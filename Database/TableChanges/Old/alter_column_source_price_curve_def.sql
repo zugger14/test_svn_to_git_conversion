@@ -1,0 +1,1 @@
+alter table source_price_curve_def alter column curve_id VARCHAR(100)

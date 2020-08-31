@@ -1,0 +1,16 @@
+D:\FARRMS_SPTFiles\GenericCLR\FARRMSGenericCLRConsole\bin\Debug\FARRMSGenericCLRConsole.exe
+D:\FARRMS_SPTFiles\GenericCLR\FARRMSGenericCLRConsole\bin\Debug\FARRMSGenericCLRConsole.pdb
+D:\FARRMS_SPTFiles\GenericCLR\FARRMSGenericCLRConsole\bin\Debug\FARRMSGenericCLR.dll
+D:\FARRMS_SPTFiles\GenericCLR\FARRMSGenericCLRConsole\bin\Debug\FARRMSGenericCLR.pdb
+D:\FARRMS_SPTFiles\GenericCLR\FARRMSGenericCLRConsole\obj\x86\Debug\FARRMSGenericCLRConsole.exe
+D:\FARRMS_SPTFiles\GenericCLR\FARRMSGenericCLRConsole\obj\x86\Debug\FARRMSGenericCLRConsole.pdb
+D:\FARRMS_SPTFiles\GenericCLR\FARRMSGenericCLRConsole\bin\Debug\DocumentFormat.OpenXml.dll
+D:\FARRMS_SPTFiles\GenericCLR\FARRMSGenericCLRConsole\bin\Debug\FARRMSGenericCLR.XmlSerializers.dll
+D:\FARRMS_SPTFiles\GenericCLR\FARRMSGenericCLRConsole\obj\x86\Debug\FARRMSGenericCLRConsole.csprojResolveAssemblyReference.cache
+D:\Farrms_Application\TRMTracker_New_Framework_Branch\GenericCLR\FARRMSGenericCLRConsole\bin\Debug\FARRMSGenericCLRConsole.exe
+D:\Farrms_Application\TRMTracker_New_Framework_Branch\GenericCLR\FARRMSGenericCLRConsole\bin\Debug\FARRMSGenericCLRConsole.pdb
+D:\Farrms_Application\TRMTracker_New_Framework_Branch\GenericCLR\FARRMSGenericCLRConsole\bin\Debug\FARRMSGenericCLR.dll
+D:\Farrms_Application\TRMTracker_New_Framework_Branch\GenericCLR\FARRMSGenericCLRConsole\bin\Debug\FARRMSGenericCLR.pdb
+D:\Farrms_Application\TRMTracker_New_Framework_Branch\GenericCLR\FARRMSGenericCLRConsole\obj\x86\Debug\FARRMSGenericCLRConsole.csprojResolveAssemblyReference.cache
+D:\Farrms_Application\TRMTracker_New_Framework_Branch\GenericCLR\FARRMSGenericCLRConsole\obj\x86\Debug\FARRMSGenericCLRConsole.exe
+D:\Farrms_Application\TRMTracker_New_Framework_Branch\GenericCLR\FARRMSGenericCLRConsole\obj\x86\Debug\FARRMSGenericCLRConsole.pdb

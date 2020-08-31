@@ -1,0 +1,1 @@
+UPDATE email_notes SET notes_object_id=NULL WHERE notes_object_id = 'na'

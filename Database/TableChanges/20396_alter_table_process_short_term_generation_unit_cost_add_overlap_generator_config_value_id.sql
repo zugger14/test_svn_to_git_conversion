@@ -1,0 +1,2 @@
+IF COL_LENGTH('process_short_term_generation_unit_cost','overlap_generator_config_value_id') IS NULL
+	alter table dbo.process_short_term_generation_unit_cost add overlap_generator_config_value_id int

@@ -1,0 +1,1 @@
+UPDATE formula_function_mapping SET eval_string = 'dbo.FNARGetWACOGPoolPrice(TRY_CAST(arg1 AS INT),CAST(arg2 as DATETIME),CAST(arg3 as DATETIME),CAST(arg4 as INT))', arg2 = 't.as_of_date' WHERE function_name = 'GetWACOGPoolPrice'

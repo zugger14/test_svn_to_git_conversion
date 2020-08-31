@@ -1,0 +1,2 @@
+ALTER TABLE counterparty_credit_migration DROP CONSTRAINT AK_Unique_fields
+ALTER TABLE counterparty_credit_migration ADD CONSTRAINT AK_Unique_fields UNIQUE(counterparty, internal_counterparty, contract, rating)

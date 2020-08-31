@@ -1,0 +1,160 @@
+IF OBJECT_ID('[dbo].[spa_update_source_deal_detail_hour]','p') IS NOT NULL 
+DROP PROC [dbo].[spa_update_source_deal_detail_hour]
+GO 
+
+--CREATE PROC [dbo].[spa_update_source_deal_detail_hour]
+--	@flag CHAR(1),
+--	@source_deal_detail_id INT, 
+--	@xml TEXT 
+--AS 
+--
+--DECLARE @idoc INT 
+--EXEC sp_xml_preparedocument @idoc OUTPUT,@xml
+--
+--SELECT 
+--	row_no
+--	,dbo.FNAStdDate(term_date) AS term_date
+--	,hr
+--	,is_dst 
+--	,volume
+--	,price 
+--	,formula_id 
+--	INTO #tmp_sddh
+--FROM   OPENXML(@idoc ,'/Root/PSRecordset' ,2)
+--WITH (
+--	row_no INT '@edit_grid0'
+--	,term_date VARCHAR(50) '@edit_grid1'
+--	,hr VARCHAR(10) '@edit_grid2'
+--	,is_dst INT '@edit_grid3'
+--	,volume FLOAT '@edit_grid4'
+--	,price FLOAT '@edit_grid5'
+--	,formula_id INT '@edit_grid6'
+--)
+--
+--UPDATE #tmp_sddh
+--SET formula_id = NULL 
+--WHERE formula_id = 0 
+--
+--
+--
+--
+--
+--IF @flag = 'u'
+--BEGIN 
+--	BEGIN TRY 
+--		BEGIN TRAN 
+--
+--		UPDATE sddh 
+--		SET volume = t.volume, 
+--			price = t.price,
+--			sddh.formula_id = t.formula_id 
+--		FROM source_deal_detail_hour sddh 
+--		INNER JOIN #tmp_sddh t ON sddh.source_deal_detail_id = @source_deal_detail_id
+--			AND sddh.term_date = t.term_date 
+--			AND sddh.hr = t.hr 
+--			AND ISNULL(sddh.is_dst,0) = t.is_dst  
+--			
+--		DECLARE @source_deal_header_id INT 
+--		DECLARE @sql VARCHAR(8000)
+--		DECLARE @user_login_id VARCHAR(100)
+--		DECLARE @process_id VARCHAR(100)
+--		
+--		DECLARE @spa VARCHAR(8000)
+--		DECLARE @job_name VARCHAR(100)
+--		
+--		SET @user_login_id=dbo.FNADBUser()
+--		SET @process_id = REPLACE(newid(),'-','_')
+--		
+--		SELECT @source_deal_header_id = source_deal_header_id FROM source_deal_detail WHERE source_deal_detail_id = @source_deal_detail_id
+--		
+--		DECLARE @report_position_deals VARCHAR(300)
+--		SET @report_position_deals = dbo.FNAProcessTableName('report_position', @user_login_id,@process_id)
+--		EXEC ('CREATE TABLE ' + @report_position_deals + '( source_deal_header_id INT, action CHAR(1))')
+--
+--		SET @sql = 'INSERT INTO ' + @report_position_deals + '(source_deal_header_id,action) SELECT ' + CAST(@source_deal_header_id AS VARCHAR) + ',''u'''
+--		EXEC spa_print @sql 
+--		EXEC (@sql)
+--		
+--		
+--		DECLARE @vol_frequency CHAR(1)
+--		DECLARE @deal_volume NUMERIC(38,20)
+--		
+--		SELECT @vol_frequency = deal_volume_frequency FROM source_deal_detail WHERE source_deal_detail_id = @source_deal_detail_id
+--	
+--		IF @vol_frequency = 'h'
+--		BEGIN
+--			SELECT @deal_volume = AVG(volume) FROM source_deal_detail_hour WHERE source_deal_detail_id = @source_deal_detail_id
+--		END 
+--		ELSE 
+--		BEGIN
+--			SELECT @deal_volume = SUM(volume) FROM source_deal_detail_hour WHERE source_deal_detail_id = @source_deal_detail_id
+--		END
+--
+--		UPDATE source_deal_detail 
+--		SET deal_volume = @deal_volume 
+--		WHERE source_deal_detail_id = @source_deal_detail_id	
+--		
+--		SET @spa = 'spa_update_deal_total_volume NULL,''' + CAST(@process_id AS VARCHAR(50)) + ''''
+--		EXEC spa_print @spa 
+--		SET @job_name = 'spa_update_deal_total_volume_' + @process_id 
+--		EXEC spa_run_sp_as_job @job_name, @spa, 'spa_update_deal_total_volume', @user_login_id 
+--	
+----		EXEC spa_update_deal_total_volume NULL,@process_id	
+--			
+--		COMMIT TRAN
+--		
+--		EXEC spa_ErrorHandler 0
+--			,'source_deal_detail_hour table'
+--			,'spa_update_source_deal_detail_hour'
+--			,'Success'
+--			,'Data Successfully Updated.'
+--			,''
+--			     
+--	END TRY
+--	BEGIN CATCH
+--		DECLARE @err_msg VARCHAR(200)
+--		SET @err_msg = ERROR_MESSAGE()
+--		EXEC spa_ErrorHandler -1
+--			,'source_deal_detail_hour table'
+--			,'spa_update_source_deal_detail_hour'
+--			,'DB Error'
+--			,'Failed Updating Data.'
+--			,@err_msg 
+--	END CATCH
+--END 
+--
+--IF @flag = 'd'
+--BEGIN 
+--	BEGIN TRY 
+--		BEGIN TRAN 
+--
+--		UPDATE sddh 
+--		SET volume = 0, 
+--			price = 0,
+--			formula_id = NULL
+--		FROM source_deal_detail_hour sddh 
+--		INNER JOIN #tmp_sddh t ON sddh.source_deal_detail_id = @source_deal_detail_id
+--			AND sddh.term_date = t.term_date 
+--			AND sddh.hr = t.hr 
+--			AND ISNULL(sddh.is_dst,0) = t.is_dst  
+--			
+--		COMMIT TRAN
+--		
+--		EXEC spa_ErrorHandler 0
+--			,'source_deal_detail_hour table'
+--			,'spa_update_source_deal_detail_hour'
+--			,'Success'
+--			,'Data Successfully Deleted.'
+--			,''
+--			     
+--	END TRY
+--	BEGIN CATCH
+--		
+--		EXEC spa_ErrorHandler -1
+--			,'source_deal_detail_hour table'
+--			,'spa_update_source_deal_detail_hour'
+--			,'DB Error'
+--			,'Failed Deleting Data.'
+--			,''
+--	END CATCH
+--END 

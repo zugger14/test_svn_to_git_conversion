@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified"
+           targetNamespace="http://www.magiumlib.com/Configuration" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:element name="magiumConfiguration">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="section" maxOccurs="unbounded" minOccurs="1">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="group" maxOccurs="unbounded" minOccurs="1">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="element" maxOccurs="unbounded" minOccurs="1">
+                                            <xs:complexType mixed="true">
+                                                <xs:sequence>
+                                                    <xs:element type="xs:string" name="description" minOccurs="0"/>
+                                                    <xs:element name="permittedValues" minOccurs="0">
+                                                        <xs:complexType>
+                                                            <xs:sequence>
+                                                                <xs:element minOccurs="1" maxOccurs="unbounded" name="value" />
+                                                            </xs:sequence>
+                                                        </xs:complexType>
+                                                    </xs:element>
+                                                    <xs:element name="value" minOccurs="0" maxOccurs="unbounded">
+                                                        <xs:complexType>
+                                                            <xs:simpleContent>
+                                                                <xs:extension base="xs:string">
+                                                                    <xs:attribute type="xs:string" name="context"/>
+                                                                </xs:extension>
+                                                            </xs:simpleContent>
+                                                        </xs:complexType>
+                                                    </xs:element>
+                                                </xs:sequence>
+                                                <xs:attribute type="xs:string" name="callbackToStorage"
+                                                              use="optional"/>
+                                                <xs:attribute type="xs:string" name="callbackFromStorage"
+                                                              use="optional"/>
+                                                <xs:attribute name="identifier" type="xs:string" use="required"/>
+                                                <xs:attribute type="xs:string" name="label" use="optional"/>
+                                                <xs:attribute name="hidden" use="optional">
+                                                    <xs:simpleType>
+                                                        <xs:restriction base="xs:string">
+                                                            <xs:enumeration value="yes"/>
+                                                            <xs:enumeration value="no"/>
+                                                        </xs:restriction>
+                                                    </xs:simpleType>
+                                                </xs:attribute>
+                                                <xs:attribute type="xs:string" name="source" use="optional"/>
+                                                <xs:attribute name="type" use="optional">
+                                                    <xs:simpleType>
+                                                        <xs:restriction base="xs:string">
+                                                            <xs:enumeration value="multi"/>
+                                                            <xs:enumeration value="select"/>
+                                                            <xs:enumeration value="text"/>
+                                                            <xs:enumeration value="textarea"/>
+                                                            <xs:enumeration value="url"/>
+                                                            <xs:enumeration value="tel"/>
+                                                            <xs:enumeration value="email"/>
+                                                            <xs:enumeration value="date"/>
+                                                            <xs:enumeration value="datetime"/>
+                                                        </xs:restriction>
+                                                    </xs:simpleType>
+                                                </xs:attribute>
+                                            </xs:complexType>
+
+                                        </xs:element>
+                                    </xs:sequence>
+                                    <xs:attribute name="identifier" type="xs:string" use="required"/>
+                                    <xs:attribute type="xs:string" name="label" use="optional"/>
+
+                                    <xs:attribute name="hidden" use="optional">
+                                        <xs:simpleType>
+                                            <xs:restriction base="xs:string">
+                                                <xs:enumeration value="yes"/>
+                                                <xs:enumeration value="no"/>
+                                            </xs:restriction>
+                                        </xs:simpleType>
+                                    </xs:attribute>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:sequence>
+                        <xs:attribute name="identifier" type="xs:string" use="required"/>
+                        <xs:attribute type="xs:string" name="label" use="optional"/>
+                        <xs:attribute type="xs:string" name="glyphicon" use="optional"/>
+                        <xs:attribute type="xs:string" name="font-awesome" use="optional"/>
+                        <xs:attribute name="hidden" use="optional">
+                            <xs:simpleType>
+                                <xs:restriction base="xs:string">
+                                    <xs:enumeration value="yes"/>
+                                    <xs:enumeration value="no"/>
+                                </xs:restriction>
+                            </xs:simpleType>
+                        </xs:attribute>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

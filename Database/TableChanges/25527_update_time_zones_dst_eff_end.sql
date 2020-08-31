@@ -1,0 +1,5 @@
+UPDATE tz
+SET  tz.DST_EFF_DT = '03L10100'
+	, tz.DST_END_DT = '10L10000'
+FROM time_zones tz
+WHERE TIMEZONE_ID = 15

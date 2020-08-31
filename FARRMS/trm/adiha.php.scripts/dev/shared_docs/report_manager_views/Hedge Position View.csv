@@ -1,0 +1,10 @@
+Book,LinkId,DealID,DealRefID,HedgeItem,Term,Volume,UOM
+Physical Gas,NULL,NULL,Index Physical NG ,Derivative,00:00.0,NULL,MMBTU
+Physical Gas,NULL,NULL,Index Physical NG ,Derivative,00:00.0,NULL,MMBTU
+Physical Gas,NULL,NULL,Index Physical NG ,Derivative,00:00.0,NULL,MMBTU
+Physical Gas,NULL,NULL,Relative Curve 001,Derivative,00:00.0,NULL,NULL
+Physical Gas,NULL,NULL,Formula Physical NG - UT,Derivative,00:00.0,NULL,NULL
+Financial Gas,NULL,NULL,Swap NG ,Derivative,00:00.0,NULL,NULL
+Financial Gas,NULL,NULL,Future NG-UT,Derivative,00:00.0,NULL,NULL
+Financial Gas,NULL,NULL,Future NG-Gen,Derivative,00:00.0,NULL,NULL
+Financial,NULL,NULL,Fixed_Swap_Power,Derivative,00:00.0,NULL,NULL

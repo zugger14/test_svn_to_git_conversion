@@ -1,0 +1,8 @@
+D:\masterdata\Clients\MLGW\Interface\TRMInterfaceOldnetframework\SqlServerProject1\ConsoleApplication1\obj\x86\Debug\ConsoleApplication1.csprojResolveAssemblyReference.cache
+D:\masterdata\Clients\MLGW\Interface\TRMInterfaceOldnetframework\SqlServerProject1\ConsoleApplication1\bin\Debug\ConsoleApplication1.exe
+D:\masterdata\Clients\MLGW\Interface\TRMInterfaceOldnetframework\SqlServerProject1\ConsoleApplication1\bin\Debug\ConsoleApplication1.pdb
+D:\masterdata\Clients\MLGW\Interface\TRMInterfaceOldnetframework\SqlServerProject1\ConsoleApplication1\bin\Debug\QuickFix.dll
+D:\masterdata\Clients\MLGW\Interface\TRMInterfaceOldnetframework\SqlServerProject1\ConsoleApplication1\bin\Debug\TRMICEInterface.dll
+D:\masterdata\Clients\MLGW\Interface\TRMInterfaceOldnetframework\SqlServerProject1\ConsoleApplication1\bin\Debug\TRMICEInterface.pdb
+D:\masterdata\Clients\MLGW\Interface\TRMInterfaceOldnetframework\SqlServerProject1\ConsoleApplication1\obj\x86\Debug\ConsoleApplication1.exe
+D:\masterdata\Clients\MLGW\Interface\TRMInterfaceOldnetframework\SqlServerProject1\ConsoleApplication1\obj\x86\Debug\ConsoleApplication1.pdb

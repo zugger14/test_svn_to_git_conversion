@@ -1,0 +1,1 @@
+update user_defined_fields_template set sql_string = 'SELECT sc.source_counterparty_id, sc.counterparty_name FROM source_counterparty sc WHERE sc.type_of_entity = 301994' where field_label = 'pipeline'

@@ -1,0 +1,1 @@
+UPDATE application_functions SET file_path = '_accounting/inventory/manual_journal_entries/manual.journal.entries.php' where function_id = 10237000

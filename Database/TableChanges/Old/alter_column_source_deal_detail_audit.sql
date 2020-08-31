@@ -1,0 +1,1 @@
+ALTER TABLE dbo.source_deal_detail_audit add fixed_cost float

@@ -1,0 +1,1 @@
+DELETE FROM maintain_field_deal WHERE field_id = 127 AND farrms_field_id = 'formula_curve_id'

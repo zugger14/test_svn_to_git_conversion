@@ -1,0 +1,1 @@
+alter table source_deal_header_template alter column template_name varchar(250)

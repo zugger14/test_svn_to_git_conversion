@@ -1,0 +1,35 @@
+DELETE FROM ssis_configurations WHERE ConfigurationFilter IN ('PKG_EDIInterface')
+INSERT INTO ssis_configurations(ConfigurationFilter,ConfiguredValue,PackagePath,ConfiguredValueType)
+SELECT 'PKG_EDIInterface','','\Package.Variables[User::PS_UserLoginID].Properties[Value]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','D:\FARRMS\TRMTracker_Master_Questar\FARRMS\trm\adiha.php.scripts\dev\shared_docs\temp_Note\EDI\processed','\Package.Variables[User::PS_ProcessFilePath].Properties[Value]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','','\Package.Variables[User::PS_Process_id].Properties[Value]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','False','\Package.Variables[User::PS_Process_id].Properties[ReadOnly]','Boolean'
+UNION ALL
+SELECT 'PKG_EDIInterface','False','\Package.Variables[User::PS_Process_id].Properties[RaiseChangedEvent]','Boolean'
+UNION ALL
+SELECT 'PKG_EDIInterface','User','\Package.Variables[User::PS_Process_id].Properties[Namespace]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','PS_Process_id','\Package.Variables[User::PS_Process_id].Properties[Name]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','False','\Package.Variables[User::PS_Process_id].Properties[IncludeInDebugDump]','Boolean'
+UNION ALL
+SELECT 'PKG_EDIInterface','','\Package.Variables[User::PS_Process_id].Properties[Expression]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','False','\Package.Variables[User::PS_Process_id].Properties[EvaluateAsExpression]','Boolean'
+UNION ALL
+SELECT 'PKG_EDIInterface','','\Package.Variables[User::PS_Process_id].Properties[Description]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','D:\FARRMS\TRMTracker_Master_Questar\FARRMS\trm\adiha.php.scripts\dev\shared_docs\temp_Note\EDI','\Package.Variables[User::PS_newfileName].Properties[Value]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','D:\FARRMS\TRMTracker_Master_Questar\FARRMS\trm\adiha.php.scripts\dev\shared_docs\temp_Note\EDI','\Package.Variables[User::PS_Folder_Location].Properties[Value]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','*.*','\Package.Variables[User::PS_Filename].Properties[Value]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','','\Package.Variables[User::PS_EDI_ErrorList].Properties[Value]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','','\Package.Variables[User::PS_Created_TS].Properties[Value]','String'
+UNION ALL
+SELECT 'PKG_EDIInterface','','\Package.Variables[User::PS_Acknowledge].Properties[Value]','String'

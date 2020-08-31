@@ -1,0 +1,17 @@
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_NAME='UC_calculate_wacoq_group')
+BEGIN
+	ALTER TABLE dbo.calculate_wacog_group
+	DROP CONSTRAINT UC_calculate_wacoq_group  
+END
+
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_NAME='UC_calculate_wacoq')
+BEGIN
+	ALTER TABLE dbo.calculate_wacog_group
+	DROP CONSTRAINT UC_calculate_wacoq 
+END
+
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_NAME='UC_calculate_wacoq')
+BEGIN
+	ALTER TABLE dbo.calculate_wacog_group
+	ADD CONSTRAINT UC_calculate_wacoq UNIQUE (wacog_group_id, as_of_date, term) 
+END

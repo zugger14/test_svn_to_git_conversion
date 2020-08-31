@@ -1,0 +1,6 @@
+IF NOT EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'contract_group' AND  COLUMN_NAME = 'mdq')
+BEGIN
+	ALTER TABLE contract_group ADD mdq FLOAT
+END
+ELSE 
+	PRINT 'Column already exists.'

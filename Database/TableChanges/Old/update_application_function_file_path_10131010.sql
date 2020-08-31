@@ -1,0 +1,1 @@
+update application_functions set file_path = '_deal_capture/maintain_deals/deal.detail.php' where function_id = 10131010

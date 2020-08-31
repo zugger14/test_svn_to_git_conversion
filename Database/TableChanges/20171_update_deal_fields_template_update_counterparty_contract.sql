@@ -1,0 +1,2 @@
+UPDATE user_defined_fields_template SET sql_string= 'EXEC spa_source_counterparty_maintain @flag = ''c'',  @is_active = ''y''' WHERE Field_label = 'Counterparty'
+UPDATE user_defined_fields_template SET  sql_string= 'EXEC spa_contract_group ''r'''   WHERE Field_label= 'Contract'

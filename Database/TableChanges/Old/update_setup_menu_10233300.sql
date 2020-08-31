@@ -1,0 +1,1 @@
+UPDATE setup_menu SET display_name = 'Copy Prior MTM Value' WHERE function_id = 10233300 AND product_category = 13000000 

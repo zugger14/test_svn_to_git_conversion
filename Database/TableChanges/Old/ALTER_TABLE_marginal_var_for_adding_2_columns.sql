@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[marginal_var] ADD MTM_value_C float,MTM_value_I float

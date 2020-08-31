@@ -1,0 +1,1 @@
+UPDATE application_functions SET file_path = '_accounting/derivative/transaction_processing/reclassify_dedes_values/reclassify.dedes.values.php' where function_id = '10234000'

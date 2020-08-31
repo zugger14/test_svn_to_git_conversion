@@ -1,0 +1,1 @@
+update setup_menu set display_name = 'Regulatory Submission' where function_id = 10164300

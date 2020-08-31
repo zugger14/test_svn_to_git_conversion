@@ -1,0 +1,126 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Name>FARRMSExcelServerCLR</Name>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>4.1</ProjectVersion>
+    <ProjectGuid>{faa7f872-cd00-41d4-a60f-a8d2d519a2c3}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
+    <OutputType>Database</OutputType>
+    <RootPath>
+    </RootPath>
+    <RootNamespace>FARRMSExcelServerCLR</RootNamespace>
+    <AssemblyName>FARRMSExcelServerCLR</AssemblyName>
+    <ModelCollation>1033, CI</ModelCollation>
+    <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
+    <DeployToDatabase>True</DeployToDatabase>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetLanguage>CS</TargetLanguage>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SqlServerVerification>False</SqlServerVerification>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
+    <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
+    <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
+  </PropertyGroup>
+  <Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <ItemGroup>
+    <Folder Include="Properties" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Spire.Common">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSExcelServerCLR\Spire.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Spire.License">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSExcelServerCLR\Spire.License.dll</HintPath>
+    </Reference>
+    <Reference Include="Spire.Pdf">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSExcelServerCLR\Spire.Pdf.dll</HintPath>
+    </Reference>
+    <Reference Include="Spire.XLS">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSExcelServerCLR\Spire.XLS.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Core" />
+    <Reference Include="System" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Calculation.cs" />
+    <Compile Include="Column.cs" />
+    <Compile Include="DataImport.cs" />
+    <Compile Include="DocumentGeneration.cs" />
+    <Compile Include="ExcelFactory.cs" />
+    <Compile Include="ExcelSheet.cs" />
+    <Compile Include="Helper.cs" />
+    <Compile Include="ISnapshot.cs" />
+    <Compile Include="Position.cs" />
+    <Compile Include="ReportFilter.cs" />
+    <Compile Include="ReportGeneration.cs" />
+    <Compile Include="ReportParameter.cs" />
+    <Compile Include="ReportSheet.cs" />
+    <Compile Include="Row.cs" />
+    <Compile Include="Rule.cs" />
+    <Compile Include="SnapshotBase.cs" />
+    <Compile Include="SnapshotInfo.cs" />
+    <Compile Include="Tablix.cs" />
+    <Compile Include="StoredProcedure.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FARRMSUtilities\FARRMSUtilities.csproj">
+      <Name>FARRMSUtilities</Name>
+      <Project>{0700a174-b7d6-437e-801c-eeee9b970a24}</Project>
+      <Private>True</Private>
+      <IsModelAware>True</IsModelAware>
+      <GenerateSqlClrDdl>True</GenerateSqlClrDdl>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup>
+    <PostBuildEvent>
+if "Debug" == "$(ConfigurationName)" (goto :donot_copy_to_clr_deploy_folder)
+if "Release" =="$(ConfigurationName)" (
+CD $(ProjectDir)
+
+copy /y bin\Debug\FARRMSExcelServerCLR.dll ..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSExcelServerCLR
+
+copy /y bin\Debug\Ionic.Zip.dll ..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSExcelServerCLR
+)
+
+:donot_copy_to_clr_deploy_folder
+
+</PostBuildEvent>
+  </PropertyGroup>
+</Project>

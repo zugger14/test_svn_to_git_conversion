@@ -1,0 +1,6 @@
+IF NOT EXISTS(SELECT 'X' FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'holiday_group' AND COLUMN_NAME = 'settlement_date')
+BEGIN
+	ALTER TABLE holiday_group ADD settlement_date DATETIME
+
+END
+

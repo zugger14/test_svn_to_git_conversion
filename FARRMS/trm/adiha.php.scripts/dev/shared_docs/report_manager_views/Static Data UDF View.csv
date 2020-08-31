@@ -1,0 +1,3 @@
+function_id,module_name,table_name,primary_key,BIC,PRP Power,TSO Gas,EAN Power,LEI,Facility,EAN Gas,Reporting Code,Status,RPG,Pigridcode,ACER,TSP Location Name,PRP Gas,Wexpro Agreement,Tesoro Facility ID,EIC,Tesoro GSI Group,TSO power,Field,Operator,DUNS REF
+10102500,SetupLocation,source_minor_location,4,NULL,NULL,NULL,NULL,NULL,LTUIY,NULL,NULL,NULL,Test RPG,NULL,NULL,Test TSP Location,NULL,NULL,Test Tesoro,NULL,ADJKJ,NULL,NULL,NULL,RTD
+10102500,SetupLocation,source_minor_location,13,NULL,NULL,NULL,NULL,NULL,dfd,NULL,NULL,NULL,dfl;gdsjfg,NULL,NULL,sdfd,NULL,NULL,fads,NULL,adsf,NULL,NULL,NULL,rdsf

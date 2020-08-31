@@ -1,0 +1,1 @@
+update setup_menu SET menu_type = 0 WHERE function_id IN (10163400, 10163600, 10104800, 10104800, 10211213, 10163800, 10106100)

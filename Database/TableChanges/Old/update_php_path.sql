@@ -1,0 +1,1 @@
+update connection_string set php_path='http://174.120.132.170/LADWP/trm/adiha.php.scripts/'

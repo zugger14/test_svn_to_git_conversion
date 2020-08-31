@@ -1,0 +1,244 @@
+
+        #container-param-block .push-up {
+           /* position:relative; 
+            top: 6px;*/
+           
+        }
+        .class-trm-paramset-detail .check_operator { 
+          width: 70px; /*position: relative; top: 10px; */
+        }
+      /*  .check_operator { width: 80px !important;  }*/
+        #container-param-block {
+            overflow : auto;
+            height : 90%; 
+            border : solid 1px #458bc1;
+            /*background: #e5eef4; */
+        }
+        
+       .ui-sortable {
+            min-width : 1100px; width: auto;
+          
+        }
+
+        img.add-button, img.remove-button, .widget-btn {
+            cursor : pointer;
+        }
+
+        .placeholder-hsort {
+            border : 1px solid #458bc1;
+            background : #e3effd;
+            height : 54px;
+        }
+
+        ul.paramset-region {
+            margin : 0;
+            padding : 0;
+        }
+
+        ul.paramset-region li {
+            xwidth : 1080px;
+            display: block;
+        }
+
+        ul.paramset-region .move-item {
+            cursor : move; padding: 8px 0 0 3px;
+        }
+
+        /*Standard mode hack*/
+
+        ul.jtabs li.active {
+            background : #ced9e1 no-repeat 0 -5px!important;
+            display : inline-block;
+        }
+
+        .no-append th {
+            background : #666;
+        }
+		
+		.not-saved-msg{
+			display:none;
+			float:right;
+            margin: 10px 0 0 0;
+		}        
+		
+		.new-from-ds .not-saved-msg {
+         display:inline-block;  /*position: relative; top: 2px; font-size: 12px!important; */
+        }
+
+        .no-append .param-relation {
+            display : none;
+        }
+
+        .disabled {
+            background: #ebeae9;
+        }
+		
+		.note-label{
+		
+		}
+     .unsaved_img { 
+        /*background:url("<?php echo $app_php_script_loc ?>adiha_pm_html/process_controls/unsaved.png") no-repeat;*/ 
+        width: 18px;
+        height: 18px; 
+        margin-top:13px!important; 
+        padding: 0!important; 
+        vertical-align: top!important; 
+  
+     }
+     .unsaved_img1 { 
+        /*background:url("<?php echo $app_php_script_loc ?>adiha_pm_html/process_controls/unsaved.png") no-repeat;*/ 
+        width: 18px;
+        height: 18px; 
+        margin-top:8px!important; 
+        padding: 0 0 0 5px!important; 
+        vertical-align: top!important; 
+     }
+
+    .class-trm-paramset-detail li .push-up input {
+      /*  position: relative; 
+        top: 5px; */ 
+    }
+
+    .class-trm-paramset-detail li { 
+        padding: 0 0 0 5px; 
+    }
+
+    .data-table td {
+     border-bottom:none;   
+    }
+
+/*Added new css for report.managerdhx.paramset.template*/
+ 
+ .paramset_columns_header {
+        border: 1px solid #eee;
+        font-family: 'Ubuntu';
+        font-weight: bold;
+        font-size: 12px;
+        height: 25px;
+        /*background: #93d7b7; */
+    }
+
+    .paramset_columns_header_detail {
+        /*border: 1px solid #89c7aa;*/
+        display: table-cell;
+        xwidth: 165px;
+        text-align: center;
+        height: 25px;
+        vertical-align: middle;
+    }
+    
+    .div_first {
+        width: 35px;
+    }
+    .div_columns {
+        width: 380px;
+    }
+    .div_operator{
+        width: 140px;
+    }
+    .div_label {
+        width: 165px;
+    }
+    .div_value1{
+        width: 210px;
+    }
+    .div_optional{
+        width: 80px; padding: 0 0 0 30px; padding-left:50px\0;
+    }
+    .div_hidden{
+        width: 90px; 
+    }
+    .even_color { 
+        background: #f9f9f9;
+    }
+    .odd_color { 
+        background: #f1f1f1;
+    }
+    .param01, .param02  { 
+        position: relative; left:70px; 
+    }       
+
+/*copied inline css from report.manager.dhx.paramset.template.php file*/
+    .unsaved_img { 
+        background:url("<?php echo $app_php_script_loc ?>adiha_pm_html/process_controls/unsaved.png") no-repeat;  
+     }
+   .unsaved_img1 { 
+       background:url("<?php echo $app_php_script_loc ?>adiha_pm_html/process_controls/unsaved.png") no-repeat; 
+       width: 18px; height: 18px; margin:0!important; 
+
+     }
+    
+    .sortable {        
+      overflow-y: scroll;
+    }
+
+    #popdiv1 {     
+      xpadding: 0 20px 20px 20px;
+      width: 80%;
+      background-color: #f9f9f9;
+      xposition: fixed;
+      xtop: 50%;
+      xleft: 50%;
+      transform: translateX(-50%) translateY(-50%);
+      border: 2px solid #81e0d3;
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+
+    }
+
+    .backdrop {
+      xposition: fixed;
+      xtop: 0px;
+      xleft: 0px;
+      z-index: 999;
+      height: 100%;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      display: none;
+      overflow: scroll;
+    }
+
+    .backdrop li {
+        width: 23%;
+        padding-bottom: 5px;
+        padding-top: 5px;
+        padding-left: 5px;
+        text-align: left;
+        margin: 3px;
+        cursor: move;
+        background-color: #f9f9f9;
+        border: 1px solid #d5d5d5;
+        font-size: 12px;
+        float: left;
+    }
+   
+    .title {
+        text-align: center; 
+        text-transform: capitalize; 
+        padding: 20px 0 10px 0;
+        border-bottom: 1px solid #ccc;
+        margin-bottom: 20px;  
+    }
+    .check_opt { position: relative; left: 2px;}
+    .ctrlbox { position: relative; top:-6px; left:2px;   }
+
+    input[type="text"]:disabled { padding: 0 0 0 2px !important; }
+
+    /*CSS for report margin analysis view*/
+    .depth-info-width{ width: 320px!important;} 
+    .nesting_level01 { padding-left: 20px; }
+    .nesting_width01 { width: 300px!important; }
+    .nesting_level02 { padding-left: 40px; }
+    .nesting_width02 { width: 280px!important; }
+    .nesting_level03 { padding-left: 60px; }
+    .nesting_width03 { width: 260px!important; }
+    .nesting_level04 { padding-left: 80px; }
+    .nesting_width04 { width: 240px!important; }
+    .nesting_level05 { padding-left: 100px; }
+    .nesting_width05 { width: 220px!important; }
+
+  /*CSS for report with issue*/
+    .adiha_label { 
+        width: 172px!important;
+        width: 196px\0 !important; /*IE specific CSS or target IE only */ 
+     }
+

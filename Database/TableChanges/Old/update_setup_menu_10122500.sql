@@ -1,0 +1,1 @@
+UPDATE setup_menu SET parent_menu_id = 10100000 where function_id = 10122500 AND product_category = 10000000

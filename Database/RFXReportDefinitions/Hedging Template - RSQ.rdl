@@ -1,0 +1,1211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2008/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+  <Body>
+    <ReportItems>
+      <Textbox Name="Textbox2">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>Risk Management Objective and Nature of Risk Being Hedged</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value />
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>The objective of the hedge is to reduce the variability of the cash flows of the forecasted</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve"> </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <Color>#ff6600</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>item_buy_sell</Label>
+                <Value>=First(Fields!item_buy_sell.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>#ff6600</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve"> </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>of natural gas at </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>item_index</Label>
+                <Value>=First(Fields!item_index.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>#ff6600</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>. This transaction is expected to occur because Pioneer Solutions is </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>selling / purchasing / receiving / returning / parking</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value> like amounts of natural gas at </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>item_index</Label>
+                <Value>=First(Fields!item_index.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>#ff6600</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value> that are required to be </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>item_bought_sold</Label>
+                <Value>=First(Fields!item_bought_sold.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>#ff6600</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve"> </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>during the month of </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>hedge_term_start</Label>
+                <Value>=First(Fields!hedge_term_start.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value> - </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>hedge_term_end</Label>
+                <Value>=First(Fields!hedge_term_end.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>.</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value> Changes in the cash flows of the futures contracts are expected to be highly effective at offsetting changes in the expected cash flows of the exposures. This transaction complies with the requirements of the Pioneer Solutions’ Risk Management Policy as authorized by The Pioneer Solutions board of Directors resolution dated ___________ .</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value />
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>Date of Designation</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>: </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>hedge_designation_date</Label>
+                <Value>=First(Fields!hedge_designation_date.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve">
+ 
+</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>Hedging Instrument:</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve">
+</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>item_volume</Label>
+                <Value>=First(Fields!item_volume.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve"> </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>None</TextDecoration>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>hedge_long_short</Label>
+                <Value>=First(Fields!hedge_long_short.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve"> </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>None</TextDecoration>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>natural gas contracts at $ </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>hedge_price</Label>
+                <Value>=First(Fields!hedge_price.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value> per </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>hedge_UOM</Label>
+                <Value>=First(Fields!hedge_UOM.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve">
+ 
+</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>Hedged Transaction:</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>
+Forecasted </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>item_buy_sell</Label>
+                <Value>=First(Fields!item_buy_sell.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>#ff6600</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve"> </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>of </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>item_volume</Label>
+                <Value>=First(Fields!item_volume.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve">  </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>hedge_UOM</Label>
+                <Value>=First(Fields!hedge_UOM.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value> of natural gas during </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>item_term_start</Label>
+                <Value>=First(Fields!item_term_start.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value> - </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>item_term_end</Label>
+                <Value>=First(Fields!item_term_end.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve">
+ 
+</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>Effectiveness Assessment:</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>
+The hedge is expected to be highly effective. Based on prior history, the forward market prices of derivatives and exposures at </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>item_index</Label>
+                <Value>=First(Fields!item_index.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>#ff6600</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value> have been highly correlated and are expected to continue to be highly correlated.
+ 
+</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>Effectiveness Measurement:</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve"> </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>
+Hedge effectiveness will be measured on a cumulative dollar-offset basis by comparing the overall change in the expected cash flows on the natural gas futures contracts with the changes in the expected total cash flows from the exposures. Estimates of cash flows for both the futures contracts and the exposures will be based on future settled prices.
+ </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value />
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>Approved: ____________________
+ 
+ 
+cc:
+_________________
+_________________
+ 
+ 
+ 
+Transaction Date: </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>hedge_designation_date</Label>
+                <Value>=First(Fields!hedge_designation_date.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>                
+Underlying Item: </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>item_index</Label>
+                <Value>=First(Fields!item_index.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>#ff6600</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>.
+Hedging Instrument: </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>hedge_index</Label>
+                <Value>=First(Fields!hedge_index.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>#ff6600</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>
+Contract Month: </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve"> </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>hedge_term_start</Label>
+                <Value>=First(Fields!hedge_term_start.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value> - </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>hedge_term_end</Label>
+                <Value>=First(Fields!hedge_term_end.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>Red</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>
+RSQ: </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>rsq</Label>
+                <Value>=First(Fields!rsq.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>#ff6600</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>
+Slope: </Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Label>slope</Label>
+                <Value>=First(Fields!slope.Value, "hedge_documentation")</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                  <Color>#ff6600</Color>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve">
+</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style>
+              <TextAlign>General</TextAlign>
+            </Style>
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox2</rd:DefaultName>
+        <Top>2.50868in</Top>
+        <Left>0.66542in</Left>
+        <Height>6.99354in</Height>
+        <Width>7.07796in</Width>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox1">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>To: Risk Management Committee
+__________________
+__________________</Value>
+                <Style />
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox1</rd:DefaultName>
+        <Top>0.5925in</Top>
+        <Left>0.66542in</Left>
+        <Height>0.83526in</Height>
+        <Width>2.2735in</Width>
+        <ZIndex>1</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox3">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>Pioneer Solutions</Value>
+                <Style>
+                  <FontSize>12pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value xml:space="preserve">
+</Value>
+                <Style>
+                  <FontSize>9pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                </Style>
+              </TextRun>
+              <TextRun>
+                <Value>CASH FLOW HEDGE AUTHORIZATION AND DOCUMENTATION</Value>
+                <Style>
+                  <FontSize>12pt</FontSize>
+                  <FontWeight>Normal</FontWeight>
+                  <TextDecoration>Underline</TextDecoration>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style>
+              <TextAlign>Center</TextAlign>
+            </Style>
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox2</rd:DefaultName>
+        <Top>1.78646in</Top>
+        <Left>0.66542in</Left>
+        <Height>0.45834in</Height>
+        <Width>7.07796in</Width>
+        <ZIndex>2</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Tablix Name="Tablix1">
+        <TablixBody>
+          <TablixColumns>
+            <TablixColumn>
+              <Width>1.74225in</Width>
+            </TablixColumn>
+            <TablixColumn>
+              <Width>1.98958in</Width>
+            </TablixColumn>
+            <TablixColumn>
+              <Width>2.11696in</Width>
+            </TablixColumn>
+          </TablixColumns>
+          <TablixRows>
+            <TablixRow>
+              <Height>0.25in</Height>
+              <TablixCells>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox4">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Date</Value>
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox4</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>White</Color>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox6">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Hedge Price</Value>
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox6</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>White</Color>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox8">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Item Price</Value>
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox8</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>White</Color>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+              </TablixCells>
+            </TablixRow>
+            <TablixRow>
+              <Height>0.25in</Height>
+              <TablixCells>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Date1">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=Fields!Date.Value</Value>
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Left</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Date1</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>White</Color>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="hedge_price">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=Fields!hedge_price.Value</Value>
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Left</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>hedge_price</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>White</Color>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="item_price">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=Fields!item_price.Value</Value>
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Left</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>item_price</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>White</Color>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+              </TablixCells>
+            </TablixRow>
+          </TablixRows>
+        </TablixBody>
+        <TablixColumnHierarchy>
+          <TablixMembers>
+            <TablixMember />
+            <TablixMember />
+            <TablixMember />
+          </TablixMembers>
+        </TablixColumnHierarchy>
+        <TablixRowHierarchy>
+          <TablixMembers>
+            <TablixMember>
+              <KeepWithGroup>After</KeepWithGroup>
+            </TablixMember>
+            <TablixMember>
+              <Group Name="Details" />
+            </TablixMember>
+          </TablixMembers>
+        </TablixRowHierarchy>
+        <DataSetName>reg_series_table</DataSetName>
+        <Top>9.69667in</Top>
+        <Left>0.66542in</Left>
+        <Height>0.5in</Height>
+        <Width>5.84879in</Width>
+        <ZIndex>3</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+        </Style>
+      </Tablix>
+    </ReportItems>
+    <Height>13.41667in</Height>
+    <Style>
+      <Border>
+        <Style>None</Style>
+      </Border>
+    </Style>
+  </Body>
+  <Width>8.63292in</Width>
+  <Page>
+    <PageWidth>8.9in</PageWidth>
+    <Style />
+  </Page>
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+                                <DataSource Name="TRMTracker_Release">
+                                    <DataSourceReference>TRMTracker_Release</DataSourceReference>
+                                    <rd:DataSourceID></rd:DataSourceID>
+                                </DataSource>
+                            </DataSources>
+  <DataSets>
+    <DataSet Name="hedge_documentation">
+      <Query>
+        <DataSourceName>TRMTracker_Release</DataSourceName>
+        <CommandText>="EXEC spa_get_template_data " &amp; Parameters!link_id.Value</CommandText>
+        <rd:UseGenericDesigner>true</rd:UseGenericDesigner>
+      </Query>
+      <Fields>
+        <Field Name="item_buy_sell">
+          <DataField>*item_buy_sell*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="item_index">
+          <DataField>*item_index*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="correlation">
+          <DataField>*correlation*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="hedge_deal_ref_id">
+          <DataField>*hedge_deal_ref_id*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="hedge_designation_date">
+          <DataField>*hedge_designation_date*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="hedge_index">
+          <DataField>*hedge_index*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="hedge_location">
+          <DataField>*hedge_location*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="hedge_long_short">
+          <DataField>*hedge_long_short*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="hedge_price">
+          <DataField>*hedge_price*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="hedge_term_end">
+          <DataField>*hedge_term_end*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="hedge_term_start">
+          <DataField>*hedge_term_start*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="hedge_UOM">
+          <DataField>*hedge_UOM*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="item_bought_sold">
+          <DataField>*item_bought_sold*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="item_location">
+          <DataField>*item_location*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="item_term_end">
+          <DataField>*item_term_end*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="item_term_start">
+          <DataField>*item_term_start*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="ng_future_contract">
+          <DataField>*ng_future_contract*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="item_volume">
+          <DataField>*item_volume*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="reg_series">
+          <DataField>*reg_series*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="rsq">
+          <DataField>*rsq*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+        <Field Name="slope">
+          <DataField>*slope*</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+      </Fields>
+    </DataSet>
+    <DataSet Name="reg_series_table">
+      <Query>
+        <DataSourceName>TRMTracker_Release</DataSourceName>
+        <CommandText>="EXEC spa_get_template_data @link_id=" &amp; Parameters!link_id.Value &amp; ",@flag='a'"</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Date">
+          <DataField>Date</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="hedge_price">
+          <DataField>Hedge Price</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="item_price">
+          <DataField>Item Price</DataField>
+          <rd:UserDefined>true</rd:UserDefined>
+        </Field>
+      </Fields>
+    </DataSet>
+  </DataSets>
+  <ReportParameters>
+    <ReportParameter Name="link_id">
+      <DataType>String</DataType>
+      <Prompt>link_id</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="report_region">
+      <DataType>String</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>en-US</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>report_region</Prompt>
+    </ReportParameter>
+  </ReportParameters>
+  <EmbeddedImages>
+    <EmbeddedImage Name="clientImageFile">
+      <MIMEType>image/jpeg</MIMEType>
+      <ImageData>/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABkAAD/4QMraHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKFdpbmRvd3MpIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjhFMzVFNzZEQUU4NjExRTNCQUYxQjkyRTM0MjM1RjJDIiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjhFMzVFNzZFQUU4NjExRTNCQUYxQjkyRTM0MjM1RjJDIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6OEUzNUU3NkJBRTg2MTFFM0JBRjFCOTJFMzQyMzVGMkMiIHN0UmVmOmRvY3VtZW50
+SUQ9InhtcC5kaWQ6OEUzNUU3NkNBRTg2MTFFM0JBRjFCOTJFMzQyMzVGMkMiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz7/7gAOQWRvYmUAZMAAAAAB/9sAhAABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAgICAgICAgICAgIDAwMDAwMDAwMDAQEBAQEBAQIBAQICAgECAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwP/wAARCAAzAGQDAREAAhEBAxEB/8QApQABAAICAgMBAAAAAAAAAAAAAAcJBggECgIDBQsBAQABBAMBAQAAAAAAAAAAAAAEAwUGBwIICQEKEAABBAIBAgUCAwgDAQAAAAADAgQFBgEHCAASERMUFQkhFiMXGEEikiTWWBkaMTIzChEAAgECBAMFBQUIAQUAAAAAAQIDEQQAEgUGIRMHMUEiFAhRYTIVFnGh0VIj8JEzo9NVFxjhgbHBYgn/2gAMAwEAAhEDEQA/AO/x0ww6YYdMMOmGHTDDphh0ww6YYdMMOmGHTDDphh0ww6YYdMMRltfatb1FVjWWwrIYhCejh4htlPrpqSUhRENG3d+4IaEJysxl/uCHjOc+KspSrS3Xfrps3oBseTeO7WaSZ35VpaRkc67uCpZYo68FUAF5ZW8ESAk1Yoj5rsPYms9QNcXRtIAVFGeaVvghjrQu1OJJJoiDizGnAVIr3snJ/kTKw5L1CMWVTo65PMa1cs4WOlUJNha0jS4dzIXhzjUROQ5coAFupwnI05wTGU9eTm8vWp6wNc2w3VfbdnBoPSt9QNpFPFZQXMfNHERvPeJK0ndG06QxQmYGJSslUx200Xor0bsdVG0NSne/3atsJnjed4myHhmWOFkC97BC7Pk8
+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</ImageData>
+    </EmbeddedImage>
+    <EmbeddedImage Name="clientImageFile1">
+      <MIMEType>image/jpeg</MIMEType>
+      <ImageData>/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABkAAD/4QMraHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtYzAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzYgKFdpbmRvd3MpIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOkYyMkU4NzEyQjk1NTExRTM4QjY2RTg1NjNDNUMyQUMxIiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOkYyMkU4NzEzQjk1NTExRTM4QjY2RTg1NjNDNUMyQUMxIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6RjIyRTg3MTBCOTU1MTFFMzhCNjZFODU2M0M1QzJBQzEiIHN0UmVmOmRvY3VtZW50
+SUQ9InhtcC5kaWQ6RjIyRTg3MTFCOTU1MTFFMzhCNjZFODU2M0M1QzJBQzEiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz7/7gAOQWRvYmUAZMAAAAAB/9sAhAABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAgICAgICAgICAgIDAwMDAwMDAwMDAQEBAQEBAQIBAQICAgECAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwP/wAARCAAzAHgDAREAAhEBAxEB/8QAqwAAAQMEAwAAAAAAAAAAAAAAAAEHCQIDBggEBQoBAQABBAMBAQAAAAAAAAAAAAABAwUGBwIICQQKEAAABgECAwENBgUFAAAAAAABAgMEBQYHAAgREgkTITFBYZGh0TKSszR0FVFxwSJSFIFyUxYXQmKiGAoRAAIBAwMCBAMHAwMFAQAAAAECAxEEBQASBiEHMVETCEEyFGFxkbEicgkjNBdiFRaBQlIzJCX/2gAMAwEAAhEDEQA/AIKTgJDmIP8ApMYP4gPD8NeeJ6dNftuU7gG8xqjTU6XiId4RDTSmlA5w7xjB9wjpU6javkNLzn48ec3H+YfTpU6bV8ho7Q/6ze0Pp8elTptXyGjtD/rN9nrD6dKnTavkNJzn/Wb2h9OlTptXyGjnN+o3lHSp02r5DRzn/Wb2h9OlTptXyGl7RTv85+P8w+nSp02r5DS9st/VU9s3p8WlTqNieQ/DR2yv9VT2zenSp02J5D8NHbLd7tVPbN6dKnTYnkPw1WkZdVRNIqinMooQhfzm9Y5uUPD9ptSKk01DiNELkCgBPh5aHQcHLkPsXWDyKG0b5j9+oh6wof8ASPy1Y1GqmjTTW320bZBnbefY7HHYphWrGn0GJc2HKGVL
+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</ImageData>
+    </EmbeddedImage>
+  </EmbeddedImages>
+  <Language>=Parameters!report_region.Value</Language>
+  <ConsumeContainerWhitespace>true</ConsumeContainerWhitespace>
+  <rd:ReportUnitType>Inch</rd:ReportUnitType>
+  <rd:ReportID>a9e197a7-4f28-4b8f-b582-872c5d59dc52</rd:ReportID>
+</Report>

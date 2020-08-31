@@ -1,0 +1,1 @@
+ UPDATE static_data_value SET code = RTRIM(LTRIM(code)), description = RTRIM(LTRIM(description)) WHERE type_id = 11101

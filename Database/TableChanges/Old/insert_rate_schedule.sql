@@ -1,0 +1,2 @@
+insert into rate_schedule([name],description,rate_schedule_type_id) values('Transportation rate schedule','Transportation rate schedule',1800)
+insert into rate_schedule([name],description,rate_schedule_type_id) values('Storage rate schedule','Storage rate schedule',1801)

@@ -1,0 +1,6 @@
+IF NOT EXISTS(SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'delivery_path' AND  COLUMN_NAME = 'mdq_at')
+BEGIN
+	ALTER TABLE delivery_path ADD mdq_at CHAR(1)
+END
+ELSE 
+	PRINT 'Column already exists.'

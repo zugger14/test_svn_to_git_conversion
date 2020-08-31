@@ -1,0 +1,2 @@
+CREATE SYNONYM deal_detail_hour_arch1 FOR farrmsarch.trmtracker_essent.dbo.deal_detail_hour_arch1
+CREATE SYNONYM deal_detail_hour_arch2 FOR farrmsarch.trmtracker_essent.dbo.deal_detail_hour_arch2

@@ -1,0 +1,2 @@
+IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.columns WHERE column_name = 'sorting_column' AND table_name = 'report_tablix_column')
+	ALTER TABLE report_tablix_column ADD sorting_column VARCHAR(100) NULL

@@ -1,0 +1,3456 @@
+/*
+Pioneer Solutions
+DHTMLX.JS THEME PATCH STYLESHEET
+
+Last Modified : 20170304
+Last Modified By : adishaswot@gmail.com
+
+*/
+/*Fonts and resets*/
+/*@import url(http://fonts.googleapis.com/css?family=Montserrat:400,700);*/
+/*@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800);*/
+/*@import url(https://fonts.googleapis.com/css?family=Lato:400,100,100italic,300,300italic,400italic,700,700italic,900,900italic);*/
+@import url(https://fonts.googleapis.com/css?family=Ubuntu:400,300italic,300,400italic,500,500italic,700,700italic);
+@import url("https://fonts.googleapis.com/css?family=PT+Mono&display=swap");
+/*Colors*/
+/* $color-set-1:- 
+1. Input form title 
+2. Form Tab and other tabs.
+3. tab drop down menu on mouse hover
+4. Input type dropdown menu 
+5. Filter show and hide button. */
+/*$color-set-2 
+1. Mouse hover effect in mein menu and left menu
+2. Tick option on header Search 
+3. Tab color of Tab of Report data set Table*/
+/*$color-set-3 
+1. Logo background
+2. Main Block and additional block container header title and border.*/
+/* $color-set-4:- 
+Top nav bar icon color, nano-message-list, .nano-message-box, message-board-wrapper , .btn-default, .wizard-cancel, .wizard-back,*/
+/* $color-set-5:- 
+dhtmlx_popup_button backgroun color and text color */
+/* $color-set-6:- 
+show hide-filter-inner::before button, .htmlx_popup_button, btn-login and hover border color.
+*/
+/* $color-set-7:-  header-navbar i*/
+/*$light-green:- class-trm-tablix-advance-table,.class-trm-tablix-advance-tab-table*/
+/*$adv_table:- Report manager tab color*/
+/*$adv_table:- Report manager tab color*/
+/*$light-red :- dhtmlx-confirm .dhtmlx_popup_title, .dhtmlx-confirm-error*/
+/*$light-blue:- button-lg*/
+/*$dark_grey:- sidebar-nav .nav > li .submenu*/
+/*$mid_gray :- .title*/
+/* $light_gray:- body*/
+/*$light_over:- gridbox_dhx_web.gridbox table - rowselected*/
+/*$color_celeste_approx:- th header of pvtAxisContainer, pvtAxisContainer:nth-child(2) > td:nth-child(1), pvtFilterBox */
+/*background color for alert-alert */
+/*background color for alert-warning */
+/*background color for alert-error */
+/*background of top nav bar */
+/*for logo color */
+/*for massage block font color */
+/*Jomsom Core UI Components*/
+/* line 1, ../common/sass/_jomsom.scss */
+.navbar i {
+  color: #c0cbf7 !important;
+}
+
+/* line 6, ../common/sass/_jomsom.scss */
+.mont-fonts, :not(i), .title, .form-signin .btn-lg, .form-signin .form_container .form_title {
+  font-family: 'Ubuntu';
+}
+
+/* line 16, ../common/sass/_jomsom.scss */
+body {
+  background: #f2f2f2;
+}
+
+/* line 20, ../common/sass/_jomsom.scss */
+.title {
+  background: transparent;
+  text-shadow: none;
+  text-align: center;
+  font-style: normal;
+  text-transform: uppercase;
+  font-weight: 400;
+  color: #6C6C6C;
+}
+
+/* line 32, ../common/sass/_jomsom.scss */
+.fa {
+  font-family: FontAwesome !important;
+}
+
+/* line 34, ../common/sass/_jomsom.scss */
+.form-signin {
+  box-shadow: none;
+  background: transparent;
+  width: 420px;
+}
+/* line 39, ../common/sass/_jomsom.scss */
+.form-signin .btn-lg {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  text-transform: uppercase;
+  background: #3498db;
+  font-weight: 400;
+  padding: 6px 0 !important;
+  border-radius: 4px;
+  font-size: 17px !important;
+}
+/* line 51, ../common/sass/_jomsom.scss */
+.form-signin .btn-lg.btn-login {
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  background-color: #adbefe !important;
+  border-color: #a3b5ff !important;
+}
+/* line 59, ../common/sass/_jomsom.scss */
+.form-signin .btn-lg.btn-block {
+  width: 30% !important;
+}
+/* line 62, ../common/sass/_jomsom.scss */
+.form-signin .btn-lg:hover {
+  background-color: #adbefe !important;
+  border-color: #a3b5ff !important;
+}
+/* line 68, ../common/sass/_jomsom.scss */
+.form-signin .alert_access {
+  text-align: center;
+  width: 100%;
+  display: inline-block;
+}
+/* line 73, ../common/sass/_jomsom.scss */
+.form-signin .form-control {
+  text-align: center;
+  padding: 8px 0;
+}
+/* line 77, ../common/sass/_jomsom.scss */
+.form-signin .form_container {
+  border: 1px solid #E4E2E2;
+  border-radius: 4px;
+  /*height: 295px;*/
+  text-align: center;
+  box-shadow: 0px -1px 24px -3px rgba(100, 100, 100, 0.2);
+  padding: 50px;
+  margin-top: 20px;
+}
+/* line 86, ../common/sass/_jomsom.scss */
+.form-signin .form_container .form_title {
+  color: rgba(0, 0, 0, 0.8);
+  font-weight: 400;
+  font-size: 16px;
+  text-transform: uppercase;
+}
+/* line 95, ../common/sass/_jomsom.scss */
+.form-signin .form_container #inputEmail {
+  display: inline-block;
+  margin-bottom: 20px;
+}
+/* line 101, ../common/sass/_jomsom.scss */
+.form-signin .checkbox {
+  margin: 14px 0;
+}
+
+/* line 106, ../common/sass/_jomsom.scss */
+.footer {
+  text-align: center;
+  background: transparent;
+  border: none;
+  margin-top: 50px;
+}
+/* line 111, ../common/sass/_jomsom.scss */
+.footer img {
+  display: inline-block;
+  float: none;
+}
+
+/*Message and Stuff*/
+/* line 118, ../common/sass/_jomsom.scss */
+.nano-message-list .message-li a,
+.nano-message-box a {
+  color: #c0cbf7 !important;
+}
+
+/* line 122, ../common/sass/_jomsom.scss */
+.nano-message-list .nano-pane,
+.message-board-wrapper .nano-pane {
+  background-color: #EEE !important;
+}
+
+/* line 128, ../common/sass/_jomsom.scss */
+.nano-message-list > .nano-pane > .nano-slider,
+.nano-message-box > .nano-pane > .nano-slider {
+  background-color: #c0cbf7 !important;
+}
+
+/* line 134, ../common/sass/_jomsom.scss */
+.btn-primary {
+  background-color: #adbefe !important;
+  border-color: #2BA065 !important;
+}
+/* line 138, ../common/sass/_jomsom.scss */
+.btn-primary:hover {
+  background-color: #adbefe !important;
+  border-color: #2BA065 !important;
+}
+
+/* line 145, ../common/sass/_jomsom.scss */
+.theme-blue-gradient .message-board-wrapper .pointer .arrow {
+  border-color: transparent transparent #c0cbf7 !important;
+}
+
+/* line 149, ../common/sass/_jomsom.scss */
+.message-board-wrapper .item-header,
+.message-board-wrapper .item-footer a {
+  background-color: #c0cbf7 !important;
+}
+/* line 153, ../common/sass/_jomsom.scss */
+.message-board-wrapper .item-header:hover,
+.message-board-wrapper .item-footer a:hover {
+  background-color: #c0cbf7 !important;
+}
+
+/* line 158, ../common/sass/_jomsom.scss */
+.message-board-wrapper .item > div > .time, .message-board-wrapper .item > div > .time-diff {
+  color: #333 !important;
+}
+
+/* line 162, ../common/sass/_jomsom.scss */
+.checkbox-nice label:after {
+  border-color: #adbefe;
+}
+
+/*Window and Stuffs.*/
+/* line 167, ../common/sass/_jomsom.scss */
+div.dhxwin_inactive {
+  opacity: .5 !important;
+}
+
+/* line 171, ../common/sass/_jomsom.scss */
+#footer-copyright {
+  background: #E7EBEE;
+}
+
+/* line 175, ../common/sass/_jomsom.scss */
+#nav-col {
+  background: #FFF !important;
+}
+
+/* line 179, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav li {
+  padding: 5px 0 !important;
+}
+
+/* line 183, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav > li > a.dropdown-toggle {
+  color: #333;
+}
+/* line 185, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav > li > a.dropdown-toggle:hover {
+  background: none;
+  color: #333;
+}
+
+/* line 190, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav > li > a:hover {
+  border-left-color: #adbefe !important;
+}
+
+/* line 194, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav > .open > .submenu > .open > a {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+
+/* line 198, ../common/sass/_jomsom.scss */
+#logo {
+  font-style: normal;
+  font-size: 18px;
+  padding: 14px;
+  display: inline-block;
+  width: 300px !important;
+  font-family: 'Ubuntu' !important;
+}
+
+/* line 207, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav > li {
+  border-top: 1px dashed #EEE;
+}
+
+/* line 210, ../common/sass/_jomsom.scss */
+.navbar > .container .navbar-brand {
+  background: none !important;
+  width: auto !important;
+}
+
+/* line 214, ../common/sass/_jomsom.scss */
+#header-navbar {
+  background: #E7EBEE !important;
+  border: none;
+  box-shadow: none !important;
+}
+/* line 219, ../common/sass/_jomsom.scss */
+#header-navbar i {
+  color: #333;
+}
+
+/*DHTMLX*/
+/* line 225, ../common/sass/_jomsom.scss */
+.dhx_cell_hdr {
+  background-color: #f4f4f4 !important;
+  color: #666 !important;
+  border: none;
+  font-size: 17px !important;
+  /*border-right:1px solid #CCC;*/
+  padding-right: 10px;
+}
+
+/* line 234, ../common/sass/_jomsom.scss */
+.dhxlayout_arrow {
+  background: #333;
+  /*border-radius:50%;*/
+}
+
+/* line 240, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_hdr div.dhxlayout_arrow.dhxlayout_arrow_va {
+  background-position: -16px 0px;
+  padding: 1px;
+}
+
+/* line 244, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout.dhxlayout_collapsed_v div.dhx_cell_hdr div.dhxlayout_arrow.dhxlayout_arrow_va {
+  background-position: -48px 0px;
+  position: relative;
+  left: 1px;
+}
+
+/* line 249, ../common/sass/_jomsom.scss */
+.dhx_toolbar_dhx_web {
+  background: transparent !important;
+  height: 28px !important;
+}
+
+/* line 254, ../common/sass/_jomsom.scss */
+.dhx_toolbar_dhx_web div.dhx_toolbar_btn, .dhx_toolbar_dhx_web div.dhx_toolbar_arw {
+  background-color: transparent !important;
+  padding: 0px;
+  color: #333;
+  border-radius: 4px;
+}
+/* line 260, ../common/sass/_jomsom.scss */
+.dhx_toolbar_dhx_web div.dhx_toolbar_btn:hover, .dhx_toolbar_dhx_web div.dhx_toolbar_arw:hover {
+  background-color: #d6dfff !important;
+}
+
+/* line 264, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_toolbar_def {
+  padding: 0;
+  border-left: none;
+  border-right: none;
+  background-color: #fafafa;
+}
+
+/* line 270, ../common/sass/_jomsom.scss */
+div.gridbox_dhx_web.gridbox table.hdr td {
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+/* line 276, ../common/sass/_jomsom.scss */
+div.gridbox_dhx_web.gridbox .xhdr {
+  border-bottom-color: #CCC;
+}
+
+/* line 280, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_cont_layout {
+  padding: 0 !important;
+  border: none;
+  /*border-right:1px solid #CCC;*/
+  padding-right: 0px !important;
+}
+
+/* line 287, ../common/sass/_jomsom.scss */
+div.gridbox_dhx_web.gridbox table.hdr td div.hdrcell {
+  width: auto;
+  padding: 0 10px 0 0;
+  font-size: 11px;
+  font-weight: bold;
+}
+/* line 292, ../common/sass/_jomsom.scss */
+div.gridbox_dhx_web.gridbox table.hdr td div.hdrcell input:not([type='checkbox']) {
+  width: 90%;
+  margin: 0;
+  border: 0;
+}
+
+/* line 299, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhxlayout_sep.dhxlayout_sep_resize_v {
+  background-color: transparent;
+  border: 1px dotted #CCC;
+  width: 1px !important;
+}
+/* line 303, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhxlayout_sep.dhxlayout_sep_resize_v:hover {
+  width: 9px;
+}
+
+/* line 307, ../common/sass/_jomsom.scss */
+.dhx_toolbar_dhx_web div.dhx_toolbar_text {
+  color: #333;
+}
+
+/* line 311, ../common/sass/_jomsom.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tabs_cont_left div.dhxtabbar_tab {
+  background: #CCC;
+  margin-left: 5px;
+  border: none;
+  cursor: pointer;
+}
+/* line 318, ../common/sass/_jomsom.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tabs_cont_left div.dhxtabbar_tab:hover {
+  background: #AAA;
+  color: #FFF;
+}
+
+/* line 325, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_statusbar_def div.dhx_cell_statusbar_text {
+  border: none;
+  border-top: 1px solid #CCC;
+  height: 28px !important;
+}
+
+/* line 331, ../common/sass/_jomsom.scss */
+.dhx_cell_statusbar_def {
+  background: transparent;
+}
+
+/* line 334, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout {
+  /*background: #F0F0F0*/
+}
+
+/*arrowheads*/
+/* line 339, ../common/sass/_jomsom.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tabs_ar_left div.dhxtabbar_arrow_img,
+.dhxtabbar_arrow_img {
+  background-color: #e5e5e5;
+}
+/* line 344, ../common/sass/_jomsom.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tabs_ar_left div.dhxtabbar_arrow_img:hover,
+.dhxtabbar_arrow_img:hover {
+  background-color: #CCC;
+}
+
+/*tab holder*/
+/* line 350, ../common/sass/_jomsom.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs {
+  background-color: transparent;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/*tab close*/
+/* line 357, ../common/sass/_jomsom.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tab div.dhxtabbar_tab_close {
+  width: 13px;
+  background-position: 1px 0px !important;
+  background-color: #CCC !important;
+  top: 6px;
+}
+
+/* line 363, ../common/sass/_jomsom.scss */
+div.gridbox_dhx_web.gridbox .xhdr,
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_menu_def div.dhtmlxMenu_dhx_web_Middle, .dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_menu_no_borders div.dhtmlxMenu_dhx_web_Middle {
+  background: #FFF !important;
+}
+
+/* line 370, ../common/sass/_jomsom.scss */
+div.dhxwin_active div.dhxwin_hdr div.dhxwin_text {
+  background: #c3d0ff !important;
+  color: #333;
+  font-weight: bold;
+}
+/* line 377, ../common/sass/_jomsom.scss */
+div.dhxwin_active div.dhxwin_brd {
+  border-color: #c3d0ff !important;
+}
+
+/* line 383, ../common/sass/_jomsom.scss */
+div.dhxwin_inactive div.dhxwin_hdr div.dhxwin_text {
+  background: #4ECDC4 !important;
+}
+/* line 387, ../common/sass/_jomsom.scss */
+div.dhxwin_inactive div.dhxwin_brd {
+  border-color: #4ECDC4 !important;
+}
+
+/* line 392, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav > .open > .submenu > li > .submenu > li a:hover, #sidebar-nav .nav > .active > .submenu > li > .submenu > li a:hover, #sidebar-nav .nav > .active > .submenu > li > .submenu > li a.active {
+  color: #FFF !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* line 397, ../common/sass/_jomsom.scss */
+#logo {
+  background: #c3d0ff !important;
+  text-shadow: none !important;
+  color: #ffffff;
+}
+
+/* line 403, ../common/sass/_jomsom.scss */
+.theme-blue-gradient #header-navbar .nav > li > a:hover, .theme-blue-gradient #header-navbar .nav > li > a:focus, .theme-blue-gradient #header-navbar .nav .open > a, .theme-blue-gradient #header-navbar .nav .open > a:hover, .theme-blue-gradient #header-navbar .nav .open > a:focus {
+  background-color: transparent !important;
+}
+
+/* line 407, ../common/sass/_jomsom.scss */
+.theme-blue-gradient #header-navbar .nav > li > a {
+  color: #333 !important;
+}
+
+/* line 410, ../common/sass/_jomsom.scss */
+#header-navbar .nav > li .caret {
+  border-top-color: #333 !important;
+}
+
+/* line 414, ../common/sass/_jomsom.scss */
+div.gridbox_dhx_web.gridbox table.hdr td {
+  background: #d6dfff !important;
+  text-transform: initial;
+  text-align: left;
+  padding-left: 10px;
+  color: #333;
+  font-size: 14px;
+}
+
+/* line 423, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav > li .submenu {
+  background: #454e59 !important;
+}
+
+/* line 427, ../common/sass/_jomsom.scss */
+div.gridbox_dhx_web.gridbox table.obj tr.rowselected,
+div.gridbox_dhx_web.gridbox table.obj tr.rowselected td,
+div.gridbox_dhx_web.gridbox table.obj.row20px tr.rowselected td,
+div.gridbox_dhx_web.gridbox table.obj tr.rowselected td.cellselected {
+  background-color: #e9eeff !important;
+  border-color: transparent !important;
+}
+
+/* line 436, ../common/sass/_jomsom.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tab.dhxtabbar_tab_actv {
+  color: #333;
+  background: #d6dfff !important;
+}
+
+/* line 442, ../common/sass/_jomsom.scss */
+div.dhxcombo_dhx_web div.dhxcombo_select_button div.dhxcombo_select_img {
+  background-color: #d6dfff !important;
+}
+
+/*active tab text*/
+/* line 447, ../common/sass/_jomsom.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tab.dhxtabbar_tab_actv div.dhxtabbar_tab_text {
+  color: #333;
+  border: none;
+}
+
+/*Form Buttons*/
+/* line 454, ../common/sass/_jomsom.scss */
+div.dhtmlxMenu_dhx_web_TopLevel_Item_Selected,
+div.dhtmlxMenu_dhx_web_SubLevelArea_Polygon table.dhtmlxMebu_SubLevelArea_Tbl tr.sub_item_selected td,
+.dhtmlxMenu_dh.dhtmlxcalendar_dhx_web div.dhtmlxcalendar_dates_cont ul.dhtmlxcalendar_line li.dhtmlxcalendar_cell.dhtmlxcalendar_cell_month_date_hover_web_TopLevel_Item_Selected,
+div.dhxcombolist_dhx_web div.dhxcombo_option.dhxcombo_option_selected,
+div.dhxcombolist_dhx_web.dhxcombolist_multicolumn div.dhxcombo_option.dhxcombo_option_selected,
+div.dhxcombo_in_grid_parent div.dhxcombo_dhx_web,
+div.dhx_toolbar_poly_dhx_web .tr_btn_selected td,
+.dhx_dataview_default_item_selected {
+  background-color: #d6dfff !important;
+  border-color: transparent !important;
+}
+
+/* line 467, ../common/sass/_jomsom.scss */
+label {
+  font-size: 13px;
+  font-weight: 400 !important;
+}
+
+/* line 472, ../common/sass/_jomsom.scss */
+.dhxtabbar_base_dhx_web div.dhx_cell_tabbar div.dhx_cell_cont_tabbar {
+  border: none !important;
+}
+
+/*New Changes : Phase 2 addins*/
+/* line 477, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_menu_def {
+  border: none !important;
+}
+
+/* line 481, ../common/sass/_jomsom.scss */
+.dhx_header_cmenu {
+  border: 1px solid #CCC;
+  padding: 4px;
+}
+/* line 485, ../common/sass/_jomsom.scss */
+.dhx_header_cmenu input[type=checkbox] {
+  position: relative;
+  top: 3px;
+}
+
+/* line 491, ../common/sass/_jomsom.scss */
+.dhx_header_cmenu_item {
+  font-size: 11px;
+  padding: 4px 10px 4px 4px;
+}
+
+/* line 496, ../common/sass/_jomsom.scss */
+#header-navbar .profile-dropdown > a > span {
+  color: #333;
+}
+
+/* line 499, ../common/sass/_jomsom.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tab div.dhxtabbar_tab_close, .dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tab:hover div.dhxtabbar_tab_close, .dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tab.dhxtabbar_tab_actv div.dhxtabbar_tab_close {
+  padding: 1px;
+  background-color: transparent !important;
+}
+
+/* line 505, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web div.disabled .dhxform_textarea {
+  border-color: #CCC;
+}
+
+/* line 509, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web {
+  background-color: #FFF;
+}
+
+/* line 513, ../common/sass/_jomsom.scss */
+.dhx_cell_statusbar_def .dhx_toolbar_dhx_web .dhx_toolbar_btn,
+.dhx_cell_statusbar_def .dhx_toolbar_dhx_web .dhx_toolbar_arw {
+  cursor: pointer;
+}
+/* line 518, ../common/sass/_jomsom.scss */
+.dhx_cell_statusbar_def .dhx_toolbar_dhx_web .dhx_toolbar_btn:hover,
+.dhx_cell_statusbar_def .dhx_toolbar_dhx_web .dhx_toolbar_arw:hover {
+  background-color: #AAA !important;
+}
+
+/* line 523, ../common/sass/_jomsom.scss */
+.dhx_cell_statusbar_def .dhx_toolbar_dhx_web .dhx_toolbar_arw {
+  background-color: #AAA !important;
+}
+
+/* line 528, ../common/sass/_jomsom.scss */
+#skin-colors li {
+  display: block !important;
+  width: 100%;
+  border-bottom: 1px dashed #CCC;
+}
+/* line 533, ../common/sass/_jomsom.scss */
+#skin-colors li:last-child {
+  border: none !important;
+}
+
+/* line 538, ../common/sass/_jomsom.scss */
+a.skin-changer {
+  width: 100% !important;
+  height: auto !important;
+  background-color: transparent !important;
+  overflow: hidden;
+  padding: 5px;
+}
+/* line 546, ../common/sass/_jomsom.scss */
+a.skin-changer .color-box {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  background-color: #333;
+  margin-right: 10px;
+  float: left;
+}
+/* line 559, ../common/sass/_jomsom.scss */
+a.skin-changer label {
+  color: #333;
+  margin-top: 5px;
+}
+/* line 564, ../common/sass/_jomsom.scss */
+a.skin-changer.active {
+  border: none !important;
+  background-color: #DFDFDF !important;
+}
+
+/* line 570, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_hdr div.dhx_cell_hdr_text {
+  font-size: 12px;
+}
+
+/* line 573, ../common/sass/_jomsom.scss */
+.dhx_toolbar_dhx_web div.dhx_toolbar_btn .dhxtoolbar_input {
+  border-color: #CCC !important;
+}
+
+/* line 578, ../common/sass/_jomsom.scss */
+#theme-wrapper .container {
+  background-color: #D5D5D5;
+}
+
+/* line 582, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web div.disabled div.dhxform_btn {
+  border: 1px solid #CCC !important;
+  background-color: #f1f1f1 !important;
+}
+
+/* line 588, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web input.dhxform_textarea {
+  position: relative;
+  height: 10px;
+  box-sizing: content-box;
+}
+
+/* line 595, ../common/sass/_jomsom.scss */
+div.system_password input.dhxform_textarea {
+  box-sizing: content-box;
+  height: 15px !important;
+}
+
+/* line 599, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout.dhxlayout_collapsed_h div.dhx_cell_hdr div.dhxlayout_arrow.dhxlayout_arrow_ha {
+  background-position: 0px -1px;
+  position: absolute;
+  top: 0;
+}
+
+/* line 604, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout.dhxlayout_collapsed_h div.dhx_cell_hdr div.dhxlayout_arrow.dhxlayout_arrow_hb {
+  background-position: -32px -1px;
+  position: absolute;
+  top: 3px;
+}
+
+/* line 610, ../common/sass/_jomsom.scss */
+.nav-small #nav-col .col-left-inner {
+  margin-right: 0 !important;
+}
+
+/* line 613, ../common/sass/_jomsom.scss */
+div.dhxcombo_dhx_web {
+  position: relative;
+  height: 18px;
+  height: 19px\0;
+  /* height:23px;*/
+}
+
+/* line 620, ../common/sass/_jomsom.scss */
+.xhdr .hdr .hdrcell {
+  text-transform: capitalize;
+}
+
+/* line 623, ../common/sass/_jomsom.scss */
+.disabled .dhxform_obj_dhx_web div.dhxform_btn {
+  padding-top: 2px;
+}
+
+/* line 627, ../common/sass/_jomsom.scss */
+.dhxtabbar_tab .dhxtabbar_tab_hidden {
+  display: none;
+}
+
+/* line 630, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web div.dhxform_base {
+  margin-right: 5px important;
+}
+
+/* line 634, ../common/sass/_jomsom.scss */
+#messageDrill tr {
+  padding: 0 10px;
+}
+/* line 637, ../common/sass/_jomsom.scss */
+#messageDrill .header {
+  text-align: center;
+  background-color: #adbefe;
+  color: #FFF;
+}
+
+/* line 644, ../common/sass/_jomsom.scss */
+div.gridbox_dhx_web.gridbox .xhd {
+  height: 40px !important;
+}
+
+/* line 647, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web div.dhxform_btn div.dhxform_btn_txt {
+  padding: 0px 0 0 0;
+  margin: 0 13px 0 14px !important;
+}
+
+/* line 652, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web div.disabled div.dhxform_btn div.dhxform_btn_txt {
+  padding: 1px 0 0 0 !important;
+}
+
+/* line 657, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web div.dhxform_label {
+  margin-bottom: 0px !important;
+  margin-top: 2px !important;
+}
+
+/* line 663, ../common/sass/_jomsom.scss */
+.dhxwins_vp_dhx_web div.dhxwin_active div.dhxwin_hdr div.dhxwin_btns div.dhxwin_button:hover {
+  color: #f2f2f2 !important;
+}
+
+/* line 667, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web div.dhxform_label div.dhxform_label_nav_link {
+  margin-left: 5px !important;
+  position: relative !important;
+  top: -1px !important;
+}
+
+/* line 674, ../common/sass/_jomsom.scss */
+div.dhxcombo_dhx_web div.dhxcombo_select_button {
+  top: 0px !important;
+  right: 0px !important;
+}
+
+/* line 679, ../common/sass/_jomsom.scss */
+.theme-blue-gradient #header-navbar .nav > li > a:hover {
+  border-bottom: 3px solid #adbefe;
+}
+
+/* line 684, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web {
+  background-color: #f9f9f9;
+}
+
+/* line 689, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web div.dhxform_label div.dhxform_label_nav_link:focus {
+  color: #000;
+}
+
+/* line 694, ../common/sass/_jomsom.scss */
+.CodeMirror pre, .CodeMirror-linenumber {
+  font-size: 12px !important;
+}
+
+/* line 698, ../common/sass/_jomsom.scss */
+.dhx_toolbar_dhx_web div.dhx_toolbar_btn.dhxtoolbar_btn_dis, .dhx_toolbar_dhx_web div.dhx_toolbar_arw.dhxtoolbar_btn_dis {
+  color: #CCC;
+}
+
+/* line 703, ../common/sass/_jomsom.scss */
+.dhx_toolbar_dhx_web div.dhx_toolbar_sep {
+  display: none !important;
+}
+
+/* line 708, ../common/sass/_jomsom.scss */
+.form-signin, #loginform {
+  margin-top: 20px !important;
+}
+
+/* line 712, ../common/sass/_jomsom.scss */
+#sidebar-nav > li.open > ul.submenu > li.open > ul.submenu {
+  background-color: #111 !important;
+}
+
+/*Global css*/
+/*Navigation Stuff Fixes*/
+/* line 722, ../common/sass/_jomsom.scss */
+.nav-small #sidebar-nav .nav > li {
+  position: static;
+}
+
+/* line 726, ../common/sass/_jomsom.scss */
+.nav-small ul.submenu.menu-list-content {
+  height: 600px;
+  max-height: 600px;
+  overflow: hidden;
+  overflow-y: scroll;
+  position: absolute !important;
+  top: 0 !important;
+}
+
+/* line 736, ../common/sass/_jomsom.scss */
+div.gridbox_dhx_web.gridbox table.hdr td div.hdrcell input {
+  height: 23px;
+  position: relative;
+  top: 2px;
+  padding-left: 5px;
+}
+
+/* line 743, ../common/sass/_jomsom.scss */
+#report_grid th.header {
+  text-align: center;
+  background-color: #c0cbf7;
+  color: #FFF;
+}
+
+/* line 749, ../common/sass/_jomsom.scss */
+.dhx_toolbar_dhx_web div.dhx_toolbar_btn.dhxtoolbar_btn_dis {
+  background-color: transparent !important;
+}
+/* line 751, ../common/sass/_jomsom.scss */
+.dhx_toolbar_dhx_web div.dhx_toolbar_btn.dhxtoolbar_btn_dis:hover {
+  background-color: transparent !important;
+}
+
+/*Surendra Dai*/
+/* line 757, ../common/sass/_jomsom.scss */
+#header-navbar i {
+  color: #438bc9 !important;
+}
+
+/* line 761, ../common/sass/_jomsom.scss */
+#theme-wrapper .container {
+  background-color: #fafbff;
+}
+
+/* line 765, ../common/sass/_jomsom.scss */
+div.dhxform_item_label_left.filter_save div.dhxform_btn_txt {
+  background-image: url(imgs/dhxtoolbar_web/filter_save.png);
+  background-repeat: no-repeat;
+  background-position: 0px 8px;
+  padding-left: 18px;
+  margin: 8px 3px 0px 5px !important;
+  height: 28px;
+}
+
+/* line 774, ../common/sass/_jomsom.scss */
+div.dhxform_item_label_left.filter_delete div.dhxform_btn_txt {
+  background-image: url(imgs/dhxtoolbar_web/filter_delete.png);
+  background-repeat: no-repeat;
+  background-position: 0px 8px;
+  padding-left: 18px;
+  margin: 8px 3px 0px 5px !important;
+  height: 28px;
+}
+
+/* line 783, ../common/sass/_jomsom.scss */
+div.dhxform_item_label_left.filter_clear div.dhxform_btn_txt {
+  background-image: url(imgs/dhxtoolbar_web/filter_clear.png);
+  background-repeat: no-repeat;
+  background-position: 0px 8px;
+  padding-left: 18px;
+  margin: 8px 3px 0px 5px !important;
+  height: 28px;
+}
+
+/* line 792, ../common/sass/_jomsom.scss */
+div.dhxform_item_label_left.filter_publish div.dhxform_btn_txt {
+  background-image: url(imgs/dhxtoolbar_web/filter_publish.png);
+  background-repeat: no-repeat;
+  background-position: 0px 8px;
+  padding-left: 18px;
+  margin: 8px 3px 0px 5px !important;
+  height: 28px;
+}
+
+/* line 801, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web div.dhxform_btn {
+  background: #f9f9f9 !important;
+  cursor: pointer;
+  color: #000;
+  outline: none !important;
+  margin-top: 1px !important;
+}
+
+/* line 804, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web .browse_open div.dhxform_btn {
+  background-image: url(imgs/dhxtoolbar_web/browse.png) !important;
+  background-repeat: no-repeat !important;
+  background-position: 9px 4px !important;
+  outline: none !important;
+}
+
+/* line 806, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web .browse_clear div.dhxform_btn {
+  background-image: url(imgs/dhxtoolbar_web/browse_cancel.png) !important;
+  background-repeat: no-repeat !important;
+  background-position: 5px 1px !important;
+  outline: none !important;
+  border-left: 1px solid #d6d6d6;
+  height: 18px;
+}
+
+/* line 809, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web .run_btn div.dhxform_btn {
+  background-image: url(imgs/dhxtoolbar_web/run.gif) !important;
+  background-repeat: no-repeat !important;
+  background-position: 0px 3px !important;
+  outline: none !important;
+}
+
+/*Surendra Dai*/
+/* line 813, ../common/sass/_jomsom.scss */
+.dhx_popup_td .dhxform_obj_dhx_web div.dhxform_btn {
+  background-color: #d6dfff !important;
+}
+/* line 817, ../common/sass/_jomsom.scss */
+.dhx_popup_td .dhxform_obj_dhx_web div.dhxform_btn:hover {
+  opacity: .8;
+}
+
+/* line 823, ../common/sass/_jomsom.scss */
+.dhxform_item_label_left.ok_btn {
+  background: none !important;
+}
+/* line 827, ../common/sass/_jomsom.scss */
+.dhxform_item_label_left.ok_btn .dhxform_btn {
+  background-color: #d6dfff !important;
+}
+/* line 830, ../common/sass/_jomsom.scss */
+.dhxform_item_label_left.ok_btn .dhxform_btn:hover {
+  opacity: .8;
+}
+
+/* line 839, ../common/sass/_jomsom.scss */
+.dhxlayout_collapsed_v .dhx_cell_hdr_text {
+  width: 500px;
+}
+/* line 842, ../common/sass/_jomsom.scss */
+.dhxlayout_collapsed_v .dhx_cell_hdr_text div {
+  overflow: visible;
+}
+/* line 846, ../common/sass/_jomsom.scss */
+.dhxlayout_collapsed_v .undock_cell_a {
+  position: relative;
+  /*left: 454px;*/
+  left: 0px;
+  top: 4px;
+}
+
+/* line 855, ../common/sass/_jomsom.scss */
+div.dhx_toolbar_btn.dhxtoolbar_btn_over {
+  background-color: #d6dfff !important;
+}
+
+/* line 860, ../common/sass/_jomsom.scss */
+div.dhx_toolbar_btn[title='Search'] {
+  position: relative;
+  top: -3px;
+}
+
+/* line 866, ../common/sass/_jomsom.scss */
+.dhxlayout_collapsed_v .undock_custom {
+  display: none;
+}
+
+/* line 872, ../common/sass/_jomsom.scss */
+.dhxlayout_collapsed_v .undock_custom {
+  display: none;
+}
+
+/* line 877, ../common/sass/_jomsom.scss */
+.dhxacc_base_dhx_web div.dhx_cell_acc {
+  margin-top: 10px;
+  position: relative;
+  left: 1px;
+}
+
+/* line 883, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav .open li > a.dropdown-toggle > .drop-icon {
+  color: #FFF !important;
+}
+
+/* line 887, ../common/sass/_jomsom.scss */
+.dhxwins_vp_dhx_web div.dhxwin_hdr div.dhxwin_icon {
+  display: none;
+}
+
+/* line 892, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav li .submenu > li > a:hover {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+/*GridBox Auto Hide*/
+/* line 899, ../common/sass/_jomsom.scss */
+.gridbox .xhdr {
+  height: auto !important;
+  /*&:hover > table tbody tr:nth-child(3){
+  				display:table-row;
+  			};
+  			*/
+}
+/* line 908, ../common/sass/_jomsom.scss */
+.gridbox .xhdr > table tbody tr:nth-child(2) td {
+  cursor: pointer !important;
+}
+/* line 912, ../common/sass/_jomsom.scss */
+.gridbox .xhdr > table tbody tr:nth-child(3) {
+  /*display:none;*/
+}
+/* line 917, ../common/sass/_jomsom.scss */
+.gridbox .xhdr > table tbody tr:nth-child(3) td {
+  /*width: 100%;*/
+}
+
+/* line 926, ../common/sass/_jomsom.scss */
+.tableRow {
+  display: table-row !important;
+}
+
+/* line 930, ../common/sass/_jomsom.scss */
+.popo #pagingArea_a {
+  display: none;
+}
+
+/* line 931, ../common/sass/_jomsom.scss */
+.popoInside .dhx_cell_statusbar_def {
+  display: none;
+}
+
+/* line 932, ../common/sass/_jomsom.scss */
+.popoInside .gridbox,
+.popoInside .gridbox > div:not(.xhdr),
+.popoInside .objbox {
+  height: 100% !important;
+}
+
+/* line 937, ../common/sass/_jomsom.scss */
+.dhxwins_vp_dhx_web div.dhxwin_active {
+  border-radius: 9px;
+  box-shadow: none;
+}
+
+/* line 942, ../common/sass/_jomsom.scss */
+.dhxwins_vp_dhx_web div.dhxwin_hdr div.dhxwin_text div.dhxwin_text_inside {
+  text-align: center;
+  color: #000;
+}
+
+/* line 947, ../common/sass/_jomsom.scss */
+.pioneer-awesome-window-actions {
+  background-color: #c3d0ff !important;
+  width: 10%;
+  float: left;
+  height: 100%;
+}
+
+/* line 953, ../common/sass/_jomsom.scss */
+div.dhxwin_active div.dhxwin_hdr div.dhxwin_text {
+  /*width: 90%;*/
+  width: 100%;
+  float: right;
+}
+
+/* line 958, ../common/sass/_jomsom.scss */
+.pioneer-awesome-window-actions > div {
+  width: 15px;
+  /*background: red;*/
+  height: 15px;
+  margin-top: 3px;
+  display: inline-block;
+  margin: 5px 3px;
+}
+
+/* line 966, ../common/sass/_jomsom.scss */
+.dhxwins_vp_dhx_web div.dhxwin_hdr div.dhxwin_button.dhxwin_button_close {
+  background-position: -15px 0;
+  background-image: url("imgs/dhxwins_web/dhxwins_buttons.gif");
+  background-repeat: no-repeat;
+}
+
+/* line 971, ../common/sass/_jomsom.scss */
+.dhxwins_vp_dhx_web div.dhxwin_hdr div.dhxwin_button.dhxwin_button_minmaxed {
+  background-position: -45px 0;
+  background-image: url("imgs/dhxwins_web/dhxwins_buttons.gif");
+  background-repeat: no-repeat;
+}
+
+/* line 976, ../common/sass/_jomsom.scss */
+.dhxwins_vp_dhx_web div.dhxwin_hdr div.dhxwin_button.dhxwin_button_park {
+  background-position: -60px 0;
+  background-image: url("imgs/dhxwins_web/dhxwins_buttons.gif");
+  background-repeat: no-repeat;
+}
+
+/* line 982, ../common/sass/_jomsom.scss */
+.dhx_cell_statusbar_def #pagingArea_a.dhx_toolbar_dhx_web .dhx_toolbar_btn {
+  background-color: transparent !important;
+}
+/* line 985, ../common/sass/_jomsom.scss */
+.dhx_cell_statusbar_def #pagingArea_a.dhx_toolbar_dhx_web .dhx_toolbar_btn:hover {
+  background-color: #CCC !important;
+}
+/* line 989, ../common/sass/_jomsom.scss */
+.dhx_cell_statusbar_def #pagingArea_a.dhx_toolbar_dhx_web .dhx_toolbar_btn img {
+  cursor: pointer;
+}
+
+/* line 995, ../common/sass/_jomsom.scss */
+.dhxlayout_collapsed_v .undock_custom {
+  display: none;
+}
+
+/* line 1001, ../common/sass/_jomsom.scss */
+#sidebar-nav {
+  /* icon for TRMTracker*/
+  /* icon for fastracker*/
+  /* icon for RECTracker*/
+}
+/* line 1002, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  opacity: .9;
+}
+/* line 1010, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-user.icon_design {
+  background: url(theme-img/gear.png) no-repeat;
+}
+/* line 1012, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-user.icon_design:before {
+  content: "";
+}
+/* line 1016, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-credit-card.icon_design {
+  background: url(theme-img/pen.png) no-repeat;
+}
+/* line 1018, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-credit-card.icon_design:before {
+  content: "";
+}
+/* line 1022, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-area-chart.icon_design {
+  background: url(theme-img/file.png) no-repeat;
+}
+/* line 1024, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-area-chart.icon_design:before {
+  content: "";
+}
+/* line 1028, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-database.icon_design {
+  background: url(theme-img/calc.png) no-repeat;
+}
+/* line 1030, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-database.icon_design:before {
+  content: "";
+}
+/* line 1035, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-users.icon_design {
+  background: url(theme-img/admin.png) no-repeat;
+}
+/* line 1037, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-users.icon_design:before {
+  content: "";
+}
+/* line 1040, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-retweet.icon_design {
+  background: url(theme-img/transaction.png) no-repeat;
+}
+/* line 1042, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-retweet.icon_design:before {
+  content: "";
+}
+/* line 1046, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-clipboard.icon_design {
+  background: url(theme-img/effectiveness.png) no-repeat;
+}
+/* line 1048, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-clipboard.icon_design:before {
+  content: "";
+}
+/* line 1051, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-newspaper-o.icon_design {
+  background: url(theme-img/journal.png) no-repeat;
+}
+/* line 1053, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-newspaper-o.icon_design:before {
+  content: "";
+}
+/* line 1057, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-gears.icon_design {
+  background: url(theme-img/gear.png) no-repeat;
+}
+/* line 1059, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-gears.icon_design:before {
+  content: "";
+}
+/* line 1062, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-bars.icon_design {
+  background: url(theme-img/env_inventory.png) no-repeat;
+}
+/* line 1064, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-bars.icon_design:before {
+  content: "";
+}
+/* line 1067, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-bank.icon_design {
+  background: url(theme-img/calc.png) no-repeat;
+}
+/* line 1069, ../common/sass/_jomsom.scss */
+#sidebar-nav .fa.fa-bank.icon_design:before {
+  content: "";
+}
+
+/* line 1075, ../common/sass/_jomsom.scss */
+#hdr-toggle-btn {
+  position: absolute;
+  top: 0px;
+  width: 100px;
+  height: 100px;
+  background: url(theme-img/filter.png) no-repeat;
+  /*background: red;*/
+  left: 0px;
+  z-index: 1000;
+  /*Grid Filter Remove*/
+  display: none !important;
+}
+
+/* line 1089, ../common/sass/_jomsom.scss */
+.dhx_cell_statusbar_def #pagingArea_a.dhx_toolbar_dhx_web .dhx_toolbar_btn_dis:hover {
+  background: transparent !important;
+}
+
+/* line 1091, ../common/sass/_jomsom.scss */
+.btn-default, .wizard-cancel, .wizard-back {
+  border: none !important;
+  background-color: #c0cbf7 !important;
+}
+
+/* line 1096, ../common/sass/_jomsom.scss */
+.dhtmlx_modal_box {
+  border: 1px solid #6e95ad !important;
+  box-shadow: 0 0 10px -2px #333;
+}
+/* line 1100, ../common/sass/_jomsom.scss */
+.dhtmlx_modal_box .dhtmlx_popup_button {
+  background-color: #f0f3ff;
+}
+
+/* line 1105, ../common/sass/_jomsom.scss */
+.onoffswitch-inner:before {
+  background-color: #d6dfff !important;
+}
+
+/* line 1109, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav li.open > a.dropdown-toggle > .drop-icon {
+  color: inherit !important;
+  right: 5px !important;
+}
+
+/* line 1114, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav li > a.dropdown-toggle > .drop-icon {
+  right: 5px !important;
+  color: inherit !important;
+  font-size: 0.9em !important;
+}
+
+/* line 1118, ../common/sass/_jomsom.scss */
+.dhxform_base > .dhxform_item_label_left.filter_save, .dhxform_base > .dhxform_item_label_left.filter_delete, .dhxform_base >
+.dhxform_item_label_left.filter_clear, .dhxform_base > .dhxform_item_label_left.filter_publish {
+  position: static;
+  margin-top: -19px;
+}
+
+/* line 1124, ../common/sass/_jomsom.scss */
+.dhxwins_vp_dhx_web div.dhxwin_active div.dhx_cell_wins div.dhx_cell_menu_def, .dhxwins_vp_dhx_web div.dhxwin_inactive div.dhx_cell_wins div.dhx_cell_menu_def {
+  border: none !important;
+}
+
+/* line 1128, ../common/sass/_jomsom.scss */
+.product_name, .product_name_version {
+  color: #c0cbf7;
+}
+
+/*====Anti White Theme Color Font Fixes===*/
+/*Added new css for arrow batch */
+/* line 1134, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web .arrow_right div.dhxform_btn {
+  background-image: url(imgs/dhxtoolbar_web/arrow_right.gif) !important;
+  background-repeat: no-repeat !important;
+  background-position: 0px 6px !important;
+  outline: none !important;
+}
+
+/* line 1141, ../common/sass/_jomsom.scss */
+.dhxform_obj_dhx_web .arrow_left div.dhxform_btn {
+  background-image: url(imgs/dhxtoolbar_web/arrow_left.gif) !important;
+  background-repeat: no-repeat !important;
+  background-position: 0px 6px !important;
+  outline: none !important;
+}
+
+/*Used to highlight the field upon drag & drop release*/
+/* line 1149, ../common/sass/_jomsom.scss */
+.highlight {
+  border: 2px solid #d6dfff !important;
+}
+
+/* line 1153, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav > li > a > span {
+  margin-left: 35px !important;
+}
+
+/* line 1157, ../common/sass/_jomsom.scss */
+#sidebar-nav .nav > li > a > i {
+  margin-top: 2px !important;
+}
+
+/* line 1160, ../common/sass/_jomsom.scss */
+.dhxwins_vp_dhx_web div.dhxwin_hdr {
+  background-color: #c3d0ff !important;
+}
+
+/* line 1161, ../common/sass/_jomsom.scss */
+.div.dhxform_base div.dhxform_item_template .simple_link {
+  padding: 0 0 0 10px;
+}
+
+/* line 1162, ../common/sass/_jomsom.scss */
+.menu_search {
+  background: url(imgs/dhxtoolbar_web/menu_search.png) no-repeat;
+}
+
+/* line 1164, ../common/sass/_jomsom.scss */
+.dhx_cell_cont_wins div.dhxform_btn {
+  background-color: #adbefe !important;
+}
+
+/* Navaraj : Add grid row popup styles START*/
+/* line 1170, ../common/sass/_jomsom.scss */
+.grid_row_popup_form_button_cancel {
+  float: right !important;
+}
+
+/* line 1174, ../common/sass/_jomsom.scss */
+.grid_row_popup_form_button {
+  min-height: 30px !important;
+}
+
+/* line 1178, ../common/sass/_jomsom.scss */
+.dhx_popup_td .grid_row_popup_form_button div.dhxform_btn {
+  background: none !important;
+}
+
+/* line 1182, ../common/sass/_jomsom.scss */
+.dhx_popup_td .grid_row_popup_form_button div.dhxform_btn:hover {
+  background-color: #82e1d4 !important;
+}
+
+/* line 1186, ../common/sass/_jomsom.scss */
+.dhx_popup_td .grid_row_popup_form_button_cancel div.dhxform_btn {
+  background: none !important;
+}
+
+/* line 1190, ../common/sass/_jomsom.scss */
+.dhx_popup_td .grid_row_popup_form_button_cancel div.dhxform_btn:hover {
+  background-color: #82e1d4 !important;
+}
+
+/* Navaraj : Add grid row popup styles END*/
+/* CSS for Flow Optimization redesign */
+/* line 1198, ../common/sass/_jomsom.scss */
+.demand_td {
+  background: #adbefe !important;
+}
+
+/* line 1201, ../common/sass/_jomsom.scss */
+.supply_td {
+  background: #adbefe !important;
+}
+
+/* line 1204, ../common/sass/_jomsom.scss */
+.blank_td_outer {
+  background: #adbefe !important;
+  border: 0 !important;
+}
+
+/* line 1209, ../common/sass/_jomsom.scss */
+.match {
+  background: url(imgs/dhxacc_web/m.png) no-repeat;
+}
+
+/* line 1212, ../common/sass/_jomsom.scss */
+.match:hover {
+  background: url(imgs/dhxacc_web/m_hover.png) no-repeat;
+}
+
+/* line 1216, ../common/sass/_jomsom.scss */
+.path_insert {
+  background: url(imgs/dhxacc_web/plus.png) no-repeat;
+}
+
+/* line 1220, ../common/sass/_jomsom.scss */
+.path_insert:hover {
+  background: url(imgs/dhxacc_web/plus_hover.png) no-repeat;
+}
+
+/* line 1224, ../common/sass/_jomsom.scss */
+.frame_tbl {
+  background: #f9fff6;
+}
+
+/* line 1228, ../common/sass/_jomsom.scss */
+.blank_td_inner {
+  background: #f9fff6;
+}
+
+/* line 1231, ../common/sass/_jomsom.scss */
+.flow_optimization_grid {
+  background: #f2f2f2;
+}
+
+/** SCROLLED DIVS CSS **/
+/* line 1236, ../common/sass/_jomsom.scss */
+.scrolled_d, .scrolled_r {
+  background-color: #adbefe !important;
+}
+
+/* line 1240, ../common/sass/_jomsom.scss */
+.d_inv_appended, .r_inv_appended {
+  color: #adbefe !important;
+}
+
+/* POPUP RELATED CSS */
+/* line 1247, ../common/sass/_jomsom.scss */
+.popup_body {
+  background: #ecf1f7;
+  border: 2px solid #a3b5ff;
+}
+
+/* line 1252, ../common/sass/_jomsom.scss */
+#pop_up_save {
+  background-color: #c3d0ff;
+}
+
+/* line 1256, ../common/sass/_jomsom.scss */
+.tbl_contract_pop_up_header {
+  background-color: #c3d0ff !important;
+}
+
+/* CSS for Flow Optimization redesign END */
+/* Ramu Busal : item_label_left filter_transfer styles START*/
+/* line 1263, ../common/sass/_jomsom.scss */
+div.dhxform_item_label_left.filter_transfer div.dhxform_btn_txt {
+  background-image: url(imgs/dhxtoolbar_web/filter_transfer.png);
+  background-repeat: no-repeat;
+  background-position: 0px 8px;
+  padding-left: 18px;
+  margin: 8px 3px 0px 5px !important;
+  height: 28px;
+}
+
+/* Ramu Busal : item_label_left filter_transfer styles END*/
+/* line 1273, ../common/sass/_jomsom.scss */
+div.undock_layout_cell {
+  position: absolute;
+  cursor: pointer;
+  background: url(imgs/dhxlayout_web/expand.gif);
+  background-repeat: no-repeat;
+  width: 12px;
+  height: 12px;
+  margin: -15px 0 0 0;
+  right: 30px;
+}
+
+/* line 1284, ../common/sass/_jomsom.scss */
+.dhxwins_vp_dhx_web div.dhxwin_hdr div.dhxwin_btns div.dhxwin_button.dhxwin_button_fullscreen {
+  background-image: url("imgs/dhxwins_web/button_fullscreen.png");
+}
+
+/* line 1288, ../common/sass/_jomsom.scss */
+.filter_icon {
+  position: absolute;
+  top: 4px;
+  right: 18px;
+  background: url(imgs/dhxgrid_web/filter.png) no-repeat;
+  height: 10px;
+  width: 10px;
+}
+
+/*new updated css for height */
+/* line 1299, ../common/sass/_jomsom.scss */
+div.dhxcombo_dhx_web input.dhxcombo_input {
+  height: 19px !important;
+}
+
+/* line 1303, ../common/sass/_jomsom.scss */
+div.dhxcombo_dhx_web.dhxcombo_disabled input.dhxcombo_input {
+  height: 11px !important;
+  top: -5px\0;
+  height: 19px\0 !important;
+  /* This issue only replicate in IE, so add css only target IE */
+}
+
+/* line 1308, ../common/sass/_jomsom.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_hdr div.dhxlayout_arrow {
+  top: 3px !important;
+}
+
+/* line 1312, ../common/sass/_jomsom.scss */
+.menu_open_button.menu_align_right {
+  float: right;
+  display: block;
+  cursor: pointer;
+  position: absolute;
+  top: 3px;
+  right: 0px;
+}
+
+/* line 1321, ../common/sass/_jomsom.scss */
+.menu_item_holder.menu_align_right {
+  float: right;
+  cursor: pointer;
+  padding-left: 60px;
+  top: -1px;
+  display: none;
+}
+
+/* line 1329, ../common/sass/_jomsom.scss */
+.menu_close_button.menu_align_right {
+  float: left;
+  position: relative;
+  right: 20px;
+  top: 4px;
+  width: 0px;
+  display: block;
+  z-index: 9999;
+}
+
+/* line 1339, ../common/sass/_jomsom.scss */
+.menu_open_button.menu_align_left, .menu_item_holder.menu_align_left, .menu_close_button.menu_align_left {
+  float: left;
+  cursor: pointer;
+  position: absolute;
+}
+
+/* line 1345, ../common/sass/_jomsom.scss */
+.menu_open_button.menu_align_left {
+  display: block;
+  top: 3px;
+  left: 0px;
+}
+
+/* line 1351, ../common/sass/_jomsom.scss */
+.menu_item_holder.menu_align_left {
+  padding-left: 35px;
+  left: -15px;
+  top: 0px;
+  display: none;
+}
+
+/* line 1358, ../common/sass/_jomsom.scss */
+.menu_close_button.menu_align_left {
+  left: 15px;
+  top: 2px;
+  width: 0px;
+  display: block;
+  z-index: 9999;
+}
+
+/*******Time Picker style******
+*/
+@font-face {
+  font-family: 'Glyphicons Halflings';
+  src: url("font/glyphicons-halflings-regular.eot");
+  src: url("font/glyphicons-halflings-regular.eot?#iefix") format("embedded-opentype"), url("font/glyphicons-halflings-regular.woff") format("woff"), url("font/glyphicons-halflings-regular.ttf") format("truetype"), url("font/glyphicons-halflings-regular.svg#glyphicons_halflingsregular") format("svg");
+}
+/* line 1377, ../common/sass/_jomsom.scss */
+.bootstrap-timepicker-widget .glyphicon {
+  position: relative;
+  top: 1px;
+  display: inline-block;
+  font-family: 'Glyphicons Halflings' !important;
+  font-style: normal;
+  font-weight: 200;
+  font-size: 12px;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  color: #438bc9;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* line 1391, ../common/sass/_jomsom.scss */
+.bootstrap-timepicker-widget.dropdown-menu:after {
+  border-bottom: 6px solid #d6dfff;
+}
+
+/* line 1395, ../common/sass/_jomsom.scss */
+.bootstrap-timepicker-widget.dropdown-menu {
+  background-color: #d6dfff;
+}
+
+/* line 1399, ../common/sass/_jomsom.scss */
+.bootstrap-timepicker-widget.timepicker-orient-bottom:after {
+  border-top: 6px solid #d6dfff !important;
+}
+
+/* line 1402, ../common/sass/_jomsom.scss */
+.bootstrap-timepicker-widget.timepicker-orient-bottom:before {
+  border-top: 6px solid #d6dfff !important;
+}
+
+/* line 1406, ../common/sass/_jomsom.scss */
+.bootstrap-timepicker-widget.timepicker-orient-bottom {
+  /*background-color: #86E2D5!important;*/
+}
+
+/* line 1409, ../common/sass/_jomsom.scss */
+.input-group-addon, .input-group-btn {
+  height: 12px !important;
+}
+
+/* line 1412, ../common/sass/_jomsom.scss */
+.bootstrap-timepicker .input-group-addon i {
+  top: 2px !important;
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon {
+  position: relative;
+  top: 1px;
+  display: inline-block;
+  font-family: 'Glyphicons Halflings';
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-asterisk:before {
+  content: "\2a";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-plus:before {
+  content: "\2b";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-eur:before, .glyphicon-euro:before {
+  content: "\20ac";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-minus:before {
+  content: "\2212";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-cloud:before {
+  content: "\2601";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-envelope:before {
+  content: "\2709";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-pencil:before {
+  content: "\270f";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-glass:before {
+  content: "\e001";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-music:before {
+  content: "\e002";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-search:before {
+  content: "\e003";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-heart:before {
+  content: "\e005";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-star:before {
+  content: "\e006";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-star-empty:before {
+  content: "\e007";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-user:before {
+  content: "\e008";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-film:before {
+  content: "\e009";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-th-large:before {
+  content: "\e010";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-th:before {
+  content: "\e011";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-th-list:before {
+  content: "\e012";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-ok:before {
+  content: "\e013";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-remove:before {
+  content: "\e014";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-zoom-in:before {
+  content: "\e015";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-zoom-out:before {
+  content: "\e016";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-off:before {
+  content: "\e017";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-signal:before {
+  content: "\e018";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-cog:before {
+  content: "\e019";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-trash:before {
+  content: "\e020";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-home:before {
+  content: "\e021";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-file:before {
+  content: "\e022";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-time:before {
+  content: "\e023";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-road:before {
+  content: "\e024";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-download-alt:before {
+  content: "\e025";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-download:before {
+  content: "\e026";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-upload:before {
+  content: "\e027";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-inbox:before {
+  content: "\e028";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-play-circle:before {
+  content: "\e029";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-repeat:before {
+  content: "\e030";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-refresh:before {
+  content: "\e031";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-list-alt:before {
+  content: "\e032";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-lock:before {
+  content: "\e033";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-flag:before {
+  content: "\e034";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-headphones:before {
+  content: "\e035";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-volume-off:before {
+  content: "\e036";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-volume-down:before {
+  content: "\e037";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-volume-up:before {
+  content: "\e038";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-qrcode:before {
+  content: "\e039";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-barcode:before {
+  content: "\e040";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-tag:before {
+  content: "\e041";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-tags:before {
+  content: "\e042";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-book:before {
+  content: "\e043";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-bookmark:before {
+  content: "\e044";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-print:before {
+  content: "\e045";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-camera:before {
+  content: "\e046";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-font:before {
+  content: "\e047";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-bold:before {
+  content: "\e048";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-italic:before {
+  content: "\e049";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-text-height:before {
+  content: "\e050";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-text-width:before {
+  content: "\e051";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-align-left:before {
+  content: "\e052";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-align-center:before {
+  content: "\e053";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-align-right:before {
+  content: "\e054";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-align-justify:before {
+  content: "\e055";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-list:before {
+  content: "\e056";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-indent-left:before {
+  content: "\e057";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-indent-right:before {
+  content: "\e058";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-facetime-video:before {
+  content: "\e059";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-picture:before {
+  content: "\e060";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-map-marker:before {
+  content: "\e062";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-adjust:before {
+  content: "\e063";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-tint:before {
+  content: "\e064";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-edit:before {
+  content: "\e065";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-share:before {
+  content: "\e066";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-check:before {
+  content: "\e067";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-move:before {
+  content: "\e068";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-step-backward:before {
+  content: "\e069";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-fast-backward:before {
+  content: "\e070";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-backward:before {
+  content: "\e071";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-play:before {
+  content: "\e072";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-pause:before {
+  content: "\e073";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-stop:before {
+  content: "\e074";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-forward:before {
+  content: "\e075";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-fast-forward:before {
+  content: "\e076";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-step-forward:before {
+  content: "\e077";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-eject:before {
+  content: "\e078";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-chevron-left:before {
+  content: "\e079";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-chevron-right:before {
+  content: "\e080";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-plus-sign:before {
+  content: "\e081";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-minus-sign:before {
+  content: "\e082";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-remove-sign:before {
+  content: "\e083";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-ok-sign:before {
+  content: "\e084";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-question-sign:before {
+  content: "\e085";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-info-sign:before {
+  content: "\e086";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-screenshot:before {
+  content: "\e087";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-remove-circle:before {
+  content: "\e088";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-ok-circle:before {
+  content: "\e089";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-ban-circle:before {
+  content: "\e090";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-arrow-left:before {
+  content: "\e091";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-arrow-right:before {
+  content: "\e092";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-arrow-up:before {
+  content: "\e093";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-arrow-down:before {
+  content: "\e094";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-share-alt:before {
+  content: "\e095";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-resize-full:before {
+  content: "\e096";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-resize-small:before {
+  content: "\e097";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-exclamation-sign:before {
+  content: "\e101";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-gift:before {
+  content: "\e102";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-leaf:before {
+  content: "\e103";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-fire:before {
+  content: "\e104";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-eye-open:before {
+  content: "\e105";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-eye-close:before {
+  content: "\e106";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-warning-sign:before {
+  content: "\e107";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-plane:before {
+  content: "\e108";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-calendar:before {
+  content: "\e109";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-random:before {
+  content: "\e110";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-comment:before {
+  content: "\e111";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-magnet:before {
+  content: "\e112";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-chevron-up:before {
+  content: "\e113";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-chevron-down:before {
+  content: "\e114";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-retweet:before {
+  content: "\e115";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-shopping-cart:before {
+  content: "\e116";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-folder-close:before {
+  content: "\e117";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-folder-open:before {
+  content: "\e118";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-resize-vertical:before {
+  content: "\e119";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-resize-horizontal:before {
+  content: "\e120";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-hdd:before {
+  content: "\e121";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-bullhorn:before {
+  content: "\e122";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-bell:before {
+  content: "\e123";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-certificate:before {
+  content: "\e124";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-thumbs-up:before {
+  content: "\e125";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-thumbs-down:before {
+  content: "\e126";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-hand-right:before {
+  content: "\e127";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-hand-left:before {
+  content: "\e128";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-hand-up:before {
+  content: "\e129";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-hand-down:before {
+  content: "\e130";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-circle-arrow-right:before {
+  content: "\e131";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-circle-arrow-left:before {
+  content: "\e132";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-circle-arrow-up:before {
+  content: "\e133";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-circle-arrow-down:before {
+  content: "\e134";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-globe:before {
+  content: "\e135";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-wrench:before {
+  content: "\e136";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-tasks:before {
+  content: "\e137";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-filter:before {
+  content: "\e138";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-briefcase:before {
+  content: "\e139";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-fullscreen:before {
+  content: "\e140";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-dashboard:before {
+  content: "\e141";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-paperclip:before {
+  content: "\e142";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-heart-empty:before {
+  content: "\e143";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-link:before {
+  content: "\e144";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-phone:before {
+  content: "\e145";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-pushpin:before {
+  content: "\e146";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-usd:before {
+  content: "\e148";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-gbp:before {
+  content: "\e149";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sort:before {
+  content: "\e150";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sort-by-alphabet:before {
+  content: "\e151";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sort-by-alphabet-alt:before {
+  content: "\e152";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sort-by-order:before {
+  content: "\e153";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sort-by-order-alt:before {
+  content: "\e154";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sort-by-attributes:before {
+  content: "\e155";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sort-by-attributes-alt:before {
+  content: "\e156";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-unchecked:before {
+  content: "\e157";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-expand:before {
+  content: "\e158";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-collapse-down:before {
+  content: "\e159";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-collapse-up:before {
+  content: "\e160";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-log-in:before {
+  content: "\e161";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-flash:before {
+  content: "\e162";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-log-out:before {
+  content: "\e163";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-new-window:before {
+  content: "\e164";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-record:before {
+  content: "\e165";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-save:before {
+  content: "\e166";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-open:before {
+  content: "\e167";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-saved:before {
+  content: "\e168";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-import:before {
+  content: "\e169";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-export:before {
+  content: "\e170";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-send:before {
+  content: "\e171";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-floppy-disk:before {
+  content: "\e172";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-floppy-saved:before {
+  content: "\e173";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-floppy-remove:before {
+  content: "\e174";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-floppy-save:before {
+  content: "\e175";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-floppy-open:before {
+  content: "\e176";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-credit-card:before {
+  content: "\e177";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-transfer:before {
+  content: "\e178";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-cutlery:before {
+  content: "\e179";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-header:before {
+  content: "\e180";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-compressed:before {
+  content: "\e181";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-earphone:before {
+  content: "\e182";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-phone-alt:before {
+  content: "\e183";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-tower:before {
+  content: "\e184";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-stats:before {
+  content: "\e185";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sd-video:before {
+  content: "\e186";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-hd-video:before {
+  content: "\e187";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-subtitles:before {
+  content: "\e188";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sound-stereo:before {
+  content: "\e189";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sound-dolby:before {
+  content: "\e190";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sound-5-1:before {
+  content: "\e191";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sound-6-1:before {
+  content: "\e192";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sound-7-1:before {
+  content: "\e193";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-copyright-mark:before {
+  content: "\e194";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-registration-mark:before {
+  content: "\e195";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-cloud-download:before {
+  content: "\e197";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-cloud-upload:before {
+  content: "\e198";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-tree-conifer:before {
+  content: "\e199";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-tree-deciduous:before {
+  content: "\e200";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-cd:before {
+  content: "\e201";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-save-file:before {
+  content: "\e202";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-open-file:before {
+  content: "\e203";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-level-up:before {
+  content: "\e204";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-copy:before {
+  content: "\e205";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-paste:before {
+  content: "\e206";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-alert:before {
+  content: "\e209";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-equalizer:before {
+  content: "\e210";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-king:before {
+  content: "\e211";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-queen:before {
+  content: "\e212";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-pawn:before {
+  content: "\e213";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-bishop:before {
+  content: "\e214";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-knight:before {
+  content: "\e215";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-baby-formula:before {
+  content: "\e216";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-tent:before {
+  content: "\26fa";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-blackboard:before {
+  content: "\e218";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-bed:before {
+  content: "\e219";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-apple:before {
+  content: "\f8ff";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-erase:before {
+  content: "\e221";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-hourglass:before {
+  content: "\231b";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-lamp:before {
+  content: "\e223";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-duplicate:before {
+  content: "\e224";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-piggy-bank:before {
+  content: "\e225";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-scissors:before {
+  content: "\e226";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-bitcoin:before {
+  content: "\e227";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-yen:before {
+  content: "\00a5";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-ruble:before {
+  content: "\20bd";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-scale:before {
+  content: "\e230";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-ice-lolly:before {
+  content: "\e231";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-ice-lolly-tasted:before {
+  content: "\e232";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-education:before {
+  content: "\e233";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-option-horizontal:before {
+  content: "\e234";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-option-vertical:before {
+  content: "\e235";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-menu-hamburger:before {
+  content: "\e236";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-modal-window:before {
+  content: "\e237";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-oil:before {
+  content: "\e238";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-grain:before {
+  content: "\e239";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-sunglasses:before {
+  content: "\e240";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-text-size:before {
+  content: "\e241";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-text-color:before {
+  content: "\e242";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-text-background:before {
+  content: "\e243";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-object-align-top:before {
+  content: "\e244";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-object-align-bottom:before {
+  content: "\e245";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-object-align-horizontal:before {
+  content: "\e246";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-object-align-left:before {
+  content: "\e247";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-object-align-vertical:before {
+  content: "\e248";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-object-align-right:before {
+  content: "\e249";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-triangle-right:before {
+  content: "\e250";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-triangle-left:before {
+  content: "\e251";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-triangle-bottom:before {
+  content: "\e252";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-triangle-top:before {
+  content: "\e253";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-console:before {
+  content: "\e254";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-superscript:before {
+  content: "\e255";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-subscript:before {
+  content: "\e256";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-menu-left:before {
+  content: "\e257";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-menu-right:before {
+  content: "\e258";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-menu-down:before {
+  content: "\e259";
+}
+
+/* line 1416, ../common/sass/_jomsom.scss */
+.glyphicon-menu-up:before {
+  content: "\e260";
+}
+
+/******Time Picker style End********/
+/* line 1421, ../common/sass/_jomsom.scss */
+.ctx-menu {
+  position: fixed;
+  display: none;
+  box-shadow: 0 0 10px 4px rgba(0, 0, 0, 0.1);
+  background: #f2f2f2;
+}
+
+/* line 1427, ../common/sass/_jomsom.scss */
+.ctx-menu-item {
+  padding: 8px 12px;
+  border-bottom: 1px solid #ded9d9;
+}
+
+/* line 1431, ../common/sass/_jomsom.scss */
+.ctx-menu-item:hover {
+  background: #c0cbf7;
+  color: #ffffff;
+}
+
+/* line 1369, ../common/sass/_jomsom.scss */
+.dhx_cell_editor .dhxtoolbar_icons_18 {
+  background: #adbefe !important;
+}
+
+/*Jomsom Report Module*/
+/*copied from extra.scss*/
+/* line 3, ../common/sass/_report.scss */
+ul.jtabs li.active a.theme-blue span {
+  background-color: #cbd6ff !important;
+}
+
+/*Report Part*/
+/* line 6, ../common/sass/_report.scss */
+.btn_save_class .dhxform_btn_filler {
+  background: #f9f9f9;
+}
+
+/* line 11, ../common/sass/_report.scss */
+#output th.pvtAxisContainer {
+  background: none !important;
+  border: 1px dashed #bbbbbb;
+  font-weight: normal;
+}
+/* line 19, ../common/sass/_report.scss */
+#output table:first-of-type tr:nth-child(2) > th {
+  border: none;
+}
+/* line 23, ../common/sass/_report.scss */
+#output table:first-of-type tr:nth-child(2) > td table {
+  margin-left: 20px;
+  margin-top: 20px;
+}
+/* line 27, ../common/sass/_report.scss */
+#output table:first-of-type tr:nth-child(2) > td:first-child {
+  margin-right: 20px;
+}
+/* line 32, ../common/sass/_report.scss */
+#output table:first-of-type tr.pvtAxisContainer:nth-child(2) > td:nth-child(1) {
+  background-color: #bbbbbb;
+}
+/* line 36, ../common/sass/_report.scss */
+#output table:first-of-type .pvtFilterBox {
+  position: absolute;
+  background-color: #c3d0ff;
+  /*$white_90;*/
+  /*Instead of the line below you could use @include border-radius($radius, $vertical-radius)*/
+  border-radius: 4px;
+  border-color: #bbbbbb;
+  /*Instead of the line below you could use @include box-shadow($shadow-1, $shadow-2, $shadow-3, $shadow-4, $shadow-5, $shadow-6, $shadow-7, $shadow-8, $shadow-9, $shadow-10)*/
+  box-shadow: 0 0 8px 2px #ccc;
+  top: 0 !important;
+  left: 0 !important;
+}
+/* line 47, ../common/sass/_report.scss */
+#output table:first-of-type table td {
+  position: relative;
+}
+/* line 50, ../common/sass/_report.scss */
+#output table:first-of-type tbody:nth-child(2) > tr:first-child > td:nth-child(2) {
+  margin-left: 20px;
+  background: none;
+  border: 1px dashed #bbbbbb;
+}
+
+/* line 59, ../common/sass/_report.scss */
+#layout-container table {
+  background: #FFF;
+  border: 1px solid #CCC;
+  border-radius: 5px;
+  box-shadow: 0 0 4px 0px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  cursor: move;
+  border-left: 10px solid #CCC;
+}
+/* line 68, ../common/sass/_report.scss */
+#layout-container table table {
+  border: none;
+  box-shadow: none;
+}
+/* line 72, ../common/sass/_report.scss */
+#layout-container table table a[id$="delete"] {
+  background: #e74c3c;
+  border-radius: 4px;
+  padding: 7px 10px;
+  color: #FFF;
+  font-size: 13px;
+  font-weight: normal;
+}
+/* line 80, ../common/sass/_report.scss */
+#layout-container table table a[id$="update"] {
+  color: #d6dfff;
+  border-radius: 0px;
+  padding: 7px 10px;
+  /*color: #FFF;*/
+  font-size: 13px;
+  font-weight: normal;
+}
+/* line 89, ../common/sass/_report.scss */
+#layout-container table table a[id$="edit"] {
+  background: #d6dfff;
+  border-radius: 4px;
+  padding: 7px 10px;
+  color: #FFF;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+/* line 101, ../common/sass/_report.scss */
+#layout .report-item {
+  background-color: transparent !important;
+}
+
+/*Paarameters*/
+/* line 106, ../common/sass/_report.scss */
+.class-trm-paramset-detail {
+  border: none !important;
+}
+/* line 109, ../common/sass/_report.scss */
+.class-trm-paramset-detail th {
+  border-radius: 5px 0 0 5px;
+  border-top: none !important;
+  width: 24px !important;
+  background-color: #709572 !important;
+  padding: 0;
+}
+/* line 114, ../common/sass/_report.scss */
+.class-trm-paramset-detail th + td {
+  width: 13px;
+}
+/* line 117, ../common/sass/_report.scss */
+.class-trm-paramset-detail th:hover td {
+  color: #333 !important;
+}
+/* line 122, ../common/sass/_report.scss */
+.class-trm-paramset-detail tr:hover td {
+  color: #333 !important;
+}
+/* line 125, ../common/sass/_report.scss */
+.class-trm-paramset-detail td {
+  background: none !important;
+  padding: 4px 2px 0px !important;
+}
+/* line 130, ../common/sass/_report.scss */
+.class-trm-paramset-detail td input, .class-trm-paramset-detail td select {
+  height: 21px;
+  border-color: #8A8787;
+  padding: 0 0 0 2px;
+  margin: 0;
+  color: #333;
+}
+/* line 140, ../common/sass/_report.scss */
+.class-trm-paramset-detail td:first-child {
+  width: 30px !important;
+}
+/* line 144, ../common/sass/_report.scss */
+.class-trm-paramset-detail td td[width] {
+  background: red;
+}
+/* line 148, ../common/sass/_report.scss */
+.class-trm-paramset-detail td:hover {
+  color: #333;
+}
+/* line 154, ../common/sass/_report.scss */
+.class-trm-paramset-detail li {
+  overflow: hidden;
+  margin: 0px 0 0 0;
+}
+/* line 163, ../common/sass/_report.scss */
+.class-trm-paramset-detail li .push-up {
+  margin: 0;
+}
+/* line 166, ../common/sass/_report.scss */
+.class-trm-paramset-detail li .push-up label input {
+  position: relative;
+}
+
+/* line 175, ../common/sass/_report.scss */
+.class-trm-tablix-advance-table .data-table tr:hover td {
+  color: #666;
+  background: #f5f7ff !important;
+}
+
+/* line 178, ../common/sass/_report.scss */
+.class-trm-tablix-advance-tab-table .data-table tr:hover td {
+  color: #666;
+  background: #f5f7ff !important;
+}
+
+/* line 183, ../common/sass/_report.scss */
+.data-table th {
+  background: #adbefe !important;
+}
+
+/* line 184, ../common/sass/_report.scss */
+.data-table td {
+  font-size: 12px !important;
+}
+
+/* line 185, ../common/sass/_report.scss */
+input[type="text"]:disabled {
+  background-color: #ebebe4;
+  padding: 4px 4px !important;
+  border: 1px solid #d6d6d6;
+}
+
+/* line 187, ../common/sass/_report.scss */
+.data-table .formlabel {
+  font-weight: normal !important;
+}
+
+/* line 188, ../common/sass/_report.scss */
+.data-table td .dataset-alias, .dataset-tooltip, .defult_value_list {
+  height: 17px !important;
+  padding-left: 2px !important;
+}
+
+/* line 190, ../common/sass/_report.scss */
+.adiha_control {
+  font-size: 12px !important;
+}
+
+/*Advanced*/
+/* line 196, ../common/sass/_report.scss */
+.advanced-table .table-container, .class-trm-chart-advance-table .table-container, .class-trm-tablix-advance-tab-table .table-container, .class-trm-tablix-advance-table .table-container {
+  padding: 20px;
+  border-bottom: 2px dashed #CCC;
+  padding-bottom: 20px;
+  margin-bottom: 10px;
+}
+/* line 205, ../common/sass/_report.scss */
+.advanced-table .data-table th, .class-trm-chart-advance-table .data-table th, .class-trm-tablix-advance-tab-table .data-table th, .class-trm-tablix-advance-table .data-table th {
+  background-color: #cbd6ff !important;
+  border-top: none !important;
+  font-size: 12px;
+  font-weight: normal !important;
+  padding: 5px;
+  color: #000 !important;
+}
+/* line 213, ../common/sass/_report.scss */
+.advanced-table .data-table td, .class-trm-chart-advance-table .data-table td, .class-trm-tablix-advance-tab-table .data-table td, .class-trm-tablix-advance-table .data-table td {
+  background-color: #FFF;
+  padding: 5px;
+  border-bottom: 1px solid #dddddd;
+  font-size: 12px !important;
+}
+/* line 220, ../common/sass/_report.scss */
+.advanced-table .FormLabelHeader, .class-trm-chart-advance-table .FormLabelHeader, .class-trm-tablix-advance-tab-table .FormLabelHeader, .class-trm-tablix-advance-table .FormLabelHeader {
+  font-size: 14px !important;
+  position: relative;
+  top: 20px;
+}
+/* line 224, ../common/sass/_report.scss */
+.advanced-table hr, .class-trm-chart-advance-table hr, .class-trm-tablix-advance-tab-table hr, .class-trm-tablix-advance-table hr {
+  display: none;
+}
+/* line 229, ../common/sass/_report.scss */
+.advanced-table ul.jtabs li.active, .class-trm-chart-advance-table ul.jtabs li.active, .class-trm-tablix-advance-tab-table ul.jtabs li.active, .class-trm-tablix-advance-table ul.jtabs li.active {
+  background-color: #cbd6ff !important;
+  border-radius: 3px 3px 0 0 !important;
+  padding: 5px;
+  color: #000 !important;
+}
+/* line 234, ../common/sass/_report.scss */
+.advanced-table ul.jtabs li.active a.theme-blue, .class-trm-chart-advance-table ul.jtabs li.active a.theme-blue, .class-trm-tablix-advance-tab-table ul.jtabs li.active a.theme-blue, .class-trm-tablix-advance-table ul.jtabs li.active a.theme-blue, .advanced-table ul.jtabs li.active span, .class-trm-chart-advance-table ul.jtabs li.active span, .class-trm-tablix-advance-tab-table ul.jtabs li.active span, .class-trm-tablix-advance-table ul.jtabs li.active span {
+  background-image: none !important;
+  color: #000 !important;
+}
+
+/* line 240, ../common/sass/_report.scss */
+ul.jtabs li {
+  height: 22px !important;
+}
+
+/* line 243, ../common/sass/_report.scss */
+ul.jtabs li a {
+  padding: 7px 0 !important;
+  font-size: 12px !important;
+  font-weight: normal !important;
+  background-color: #b7b7b7 !important;
+  border-radius: 2px 2px 0 0 !important;
+  color: #fff !important;
+}
+
+/*eo advanced table*/
+/* line 251, ../common/sass/_report.scss */
+.advanced-info, .class-trm-chart-advance-info, .class-trm-tablix-advance-info {
+  padding: 20px;
+  background: #F9F9F9;
+  font-weight: bold;
+  border-top: 10px solid #CCC;
+}
+
+/*end of report designer*/
+/* line 266, ../common/sass/_report.scss */
+.class-trm-report-item {
+  position: relative;
+}
+/* line 275, ../common/sass/_report.scss */
+.class-trm-report-item .class-trm-report-item-delete {
+  top: 50px;
+}
+/* line 279, ../common/sass/_report.scss */
+.class-trm-report-item .trm-report-item-action-button {
+  width: 100px;
+}
+/* line 281, ../common/sass/_report.scss */
+.class-trm-report-item .trm-report-item-action-button a {
+  display: inline-block;
+  margin-right: 10px;
+}
+/* line 286, ../common/sass/_report.scss */
+.class-trm-report-item td {
+  padding: 0;
+}
+/* line 289, ../common/sass/_report.scss */
+.class-trm-report-item .btn-text {
+  display: inline-block;
+  margin: 0 5px;
+  font-weight: bold;
+}
+/* line 297, ../common/sass/_report.scss */
+.class-trm-report-item .header td {
+  padding: 16px 10px;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+/* line 302, ../common/sass/_report.scss */
+.class-trm-report-item .header td .its-name {
+  font-weight: bold;
+}
+/* line 309, ../common/sass/_report.scss */
+.class-trm-report-item .itemlist td {
+  padding: 5px 10px;
+}
+/* line 312, ../common/sass/_report.scss */
+.class-trm-report-item .itemlist input {
+  padding: 6px;
+  border-radius: 3px;
+  border: none;
+  border-bottom: 1px dashed #777;
+}
+/* line 319, ../common/sass/_report.scss */
+.class-trm-report-item .itemlist .change-btn {
+  font-weight: bold;
+}
+/* line 324, ../common/sass/_report.scss */
+.class-trm-report-item .fa {
+  font-size: 18px;
+}
+
+/* line 330, ../common/sass/_report.scss */
+.cdisplay {
+  width: 110px;
+}
+
+/* line 333, ../common/sass/_report.scss */
+#overlay-info-template {
+  border: 1px solid #c3d0ff !important;
+}
+
+/* line 336, ../common/sass/_report.scss */
+.data-table th.base, .data-table th.main {
+  border-bottom: 0px !important;
+}
+
+/* line 339, ../common/sass/_report.scss */
+.data-table th.aggr, .data-table th.cdisplay, .data-table th.display, .data-table th.hdisplay {
+  border-bottom: 0px !important;
+}
+
+/*CSS copied from extra.scss*/
+/* line 345, ../common/sass/_report.scss */
+.hide-filter-inner::before {
+  background-color: #a3b5ff !important;
+}
+
+/* line 349, ../common/sass/_report.scss */
+.btn:focus, .btn:active:focus, .btn.active:focus, .btn.focus, .btn.focus:active, .btn.active.focus {
+  outline: none !important;
+}
+
+/* line 353, ../common/sass/_report.scss */
+.dhtmlx-confirm .dhtmlx_popup_title, .dhtmlx-confirm-error .dhtmlx_popup_title {
+  background-color: #e8e3e3 !important;
+  border: 1px solid #e8e3e3 !important;
+  color: #000 !important;
+  font-style: italic !important;
+}
+
+/* line 359, ../common/sass/_report.scss */
+.dhtmlx-alert .dhtmlx_popup_title, .dhtmlx-alert-error .dhtmlx_popup_title {
+  background-color: #c8ddf0 !important;
+  font-style: italic !important;
+  color: #000 !important;
+  border: none !important;
+}
+
+/* line 366, ../common/sass/_report.scss */
+.dhtmlx-alert-warning .dhtmlx_popup_title, .dhtmlx-alert-warning-error .dhtmlx_popup_title {
+  background-color: #f8a248 !important;
+  border: 1px solid #f8a248 !important;
+}
+
+/* line 371, ../common/sass/_report.scss */
+.dhtmlx-alert-error .dhtmlx_popup_title, .dhtmlx-confirm-alert-error .dhtmlx_popup_title {
+  background-color: #dd7e6b !important;
+  border: 1px solid #dd7e6b !important;
+}
+
+/* line 376, ../common/sass/_report.scss */
+.dhtmlx_popup_button {
+  background-color: #a3b5ff !important;
+  border-radius: 2px !important;
+}
+
+/* line 381, ../common/sass/_report.scss */
+.dhtmlx_popup_button:active,
+.dhtmlx_popup_button:focus {
+  background-color: #c0cbf7 !important;
+  border-radius: 2px !important;
+}
+
+/* line 386, ../common/sass/_report.scss */
+.dhxform_btn_txt {
+  color: #000 !important;
+}
+
+/* line 390, ../common/sass/_report.scss */
+.message-board-wrapper .item-header, .message-board-wrapper .item-footer a {
+  color: #333 !important;
+}

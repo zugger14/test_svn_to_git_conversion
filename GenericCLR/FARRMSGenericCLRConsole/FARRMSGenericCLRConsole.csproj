@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{02CA5DFC-EF30-4AE0-9C19-2F83FA3F08C3}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>FARRMSGenericCLRConsole</RootNamespace>
+    <AssemblyName>FARRMSGenericCLRConsole</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FAARMSFileTransferCLR\FAARMSFileTransferCLR.sqlproj">
+      <Project>{a049f1cd-b7cc-4a91-8def-7a5c6e16b726}</Project>
+      <Name>FAARMSFileTransferCLR</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\FAARMSFileTransferService\FAARMSFileTransferService.csproj">
+      <Project>{ceb330c0-53e1-4b7c-8644-e312c8bdd79e}</Project>
+      <Name>FAARMSFileTransferService</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\FARRMSExcelServerCLR\FARRMSExcelServerCLR.sqlproj">
+      <Project>{faa7f872-cd00-41d4-a60f-a8d2d519a2c3}</Project>
+      <Name>FARRMSExcelServerCLR</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\FARRMSExportCLR\FARRMSExportCLR.sqlproj">
+      <Project>{8bd39fdd-a1fd-4e6b-9ec7-be7537b81fff}</Project>
+      <Name>FARRMSExportCLR</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\FARRMSGenericCLR\FARRMSGenericCLR.sqlproj">
+      <Project>{ace1fc45-dbd5-4866-ab43-56425c72d017}</Project>
+      <Name>FARRMSGenericCLR</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\FARRMSImportCLR\FARRMSImportCLR.sqlproj">
+      <Project>{6d13105f-5f37-4a54-b84d-d9464d13a657}</Project>
+      <Name>FARRMSImportCLR</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\FARRMSUtilities\FARRMSUtilities.csproj">
+      <Project>{0700a174-b7d6-437e-801c-eeee9b970a24}</Project>
+      <Name>FARRMSUtilities</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

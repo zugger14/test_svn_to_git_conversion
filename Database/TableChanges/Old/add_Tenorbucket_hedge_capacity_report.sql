@@ -1,0 +1,2 @@
+IF not EXISTS(SELECT * FROM sys.[columns] WHERE [object_id]=object_id('hedge_capacity_report') AND [name]='TenorBucket')
+	alter table dbo.hedge_capacity_report add TenorBucket varchar(250),term_end datetime

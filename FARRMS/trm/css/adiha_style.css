@@ -1,0 +1,1537 @@
+.data-table tr:hoverbody {
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+}
+
+form {
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    /*overflow: hidden;*/
+}
+
+#mainMenuScreen {
+    background: #436AAD url(../main.menu/images/wallpaper.jpg) no-repeat center center;
+}
+
+.border {
+    border: 1px solid black;
+}
+
+TABLE.mainmenu TD {
+    font-family: verdana;
+    font-size: 10px;
+    background: #8CBEFB ;
+    color: #000000;
+    BORDER-BOTTOM: #99CCFF 1px solid;
+}
+
+#menuLeftBar {
+    background: #6699FF;
+    BORDER-BOTTOM: #6699FF 1px solid;
+}
+
+.ExportReport {
+ cursor: pointer;
+}
+
+.mainItem {
+    width: 100%;
+    height: 20px;
+    text-align: left;
+    cursor: pointer;
+    text-indent: 3pt;
+    color: #000000;
+}
+
+.mainItemDisable {
+    width: 100%;
+    height: 20px;
+    text-align: left;
+    text-indent: 3pt;
+    color: #E2DCD7;
+}
+
+.mainMenuMover {
+    width: 100%;
+    height: 20px;
+    text-align: left;
+    cursor: pointer;
+    text-indent: 3pt;
+    background: #F0F4F5;
+    color: #4C4D92;
+}
+
+table {margin-top: 0px;
+    font-size: 10px;
+    font-family: verdana}
+
+.ExportTool {
+    cursor: pointer;
+}
+
+.subsidairyCol {
+    font-weight: bold;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    color: #ffffff;
+    background: #225ACB;
+    font-size: 10px;
+    text-align: left
+}
+
+.subsidairyColbtn {
+    font-weight: bold;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    background: #225ACB;
+    font-size: 10px;
+    text-valign: middle;
+    text-align: left
+}
+
+.strategyCol {
+    font-weight: bold;
+    color: #000000;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    background: #C7D4F7;
+    font-size: 10px;
+    text-align: left
+}
+
+.strategyColbtn {
+    font-weight: bold;
+    color: #000000;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    text-align: left;
+    background: #C7D4F7;
+}
+
+.bookCol {
+    font-weight: bold;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    background: #DAE9F3;
+    font-size: 10px;
+    text-align: left;
+}
+
+.bookColbtn {
+    font-weight: bold;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    text-align: left;
+    background: #DAE9F3;
+}
+
+.bookMapCol {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    text-align: left;
+    background: #ffffff;
+}
+
+.bookMapColbtn {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    text-align: left;
+}
+
+.roottitle {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    height: 15px;
+    font-weight: bold;
+    text-align: left;
+    text-valign: middle;
+    background: #ffffff;
+    color: #455269;
+    border-bottom: 1px solid #C0CCD2;
+}
+.roottitle img {
+    cursor: pointer;
+}
+
+#subsidairyTable {
+    cursor: pointer;
+}
+
+.openClass {
+}
+
+.closeClass {
+}
+
+.help {
+    margin-top: -3px; /* Due to problem in page having Tree + tab*/
+    padding: 0;
+    /*margin: 0;*/
+    color: #707CA4;
+    font-size: 20px;
+    text-decoration: none;
+    cursor: help;
+}
+
+.help2 {
+    margin-top: -3px; /* Due to problem in page having Tree + tab*/
+    padding: 0;
+    /*margin: 0;*/
+    color: #707CA4;
+    font-size: 10px;
+    text-decoration: none;
+    cursor: help;
+}
+
+a.help:hover, a.help img:hover {
+    cursor:  help;
+}
+
+a.help2:hover, a.help2 img:hover {
+    cursor:  help;
+}
+
+.helpHover2 {
+    color: #707CA4;
+    font-size: 11px;
+    cursor: help;
+    text-decoration: underline;
+}
+
+.helpHover {
+    color: #707CA4;
+    font-size: 20px;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.messageboard a:hover {
+    text-decoration: underline;
+    color: blue;
+}
+
+.messageboard a:visited {
+    color: #810081;
+}
+
+.GridClass {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 9px;
+    text-align: left;
+}
+
+.FormLabel {
+    text-align: right;
+    font-weight: bold;
+    color: #000000;
+}
+
+.FormLabelC {
+    text-align: center;
+    font-weight: bold;
+}
+
+.FormLabelL {
+    text-align: left;
+    font-weight: bold;
+    color: #000000;
+    display: inline-block;
+}
+
+.FormLabelHeader {
+    color: #000000;
+    font-weight: bold;
+    text-align: left;
+}
+
+.formPanelColor {
+    background: #BCD0F4;
+}
+
+.formBodyColor {
+    background: #ffffff;
+    font-family: verdana;
+    font-size: 10px;
+    scrollbar-face-color: #AFBECF;
+    scrollbar-3dlight-color: #11487D;
+    scrollbar-arrow-color: #11487D;
+    scrollbar-darkshadow-color: #11487D;
+    margin: 0px;
+    padding:0px;
+}
+
+.radioGroupHeader {
+    color: #000000;
+    font-weight: bold;
+}
+
+.radioGroupItem {
+    color: #000000;
+    font-weight: normal;
+}
+
+.ExportBGColor {
+    background: #DFE8EC;
+    border-bottom: 1px solid #11487D;
+    border-right: 1px solid #11487D;
+    border-left: 1px solid #A4ABCD;
+    border-top: 1px solid #A4ABCD;
+    color: #000066;
+    width: 100%;
+    text-align: left;
+    padding: 2px;
+    word-spacing: 10px;
+    margin-right: 10px;
+}
+
+.adiha_control {
+    border-bottom: 1px solid #11487D;
+    border-right: 1px solid #11487D;
+    border-left: 1px solid #11487D;
+    border-top: 1px solid #11487D;
+    color: #000066;
+    height: 16px;
+    font-size: 10px;
+}
+
+.adiha_multitext_control {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 9px;
+}
+
+.adiha_ucontrol {
+    border-bottom: 1px solid #11487D;
+    border-right: 0px solid #11487D;
+    border-left: 0px solid #11487D;
+    border-top: 0px solid #11487D;
+    color: #000066;
+    background-color: #FFFFFF;
+    height: 20px;
+    font-size: 10px;
+}
+
+.check_box_class {
+    color: #000066;
+    border: thin none #11487D;
+    margin: 2px 5px 0px 0px;
+    padding: 0;
+    width:auto;
+}
+
+.iframeClass {
+    background: #DFE8EC;
+    border-bottom: 1px solid #11487D;
+    border-right: 1px solid #11487D;
+    border-left: 1px solid #A4ABCD;
+    border-top: 1px solid #A4ABCD;
+    color: #000066;
+}
+
+#menuOut, #menuIn {
+    position: absolute;
+    width: 16px;
+    left: 552px;
+    font: bold 12px Verdana;
+    line-height: 20px;
+    height: 0px;
+}
+
+.message {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+
+.tabs {
+    position: absolute;
+    top: 16px;
+    right: 7px;
+    margin-left: 0;
+    height: 22px;
+    white-space: nowrap;
+    font: menu;
+    font-size: 11px;
+    line-height: 13px;
+    cursor: default !important;
+    font-weight: 700 !important;
+    white-space: nowrap;
+    z-index: 1000;
+    left: 3px;
+}
+
+.tabwhatif {
+    position: absolute;
+    top: 16px;
+    white-space: nowrap;
+    font: menu;
+    font-size: 11px;
+    cursor: default !important;
+    font-weight: 700 !important;
+    white-space: nowrap;
+    z-index: 1000;
+    left: 3px;
+}
+
+.tabassessment {
+    position: absolute;
+    top: 9px;
+    white-space: nowrap;
+    font-size: 11px;
+    cursor: default !important;
+    white-space: nowrap;
+    z-index: 1000;
+    left: 10px;
+}
+
+.tab {
+    border: 1px solid #CFCFCF;
+    padding: 13px 9px 13px 9px;
+    color: #303036;
+    z-index: 100;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-width: 0;
+    text-decoration: none;
+    white-space: nowrap;
+
+}
+
+.contentgeneral {
+    position: absolute;
+    font-family: arial;
+    font-size: 8px;
+    top: 28px   ;
+    width: 100%;
+    z-index: 1;
+    left: 12px;
+    visibility: visible;
+}
+
+/*.content {
+    position: absolute;
+    font-family: arial;
+    font-size: 8px;
+    top: 28px   ;
+    width: 100%;
+    z-index: 1000;
+    left: 12px;
+    visibility: hidden;
+}*/
+
+.contentgeneralwhatif {
+    position: absolute;
+    margin-left: 5px;
+    font-family: arial;
+    font-size: 8px;
+    top: 50px   ;
+    right: 0;
+    padding: 1px 12px 12px 12px;
+    width: 102%;
+    z-index: 1;
+    left: 3px;
+    visibility: visible;
+}
+
+.contentwhatif {
+    position: absolute;
+    margin-left: 5px;
+    font: menu;
+    font-size: 8px;
+    top: 50px   ;
+    right: 0;
+    padding: 1px 12px 12px 12px;
+    width: 102%;
+    z-index: 1000;
+    left: 3px;
+    visibility: hidden;
+}
+
+.tabwhatifwizard {
+    position: absolute;
+    top: 6px;
+    white-space: nowrap;
+    font-size: 11px;
+    cursor: default !important;
+    white-space: nowrap;
+    z-index: 1000;
+    left: 8px;
+}
+
+.contentgeneralwhatifwizard {
+    position: absolute;
+    font-family: arial;
+    font-size: 8px;
+    top: 25px;
+    width: 100%;
+    z-index: 1;
+    left: 10px;
+    visibility: visible;
+}
+
+.contentwhatifwizard {
+    position: absolute;
+    font: menu;
+    font-size: 8px;
+    top: 25px   ;
+    width: 100%;
+    z-index: 1000;
+    left: 10px;
+    visibility: hidden;
+}
+
+.contentgeneralhedgerel {
+    position: absolute;
+    margin-left: -10px;
+    font-family: arial;
+    font-size: 8px;
+    top: 60px;
+    right: 0;
+    padding: 1px 12px 12px 12px;
+    width: 102%;
+    height: 80%;
+    z-index: 1;
+    left: 11px;
+    visibility: visible;
+}
+
+.contenthedgerel {
+    position: absolute;
+    margin-left: -10px;
+    font: menu;
+    font-size: 8px;
+    top: 60px;
+    right: 0;
+    padding: 1px 12px 12px 12px;
+    width: 102%;
+    height: 80%;
+    z-index: 1000;
+    left: 11px;
+    visibility: hidden;
+}
+
+.tabActive {
+    padding: 3px 9px 3px 9px;
+    color: #060610 ;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    background: #BCD0F4 url(../adiha.php.scripts/adiha_pm_html/process_controls/active_tab.gif) left top no-repeat;
+    height: 10px;
+    width: 130px;
+    text-align: center;
+}
+
+.tabActivehedges {
+    padding: 3px 9px 3px 9px;
+    color: #060610 ;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    background: #BCD0F4;
+    background-attachment: fixed;
+    background-image: url(../adiha.php.scripts/adiha_pm_html/process_controls/active_tab.gif);
+    background-position: left;
+    height: 10px;
+    width: 130px;
+    text-align: center;
+}
+
+.contentgeneralhedgeitem {
+    position: absolute;
+    font-family: arial;
+    font-size: 8px;
+    top: 35px   ;
+    width: 100%;
+    z-index: 1;
+    left: 10px;
+    visibility: visible;
+}
+
+.contenthedgeitem {
+    position: absolute;
+    font-family: arial;
+    font-size: 8px;
+    top: 35px   ;
+    width: 100%;
+    z-index: 1000;
+    left: 10px;
+    visibility: hidden;
+}
+
+.MsgBoardBody {
+    background-image: url(../main.menu/images/msgboardwallpaper.jpg);
+    background-attachment: fixed;
+    color: #000000;
+}
+
+.MsgHeader {
+    font-family: verdana;
+    color: #3B63A9;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 5px 0px 3px 5px;
+}
+
+.MsgBoardHeading {
+    color: #000000;
+    font-size: 12px;
+    font-family: tahoma;
+}
+
+.MsgTable {
+    color: #000000;
+    font-size: 10px;
+    font-family: tahoma;
+}
+
+.MsgTableError {
+    color: #E73A3A;
+}
+
+.message_board_hyperlink {
+    font-family: tahoma;
+    font-size: 11px;
+    width: 180px;
+    font-weight: bold;
+    float: left;
+}
+
+.msg_content {
+    font-family: tahoma;
+    font-size: 11px;
+    width: 80px;
+    padding-left: 5px;
+    float: left;
+    margin-bottom: 30px;
+    word-wrap: break-word;
+}
+
+.Report_html_header {
+    font-family: verdana;
+    font-size: 12px;
+    color: #000000;
+    font-weight: bold;
+    background: #FFFF00;
+}
+
+.Report_html_row {
+    font-family: tahoma;
+    font-size: 10px;
+    color: #000000;
+    background: #CCFFFF;
+}
+
+.Report_html_subtotal {
+    font-family: arial;
+    font-size: 12px;
+    color: #000000;
+    font-weight: bold;
+    background: #CCFFFF;
+}
+
+.Report_html_total {
+    font-family: arial;
+    font-size: 12px;
+    color: #000000;
+    font-weight: bold;
+    background: #EEEEFF;
+}
+
+.deal_content_tabs {
+    position: absolute;
+    margin-left: -10px;
+    font-family: arial;
+    font-size: 8px;
+    top: 65px;
+    padding: 1px 12px 12px 12px;
+    z-index: 1;
+    left: 260px;
+    visibility: visible;
+    width: 100%;
+    z-index: 9;
+}
+
+.deal_content_tabs_ems {
+    position: absolute;
+    margin-left: -10px;
+    font-family: arial;
+    font-size: 8px;
+    top: 30px;
+    right: 0;
+    padding: 1px 12px 12px 12px;
+    width: 102%;
+    height: 80%;
+    z-index: 1;
+    left: 10px;
+    visibility: visible;
+}
+
+.deal_tabs_ems {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    margin-left: 0;
+    height: 22px;
+    white-space: nowrap;
+    font: menu;
+    font-size: 11px;
+    line-height: 13px;
+    cursor: default !important;
+    font-weight: 700 !important;
+    white-space: nowrap;
+    z-index: 1000;
+    left: 6px;
+}
+
+.deal_tabs {
+    position: absolute;
+    top: 31px;
+    right: 7px;
+    margin-left: 193px;
+    height: 22px;
+    white-space: nowrap;
+    font: menu;
+    font-size: 11px;
+    line-height: 13px;
+    cursor: default !important;
+    font-weight: 700 !important;
+    z-index: 1000;
+    left: 53px;
+}
+
+.deal_detail_tabs {
+    position: absolute;
+    top: 14px;
+    right: 7px;
+    margin-left: 0;
+    height: 22px;
+    white-space: nowrap;
+    font: menu;
+    font-size: 11px;
+    line-height: 13px;
+    cursor: default !important;
+    font-weight: 700 !important;
+    white-space: nowrap;
+    z-index: 1000;
+    left: 1px;
+}
+
+.deal_detail_content_tabs {
+    position: absolute;
+    margin-left: -10px;
+    font-family: arial;
+    font-size: 8px;
+    top: 28px;
+    right: 0;
+    padding: 1px 12px 12px 12px;
+    width: 102%;
+    height: 80%;
+    z-index: 1;
+    left: 10px;
+    visibility: visible;
+}
+
+.deal_detail_general_content_tabs {
+    position: absolute;
+    margin-left: -10px;
+    font-family: arial;
+    font-size: 8px;
+    top: 60px;
+    right: 0;
+    padding: 1px 12px 12px 12px;
+    width: 102%;
+    height: 80%;
+    z-index: 1;
+    left: 11px;
+    visibility: visible;
+}
+
+.deal_detail_content_tabs {
+    position: absolute;
+    margin-left: -10px;
+    font: menu;
+    font-size: 8px;
+    top: 60px;
+    right: 0;
+    padding: 1px 12px 12px 12px;
+    width: 102%;
+    height: 80%;
+    z-index: 1000;
+    left: 11px;
+    visibility: hidden;
+}
+
+.tabs_header {
+    position: absolute;
+    margin-left: -5px;
+    font-family: arial;
+    font-size: 8px;
+    top: 36px;
+    right: 0;
+    padding: 1px 12px 12px 12px;
+    width: 102%;
+    height: 90px;
+    z-index: 10;
+    left: 10px;
+    visibility: visible;
+}
+
+.risk_detail_tabs {
+    position: absolute;
+    top: 75px;
+    right: 7px;
+    margin-left: 272px;
+    height: 22px;
+    white-space: nowrap;
+    font: menu;
+    font-size: 11px;
+    line-height: 13px;
+    cursor: default !important;
+    font-weight: 700 !important;
+    white-space: nowrap;
+    z-index: 1000;
+    left: 1px;
+}
+
+.deal_tabs_1 {
+    position: absolute;
+    top: 43px;
+    right: 7px;
+    margin-left: 10px;
+    height: 22px;
+    white-space: nowrap;
+    font: menu;
+    font-size: 11px;
+    line-height: 13px;
+    cursor: default !important;
+    font-weight: 700 !important;
+    white-space: nowrap;
+    z-index: 1000;
+    left: 1px;
+}
+
+.deal_content_tabs_1 {
+    position: absolute;
+    margin-left: -10px;
+    font-family: arial;
+    font-size: 8px;
+    top: 65px;
+    right: 0;
+    padding: 1px 12px 12px 12px;
+    width: 102%;
+    height: 80%;
+    z-index: 1;
+    left: 7px;
+    visibility: visible;
+}
+
+.what_if_content_tabs {
+    position: absolute;
+    margin-left: -10px;
+    font-family: arial;
+    font-size: 8px;
+    top: 230px;
+    right: 0;
+    padding: 1px 12px 12px 12px;
+    width: 102%;
+    height: 80%;
+    z-index: 1;
+    left: 11px;
+    visibility: visible;
+}
+
+DIV.grid {
+    overflow-y: scroll;
+    overflow-x: scroll;
+    position: relative;
+}
+
+DIV.grid TABLE TR.header {
+    position: relative;
+    top: expression(this.offsetParent.scrollTop);
+    z-index: 5;
+}
+
+DIV.grid TABLE TD.side {
+    position: relative;
+    left: expression(this.offsetParent.scrollLeft);
+    z-index: 1;
+    background-color : #CCCCCC;
+}
+
+DIV.grid TABLE TH.header {
+    position: relative;
+    top: expression(this.offsetParent.scrollTop);
+    z-index: 3;
+}
+
+DIV.grid TABLE TH.side {
+    position: relative;
+    top: expression(this.offsetParent.scrollTop);
+    left: expression(this.offsetParent.scrollLeft);
+    z-index: 5;
+}
+
+.clear {
+    clear: both;
+}
+.wrapper-container{
+    border-top:5px #fff solid;
+    border-left:5px #fff solid;
+    border-right:3px #fff solid;
+    margin: 0;
+}
+
+#wrapper,#wrapperIU {
+    padding: 0px;
+    width: 100%!important;
+}
+
+ /*#wrapperIU {
+   padding: 5px 0px 0px 5px;
+    display: inline-block;
+    position: absolute;
+    width: 100%;
+} */
+
+#header-wrapper {
+    margin-bottom: 5px;
+    margin-top: 3px;
+}
+
+#company-logo {
+    float: left;
+}
+
+#right-header {
+    float: right;
+    padding-right: 0px;
+}
+
+#right-header img {
+    float: right;
+    padding-right: 5px;
+}
+
+.footer.button {
+    margin-right: 3px;
+}
+
+/*Styles for form elements starts*/
+.row {
+    clear: both;
+    margin-top: 0px;
+    display: inline-block;
+    width: 100%;
+}
+
+.first {
+    margin-top: 0px;
+}
+
+#loginform .adiha_control{
+    height: 20px;
+}
+
+.component-container-xl {
+    float: left;
+    margin: 0px 38px 10px 0px;
+    width: 100%;
+    font-weight: bold;
+}
+
+.component-container {
+    float: left;
+    margin: 0px 38px 6px 0px;
+    width: 123px;
+    font-weight: bold;
+    line-height: 15px;
+}
+
+
+.component-container-right { /*right most component*/
+    float: left;
+    line-height: 15px;
+    margin: 0px 1px 10px 0px;
+    width: 123px;
+    font-weight: bold;
+}
+
+.component-container-button { /* file button */
+    float: right;
+    width: 35px;
+    padding-right: 0px;
+    margin-right: 0px;
+}
+
+
+.large {
+    width: 442px;
+}
+
+.medium {
+    width: 282px;
+}
+
+.component-container-grid {
+    float: left;
+    margin: 0px;
+    padding: 0px;
+    width: 100%;
+    font-weight: bold;
+}
+
+.component-container-horizontal-large {
+    float: left;
+    margin: 0px 38px 10px 0px;
+    width: 160px;
+    font-weight: bold;
+}
+
+.component-container-horizontal {
+    float: left;
+    margin: 2px 10px 0px 0px;
+    width: 110px;
+}
+
+.component-container-checkbox {
+    float: left;
+    margin: 0 14px 0 6px;
+    width: 100%;
+    font-weight: bold;
+}
+
+.padding3px {
+    padding-right: 2px;
+}
+
+.component-container-large {
+    float: left;
+    margin: 0px 38px 10px 0px;
+    font-weight: bold;
+    width: 140px;
+    text-align: left;
+    line-height: 15px;
+}
+
+.left {
+    margin-left: 0px;
+}
+
+.left-checkbox {
+    margin-left: -4px;
+}
+
+.right {
+    margin-right: 0px;
+}
+
+.component-container label, .component-container-large label {
+    font-weight: bold;
+    display: block;
+    padding-bottom: 3px;
+}
+
+.checkbox-single {
+    font-weight: bold;
+}
+
+.checkbox-with-other {
+    font-weight: bold;
+    margin-top: 4px;
+}
+
+/*Styles for form elements starts*/
+/*Styles for export buttons start*/
+.export-button, .export-button li {
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    list-style-type: none;
+    list-style: none;
+    cursor: pointer;
+}
+
+.export-button li {
+    display: inline;
+    float: left;
+    margin: 0 1px;
+}
+
+.export-button li.left {
+    margin-left: 0px;
+}
+
+.export-button li.right {
+    margin-right: 0px;
+}
+
+.export-bottom-gap {
+    padding-bottom: 3px;
+    margin: 0px;
+}
+
+/*Styles for export buttons end*/
+.tabs_general {
+    position: relative;
+    margin-top: 5px;
+}
+
+.deal_content_tabs_new {
+    position: absolute;
+    padding: 1px;
+    width: 100%;
+    height: 80%;
+    z-index: 1;
+    visibility: visible;
+}
+
+/*Styles for footer part starts*/
+.footer {
+    z-index: 10000;
+    margin: 1px 0px 0px 3px;
+}
+
+.footer-button {
+    float: right;
+    margin-right: -1px;
+    display: inline-block;
+}
+
+.horizontal-button {
+    float: left;
+    margin-top: 3px;
+    display: inline-block;
+    margin-left: -4px;
+}
+
+.help {
+    float: left;
+    display: inline-block;
+}
+
+/*Styles for footer part ends*/
+.vertical-buttons, .vertical-buttons li {
+    list-style: none;
+    margin: 0px 0px 0px 0px;
+    padding: 0;
+    width: 110px;
+    float: right;
+}
+
+/* Styles for tabs starts*/
+.tab-container {
+    position: relative;
+    font-weight: bold;
+}
+
+.tab-container a {
+    color: #303036;
+    z-index: 100;
+    text-decoration: none;
+    border-right: 1px solid #CFCFCF;
+    padding: 3px 5px 0 5px;
+    float: left;
+    height: 15px;
+    text-align: center;
+    margin-bottom: -1px;
+    width: 120px;
+}
+
+.tab-container a.active {
+    color: #060610 ;
+    background: url(../adiha.php.scripts/adiha_pm_html/process_controls/tab.png) left top no-repeat;
+    display: block;
+    padding-left: 6px;
+    margin-left: 1px;
+    text-align: center;
+    border: 0px;
+    width: 120px;
+}
+
+.tab-content-container {
+    display: inline-block;
+    position: relative;
+    z-index: 1000;
+    width: 100%;
+}
+
+.tab-content-container-deal {
+    display: inline-block;
+    position: relative;
+    z-index: 1000;
+    width: 100%;
+    border: antiquewhite;
+}
+
+.tab-contents {
+    position: absolute;
+    top: 0;
+    left: 0;
+    visibility: hidden;
+    width: 98%;
+}
+
+/* Styles for tabs ends*/
+
+.log-off {
+    float: right;
+    color: #707CA4;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: center;
+    font-size: 20px;
+}
+
+/* Styles for table start */
+.default_layout {
+    width: 100%;
+    border: none;
+    padding: 0px;
+}
+
+/* Styles for table ends*/
+.tabs-content-container {
+    position: absolute;
+    top: 28px;
+    left: 8px;
+    visibility: visible;
+}
+
+#header-editable-grid {
+    position: relative;
+    top: expression(this.offsetParent.scrollTop-0);
+    z-index: 50;
+    /*table-layout: fixed;*/
+    top: -5px;
+    padding: 5px;
+    white-space: nowrap;
+    border-collapse: collapse;
+    overflow: auto;
+}
+
+/* style for restful tabs with no config - jquery.tab.min.js reqd*/
+ul.jtabs {
+    font-size: 10px;
+    padding-top: .8em;
+    font-weight: bold;
+}
+
+ul.jtabs, .jtabs ul li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+ul.jtabs {
+    padding: 5px 0 0 0;
+}
+
+ul.jtabs li {
+    display: inline;
+    margin: 2px 2px 0 0;
+    height: 19px;
+    padding: 0;
+}
+
+ul.jtabs li a {
+    color: #000;
+    padding: 0px 0px 0px 0px;
+    margin: 0px 0 0px 0;
+    text-decoration: none;
+}
+
+ul.jtabs li a span {
+    padding: 0px 15px;
+    display: inline-block;
+}
+
+/*ul.jtabs li.active {background: #ced9e1 no-repeat 100% 0px;}
+*/
+ul.jtabs li.active a {
+    padding-top: 4px;
+    padding-bottom: 2px;
+    background: url("../adiha.php.scripts/adiha_pm_html/process_controls/tab-right.gif") no-repeat 100% 50%;
+    background-color: #ced9e1;
+}
+
+ul.jtabs li.active a span {
+    padding-top: 4px;
+    padding-bottom: 2px;
+    background: url("../adiha.php.scripts/adiha_pm_html/process_controls/tab-left.gif") no-repeat 0 50%;
+}
+
+ul.jtabs li.active a.theme-blue {
+    background: url("../adiha.php.scripts/adiha_pm_html/process_controls/tab-right-inner.gif") no-repeat 100% 0px;
+    color: #fff;
+}
+
+ul.jtabs li.active a.theme-blue span {
+    background: url("../adiha.php.scripts/adiha_pm_html/process_controls/tab-left-inner.gif") no-repeat;
+}
+
+ul.jtabs-content {
+    margin: 0;
+    padding: 0 0 0 4px;
+    display: block;
+}
+
+ul.jtabs-content li.child-section {
+    display: none;
+}
+
+ul.jtabs-content li {
+    list-style-type: none!important;
+}
+
+ul.jtabs-content li.active {
+    display: inline;
+}
+
+/*style for tables-ssrs, sable on other areas as well, width info should be added by self, just add data-table class on the table tag*/
+.data-table {
+    text-align: left;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    font-weight: bold;
+    padding: 4px;
+    background: #458bc1;
+    border-top: 1px solid #458bc2;
+    border-bottom: 1px solid #fff;
+    color: #fff;
+}
+
+.data-table td {
+    padding: 2px;
+    background: #e5eef4;
+    border-bottom: 1px solid #fff;
+    color: #666;
+    border-top: 1px solid transparent;
+}
+
+.data-table tr:hover td {
+    /*background: #d0dafd;
+    background: #d6f8e7;*/
+    color: #339;
+}
+
+.data-table-hoverless tr:hover td {
+    background: #e5eef4;
+    color: #666;
+}
+
+/*added later*/
+.horizontal-button {
+    float: left;
+    margin-top: 3px;
+    display: inline-block;
+    margin-left: -4px;
+}
+
+
+.menu_bg {
+    background: url(../main.menu/images/menu-bg.jpg);
+}
+/*
+.component-container-grid {
+    float: left;
+    margin: 0px 5px 0px 0px;
+    width: 99%;
+    font-weight: bold;
+}
+*/
+
+.clear {
+    clear: both;
+}
+
+/* show multiline content with proper spacing*/
+ul.ul-inside-grid {
+    margin: 0;
+    padding: 0;
+    list-style-position: inside;
+    list-style-type: square;
+}
+
+ul.ul-inside-grid li.grid-list-item-clean {
+    margin: 0;
+    padding: 2px 0 4px 0;
+}
+/*jquery ui autocomplete - native app theming*/
+.ui-autocomplete {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: block;
+    float: left;
+    position: absolute;
+    border: 1px solid #458bc1;
+}
+
+.ui-autocomplete .ui-autocomplete {
+    margin-top: -3px;
+}
+
+.ui-autocomplete .ui-menu-item {
+    margin: 0;
+    padding: 0;
+    zoom: 1;
+    float: left;
+    clear: left;
+    width: 100%;
+}
+
+.ui-autocomplete .ui-menu-item a {
+    text-decoration: none;
+    display: block;
+    padding: .2em;
+    line-height: 1.5;
+    zoom: 1;
+    background: white;
+}
+
+.ui-autocomplete .ui-menu-item a.ui-state-hover,.ui-autocomplete .ui-menu-item a.ui-state-active {
+    font-weight: normal;
+    background: #458bc1;
+    color: white;
+}
+
+* html .ui-autocomplete {
+    width: 1px;
+}
+/* without this, the menu expands to 100% in IE6 */
+
+/* Some action icons -  via sprite*/
+.r-icon-save, .r-icon-delete, .r-icon-undo, .r-icon-edit, .r-icon-cancel, .r-icon-move-cursor{
+    background: url("../adiha.php.scripts/adiha_pm_html/process_controls/sprites.png") no-repeat;
+        display: inline-block;
+        vertical-align: middle;
+}
+.r-icon{/*use if doctype not used*/
+    display: inline;
+    vertical-align: middle;
+}
+.r-icon-save{
+    background-position: -1px -2px ;
+    width: 16px;
+    height: 16px;
+}
+
+.r-icon-delete{
+    background-position: -20px -2px ;
+    width: 16px;
+    height: 16px;
+}
+
+.r-icon-undo{
+    background-position: -62px -3px ;
+    width: 16px;
+    height: 16px;
+}
+
+.r-icon-edit{
+    background-position: -41px -3px ;
+    width: 16px;
+    height: 16px;
+}
+
+.r-icon-cancel{
+    background-position: -80px -3px ;
+    width: 16px;
+    height: 16px;
+}
+.r-icon-move-cursor{
+    background-position: -100px -5px ;
+    width: 6px;
+    height: 6px;
+}
+
+.radio-group label {
+    font-weight: normal;
+    display: inline;
+}
+
+/*CSS for search */
+
+table.myTable {
+    border: 0px solid #BCD0F4;
+    font-size: 11px;
+    }
+
+.myTable tr.even {
+    background: none repeat scroll 0 0 #D5E6FA;
+    }
+
+.myTable tr.odd {
+    background: none repeat scroll 0 0 #F8FBFE;
+    }
+
+.myTable tr.drop {
+    background: url("../adiha.php.scripts/adiha_pm_html/process_controls/onclick_bg.jpg") repeat-x scroll 0 0 #ececec;
+    }
+
+.myTable td a {
+        color: #014F93;
+    }
+
+table.myTable td {
+    border-bottom: 0px solid #77A7CF;
+    border-right: 1px solid #77A7CF;
+    border-top: 1px solid #77A7CF;
+    font-family: Tahoma;
+    height: 12px;
+    padding: 5px;
+    text-align: left;
+    white-space: nowrap;
+    }
+
+td.nowrap th.nowrap {
+    overflow: hidden;
+    white-space: nowrap;
+    width: auto;
+    }
+
+#foldTable {
+    cursor: hand;
+}
+#editor {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+/*FARRMS customization of CodeMirror textbox starts */
+.CodeMirror pre {
+    font-family: Consolas;
+    font-size: 11px;
+}
+
+.CodeMirror {
+    font-family: Consolas;
+    font-size: 12px;
+}
+/*FARRMS customization of CodeMirror textbox ends */
+
+/*FARRMS customization of DHTMLX Grid starts*/
+div.gridbox table.hdr td {
+    text-align: left;
+    font-weight: bold;
+    padding: 4px;
+    background: #89DAB2 !important;
+    border-top: 1px solid #458bc2;
+    border-bottom: 1px solid #fff;
+    color: #fff;
+}
+
+div.gridbox table.obj tr td {
+    border-right: 1px solid;
+    border-color : #95acc0;
+    font-size: 11px;
+}
+/*FARRMS customization of DHTMLX Grid ends*/

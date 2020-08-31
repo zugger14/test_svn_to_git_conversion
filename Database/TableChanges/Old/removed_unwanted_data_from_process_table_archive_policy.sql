@@ -1,0 +1,1 @@
+delete from  process_table_archive_policy where tbl_name = 'edr_raw_data'

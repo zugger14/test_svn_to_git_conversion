@@ -1,0 +1,2 @@
+IF EXISTS (SELECT * FROM sys.foreign_keys WHERE object_id = OBJECT_ID(N'[dbo].[FK_source_price_curve_def_static_data_value5]') AND parent_object_id = OBJECT_ID(N'[dbo].[source_price_curve_def]'))
+ALTER TABLE source_price_curve_def DROP CONSTRAINT [FK_source_price_curve_def_static_data_value5]

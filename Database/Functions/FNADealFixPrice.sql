@@ -1,0 +1,14 @@
+IF EXISTS(SELECT * FROM   sys.objects WHERE  [object_id] = OBJECT_ID(N'[dbo].[FNADealFixPrice]') AND TYPE IN (N'FN', N'IF', N'TF', N'FS', N'FT') )
+    DROP FUNCTION [dbo].[FNADealFixPrice]
+GO
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE FUNCTION [dbo].[FNADealFixPrice] ()
+
+RETURNS FLOAT AS
+BEGIN
+	RETURN 1
+END
+GO

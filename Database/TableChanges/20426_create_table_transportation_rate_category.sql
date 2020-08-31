@@ -1,0 +1,24 @@
+IF EXISTS (SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'[dbo].[transportation_rate_category]') AND TYPE IN (N'U'))
+BEGIN
+    PRINT 'Table Already Exists'
+END
+ELSE
+BEGIN
+    CREATE TABLE [dbo].transportation_rate_category
+    (
+	[value_id]		INT IDENTITY(1,1) NOT NULL,
+	[code]			VARCHAR(50) NOT NULL,
+	[description]	VARCHAR(50) NULL,
+	[rate_category]	INT NOT NULL,
+	[pipeline]		INT NULL,
+	[type_id]		INT NULL,
+	[create_user]	VARCHAR(100) NULL DEFAULT dbo.FNADBUser(),
+	[create_ts]		DATETIME DEFAULT GETDATE(),
+	[update_user]	VARCHAR(100) NULL,
+	[update_ts]		DATETIME NULL,
+	CONSTRAINT [pk_value_id] PRIMARY KEY CLUSTERED([value_id] ASC)WITH (IGNORE_DUP_KEY = OFF) 
+	ON [PRIMARY]
+    ) ON [PRIMARY]
+    PRINT 'Table Successfully Created'
+END
+GO

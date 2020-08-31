@@ -1,0 +1,1 @@
+UPDATE application_functions SET file_path = '_settlement_billing/run_settlement/run.settlement.php' WHERE function_id = 10222300

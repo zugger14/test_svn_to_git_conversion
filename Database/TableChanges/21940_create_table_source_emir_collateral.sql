@@ -1,0 +1,67 @@
+IF EXISTS(SELECT 1 FROM sys.objects WHERE [object_id] = OBJECT_ID(N'[dbo].[source_emir_collateral]') AND [type] IN (N'U'))
+BEGIN
+	PRINT 'Table already exists.'
+	RETURN
+END
+ELSE
+BEGIN
+	CREATE TABLE [dbo].[source_emir_collateral] (
+		[source_emir_collateral_id] INT IDENTITY(1, 1) CONSTRAINT [PK_source_emir_collateral_id] PRIMARY KEY CLUSTERED WITH (IGNORE_DUP_KEY = OFF) NOT NULL,
+		[source_deal_header_id] INT,
+		[deal_id] VARCHAR(200),
+		[sub_book_id] INT,
+		[message_type] VARCHAR(250),
+		[data_submitter_message_id] VARCHAR(250),
+		[action] VARCHAR(250),
+		[data_submitter_prefix] VARCHAR(250),
+		[data_submitter_value] VARCHAR(250),
+		[trade_party_prefix] VARCHAR(250),
+		[trade_party_value] VARCHAR(250),
+		[execution_agent_party_prefix] VARCHAR(250),
+		[execution_agent_party_value] VARCHAR(250),
+		[collateral_portfolio_code] VARCHAR(250),
+		[collateral_portfolio] VARCHAR(250),
+		[value_of_the_collateral] VARCHAR(250),
+		[currency_of_the_collateral] VARCHAR(250),
+		[collateral_valuation_date_time] VARCHAR(250),
+		[collateral_reporting_date] VARCHAR(250),
+		[send_to] VARCHAR(250),
+		[execution_agent_masking_indicator] VARCHAR(250),
+		[trade_party_reporting_obligation] VARCHAR(250),
+		[other_party_id_type] VARCHAR(250),
+		[other_party_id] VARCHAR(250),
+		[collateralized] VARCHAR(250),
+		[initial_margin_posted] VARCHAR(250),
+		[initial_margin_posted_currency] VARCHAR(250),
+		[initial_margin_received] VARCHAR(250),
+		[initial_margin_received_currency] VARCHAR(250),
+		[variation_margin_posted] VARCHAR(250),
+		[variation_margin_posted_currency] VARCHAR(250),
+		[variation_margin_received] VARCHAR(250),
+		[variation_margin_received_currency] VARCHAR(250),
+		[excess_collateral_posted] VARCHAR(250),
+		[excess_collateral_posted_currency] VARCHAR(250),
+		[excess_collateral_received] VARCHAR(250),
+		[excess_collateral_received_currency] VARCHAR(250),
+		[third_party_viewer] VARCHAR(250),
+		[reserved_participant_use_1] VARCHAR(250),
+		[reserved_participant_use_2] VARCHAR(250),
+		[reserved_participant_use_3] VARCHAR(250),
+		[reserved_participant_use_4] VARCHAR(250),
+		[reserved_participant_use_5] VARCHAR(250),
+		[action_type_party_1] VARCHAR(250),
+		[third_party_viewer_id_type] VARCHAR(250),
+		[level] VARCHAR(250),
+		[process_id] VARCHAR(100),
+		[error_validation_message] VARCHAR(MAX),
+		[submission_status] INT,
+		[submission_date] DATETIME,
+		[create_date_from] DATETIME,
+		[create_date_to] DATETIME,
+		[create_user] VARCHAR(100) NULL DEFAULT dbo.FNADBUser(),
+		[create_ts] DATETIME DEFAULT GETDATE(),
+		[update_user] VARCHAR(100) NULL,
+		[update_ts] DATETIME NULL
+	)
+	PRINT 'Table Successfully Created'
+END

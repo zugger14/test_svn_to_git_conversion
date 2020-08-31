@@ -1,0 +1,2 @@
+IF NOT EXISTS (SELECT 'x' FROM INFORMATION_SCHEMA.columns WHERE table_name LIKE 'source_deal_detail_audit' AND column_name LIKE 'header_audit_id')
+ALTER TABLE source_deal_detail_audit ADD header_audit_id INT

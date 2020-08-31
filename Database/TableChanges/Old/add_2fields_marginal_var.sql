@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[marginal_var] add [MVaR_C] FLOAT,[MVaR_I] float

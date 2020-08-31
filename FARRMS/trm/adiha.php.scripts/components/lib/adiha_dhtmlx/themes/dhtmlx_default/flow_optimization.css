@@ -1,0 +1,422 @@
+<style>
+    body {
+		overflow: auto!important;
+        width: auto;
+        height: auto;
+    }
+    
+    #main_div {
+        display: none;
+    }
+    #loading {
+        display: block;
+        position: absolute;
+        z-index: 100;
+        width: 100%;
+        height: 100%;
+    }
+    #my_popup {
+        margin:  -10px -7px -10px -7px;
+        border: solid 1px #9F9D9E;
+        background: white;
+        width: auto;
+    }
+    .popup_body {
+        margin: 7px;
+        border: solid 1px #9F9D9E;
+        padding: 3px;
+        background: #CED9FD;
+    }
+    .popup_multipath {
+        border: solid 1px #9F9D9E;
+        background: #E7F1FA;
+        padding:  0px;
+        z-index: 9999;
+        margin: -8px -5px -8px -5px;
+        border-radius: 2px;
+        xbox-shadow: inset 0 0 7px #000000;
+        font: 10px verdana;
+        
+    }
+    .path_list_ul {
+        border: solid 1px green;
+        padding: 0px 0px 0px 0px;
+        list-style: none;
+        
+    }
+    .path_list_ul li {
+        border-bottom: solid 1px gray;
+        cursor: pointer;
+        padding: 0px 5px 3px 5px;
+        
+        white-space: nowrap;
+    }
+    .path_list_ul li:hover{
+        background: #F5FAFD;
+        xcolor: blue;
+    }
+    .popup_tbl {
+       font: 11px verdana; 
+       width: 100%;
+    }
+    .content_popup {
+        font: 11px verdana; 
+        margin-bottom: 3px;
+        xborder: solid 1px green;
+        
+    }
+    .mdq_info {
+        xborder: solid 1px green;
+        width: 120px;
+    }
+    .del_path_link {
+        cursor: pointer;
+        color: #2353C1;
+        text-decoration: none;
+        width: auto;
+        height: 100%;
+        xborder: solid 1px red;
+    }
+    .chk_cell {
+        xborder: solid 1px #408080;
+        float: left;
+    }
+    .link_cell {
+        xborder: solid 1px #408080;
+        float: left;
+        height: auto;
+        padding-top: 2px;
+    }
+    .path_dd, .storage_contract_dd {
+        font: 10px Verdana, Geneva, sans-serif;
+        height: 16px;
+        width:auto;
+        max-width: 320px;
+        min-width: 190px;
+        border: solid 1px gray;
+    }
+    .popup_contract {
+        font: 10px Verdana, Geneva, sans-serif;
+        height: 16px;
+        width: auto;
+    }
+    .pop_ip1,.pop_ip2 { 
+    	font: 10px Verdana, Geneva, sans-serif;
+        height: 13pt;  
+        text-align: right;    
+    }
+    .popup_invalid_mdq {
+        background: #FB8689;
+    }
+    .allmdq_label{
+    	Xborder: solid 1px #9FF;
+    	float: left;
+    	text-align: right;
+        width: 67%;
+    	height: 15px;
+    }
+    .allmdq_value{
+    	Xborder: solid 1px #9FF;
+    	float: right;
+    	text-align: left;
+    	width: 30%;
+    	height: 15px;
+     }
+    .mdq_div {
+    	xborder: solid 1px green;
+    	width:auto;
+    	height:13px;
+    }
+    .inner_div {
+    	xborder: solid 1px brown;
+    	width:auto;
+        xbackground-color: #CCCCC8;
+    }
+    .center_div {
+        padding-bottom: 2px;
+        width: 157px;
+        float: left;
+        cursor: pointer;
+    }
+    .top_div, .bottom_div {
+    	height: 18px;
+    }
+    
+    .box_div {
+        border: solid 1px #D8D8D8;
+        height: 35px;
+    	width: 180px;
+    	font-size: 10px;
+    	font-family: Verdana, Geneva, sans-serif;
+        background-color: #F5F9FF;
+        padding: 0px;
+        margin: 0px;
+    }
+    .data_td {
+        width: 168px;
+    }
+    .frame_tbl {
+        background-color: #DDEAF3;
+        font: 11px Verdana, Geneva, sans-serif;
+        border-collapse:collapse; 
+        width: auto;
+
+    }
+    
+    table.frame_tbl > tbody > tr {
+    }
+    table.frame_tbl > tbody > tr > td {
+        border: solid 1px #BDCEE8;
+    }
+    .row_label, .col_label {
+        xborder: solid 1px red;
+        width: auto;
+    }
+    .row_chk_div, .col_chk_div {
+        xborder: solid 1px green;
+        width: auto;
+        
+    }
+    
+    .first_frame_div {
+        xbackground-color: black;
+        
+    }
+    #main_div {
+        xborder: solid 2px green;
+        height: auto;
+        width: auto;
+    }
+    
+    .supply_td {
+        color: #FFFFFF;
+        xbackground: -ms-linear-gradient(right, #FFFFFF 0%, #005D8A 20%);
+        background: #488DC8;
+        border: 0 !important;
+    }
+    .demand_td {
+        color: #FFFFFF;
+        xbackground: -ms-linear-gradient(bottom, #FFFFFF 0%, #005D8A 30%);
+        background: #488DC8;
+        height: 30px;
+        border: 0 !important;
+    }
+    .blank_td_outer {
+        background: #488DC8;
+        border: 0 !important;
+    }
+    .blank_td_inner {
+        color: #FFFFFF;
+        background: #DDEAF3;
+        border: 0 !important;
+    }
+    .position_drill_d, .position_drill_r {
+        color: black;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+    .row_label a, .col_label a {
+        color: #005FAF;
+        text-decoration: none;
+    }
+    /*
+    .frame_tbl tr:nth-child(-n+3) td:nth-child(-n+3) {
+        color: #FFFFFF;
+        background: #225ACB;
+        border: 0;
+    }
+    */
+    .col_chk_div, .row_chk_div {
+        width: auto;
+        float: left;
+        xborder: solid 1px black;
+    }
+    .col_label, .row_label {
+        width: 117px;
+        height: auto;
+        float: left;
+        padding-top: 2px;
+        xborder: solid 1px black;
+        xfont-weight: bold;
+    }
+    .loc_name_wrapper {
+        xborder: solid 1px red;
+        height: 35px;
+        width: 181px; /* same width as box div + 1 */
+        position: relative;
+    }
+    .path_insert {
+        xborder: solid 1px green;
+        width: 18px;
+        height: auto;
+        float: left;
+        margin-left:-20px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 13px;
+        color: #2353c1;
+        cursor: pointer;
+    }
+	
+	.match {
+        
+        width: 14px;
+        height: auto;
+        float: right!important;
+        margin-left:-20px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 8px;
+        color: #ffffff;
+        cursor: pointer;
+        background-color: #2353c1;
+    }
+	
+    .total_beg_inv_del, .total_end_inv_del, .total_beg_inv_rec, .total_end_inv_rec {
+        xfont-weight: bold;
+    }
+    .demand_td, .supply_td {
+        font-weight: bold;
+        xfont-style: italic;
+    }
+    .flow_optimization_grid {
+        background: #bcd0f4; 
+        border: solid 1px green; 
+		width: auto; 
+        min-width: 98.9%;
+        height: auto;
+        min-height: 97.6%; 
+		xoverflow: auto;
+        position: absolute;
+    }
+    #nominate_wrapper_div {
+        width: 810px; 
+        height: 35px; 
+        xborder: solid 1px black;
+    }
+    .d_inv_appended, .r_inv_appended {
+        cursor: default;
+        color: #B7D1EC;
+    }
+    
+    /****POP up contract*/
+    .tbl_contract_pop_up {
+        border: solid 1px gray;
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .div_contract_pop_up_body {
+        height: 18px;
+        overflow-y: auto;
+        -ms-overflow-style: none;
+        xborder: solid 1px gray;
+        
+    }
+    
+    /** CONTRACT DETAIL HEADER/FOOTER **/
+    .tbl_contract_pop_up_header {
+        width: 100%;
+        background: #C3D1FF;
+    }
+    .tbl_contract_pop_up_footer {
+        background: #E3E3E3;
+    }
+    .tbl_contract_pop_up_header td, .tbl_contract_pop_up_footer td {
+        xwidth: 60px;
+        font-weight: bold;
+        color: #00002b;
+    }
+    .tbl_contract_pop_up_header td, .tbl_contract_pop_up_footer td {
+        xbackground: silver;
+        border: solid 1px gray;
+    }
+    .tbl_contract_pop_up_footer td:nth-child(n+2) {
+        text-align: right;
+    }
+    .tbl_contract_pop_up_header td:nth-child(1) {
+        width: 10px;
+    }
+    
+    .tbl_contract_pop_up_header td:nth-child(2) {
+        width: 70px;
+        text-align: left;
+    }
+    .tbl_contract_pop_up_header td:nth-child(3),.tbl_contract_pop_up_header td:nth-child(4)
+    ,.tbl_contract_pop_up_header td:nth-child(5),.tbl_contract_pop_up_header td:nth-child(6) {
+        width: 44px;
+    }
+    .tbl_contract_pop_up_header td:nth-child(7),.tbl_contract_pop_up_header td:nth-child(8) {
+        width: 60px;
+    }
+    
+    
+    /** CONTRACT DETAIL BODY **/
+    .tbl_contract_pop_up_body {
+        width: 100%;
+    }
+    .tbl_contract_pop_up_body  tr{
+        border-bottom: solid 1px gray;
+    }
+    .tbl_contract_pop_up_body td:nth-child(2),.tbl_contract_pop_up_body td:nth-child(3),.tbl_contract_pop_up_body td:nth-child(4)
+    ,.tbl_contract_pop_up_body td:nth-child(5),.tbl_contract_pop_up_body td:nth-child(6),.tbl_contract_pop_up_body td:nth-child(7) {
+        border-right: solid 1px gray;
+    }
+    .tbl_contract_pop_up_body td:nth-child(n+2) {
+        text-align: right;
+    }
+    .tbl_contract_pop_up_body td:nth-child(1) {
+        width: 10px;
+        
+    }
+    .tbl_contract_pop_up_body td:nth-child(2) {
+        max-width: 67px;
+        text-align: left;
+        word-wrap: break-word;
+    }
+    .tbl_contract_pop_up_body td:nth-child(3),.tbl_contract_pop_up_body td:nth-child(4)
+    ,.tbl_contract_pop_up_body td:nth-child(5),.tbl_contract_pop_up_body td:nth-child(6) {
+        width: 45px;
+    }
+    .tbl_contract_pop_up_body td:nth-child(7),.tbl_contract_pop_up_body td:nth-child(8) {
+        width: 60px;
+    }
+    
+    /* contract detail template classes for active and inactive */
+    .cd_active {
+        display: table;
+    }   
+    .cd_inactive {
+        display: none;
+    }
+    
+    /** SCROLLED DIVS CSS **/
+    .scrolled_d, .scrolled_r {
+        background-color: #488DC8;
+
+    }
+    
+    .solver_loading {
+        display: none;
+        text-align: center;
+        width: 180px;
+        height: 35px;
+        border: solid 1px #D8D8D8;
+        background-color: #F5F9FF;
+        line-height: 35px;
+    }
+    
+    /* CUSTOM TOOLBAR CSS */
+    .div_custom_toolbar {
+        width: auto;
+    }
+    
+    /* MANUAL SCHEDULE SAVE BUTTON CSS */
+    #pop_up_save {
+        background-color: #E3E3E3;
+        cursor: pointer;
+    }
+    #pop_up_save:hover {
+        background-color: #D5D5D5;
+    }
+   
+    </style>

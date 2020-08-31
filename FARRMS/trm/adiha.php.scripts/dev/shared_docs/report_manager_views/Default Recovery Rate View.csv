@@ -1,0 +1,5 @@
+debt_rating,effective_date,recovery,months,rate,debt_rating_id,as_of_date,rating_type_id,rating_type
+A1,00:00.0,No,24,0.7,309162,May  1 2016 12:00AM,10098,Debt Rating
+a-,00:00.0,No,24,0.88,309153,May  1 2016 12:00AM,10098,Debt Rating
+1+,00:00.0,No,24,1,307090,May  1 2016 12:00AM,10098,Debt Rating
+Rating2,00:00.0,No,24,0.5,303171,May  1 2016 12:00AM,10097,Internal Rating

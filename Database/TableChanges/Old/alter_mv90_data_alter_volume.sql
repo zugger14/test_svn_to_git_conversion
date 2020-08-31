@@ -1,0 +1,2 @@
+
+ALTER TABLE mv90_data ALTER COLUMN volume FLOAT NULL

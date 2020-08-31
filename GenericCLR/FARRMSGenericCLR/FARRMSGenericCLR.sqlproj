@@ -1,0 +1,147 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Name>FARRMSGenericCLR</Name>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>4.1</ProjectVersion>
+    <ProjectGuid>{ace1fc45-dbd5-4866-ab43-56425c72d017}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
+    <OutputType>Database</OutputType>
+    <RootPath>
+    </RootPath>
+    <RootNamespace>FARRMSGenericCLR</RootNamespace>
+    <AssemblyName>FARRMSGenericCLR</AssemblyName>
+    <ModelCollation>1033,CI</ModelCollation>
+    <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
+    <DeployToDatabase>True</DeployToDatabase>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetLanguage>CS</TargetLanguage>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SqlServerVerification>False</SqlServerVerification>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
+    <DefaultCollation>SQL_Latin1_General_CP1_CI_AS</DefaultCollation>
+    <DefaultFilegroup>PRIMARY</DefaultFilegroup>
+    <Trustworthy>True</Trustworthy>
+    <PermissionSet>UNSAFE</PermissionSet>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <!-- VS10 without SP1 will not have VisualStudioVersion set, so do that here -->
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <ItemGroup>
+    <Folder Include="Properties" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="Microsoft.VisualBasic" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="Accessibility" />
+    <Reference Include="WindowsBase" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="BouncyCastle.Crypto">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR\BouncyCastle.Crypto.dll</HintPath>
+    </Reference>
+    <Reference Include="DocumentFormat.OpenXml">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR\DocumentFormat.OpenXml.dll</HintPath>
+    </Reference>
+    <Reference Include="Ionic.Zip">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR\Ionic.Zip.dll</HintPath>
+    </Reference>
+    <Reference Include="Jint">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR\Jint.dll</HintPath>
+    </Reference>
+    <Reference Include="MailKit">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR\MailKit.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.SqlServer.TransactSql.ScriptDom">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR\Microsoft.SqlServer.TransactSql.ScriptDom.dll</HintPath>
+    </Reference>
+    <Reference Include="MimeKit">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR\MimeKit.dll</HintPath>
+    </Reference>
+    <Reference Include="WordDocumentGenerator.Library">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR\WordDocumentGenerator.Library.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CholeskyDecomposition.cs" />
+    <Compile Include="EigenvalueDecomposition.cs" />
+    <Compile Include="GeneralMatrix.cs" />
+    <Compile Include="GenerateDocumentUsingXML.cs" />
+    <Compile Include="LUDecomposition.cs" />
+    <Compile Include="QRDecomposition.cs" />
+    <Compile Include="SingularValueDecomposition.cs" />
+    <Compile Include="StoredProcedure.cs" />
+    <Compile Include="UserDefinedFunction.cs" />
+    <Compile Include="PsJson.cs" />
+    <Compile Include="MailTaskOutlook.cs" />
+    <Compile Include="ExcelHelper.cs" />
+    <Compile Include="TSqlScriptParser.cs" />
+    <Compile Include="ExportStatus.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FARRMSWebServices\FARRMS.WebServices.csproj">
+      <Name>FARRMS.WebServices</Name>
+      <Project>{3b05eaf1-970e-4d3b-8bef-da79a5928ce6}</Project>
+      <Private>True</Private>
+      <IsModelAware>True</IsModelAware>
+      <GenerateSqlClrDdl>True</GenerateSqlClrDdl>
+      <SqlOwnerName>dbo</SqlOwnerName>
+      <SqlPermissionSet>UNSAFE</SqlPermissionSet>
+    </ProjectReference>
+    <ProjectReference Include="..\FARRMSUtilities\FARRMSUtilities.csproj">
+      <Name>FARRMSUtilities</Name>
+      <Project>{0700a174-b7d6-437e-801c-eeee9b970a24}</Project>
+      <Private>True</Private>
+      <IsModelAware>True</IsModelAware>
+      <GenerateSqlClrDdl>True</GenerateSqlClrDdl>
+    </ProjectReference>
+  </ItemGroup>
+  <PropertyGroup>
+    <PostBuildEvent>
+if "Debug" == "$(ConfigurationName)" (goto :donot_copy_to_clr_deploy_folder)
+if "Release" =="$(ConfigurationName)" (
+CD $(ProjectDir)
+
+copy /y bin\Debug\FARRMSGenericCLR.dll ..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR
+
+copy /y bin\Debug\FARRMSWebServices.dll ..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR
+)
+
+:donot_copy_to_clr_deploy_folder	
+	
+</PostBuildEvent>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,5 @@
+IF EXISTS( SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'counterparty_products' AND  COLUMN_NAME = 'trader_id')
+BEGIN
+	ALTER TABLE counterparty_products
+	ALTER COLUMN trader_id VARCHAR(2000)
+END

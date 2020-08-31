@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<DTSConfiguration>
+	<DTSConfigurationHeading>
+		<DTSConfigurationFileInfo GeneratedBy="Pioneer\Admin" GeneratedFromPackageName="SSISImport" GeneratedFromPackageID="{68722643-5713-41E9-8D95-263672138D01}" GeneratedDate="2018-12-06 12:01:24 AM"/>
+	</DTSConfigurationHeading>
+	
+	<!-- FOR SQL Auth, cannot use ConnectionString as in win Auth as need to overwrite Properties[UserName] with current user via expression-->
+	<Configuration ConfiguredType="Property" Path="\Package.Connections[OLE_CONN_MainDB].Properties[InitialCatalog]" ValueType="String">
+		<ConfiguredValue>TRMTracker_Release</ConfiguredValue>
+	</Configuration>
+	<Configuration ConfiguredType="Property" Path="\Package.Connections[OLE_CONN_MainDB].Properties[Name]" ValueType="String">
+		<ConfiguredValue>OLE_CONN_MainDB</ConfiguredValue>
+	</Configuration>
+	<Configuration ConfiguredType="Property" Path="\Package.Connections[OLE_CONN_MainDB].Properties[Password]" ValueType="String">
+		<ConfiguredValue>SomeComplexPassword</ConfiguredValue>
+	</Configuration>
+	<Configuration ConfiguredType="Property" Path="\Package.Connections[OLE_CONN_MainDB].Properties[ServerName]" ValueType="String">
+		<ConfiguredValue>SG-D-SQL02.farrms.us,2033</ConfiguredValue>
+	</Configuration>
+	<Configuration ConfiguredType="Property" Path="\Package.Connections[OLE_CONN_MainDB].Properties[UserName]" ValueType="String">
+		<ConfiguredValue>farrms_admin</ConfiguredValue>
+	</Configuration>
+	
+	<!-- FOR Win Auth -->
+	<Configuration ConfiguredType="Property" Path="\Package.Connections[OLE_CONN_MainDB].Properties[ConnectionString]" ValueType="String">
+        <ConfiguredValue>Provider=SQLNCLI11;Persist Security Info=True;Auto Translate=False;
+        Data Source=SG-D-SQL02.farrms.us,2033;
+        Initial Catalog=TRMTracker_Release;Integrated Security=SSPI;
+		</ConfiguredValue>
+    </Configuration>
+</DTSConfiguration>

@@ -1,0 +1,1 @@
+update process_risk_controls set control_type=NULL where control_type=291327

@@ -1,0 +1,4 @@
+IF EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = 'variable_charge' AND COLUMN_NAME = 'rate')
+BEGIN
+	ALTER TABLE variable_charge ALTER COLUMN rate FLOAT
+END

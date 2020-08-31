@@ -1,0 +1,7 @@
+IF EXISTS(SELECT 1 FROM setup_menu WHERE function_id = 10100000 AND product_category = 10000000)
+BEGIN
+	UPDATE setup_menu 
+	SET parent_menu_id = 10100000 
+	WHERE function_id = 10101500 and 
+	display_name = 'Setup Netting Group'
+END

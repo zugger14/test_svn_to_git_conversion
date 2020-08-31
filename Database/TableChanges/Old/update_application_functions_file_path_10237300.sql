@@ -1,0 +1,1 @@
+UPDATE application_functions set file_path = '_accounting/derivative/transaction_processing/des_of_a_hedge/view.link.php?mode=r&function_id=10237300' WHERE function_id = 10237300

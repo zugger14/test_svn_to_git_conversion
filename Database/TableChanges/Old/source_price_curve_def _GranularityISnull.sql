@@ -1,0 +1,1 @@
+UPDATE source_price_curve_def SET Granularity =980 WHERE Granularity IS null

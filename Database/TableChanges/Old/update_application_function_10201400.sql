@@ -1,0 +1,1 @@
+UPDATE application_ui_template SET is_report = 'n' WHERE application_function_id = 10201400

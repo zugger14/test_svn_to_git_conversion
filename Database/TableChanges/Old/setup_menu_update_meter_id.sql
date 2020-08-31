@@ -1,0 +1,1 @@
+update setup_menu set display_name = 'Setup Meter' from setup_menu where function_id = 10103000 and product_category = 10000000 and parent_menu_id = 10100000

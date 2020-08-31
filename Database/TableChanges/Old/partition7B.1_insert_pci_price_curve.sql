@@ -1,0 +1,85 @@
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'source_price_curve')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('source_price_curve'
+           ,25
+           ,'DATE'
+           ,'as_of_date'
+           ,'PF_Price_curve'
+           ,'PS_Price_curve'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'source_price_curve'
+           ,'source_price_curve_archive'
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+
+--------------For Cached Curve 
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'cached_curves_value')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('cached_curves_value'
+           ,25
+           ,'DATE'
+           ,'as_of_date'
+           ,'PF_cached_curve'
+           ,'PS_cached_curve'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'cached_curves_value'
+           ,'cached_curves_value_archive'
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+

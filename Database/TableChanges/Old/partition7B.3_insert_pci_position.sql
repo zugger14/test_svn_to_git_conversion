@@ -1,0 +1,299 @@
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'report_hourly_position_deal')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('report_hourly_position_deal'
+           ,24
+           ,'DATE'
+           ,'term_start'
+           ,'PF_position_report_hourly_position_deal'
+           ,'PS_position_report_hourly_position_deal'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'report_hourly_position_deal'
+           ,'report_hourly_position_deal_archive'
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+
+-------------------------------INSERT PCI FOR report_hourly_position_profile
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'report_hourly_position_profile')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('report_hourly_position_profile'
+           ,24
+           ,'DATE'
+           ,'term_start'
+           ,'PF_position_report_hourly_position_profile'
+           ,'PS_position_report_hourly_position_profile'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'report_hourly_position_profile'
+           ,'report_hourly_position_profile_archive'
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+
+-------------------------------INSERT PCI FOR report_hourly_position_breakdown
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'report_hourly_position_breakdown')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('report_hourly_position_breakdown'
+           ,24
+           ,'DATE'
+           ,'term_start'
+           ,'PF_position_report_hourly_position_breakdown'
+           ,'PS_position_report_hourly_position_breakdown'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'report_hourly_position_breakdown'
+           ,'report_hourly_position_breakdown_archive'
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+
+-------------------------------INSERT PCI FOR delta_report_hourly_position
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'delta_report_hourly_position')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('delta_report_hourly_position'
+           ,24
+           ,'DATE'
+           ,'term_start'
+           ,'PF_position_delta_report_hourly_position'
+           ,'PS_position_delta_report_hourly_position'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'delta_report_hourly_position'
+           ,'delta_report_hourly_position_archive'
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+
+------------------------------INSERT PCI FOR report_hourly_position_fixed
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'report_hourly_position_fixed')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('report_hourly_position_fixed'
+           ,24
+           ,'DATE'
+           ,'term_start'
+           ,'PF_position_report_hourly_position_fixed'
+           ,'PS_position_report_hourly_position_fixed'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'report_hourly_position_fixed'
+           ,'report_hourly_position_fixed_archive'
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+
+------------------------------INSERT PCI FOR deal_position_break_down
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'deal_position_break_down')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('deal_position_break_down'
+           ,24
+           ,'DATE'
+           ,'term_start'
+           ,'PF_position_deal_position_break_down'
+           ,'PS_position_deal_position_break_down'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'deal_position_break_down'
+           ,'deal_position_break_down_archive'
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+
+------------------------------INSERT PCI FOR delta_report_hourly_position_breakdown
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'delta_report_hourly_position_breakdown')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('delta_report_hourly_position_breakdown'
+           ,24
+           ,'DATE'
+           ,'term_start'
+           ,'PF_position_delta_report_hourly_position_breakdown'
+           ,'PS_position_delta_report_hourly_position_breakdown'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'delta_report_hourly_position_breakdown'
+           ,'delta_report_hourly_position_breakdown_archive'
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END

@@ -1,0 +1,1 @@
+alter table [dbo].[source_deal_pnl_arch1] alter column source_deal_pnl_id [int]

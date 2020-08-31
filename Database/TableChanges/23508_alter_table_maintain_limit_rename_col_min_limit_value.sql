@@ -1,0 +1,1 @@
+EXEC sp_RENAME 'maintain_limit.min_limit_id', 'min_limit_value', 'COLUMN'

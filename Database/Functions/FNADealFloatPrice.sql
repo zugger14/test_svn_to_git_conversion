@@ -1,0 +1,12 @@
+IF OBJECT_ID(N'FNADealFloatPrice', N'FN') IS NOT NULL
+DROP FUNCTION FNADealFloatPrice
+ GO 
+
+CREATE FUNCTION FNADealFloatPrice()
+RETURNS float AS  
+BEGIN 
+	RETURN 1
+END
+
+
+

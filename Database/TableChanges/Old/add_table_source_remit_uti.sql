@@ -1,0 +1,11 @@
+IF OBJECT_ID('dbo.source_remit_uti') IS NULL
+BEGIN
+	CREATE TABLE dbo.source_remit_uti(id INT IDENTITY(1,1), source_deal_header_id INT, deal_id VARCHAR(100),  acer_submission_status INT, acer_submission_date DATETIME, acer_confirmation_date DATETIME,  [user] VARCHAR(100), buy_sell_flag CHAR(1), deal_counterparty_id VARCHAR(100), deal_source_code VARCHAR(100), sub_counterparty_id VARCHAR(100), sub_source_code VARCHAR(100), fixed_price FLOAT, option_first_exercise_date DATETIME, option_last_exercise_date DATETIME, option_type VARCHAR(100), sub_id INT, stra_id INT, book_id INT, sub_book_id INT, subsidiary VARCHAR(100), strategy VARCHAR(100), book VARCHAR(100), sub_book VARCHAR(100), contract_id VARCHAR(100), energy_commodity VARCHAR(100), estimated_notional_amount FLOAT, notional_currency VARCHAR(100), sourcing_classification VARCHAR(100),
+	forecasting_group VARCHAR(100), volume_optionality_capacity FLOAT, delivery_point VARCHAR(100), fixing_frequency CHAR(1), fixing_index VARCHAR(100), fixing_index_source VARCHAR(100), fixing_index_type VARCHAR(100), load_type VARCHAR(100), notional_quantity_unit VARCHAR(100), option_exercise_frequency VARCHAR(100), option_strike_index VARCHAR(100), option_strike_index_source VARCHAR(100), option_strike_price VARCHAR(100), option_style VARCHAR(100),
+	settlement_method CHAR(1), strike_index_type VARCHAR(100), type_of_index_price CHAR(1), volume_optionality CHAR(1), volume_optionality_frequency CHAR(1), volume_optionality_intervals VARCHAR(100),
+	beneficiary_id VARCHAR(100), contract_type VARCHAR(100), trading_capacity_of_the_market_participant_or_counterparty_in_field1 CHAR(1), type_of_code_used_in_field7 VARCHAR(100),
+	contract_date DATETIME, first_fixing_date DATETIME, last_fixing_date DATETIME, total_notional_contract_quantity NUMERIC(38,20), delivery_start_date DATETIME, delivery_end_date DATETIME,
+	action_type VARCHAR(100), Hash_of_concatenated_values VARCHAR(1000), progressive_number INT, uti VARCHAR(1000), [error_message] VARCHAR(8000), filename VARCHAR(100), process_id VARCHAR(100), [xml] xml, report_type INT, create_date_from DATETIME, create_date_to DATETIME, create_ts DATETIME DEFAULT GETDATE(), create_user VARCHAR(100) DEFAULT dbo.FNADBUser())
+END
+
+--drop table dbo.source_remit_uti

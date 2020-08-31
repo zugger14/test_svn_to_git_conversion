@@ -1,0 +1,2 @@
+
+ALTER TABLE source_deal_header_template alter column hourly_position_breakdown int

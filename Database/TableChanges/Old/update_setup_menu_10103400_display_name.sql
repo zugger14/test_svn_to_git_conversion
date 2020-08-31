@@ -1,0 +1,1 @@
+UPDATE setup_menu SET display_name = 'Setup Default GL Group' where function_id = 10103400

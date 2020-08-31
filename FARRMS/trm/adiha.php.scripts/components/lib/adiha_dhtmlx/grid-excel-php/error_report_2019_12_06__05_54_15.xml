@@ -1,0 +1,27 @@
+<rows profile='color'><head><columns><column  width='200' align='left' type='tree' hidden='false' sort='na' color='' id='deal_group'><![CDATA[Group]]></column><column  width='160' align='left' type='dhxCalendarA' hidden='false' sort='date' color='' id='term_start'><![CDATA[
+Term Start]]></column><column  width='160' align='left' type='dhxCalendarA' hidden='false' sort='date' color='' id='term_end'><![CDATA[
+Term End]]></column><column  width='150' align='left' type='combo' hidden='false' sort='str' color='' id='buy_sell_flag'><![CDATA[
+Buy/Sell]]></column><column  width='150' align='left' type='combo' hidden='false' sort='str' color='' id='location_id'><![CDATA[
+Location]]></column><column  width='150' align='left' type='combo' hidden='false' sort='str' color='' id='curve_id'><![CDATA[
+Valuation Index]]></column><column  width='150' align='right' type='ed_no' hidden='false' sort='str' color='' id='deal_volume'><![CDATA[
+Capacity]]></column><column  width='150' align='right' type='combo' hidden='false' sort='str' color='' id='deal_volume_uom_id'><![CDATA[
+UOM]]></column><column  width='150' align='left' type='combo' hidden='false' sort='str' color='' id='deal_volume_frequency'><![CDATA[
+Frequency]]></column><column  width='150' align='right' type='ed_no' hidden='false' sort='str' color='' id='total_volume'><![CDATA[
+Total Capacity]]></column><column  width='150' align='right' type='combo' hidden='false' sort='str' color='' id='position_uom'><![CDATA[
+Total Capacity UOM]]></column><column  width='150' align='right' type='ed_p' hidden='false' sort='str' color='' id='fixed_price'><![CDATA[
+Capacity Fees]]></column><column  width='150' align='right' type='combo' hidden='false' sort='str' color='' id='fixed_price_currency_id'><![CDATA[
+Currency]]></column></columns></head>
+<row level="0"><cell><![CDATA[CAVLSR_2_BSOLAR - North Import - 11/25/2019 - 11/25/2019]]></cell><cell><![CDATA[11/25/2019]]></cell><cell><![CDATA[11/25/2019]]></cell><cell><![CDATA[Buy]]></cell><cell><![CDATA[CAVLSR_2_BSOLAR [Generator]]]></cell><cell><![CDATA[North Import]]></cell><cell><![CDATA[ ]]></cell><cell><![CDATA[MW]]></cell><cell><![CDATA[Hourly]]></cell><cell><![CDATA[ ]]></cell><cell><![CDATA[MWh]]></cell><cell><![CDATA[ ]]></cell><cell><![CDATA[USD]]></cell></row></rows><rows profile='color'><head><columns><column  width='200' align='left' type='tree' hidden='false' sort='na' color='' id='deal_group'><![CDATA[Group]]></column><column  width='160' align='left' type='dhxCalendarA' hidden='false' sort='date' color='' id='term_start'><![CDATA[
+Term Start]]></column><column  width='160' align='left' type='dhxCalendarA' hidden='false' sort='date' color='' id='term_end'><![CDATA[
+Term End]]></column><column  width='150' align='left' type='combo' hidden='false' sort='str' color='' id='buy_sell_flag'><![CDATA[
+Buy/Sell]]></column><column  width='150' align='left' type='combo' hidden='false' sort='str' color='' id='location_id'><![CDATA[
+Location]]></column><column  width='150' align='left' type='combo' hidden='false' sort='str' color='' id='curve_id'><![CDATA[
+Valuation Index]]></column><column  width='150' align='right' type='ed_no' hidden='false' sort='str' color='' id='deal_volume'><![CDATA[
+Capacity]]></column><column  width='150' align='right' type='combo' hidden='false' sort='str' color='' id='deal_volume_uom_id'><![CDATA[
+UOM]]></column><column  width='150' align='left' type='combo' hidden='false' sort='str' color='' id='deal_volume_frequency'><![CDATA[
+Frequency]]></column><column  width='150' align='right' type='ed_no' hidden='false' sort='str' color='' id='total_volume'><![CDATA[
+Total Capacity]]></column><column  width='150' align='right' type='combo' hidden='false' sort='str' color='' id='position_uom'><![CDATA[
+Total Capacity UOM]]></column><column  width='150' align='right' type='ed_p' hidden='false' sort='str' color='' id='fixed_price'><![CDATA[
+Capacity Fees]]></column><column  width='150' align='right' type='combo' hidden='false' sort='str' color='' id='fixed_price_currency_id'><![CDATA[
+Currency]]></column></columns></head>
+<row level="0"><cell><![CDATA[CAVLSR_2_BSOLAR - North Import - 11/25/2019 - 11/25/2019]]></cell><cell><![CDATA[11/25/2019]]></cell><cell><![CDATA[11/25/2019]]></cell><cell><![CDATA[Buy]]></cell><cell><![CDATA[CAVLSR_2_BSOLAR [Generator]]]></cell><cell><![CDATA[North Import]]></cell><cell><![CDATA[ ]]></cell><cell><![CDATA[MW]]></cell><cell><![CDATA[Hourly]]></cell><cell><![CDATA[ ]]></cell><cell><![CDATA[MWh]]></cell><cell><![CDATA[ ]]></cell><cell><![CDATA[USD]]></cell></row></rows>

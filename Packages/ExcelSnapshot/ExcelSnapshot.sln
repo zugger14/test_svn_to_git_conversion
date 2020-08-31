@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{159641D6-6404-4A2A-AE62-294DE0FE8301}") = "ExcelSnapshot", "ExcelSnapshot\ExcelSnapshot.dtproj", "{4750CC2E-B2F3-4504-BCAE-9D5614EF2FBE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Deploy|Default = Deploy|Default
+		Development|Default = Development|Default
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4750CC2E-B2F3-4504-BCAE-9D5614EF2FBE}.Deploy|Default.ActiveCfg = Deploy
+		{4750CC2E-B2F3-4504-BCAE-9D5614EF2FBE}.Deploy|Default.Build.0 = Deploy
+		{4750CC2E-B2F3-4504-BCAE-9D5614EF2FBE}.Development|Default.ActiveCfg = Development
+		{4750CC2E-B2F3-4504-BCAE-9D5614EF2FBE}.Development|Default.Build.0 = Development
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,1 @@
+update source_uom set uom_type='m' where uom_type is null

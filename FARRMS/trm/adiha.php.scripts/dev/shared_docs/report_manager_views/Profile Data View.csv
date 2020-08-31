@@ -1,0 +1,4 @@
+profile_id,external_id,profile_type,profile_name,uom_id,uom_name,granularity,term_start,term_end,hour,value,year,month,day,location_id,Location_name,Source_minor_location_id
+49,Millstone 3 - Mix 1,17500,Millstone 3 - Mix 1,1158,MW,982,00:00.0,00:00.0,0,9.885986456,2017,3,1,4851,Millstone - Mix 1,1676
+49,Millstone 3 - Mix 1,17500,Millstone 3 - Mix 1,1158,MW,982,00:00.0,00:00.0,9,9.859693938,2017,3,1,4851,Millstone - Mix 1,1676
+49,Millstone 3 - Mix 1,17500,Millstone 3 - Mix 1,1158,MW,982,00:00.0,00:00.0,10,9.859693938,2017,3,1,4851,Millstone - Mix 1,1676

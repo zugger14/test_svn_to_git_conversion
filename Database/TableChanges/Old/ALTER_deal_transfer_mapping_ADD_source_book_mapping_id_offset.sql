@@ -1,0 +1,2 @@
+IF NOT EXISTS (SELECT 'x' FROM INFORMATION_SCHEMA.columns WHERE table_name LIKE 'deal_transfer_mapping' AND column_name LIKE 'source_book_mapping_id_offset')
+	ALTER TABLE deal_transfer_mapping ADD source_book_mapping_id_offset INT 

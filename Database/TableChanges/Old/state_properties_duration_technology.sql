@@ -1,0 +1,1 @@
+alter table state_properties_duration alter column technology int null

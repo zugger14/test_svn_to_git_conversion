@@ -1,0 +1,10 @@
+IF OBJECT_ID(N'FNALocationGrid', N'FN') IS NOT NULL
+    DROP FUNCTION [dbo].[FNALocationGrid]
+GO 
+
+CREATE FUNCTION [dbo].[FNALocationGrid]()
+RETURNS FLOAT
+AS
+BEGIN
+	RETURN 1
+END

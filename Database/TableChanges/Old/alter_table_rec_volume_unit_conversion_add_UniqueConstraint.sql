@@ -1,0 +1,2 @@
+-- Making the combination of from_source_uom_id and to_source_uom_id unique
+ALTER TABLE rec_volume_unit_conversion ADD CONSTRAINT IX_rec_volume_unit_conversion_2 UNIQUE(from_source_uom_id, to_source_uom_id)

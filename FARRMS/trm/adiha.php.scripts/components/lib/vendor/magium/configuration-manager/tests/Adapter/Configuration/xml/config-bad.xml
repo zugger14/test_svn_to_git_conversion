@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<magiumConfiguration>
+    <section> <!-- missing the ID, which is required -->
+        <group identifier="website" label="Website">
+            <element identifier="title" label="Title">
+                <default>My Homepage</default>
+            </element>
+            <element identifier="languages" label="Languages" source="Namespace\MySource" type="multi"/>
+        </group>
+        <group identifier="design" label="Design">
+            <element identifier="theme" label="Theme"/>
+        </group>
+    </section>
+    <section identifier="security" label="Security">
+        <group identifier="authentication" label="Authentication">
+            <element identifier="require" label="Require Authentication" type="select" source="Magium\Configuration\Source\YesNo"/>
+        </group>
+    </section>
+</magiumConfiguration>

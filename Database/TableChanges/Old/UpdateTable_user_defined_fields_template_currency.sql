@@ -1,0 +1,1 @@
+UPDATE user_defined_fields_template SET sql_string = 'SELECT source_currency_id AS id,currency_name AS VALUE FROM source_currency sc ORDER BY VALUE ASC' WHERE Field_label = 'currency' AND udf_template_id = 1276 

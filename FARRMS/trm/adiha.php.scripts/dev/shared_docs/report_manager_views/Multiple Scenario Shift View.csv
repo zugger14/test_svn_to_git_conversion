@@ -1,0 +1,6 @@
+as_of_date,criteria_id,criteria_name,commodity_one,commodity_two,commodity_one_name,commodity_two_name,shift_one,shift_two,value_one,value_two,calc_value_one,calc_value_two,fixed_value,total_value,term_start,term_end,delta
+00:00.0,124,0 Multiple Scenario MTM test,50,123,Natural Gas,Power,-0.1,-0.1,382190,607600,-38219,-60760,-750650,145869.5122,NULL,NULL,y
+00:00.0,124,0 Multiple Scenario MTM test,50,123,Natural Gas,Power,-0.1,-0.05,382190,607600,-38219,-30380,-750650,176249.5122,NULL,NULL,y
+00:00.0,124,0 Multiple Scenario MTM test,50,123,Natural Gas,Power,-0.1,0,382190,607600,-38219,0,-750650,206629.5122,NULL,NULL,y
+00:00.0,124,0 Multiple Scenario MTM test,50,123,Natural Gas,Power,-0.1,0.05,382190,607600,-38219,30380,-750650,237009.5122,NULL,NULL,y
+00:00.0,124,0 Multiple Scenario MTM test,50,123,Natural Gas,Power,-0.1,0.1,382190,607600,-38219,60760,-750650,267389.5122,NULL,NULL,y

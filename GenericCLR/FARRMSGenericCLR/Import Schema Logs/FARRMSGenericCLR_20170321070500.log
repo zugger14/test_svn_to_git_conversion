@@ -1,0 +1,75 @@
+3/21/2017 1:05:00 AM	This log contains information about the import schema operation into project 'FARRMSGenericCLR' on computer 'DESKTOP-NK3UL38' by user 'pioneer'.
+3/21/2017 1:05:00 AM	Import of database schema has started.
+3/21/2017 1:05:11 AM	Gathering database options
+3/21/2017 1:05:11 AM	Gathering users
+3/21/2017 1:05:11 AM	Gathering roles
+3/21/2017 1:05:11 AM	Gathering application roles
+3/21/2017 1:05:11 AM	Gathering role memberships
+3/21/2017 1:05:11 AM	Gathering filegroups
+3/21/2017 1:05:11 AM	Gathering full-text catalogs
+3/21/2017 1:05:11 AM	Gathering assemblies
+3/21/2017 1:05:16 AM	Gathering certificates
+3/21/2017 1:05:16 AM	Gathering asymmetric keys
+3/21/2017 1:05:16 AM	Gathering symmetric keys
+3/21/2017 1:05:16 AM	Gathering encrypted symmetric keys
+3/21/2017 1:05:16 AM	Gathering schemas
+3/21/2017 1:05:16 AM	Gathering XML schema collections
+3/21/2017 1:05:16 AM	Gathering user-defined data types
+3/21/2017 1:05:16 AM	Gathering user-defined types
+3/21/2017 1:05:16 AM	Gathering table types
+3/21/2017 1:05:16 AM	Gathering unique keys for table types
+3/21/2017 1:05:16 AM	Gathering primary keys for table types
+3/21/2017 1:05:16 AM	Gathering check constraints for table types
+3/21/2017 1:05:16 AM	Gathering default constraints for table types
+3/21/2017 1:05:16 AM	Gathering partition functions
+3/21/2017 1:05:16 AM	Gathering partition schemes
+3/21/2017 1:05:16 AM	Gathering functions
+3/21/2017 1:05:16 AM	Gathering encrypted functions
+3/21/2017 1:05:16 AM	Gathering aggregates
+3/21/2017 1:05:16 AM	Gathering procedures
+3/21/2017 1:05:16 AM	Gathering encrypted procedures
+3/21/2017 1:05:16 AM	Gathering tables
+3/21/2017 1:05:16 AM	Gathering primary keys
+3/21/2017 1:05:16 AM	Gathering unique constraints
+3/21/2017 1:05:16 AM	Gathering foreign keys
+3/21/2017 1:05:16 AM	Gathering default constraints
+3/21/2017 1:05:16 AM	Gathering check constraints
+3/21/2017 1:05:16 AM	Gathering views
+3/21/2017 1:05:16 AM	Gathering encrypted views
+3/21/2017 1:05:16 AM	Gathering indexes
+3/21/2017 1:05:16 AM	Gathering statistics
+3/21/2017 1:05:16 AM	Gathering full-text index stoplists
+3/21/2017 1:05:16 AM	Gathering search property lists
+3/21/2017 1:05:16 AM	Gathering search properties
+3/21/2017 1:05:16 AM	Gathering full-text indexes
+3/21/2017 1:05:16 AM	Gathering column store indexes
+3/21/2017 1:05:16 AM	Gathering spatial indexes
+3/21/2017 1:05:16 AM	Gathering XML indexes
+3/21/2017 1:05:16 AM	Gathering encrypted triggers
+3/21/2017 1:05:16 AM	Gathering triggers
+3/21/2017 1:05:16 AM	Gathering encrypted and clr ddl triggers
+3/21/2017 1:05:16 AM	Gathering ddl triggers
+3/21/2017 1:05:16 AM	Gathering synonyms
+3/21/2017 1:05:16 AM	Gathering defaults
+3/21/2017 1:05:16 AM	Gathering data constraint uddt bindings
+3/21/2017 1:05:16 AM	Gathering rules
+3/21/2017 1:05:16 AM	Gathering data constraint uddt bindings
+3/21/2017 1:05:16 AM	Gathering message types
+3/21/2017 1:05:16 AM	Gathering queues
+3/21/2017 1:05:16 AM	Gathering contracts
+3/21/2017 1:05:16 AM	Gathering services
+3/21/2017 1:05:16 AM	Gathering event notifications
+3/21/2017 1:05:16 AM	Gathering remote service bindings
+3/21/2017 1:05:16 AM	Gathering broker priorities
+3/21/2017 1:05:16 AM	Gathering signatures
+3/21/2017 1:05:16 AM	Gathering data compression options
+3/21/2017 1:05:16 AM	Gathering sequence types
+3/21/2017 1:05:16 AM	Gathering extended properties
+3/21/2017 1:05:16 AM	Gathering credentials
+3/21/2017 1:05:16 AM	Gathering logins
+3/21/2017 1:05:17 AM	Gathering server audits
+3/21/2017 1:05:18 AM	Scanning project for duplicate elements
+3/21/2017 1:05:18 AM	Finished duplicate element processing
+3/21/2017 1:05:21 AM	Finished importing database.
+3/21/2017 1:05:21 AM	A summary of the import was saved to the following location: c:\FARRMSGenericCLR\FARRMSGenericCLR\Import Schema Logs\FARRMSGenericCLR_20170321070500.log
+3/21/2017 1:05:21 AM	Click Finish to continue...

@@ -1,0 +1,2 @@
+update application_functions set document_path='Hedge_Accounting_Strategy/Set_Up_Hedging_Strategies/Setup__Hedging_strategies.htm' where 
+function_id=10101210

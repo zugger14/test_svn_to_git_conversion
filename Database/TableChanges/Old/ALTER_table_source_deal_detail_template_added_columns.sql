@@ -1,0 +1,1 @@
+ALTER table source_deal_detail_template ADD strip_months_from tinyint, lag_months tinyint,strip_months_to tinyint, conversion_factor float

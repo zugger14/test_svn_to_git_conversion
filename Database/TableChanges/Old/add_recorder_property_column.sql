@@ -1,0 +1,1 @@
+alter table recorder_properties add recorder_property_id INT identity(1,1)

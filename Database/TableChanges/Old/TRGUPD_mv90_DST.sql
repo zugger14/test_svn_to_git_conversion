@@ -1,0 +1,23 @@
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+IF EXISTS (SELECT * FROM sys.triggers WHERE OBJECT_ID = OBJECT_ID(N'[dbo].[TRGUPD_mv90_DST]'))
+	DROP TRIGGER [dbo].[TRGUPD_mv90_DST]
+GO
+
+CREATE TRIGGER [dbo].[TRGUPD_mv90_DST]
+ON [dbo].[mv90_DST]
+FOR UPDATE
+AS
+BEGIN
+IF NOT UPDATE (create_ts) AND NOT UPDATE (update_ts)
+	BEGIN
+		UPDATE mv90_DST
+		SET update_user = dbo.FNADBUser(),
+			update_ts = GETDATE()
+		FROM mv90_DST t
+		INNER JOIN DELETED u ON t.id = u.id
+	END
+END
+GO

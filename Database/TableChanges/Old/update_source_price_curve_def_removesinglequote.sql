@@ -1,0 +1,1 @@
+update source_price_curve_def set curve_name='ANR ML7' where curve_name='ANR ML''7'

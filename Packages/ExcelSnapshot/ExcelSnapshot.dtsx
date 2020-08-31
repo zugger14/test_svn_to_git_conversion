@@ -1,0 +1,3511 @@
+﻿<?xml version="1.0"?>
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  DTS:refId="Package"
+  DTS:CreationDate="11/3/2016 10:20:17 AM"
+  DTS:CreationName="SSIS.Package.3"
+  DTS:CreatorComputerName="PSLDEV10"
+  DTS:CreatorName="PSLDEV10\Administrator"
+  DTS:DTSID="{ED0161BA-809E-483B-9154-A0F389B11535}"
+  DTS:EnableConfig="True"
+  DTS:ExecutableType="SSIS.Package.3"
+  DTS:LastModifiedProductVersion="11.0.7462.6"
+  DTS:LocaleID="1033"
+  DTS:ObjectName="ExcelSnapshot"
+  DTS:PackageType="5"
+  DTS:ProtectionLevel="0"
+  DTS:VersionBuild="429"
+  DTS:VersionGUID="{AC29A1AE-0A28-4069-BEC8-DC1F4990C6E9}">
+  <DTS:Property
+    DTS:Name="PackageFormatVersion">6</DTS:Property>
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager
+      DTS:refId="Package.ConnectionManagers[OLE_CONN_MainDB]"
+      DTS:CreationName="OLEDB"
+      DTS:DTSID="{2DAAFDCE-D134-423E-9B2C-455603BC9AE4}"
+      DTS:ObjectName="OLE_CONN_MainDB">
+      <DTS:ObjectData>
+        <DTS:ConnectionManager
+          DTS:ConnectionString="Provider=SQLNCLI11.0;Persist Security Info=True;Auto Translate=False;&#xA;        Data Source=demo01.farrms.us,2033;&#xA;        Initial Catalog=TRMTracker_Master_Demo3;&#xA;     USER ID=farrms_admin; &#xA;      &#xA;        Application Name=EndurImport;" />
+      </DTS:ObjectData>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+  <DTS:Configurations>
+    <DTS:Configuration
+      DTS:ConfigurationString="SSIS_DB_CONFIG_PATH_TRMTracker_Trunk_CLR"
+      DTS:ConfigurationType="5"
+      DTS:CreationName=""
+      DTS:DTSID="{3E3C2DC3-936E-453C-9D21-4328F7391056}"
+      DTS:ObjectName="XML_CFG_EXCEL_SNAPSHOT" />
+    <DTS:Configuration
+      DTS:ConfigurationString="&quot;OLE_CONN_MainDB&quot;;&quot;[dbo].[ssis_configurations]&quot;;&quot;PRJ_Excel_Snapshot&quot;;"
+      DTS:ConfigurationType="7"
+      DTS:CreationName=""
+      DTS:DTSID="{E9E7BB68-663E-44DE-B364-936BAAAB91D8}"
+      DTS:ObjectName="SQL_CFG_OLEDB_CONNECTION" />
+  </DTS:Configurations>
+  <DTS:LogProviders>
+    <DTS:LogProvider
+      DTS:ConfigString="OLE_CONN_MainDB"
+      DTS:CreationName="DTS.LogProviderSQLServer.3"
+      DTS:Description="Writes log entries for events to a SQL Server database"
+      DTS:DTSID="{2D18D90B-EA89-409F-98FF-1D09C4002DC5}"
+      DTS:ObjectName="SSIS log provider for SQL Server">
+      <DTS:ObjectData>
+        <InnerObject />
+      </DTS:ObjectData>
+    </DTS:LogProvider>
+  </DTS:LogProviders>
+  <DTS:Variables>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{2939FFB3-0919-4439-AD4B-9FEF5EB2816E}"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="PS_ExcelReportParam">
+      <DTS:VariableValue
+        DTS:DataType="8">ALL</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{7DB09DDD-0BAB-4B8B-B287-C3160BD53C8B}"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="PS_ExcelSheetId">
+      <DTS:VariableValue
+        DTS:DataType="8">3118</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{FDEB1745-FC6F-439A-A44B-1E4A857388F2}"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="PS_ImageSnapshot">
+      <DTS:VariableValue
+        DTS:DataType="8">y</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{DC66927B-0A08-43AE-B05D-53D5DCB6D676}"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="PS_PackageSubDir">
+      <DTS:VariableValue
+        DTS:DataType="8">\ExcelSnapshot\Package</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{30D5E1BD-4CA9-401E-8CB9-9966B9DAB326}"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="PS_ProcessId">
+      <DTS:VariableValue
+        DTS:DataType="8"
+        xml:space="preserve"></DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{A2819A94-DF0B-453A-A0EC-1F42A1191943}"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="PS_Synchronize">
+      <DTS:VariableValue
+        DTS:DataType="8">y</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{0AE1BCAB-B286-4254-B624-C15FECE79D75}"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="PS_UserName">
+      <DTS:VariableValue
+        DTS:DataType="8">farrms_admin</DTS:VariableValue>
+    </DTS:Variable>
+    <DTS:Variable
+      DTS:CreationName=""
+      DTS:DTSID="{2318E16D-1D5D-4B43-A521-E4A6D06B39FC}"
+      DTS:IncludeInDebugDump="2345"
+      DTS:Namespace="User"
+      DTS:ObjectName="PS_ViewReportFilterXmlParam">
+      <DTS:VariableValue
+        DTS:DataType="8"
+        xml:space="preserve"></DTS:VariableValue>
+    </DTS:Variable>
+  </DTS:Variables>
+  <DTS:LoggingOptions
+    DTS:FilterKind="0"
+    DTS:LoggingMode="1">
+    <DTS:Property
+      DTS:DataType="8"
+      DTS:Name="EventFilter">2,7,OnError,12,OnTaskFailed</DTS:Property>
+    <DTS:Property
+      DTS:EventName="OnError"
+      DTS:Name="ColumnFilter">
+      <DTS:Property
+        DTS:Name="Computer">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="Operator">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="SourceName">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="SourceID">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="ExecutionID">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="MessageText">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="DataBytes">-1</DTS:Property>
+    </DTS:Property>
+    <DTS:Property
+      DTS:EventName="OnTaskFailed"
+      DTS:Name="ColumnFilter">
+      <DTS:Property
+        DTS:Name="Computer">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="Operator">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="SourceName">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="SourceID">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="ExecutionID">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="MessageText">-1</DTS:Property>
+      <DTS:Property
+        DTS:Name="DataBytes">-1</DTS:Property>
+    </DTS:Property>
+    <DTS:SelectedLogProviders>
+      <DTS:SelectedLogProvider
+        DTS:InstanceID="{2D18D90B-EA89-409F-98FF-1D09C4002DC5}" />
+    </DTS:SelectedLogProviders>
+  </DTS:LoggingOptions>
+  <DTS:Executables>
+    <DTS:Executable
+      DTS:refId="Package\SCR_EXCEL_SNAPSHOT"
+      DTS:CreationName="Microsoft.SqlServer.Dts.Tasks.ScriptTask.ScriptTask, Microsoft.SqlServer.ScriptTask, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91"
+      DTS:Description="Script Task"
+      DTS:DTSID="{F0B78735-95E4-48EB-832C-D660046379D8}"
+      DTS:ExecutableType="Microsoft.SqlServer.Dts.Tasks.ScriptTask.ScriptTask, Microsoft.SqlServer.ScriptTask, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91"
+      DTS:LocaleID="-1"
+      DTS:ObjectName="SCR_EXCEL_SNAPSHOT"
+      DTS:ThreadHint="0">
+      <DTS:Variables />
+      <DTS:LoggingOptions
+        DTS:FilterKind="0" />
+      <DTS:ObjectData>
+        <ScriptProject
+          Name="ST_dd15b1baccfb44448c0156790b3eaa20"
+          VSTAMajorVersion="3"
+          VSTAMinorVersion="0"
+          Language="CSharp"
+          ReadOnlyVariables="User::PS_ExcelReportParam,User::PS_ExcelSheetId,User::PS_ImageSnapshot,User::PS_PackageSubDir,User::PS_ProcessId,User::PS_Synchronize,User::PS_UserName"
+          ReadWriteVariables="User::PS_ViewReportFilterXmlParam">
+          <ProjectItem
+            Name="Snapshot.cs"
+            Encoding="UTF8"><![CDATA[using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
+using System.Data.OleDb;
+using System.Data.SqlClient;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading;
+using System.Windows.Forms;
+using System.Xml;
+using System.Xml.Serialization;
+using ADODB;
+using Microsoft.Office.Interop.Excel;
+using System.Xml.Linq;
+using ST_dd15b1baccfb44448c0156790b3eaa20;
+using Application = Microsoft.Office.Interop.Excel.Application;
+
+
+namespace ST_f39233fac16e426d991d932f9ef7d858
+{
+    public class Snapshot
+    {
+        public Snapshot(OleDbConnection _oleDbConnection)
+        {
+            OleDbConnection = _oleDbConnection;
+            OleDbCommand cmd = new OleDbCommand("spa_excel_snapshots 'c'", OleDbConnection);
+            using (OleDbDataReader rd = cmd.ExecuteReader())
+            {
+                if (rd.HasRows)
+                    rd.Read();
+
+                ReportRepository = rd[0].ToString();
+                DocumentPath = rd[1].ToString();
+            }
+            this.DateTrm = GetDefaultDate();
+            //  Derived default custom dates, business dates
+            GetDefaultDateValues();
+
+        }
+
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
+        private string ReportRepository { get; set; }
+        private string DocumentPath { get; set; }
+        public string SchedulerFolder { get; set; }
+        public bool Synchronize { get; set; }
+        public bool ImageSnapshot { get; set; }
+        //public string SheetNames { get; set; }
+        public string UserName { get; set; }
+        public OleDbConnection OleDbConnection { get; set; }
+        private DefaultDate DateTrm { get; set; }
+        public string ExcelReportParamXML { get; set; }
+        public string ExcelReplica { get; set; }
+        private List<ReportFilter> ViewReportFilters { get; set; }
+        private List<CustomDate> OverrideDates { get; set; }
+        
+        public string ProcessId { get; set; }
+
+
+        //View Report Filter . Eg xml format
+        /*
+         * <Parameters>
+	            <Parameter>
+		            <Name>as_of_date_from</Name>
+		            <Value>5</Value>
+	            </Parameter>
+	            <Parameter>
+		            <Name>as_of_date_to</Name>
+		            <Value>5</Value>
+	            </Parameter>
+           </Parameters>
+         */
+
+        private CustomDate GetCustomDate(int customDateTypeID, int adjustmentDays)
+        {
+            var customDate = this.OverrideDates.FirstOrDefault(x => x.TypeId == customDateTypeID);
+            if (customDate != null)
+            {
+                customDate.Value = customDate.Value.AddDays(adjustmentDays);
+                return customDate;
+            }
+            return null;
+        }
+
+        public string ViewReportParamXml
+        {
+            set
+            {
+                ParseViewReportFilterXMl(value);
+            }
+        }
+
+        private Application CreateReplica(string sourceFileName)
+        {
+            uint iProcessId;
+            Application xlApp = new Application();
+            GetWindowThreadProcessId((IntPtr)xlApp.Hwnd, out iProcessId);
+
+            try
+            {
+                if (!Directory.Exists(DocumentPath + "\\temp_Note"))
+                    Directory.CreateDirectory(DocumentPath + "\\temp_Note");
+
+                string replicaFile = DocumentPath + "\\temp_Note\\" + this.ProcessId + ".xlsx";
+                File.Copy(sourceFileName, replicaFile);
+
+                xlApp.Visible = false;
+                xlApp.DisplayAlerts = false;
+                Workbook wb = xlApp.Workbooks.Add(replicaFile);
+
+                /*
+                foreach (Worksheet ws in wb.Worksheets)
+                {
+                    ws.Unprotect();
+                    foreach (PivotTable pt in ws.PivotTables())
+                    {
+                        string sourceData = pt.SourceData;
+                        string fname = "[" + Path.GetFileName(sourceFileName) + "]";
+                        sourceData = sourceData.Substring(sourceData.IndexOf(']') + 1);
+                        sourceData = Path.GetDirectoryName(replicaFile) + @"\[" + Path.GetFileName(replicaFile) + "]" + sourceData.Replace(fname, "").Replace("'", "");
+                        pt.SourceData = sourceData;
+                    }
+                }
+                 */
+
+                
+                
+                wb.Close(SaveChanges: true, Filename: replicaFile);
+                ExcelReplica = replicaFile;
+                return xlApp;
+            }
+            catch (Exception ex)
+            {
+                KillExcelProcess(xlApp);
+                return null;
+            }
+
+        }
+
+        public void DeleteReplica( bool deleteFile)
+        {
+            try
+            {
+                if (deleteFile)
+                    File.Delete(ExcelReplica);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+
+        }
+
+
+        private void ParseViewReportFilterXMl(string xmlContent)
+        {
+            ViewReportFilters = new List<ReportFilter>();
+            try
+            {
+                
+                XDocument xDoc;
+                xDoc = XDocument.Parse(xmlContent);
+
+                foreach (XElement el in xDoc.Descendants())
+                {
+                    if (el.HasElements && el.Name.ToString().ToLower() == "parameter")
+                    {
+                        ReportFilter rf = new ReportFilter();
+                        foreach (XElement xp in el.Descendants())
+                        {
+                            if (xp.Name.ToString().ToLower() == "name") rf.Name = xp.Value;
+                            if (xp.Name.ToString().ToLower() == "value") rf.Value = xp.Value;
+                            if (xp.Name.ToString().ToLower() == "displaylabel") rf.DisplayLabel = xp.Value;
+                            if (xp.Name.ToString().ToLower() == "displayvalue") rf.DisplayValue = xp.Value;
+                            if (xp.Name.ToString().ToLower() == "overwritetype") rf.OverrideType = xp.Value.ToInt();
+                            if (xp.Name.ToString().ToLower() == "adjustmentdays") rf.AdjustmentDays = xp.Value.ToInt();
+                        }
+                        if (rf.Value.Trim() == "")
+                            rf.Value = "NULL";
+
+                        ViewReportFilters.Add(rf);
+                    }
+                }
+                
+                //List<ReportFilter> ViewReportFilters = xmlContent.DeserializeXml<ReportFilter>("Parameters");
+                
+            }
+            catch (Exception)
+            {
+                ViewReportFilters = null;
+            }
+        }
+        
+        private static Worksheet CheckIfSheetExists(Workbook wb, string sheetName)
+        {
+            Worksheet ws = null;
+            foreach (Worksheet worksheet in wb.Worksheets)
+            {
+                if (worksheet.Name.ToLower() == sheetName.ToLower())
+                {
+                    ws = worksheet;
+                    break;
+                }
+                else
+                {
+                    ws = null;
+                }
+            }
+            return ws;
+        }
+        public void SynchronizeExcel(string excelFileName, out uint iProcessId)
+        {
+            
+            iProcessId = 0;
+            if (!Synchronize)
+                return;
+
+            Application xlApp = this.CreateReplica(excelFileName);
+            if (xlApp == null) return; //   if cannot copy to replica folder 
+
+            GetWindowThreadProcessId((IntPtr)xlApp.Hwnd, out iProcessId);
+            xlApp.Visible = false;
+            xlApp.DisplayAlerts = false;
+            Workbook wb = xlApp.Workbooks.Open(this.ExcelReplica);
+
+            Worksheet wsConfiguration = GetWorksheetFromWorkBook(wb, "Configurations");
+            
+            List<ReportSheet> reportSheets = new List<ReportSheet>();
+
+            if (wsConfiguration != null)
+            {
+                //  retrive rfx query for selected report
+                bool empty = true;
+                int row = 2;
+                while (empty)
+                {
+                    var cellSheetName = (Range)wsConfiguration.Cells[row, 2];
+                    if (cellSheetName.Value2 != null)
+                    {
+                        //  Check if report configuration does exists , if not try to changes report configuration paramset / tablix id according to report name
+                        ReportData rd = GetReportDefinition(((Range)wsConfiguration.Cells[row, 1]).Value2.ToString());
+                        if (rd == null) //  report doesnt exists in system
+                        {
+                            row++;
+                            continue;
+                        }
+                            
+                        //  Don't add report sheet which doesnt exist in file , user can delte trm report sheet from file but its not removed from confiuration , same to parameter sheet
+                        if (GetWorksheetFromWorkBook(wb, wsConfiguration.Cells[row, 2].Value2.ToString()) == null || GetWorksheetFromWorkBook(wb, wsConfiguration.Cells[row, 4].Value2.ToString()) == null)
+                        {
+                            row++;
+                            continue;
+                        }
+                        ReportSheet rs = new ReportSheet() { ReportName = ((Range)wsConfiguration.Cells[row, 1]).Value2.ToString(), SheetName = ((Range)wsConfiguration.Cells[row, 2]).Value2.ToString(), SpaRfxQuery = ((Range)wsConfiguration.Cells[row, 3]).Value2.ToString(), ParameterSheet = ((Range)wsConfiguration.Cells[row, 4]).Value2.ToString(), Description = "" };
+
+                        reportSheets.Add(rs);
+
+                        if (rd != null)
+                        {
+                            string[] arr = rs.SpaRfxQuery.Split(',');
+                            if (arr.Count() > 0)
+                            {
+                                arr[0] = arr[0].Replace("spa_rfx_run_sql", "").Replace(" ", "");
+                                //  Check if config has been changed
+                                if (rd.ParamsetId != arr[0].ToInt() || rd.TablixId != arr[1].ToInt())
+                                {
+                                    string query = "spa_rfx_run_sql  " + rd.ParamsetId.ToString() + "," + rd.TablixId.ToString();
+                                    for (int i = 2; i < arr.Count(); i++)
+                                    {
+                                        query += "," + arr[i];
+                                    }
+                                    var pCell = (Microsoft.Office.Interop.Excel.Range)wsConfiguration.Cells[row, 3];
+                                    pCell.Value2 = query;
+                                    rs.SpaRfxQuery = query;
+                                }
+                            }
+                        }
+
+                    }
+                    else if (cellSheetName.Value2 == null)
+                    {
+                        empty = false;
+                        break;
+                    }
+
+                    row++;
+                }
+
+                
+
+                string spaRfxQuery = "";
+                List<OverrideParam> overrideParams = new List<OverrideParam>();
+                
+                foreach (ReportSheet rs in reportSheets)
+                {
+                    OverRideSummary overRideSummary = OverRideViewFilter(rs.SpaRfxQuery, overrideParams);
+
+                    Worksheet ws = wb.Worksheets[rs.SheetName];
+                    BindRecordSetToWorkSheet(xlApp, wb, ws, this.ExcelReplica, OleDbConnection, overRideSummary);
+                }
+
+                
+                string appliedFilter = "";
+                foreach (OverrideParam op in overrideParams.Distinct().Where(x => x.OverrideValue != null))
+                {
+                    if (op.OverrideValue.Trim().ToLower() == "null")
+                        appliedFilter += op.Label + "= | ";
+                    else
+                        appliedFilter += op.Label + "=" + op.OverrideValue + " | ";
+                } 
+                appliedFilter = appliedFilter.Trim().TrimEnd('|').Replace("0001-01-01","");
+                
+                SnapHistory history = new SnapHistory()
+                {
+                    AppliedFilter = appliedFilter,
+                    FileName = excelFileName,
+                    RefreshdaDateTime = DateTime.Now
+                };
+                //foreach (Worksheet ws in wb.Worksheets)
+                //{
+                //    foreach (PivotTable pt in ws.PivotTables())
+                //    {
+                //        pt.RefreshTable();
+                //    }
+                //}
+                wb.RefreshAll();
+                SaveWorksheetSnapshot(history, xlApp, wb);
+                
+                wb.Close(SaveChanges: true, Filename: this.ExcelReplica);
+                
+
+                TerminateExcel(xlApp, wb);
+                this.DeleteReplica(deleteFile:false);
+            }
+            else
+            {
+                //  Start logging configuration not found
+            }
+
+
+        }
+
+        public void KillExcelProcess(Application xlApp)
+        {
+            uint iProcessId = 0;
+            //Get the process ID of excel so we can kill it later.
+            GetWindowThreadProcessId((IntPtr)xlApp.Hwnd, out iProcessId);
+
+            try
+            {
+                Process pProcess = Process.GetProcessById((int)iProcessId);
+                if (pProcess != null)
+                    pProcess.Kill();
+            }
+            catch (System.Exception)
+            {
+                //just ignore any failure.
+            }
+
+        }
+
+        public ReportData GetReportDefinition(string reportName)
+        {
+            string sql = @"SELECT rp.name,
+                               rp.report_paramset_id [ParamsetId],
+                               rpt.report_page_tablix_id [TablixId],
+                               rp.name [ReportName],
+                               rp.page_id PageID,
+                               rp.report_status_id [ReportStatusId]
+                        FROM   report_paramset rp
+                               INNER JOIN report_page_tablix rpt
+                                    ON  rpt.page_id = rp.page_id
+                               INNER JOIN report_page rp2
+                                    ON  rpt.page_id = rp2.report_page_id";
+            sql += " WHERE  rp.NAME = '" + reportName + "'";
+            //MessageBox.Show(sql);
+            OleDbCommand cmd = new OleDbCommand(sql, OleDbConnection);
+            cmd.CommandType = System.Data.CommandType.Text;
+            OleDbDataReader r = cmd.ExecuteReader();
+            if (!r.HasRows)
+            {
+                r.Close();
+                return null;
+            }
+            r.Read();
+            ReportData rData = new ReportData()
+            {
+                PageID = r["PageId"].ToInt(),
+                ParamsetId = r["ParamsetId"].ToInt(),
+                ReportName = r["ReportName"].ToString(),
+                ReportStatusId = r["ReportStatusId"].ToInt(),
+                TablixId = r["TablixId"].ToInt()
+            };
+            r.Close();
+            return rData;
+        }
+
+        private DefaultDate GetDefaultDate()
+        {
+            DefaultDate defaultDate = new DefaultDate();
+            using (SqlConnection cn = new SqlConnection(GetSqlConnection(OleDbConnection.ConnectionString)))
+            {
+                cn.Open();
+                using (SqlCommand cmd = new SqlCommand("EXEC spa_excel_snapshots @flag = 't'", cn))
+                {
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    defaultDate = new List<DefaultDate>().FromOleReader(reader).ToList().FirstOrDefault();
+                    cn.Close();
+                    return defaultDate;
+                }
+                cn.Close();
+            }
+        }
+
+        private void GetDefaultDateValues()
+        {
+            this.OverrideDates = new List<CustomDate>();
+            using (SqlConnection cn = new SqlConnection(GetSqlConnection(OleDbConnection.ConnectionString)))
+            {
+                cn.Open();
+                using (SqlCommand cmd = new SqlCommand("EXEC spa_excel_snapshots @flag = 'y'", cn))
+                {
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    this.OverrideDates = new List<CustomDate>().FromOleReader(reader).ToList();
+                }
+                cn.Close();
+            }
+        }
+
+        private bool OverRide(string[] alllParameters, string parameterToCheck)
+        {
+            bool overRide = false;
+            //  Dont override those parameter which are not include in current spa rfx query
+            foreach (string p in alllParameters)
+            {
+                //  ininital parameter is enclosed with single quotes
+                string paramName = p.Split('=')[0].TrimStart('\'');
+                if (paramName == parameterToCheck)
+                {
+                    return true;
+                    break;
+                }
+            }
+            return overRide;
+        }
+
+        private OverRideSummary OverRideViewFilter(string  spaRfxQuery, List<OverrideParam> overrideParamsList)
+        {
+            OverRideSummary ors = new OverRideSummary();
+            string[] allParameters = spaRfxQuery.Split(',');
+
+            //  Browse parameters to match rfx parameters
+            foreach (string s in allParameters)
+            {
+                //  detect parameter
+                if (s.Contains("="))
+                {
+                    //  if parameter starts/ends with single quote then replace it
+                    string pName = s.Split('=').First().TrimStart('\'').TrimEnd('\'');
+                    if (ViewReportFilters != null)
+                    {
+                        ReportFilter reportFilter = ViewReportFilters.FirstOrDefault(x => x.Name == pName);
+                        if (reportFilter != null)
+                        {
+                            if (reportFilter.OverrideType != 0)
+                            {
+                                CustomDate cd = this.GetCustomDate(reportFilter.OverrideType, reportFilter.AdjustmentDays);
+                                if (cd != null)
+                                {
+                                    reportFilter.Value = cd.Value.ToString(cd.DateFormat);
+                                    reportFilter.DisplayValue = cd.Type + "(" + reportFilter.AdjustmentDays + ") [" + reportFilter.Value + "]";
+                                }
+                            }
+
+                            if (s.StartsWith("'"))
+                                ors.SpaRfxQuery += "'";
+                            if (s.EndsWith("'"))
+                                ors.SpaRfxQuery += reportFilter.Name + "=" + reportFilter.Value + "',";
+                            else
+                                ors.SpaRfxQuery += reportFilter.Name + "=" + reportFilter.Value + ",";
+                        }
+                        else
+                        {
+                            ors.SpaRfxQuery += s + ",";
+                        }
+                        if (reportFilter != null)
+                        {
+                            OverrideParam op = overrideParamsList.Where(x => x.ParameterName == reportFilter.Name).FirstOrDefault();
+                            if (op == null)
+                            {
+                                overrideParamsList.Add(new OverrideParam() { ParameterName = reportFilter.Name, Label = reportFilter.DisplayLabel, OverrideLabel = reportFilter.DisplayLabel, OverrideValue = reportFilter.DisplayValue });
+                            }
+                            else
+                            {
+                                op.Label = reportFilter.DisplayLabel;
+                                op.OverrideLabel = reportFilter.DisplayLabel;
+                                op.ParameterName = reportFilter.Name;
+                                op.OverrideValue = reportFilter.DisplayValue;
+
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ors.SpaRfxQuery += s + ",";
+                    }
+                }
+                else
+                {
+                    ors.SpaRfxQuery += s + ",";
+                }
+
+            }
+            ors.SpaRfxQuery = ors.SpaRfxQuery.TrimEnd(',');
+
+            return ors;
+        }
+
+        private bool IsValidDate(string value)
+        {
+            try
+            {
+                var obj = Convert.ToDateTime(value.ToString());
+                return true;
+            }
+            catch (Exception)
+            {
+
+                return false;
+            }
+        }
+
+
+        private bool BindRecordSetToWorkSheet(Application xlApp, Workbook wb, Worksheet ws, string filename, OleDbConnection connection, OverRideSummary overRideSummary)
+        {
+            Connection cn = new Connection();
+            Recordset rs = new Recordset();
+            Command cmd = new Command();
+
+
+
+            string parameterWorksheet = ws.Name + "_Param";
+
+            try
+            {
+                //cn.ConnectionString = @"user id=" + d.UserName + ";password=" + d.Password + ";provider=SQLOLEDB;data source=" + d.ServerName + ";Database=" + d.Database;
+                //if (d.AuthenticationType == 1)   //  windows authentication
+                //    cn.ConnectionString = "provider=SQLOLEDB;Integrated Security=SSPI;Initial Catalog=" + d.Database + ";Data Source=" + d.ServerName;
+
+                cn.ConnectionString = connection.ConnectionString;
+                cn.ConnectionString += "DataTypeCompatibility=80;MARS Connection=True";
+                cn.Open();
+                rs.Open(overRideSummary.SpaRfxQuery, cn, CursorTypeEnum.adOpenForwardOnly, LockTypeEnum.adLockOptimistic, 1);
+
+                ws.Cells.ClearContents();
+                ws.Cells.ClearFormats();
+                ws.Activate();
+                //  Header
+                for (int i = 0; i < rs.Fields.Count; i++)
+                {
+                    var cell = (Range)ws.Cells[1, i + 1];
+                    cell.Value2 = rs.Fields[i].Name;
+                    cell.Font.Bold = true;
+                }
+
+                Range range = ws.get_Range("A2");
+
+                range.CopyFromRecordset(rs);
+                //range.AutoFormat(XlRangeAutoFormat.xlRangeAutoFormatClassicPivotTable);
+                ws.UsedRange.Columns.AutoFit();
+                rs.Close();
+                cn.Close();
+                ChangePivotSourceDataCache(wb);
+                //wb.RefreshAll();
+                //RefreshSheets(wb);
+                //  Freeze Top Row
+                //if (range.Value2 != null)
+                //{
+                //    range.Select();
+                //    range.Application.ActiveWindow.FreezePanes = true;
+                //}
+
+                //  Rewrite over rided parameter values to _Param work sheet 
+                Worksheet wsParam = CheckIfSheetExists(wb, parameterWorksheet);
+                string[] arrParams = overRideSummary.SpaRfxQuery.Split(',').Where(x => x.Contains('=')).ToArray();
+                foreach (string p in arrParams)
+                {
+                    int row = 3;
+                    bool empty = false;
+                    while (!empty)
+                    {
+                        var cell = (Range)wsParam.Cells[row, 2];
+                        if (cell.Value2 != null)
+                        {
+                            //if (p.Contains(cell.Value2))
+                            if (p.Split('=')[0] == cell.Value2)
+                            {
+                                //  text format
+                                ((Range)wsParam.Cells[row, 3]).NumberFormat = "@";
+                                string strValue = p.Split('=')[1].TrimStart('\'').TrimEnd('\'');
+                                ((Range) wsParam.Cells[row, 3]).Value2 = strValue;
+                            }
+                        }
+                        else
+                        {
+                            empty = true;
+                            break;
+                        }
+                        row++;
+                    }
+                }
+                //  Rewrite spa rfx query in configuration worksheeet too
+                Worksheet wsConfiguration = CheckIfSheetExists(wb, "Configurations");
+                if (wsConfiguration != null)
+                {
+                    int row = 2;
+                    bool empty = false;
+                    while (!empty)
+                    {
+                        //  Sheetname
+                        var cell = (Range)wsConfiguration.Cells[row, 2];
+                        if (cell.Value2 != null)
+                        {
+                            if (cell.Value2 == ws.Name)
+                            {
+                                ((Range)wsConfiguration.Cells[row, 3]).Value2 = overRideSummary.SpaRfxQuery;
+                            }
+                        }
+                        else
+                        {
+                            empty = true;
+                            break;
+                        }
+                        row++;
+                    }
+                }
+                xlApp.DisplayAlerts = false;
+                
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private void ChangePivotSourceDataCache(Workbook wb)
+        {
+            foreach (Worksheet ws in wb.Worksheets)
+            {
+                ws.Unprotect();
+                foreach (PivotTable pt in ws.PivotTables())
+                {
+                    //'[9527CA3D_E48A_4808_9658_9120BFC91837.xlsx]PNL Attribution Report'!$A$1:$Q$13
+                    string sourceData = pt.SourceData;
+                    string[] pivotSource = sourceData.Split('!');
+                    string pivotSourceSheet = pivotSource[0];
+
+                    //  Check if it has file name created by older version enclosed by file
+                    if (pivotSource[0] != null && pivotSource[0].Contains(']'))
+                    {
+                        pivotSourceSheet = "'" + pivotSourceSheet.Substring(pivotSourceSheet.IndexOf(']') + 1);
+
+                    }
+
+                    //  Check if pivot is generated from raw report , there might be custom pivots skip that
+                    //var list = TRMAddin.ListAllConfigurations();
+                    Worksheet wsReport = CheckIfSheetExists(wb, pivotSourceSheet.Replace("'", ""));
+
+                    //var sheet = list.FirstOrDefault(x => x.ReportSheet == );
+                    if (wsReport != null)
+                    {
+                        Range r = wsReport.UsedRange;
+                        string row = r.Rows.Count.ToString();
+                        if (r.Rows.Count <= 1)
+                            row = "2";
+
+                        string col = r.Columns.Count.ToString();
+                        pt.SourceData = "'" + wsReport.Name + "'!R1C1:R" + row + "C" + col;
+                    }
+                }
+            }
+        }
+        
+        private void SaveWorksheetSnapshot(SnapHistory history, Application app, Workbook wb)
+        {
+            if (!ImageSnapshot)
+                return;
+            OleDbCommand cmd = new OleDbCommand("spa_excel_snapshots 'p',NULL,'" + Path.GetFileName(history.FileName) + "'", OleDbConnection);
+            OleDbDataReader reader = cmd.ExecuteReader();
+            List<ExcelSheets> excelSheets = new List<ExcelSheets>().FromOleReader(reader).ToList();
+
+            //Application app = new Application();
+            //Workbook wb = app.Workbooks.Add(history.FileName);
+            //app.DisplayAlerts = false;
+            string[] arrWorksheets = excelSheets.Select(x=> x.SheetName).ToArray();
+            foreach (string s in arrWorksheets)
+            {
+                history.SnapshotSheetName = s;
+                Worksheet ws2 = wb.Worksheets[s];
+                Range r = GetWorkSpaceRange(ws2);
+                r.CopyPicture(XlPictureAppearance.xlScreen, XlCopyPictureFormat.xlBitmap);
+                //CopyImage(history);
+                Thread newThread = new Thread(() => CopyImage(history));
+
+                newThread.SetApartmentState(ApartmentState.STA);
+                newThread.Start();
+                Thread.Sleep(2000);
+                
+            }
+
+
+            //app.DisplayAlerts = false;
+            //app.Quit();
+            //TerminateExcel(app, wb);
+        }
+
+        public void PublishSnapshot(string excelFileName, string[] arrWorksheets, out uint iProcessId)
+        {
+            iProcessId = 0;
+        
+            if (!ImageSnapshot)return;
+            if (arrWorksheets.Count() == 0) return;
+
+            Application app = new Application();
+            GetWindowThreadProcessId((IntPtr)app.Hwnd, out iProcessId);
+
+            app.DisplayAlerts = false;
+            Workbook wb = app.Workbooks.Add(excelFileName);
+            
+            foreach (string s in arrWorksheets)
+            {
+                SnapHistory history = new SnapHistory() { AppliedFilter = "snapshotonly", FileName = excelFileName, RefreshdaDateTime = DateTime.Now, SnapshotSheetName = s, SnapshotFileName = "" };
+                Worksheet ws2 = wb.Worksheets[s];
+                Range r = GetWorkSpaceRange(ws2);
+                r.CopyPicture(XlPictureAppearance.xlScreen, XlCopyPictureFormat.xlBitmap);
+                //CopyImage(history);
+                Thread newThread = new Thread(() => CopyImage(history));
+
+                newThread.SetApartmentState(ApartmentState.STA);
+                newThread.Start();
+                Thread.Sleep(2000);
+
+            }
+
+
+            
+            //app.Quit();
+            TerminateExcel(app, wb);
+        }
+
+
+
+        
+        private void CopyImage(SnapHistory history)
+        {
+            history.SnapshotFileName = ReportRepository + history.SnapshotSheetName + "_" + UserName + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmssff") + ".png";
+            Bitmap image2 =  new Bitmap(System.Windows.Forms.Clipboard.GetImage());
+            image2.Save(history.SnapshotFileName, ImageFormat.Png);   
+            //  Update snapshot history
+            UpdateSnapshotHistory(history);
+            System.Threading.Thread.Sleep(5000);
+            
+        }
+
+
+        private void UpdateSnapshotHistory(SnapHistory history)
+        {
+            string exFile = Path.GetFileName(history.FileName);
+            string sheetFile = Path.GetFileName(history.SnapshotFileName);
+                string sql = "spa_excel_snapshots";
+
+            using (SqlConnection cn = new SqlConnection(GetSqlConnection(OleDbConnection.ConnectionString)))
+            {
+                cn.Open();
+                using (SqlCommand cmd = new SqlCommand(sql, cn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@flag", "h");
+                    cmd.Parameters.AddWithValue("@sheet_id", System.DBNull.Value);
+                    cmd.Parameters.AddWithValue("@filename", exFile);
+                    cmd.Parameters.AddWithValue("@snapshot_sheet_name", history.SnapshotSheetName);
+                    cmd.Parameters.AddWithValue("@snapshot_filename", sheetFile);
+                    cmd.Parameters.AddWithValue("@applied_filter", history.AppliedFilter);
+                    cmd.Parameters.AddWithValue("@refreshed_on", history.RefreshdaDateTime.ToString("yyyy MMMM dd HH:mm:ss"));
+                    cmd.Parameters.AddWithValue("@process_id", this.ProcessId);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+                
+        }
+
+
+        private string  GetSqlConnection(string oledbConnectionString)
+        {
+            string sql = "";
+            string[] arr = oledbConnectionString.Split(';');
+            foreach (string s in arr)
+            {
+                if (s.ToLower().Contains("provider") || s.ToLower().Contains("translate"))
+                    continue;
+                sql += s + ";" ;
+            }
+            sql = sql.TrimEnd(';');
+            return sql;
+        }
+
+
+
+        private bool DeleteSnapshot(string fileName)
+        {
+            if (File.Exists(fileName))
+            {
+                try
+                {
+                    File.Delete(fileName);
+                    return true;
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+
+        private Range GetWorkSpaceRange(Worksheet ws)
+        {
+            string usedRange = ws.UsedRange.get_AddressLocal();
+            List<CellAddress> minList = new List<CellAddress>();
+            List<CellAddress> maxList = new List<CellAddress>();
+
+            string[] arrMin = usedRange.Split(':').FirstOrDefault().Split('$').Where(x => x.Trim() != "").ToArray();
+            minList.Add(new CellAddress() { Column = arrMin[0], Index = Convert.ToInt32(arrMin[1]) });
+
+            string[] arrMax = usedRange.Split(':').LastOrDefault().Split('$').Where(x => x.Trim() != "").ToArray();
+            maxList.Add(new CellAddress() { Column = arrMax[0], Index = Convert.ToInt32(arrMax[1]) });
+
+            ws.Protect(Contents: false);
+
+            List<string> bottomRightsRanges = new List<string>();
+
+            foreach (ChartObject co in ws.ChartObjects())
+            {
+
+                string address = co.TopLeftCell.get_AddressLocal();
+                string[] arr = address.Split('$').Where(x => x.Trim() != "").ToArray();
+                minList.Add(new CellAddress() { Column = arr[0], Index = Convert.ToInt32(arr[1]) });
+
+                address = co.BottomRightCell.get_AddressLocal();
+                arr = address.Split('$').Where(x => x.Trim() != "").ToArray();
+                maxList.Add(new CellAddress() { Column = arr[0], Index = Convert.ToInt32(arr[1]) });
+            }
+
+            CellAddress minAddress = minList.OrderBy(x => x.Column).ThenBy(x => x.Index).FirstOrDefault();
+            string maxCol = maxList.OrderBy(x => x.Column.Length).ThenBy(x => x.Column).LastOrDefault().Column;
+            CellAddress maxAddress = maxList.OrderBy(x => x.Index).LastOrDefault();
+
+            Range r = ws.get_Range(minAddress.Column + minAddress.Index, maxCol + maxAddress.Index);
+            return r;
+        }
+
+        private Worksheet GetWorksheetFromWorkBook(Workbook workbook, string sheetName)
+        {
+            foreach (Worksheet ws in workbook.Worksheets)
+            {
+                if (ws.Name != sheetName)
+                    continue;
+                return ws;
+            }
+            return null;
+        }
+
+        private struct ScheduleParam
+        {
+            public string ParameterName { get; set; }
+            public int ScheduleType { get; set; }
+            public int Day { get; set; }
+            public string Value { get; set; }
+        }
+
+        private void TerminateExcel(Application xlApp, Workbook wb)
+        {
+            KillExcelProcess(xlApp);
+
+            //xlApp.Workbooks.Close();
+
+            //Marshal.FinalReleaseComObject(wb);
+            //Marshal.FinalReleaseComObject(xlApp);
+            //xlApp = null;
+        }
+
+    }
+
+    public class CustomDate
+    {
+        public int TypeId { get; set; }
+        public string Type { get; set; }
+        public DateTime Value { get; set; }
+        public string DateFormat { get; set; }
+    }
+    class OverrideParam
+    {
+        public string ParameterName { get; set; }
+        public string Label { get; set; }
+        public int OverrideType { get; set; }
+        public int NoOfDays { get; set; }
+        public virtual string OverrideValue { get; set; }
+        public virtual string OverrideLabel { get; set; }
+    }
+
+    public class ReportFilter
+    {
+        public string Name { get; set; }
+        public string DisplayLabel { get; set; }
+        public string Value { get; set; }
+        public string DisplayValue { get; set; }
+        public int OverrideType { get; set; }
+        public int AdjustmentDays { get; set; }
+    }
+
+    internal class ExcelSheetParameter
+    {
+        public string Name { get; set; }
+        public string Label { get; set; }
+    }
+
+    struct OverRideSummary
+    {
+        public string ExcelFileName { get; set; }
+        public string AppliedFilter { get; set; }
+        public string SpaRfxQuery { get; set; }
+    }
+
+    public class ExcelSheets
+    {
+        public string FileName { get; set; }
+        public string SheetName { get; set; }
+        public bool Publish { get; set; }
+        public bool MaintainHistory { get; set; }
+    }
+
+    struct SnapHistory
+    {
+        public string FileName { get; set; }
+        public string SnapshotSheetName { get; set; }
+        public string AppliedFilter { get; set; }
+        public DateTime RefreshdaDateTime { get; set; }
+        public string SnapshotFileName { get; set; }
+    }
+
+    struct DefaultDate
+    {
+        public int DefaultHolidayCalendarId { get; set; }
+        public DateTime CurrentDate { get; set; }
+        public DateTime CurrentBusinessDay { get; set; }
+        public DateTime FirstDayOfTheMonth { get; set; }
+        public DateTime LastDayOfTheMonth { get; set; }
+        public DateTime FirstDayOfWeek { get; set; }
+        public DateTime LastDayOfWeek { get; set; }
+        public DateTime FirstBusinessDayOfMonth { get; set; }
+        public DateTime LastBusinessDayOfMonth { get; set; }
+        public DateTime FirstBusinessDayOfWeek { get; set; }
+        public DateTime LastBusinessDayOfWeek { get; set; }
+    }
+    struct CellAddress
+    {
+        public string Column { get; set; }
+        public int Index { get; set; }
+    }
+
+    public class ExcelFile
+    {
+        public string FileName { get; set; }
+        public virtual List<ReportSheet> ReportSheets { get; set; }
+    }
+
+    public class ReportSheet
+    {
+        public string ReportName { get; set; }
+        public string SheetName { get; set; }
+        public string Description { get; set; }
+        public string SpaRfxQuery { get; set; }
+        public string ParameterSheet { get; set; }
+        
+        public virtual List<Parameter> Parameters { get; set; }
+
+    }
+
+    public class ReportData
+    {
+        public int ParamsetId { get; set; }
+        public int TablixId { get; set; }
+        public string ReportName { get; set; }
+        public int PageID { get; set; }
+        public int ReportStatusId { get; set; }
+    }
+
+    public class Parameter
+    {
+        public string Name { get; set; }
+        public string Label { get; set; }
+        public bool Optional { get; set; }
+        public int DatatypeId { get; set; }
+        public virtual string Values { get; set; }
+    }
+
+    public class DataSource
+    {
+        public string DisplayName { get; set; }
+        public string ApplicationURL { get; set; }
+        public string ServerName { get; set; }
+        public string Database { get; set; }
+        public int AuthenticationType { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
+        public string PasswordTRM { get; set; }
+        public string FileName { get; set; }
+        public virtual ReportSheet ReportSheet { get; set; }
+    }
+
+
+
+
+    public class Reflection
+    {
+        public void FillObjectWithProperty(ref object objectTo, string propertyName, object propertyValue,
+            Object[] index)
+        {
+            Type tOb2 = objectTo.GetType();
+            tOb2.GetProperty(propertyName).SetValue(objectTo, propertyValue, null);
+        }
+    }
+
+    public static class IENumerableExtensions
+    {
+        public static int ToInt(this Object value)
+        {
+            try
+            {
+                return Convert.ToInt32(value.ToString());
+            }
+            catch (Exception)
+            {
+
+                return 0;
+            }
+        }
+
+        public static void KillExcel(this uint iProcessId)
+        {
+            try
+            {
+                Process pProcess = Process.GetProcessById((int)iProcessId);
+                if (pProcess != null)
+                    pProcess.Kill();
+            }
+            catch (System.Exception)
+            {
+                //just ignore any failure.
+            }
+
+        }
+        public static List<T> DeserializeXml<T>(this string xmlContent, string xmlRootAttribute)
+        {
+            try
+            {
+                using (StringReader stringReader = new StringReader(xmlContent))
+                {
+                    XmlSerializer serializer = new XmlSerializer(typeof(List<T>), new XmlRootAttribute(xmlRootAttribute));
+                    List<T> list = (List<T>)serializer.Deserialize(stringReader);
+                    return list;
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
+        }
+        public static DateTime ToDateTime(this Object value)
+        {
+            DateTime dt = new DateTime();
+            try
+            {
+                return Convert.ToDateTime(value.ToString());
+            }
+            catch (Exception)
+            {
+
+                return dt;
+            }
+        }
+
+        public static bool ToBool(this Object value)
+        {
+            try
+            {
+                return Convert.ToBoolean(value);
+            }
+            catch (Exception)
+            {
+
+                return false;
+            }
+        }
+
+        public static bool ToBool(this XElement xElement)
+        {
+            try
+            {
+                if (xElement.Value.ToLower() == "true" || xElement.Value.ToLower() == "1")
+                    return true;
+                return false;
+            }
+            catch (Exception)
+            {
+
+                return false;
+            }
+        }
+
+
+        public static string Encrypt(this Object value)
+        {
+            string result = Encrypt(value.ToString());
+            //string result = value.ToString();
+            return result;
+        }
+
+        public static string Decrypt(this Object value)
+        {
+            string result = Decrypt(value.ToString());
+            //string result = value.ToString();
+            return result;
+        }
+
+        private static string Encrypt(string toEncrypt, bool useHashing = true)
+        {
+            byte[] keyArray;
+            byte[] toEncryptArray = UTF8Encoding.UTF8.GetBytes(toEncrypt);
+
+            string key = "farrms_admin";
+            //System.Windows.Forms.MessageBox.Show(key);
+            //If hashing use get hashcode regards to your key
+            if (useHashing)
+            {
+                MD5CryptoServiceProvider hashmd5 = new MD5CryptoServiceProvider();
+                keyArray = hashmd5.ComputeHash(UTF8Encoding.UTF8.GetBytes(key));
+                //Always release the resources and flush data
+                // of the Cryptographic service provide. Best Practice
+
+                hashmd5.Clear();
+            }
+            else
+                keyArray = UTF8Encoding.UTF8.GetBytes(key);
+
+            TripleDESCryptoServiceProvider tdes = new TripleDESCryptoServiceProvider();
+            //set the secret key for the tripleDES algorithm
+            tdes.Key = keyArray;
+            //mode of operation. there are other 4 modes.
+            //We choose ECB(Electronic code Book)
+            tdes.Mode = CipherMode.ECB;
+            //padding mode(if any extra byte added)
+
+            tdes.Padding = PaddingMode.PKCS7;
+
+            ICryptoTransform cTransform = tdes.CreateEncryptor();
+            //transform the specified region of bytes array to resultArray
+            byte[] resultArray =
+              cTransform.TransformFinalBlock(toEncryptArray, 0,
+              toEncryptArray.Length);
+            //Release resources held by TripleDes Encryptor
+            tdes.Clear();
+            //Return the encrypted data into unreadable string format
+            return Convert.ToBase64String(resultArray, 0, resultArray.Length);
+        }
+
+        private static string Decrypt(string cipherString, bool useHashing = true)
+        {
+            byte[] keyArray;
+            //get the byte code of the string
+
+            byte[] toEncryptArray = Convert.FromBase64String(cipherString);
+
+            //Get your key from config file to open the lock!
+            string key = "farrms_admin";
+
+            if (useHashing)
+            {
+                //if hashing was used get the hash code with regards to your key
+                MD5CryptoServiceProvider hashmd5 = new MD5CryptoServiceProvider();
+                keyArray = hashmd5.ComputeHash(UTF8Encoding.UTF8.GetBytes(key));
+                //release any resource held by the MD5CryptoServiceProvider
+
+                hashmd5.Clear();
+            }
+            else
+            {
+                //if hashing was not implemented get the byte code of the key
+                keyArray = UTF8Encoding.UTF8.GetBytes(key);
+            }
+
+            TripleDESCryptoServiceProvider tdes = new TripleDESCryptoServiceProvider();
+            //set the secret key for the tripleDES algorithm
+            tdes.Key = keyArray;
+            //mode of operation. there are other 4 modes. 
+            //We choose ECB(Electronic code Book)
+
+            tdes.Mode = CipherMode.ECB;
+            //padding mode(if any extra byte added)
+            tdes.Padding = PaddingMode.PKCS7;
+
+            ICryptoTransform cTransform = tdes.CreateDecryptor();
+            byte[] resultArray = cTransform.TransformFinalBlock(
+                                 toEncryptArray, 0, toEncryptArray.Length);
+            //Release resources held by TripleDes Encryptor                
+            tdes.Clear();
+            //return the Clear decrypted TEXT
+            return UTF8Encoding.UTF8.GetString(resultArray);
+        }
+
+        public static IEnumerable<T> FromDataReader<T>(this IEnumerable<T> list, DbDataReader dr)
+        {
+            //Instance reflec object from Reflection class coded above
+            var reflec = new Reflection();
+            //Declare one "instance" object of Object type and an object list
+            var lstObj = new List<Object>();
+
+            //dataReader loop
+            while (dr.Read())
+            {
+                //Create an instance of the object needed.
+                //The instance is created by obtaining the object type T of the object
+                //list, which is the object that calls the extension method
+                //Type T is inferred and is instantiated
+                Object instance = Activator.CreateInstance(list.GetType().GetGenericArguments()[0]);
+
+                // Loop all the fields of each row of dataReader, and through the object
+                // reflector (first step method) fill the object instance with the datareader values
+                System.Data.DataTable schemaTable = dr.GetSchemaTable();
+                if (schemaTable != null)
+                    foreach (DataRow drow in schemaTable.Rows)
+                    {
+                        reflec.FillObjectWithProperty(ref instance,
+                            drow.ItemArray[0].ToString(), dr[drow.ItemArray[0].ToString()], null);
+                    }
+
+                //Add object instance to list
+                lstObj.Add(instance);
+            }
+
+            var lstResult = new List<T>();
+            foreach (Object item in lstObj)
+            {
+                lstResult.Add((T)Convert.ChangeType(item, typeof(T)));
+            }
+
+            return lstResult;
+        }
+
+        public static IEnumerable<T> FromOleReader<T>(this IEnumerable<T> list, SqlDataReader dr)
+        {
+            //Instance reflec object from Reflection class coded above
+            var reflec = new Reflection();
+            //Declare one "instance" object of Object type and an object list
+            var lstObj = new List<Object>();
+
+            //dataReader loop
+            while (dr.Read())
+            {
+                //Create an instance of the object needed.
+                //The instance is created by obtaining the object type T of the object
+                //list, which is the object that calls the extension method
+                //Type T is inferred and is instantiated
+                Object instance = Activator.CreateInstance(list.GetType().GetGenericArguments()[0]);
+
+                // Loop all the fields of each row of dataReader, and through the object
+                // reflector (first step method) fill the object instance with the datareader values
+                System.Data.DataTable schemaTable = dr.GetSchemaTable();
+                if (schemaTable != null)
+                    foreach (DataRow drow in schemaTable.Rows)
+                    {
+                        reflec.FillObjectWithProperty(ref instance,
+                            drow.ItemArray[0].ToString(), dr[drow.ItemArray[0].ToString()], null);
+                    }
+
+                //Add object instance to list
+                lstObj.Add(instance);
+            }
+
+            var lstResult = new List<T>();
+            foreach (Object item in lstObj)
+            {
+                lstResult.Add((T)Convert.ChangeType(item, typeof(T)));
+            }
+
+            return lstResult;
+        }
+
+        public static IEnumerable<T> FromOleReader<T>(this IEnumerable<T> list, OleDbDataReader dr)
+        {
+            //Instance reflec object from Reflection class coded above
+            var reflec = new Reflection();
+            //Declare one "instance" object of Object type and an object list
+            var lstObj = new List<Object>();
+
+            //dataReader loop
+            while (dr.Read())
+            {
+                //Create an instance of the object needed.
+                //The instance is created by obtaining the object type T of the object
+                //list, which is the object that calls the extension method
+                //Type T is inferred and is instantiated
+                Object instance = Activator.CreateInstance(list.GetType().GetGenericArguments()[0]);
+
+                // Loop all the fields of each row of dataReader, and through the object
+                // reflector (first step method) fill the object instance with the datareader values
+                System.Data.DataTable schemaTable = dr.GetSchemaTable();
+                if (schemaTable != null)
+                    foreach (DataRow drow in schemaTable.Rows)
+                    {
+                        reflec.FillObjectWithProperty(ref instance,
+                            drow.ItemArray[0].ToString(), dr[drow.ItemArray[0].ToString()], null);
+                    }
+
+                //Add object instance to list
+                lstObj.Add(instance);
+            }
+
+            var lstResult = new List<T>();
+            foreach (Object item in lstObj)
+            {
+                lstResult.Add((T)Convert.ChangeType(item, typeof(T)));
+            }
+
+            return lstResult;
+        }
+    }
+
+}]]></ProjectItem>
+          <ProjectItem
+            Name="Properties\Resources.resx"
+            Encoding="UTF8"><![CDATA[<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+</root>]]></ProjectItem>
+          <ProjectItem
+            Name="Properties\Settings.Designer.cs"
+            Encoding="UTF8"><![CDATA[//------------------------------------------------------------------------------
+// <auto-generated>
+//     This code was generated by a tool.
+//
+//     Changes to this file may cause incorrect behavior and will be lost if
+//     the code is regenerated.
+// </auto-generated>
+//------------------------------------------------------------------------------
+
+[assembly: global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Scope="member", Target="ST_dd15b1baccfb44448c0156790b3eaa20.Properties.Settings.get_Default():ST_dd15b1baccfb44448c0156790b3eaa20.Properties.Sett" +
+    "ings")]
+
+namespace ST_dd15b1baccfb44448c0156790b3eaa20.Properties {
+    
+    
+    internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
+        
+        [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+        private static Settings defaultInstance = new Settings();
+        
+        public static Settings Default {
+            get {
+                return defaultInstance;
+            }
+        }
+    }
+}]]></ProjectItem>
+          <ProjectItem
+            Name="ScriptMain.cs"
+            Encoding="UTF8"><![CDATA[#region Help:  Introduction to the script task
+/* The Script Task allows you to perform virtually any operation that can be accomplished in
+ * a .Net application within the context of an Integration Services control flow. 
+ * 
+ * Expand the other regions which have "Help" prefixes for examples of specific ways to use
+ * Integration Services features within this script task. */
+#endregion
+
+
+#region Namespaces
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.OleDb;
+using System.Diagnostics;
+using System.Drawing;
+using System.Linq;
+using System.Threading;
+using Microsoft.SqlServer.Dts.Runtime;
+using System.Windows.Forms;
+using Microsoft.SqlServer.Dts.Runtime.Wrapper;
+using ST_f39233fac16e426d991d932f9ef7d858;
+using Microsoft.Office.Interop.Excel;
+
+#endregion
+
+namespace ST_dd15b1baccfb44448c0156790b3eaa20
+{
+    /// <summary>
+    /// ScriptMain is the entry point class of the script.  Do not change the name, attributes,
+    /// or parent of this class.
+    /// 
+    /// </summary>
+	[Microsoft.SqlServer.Dts.Tasks.ScriptTask.SSISScriptTaskEntryPointAttribute]
+	public partial class ScriptMain : Microsoft.SqlServer.Dts.Tasks.ScriptTask.VSTARTScriptObjectModelBase
+	{
+        #region Help:  Using Integration Services variables and parameters in a script
+        /* To use a variable in this script, first ensure that the variable has been added to 
+         * either the list contained in the ReadOnlyVariables property or the list contained in 
+         * the ReadWriteVariables property of this script task, according to whether or not your
+         * code needs to write to the variable.  To add the variable, save this script, close this instance of
+         * Visual Studio, and update the ReadOnlyVariables and 
+         * ReadWriteVariables properties in the Script Transformation Editor window.
+         * To use a parameter in this script, follow the same steps. Parameters are always read-only.
+         * 
+         * Example of reading from a variable:
+         *  DateTime startTime = (DateTime) Dts.Variables["System::StartTime"].Value;
+         * 
+         * Example of writing to a variable:
+         *  Dts.Variables["User::myStringVariable"].Value = "new value";
+         * 
+         * Example of reading from a package parameter:
+         *  int batchId = (int) Dts.Variables["$Package::batchId"].Value;
+         *  
+         * Example of reading from a project parameter:
+         *  int batchId = (int) Dts.Variables["$Project::batchId"].Value;
+         * 
+         * Example of reading from a sensitive project parameter:
+         *  int batchId = (int) Dts.Variables["$Project::batchId"].GetSensitiveValue();
+         * */
+
+        #endregion
+
+        #region Help:  Firing Integration Services events from a script
+        /* This script task can fire events for logging purposes.
+         * 
+         * Example of firing an error event:
+         *  Dts.Events.FireError(18, "Process Values", "Bad value", "", 0);
+         * 
+         * Example of firing an information event:
+         *  Dts.Events.FireInformation(3, "Process Values", "Processing has started", "", 0, ref fireAgain)
+         * 
+         * Example of firing a warning event:
+         *  Dts.Events.FireWarning(14, "Process Values", "No values received for input", "", 0);
+         * */
+        #endregion
+
+        #region Help:  Using Integration Services connection managers in a script
+        /* Some types of connection managers can be used in this script task.  See the topic 
+         * "Working with Connection Managers Programatically" for details.
+         * 
+         * Example of using an ADO.Net connection manager:
+         *  object rawConnection = Dts.Connections["Sales DB"].AcquireConnection(Dts.Transaction);
+         *  SqlConnection myADONETConnection = (SqlConnection)rawConnection;
+         *  //Use the connection in some code here, then release the connection
+         *  Dts.Connections["Sales DB"].ReleaseConnection(rawConnection);
+         *
+         * Example of using a File connection manager
+         *  object rawConnection = Dts.Connections["Prices.zip"].AcquireConnection(Dts.Transaction);
+         *  string filePath = (string)rawConnection;
+         *  //Use the connection in some code here, then release the connection
+         *  Dts.Connections["Prices.zip"].ReleaseConnection(rawConnection);
+         * */
+        #endregion
+
+
+		/// <summary>
+        /// This method is called when this script task executes in the control flow.
+        /// Before returning from this method, set the value of Dts.TaskResult to indicate success or failure.
+        /// To open Help, press F1.
+        /// </summary>
+        /// 
+        
+        private string _psSynchronize;
+        private string _psImageSnapshot;
+        private string _psExcelSheetId;
+        private string _psUserName;
+        private string _psExcelReportParam;
+        private string _psViewReportFilterXmlParam;
+        private string _psProcessId;
+
+        [STAThread]
+		public void Main()
+		{
+            uint iProcessId=0;
+            try
+            {
+                _psSynchronize = Dts.Variables["PS_Synchronize"].Value.ToString();
+                _psImageSnapshot = Dts.Variables["PS_ImageSnapshot"].Value.ToString();
+                _psExcelSheetId = Dts.Variables["PS_ExcelSheetId"].Value.ToString().Replace('|', ',').Replace("ALL", "");
+                _psUserName = Dts.Variables["PS_UserName"].Value.ToString();
+                _psExcelReportParam = Dts.Variables["PS_ExcelReportParam"].Value.ToString();
+                _psViewReportFilterXmlParam = Dts.Variables["PS_ViewReportFilterXmlParam"].Value.ToString();
+                _psProcessId = Dts.Variables["PS_ProcessId"].Value.ToString();
+                
+                /*
+                _psViewReportFilterXmlParam = @"<Parameters>
+            <Parameter>
+                <Name>sub_id</Name>
+                <Value>1598</Value>
+                <DisplayLabel>Subsidiary</DisplayLabel>
+                <DisplayValue>001 Sales</DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>stra_id</Name>
+                <Value>1600</Value>
+                <DisplayLabel>Strategy</DisplayLabel>
+                <DisplayValue>Gas Business</DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>book_id</Name>
+                <Value>1604</Value>
+                <DisplayLabel>Book</DisplayLabel>
+                <DisplayValue>fixed price</DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>sub_book_id</Name>
+                <Value>3632!1345</Value>
+                <DisplayLabel>Sub Book</DisplayLabel>
+                <DisplayValue>001 Sales_PPA_CO,001 Sales_PPA_NC</DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>from_as_of_date</Name>
+                <Value>2017-11-01</Value>
+                <DisplayLabel>As of Date</DisplayLabel>
+                <DisplayValue>11/01/2017</DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>source_deal_header_id</Name>
+                <Value></Value>
+                <DisplayLabel>Deal</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>deal_ref_id</Name>
+                <Value></Value>
+                <DisplayLabel>Deal Reference</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>period_from</Name>
+                <Value></Value>
+                <DisplayLabel>Month From</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>period_to</Name>
+                <Value></Value>
+                <DisplayLabel>Month To</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>term_start</Name>
+                <Value></Value>
+                <DisplayLabel>Term Start</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>term_end</Name>
+                <Value></Value>
+                <DisplayLabel>Term End</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>trader_id</Name>
+                <Value></Value>
+                <DisplayLabel>Trader</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>source_counterparty_id</Name>
+                <Value>4723!14105</Value>
+                <DisplayLabel>Counterparty</DisplayLabel>
+                <DisplayValue>0_Privilege_Test - ssdsd,001 Hari Roka</DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>contract_id</Name>
+                <Value></Value>
+                <DisplayLabel>Contract</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>location_id</Name>
+                <Value></Value>
+                <DisplayLabel>Location</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>index_id</Name>
+                <Value></Value>
+                <DisplayLabel>Index</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>buy_sell_flag</Name>
+                <Value></Value>
+                <DisplayLabel>Buy/Sell</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>physical_financial_flag</Name>
+                <Value></Value>
+                <DisplayLabel>Physical/Financial</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>commodity_id</Name>
+                <Value></Value>
+                <DisplayLabel>Commodity</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>source_deal_type_id</Name>
+                <Value></Value>
+                <DisplayLabel>Deal Type</DisplayLabel>
+                <DisplayValue></DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>charge_type_id</Name>
+                <Value>-5500</Value>
+                <DisplayLabel>Charge Type</DisplayLabel>
+                <DisplayValue>Commodity</DisplayValue>
+            </Parameter>
+            <Parameter>
+                <Name>pnl_source_value_id</Name>
+                <Value>4500</Value>
+                <DisplayLabel>Curve Source</DisplayLabel>
+                <DisplayValue>Master</DisplayValue>
+            </Parameter></Parameters>";
+            */
+                if (_psProcessId == "")
+                    _psProcessId = Guid.NewGuid().ToString().Replace("-", "_").ToUpper();
+
+                OleDbConnection oleDbConnection = GetConnection("OLE_CONN_MainDB");
+                OleDbCommand cmd = new OleDbCommand("spa_excel_snapshots @flag='e',@sheet_id='" + _psExcelSheetId + "',@batch_call_xml='" + _psExcelReportParam + "'", oleDbConnection);
+                OleDbDataReader reader = cmd.ExecuteReader();
+                List<ExcelSheets> excelSheets = new List<ExcelSheets>().FromOleReader(reader).ToList();
+
+                Snapshot snap = new Snapshot(oleDbConnection);
+                snap.ProcessId = _psProcessId;
+                snap.ExcelReportParamXML = _psExcelReportParam;
+                snap.UserName = _psUserName;
+                
+//                _psViewReportFilterXmlParam = @"<Parameters>
+//	                                                <Parameter>
+//		                                                <Name>as_of_date_from</Name>
+//		                                                <Value>2016-10-01</Value>
+//	                                                </Parameter>
+//	                                                <Parameter>
+//		                                                <Name>as_of_date_to</Name>
+//		                                                <Value>2017-12-30</Value>
+//	                                                </Parameter>
+//                                                </Parameters>";
+
+                snap.ViewReportParamXml = _psViewReportFilterXmlParam; //   Parse view filter in object property setter.
+
+                if (_psSynchronize.Replace('y', '1') == "1")
+                    snap.Synchronize = true;
+
+                if (_psImageSnapshot.Replace('y', '1') == "1")
+                    snap.ImageSnapshot = true;
+
+
+
+                
+                //  Synchronize excel sheets , Synchronization process creates snapshots its self
+                string[] files = excelSheets.Where(x => x.Publish == true).Select(x => x.FileName).Distinct().ToArray();
+                foreach (string f in files)
+                {
+                    snap.SynchronizeExcel(f, out iProcessId);
+                }
+
+                //  Publish Snapshots only
+                if (!snap.Synchronize && snap.ImageSnapshot)
+                //if (snap.ImageSnapshot)
+                {
+                    foreach (string s in files)
+                    {
+                        string[] arrSheets = excelSheets.Where(x => x.FileName == s && x.Publish == true).Select(x => x.SheetName).ToArray();
+                        snap.PublishSnapshot(s, arrSheets, out iProcessId);
+                    }
+                }
+                Dts.TaskResult = (int)ScriptResults.Success;
+            }
+            catch (Exception ex)
+            {
+                iProcessId.KillExcel();
+                Dts.Events.FireError(0, "Script_Task", ex.Message + "\r" + ex.StackTrace, String.Empty, 0);
+                Dts.TaskResult = (int)ScriptResults.Failure;
+            }
+            
+			
+		}
+
+        
+        
+        private OleDbConnection GetConnection(string constring)
+        {
+            try
+            {
+                ConnectionManager cm = Dts.Connections[constring];
+                IDTSConnectionManagerDatabaseParameters100 cmParams = cm.InnerObject as IDTSConnectionManagerDatabaseParameters100;
+                OleDbConnection con = cmParams.GetConnectionForSchema() as OleDbConnection;
+                return con;
+            }
+            catch (Exception ex)
+            {
+                Dts.Events.FireError(0, "Script_Task", ex.Message + "\r" + ex.StackTrace, String.Empty, 0);
+                Dts.TaskResult = (int)ScriptResults.Failure;
+            }
+            return null;
+        }
+        #region ScriptResults declaration
+        /// <summary>
+        /// This enum provides a convenient shorthand within the scope of this class for setting the
+        /// result of the script.
+        /// 
+        /// This code was generated automatically.
+        /// </summary>
+        enum ScriptResults
+        {
+            Success = Microsoft.SqlServer.Dts.Runtime.DTSExecResult.Success,
+            Failure = Microsoft.SqlServer.Dts.Runtime.DTSExecResult.Failure
+        };
+        #endregion
+	}
+}]]></ProjectItem>
+          <ProjectItem
+            Name="ST_dd15b1baccfb44448c0156790b3eaa20.csproj"
+            Encoding="UTF8"><![CDATA[<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ProjectTypeGuids>{30D016F9-3734-4E33-A861-5E7D899E18F3};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{0C3005C9-9BCC-4175-B32E-77B5C2007D49}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ST_dd15b1baccfb44448c0156790b3eaa20</RootNamespace>
+    <AssemblyName>ST_dd15b1baccfb44448c0156790b3eaa20</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>.\bin\Debug\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>false</DebugSymbols>
+    <Optimize>true</Optimize>
+    <OutputPath>.\bin\Release\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="adodb, Version=7.0.3300.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <SpecificVersion>False</SpecificVersion>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+      <HintPath>C:\Program Files (x86)\Microsoft.NET\Primary Interop Assemblies\adodb.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=14.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+      <HintPath>C:\Program Files (x86)\Microsoft Visual Studio 11.0\Visual Studio Tools for Office\PIA\Office14\Microsoft.Office.Interop.Excel.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.SQLServer.DTSRuntimeWrap, Version=13.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=x86">
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="Microsoft.SQLServer.ManagedDTS, Version=13.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms">
+      <Private>True</Private>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.SqlServer.ScriptTask, Version=11.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+  <ItemGroup>
+    <AppDesigner Include="Properties\" />
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Snapshot.cs" />
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="ScriptMain.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <!-- Include the build rules for a C# project.-->
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ProjectExtensions>
+    <VisualStudio>
+      <FlavorProperties GUID="{30D016F9-3734-4E33-A861-5E7D899E18F3}">
+        <ProjectProperties HostName="VSTAHostName" HostPackage="{B3A685AA-7EAF-4BC6-9940-57959FA5AC07}" ApplicationType="usd" Language="cs" TemplatesPath="" DebugInfoExeName="devenv.exe" DebugInfoCommandLine="/vstaHostDebugUri:&quot;vstadebugf5388673-3091-4fc5-adfc-cfc9602f37e7/9a9d0019-b74a-43b0-b5a7-5741971e7766&quot;" />
+        <Host Name="ScriptTask" />
+        <ProjectClient>
+          <HostIdentifier>SSIS_ST110</HostIdentifier>
+        </ProjectClient>
+      </FlavorProperties>
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>]]></ProjectItem>
+          <ProjectItem
+            Name="Project"
+            Encoding="UTF16LE"><![CDATA[<?xml version="1.0" encoding="UTF-16" standalone="yes"?>
+<c:Project xmlns:c="http://schemas.microsoft.com/codeprojectml/2010/08/main" xmlns:msb="http://schemas.microsoft.com/developer/msbuild/2003" runtimeVersion="3.0" schemaVersion="1.0">
+	<msb:PropertyGroup>
+		<msb:CodeName>ST_dd15b1baccfb44448c0156790b3eaa20</msb:CodeName>
+		<msb:DisplayName>ST_dd15b1baccfb44448c0156790b3eaa20</msb:DisplayName>
+		<msb:Language>msBuild</msb:Language>
+		<msb:ProjectId>{FC04B4FB-676E-4C29-B168-91092E46900D}</msb:ProjectId>
+	</msb:PropertyGroup>
+	<msb:ItemGroup>
+		<msb:Project Include="ST_dd15b1baccfb44448c0156790b3eaa20.csproj"/>
+		<msb:File Include="Properties\AssemblyInfo.cs"/>
+		<msb:File Include="Properties\Resources.resx"/>
+		<msb:File Include="Properties\Resources.Designer.cs"/>
+		<msb:File Include="Properties\Settings.Designer.cs"/>
+		<msb:File Include="Properties\Settings.settings"/>
+		<msb:File Include="ScriptMain.cs"/>
+		<msb:File Include="Snapshot.cs"/>
+		<msb:Breakpoint Include="80d1c36e8ea5440686189d9f65f9d50d">
+			<msb:HitCountType>1</msb:HitCountType>
+			<msb:FileName>Snapshot.cs</msb:FileName>
+			<msb:LineNumber>838</msb:LineNumber>
+			<msb:HitCountTarget>1</msb:HitCountTarget>
+			<msb:ColumnNumber>13</msb:ColumnNumber>
+			<msb:Enabled>True</msb:Enabled>
+			<msb:Condition></msb:Condition>
+			<msb:ConditionType>1</msb:ConditionType>
+			<msb:Language>C#</msb:Language>
+		</msb:Breakpoint>
+		<msb:Breakpoint Include="9521005b85474d1083ececa6b9235c8c">
+			<msb:HitCountType>1</msb:HitCountType>
+			<msb:FileName>Snapshot.cs</msb:FileName>
+			<msb:LineNumber>219</msb:LineNumber>
+			<msb:HitCountTarget>1</msb:HitCountTarget>
+			<msb:ColumnNumber>1</msb:ColumnNumber>
+			<msb:Enabled>True</msb:Enabled>
+			<msb:Condition></msb:Condition>
+			<msb:ConditionType>1</msb:ConditionType>
+			<msb:Language>C#</msb:Language>
+		</msb:Breakpoint>
+		<msb:Breakpoint Include="6e930651128e4b0489a13b8c0e78be1b">
+			<msb:HitCountType>1</msb:HitCountType>
+			<msb:FileName>ScriptMain.cs</msb:FileName>
+			<msb:LineNumber>267</msb:LineNumber>
+			<msb:HitCountTarget>1</msb:HitCountTarget>
+			<msb:ColumnNumber>17</msb:ColumnNumber>
+			<msb:Enabled>True</msb:Enabled>
+			<msb:Condition></msb:Condition>
+			<msb:ConditionType>1</msb:ConditionType>
+			<msb:Language>C#</msb:Language>
+		</msb:Breakpoint>
+		<msb:Breakpoint Include="b4e13f6f33f64fdfb06c2259f150d02d">
+			<msb:HitCountType>1</msb:HitCountType>
+			<msb:FileName>ScriptMain.cs</msb:FileName>
+			<msb:LineNumber>264</msb:LineNumber>
+			<msb:HitCountTarget>1</msb:HitCountTarget>
+			<msb:ColumnNumber>17</msb:ColumnNumber>
+			<msb:Enabled>True</msb:Enabled>
+			<msb:Condition></msb:Condition>
+			<msb:ConditionType>1</msb:ConditionType>
+			<msb:Language>C#</msb:Language>
+		</msb:Breakpoint>
+		<msb:Breakpoint Include="3f591d8d2d6a4a2db6da6e9f5b6223b5">
+			<msb:HitCountType>1</msb:HitCountType>
+			<msb:FileName>Snapshot.cs</msb:FileName>
+			<msb:LineNumber>765</msb:LineNumber>
+			<msb:HitCountTarget>1</msb:HitCountTarget>
+			<msb:ColumnNumber>13</msb:ColumnNumber>
+			<msb:Enabled>True</msb:Enabled>
+			<msb:Condition></msb:Condition>
+			<msb:ConditionType>1</msb:ConditionType>
+			<msb:Language>C#</msb:Language>
+		</msb:Breakpoint>
+		<msb:Breakpoint Include="9e29c364d5c445748754546eeb0dea2f">
+			<msb:HitCountType>1</msb:HitCountType>
+			<msb:FileName>Snapshot.cs</msb:FileName>
+			<msb:LineNumber>335</msb:LineNumber>
+			<msb:HitCountTarget>1</msb:HitCountTarget>
+			<msb:ColumnNumber>17</msb:ColumnNumber>
+			<msb:Enabled>True</msb:Enabled>
+			<msb:Condition></msb:Condition>
+			<msb:ConditionType>1</msb:ConditionType>
+			<msb:Language>C#</msb:Language>
+		</msb:Breakpoint>
+	</msb:ItemGroup>
+</c:Project>]]></ProjectItem>
+          <ProjectItem
+            Name="Properties\AssemblyInfo.cs"
+            Encoding="UTF8"><![CDATA[using System.Reflection;
+using System.Runtime.CompilerServices;
+
+//
+// General Information about an assembly is controlled through the following 
+// set of attributes. Change these attribute values to modify the information
+// associated with an assembly.
+//
+[assembly: AssemblyTitle("ST_dd15b1baccfb44448c0156790b3eaa20")]
+[assembly: AssemblyDescription("")]
+[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyCompany("Microsoft")]
+[assembly: AssemblyProduct("ST_dd15b1baccfb44448c0156790b3eaa20")]
+[assembly: AssemblyCopyright("Copyright @ Microsoft 2016")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]
+//
+// Version information for an assembly consists of the following four values:
+//
+//      Major Version
+//      Minor Version 
+//      Build Number
+//      Revision
+//
+// You can specify all the values or you can default the Revision and Build Numbers 
+// by using the '*' as shown below:
+
+[assembly: AssemblyVersion("1.0.*")]]]></ProjectItem>
+          <ProjectItem
+            Name="Properties\Settings.settings"
+            Encoding="UTF8"><![CDATA[<?xml version='1.0' encoding='iso-8859-1'?>
+<SettingsFile xmlns="uri:settings" CurrentProfile="(Default)">
+  <Profiles>
+    <Profile Name="(Default)" />
+  </Profiles>
+  <Settings />
+</SettingsFile>]]></ProjectItem>
+          <ProjectItem
+            Name="Properties\Resources.Designer.cs"
+            Encoding="UTF8"><![CDATA[//------------------------------------------------------------------------------
+// <auto-generated>
+//     This code was generated by a tool.
+//
+//     Changes to this file may cause incorrect behavior and will be lost if
+//     the code is regenerated.
+// </auto-generated>
+//------------------------------------------------------------------------------
+
+[assembly: global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Scope="member", Target="ST_dd15b1baccfb44448c0156790b3eaa20.Properties.Resources.get_ResourceManager():System.Resources.Resou" +
+    "rceManager")]
+[assembly: global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Scope="member", Target="ST_dd15b1baccfb44448c0156790b3eaa20.Properties.Resources.get_Culture():System.Globalization.CultureIn" +
+    "fo")]
+[assembly: global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode", Scope="member", Target="ST_dd15b1baccfb44448c0156790b3eaa20.Properties.Resources.set_Culture(System.Globalization.CultureInfo" +
+    "):Void")]
+
+namespace ST_dd15b1baccfb44448c0156790b3eaa20.Properties {
+    
+    
+    /// <summary>
+    ///   A strongly-typed resource class, for looking up localized strings, etc.
+    /// </summary>
+    // This class was auto-generated by the StronglyTypedResourceBuilder
+    // class via a tool like ResGen or Visual Studio.
+    // To add or remove a member, edit your .ResX file then rerun ResGen
+    // with the /str option, or rebuild your VS project.
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+    internal class Resources {
+        
+        private static global::System.Resources.ResourceManager resourceMan;
+        
+        private static global::System.Globalization.CultureInfo resourceCulture;
+        
+        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+        internal Resources() {
+        }
+        
+        /// <summary>
+        ///   Returns the cached ResourceManager instance used by this class.
+        /// </summary>
+        [global::System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Resources.ResourceManager ResourceManager {
+            get {
+                if ((resourceMan == null)) {
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("ST_dd15b1baccfb44448c0156790b3eaa20.Properties.Resources", typeof(Resources).Assembly);
+                    resourceMan = temp;
+                }
+                return resourceMan;
+            }
+        }
+        
+        /// <summary>
+        ///   Overrides the current thread's CurrentUICulture property for all
+        ///   resource lookups using this strongly typed resource class.
+        /// </summary>
+        [global::System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Globalization.CultureInfo Culture {
+            get {
+                return resourceCulture;
+            }
+            set {
+                resourceCulture = value;
+            }
+        }
+    }
+}]]></ProjectItem>
+          <BinaryItem
+            Name="ST_dd15b1baccfb44448c0156790b3eaa20.dll">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
+AAAKKGwAAAqAlwAABH6XAAAEe20AAAp+lwAABAdvLQEABhEPb6wAAAZvMQEABm9vAAAKExECBgcR
+EQIoFQAABgIoDwAABhEQKCsAAAYmEi8ocAAACjpu////3g4SL/4WFwAAG28WAAAK3HJNAQBwExIR
+DigDAAArfg4AAAQtERT+BjYAAAZzcgAACoAOAAAEfg4AAAQoBAAAK290AAAKEzA4gAAAABEwb3UA
+AAoTExETb1sAAAZvOAAACm80AAAKcj0CAHAoNQAACiwXERIRE29VAAAGckcCAHAoZwAAChMSK0MR
+EhMxG40tAAABEzIRMhYRMaIRMhcRE29VAAAGohEyGHJRAgBwohEyGRETb1sAAAaiETIaclUCAHCi
+ETIodgAAChMSETBvNwAACjp0////3gwRMCwHETBvFgAACtwREm84AAAKF41KAAABEzMRMxYffJ0R
+M293AAAKcl0CAHByTQEAcG9lAAAKExISFf4VCgAAAhIVERIohgAABhIVAyiCAAAGEhUoeAAACiiI
+AAAGERUTFAdvKwEABgIRFAYHKC0AAAYHF4wyAAABAigVAAAGfioAAApvKQEABgIGByg1AAAGAhYo
+IAAABioAAAABHAAAAgATDZmsDQ4AAAAAAgDxDZOEDgwAAAAAGzACACsAAAAHAAARFgoDbyMBAAYo
+IAAAChIAKAIAAAYmBih6AAAKCwcsBgdvewAACt4DJt4AKgABEAAAAAAVABInAAM1AAABEzAEAM8A
+AAAIAAARcnMCAHAKBnJ8BwBwA3KkBwBwKCQAAAoKBgIoDwAABnMQAAAKCwcXb3wAAAoHbxEAAAoM
+CG8SAAAKLQgIb30AAAoUKghvEwAACiZzwQAABhMEEQQIcqgHAHBvfgAACijkAAAGb74AAAYRBAhy
+tgcAcG9+AAAKKOQAAAZvuAAABhEECHLMBwBwb34AAApvFQAACm+8AAAGEQQIcuIHAHBvfgAACijk
+AAAGb8AAAAYRBAhyAAgAcG9+AAAKKOQAAAZvugAABhEEDQhvfQAACgkqABswAgBwAAAACQAAERIA
+/hULAAACAgIoDwAABm9/AAAKKDEAAAZzgAAACgsHb4EAAApyEggAcAdzggAACgwIb4MAAAoNc4QA
+AAoJKAUAACsoBgAAKygHAAArCgdvhwAACgYTBN4UCCwGCG8WAAAK3AcsBgdvFgAACtwRBCoBHAAA
+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
+AAAKck0BAHAo1gAACipGAm84AAAKck0BAHAo1gAACipGAm84AAAKck0BAHAo1gAACipGAm84AAAK
+ck0BAHAo1gAACioiDwAooQAABioiDwAoowAABio2DwAooQAABm/XAAAKKiIPACihAAAGKiIPACij
+AAAGKgAAGzARAG4EAAAVAAARA29BAQAGfioAAAp+KgAAChd+KgAACn4qAAAKb/8AAAYKc9kAAAoL
+c9kAAAoMBheNSgAAARMQERAWHzqdERBvYwAACigTAAArF41KAAABExERERYfJJ0REW9jAAAKfhEA
+AAQtERT+BjkAAAZzqwAACoARAAAEfhEAAAQoDgAAKygPAAArDQcSDv4VDAAAAhIOCRaaKKIAAAYS
+DgkXmijaAAAKKKQAAAYRDm/bAAAKBheNSgAAARMSERIWHzqdERJvYwAACigUAAArF41KAAABExMR
+ExYfJJ0RE29jAAAKfhIAAAQtERT+BjoAAAZzqwAACoASAAAEfhIAAAQoDgAAKygPAAArEwQIEg/+
+FQwAAAISDxEEFpooogAABhIPEQQXmijaAAAKKKQAAAYRD2/bAAAKA34qAAAKfioAAAoWjDIAAAF+
+KgAACn4qAAAKfioAAAp+KgAACn4qAAAKfioAAAp+KgAACn4qAAAKfioAAAp+KgAACn4qAAAKfioA
+AAp+KgAACm9DAQAGc94AAAomfrgAAAQtJBbQXwAAAShAAAAK0AIAAAIoQAAACihBAAAKKLUAAAqA
+uAAABH64AAAEe7YAAAp+uAAABAN+KgAACm87AQAGb7gAAApvuQAAChMUOGUBAAB+uQAABC0lHxDQ
+MAAAAihAAAAK0AIAAAIoQAAACihBAAAKKOAAAAqAuQAABH65AAAEe+EAAAp+uQAABBEUbzwAAApv
+4gAAChMFEQVvVQEABn4qAAAKfioAAAoXfioAAAp+KgAACm//AAAGEwYRBheNSgAAARMVERUWHySd
+ERVvYwAACn4TAAAELREU/gY7AAAGc6sAAAqAEwAABH4TAAAEKA4AACsoDwAAKxMHBxII/hUMAAAC
+EggRBxaaKKIAAAYSCBEHF5oo2gAACiikAAAGEQhv2wAAChEFb1MBAAZ+KgAACn4qAAAKF34qAAAK
+fioAAApv/wAABhMGEQYXjUoAAAETFhEWFh8knREWb2MAAAp+FAAABC0RFP4GPAAABnOrAAAKgBQA
+AAR+FAAABCgOAAArKA8AACsTBwgSCf4VDAAAAhIJEQcWmiiiAAAGEgkRBxeaKNoAAAoopAAABhEJ
+b9sAAAoRFG83AAAKOo/+///eFREUdSMAAAETFxEXLAcRF28WAAAK3Ad+FQAABC0RFP4GPQAABnPl
+AAAKgBUAAAR+FQAABCgVAAArfhYAAAQtERT+Bj4AAAZz5wAACoAWAAAEfhYAAAQoFgAAKygXAAAr
+EwoIfhcAAAQtERT+Bj8AAAZz5wAACoAXAAAEfhcAAAQoGAAAK34YAAAELREU/gZAAAAGc+UAAAqA
+GAAABH4YAAAEKBkAACsoGgAAKxMYEhgooQAABhMLCH4ZAAAELREU/gZBAAAGc+cAAAqAGQAABH4Z
+AAAEKBgAACsoGgAAKxMMAxIKKKEAAAYSCiijAAAGjEYAAAEo6QAAChELEgwoowAABoxGAAABKOkA
+AApvPwEABhMNEQ0qAABBHAAAAgAAAOABAAB4AQAAWAMAABUAAAAAAAAAGzACAEsAAAAFAAARA28t
+AQAGby8BAAYMKx4IbzwAAAp0GQAAAgoGbzUBAAYEKNYAAAotBAYL3h0IbzcAAAot2t4RCHUjAAAB
+DQksBglvFgAACtwUKgcqAAEQAAACAAwAKjYAEQAAAAAiAgMoJAAABioeAnsaAAAEKiICA30aAAAE
+Kh4CexsAAAQqIgIDfRsAAAQqHgJ7HAAABCoiAgN9HAAABCoeAnsdAAAEKiICA30dAAAEKh4Cex4A
+AAQqIgIDfR4AAAQqHgJ7HwAABCoiAgN9HwAABCoeAnsgAAAEKiICA30gAAAEKh4CeyEAAAQqIgID
+fSEAAAQqHgIoDwAACioeAnsiAAAEKiICA30iAAAEKh4CeyMAAAQqIgIDfSMAAAQqHgJ7JAAABCoi
+AgN9JAAABCoeAnslAAAEKiICA30lAAAEKh4CeyYAAAQqIgIDfSYAAAQqHgJ7JwAABCoiAgN9JwAA
+BCoeAigPAAAKKh4CeygAAAQqIgIDfSgAAAQqHgJ7KQAABCoiAgN9KQAABCoeAnsqAAAEKiICA30q
+AAAEKh4CeysAAAQqIgIDfSsAAAQqHgJ7LAAABCoiAgN9LAAABCoeAnstAAAEKiICA30tAAAEKh4C
+KA8AAAoqHgJ7LgAABCoiAgN9LgAABCoeAnsvAAAEKiICA30vAAAEKh4CKA8AAAoqHgJ7MAAABCoi
+AgN9MAAABCoeAnsxAAAEKiICA30xAAAEKh4CezIAAAQqIgIDfTIAAAQqHgJ7MwAABCoiAgN9MwAA
+BCoeAns0AAAEKiICA300AAAEKh4CezUAAAQqIgIDfTUAAAQqHgJ7NgAABCoiAgN9NgAABCoeAigP
+AAAKKh4CezcAAAQqIgIDfTcAAAQqHgJ7OAAABCoiAgN9OAAABCoeAns5AAAEKiICA305AAAEKh4C
+ezoAAAQqIgIDfToAAAQqHgJ7OwAABCoiAgN9OwAABCoeAns8AAAEKiICA308AAAEKh4Cez0AAAQq
+IgIDfT0AAAQqHgJ7PgAABCoiAgN9PgAABCoeAns/AAAEKiICA30/AAAEKh4Ce0AAAAQqIgIDfUAA
+AAQqHgJ7QQAABCoiAgN9QQAABCoeAntCAAAEKiICA31CAAAEKh4Ce0MAAAQqIgIDfUMAAAQqHgJ7
+RAAABCoiAgN9RAAABCoeAntFAAAEKiICA31FAAAEKh4Ce0YAAAQqIgIDfUYAAAQqHgJ7RwAABCoi
+AgN9RwAABCoeAntIAAAEKiICA31IAAAEKh4Ce0kAAAQqIgIDfUkAAAQqHgJ7SgAABCoiAgN9SgAA
+BCoeAigPAAAKKh4Ce0sAAAQqIgIDfUsAAAQqHgJ7TAAABCoiAgN9TAAABCoeAntNAAAEKiICA31N
+AAAEKh4Ce04AAAQqIgIDfU4AAAQqHgJ7TwAABCoiAgN9TwAABCoeAntQAAAEKiICA31QAAAEKh4C
+KA8AAAoqHgJ7UQAABCoiAgN9UQAABCoeAntSAAAEKiICA31SAAAEKh4Ce1MAAAQqIgIDfVMAAAQq
+HgJ7VAAABCoiAgN9VAAABCoeAntVAAAEKiICA31VAAAEKh4CKA8AAAoqHgJ7VgAABCoiAgN9VgAA
+BCoeAntXAAAEKiICA31XAAAEKh4Ce1gAAAQqIgIDfVgAAAQqHgJ7WQAABCoiAgN9WQAABCoeAnta
+AAAEKiICA31aAAAEKh4CKA8AAAoqHgJ7WwAABCoiAgN9WwAABCoeAntcAAAEKiICA31cAAAEKh4C
+e10AAAQqIgIDfV0AAAQqHgJ7XgAABCoiAgN9XgAABCoeAntfAAAEKiICA31fAAAEKh4Ce2AAAAQq
+IgIDfWAAAAQqHgJ7YQAABCoiAgN9YQAABCoeAntiAAAEKiICA31iAAAEKh4Ce2MAAAQqIgIDfWMA
+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
+AG8uAAAGEREXWBMREREREI5pMoUCKBcBAAoWbx8BAAreSxMLBijlAAAGAigXAQAKbyABAAoWcmIN
+AHARC28hAQAKcnoNAHARC28iAQAKKGcAAAp+IwEAChZvJAEACiYCKBcBAAoXbx8BAAreACoAAEEc
+AAAAAAAAAgAAAGwDAABuAwAASwAAADUAAAEbMAYAdgAAACAAABECKBcBAApvJQEACgNvJgEACgoG
+bycBAAp1MwAAAgsHb1kBAAZ1BgAAAQwIEwTeRA0CKBcBAApvIAEAChZyYg0AcAlvIQEACnJ6DQBw
+CW8iAQAKKGcAAAp+IwEAChZvJAEACiYCKBcBAAoXbx8BAAreABQqEQQqAAABEAAAAAAAAC8vAEI1
+AAABHgIoKQEACiq0AAAAzsrvvgEAAACRAAAAbFN5c3RlbS5SZXNvdXJjZXMuUmVzb3VyY2VSZWFk
+ZXIsIG1zY29ybGliLCBWZXJzaW9uPTQuMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5
+VG9rZW49Yjc3YTVjNTYxOTM0ZTA4OSNTeXN0ZW0uUmVzb3VyY2VzLlJ1bnRpbWVSZXNvdXJjZVNl
+dAIAAAAAAAAAAAAAAFBBRFBBRFC0AAAAQlNKQgEAAQAAAAAADAAAAHY0LjAuMzAzMTkAAAAABQBs
+AAAAjEMAACN+AAD4QwAAvDwAACNTdHJpbmdzAAAAALSAAACADQAAI1VTADSOAAAQAAAAI0dVSUQA
+AABEjgAADBcAACNCbG9iAAAAAAAAAAIAAAFXP6IdCQ8AAAD6JTMAFgAAAQAAAJ8AAAA5AAAAvQAA
+AFkBAAAJAQAACQAAADMBAAANAAAA1wEAAFYAAAAgAAAAGgAAAHIAAADTAAAAAQAAADUAAAABAAAA
+AQAAAA0AAAABAAAADgAAAAQAAAAcAAAAAAAKAAEAAAAAAAYAzQHGAQYA1AHGAQoA8wHeAQ4AUwIq
+AgYAbwLGARIAkgKAAgYAQAQlBAQA2ATkBAQAOAXkBAQAQgXkBAQAegbkBAYAIgrGARYA6BrYGgYA
+ARslBBIAIhsPGxIAVBs+GxIAcBuAAgYAkRuAGwYAwhutGwYAHR3+HAYA5h7MHgYAER//HgYAKB//
+HgYARR//HgYAZB//HgYAfR//HgYAlh//HgYAsR//HgYAzB//HgYA5R//HgYAHiD+HwYAPiD+HxoA
+aCD+HxIAeyCAAgYAuSDGAQYAzSD+HAYA6yD+HwYALyHGARoAQiE2IQYAZCHGAQYAmgrGAQYAeiHG
+AQQAkyHkBAYAqSHGAQYAvCHGAQYA1CHKIQYA5SHKIQYAAyLKIQQAKyLkBAYARyLGAQYATyL/HgQA
+VyLkBAYAZyLGARYAeCLYGhYAiCLYGgYAnyIlBBYA1yLYGgYABCPxIgQAHiPkBAQANCPkBBoAYyP+
+HwYAbiPGARoAdSP+HwYAlCPGAQYA6CPGAQYAXyXGAR4AsyWUJRoAuiX+Hx4AySWUJQYA+yXGAR4A
+FSaUJR4AKCaUJRoAWCZAJgYAqCbGAR8AzCYAAAoAFCcBJxIAMCcPGxIAOid0AhIAVicPGxIAeCc+
+GxIAhic+GwYA2yXGASIAaCliKSIAeCliKSIAhyliKSIAlCliKSIAtSliKSIAwCliKSIAzyliKSIA
+ACpiKSIAEipiKQQAGCrkBCIAkCpiKSIAmypiKQYA1CrxIgQA7CrkBAYAFCzKIQQALCzkBAQAQCzk
+BAYAcSxgLAYAfSxgLAYAhCxgLCYAIS0MLSoAOi0rLSoASS0rLSoAZy1QLRIAgC0+GxIAly0+GwYA
+sS3GAQQA+i3kBAQAdDDkBBoA5TA2IQYACTH+HAYAHzH+HAYAMjH/HgYAVDHKIS4AhTFsMS4AljFs
+MQYApDHKIQYA0THFMQYACTLsMQYAIjLsMQYAQjLsMQYAYTLsMQYAfDLsMQYAkDLsMQYAqDLsMRIA
+KzN0AhIARDN0AhIAVjN0AhIAcTN0AgYAkjMBJwYArzP/HgoA2zPFMwoA9DPFMw4AEDQqAgYAMjTG
+AQ4A+zQqAjIAVDU0NTYAVDU0NTYAbDU0NQ4AlDUqAjIA3jU0NTYA3jU0NTYA+jU0NQQAHDZHNgQA
+hjbkBAYAljb+HAYApDb+HAYAvDb+HAYAzzb+HAQA4DbkBAQA8DbkBAYAETf+HAYAZDj/HgYAezj+
+HAYAkjj+HAYAzzj+HAYAOjz+HAAAAAABAAAAAAABAAEAAQAQADIAOwAFAAEAAQALARAAXwAAAAkA
+GgBCAAEAEABtADsABQAeAEoAAAAQAHgAOwAFACIAUwABABAAhgA7AAUAKABgAAAAEACTADsABQAu
+AG0ACAEQAKcAOwAJADAAcgABABAAtwA7AAUAMwB4AAgBEADDADsACQA3AIEACAEQAM8AOwAJADwA
+iwAIARAA2wA7AAkARwChAAEAEADnADsABQBJAKUAAQAQAPEAOwAFAEsAqgABABAA/QA7AAUAUQC3
+AAEAEAAIATsABQBWAMIAAQAQABIBOwAFAFsAzQABABAAHQE7AAUAZQDiAIEBEAAoATsABQBlAOQA
+AAAQAD4BSAEFAGUA8QAAARAAdwFIAQ0AZwD1AAEAEACAAYsBEQBoAPgAAwEAAK8BAAAVAHIA/gCh
+EAAA2ATkBAAAdQD+AKEQAAA4BeQEAAB1AP4AoRAAAEIF5AQAAHUA/gChEAAAegbkBAAAdQD+AAMB
+EAAGIQAABQB1ABgBoRAAAJMh5AQAAHYAGgGhEAAAKyLkBAAAdgAkAaEQAABXIuQEAAB2ACgBoRAA
+AB4j5AQAAHYALgGhEAAANCPkBAAAdgAyAYMBEAA/IwAABQB2AEQBAwEQAKInAAAFAJgARAEDARAA
+1icAAAUAmQBGAYMBEABFKAAABQCbAEgBoRAAABgq5AQAAKkASAGDARAApSoAAAUAqQBLAaEQAADs
+KuQEAACsAEsBgwEQAF4rAAAFAKwATgEDARAAlCsAAAUArQBOAQEBAAAsLOQEFQCvAFABAQEAAEAs
+5AQVALIAUAGDARAAsSwAAAUAtQBQAQMBEADhLAAABQC2AFABgwEQAMgtAAAFALgAUgGhEAAA+i3k
+BAAAugBSAQEBAAB0MOQEFQC6AFYBAwEQAEU0AAAFAL0AVgGhEAAAHDZHNgAAvgBYAaEQAACGNuQE
+AAC+AFoBoRAAAOA25AQAAL4AWgGhEAAA8DbkBAAAvgBaAaEQAABVPOQEAAC+AFoBoRAAAF885AQA
+AL4AWgGhEAAAaTzkBAAAvgBaAQEAugb2AAEA3Ab2AAEA+gb2AAEAGwf5AAEAOAf5AAEAVwf2AAEA
+cQf8AAEAkgcAAQEAqwf2AAEA0Af2AAEA7gcEAQEAEQgMAQEAMAj2ABEAMiVJBBEAOil6CBEA7CsG
+ChEAKy56CBEAbC56CBEArS56CBEA7i56CBEALy8LCxEAcC8bCxEAsS8bCxEA8i8LCxEAMzAbCwEA
+bAn2AAEAiwlBAQEAqQlBAQEAvgn2AAEASQpBAQEAYQr2AAEAvglTAQEAdwr2AAEAbAn2AAEAQgv2
+AAEAWQtBAQEAdwtBAQEAkQv2AAEAsAv2AAEAgwz2AAEAmQz2AAEAvgn2AAEAtwz2AAEAWQtBAQEA
+1QxBAQEAgwz2AAEAQgv2AAEAiw32AAEAqg32AAEAyQ32AAEAhA72AAEAng72AAEAuQ75AAEA0g75
+AAEAhA72AAEAoA/2AAEAqg32AAEAww9TAQEA5g/2AAEAQRJBAQEAaxJTAQEAiBJTAQEArBJTAQEA
+0BJTAQEA8xJTAQEAExNTAQEAMhNTAQEAWxNTAQEAgxNTAQEAqxNTAQEA0hT2AAEA6hRBAQEAhA72
+AAEAMBVvAQEA3RX2AAEAng72AAEA+RX2AAEAyQ32AAEAFhb2AAEANhaTAQEA9xZBAQEAExdBAQEA
+3RX2AAEALRdBAQEARRdBAQEAgwz2AAEAQgv2AAEA3Rf5AAEA9xdBAQEAExj2AAEATBn2AAEAaRn2
+AAEAiRn2AAEApRn2AAEAvxlBAQEAVwf2AAEA4xn2AAEA/Rn2AAEAhA72AAEAGhqvAREAoRsqAhEA
+zhsuAhEAEhxMAgEANhz2AAEARRz2AAEAVhz2AAEAZhz2AAEAchz2AAEAhhz2AAEAohz2ABEAcDRY
+DREAojQGChEA1DQGCgYGwhxBAVaAyhxgAlaA0hxgAgYAMB1BARYAfiOgAxYAiSOyAxYAmyPDAxYA
+piPVAxYAsSPnAxYAvCP6AxYAxyOgAxYA0iOyAxYA3SPDAxYA7yMLBBYA+iP6AxYABiT6AxYAEiSy
+AxYAHiTDAxYAKiTDAxYANiQLBBYAQiT6AxYATiT6AxYAWiQgBBYAZiT6AxYAciSgAxYAfiQgBBYA
+iiT6AxYAliSgAxYAoiQgBBYAriT6AxYAuiSgAxYAxiQgBBYA0iT6AxYA3iSgAxYA6iSgAxYA9iSy
+AxYAAiXDAxYADiUxBAYAtif2AAYA6ifuBwYA+yfzBxYAciigAxYAfiigAxYAiiiyAxYAlijDAxYA
+oiiyAxYArihWCBYAuiigAxYAxiigAxYA0iigAxYA3iiyAxYA6ijDAxYA9iiyAxYAAiloCBYADimg
+AxYA4CpmCRYA9yp5CRYAAysgBBYAiCsxBAYAqCv4CQYAEh78CQYGwhxBAVaA0zvzEVaA3TvzEQYG
+whxBAVaA5jtgElaA7ztgEhYA1SwxBAYAEh78CQYAqCv4CRYA7i1mCRYABi7yCgYGwhxBAVaAIjz+
+ElaAJzz+EgYAWDT2AFAgAAAAAIYYogITAAEAAAAAAIAAkSCoAhkAAgDkIAAAAACBCMECIAAEAOwg
+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
+AgEAAAAAgADGDSYqKAYDAQAAAAAAAAYYuzuQAAQBAAAAAIAAxg0lK48DBAEAAAAAgADGDU8rKAYF
+AYBGAAAAAIYYogKQAAYBkEYAAAAAhgCyK5AABgEJSAAAAACGGKICkAAGARFIAAAAAIYA9SyQAAYB
+AAAAAAAABhgtOZAABgEAAAAAgADGDdEwsQQGAQAAAAAAAAYY+TuQAAcBAAAAAIAAxg3BMLEEBwEb
+XgAAAACGGKICkAAIATNeAAAAAIYAWjRMDQgBAAAAAAAABhguPJAACQEAAAAAAADGBW82jwMJAQAA
+AQDaHAAAAQDrHAIAAgDwHAAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAq
+HQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAwHQAAAgBBHQAAAQAqHQAA
+AQBQHQAAAQBfHQAAAQBqHQAAAQB1HQAAAgB4HQAAAQCCHQIAAgCQHQAAAQCbHQAAAQChHQAAAQCs
+HQAAAgC7HQAAAQDMHQAAAgDYHQAAAQAqHQAAAQCbHQAAAgB1HQAAAwDrHQAABADuHQAABQD3HQAA
+BgACHgAAAQB1HQAAAQASHgAAAgAaHgAAAwB1HQAAAQCCHQAAAgAeHgIAAwCQHQAAAQASHgAAAQAS
+HgAAAQAsHgAAAQBCHgAAAQDrHQAAAQBLHgAAAgB4HQAAAQCbHQAAAgB1HQAAAQAtIQAAAQAtIQAA
+AQAtIQAAAQAtIQAAAQAtIQAAAQAtIQAAAQAtIQAAAQAtIQAAAQAtIQAAAQAtIQAAAQAtIQAAAQAt
+IQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAA
+AQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAq
+HQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAA
+AQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAq
+HQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAA
+AQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAq
+HQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAA
+AQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQAqHQAAAQBU
+HgAAAgBdHgAAAwBqHgAABAB4HgAAAQAqHQAAAQCQHQAAAQBqHQAAAgB+HgAAAQAqHQAAAQAqHQAA
+AQCPHgAAAQAqHQAAAQAqHQAAAQCYHhAQAgCiHgAAAQCtHhAQAgCiHgAAAQC6HgAAAgC/HgAAAQC6
+HgAAAgC/HgAAAQC6HgAAAgC/HgAAAQAqHQAAAQDCHgAAAQAtIQAAAQAtIQAAAQAtIQAgAAAAABEg
+AQAhNxEgAgAtNxEQAwA8NxEgBABLNxEgBQBUNwAgAAAAAAAgAAAAAAAgAAAAAAAgAAAAAAEgAQCP
+NxEgAgCUNxEgAwCcNwAgAAAAABEQAQCnNxEQAgCyNwAgAAAAABEgAQDFNxEgAgDONxEgAQDFNxEg
+AgDONxEgAwAqHQAgAAAAAAAgAAAAAAEgAQAqHQAgAAAAAAAgAAAAAAEgAQAqHQAAAQAtIQAgAAAA
+AAEAAQDnOAEAAQDnOAAgAAAAABEgAQA5OQAgAAAAAAEgAQBOOREgAgBXOREgAwBjOREgBACyNxEg
+BQB5GhEgBgBsOREgBwB9OREgCACXOREgCQCeOREgCgCoOREgCwCxOREgDAC4OREgDQDCOREgDgDL
+OREgDwDROREgAQDqOREgAgBOOREgAwD2OQAgAAAAAAAgAAAAAAAgAAAAAAEgAQAIFQAgAAAAAAEg
+AQDnOBEgAQB5GgAgAAAAAAAgAAAAABEgAQAIFQAgAAAAABEgAQAIFQAgAAAAAAEgAQBpOhEgAgBv
+OgAgAAAAABEgAQB5GhEgAgCCOhEgAwCROhEgBACaOhEgBQCkOhEgBgC2OhEgBwDLOhEgCADiOhEg
+CQD2OhEgCgAMOxEgCwAfOxEgDAA4OxEgDQBNOxEgDgBfOxEgDwBsOxEgEAB7OwAAAQAtIQAAAQAt
+IQAgAAAAAAEgAQAqHQAgAAAAAAEgAQAqHQAgAAAAAAAgAAAAAAAAAQAtIQAgAAAAABgAdAAYANAA
+GQCEABkA1AAaAHwAGgDYABsAfQEeAH0BIAB9AaEAogKQAKkAogIkALEAogIkALkAogIkAMEAogIk
+AMkAogIkANEAogIkANkAogIkAOEAogIkAOkAogIkAPEAogIkAPkAogI8AQEBogKQAAkBogKQAAkA
+ogKQABEBogJwAhEBiCB3AnkAliApAHkAoiApAHkApyB8AgkAsCAgABkBxSCQACEBogIkACkBogKQ
+AAwAogKYAjkBTSGeAmEAXCG3AkEBogIkAEkBaSHGAlEBhCHPAhsJoCE4AWEBsCHWAmkBwyHbAnEB
+3iHhAnEB8yHmAmkBwyHtAoEBCCL1AgsJDSItAPMIGSItANsINSL7AisJQyIAA5kB9AkGA0sJYSIL
+A4EBcSIdAxQAogKQALEBgiIpA7kBkyIwAxwArSJAAyQAuyJSA2kAxyIpAGkABwxXA2kB3SIgAGkB
+5SJdA2kAWAkgANEBECMpAGkBGSMgABQAQyJjA2sJJSODA3sJrSKJA9EBuyKPA6sJBwwgADsJWiVT
+BCwAogKQAEkBcSVuBBkC2yWABDQA4yWgBDQA6iWtBNMJ8SWxBGMIASa2BDwADibIBDkC4yXRBBkC
+ZybbBEQA4yWgBEQA6iWtBBkCdibbBEwA4yWgBEwA6iWtBLMIhiaPA1QADiYeBVwADibIBGQA4yWg
+BGQA6iWtBBkCkSZFBWwA4yWgBGwA6iWtBHQA4yWgBHQA6iWtBHwADibIBIQADiYeBYwADibIBJQA
+4yWgBJQA6iWtBBkCnia6BZwADibdBaQA4yWgBKQA6iWtBKwADibIBCwAQyJjA2kBrSYFBjkBsyYM
+BmkBuSYbBjECsCAgAGkBwyEhBrsIwSYoBrQAogKQACwArSI0BrwAuyJSA8QA4yWgBMQA6iWtBIsJ
+ASZXBswADibIBLwAECMpADkB1yZoBtQAogKYAjkB4CaGBtwArSJAA+QAuyJSA2kBwyGtBmkB5iaz
+BmEA7ia5BlsJ9iaQAGECHCddB2ECKyeQAGkCRidrB3kAYSKQAHkApyByB3kCYycgAIECogIkAHkC
+WiWQAIkCogKEB4kCiCCMB+wAogKQADkBkSedBzkBTSGtB3kCYSKQAPQAogKQAGkBmCezBmkBIiin
+ADkBKyitB/wAogKYAmEAsCDaAGkBwyELCGkBMSinAGkBPCinALQAQyJjA5ECxhpMCDkBIiiDCJkC
+ogKQAKECogKQAKkCogKQALECoCkkALECYycgALECWiWUCLkCWiWcCBsI3CmPAyMI6imPA5sJ9ymQ
+ALkCByqpCNECpyCvCNkCBwwgAHsIHSq2CFMKJiooBtECLyo4AfsJOSq8CEMIQyrDCAsKVSqxBDMI
+YyqxBAsIbyqPA7kCYSKQALECYSKQAAQBogKYAjkBdyrSCAwB4yWgBAwB6iWtBBQBDiYeBZMIfyoo
+BhwB4yWgBBwB6iWtBCQBDiYeBcMJDysoBiwB4yWgBCwB6iWtBOsJGStXBjQBDibIBPkCrSKJAzwB
+4yWgBDwB6iWtBEQBDibIBGMKJSuPA2kBNCvKCWkBPCvPCaMIRiuxBFMILyo4AWsKTysoBgkDGSwQ
+CkwBogKQAFQBogKYAjkBJSwqCksIVCxJCiEDogKYAikDogJTCikDkyxaCikDpSyQACkDqyxhCjkD
+QC2eCkkDogKkClEDcy2rCkEDey2xCokCvxXDClkDpC3JCmkD9AnRCmkCuC04AYEB3iHhAmkBWzBd
+A2kBaTA4AfsHhTAlC1wBogKQAJECljA3C1wBQyJjAzkBnjCtBxsKrDA8C2QBogKQANsJtDBXBmwB
+4yWgBGwB6iWtBHQBDibIBKsKwTCxBJsK0TCxBHwBogKYAjkB+jB+C4QBogKYAjkBAjGnC2kBwyHN
+C4kDogIQDAkAKjEXDEkBPzEdDJkDSzEkDKEDogIkAKkDogIkALEDogJDDLEDrzFNDJECuzHeAcED
+2jF0DMED4zF6DMkDogKQANEDMDKADNEDPDKQANkDogKQAOEDdDKHDOEDhzKNDOEDnDKUDOEDuTKb
+DPkDyTKhDOEDPDKQAJEC3TKqDJEC7DLFDOED/TKbDMEDDTPLDJQBogKQAEkBFzPXDHkANTPeDAEE
+RivkDBEErSKJAxkEeTPqDJQBQyJjA4wBogKQAJQBrSI0BpwBuyJSA5EChzP5DIwBQyJjA5wBECMp
+ACEEogKQAEkBuDMlDZEAogIrDTEEogI4DRkAogKQAEEEogKQAEkEogKQACEADTViDVEEXjVoDWEE
+pyBuDWkEWAmPA2kBuSZ1DUEBdTV7DWkBfTUgAKwBogKYAlEEhTU8AVEEqDWKDakBszUgAKkBvzUg
+AGkBzjX2AHEE1DWQDVEE6jXKDYEEpyDQDYkEDDaPA8sKbzaPAyEAogKQAKEEogIkAKkEogKQALEE
+ogKQALkEogIRDtEEogI8AdkEogIkAOEEogKmD/EEogI8AakEogL9EfkEogLuEwgAzAFkAggA0AFp
+AgIAdQJuAgIAfQJuAggAuQJpAggAwAL4EQgAxAJpAggAzAL4EQgA0AITDwgA5QJpAggA6QITDwgA
+7AJpAggA8AIDEyEAwwBpAi4AMwCzFi4ASwCtFi4AYwDiFi4AKwCtFi4AawDrFi4AOwCEFi4AQwDC
+Fi4AGwCEFi4AcwBpAi4AIwCtFi4AEwA8FkEAwwBpAmAAwwBpAmEAwwBpAoAAwwBpAoEAwwBpAqAA
+wwBpAqEAwwBpAsAAwwBpAsEAwwBpAuAAwwBpAuEAwwBpAgABwwBpAgEBwwBpAiABwwBpAiEBwwBp
+AkABwwBpAkEBwwBpAmABwwBpAmEBwwBpAoABwwBpAoEBwwBpAqABwwBpAqEBwwBpAsABwwBpAsEB
+wwBpAuABwwBpAuEBwwBpAgACwwBpAgECwwBpAiACwwBpAiECwwBpAkACwwBpAkECwwBpAmACwwBp
+AmECwwBpAmMCcwBpAoACwwBpAoECwwBpAoMCgwhpAqACwwBpAqECwwBpAsACwwBpAsECwwBpAsMC
+qwhpAuACwwBpAuECwwBpAgADwwBpAgEDwwBpAgMDwwBpAgMDawkYDgMDWwlpAgMDUwnnDSADwwBp
+AiEDwwBpAiMDawkYDiMDUwl4DiMDWwlpAiMDwwBpAkADwwBpAkEDwwBpAkMDWwlpAkMDUwmiDkMD
+awkYDkMDwwBpAmADwwBpAmEDwwBpAmMDwwBpAmMDWwlpAmMDUwluD2MDewmYD2MDgwk/DYADwwBp
+AoEDwwBpAoMDwwBpAqEDwwBpAqMDWwlpAqMDwwBpAqMDewmYD6MDUwnnDcEDwwBpAsMDWwlpAsMD
+Uwn6D8MDwwBpAsMDewmYD+EDwwBpAuMDWwlpAuMDUwmiDuMDwwBpAgEEwwBpAgMEwwBpAgMEUwkL
+EQMEewmYDwMEWwlpAiEEwwBpAiMEWwlpAiMEUwl4DiMEwwBpAkEEwwBpAkMEwwBpAmEEwwBpAmME
+wwBpAoEEwwBpAoMEwwBpAqEEwwBpAqMEwwBpAsEEwwBpAsMEwwBpAsMEgwk/DcMEWwlpAsMEUwmW
+EeEEwwBpAuMEwwBpAgEFwwBpAgMFwwBpAgMFgwk/DQMFUwnJEQMFWwlpAgMFewmYDyEFwwBpAiMF
+wwBpAkEFwwBpAkMFwwBpAmEFwwBpAmMFwwBpAmMFkwkDEoEFwwBpAoMFwwBpAoMFkwllEqEFwwBp
+AqMFwwBpAsEFwwBpAsMFwwBpAuEFwwBpAuMFwwBpAgEGwwBpAgMGgwk/DQMGUwnUEgMGwwBpAgMG
+WwlpAiEGwwBpAiMGkwkIEyMGwwBpAkEGwwBpAkMGwwBpAmEGwwBpAmMGwwBpAmMGWwlpAmMGUwlr
+E4EGwwBpAoMGmwn4E4MGwwBpAoMGkwmVE6EGwwBpAqMGmwmoFKMGkwlPFKMGwwBpAsAGwwBpAsEG
+wwBpAsMGwwBpAsMGkwn/FMMGmwldFeAGwwBpAuEGwwBpAuMGwwBpAuMGUwm+FeMGWwlpAuMGgwk/
+DQAHwwBpAgEHwwBpAgMHUwnoFQMHgwk/DQMHwwBpAgMHWwlpAiAHwwBpAiEHwwBpAiMHUwkSFiMH
+WwlpAiMHgwk/DSMHwwBpAkAHwwBpAkEHwwBpAmAHwwBpAmEHwwBpAoAHwwBpAoEHwwBpAqAHwwBp
+AqEHwwBpAsAHwwBpAsEHwwBpAuAHwwBpAuEHwwBpAgAIwwBpAgEIwwBpAiAIwwBpAiEIwwBpAkAI
+wwBpAkEIwwBpAmAIwwBpAmEIwwBpAoAIwwBpAoEIwwBpAqAIwwBpAqEIwwBpAsAIwwBpAsEIwwBp
+AuAIwwBpAuEIwwBpAgAJwwBpAgEJwwBpAiAJwwBpAiEJwwBpAkAJwwBpAkEJwwBpAmAJwwBpAmEJ
+wwBpAoAJwwBpAoEJwwBpAqAJwwBpAqEJwwBpAsAJwwBpAsEJwwBpAuAJwwBpAuEJwwBpAgAKwwBp
+AgEKwwBpAiAKwwBpAiEKwwBpAkEKwwBpAmAKwwBpAmEKwwBpAoAKwwBpAoEKwwBpAqAKwwBpAqEK
+wwBpAsAKwwBpAsEKwwBpAuAKwwBpAuEKwwBpAgALwwBpAgELwwBpAiALwwBpAiELwwBpAkALwwBp
+AkELwwBpAkkLmwg/DWALwwBpAmELwwBpAmkLmwg/DYALwwBpAoELwwBpAqALwwBpAqELwwBpAsAL
+wwBpAsELwwBpAuELwwBpAgAMwwBpAgEMwwBpAiAMwwBpAiEMwwBpAkAMwwBpAkEMwwBpAmAMwwBp
+AmEMwwBpAoAMwwBpAoEMwwBpAqAMwwBpAsAMwwBpAuAMwwBpAuEMwwBpAgANwwBpAiANwwBpAkAN
+wwBpAmANwwBpAqANwwBpAsANwwBpAuANwwBpAuENwwBpAgAOwwBpAgEOwwBpAiEOwwBpAkAOwwBp
+AmAOwwBpAoAOwwBpAqAOwwBpAsAOwwBpAuAOwwBpAgAPwwBpAiAPwwBpAkAPwwBpAmAPwwBpAoAP
+wwBpAqAPwwBpAsAPwwBpAuAPwwBpAiAQwwBpAkAQwwBpAmAQwwBpAoAQwwBpAqAQwwBpAsAQwwBp
+AuAQwwBpAgARwwBpAiARwwBpAkARwwBpAmARwwBpAoARwwBpAqARwwBpAsARwwBpAuARwwBpAgAS
+wwBpAiASwwBpAkASwwBpAmASwwBpAoASwwBpAqASwwBpAsASwwBpAuASwwBpAgATwwBpAiATwwBp
+AkATwwBpAmATwwBpAoATwwBpAqATwwBpAsATwwBpAuATwwBpAgAUwwBpAiAUwwBpAkAUwwBpAmAU
+wwBpAoAUwwBpAqAUwwBpAsAUwwBpAuAUwwBpAgAVwwBpAkAVwwBpAmAVwwBpAoAVwwBpAqAVwwBp
+AsAVwwBpAuAVwwBpAgAWwwBpAiAWwwBpAkAWwwBpAmAWwwBpAoAWwwBpAqAWwwBpAuAWwwBpAgAX
+wwBpAiAXwwBpAkAXwwBpAmAXwwBpAoAXwwBpAqAXwwBpAsAXwwBpAuAXwwBpAgAYwwBpAkAYwwBp
+AmAYwwBpAoAYwwBpAqAYwwBpAsAYwwBpAuAYwwBpAgAZwwBpAiAZwwBpAkAZwwBpAmAZwwBpAqAZ
+wwBpAsAZwwBpAuAZwwBpAgAawwBpAiAawwBpAkAawwBpAmAawwBpAoAawwBpAqAawwBpAsAawwBp
+AuAawwBpAgAbwwBpAiAbwwBpAkAbwwBpAmAbwwBpAoAbwwBpAqAbwwBpAsAbwwBpAuAbwwBpAgAc
+wwBpAoAccwBpAqAccwBpAsAccwBpAuAccwBpAgAdcwBpAiAdcwBpAkAdcwBpAmAdcwBpAsAdcwBp
+AuAdcwBpAgAecwBpAgAfswhpAmAfwwBpAoAfwwBpAqAfwwBpAuAfcwnMDiAgcwnZDmAgcwniDoAg
+cwnrDsAgcwn0DgAhcwn/DiAhcwkKD0AhcwkYD4AhcwkhD6AhcwkhD+AhcwkqDyAicwkzD0Aicwkz
+D4Aicwk8D8AicwlFD+AicwlFD2AjcwmtD6AjiwkhD6Ajcwm2D8AjiwkhD8Ajcwm2DwAkcwm/DwAk
+iwkhDyAkiwkhDyAkcwm/D2AkcwnID6AkcwnfD6AkiwnWD+AkiwnoD+AkcwnxDyAliwkkECAlcwkt
+EGAlcwk2EKAlcwk/EOAlcwlOECAmcwkhD2Amcwk1EWAmiwkhD6Amcwk+EcAmcwk+EQAniwnWDwAn
+cwlHEUAncwlQEWAncwlZEWAniwnWD6AniwnWD6AncwliEeAncwlrESAocwl0ESAoiwkhD2Aocwl9
+ESApcwmNEUApcwmNEYApcwnAEaApcwnAEWAqcwnCEqAqcwnLEiArcwliE1cB1Q5ZAdcOWwHXDl8B
+1w5hAdcOYwHXDmUB1w5nAdcOaQH9DmsBCA9tAdcObwHXDnEB1w53AdcOeQHXDnsB1w59AdcOfwHX
+DoEB1w6DAf0OhQHXDocB1w6JAf0OiwHXDo0B1w6RAf0OlwH9DpkB1w6bAf0OnQHVDp8B1w6hAdcO
+owHXDqUB1w6nAdcOqQHXDqsB1w6tAdcOrwHXDrEB1w6zAdcOtQHXDrcB1w65AdcOuwHXDr0B1w6/
+AdcOwQH9DsMBVxDFAQQRxwHXDskB1Q7LAdUOzQHXDs8B/Q7RAQQR0wHXDtUBBBHXAdcO2QH9DtsB
+1w7dAdcO3wH9DuEB1w7jAdcO5QHXDucB1w7pAdcO6wHXDu0B1w7vAdcO8QHXDvMB1w71AdcO9wHX
+DvkB1w77AdcO/QHXDv8B1w4FAtcOBwLXDgkC1w4LAtcODQL9Dg8C/Q4TAggPgQK9AhIDaQOTA74G
+ZAd3B7kHzwfaBxEIUggZCdQJZgqHCrkK1grkCtMLLAwyDDYMVAxpDHAMsgwBDTMNmQ3XDQIAAQAD
+AA8ABAATAAUAFwAGAB0ABwAjAAgAJQAJACgACgAsAAsAMQAMADwADQA+AA4AQAAPAEYAEABLABEA
+UAAUAFoAFQBcABsAXQAdAGUAHwBpACAAagAhAGsAJgBvACgAcAAwAHEAAABLCBQBAABcCBQBAABp
+CBQBAAB5CBgBAACFCBgBAACTCBQBAACSAhwBAACcCCEBAACkCBQBAAC4CBQBAADFCCYBAADXCC8B
+AADlCBQBAADvCBQBAADVCRQBAADjCUQBAADwCUQBAAD0CRQBAACTCkQBAACaChQBAAD0CVcBAACf
+ChQBAADVCRQBAADPCxQBAADVC0QBAADiC0QBAADrCxQBAAD5CxQBAAD1DBQBAAD6DBQBAAD0CRQB
+AAAHDRQBAADVC0QBAAAUDUQBAAD1DBQBAADPCxQBAADmDRQBAAD0DRQBAAACDhQBAADzDhQBAAD8
+DhQBAAAGDxgBAAAODxgBAADzDhQBAAAIEBQBAAD0DRQBAAAaEFcBAAAsEBQBAADSE0QBAADrE1cB
+AAD3E1cBAAAKFFcBAAAdFFcBAAAvFFcBAAA+FFcBAABMFFcBAABkFFcBAAB7FFcBAACSFFcBAAAB
+FRQBAAAIFUQBAADzDhQBAABOFXcBAABSFhQBAAD8DhQBAABdFhQBAAACDhQBAABpFhQBAAB4FpsB
+AABlF0QBAABwF0QBAABSFhQBAAB5F0QBAACAF0QBAAD1DBQBAADPCxQBAAArGBgBAAA0GEQBAAA/
+GBQBAAA3GhQBAABDGhQBAABSGhQBAABdGhQBAABmGkQBAACTCBQBAAB5GhQBAACCGhQBAADzDhQB
+AADxALMBAACRG0ICAAAKHEcCAAAuHFUCAAAtOE4PAAA6OFkPAACzJkQBAABCOF4PAAAYKmQPAABL
+OGoPAABYOFkPAABdOGoPAAArItEPAAASORgBAAAgORgBAAAoOUQBAAAeOkgQAABCOAYRAAD1DBQB
+AACRO1kPAAB6BoYRAACXO1kPAAC2O2oPAADIO2oPAAAGPFkPAAAWPFkPAgADAAMAAQAEAAMAAgAF
+AAUAAQAGAAUAAgAHAAcAAQAIAAcAAQAKAAkAAgAJAAkAAgALAAsAAQAMAAsAAQAOAA0AAgANAA0A
+AQAQAA8AAgAPAA8AAgARABEAAQASABEAAQAUABMAAgATABMAAgAVABUAAQAWABUAAgAXABcAAQAY
+ABcAAgAZABkAAQAaABkAAQAcABsAAgAbABsAAQAeAB0AAgBCAB8AAQBDAB8AAQBFACEAAgBEACEA
+AgBGACMAAQBHACMAAgBIACUAAQBJACUAAgBKACcAAQBLACcAAgBMACkAAQBNACkAAQBPACsAAgBO
+ACsAAgBQAC0AAQBRAC0AAQBUAC8AAgBTAC8AAgBVADEAAQBWADEAAgBXADMAAQBYADMAAgBZADUA
+AQBaADUAAQBcADcAAgBbADcAAQBeADkAAgBdADkAAgBgADsAAQBhADsAAgBiAD0AAQBjAD0AAQBl
+AD8AAgBkAD8AAgBmAEEAAQBnAEEAAQBpAEMAAgBoAEMAAQBrAEUAAgBqAEUAAgBtAEcAAQBuAEcA
+AQBwAEkAAgBvAEkAAgByAEsAAQBzAEsAAgB0AE0AAQB1AE0AAgB2AE8AAQB3AE8AAQB5AFEAAgB4
+AFEAAQB7AFMAAgB6AFMAAgB8AFUAAQB9AFUAAQB/AFcAAgB+AFcAAgCBAFkAAQCCAFkAAgCDAFsA
+AQCEAFsAAgCFAF0AAQCGAF0AAgCHAF8AAQCIAF8AAQCKAGEAAgCJAGEAAgCLAGMAAQCMAGMAAQCO
+AGUAAgCNAGUAAgCPAGcAAQCQAGcAAgCRAGkAAQCSAGkAAgCTAGsAAQCUAGsAAgCVAG0AAQCWAG0A
+AQCYAG8AAgCXAG8AAgCZAHEAAQCaAHEAAgCbAHMAAQCcAHMAAQCeAHUAAgCdAHUAAgCfAHcAAQCg
+AHcAAQCiAHkAAgChAHkAAQCkAHsAAgCjAHsAAgClAH0AAQCmAH0AAQCoAH8AAgCnAH8AAgCqAIEA
+AQCrAIEAAgCsAIMAAQCtAIMAAgCuAIUAAQCvAIUAAgCwAIcAAQCxAIcAAQCzAIkAAgCyAIkAAgC0
+AIsAAQC1AIsAAgC3AI0AAQC4AI0AAQC6AI8AAgC5AI8AAgC7AJEAAQC8AJEAAQC+AJMAAgC9AJMA
+AQDAAJUAAgC/AJUAAgDCAJcAAQDDAJcAAQDFAJkAAgDEAJkAAgDGAJsAAQDHAJsAAgDIAJ0AAQDJ
+AJ0AAgDKAJ8AAQDLAJ8AAQDOAKEAAgDNAKEAAQDQAKMAAgDPAKMAAgDRAKUAAQDSAKUAAgDTAKcA
+AQDUAKcAAQDWAKkAAgDVAKkAAgDXAKsAAQDYAKsAAQDaAK0AAgDZAK0AAQDcAK8AAgDbAK8AAgDd
+ALEAAQDeALEAAQDgALMAAgDfALMAAgDyALUAAQD0ALcAAgDzALcAAgD1ALkAAgD/ALsAAgAGAb0A
+AgAKAb8AAgAMAcEAAQANAcEAAgAPAcMAAgARAcUAAQASAcUAAgAUAccAAgAWAckAAQAXAckAAgAb
+AcsAAgAdAc0AAQAeAc0AAgAgAc8AAQAhAc8AAgAjAdEAAgAtAdMAAgAxAdUAAgA1AdcAAQA2AdcA
+AgA6AdkAAgA/AdsAAgBBAd0AAgBJAd8AAQBKAd8AAgBMAeEAAQBNAeEAAgBTAeMAAgBVAeUA4CCP
+AiIDOQNKA2cEjwS8BPEEAQUSBSkFNAVgBXIFggWNBZoFpgXOBeoF+gUtBj4GRgZcBn0GngalBpEH
+yAf9B8oI3wjwCPwIDQmMCZ4Jqwm9CRUKIQowC1ALVgtoC3ULngs8DNEM7wz2DIENAAEFAKgCAQAE
+gAAAAQAAAHcaJ34AAAAAAACLAQAABAAAAAAAAAAAAAAAAQC9AQAAAAAEAAAAAAAAAAAAAAABAMYB
+AAAAAAsAAAAAAAAAAAAAAAoACwIAAAAABAAAAAAAAAAAAAAAAQB0AgAAAAAEAAAAAAAAAAAAAAAB
+ANgaAAAAAAQAAAAAAAAAAAAAAAEAXCAAAAAABAAAAAAAAAAAAAAAdwSDJQAAAAAHAAAA5AwAAAAA
+AAB3BGIpAAAAAAQAAAAAAAAAAAAAAAEADC0AAAAABAAAAAAAAAAAAAAAdwQrLQAAAAAEAAAAAAAA
+AAAAAAABAGExAAAAAAsAAAAAAAAAAAAAAAoAFTUAAAAADQAAAAAAAAAAAAAACgAVNQAAAAAAAAAA
+AQAAAHg8AAADAAIAFwAWABwAAgAiAAIAIwACACQAAgAlAAIAJwACACkAAgAqAAIALQACAC4AAgAv
+AAIAMgAWAAAAAADNAcQaAAAAAN0BxBoAAAAA3wHEGgAAAADhAcQaNQCyAskAFwbjAHgG5wB4Bt4B
+mAcLAZgHDQGYB94BsgILAbICFwEXBjUABggNAXgGJwGQCOcAFwZZARcG4AEcCgsBHAqNAUMKDQEX
+BrkBFwbNAZgL0QHCCw0ByAvNAcIL0QGYC7kByAvnABwK4wAXBgAAADxNb2R1bGU+AFNUX2RkMTVi
+MWJhY2NmYjQ0NDQ4YzAxNTY3OTBiM2VhYTIwLmRsbABTbmFwc2hvdABTVF9mMzkyMzNmYWMxNmU0
+MjZkOTkxZDkzMmY5ZWY3ZDg1OABTY2hlZHVsZVBhcmFtAEN1c3RvbURhdGUAT3ZlcnJpZGVQYXJh
+bQBSZXBvcnRGaWx0ZXIARXhjZWxTaGVldFBhcmFtZXRlcgBPdmVyUmlkZVN1bW1hcnkARXhjZWxT
+aGVldHMAU25hcEhpc3RvcnkARGVmYXVsdERhdGUAQ2VsbEFkZHJlc3MARXhjZWxGaWxlAFJlcG9y
+dFNoZWV0AFJlcG9ydERhdGEAUGFyYW1ldGVyAERhdGFTb3VyY2UAUmVmbGVjdGlvbgBJRU51bWVy
+YWJsZUV4dGVuc2lvbnMAUmVzb3VyY2VzAFNUX2RkMTViMWJhY2NmYjQ0NDQ4YzAxNTY3OTBiM2Vh
+YTIwLlByb3BlcnRpZXMAU2V0dGluZ3MAU2NyaXB0TWFpbgBTVF9kZDE1YjFiYWNjZmI0NDQ0OGMw
+MTU2NzkwYjNlYWEyMABTY3JpcHRSZXN1bHRzAG1zY29ybGliAFN5c3RlbQBPYmplY3QAVmFsdWVU
+eXBlAFN5c3RlbS5Db25maWd1cmF0aW9uAEFwcGxpY2F0aW9uU2V0dGluZ3NCYXNlAE1pY3Jvc29m
+dC5TcWxTZXJ2ZXIuU2NyaXB0VGFzawBNaWNyb3NvZnQuU3FsU2VydmVyLkR0cy5UYXNrcy5TY3Jp
+cHRUYXNrAFZTVEFSVFNjcmlwdE9iamVjdE1vZGVsQmFzZQBFbnVtAFN5c3RlbS5EYXRhAFN5c3Rl
+bS5EYXRhLk9sZURiAE9sZURiQ29ubmVjdGlvbgAuY3RvcgBHZXRXaW5kb3dUaHJlYWRQcm9jZXNz
+SWQAZ2V0X1JlcG9ydFJlcG9zaXRvcnkAc2V0X1JlcG9ydFJlcG9zaXRvcnkAZ2V0X0RvY3VtZW50
+UGF0aABzZXRfRG9jdW1lbnRQYXRoAGdldF9TY2hlZHVsZXJGb2xkZXIAc2V0X1NjaGVkdWxlckZv
+bGRlcgBnZXRfU3luY2hyb25pemUAc2V0X1N5bmNocm9uaXplAGdldF9JbWFnZVNuYXBzaG90AHNl
+dF9JbWFnZVNuYXBzaG90AGdldF9Vc2VyTmFtZQBzZXRfVXNlck5hbWUAZ2V0X09sZURiQ29ubmVj
+dGlvbgBzZXRfT2xlRGJDb25uZWN0aW9uAGdldF9EYXRlVHJtAHNldF9EYXRlVHJtAGdldF9FeGNl
+bFJlcG9ydFBhcmFtWE1MAHNldF9FeGNlbFJlcG9ydFBhcmFtWE1MAGdldF9FeGNlbFJlcGxpY2EA
+c2V0X0V4Y2VsUmVwbGljYQBTeXN0ZW0uQ29sbGVjdGlvbnMuR2VuZXJpYwBMaXN0YDEAZ2V0X1Zp
+ZXdSZXBvcnRGaWx0ZXJzAHNldF9WaWV3UmVwb3J0RmlsdGVycwBnZXRfT3ZlcnJpZGVEYXRlcwBz
+ZXRfT3ZlcnJpZGVEYXRlcwBnZXRfUHJvY2Vzc0lkAHNldF9Qcm9jZXNzSWQAR2V0Q3VzdG9tRGF0
+ZQBzZXRfVmlld1JlcG9ydFBhcmFtWG1sAEFwcGxpY2F0aW9uAE1pY3Jvc29mdC5PZmZpY2UuSW50
+ZXJvcC5FeGNlbABDcmVhdGVSZXBsaWNhAERlbGV0ZVJlcGxpY2EAUGFyc2VWaWV3UmVwb3J0Rmls
+dGVyWE1sAFdvcmtzaGVldABXb3JrYm9vawBDaGVja0lmU2hlZXRFeGlzdHMAU3luY2hyb25pemVF
+eGNlbABLaWxsRXhjZWxQcm9jZXNzAEdldFJlcG9ydERlZmluaXRpb24AR2V0RGVmYXVsdERhdGUA
+R2V0RGVmYXVsdERhdGVWYWx1ZXMAT3ZlclJpZGUAT3ZlclJpZGVWaWV3RmlsdGVyAElzVmFsaWRE
+YXRlAEJpbmRSZWNvcmRTZXRUb1dvcmtTaGVldABDaGFuZ2VQaXZvdFNvdXJjZURhdGFDYWNoZQBT
+YXZlV29ya3NoZWV0U25hcHNob3QAUHVibGlzaFNuYXBzaG90AENvcHlJbWFnZQBVcGRhdGVTbmFw
+c2hvdEhpc3RvcnkAR2V0U3FsQ29ubmVjdGlvbgBEZWxldGVTbmFwc2hvdABSYW5nZQBHZXRXb3Jr
+U3BhY2VSYW5nZQBHZXRXb3Jrc2hlZXRGcm9tV29ya0Jvb2sAVGVybWluYXRlRXhjZWwAPFJlcG9y
+dFJlcG9zaXRvcnk+a19fQmFja2luZ0ZpZWxkADxEb2N1bWVudFBhdGg+a19fQmFja2luZ0ZpZWxk
+ADxTY2hlZHVsZXJGb2xkZXI+a19fQmFja2luZ0ZpZWxkADxTeW5jaHJvbml6ZT5rX19CYWNraW5n
+RmllbGQAPEltYWdlU25hcHNob3Q+a19fQmFja2luZ0ZpZWxkADxVc2VyTmFtZT5rX19CYWNraW5n
+RmllbGQAPE9sZURiQ29ubmVjdGlvbj5rX19CYWNraW5nRmllbGQAPERhdGVUcm0+a19fQmFja2lu
+Z0ZpZWxkADxFeGNlbFJlcG9ydFBhcmFtWE1MPmtfX0JhY2tpbmdGaWVsZAA8RXhjZWxSZXBsaWNh
+PmtfX0JhY2tpbmdGaWVsZAA8Vmlld1JlcG9ydEZpbHRlcnM+a19fQmFja2luZ0ZpZWxkADxPdmVy
+cmlkZURhdGVzPmtfX0JhY2tpbmdGaWVsZAA8UHJvY2Vzc0lkPmtfX0JhY2tpbmdGaWVsZABSZXBv
+cnRSZXBvc2l0b3J5AERvY3VtZW50UGF0aABTY2hlZHVsZXJGb2xkZXIAU3luY2hyb25pemUASW1h
+Z2VTbmFwc2hvdABVc2VyTmFtZQBEYXRlVHJtAEV4Y2VsUmVwb3J0UGFyYW1YTUwARXhjZWxSZXBs
+aWNhAFZpZXdSZXBvcnRGaWx0ZXJzAE92ZXJyaWRlRGF0ZXMAUHJvY2Vzc0lkAFZpZXdSZXBvcnRQ
+YXJhbVhtbABnZXRfUGFyYW1ldGVyTmFtZQBzZXRfUGFyYW1ldGVyTmFtZQBnZXRfU2NoZWR1bGVU
+eXBlAHNldF9TY2hlZHVsZVR5cGUAZ2V0X0RheQBzZXRfRGF5AGdldF9WYWx1ZQBzZXRfVmFsdWUA
+PFBhcmFtZXRlck5hbWU+a19fQmFja2luZ0ZpZWxkADxTY2hlZHVsZVR5cGU+a19fQmFja2luZ0Zp
+ZWxkADxEYXk+a19fQmFja2luZ0ZpZWxkADxWYWx1ZT5rX19CYWNraW5nRmllbGQAUGFyYW1ldGVy
+TmFtZQBTY2hlZHVsZVR5cGUARGF5AFZhbHVlAGdldF9UeXBlSWQAc2V0X1R5cGVJZABnZXRfVHlw
+ZQBzZXRfVHlwZQBEYXRlVGltZQBnZXRfRGF0ZUZvcm1hdABzZXRfRGF0ZUZvcm1hdAA8VHlwZUlk
+PmtfX0JhY2tpbmdGaWVsZAA8VHlwZT5rX19CYWNraW5nRmllbGQAPERhdGVGb3JtYXQ+a19fQmFj
+a2luZ0ZpZWxkAFR5cGVJZABUeXBlAERhdGVGb3JtYXQAZ2V0X0xhYmVsAHNldF9MYWJlbABnZXRf
+T3ZlcnJpZGVUeXBlAHNldF9PdmVycmlkZVR5cGUAZ2V0X05vT2ZEYXlzAHNldF9Ob09mRGF5cwBn
+ZXRfT3ZlcnJpZGVWYWx1ZQBzZXRfT3ZlcnJpZGVWYWx1ZQBnZXRfT3ZlcnJpZGVMYWJlbABzZXRf
+T3ZlcnJpZGVMYWJlbAA8TGFiZWw+a19fQmFja2luZ0ZpZWxkADxPdmVycmlkZVR5cGU+a19fQmFj
+a2luZ0ZpZWxkADxOb09mRGF5cz5rX19CYWNraW5nRmllbGQAPE92ZXJyaWRlVmFsdWU+a19fQmFj
+a2luZ0ZpZWxkADxPdmVycmlkZUxhYmVsPmtfX0JhY2tpbmdGaWVsZABMYWJlbABPdmVycmlkZVR5
+cGUATm9PZkRheXMAT3ZlcnJpZGVWYWx1ZQBPdmVycmlkZUxhYmVsAGdldF9OYW1lAHNldF9OYW1l
+AGdldF9EaXNwbGF5TGFiZWwAc2V0X0Rpc3BsYXlMYWJlbABnZXRfRGlzcGxheVZhbHVlAHNldF9E
+aXNwbGF5VmFsdWUAZ2V0X0FkanVzdG1lbnREYXlzAHNldF9BZGp1c3RtZW50RGF5cwA8TmFtZT5r
+X19CYWNraW5nRmllbGQAPERpc3BsYXlMYWJlbD5rX19CYWNraW5nRmllbGQAPERpc3BsYXlWYWx1
+ZT5rX19CYWNraW5nRmllbGQAPEFkanVzdG1lbnREYXlzPmtfX0JhY2tpbmdGaWVsZABOYW1lAERp
+c3BsYXlMYWJlbABEaXNwbGF5VmFsdWUAQWRqdXN0bWVudERheXMAZ2V0X0V4Y2VsRmlsZU5hbWUA
+c2V0X0V4Y2VsRmlsZU5hbWUAZ2V0X0FwcGxpZWRGaWx0ZXIAc2V0X0FwcGxpZWRGaWx0ZXIAZ2V0
+X1NwYVJmeFF1ZXJ5AHNldF9TcGFSZnhRdWVyeQA8RXhjZWxGaWxlTmFtZT5rX19CYWNraW5nRmll
+bGQAPEFwcGxpZWRGaWx0ZXI+a19fQmFja2luZ0ZpZWxkADxTcGFSZnhRdWVyeT5rX19CYWNraW5n
+RmllbGQARXhjZWxGaWxlTmFtZQBBcHBsaWVkRmlsdGVyAFNwYVJmeFF1ZXJ5AGdldF9GaWxlTmFt
+ZQBzZXRfRmlsZU5hbWUAZ2V0X1NoZWV0TmFtZQBzZXRfU2hlZXROYW1lAGdldF9QdWJsaXNoAHNl
+dF9QdWJsaXNoAGdldF9NYWludGFpbkhpc3RvcnkAc2V0X01haW50YWluSGlzdG9yeQA8RmlsZU5h
+bWU+a19fQmFja2luZ0ZpZWxkADxTaGVldE5hbWU+a19fQmFja2luZ0ZpZWxkADxQdWJsaXNoPmtf
+X0JhY2tpbmdGaWVsZAA8TWFpbnRhaW5IaXN0b3J5PmtfX0JhY2tpbmdGaWVsZABGaWxlTmFtZQBT
+aGVldE5hbWUAUHVibGlzaABNYWludGFpbkhpc3RvcnkAZ2V0X1NuYXBzaG90U2hlZXROYW1lAHNl
+dF9TbmFwc2hvdFNoZWV0TmFtZQBnZXRfUmVmcmVzaGRhRGF0ZVRpbWUAc2V0X1JlZnJlc2hkYURh
+dGVUaW1lAGdldF9TbmFwc2hvdEZpbGVOYW1lAHNldF9TbmFwc2hvdEZpbGVOYW1lADxTbmFwc2hv
+dFNoZWV0TmFtZT5rX19CYWNraW5nRmllbGQAPFJlZnJlc2hkYURhdGVUaW1lPmtfX0JhY2tpbmdG
+aWVsZAA8U25hcHNob3RGaWxlTmFtZT5rX19CYWNraW5nRmllbGQAU25hcHNob3RTaGVldE5hbWUA
+UmVmcmVzaGRhRGF0ZVRpbWUAU25hcHNob3RGaWxlTmFtZQBnZXRfRGVmYXVsdEhvbGlkYXlDYWxl
+bmRhcklkAHNldF9EZWZhdWx0SG9saWRheUNhbGVuZGFySWQAZ2V0X0N1cnJlbnREYXRlAHNldF9D
+dXJyZW50RGF0ZQBnZXRfQ3VycmVudEJ1c2luZXNzRGF5AHNldF9DdXJyZW50QnVzaW5lc3NEYXkA
+Z2V0X0ZpcnN0RGF5T2ZUaGVNb250aABzZXRfRmlyc3REYXlPZlRoZU1vbnRoAGdldF9MYXN0RGF5
+T2ZUaGVNb250aABzZXRfTGFzdERheU9mVGhlTW9udGgAZ2V0X0ZpcnN0RGF5T2ZXZWVrAHNldF9G
+aXJzdERheU9mV2VlawBnZXRfTGFzdERheU9mV2VlawBzZXRfTGFzdERheU9mV2VlawBnZXRfRmly
+c3RCdXNpbmVzc0RheU9mTW9udGgAc2V0X0ZpcnN0QnVzaW5lc3NEYXlPZk1vbnRoAGdldF9MYXN0
+QnVzaW5lc3NEYXlPZk1vbnRoAHNldF9MYXN0QnVzaW5lc3NEYXlPZk1vbnRoAGdldF9GaXJzdEJ1
+c2luZXNzRGF5T2ZXZWVrAHNldF9GaXJzdEJ1c2luZXNzRGF5T2ZXZWVrAGdldF9MYXN0QnVzaW5l
+c3NEYXlPZldlZWsAc2V0X0xhc3RCdXNpbmVzc0RheU9mV2VlawA8RGVmYXVsdEhvbGlkYXlDYWxl
+bmRhcklkPmtfX0JhY2tpbmdGaWVsZAA8Q3VycmVudERhdGU+a19fQmFja2luZ0ZpZWxkADxDdXJy
+ZW50QnVzaW5lc3NEYXk+a19fQmFja2luZ0ZpZWxkADxGaXJzdERheU9mVGhlTW9udGg+a19fQmFj
+a2luZ0ZpZWxkADxMYXN0RGF5T2ZUaGVNb250aD5rX19CYWNraW5nRmllbGQAPEZpcnN0RGF5T2ZX
+ZWVrPmtfX0JhY2tpbmdGaWVsZAA8TGFzdERheU9mV2Vlaz5rX19CYWNraW5nRmllbGQAPEZpcnN0
+QnVzaW5lc3NEYXlPZk1vbnRoPmtfX0JhY2tpbmdGaWVsZAA8TGFzdEJ1c2luZXNzRGF5T2ZNb250
+aD5rX19CYWNraW5nRmllbGQAPEZpcnN0QnVzaW5lc3NEYXlPZldlZWs+a19fQmFja2luZ0ZpZWxk
+ADxMYXN0QnVzaW5lc3NEYXlPZldlZWs+a19fQmFja2luZ0ZpZWxkAERlZmF1bHRIb2xpZGF5Q2Fs
+ZW5kYXJJZABDdXJyZW50RGF0ZQBDdXJyZW50QnVzaW5lc3NEYXkARmlyc3REYXlPZlRoZU1vbnRo
+AExhc3REYXlPZlRoZU1vbnRoAEZpcnN0RGF5T2ZXZWVrAExhc3REYXlPZldlZWsARmlyc3RCdXNp
+bmVzc0RheU9mTW9udGgATGFzdEJ1c2luZXNzRGF5T2ZNb250aABGaXJzdEJ1c2luZXNzRGF5T2ZX
+ZWVrAExhc3RCdXNpbmVzc0RheU9mV2VlawBnZXRfQ29sdW1uAHNldF9Db2x1bW4AZ2V0X0luZGV4
+AHNldF9JbmRleAA8Q29sdW1uPmtfX0JhY2tpbmdGaWVsZAA8SW5kZXg+a19fQmFja2luZ0ZpZWxk
+AENvbHVtbgBJbmRleABnZXRfUmVwb3J0U2hlZXRzAHNldF9SZXBvcnRTaGVldHMAPFJlcG9ydFNo
+ZWV0cz5rX19CYWNraW5nRmllbGQAUmVwb3J0U2hlZXRzAGdldF9SZXBvcnROYW1lAHNldF9SZXBv
+cnROYW1lAGdldF9EZXNjcmlwdGlvbgBzZXRfRGVzY3JpcHRpb24AZ2V0X1BhcmFtZXRlclNoZWV0
+AHNldF9QYXJhbWV0ZXJTaGVldABnZXRfUGFyYW1ldGVycwBzZXRfUGFyYW1ldGVycwA8UmVwb3J0
+TmFtZT5rX19CYWNraW5nRmllbGQAPERlc2NyaXB0aW9uPmtfX0JhY2tpbmdGaWVsZAA8UGFyYW1l
+dGVyU2hlZXQ+a19fQmFja2luZ0ZpZWxkADxQYXJhbWV0ZXJzPmtfX0JhY2tpbmdGaWVsZABSZXBv
+cnROYW1lAERlc2NyaXB0aW9uAFBhcmFtZXRlclNoZWV0AFBhcmFtZXRlcnMAZ2V0X1BhcmFtc2V0
+SWQAc2V0X1BhcmFtc2V0SWQAZ2V0X1RhYmxpeElkAHNldF9UYWJsaXhJZABnZXRfUGFnZUlEAHNl
+dF9QYWdlSUQAZ2V0X1JlcG9ydFN0YXR1c0lkAHNldF9SZXBvcnRTdGF0dXNJZAA8UGFyYW1zZXRJ
+ZD5rX19CYWNraW5nRmllbGQAPFRhYmxpeElkPmtfX0JhY2tpbmdGaWVsZAA8UGFnZUlEPmtfX0Jh
+Y2tpbmdGaWVsZAA8UmVwb3J0U3RhdHVzSWQ+a19fQmFja2luZ0ZpZWxkAFBhcmFtc2V0SWQAVGFi
+bGl4SWQAUGFnZUlEAFJlcG9ydFN0YXR1c0lkAGdldF9PcHRpb25hbABzZXRfT3B0aW9uYWwAZ2V0
+X0RhdGF0eXBlSWQAc2V0X0RhdGF0eXBlSWQAZ2V0X1ZhbHVlcwBzZXRfVmFsdWVzADxPcHRpb25h
+bD5rX19CYWNraW5nRmllbGQAPERhdGF0eXBlSWQ+a19fQmFja2luZ0ZpZWxkADxWYWx1ZXM+a19f
+QmFja2luZ0ZpZWxkAE9wdGlvbmFsAERhdGF0eXBlSWQAVmFsdWVzAGdldF9EaXNwbGF5TmFtZQBz
+ZXRfRGlzcGxheU5hbWUAZ2V0X0FwcGxpY2F0aW9uVVJMAHNldF9BcHBsaWNhdGlvblVSTABnZXRf
+U2VydmVyTmFtZQBzZXRfU2VydmVyTmFtZQBnZXRfRGF0YWJhc2UAc2V0X0RhdGFiYXNlAGdldF9B
+dXRoZW50aWNhdGlvblR5cGUAc2V0X0F1dGhlbnRpY2F0aW9uVHlwZQBnZXRfUGFzc3dvcmQAc2V0
+X1Bhc3N3b3JkAGdldF9QYXNzd29yZFRSTQBzZXRfUGFzc3dvcmRUUk0AZ2V0X1JlcG9ydFNoZWV0
+AHNldF9SZXBvcnRTaGVldAA8RGlzcGxheU5hbWU+a19fQmFja2luZ0ZpZWxkADxBcHBsaWNhdGlv
+blVSTD5rX19CYWNraW5nRmllbGQAPFNlcnZlck5hbWU+a19fQmFja2luZ0ZpZWxkADxEYXRhYmFz
+ZT5rX19CYWNraW5nRmllbGQAPEF1dGhlbnRpY2F0aW9uVHlwZT5rX19CYWNraW5nRmllbGQAPFBh
+c3N3b3JkPmtfX0JhY2tpbmdGaWVsZAA8UGFzc3dvcmRUUk0+a19fQmFja2luZ0ZpZWxkADxSZXBv
+cnRTaGVldD5rX19CYWNraW5nRmllbGQARGlzcGxheU5hbWUAQXBwbGljYXRpb25VUkwAU2VydmVy
+TmFtZQBEYXRhYmFzZQBBdXRoZW50aWNhdGlvblR5cGUAUGFzc3dvcmQAUGFzc3dvcmRUUk0ARmls
+bE9iamVjdFdpdGhQcm9wZXJ0eQBUb0ludABLaWxsRXhjZWwARGVzZXJpYWxpemVYbWwAVABUb0Rh
+dGVUaW1lAFRvQm9vbABTeXN0ZW0uWG1sLkxpbnEAWEVsZW1lbnQARW5jcnlwdABEZWNyeXB0AElF
+bnVtZXJhYmxlYDEAU3lzdGVtLkRhdGEuQ29tbW9uAERiRGF0YVJlYWRlcgBGcm9tRGF0YVJlYWRl
+cgBTeXN0ZW0uRGF0YS5TcWxDbGllbnQAU3FsRGF0YVJlYWRlcgBGcm9tT2xlUmVhZGVyAE9sZURi
+RGF0YVJlYWRlcgBTeXN0ZW0uUmVzb3VyY2VzAFJlc291cmNlTWFuYWdlcgByZXNvdXJjZU1hbgBT
+eXN0ZW0uR2xvYmFsaXphdGlvbgBDdWx0dXJlSW5mbwByZXNvdXJjZUN1bHR1cmUAZ2V0X1Jlc291
+cmNlTWFuYWdlcgBnZXRfQ3VsdHVyZQBzZXRfQ3VsdHVyZQBDdWx0dXJlAGRlZmF1bHRJbnN0YW5j
+ZQBnZXRfRGVmYXVsdABEZWZhdWx0AF9wc1N5bmNocm9uaXplAF9wc0ltYWdlU25hcHNob3QAX3Bz
+RXhjZWxTaGVldElkAF9wc1VzZXJOYW1lAF9wc0V4Y2VsUmVwb3J0UGFyYW0AX3BzVmlld1JlcG9y
+dEZpbHRlclhtbFBhcmFtAF9wc1Byb2Nlc3NJZABNYWluAEdldENvbm5lY3Rpb24AdmFsdWVfXwBT
+dWNjZXNzAEZhaWx1cmUAX29sZURiQ29ubmVjdGlvbgBoV25kAGxwZHdQcm9jZXNzSWQAU3lzdGVt
+LlJ1bnRpbWUuSW50ZXJvcFNlcnZpY2VzAE91dEF0dHJpYnV0ZQB2YWx1ZQBjdXN0b21EYXRlVHlw
+ZUlEAGFkanVzdG1lbnREYXlzAHNvdXJjZUZpbGVOYW1lAGRlbGV0ZUZpbGUAeG1sQ29udGVudAB3
+YgBzaGVldE5hbWUAZXhjZWxGaWxlTmFtZQBpUHJvY2Vzc0lkAHhsQXBwAHJlcG9ydE5hbWUAYWxs
+bFBhcmFtZXRlcnMAcGFyYW1ldGVyVG9DaGVjawBzcGFSZnhRdWVyeQBvdmVycmlkZVBhcmFtc0xp
+c3QAd3MAZmlsZW5hbWUAY29ubmVjdGlvbgBvdmVyUmlkZVN1bW1hcnkAaGlzdG9yeQBhcHAAYXJy
+V29ya3NoZWV0cwBvbGVkYkNvbm5lY3Rpb25TdHJpbmcAZmlsZU5hbWUAd29ya2Jvb2sAb2JqZWN0
+VG8AcHJvcGVydHlOYW1lAHByb3BlcnR5VmFsdWUAaW5kZXgAeG1sUm9vdEF0dHJpYnV0ZQB4RWxl
+bWVudAB0b0VuY3J5cHQAdXNlSGFzaGluZwBjaXBoZXJTdHJpbmcAbGlzdABkcgBjb25zdHJpbmcA
+U3lzdGVtLlJ1bnRpbWUuVmVyc2lvbmluZwBUYXJnZXRGcmFtZXdvcmtBdHRyaWJ1dGUAU3lzdGVt
+LlJlZmxlY3Rpb24AQXNzZW1ibHlUaXRsZUF0dHJpYnV0ZQBBc3NlbWJseURlc2NyaXB0aW9uQXR0
+cmlidXRlAEFzc2VtYmx5Q29uZmlndXJhdGlvbkF0dHJpYnV0ZQBBc3NlbWJseUNvbXBhbnlBdHRy
+aWJ1dGUAQXNzZW1ibHlQcm9kdWN0QXR0cmlidXRlAEFzc2VtYmx5Q29weXJpZ2h0QXR0cmlidXRl
+AEFzc2VtYmx5VHJhZGVtYXJrQXR0cmlidXRlAEFzc2VtYmx5Q3VsdHVyZUF0dHJpYnV0ZQBBc3Nl
+bWJseVZlcnNpb25BdHRyaWJ1dGUAU3lzdGVtLlJ1bnRpbWUuQ29tcGlsZXJTZXJ2aWNlcwBDb21w
+aWxhdGlvblJlbGF4YXRpb25zQXR0cmlidXRlAFJ1bnRpbWVDb21wYXRpYmlsaXR5QXR0cmlidXRl
+AFN5c3RlbS5Db3JlAEV4dGVuc2lvbkF0dHJpYnV0ZQBPbGVEYkNvbW1hbmQARXhlY3V0ZVJlYWRl
+cgBnZXRfSGFzUm93cwBSZWFkAGdldF9JdGVtAFRvU3RyaW5nAElEaXNwb3NhYmxlAERpc3Bvc2UA
+RGxsSW1wb3J0QXR0cmlidXRlAHVzZXIzMi5kbGwAQ29tcGlsZXJHZW5lcmF0ZWRBdHRyaWJ1dGUA
+PD5jX19EaXNwbGF5Q2xhc3MxADxHZXRDdXN0b21EYXRlPmJfXzAAeABGdW5jYDIAU3lzdGVtLkxp
+bnEARW51bWVyYWJsZQBGaXJzdE9yRGVmYXVsdABBZGREYXlzAEd1aWQAR2V0VHlwZUZyb21DTFNJ
+RABBY3RpdmF0b3IAQ3JlYXRlSW5zdGFuY2UAX0FwcGxpY2F0aW9uAGdldF9Id25kAEludFB0cgBv
+cF9FeHBsaWNpdABTdHJpbmcAQ29uY2F0AFN5c3RlbS5JTwBEaXJlY3RvcnkARXhpc3RzAERpcmVj
+dG9yeUluZm8AQ3JlYXRlRGlyZWN0b3J5AEZpbGUAQ29weQBzZXRfVmlzaWJsZQBzZXRfRGlzcGxh
+eUFsZXJ0cwBXb3JrYm9va3MAZ2V0X1dvcmtib29rcwBBZGQAQm9vbGVhbgBNaXNzaW5nAF9Xb3Jr
+Ym9vawBDbG9zZQBFeGNlcHRpb24ARGVsZXRlAFhEb2N1bWVudABQYXJzZQBYQ29udGFpbmVyAERl
+c2NlbmRhbnRzAElFbnVtZXJhdG9yYDEAR2V0RW51bWVyYXRvcgBnZXRfQ3VycmVudABnZXRfSGFz
+RWxlbWVudHMAWE5hbWUAVG9Mb3dlcgBvcF9FcXVhbGl0eQBTeXN0ZW0uQ29sbGVjdGlvbnMASUVu
+dW1lcmF0b3IATW92ZU5leHQAVHJpbQBTaGVldHMAZ2V0X1dvcmtzaGVldHMAX1dvcmtzaGVldAA8
+U3luY2hyb25pemVFeGNlbD5vX19TaXRlQ29udGFpbmVyNQBDYWxsU2l0ZWAxAEZ1bmNgMwBDYWxs
+U2l0ZQA8PnBfX1NpdGU2ADw+cF9fU2l0ZTcARnVuY2A0ADw+cF9fU2l0ZTgAPD5wX19TaXRlOQA8
+PnBfX1NpdGVhADw+cF9fU2l0ZWIAPD5wX19TaXRlYwA8PnBfX1NpdGVkADw+cF9fU2l0ZWUARnVu
+Y2A1ADw+cF9fU2l0ZWYAPD5wX19TaXRlMTAAPD5wX19TaXRlMTEAPD5wX19TaXRlMTIAPD5wX19T
+aXRlMTMAPD5wX19TaXRlMTQAPD5wX19TaXRlMTUAPD5wX19TaXRlMTYAPD5wX19TaXRlMTcAPD5w
+X19TaXRlMTgAPD5wX19TaXRlMTkAPD5wX19TaXRlMWEAPD5wX19TaXRlMWIAPD5wX19TaXRlMWMA
+PD5wX19TaXRlMWQAPD5wX19TaXRlMWUAPD5wX19TaXRlMWYAPD5wX19TaXRlMjAAPD5wX19TaXRl
+MjEAPD5wX19TaXRlMjIAPD5wX19TaXRlMjMAPD5wX19TaXRlMjQAPD5wX19TaXRlMjUAPD5wX19T
+aXRlMjYAPD5wX19TaXRlMjcAPFN5bmNocm9uaXplRXhjZWw+Yl9fMjgAQ1MkPD45X19DYWNoZWRB
+bm9ueW1vdXNNZXRob2REZWxlZ2F0ZTI5AE9wZW4AUnVudGltZVR5cGVIYW5kbGUAR2V0VHlwZUZy
+b21IYW5kbGUATWljcm9zb2Z0LkNTaGFycABNaWNyb3NvZnQuQ1NoYXJwLlJ1bnRpbWVCaW5kZXIA
+QmluZGVyAENhbGxTaXRlQmluZGVyAENTaGFycEJpbmRlckZsYWdzAENvbnZlcnQAQ3JlYXRlAFRh
+cmdldABnZXRfQ2VsbHMASW50MzIAZ2V0X19EZWZhdWx0AEludm9rZQBDU2hhcnBBcmd1bWVudElu
+Zm8AQ1NoYXJwQXJndW1lbnRJbmZvRmxhZ3MAU3lzdGVtLkxpbnEuRXhwcmVzc2lvbnMARXhwcmVz
+c2lvblR5cGUAVW5hcnlPcGVyYXRpb24AQmluYXJ5T3BlcmF0aW9uAGdldF9WYWx1ZTIASW52b2tl
+TWVtYmVyAEdldE1lbWJlcgBDaGFyAFNwbGl0AENvdW50AFJlcGxhY2UAc2V0X1ZhbHVlMgBFbnVt
+ZXJhdG9yAERpc3RpbmN0AFdoZXJlAFRyaW1FbmQAZ2V0X05vdwBSZWZyZXNoQWxsAFN5c3RlbS5E
+aWFnbm9zdGljcwBQcm9jZXNzAEdldFByb2Nlc3NCeUlkAEtpbGwARGJDb21tYW5kAENvbW1hbmRU
+eXBlAHNldF9Db21tYW5kVHlwZQBEYkNvbm5lY3Rpb24AZ2V0X0Nvbm5lY3Rpb25TdHJpbmcAU3Fs
+Q29ubmVjdGlvbgBTcWxDb21tYW5kAFRvTGlzdABUcmltU3RhcnQAPD5jX19EaXNwbGF5Q2xhc3My
+ZgBwTmFtZQA8T3ZlclJpZGVWaWV3RmlsdGVyPmJfXzJjADw+Y19fRGlzcGxheUNsYXNzMzIAQ1Mk
+PD44X19sb2NhbHMzMAByZXBvcnRGaWx0ZXIAPE92ZXJSaWRlVmlld0ZpbHRlcj5iX18yZABDb250
+YWlucwBGaXJzdABTdGFydHNXaXRoAEVuZHNXaXRoADxCaW5kUmVjb3JkU2V0VG9Xb3JrU2hlZXQ+
+b19fU2l0ZUNvbnRhaW5lcjM0ADw+cF9fU2l0ZTM1ADw+cF9fU2l0ZTM2ADw+cF9fU2l0ZTM3ADw+
+cF9fU2l0ZTM4ADw+cF9fU2l0ZTM5ADw+cF9fU2l0ZTNhADw+cF9fU2l0ZTNiADw+cF9fU2l0ZTNj
+ADw+cF9fU2l0ZTNkADw+cF9fU2l0ZTNlADw+cF9fU2l0ZTNmADw+cF9fU2l0ZTQwADw+cF9fU2l0
+ZTQxADw+cF9fU2l0ZTQyADxCaW5kUmVjb3JkU2V0VG9Xb3JrU2hlZXQ+Yl9fNDMAQ1MkPD45X19D
+YWNoZWRBbm9ueW1vdXNNZXRob2REZWxlZ2F0ZTQ0AEFET0RCAENvbm5lY3Rpb25DbGFzcwBSZWNv
+cmRzZXRDbGFzcwBDb21tYW5kQ2xhc3MAX0Nvbm5lY3Rpb24Ac2V0X0Nvbm5lY3Rpb25TdHJpbmcA
+X1JlY29yZHNldABDdXJzb3JUeXBlRW51bQBMb2NrVHlwZUVudW0AQ2xlYXJDb250ZW50cwBDbGVh
+ckZvcm1hdHMAQWN0aXZhdGUARmllbGRzAGdldF9GaWVsZHMARmllbGQARm9udABnZXRfRm9udABz
+ZXRfQm9sZABnZXRfQ291bnQAZ2V0X1JhbmdlAENvcHlGcm9tUmVjb3Jkc2V0AGdldF9Vc2VkUmFu
+Z2UAZ2V0X0NvbHVtbnMAQXV0b0ZpdABUb0FycmF5AHNldF9OdW1iZXJGb3JtYXQAQ29ubmVjdGlv
+bgBSZWNvcmRzZXQAPENoYW5nZVBpdm90U291cmNlRGF0YUNhY2hlPm9fX1NpdGVDb250YWluZXI0
+NQBJRW51bWVyYWJsZQA8PnBfX1NpdGU0NgBQaXZvdFRhYmxlADw+cF9fU2l0ZTQ3ADw+cF9fU2l0
+ZTQ4AFVucHJvdGVjdABQaXZvdFRhYmxlcwBnZXRfU291cmNlRGF0YQBJbmRleE9mAFN1YnN0cmlu
+ZwBnZXRfUm93cwBzZXRfU291cmNlRGF0YQA8U2F2ZVdvcmtzaGVldFNuYXBzaG90Pm9fX1NpdGVD
+b250YWluZXI0OQA8PnBfX1NpdGU0YQA8PmNfX0Rpc3BsYXlDbGFzczRmADw+NF9fdGhpcwA8U2F2
+ZVdvcmtzaGVldFNuYXBzaG90PmJfXzRjADxTYXZlV29ya3NoZWV0U25hcHNob3Q+Yl9fNGIAQ1Mk
+PD45X19DYWNoZWRBbm9ueW1vdXNNZXRob2REZWxlZ2F0ZTRkAFBhdGgAR2V0RmlsZU5hbWUAU2Vs
+ZWN0AFhsUGljdHVyZUFwcGVhcmFuY2UAWGxDb3B5UGljdHVyZUZvcm1hdABDb3B5UGljdHVyZQBT
+eXN0ZW0uVGhyZWFkaW5nAFRocmVhZFN0YXJ0AFRocmVhZABBcGFydG1lbnRTdGF0ZQBTZXRBcGFy
+dG1lbnRTdGF0ZQBTdGFydABTbGVlcAA8UHVibGlzaFNuYXBzaG90Pm9fX1NpdGVDb250YWluZXI1
+MgA8PnBfX1NpdGU1MwA8PmNfX0Rpc3BsYXlDbGFzczU1ADxQdWJsaXNoU25hcHNob3Q+Yl9fNTQA
+U3lzdGVtLldpbmRvd3MuRm9ybXMAQ2xpcGJvYXJkAFN5c3RlbS5EcmF3aW5nAEltYWdlAEdldElt
+YWdlAEJpdG1hcABTeXN0ZW0uRHJhd2luZy5JbWFnaW5nAEltYWdlRm9ybWF0AGdldF9QbmcAU2F2
+ZQBTcWxQYXJhbWV0ZXJDb2xsZWN0aW9uAFNxbFBhcmFtZXRlcgBBZGRXaXRoVmFsdWUAREJOdWxs
+AEV4ZWN1dGVOb25RdWVyeQA8R2V0V29ya1NwYWNlUmFuZ2U+b19fU2l0ZUNvbnRhaW5lcjViADw+
+cF9fU2l0ZTVjAENoYXJ0T2JqZWN0ADw+cF9fU2l0ZTVkADxHZXRXb3JrU3BhY2VSYW5nZT5iX181
+ZQBDUyQ8PjlfX0NhY2hlZEFub255bW91c01ldGhvZERlbGVnYXRlNjcAPEdldFdvcmtTcGFjZVJh
+bmdlPmJfXzVmAENTJDw+OV9fQ2FjaGVkQW5vbnltb3VzTWV0aG9kRGVsZWdhdGU2OAA8R2V0V29y
+a1NwYWNlUmFuZ2U+Yl9fNjAAQ1MkPD45X19DYWNoZWRBbm9ueW1vdXNNZXRob2REZWxlZ2F0ZTY5
+ADxHZXRXb3JrU3BhY2VSYW5nZT5iX182MQBDUyQ8PjlfX0NhY2hlZEFub255bW91c01ldGhvZERl
+bGVnYXRlNmEAPEdldFdvcmtTcGFjZVJhbmdlPmJfXzYyAENTJDw+OV9fQ2FjaGVkQW5vbnltb3Vz
+TWV0aG9kRGVsZWdhdGU2YgA8R2V0V29ya1NwYWNlUmFuZ2U+Yl9fNjMAQ1MkPD45X19DYWNoZWRB
+bm9ueW1vdXNNZXRob2REZWxlZ2F0ZTZjADxHZXRXb3JrU3BhY2VSYW5nZT5iX182NABDUyQ8Pjlf
+X0NhY2hlZEFub255bW91c01ldGhvZERlbGVnYXRlNmQAPEdldFdvcmtTcGFjZVJhbmdlPmJfXzY1
+AENTJDw+OV9fQ2FjaGVkQW5vbnltb3VzTWV0aG9kRGVsZWdhdGU2ZQA8R2V0V29ya1NwYWNlUmFu
+Z2U+Yl9fNjYAQ1MkPD45X19DYWNoZWRBbm9ueW1vdXNNZXRob2REZWxlZ2F0ZTZmAG9wX0luZXF1
+YWxpdHkAZ2V0X0xlbmd0aABYbFJlZmVyZW5jZVN0eWxlAGdldF9BZGRyZXNzTG9jYWwAVG9JbnQz
+MgBMYXN0T3JEZWZhdWx0AFByb3RlY3QAQ2hhcnRPYmplY3RzAGdldF9Ub3BMZWZ0Q2VsbABnZXRf
+Qm90dG9tUmlnaHRDZWxsAElPcmRlcmVkRW51bWVyYWJsZWAxAE9yZGVyQnkAVGhlbkJ5AFN0cnVj
+dExheW91dEF0dHJpYnV0ZQBMYXlvdXRLaW5kAEdldFR5cGUAUHJvcGVydHlJbmZvAEdldFByb3Bl
+cnR5AFNldFZhbHVlAFN0cmluZ1JlYWRlcgBTeXN0ZW0uWG1sAFN5c3RlbS5YbWwuU2VyaWFsaXph
+dGlvbgBYbWxSb290QXR0cmlidXRlAFhtbFNlcmlhbGl6ZXIAVGV4dFJlYWRlcgBEZXNlcmlhbGl6
+ZQBUb0Jvb2xlYW4AU3lzdGVtLlRleHQARW5jb2RpbmcAZ2V0X1VURjgAR2V0Qnl0ZXMAU3lzdGVt
+LlNlY3VyaXR5LkNyeXB0b2dyYXBoeQBNRDVDcnlwdG9TZXJ2aWNlUHJvdmlkZXIASGFzaEFsZ29y
+aXRobQBDb21wdXRlSGFzaABDbGVhcgBUcmlwbGVERVNDcnlwdG9TZXJ2aWNlUHJvdmlkZXIAU3lt
+bWV0cmljQWxnb3JpdGhtAHNldF9LZXkAQ2lwaGVyTW9kZQBzZXRfTW9kZQBQYWRkaW5nTW9kZQBz
+ZXRfUGFkZGluZwBJQ3J5cHRvVHJhbnNmb3JtAENyZWF0ZUVuY3J5cHRvcgBUcmFuc2Zvcm1GaW5h
+bEJsb2NrAFRvQmFzZTY0U3RyaW5nAEZyb21CYXNlNjRTdHJpbmcAQ3JlYXRlRGVjcnlwdG9yAEdl
+dFN0cmluZwBHZXRHZW5lcmljQXJndW1lbnRzAERhdGFUYWJsZQBHZXRTY2hlbWFUYWJsZQBEYXRh
+Um93Q29sbGVjdGlvbgBJbnRlcm5hbERhdGFDb2xsZWN0aW9uQmFzZQBEYXRhUm93AGdldF9JdGVt
+QXJyYXkAQ2hhbmdlVHlwZQBEZWJ1Z2dlck5vblVzZXJDb2RlQXR0cmlidXRlAEFzc2VtYmx5AGdl
+dF9Bc3NlbWJseQBTeXN0ZW0uQ29tcG9uZW50TW9kZWwARWRpdG9yQnJvd3NhYmxlQXR0cmlidXRl
+AEVkaXRvckJyb3dzYWJsZVN0YXRlAC5jY3RvcgBTU0lTU2NyaXB0VGFza0VudHJ5UG9pbnRBdHRy
+aWJ1dGUAU1RBVGhyZWFkQXR0cmlidXRlADw+Y19fRGlzcGxheUNsYXNzOABzADxNYWluPmJfXzIA
+PE1haW4+Yl9fMABDUyQ8PjlfX0NhY2hlZEFub255bW91c01ldGhvZERlbGVnYXRlNAA8TWFpbj5i
+X18xAENTJDw+OV9fQ2FjaGVkQW5vbnltb3VzTWV0aG9kRGVsZWdhdGU1ADxNYWluPmJfXzMAQ1Mk
+PD45X19DYWNoZWRBbm9ueW1vdXNNZXRob2REZWxlZ2F0ZTYAU2NyaXB0T2JqZWN0TW9kZWwAZ2V0
+X0R0cwBNaWNyb3NvZnQuU3FsU2VydmVyLk1hbmFnZWREVFMATWljcm9zb2Z0LlNxbFNlcnZlci5E
+dHMuUnVudGltZQBWYXJpYWJsZXMAZ2V0X1ZhcmlhYmxlcwBWYXJpYWJsZQBOZXdHdWlkAFRvVXBw
+ZXIAc2V0X1Rhc2tSZXN1bHQARXZlbnRzT2JqZWN0V3JhcHBlcgBnZXRfRXZlbnRzAGdldF9NZXNz
+YWdlAGdldF9TdGFja1RyYWNlAEVtcHR5AEZpcmVFcnJvcgBDb25uZWN0aW9ucwBnZXRfQ29ubmVj
+dGlvbnMAQ29ubmVjdGlvbk1hbmFnZXIAZ2V0X0lubmVyT2JqZWN0AElEVFNDb25uZWN0aW9uTWFu
+YWdlckRhdGFiYXNlUGFyYW1ldGVyczEwMABNaWNyb3NvZnQuU3FsU2VydmVyLkR0cy5SdW50aW1l
+LldyYXBwZXIAR2V0Q29ubmVjdGlvbkZvclNjaGVtYQBBcHBFdmVudHNfRXZlbnQAR3VpZEF0dHJp
+YnV0ZQBUeXBlSWRlbnRpZmllckF0dHJpYnV0ZQBDb21JbXBvcnRBdHRyaWJ1dGUAQ29DbGFzc0F0
+dHJpYnV0ZQBEb2NFdmVudHNfRXZlbnQAV29ya2Jvb2tFdmVudHNfRXZlbnQAX1Z0YmxHYXAxXzcA
+RGlzcElkQXR0cmlidXRlAFJvd0Fic29sdXRlAENvbHVtbkFic29sdXRlAFJlZmVyZW5jZVN0eWxl
+AEV4dGVybmFsAFJlbGF0aXZlVG8AX1Z0YmxHYXAyXzcAX1Z0YmxHYXAzXzkAX1Z0YmxHYXA0XzQA
+X1Z0YmxHYXA1XzQARGF0YQBNYXhSb3dzAE1heENvbHVtbnMAQXBwZWFyYW5jZQBGb3JtYXQAX1Z0
+YmxHYXA2XzYAUm93SW5kZXgAQ29sdW1uSW5kZXgAc2V0X19EZWZhdWx0AF9WdGJsR2FwN18xNgBf
+VnRibEdhcDhfNDkAZ2V0X051bWJlckZvcm1hdABfVnRibEdhcDlfMjgAX1Z0YmxHYXAxMF8zMQBB
+ZGRyZXNzTG9jYWwAQ29sdW1ucwBfRGVmYXVsdABOdW1iZXJGb3JtYXQAUm93cwBWYWx1ZTIARGVm
+YXVsdE1lbWJlckF0dHJpYnV0ZQBJbnRlcmZhY2VUeXBlQXR0cmlidXRlAENvbUludGVyZmFjZVR5
+cGUAX1Z0YmxHYXAxXzQ1AF9WdGJsR2FwMl82NgBnZXRfRGlzcGxheUFsZXJ0cwBMQ0lEQ29udmVy
+c2lvbkF0dHJpYnV0ZQBSSFMAX1Z0YmxHYXAzXzE2MQBnZXRfVmlzaWJsZQBfVnRibEdhcDRfNjcA
+RGlzcGxheUFsZXJ0cwBWaXNpYmxlAEh3bmQAX1Z0YmxHYXAxXzMAVGVtcGxhdGUAX1Z0YmxHYXAy
+XzgARmlsZW5hbWUAVXBkYXRlTGlua3MAUmVhZE9ubHkAV3JpdGVSZXNQYXNzd29yZABJZ25vcmVS
+ZWFkT25seVJlY29tbWVuZGVkAE9yaWdpbgBEZWxpbWl0ZXIARWRpdGFibGUATm90aWZ5AENvbnZl
+cnRlcgBBZGRUb01ydQBMb2NhbABDb3JydXB0TG9hZABfVnRibEdhcDFfMjAAU2F2ZUNoYW5nZXMA
+Um91dGVXb3JrYm9vawBfVnRibEdhcDJfNjUAX1Z0YmxHYXAzXzM3AFdvcmtzaGVldHMAX1Z0YmxH
+YXAxXzEwAF9WdGJsR2FwM18xOABfVnRibEdhcDRfMTMAX1Z0YmxHYXA1XzQ0AF9WdGJsR2FwNl8x
+AENlbGwxAENlbGwyAF9WdGJsR2FwOF8yNABEcmF3aW5nT2JqZWN0cwBDb250ZW50cwBTY2VuYXJp
+b3MAVXNlckludGVyZmFjZU9ubHkAQWxsb3dGb3JtYXR0aW5nQ2VsbHMAQWxsb3dGb3JtYXR0aW5n
+Q29sdW1ucwBBbGxvd0Zvcm1hdHRpbmdSb3dzAEFsbG93SW5zZXJ0aW5nQ29sdW1ucwBBbGxvd0lu
+c2VydGluZ1Jvd3MAQWxsb3dJbnNlcnRpbmdIeXBlcmxpbmtzAEFsbG93RGVsZXRpbmdDb2x1bW5z
+AEFsbG93RGVsZXRpbmdSb3dzAEFsbG93U29ydGluZwBBbGxvd0ZpbHRlcmluZwBBbGxvd1VzaW5n
+UGl2b3RUYWJsZXMAQ2VsbHMAVXNlZFJhbmdlAF9WdGJsR2FwMV81AGdldF9Cb2xkAEJvbGQAX1Z0
+YmxHYXAxXzM0AFNvdXJjZURhdGEAeGxQcmludGVyAHhsU2NyZWVuAHhsQml0bWFwAHhsUGljdHVy
+ZQBfVnRibEdhcDJfMjcAQm90dG9tUmlnaHRDZWxsAFRvcExlZnRDZWxsAHhsQTEAeGxSMUMxAF9W
+dGJsR2FwMV85AENvbUV2ZW50SW50ZXJmYWNlQXR0cmlidXRlAEFwcEV2ZW50cwBEb2NFdmVudHMA
+V29ya2Jvb2tFdmVudHMAU1RfZGQxNWIxYmFjY2ZiNDQ0NDhjMDE1Njc5MGIzZWFhMjAuUHJvcGVy
+dGllcy5SZXNvdXJjZXMucmVzb3VyY2VzAAAAL3MAcABhAF8AZQB4AGMAZQBsAF8AcwBuAGEAcABz
+AGgAbwB0AHMAIAAnAGMAJwABSTAAMAAwADIANAA1ADAAMAAtADAAMAAwADAALQAwADAAMAAwAC0A
+QwAwADAAMAAtADAAMAAwADAAMAAwADAAMAAwADAANAA2AAEVXAB0AGUAbQBwAF8ATgBvAHQAZQAA
+F1wAdABlAG0AcABfAE4AbwB0AGUAXAAACy4AeABsAHMAeAAAE3AAYQByAGEAbQBlAHQAZQByAAAJ
+bgBhAG0AZQAAC3YAYQBsAHUAZQAAGWQAaQBzAHAAbABhAHkAbABhAGIAZQBsAAAZZABpAHMAcABs
+AGEAeQB2AGEAbAB1AGUAABtvAHYAZQByAHcAcgBpAHQAZQB0AHkAcABlAAAdYQBkAGoAdQBzAHQA
+bQBlAG4AdABkAGEAeQBzAAABAAlOAFUATABMAAAdQwBvAG4AZgBpAGcAdQByAGEAdABpAG8AbgBz
+AAAnRwBlAHQAUgBlAHAAbwByAHQARABlAGYAaQBuAGkAdABpAG8AbgAAEVQAbwBTAHQAcgBpAG4A
+ZwAAMUcAZQB0AFcAbwByAGsAcwBoAGUAZQB0AEYAcgBvAG0AVwBvAHIAawBCAG8AbwBrAAANVgBh
+AGwAdQBlADIAAB9zAHAAYQBfAHIAZgB4AF8AcgB1AG4AXwBzAHEAbAAAAyAAACNzAHAAYQBfAHIA
+ZgB4AF8AcgB1AG4AXwBzAHEAbAAgACAAAAMsAAAJbgB1AGwAbAAACT0AIAB8ACAAAAM9AAAHIAB8
+ACAAABUwADAAMAAxAC0AMAAxAC0AMAAxAAGFB1MARQBMAEUAQwBUACAAcgBwAC4AbgBhAG0AZQAs
+AA0ACgAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAA
+IAAgACAAIAAgAHIAcAAuAHIAZQBwAG8AcgB0AF8AcABhAHIAYQBtAHMAZQB0AF8AaQBkACAAWwBQ
+AGEAcgBhAG0AcwBlAHQASQBkAF0ALAANAAoAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAA
+IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAByAHAAdAAuAHIAZQBwAG8AcgB0AF8AcABh
+AGcAZQBfAHQAYQBiAGwAaQB4AF8AaQBkACAAWwBUAGEAYgBsAGkAeABJAGQAXQAsAA0ACgAgACAA
+IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg
+AHIAcAAuAG4AYQBtAGUAIABbAFIAZQBwAG8AcgB0AE4AYQBtAGUAXQAsAA0ACgAgACAAIAAgACAA
+IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAHIAcAAu
+AHAAYQBnAGUAXwBpAGQAIABQAGEAZwBlAEkARAAsAA0ACgAgACAAIAAgACAAIAAgACAAIAAgACAA
+IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAHIAcAAuAHIAZQBwAG8AcgB0
+AF8AcwB0AGEAdAB1AHMAXwBpAGQAIABbAFIAZQBwAG8AcgB0AFMAdABhAHQAdQBzAEkAZABdAA0A
+CgAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIABGAFIATwBN
+ACAAIAAgAHIAZQBwAG8AcgB0AF8AcABhAHIAYQBtAHMAZQB0ACAAcgBwAA0ACgAgACAAIAAgACAA
+IAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAEkATgBO
+AEUAUgAgAEoATwBJAE4AIAByAGUAcABvAHIAdABfAHAAYQBnAGUAXwB0AGEAYgBsAGkAeAAgAHIA
+cAB0AA0ACgAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg
+ACAAIAAgACAAIAAgACAAIAAgACAAIABPAE4AIAAgAHIAcAB0AC4AcABhAGcAZQBfAGkAZAAgAD0A
+IAByAHAALgBwAGEAZwBlAF8AaQBkAA0ACgAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg
+ACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgAEkATgBOAEUAUgAgAEoATwBJAE4AIAByAGUA
+cABvAHIAdABfAHAAYQBnAGUAIAByAHAAMgANAAoAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAg
+ACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAAIAAgACAATwBOACAAIAByAHAA
+dAAuAHAAYQBnAGUAXwBpAGQAIAA9ACAAcgBwADIALgByAGUAcABvAHIAdABfAHAAYQBnAGUAXwBp
+AGQAACcgAFcASABFAFIARQAgACAAcgBwAC4ATgBBAE0ARQAgAD0AIAAnAAEDJwABDVAAYQBnAGUA
+SQBkAAAVUABhAHIAYQBtAHMAZQB0AEkAZAAAFVIAZQBwAG8AcgB0AE4AYQBtAGUAAB1SAGUAcABv
+AHIAdABTAHQAYQB0AHUAcwBJAGQAABFUAGEAYgBsAGkAeABJAGQAAElFAFgARQBDACAAcwBwAGEA
+XwBlAHgAYwBlAGwAXwBzAG4AYQBwAHMAaABvAHQAcwAgAEAAZgBsAGEAZwAgAD0AIAAnAHQAJwAB
+SUUAWABFAEMAIABzAHAAYQBfAGUAeABjAGUAbABfAHMAbgBhAHAAcwBoAG8AdABzACAAQABmAGwA
+YQBnACAAPQAgACcAeQAnAAEDKAAABykAIABbAAADXQAABScALAABDV8AUABhAHIAYQBtAABbRABh
+AHQAYQBUAHkAcABlAEMAbwBtAHAAYQB0AGkAYgBpAGwAaQB0AHkAPQA4ADAAOwBNAEEAUgBTACAA
+QwBvAG4AbgBlAGMAdABpAG8AbgA9AFQAcgB1AGUAAAVBADIAAANAAAADMgAAEScAIQBSADEAQwAx
+ADoAUgABA0MAAD1zAHAAYQBfAGUAeABjAGUAbABfAHMAbgBhAHAAcwBoAG8AdABzACAAJwBwACcA
+LABOAFUATABMACwAJwABGXMAbgBhAHAAcwBoAG8AdABvAG4AbAB5AAADXwAAI3kAeQB5AHkATQBN
+AGQAZABfAEgASABtAG0AcwBzAGYAZgAACS4AcABuAGcAACdzAHAAYQBfAGUAeABjAGUAbABfAHMA
+bgBhAHAAcwBoAG8AdABzAAALQABmAGwAYQBnAAADaAAAE0AAcwBoAGUAZQB0AF8AaQBkAAATQABm
+AGkAbABlAG4AYQBtAGUAAClAAHMAbgBhAHAAcwBoAG8AdABfAHMAaABlAGUAdABfAG4AYQBtAGUA
+ACVAAHMAbgBhAHAAcwBoAG8AdABfAGYAaQBsAGUAbgBhAG0AZQAAH0AAYQBwAHAAbABpAGUAZABf
+AGYAaQBsAHQAZQByAAAbQAByAGUAZgByAGUAcwBoAGUAZABfAG8AbgAAK3kAeQB5AHkAIABNAE0A
+TQBNACAAZABkACAASABIADoAbQBtADoAcwBzAAAXQABwAHIAbwBjAGUAcwBzAF8AaQBkAAARcABy
+AG8AdgBpAGQAZQByAAATdAByAGEAbgBzAGwAYQB0AGUAAAM7AAAJdAByAHUAZQAAAzEAABlmAGEA
+cgByAG0AcwBfAGEAZABtAGkAbgAAcVMAVABfAGQAZAAxADUAYgAxAGIAYQBjAGMAZgBiADQANAA0
+ADQAOABjADAAMQA1ADYANwA5ADAAYgAzAGUAYQBhADIAMAAuAFAAcgBvAHAAZQByAHQAaQBlAHMA
+LgBSAGUAcwBvAHUAcgBjAGUAcwAAHVAAUwBfAFMAeQBuAGMAaAByAG8AbgBpAHoAZQAAIVAAUwBf
+AEkAbQBhAGcAZQBTAG4AYQBwAHMAaABvAHQAAB9QAFMAXwBFAHgAYwBlAGwAUwBoAGUAZQB0AEkA
+ZAAAB0EATABMAAAXUABTAF8AVQBzAGUAcgBOAGEAbQBlAAAnUABTAF8ARQB4AGMAZQBsAFIAZQBw
+AG8AcgB0AFAAYQByAGEAbQAAN1AAUwBfAFYAaQBlAHcAUgBlAHAAbwByAHQARgBpAGwAdABlAHIA
+WABtAGwAUABhAHIAYQBtAAAZUABTAF8AUAByAG8AYwBlAHMAcwBJAGQAAAMtAAEfTwBMAEUAXwBD
+AE8ATgBOAF8ATQBhAGkAbgBEAEIAAFNzAHAAYQBfAGUAeABjAGUAbABfAHMAbgBhAHAAcwBoAG8A
+dABzACAAQABmAGwAYQBnAD0AJwBlACcALABAAHMAaABlAGUAdABfAGkAZAA9ACcAAScnACwAQABi
+AGEAdABjAGgAXwBjAGEAbABsAF8AeABtAGwAPQAnAAEXUwBjAHIAaQBwAHQAXwBUAGEAcwBrAAAD
+DQAAAAB40J2NULFOSbJKWQ7sQw5BAAi3elxWGTTgiQiJhF3NgIDMkQUgAQESGQYAAgkYEAkDIAAO
+BCABAQ4DIAACBCABAQIEIAASGQQgABEsBSABAREsCCAAFRIdARIYCSABARUSHQESGAggABUSHQES
+EAkgAQEVEh0BEhAGIAISEAgIBSABEmAOBwACEmQSaA4GIAIBDhAJBSABARJgBSABEjwOAyAAAQYg
+AgIdDg4LIAIRIA4VEh0BEhQEIAECDg4gBgISYBJoEmQOEhkRIAUgAQESaAkgAwERKBJgEmgIIAMB
+Dh0OEAkFIAEBESgEIAEODgYgARJsEmQHIAISZBJoDgcgAgESYBJoAgYOAgYCAwYSGQMGESwHBhUS
+HQESGAcGFRIdARIQAygADgMoAAIEKAASGQQoABEsCCgAFRIdARIYCCgAFRIdARIQAyAACAQgAQEI
+AgYIAygACAQgABExBSABARExAwYRMQQoABExCCAAFRIdARI4CSABARUSHQESOAcGFRIdARI4CCgA
+FRIdARI4CCAAFRIdARJACSABARUSHQESQAcGFRIdARJACCgAFRIdARJABCAAEjgFIAEBEjgDBhI4
+BCgAEjgJIAQBEBwOHB0cBAABCBwEAAEBCQsQAQIVEh0BHgAODgUAARExHAQAAQIcBQABAhI1BAAB
+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
+IAASgf0IIAMdBR0FCAgHAAMOHQUICBIHBx0FHQUOEoHlEoHtEoH9HQUFAAEdBQ4FIAEOHQUFFRId
+ARwGIAAdEoClBSAAEoIBBSAAEoIFBCAAHRwGFRGBLQEcAh4ABwACHBwSgKUjBwoSSBUSHQEcHBKC
+ARKCDRUSHQEeABwSgOkSgI0VEYEtARwFIAASghUHIAIBDhKCFQQHARJJBiABARGCHQgBAAIAAAAA
+AAMAAAEFIAECEiQFAAECEiQJBhUSgJkCEiQCBSAAEoIpBSAAEoItBiABEoI1HAUgAg4DAwUAABGA
+oQgVEoCZAhIkAgUgABKCOQggBQIIDg4OCDAHEgkSGRKAiRJFFRIdARIkEggdDg4dDhUSgJkCEiQC
+EoDIEoDVEYChHQ4dDggdDggFIAASgj0GIAESgkUcDwcFEoJFEoDMEhkSgNUSGSkBACQwMDAyMDhE
+NS0wMDAwLTAwMDAtQzAwMC0wMDAwMDAwMDAwNDYAAAYgAQESgKVfAQBaU3lzdGVtLk9iamVjdCwg
+bXNjb3JsaWIsIFZlcnNpb249NC4wLjAuMCwgQ3VsdHVyZT1uZXV0cmFsLCBQdWJsaWNLZXlUb2tl
+bj1iNzdhNWM1NjE5MzRlMDg5AAApAQAkMDAwMjA4RDgtMDAwMC0wMDAwLUMwMDAtMDAwMDAwMDAw
+MDQ2AAApAQAkMDAwMjA4REEtMDAwMC0wMDAwLUMwMDAtMDAwMDAwMDAwMDQ2AAAIAQC1AQAAAAAB
+EwEbCAEA7QAAAAAACAEAcQAAAAAACAEAcAAAAAAACAEA8QAAAAAAARwIAQCABAAAAAABGQgBANUA
+AAAAAATN7///CAEAdgAAAAAACAEAAAAAAAAACAEAkgAAAAAACAEAwQAAAAAACAEAAgEAAAAACAEA
+bAUAAAAACigFDhwcEYDEHBwEKAASbAUoAhwcHAUoABKAmAMoABwpAQAkMDAwMjA4NDYtMDAwMC0w
+MDAwLUMwMDAtMDAwMDAwMDAwMDQ2AAANAQAIX0RlZmF1bHQAAAYgAQERgnUIAQA8AgAAAAAIAQBX
+AQAAAAAIAQAuAgAAAAAIAQCeBwAAAAAEKAASeAgBAAEAAAAAAAgBALUAAAAAAAgBAA8AAAAAAAgB
+AIMHAAAAACkBACQwMDAyMDhEQi0wMDAwLTAwMDAtQzAwMC0wMDAwMDAwMDAwNDYAAAgBAAMAAAAA
+AAgBABUBAAAAAAgBAKwFAAAAAAgBAO4BAAAAAAUoABKAgAgBAPz///8AAICrLAAAgKVTeXN0ZW0u
+UnVudGltZS5JbnRlcm9wU2VydmljZXMuQ3VzdG9tTWFyc2hhbGVycy5FbnVtZXJhdG9yVG9FbnVt
+VmFyaWFudE1hcnNoYWxlciwgQ3VzdG9tTWFyc2hhbGVycywgVmVyc2lvbj0yLjAuMC4wLCBDdWx0
+dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWIwM2Y1ZjdmMTFkNTBhM2EAARoEKAEcHCkBACQw
+MDAyMDhENy0wMDAwLTAwMDAtQzAwMC0wMDAwMDAwMDAwNDYAAAgBADABAAAAAAgBAG4AAAAAAAgB
+AB0BAAAAAAgBAO4AAAAAAAgBACQEAAAAAAgBALICAAAAAAgBAMUAAAAAAAgBAJwBAAAAAAgBAO0H
+AAAAAAYoAhJsHBwIAQBgAAAAAAApAQAkMDAwMjA4NEQtMDAwMC0wMDAwLUMwMDAtMDAwMDAwMDAw
+MDQ2AAAIAQCuAgAAAAApAQAkMDAwMjA4NzItMDAwMC0wMDAwLUMwMDAtMDAwMDAwMDAwMDQ2AAAE
+BhGArAQCAAAABSACAQ4OXAEAJDAwMDIwODEzLTAwMDAtMDAwMC1jMDAwLTAwMDAwMDAwMDA0NjJN
+aWNyb3NvZnQuT2ZmaWNlLkludGVyb3AuRXhjZWwuWGxQaWN0dXJlQXBwZWFyYW5jZQAABAYRgLBc
+AQAkMDAwMjA4MTMtMDAwMC0wMDAwLWMwMDAtMDAwMDAwMDAwMDQ2Mk1pY3Jvc29mdC5PZmZpY2Uu
+SW50ZXJvcC5FeGNlbC5YbENvcHlQaWN0dXJlRm9ybWF0AAAIAQBnAgAAAAAIAQBsAgAAAAApAQAk
+MDAwMjA4Q0YtMDAwMC0wMDAwLUMwMDAtMDAwMDAwMDAwMDQ2AAAEBhGAxATK7///WQEAJDAwMDIw
+ODEzLTAwMDAtMDAwMC1jMDAwLTAwMDAwMDAwMDA0Ni9NaWNyb3NvZnQuT2ZmaWNlLkludGVyb3Au
+RXhjZWwuWGxSZWZlcmVuY2VTdHlsZQAACAEAGgAAAAAAKQEAJDYxMTYzRUYwLTQ0RTktNDEzRi1B
+ODIxLUNDODE1MzlBNzJBMgAAWAEAJDAwMDIwODEzLTAwMDAtMDAwMC1jMDAwLTAwMDAwMDAwMDA0
+Ni5NaWNyb3NvZnQuT2ZmaWNlLkludGVyb3AuRXhjZWwuQXBwRXZlbnRzX0V2ZW50AAAJIAIBEoCl
+EoClVgEAKE1pY3Jvc29mdC5PZmZpY2UuSW50ZXJvcC5FeGNlbC5BcHBFdmVudHMoTWljcm9zb2Z0
+Lk9mZmljZS5JbnRlcm9wLkV4Y2VsLkFwcEV2ZW50cwAAWAEAJDAwMDIwODEzLTAwMDAtMDAwMC1j
+MDAwLTAwMDAwMDAwMDA0Ni5NaWNyb3NvZnQuT2ZmaWNlLkludGVyb3AuRXhjZWwuRG9jRXZlbnRz
+X0V2ZW50AABWAQAoTWljcm9zb2Z0Lk9mZmljZS5JbnRlcm9wLkV4Y2VsLkRvY0V2ZW50cyhNaWNy
+b3NvZnQuT2ZmaWNlLkludGVyb3AuRXhjZWwuRG9jRXZlbnRzAABdAQAkMDAwMjA4MTMtMDAwMC0w
+MDAwLWMwMDAtMDAwMDAwMDAwMDQ2M01pY3Jvc29mdC5PZmZpY2UuSW50ZXJvcC5FeGNlbC5Xb3Jr
+Ym9va0V2ZW50c19FdmVudAAAYAEALU1pY3Jvc29mdC5PZmZpY2UuSW50ZXJvcC5FeGNlbC5Xb3Jr
+Ym9va0V2ZW50cy1NaWNyb3NvZnQuT2ZmaWNlLkludGVyb3AuRXhjZWwuV29ya2Jvb2tFdmVudHMA
+ACkBACQwMDAyNDQxMy0wMDAwLTAwMDAtQzAwMC0wMDAwMDAwMDAwNDYAACkBACQwMDAyNDQxMS0w
+MDAwLTAwMDAtQzAwMC0wMDAwMDAwMDAwNDYAACkBACQwMDAyNDQxMi0wMDAwLTAwMDAtQzAwMC0w
+MDAwMDAwMDAwNDYAAEcBABouTkVURnJhbWV3b3JrLFZlcnNpb249djQuMAEAVA4URnJhbWV3b3Jr
+RGlzcGxheU5hbWUQLk5FVCBGcmFtZXdvcmsgNCgBACNTVF9kZDE1YjFiYWNjZmI0NDQ0OGMwMTU2
+NzkwYjNlYWEyMAAABQEAAAAADgEACU1pY3Jvc29mdAAAHwEAGkNvcHlyaWdodCBAIE1pY3Jvc29m
+dCAyMDE2AAAIAQAIAAAAAAAeAQABAFQCFldyYXBOb25FeGNlcHRpb25UaHJvd3MBAAAICQEAAAAA
+AAAAAAAeCQEAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAkBAAAAAAAAAF9Db3JEbGxNYWluAG1z
+Y29yZWUuZGxsAAAAAAD/JQAgABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAEAEAAAABgAAIAAAAAAAAAAAAAAAAAAAAEAAQAAADAAAIAAAAAAAAAAAAAAAAAA
+AAEAAAAAAEgAAABYIAEA+AMAAAAAAAAAAAAA+AM0AAAAVgBTAF8AVgBFAFIAUwBJAE8ATgBfAEkA
+TgBGAE8AAAAAAL0E7/4AAAEAAAABACd+dxoAAAEAJ353Gj8AAAAAAAAABAAAAAIAAAAAAAAAAAAA
+AAAAAABEAAAAAQBWAGEAcgBGAGkAbABlAEkAbgBmAG8AAAAAACQABAAAAFQAcgBhAG4AcwBsAGEA
+dABpAG8AbgAAAAAAAACwBFgDAAABAFMAdAByAGkAbgBnAEYAaQBsAGUASQBuAGYAbwAAADQDAAAB
+ADAAMAAwADAAMAA0AGIAMAAAADQACgABAEMAbwBtAHAAYQBuAHkATgBhAG0AZQAAAAAATQBpAGMA
+cgBvAHMAbwBmAHQAAABwACQAAQBGAGkAbABlAEQAZQBzAGMAcgBpAHAAdABpAG8AbgAAAAAAUwBU
+AF8AZABkADEANQBiADEAYgBhAGMAYwBmAGIANAA0ADQANAA4AGMAMAAxADUANgA3ADkAMABiADMA
+ZQBhAGEAMgAwAAAAQAAPAAEARgBpAGwAZQBWAGUAcgBzAGkAbwBuAAAAAAAxAC4AMAAuADYANwA3
+ADUALgAzADIAMgA5ADUAAAAAAHAAKAABAEkAbgB0AGUAcgBuAGEAbABOAGEAbQBlAAAAUwBUAF8A
+ZABkADEANQBiADEAYgBhAGMAYwBmAGIANAA0ADQANAA4AGMAMAAxADUANgA3ADkAMABiADMAZQBh
+AGEAMgAwAC4AZABsAGwAAABcABsAAQBMAGUAZwBhAGwAQwBvAHAAeQByAGkAZwBoAHQAAABDAG8A
+cAB5AHIAaQBnAGgAdAAgAEAAIABNAGkAYwByAG8AcwBvAGYAdAAgADIAMAAxADYAAAAAAHgAKAAB
+AE8AcgBpAGcAaQBuAGEAbABGAGkAbABlAG4AYQBtAGUAAABTAFQAXwBkAGQAMQA1AGIAMQBiAGEA
+YwBjAGYAYgA0ADQANAA0ADgAYwAwADEANQA2ADcAOQAwAGIAMwBlAGEAYQAyADAALgBkAGwAbAAA
+AGgAJAABAFAAcgBvAGQAdQBjAHQATgBhAG0AZQAAAAAAUwBUAF8AZABkADEANQBiADEAYgBhAGMA
+YwBmAGIANAA0ADQANAA4AGMAMAAxADUANgA3ADkAMABiADMAZQBhAGEAMgAwAAAARAAPAAEAUABy
+AG8AZAB1AGMAdABWAGUAcgBzAGkAbwBuAAAAMQAuADAALgA2ADcANwA1AC4AMwAyADIAOQA1AAAA
+AABIAA8AAQBBAHMAcwBlAG0AYgBsAHkAIABWAGUAcgBzAGkAbwBuAAAAMQAuADAALgA2ADcANwA1
+AC4AMwAyADIAOQA1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEADAAA
+ADA5AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==</BinaryItem>
+          <Breakpoint
+            Enabled="True"
+            File="ScriptMain.cs"
+            Line="267"
+            Column="17" />
+          <Breakpoint
+            Enabled="True"
+            File="ScriptMain.cs"
+            Line="264"
+            Column="17" />
+          <Breakpoint
+            Enabled="True"
+            File="Snapshot.cs"
+            Line="838"
+            Column="13" />
+          <Breakpoint
+            Enabled="True"
+            File="Snapshot.cs"
+            Line="219"
+            Column="1" />
+          <Breakpoint
+            Enabled="True"
+            File="Snapshot.cs"
+            Line="765"
+            Column="13" />
+          <Breakpoint
+            Enabled="True"
+            File="Snapshot.cs"
+            Line="335"
+            Column="17" />
+        </ScriptProject>
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
+  <DTS:DesignTimeProperties><![CDATA[<?xml version="1.0"?>
+<!--This CDATA section contains the layout information of the package. The section includes information such as (x,y) coordinates, width, and height.-->
+<!--If you manually edit this section and make a mistake, you can delete it. -->
+<!--The package will still be able to load normally but the previous layout information will be lost and the designer will automatically re-arrange the elements on the design surface.-->
+<Objects
+  Version="sql11">
+  <!--Each node below will contain properties that do not affect runtime behavior.-->
+  <Package
+    design-time-name="Package">
+    <LayoutInfo>
+      <GraphLayout
+        Capacity="4" xmlns="clr-namespace:Microsoft.SqlServer.IntegrationServices.Designer.Model.Serialization;assembly=Microsoft.SqlServer.IntegrationServices.Graph">
+        <NodeLayout
+          Size="191,42"
+          Id="Package\SCR_EXCEL_SNAPSHOT"
+          TopLeft="347,68" />
+      </GraphLayout>
+    </LayoutInfo>
+  </Package>
+</Objects>]]></DTS:DesignTimeProperties>
+</DTS:Executable>

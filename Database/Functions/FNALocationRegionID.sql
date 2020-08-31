@@ -1,0 +1,15 @@
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+GO
+
+IF EXISTS(SELECT * FROM sys.objects WHERE [object_id] = OBJECT_ID(N'[dbo].[FNALocationRegionID]') AND TYPE IN (N'FN', N'IF', N'TF', N'FS', N'FT'))
+	DROP FUNCTION [dbo].[FNALocationRegionID]
+GO
+
+CREATE FUNCTION [dbo].[FNALocationRegionID]()
+	RETURNS INT
+AS
+BEGIN
+	RETURN 1
+END
+GO

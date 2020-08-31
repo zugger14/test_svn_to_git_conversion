@@ -1,0 +1,12 @@
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[FNAFloor]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
+	DROP FUNCTION [dbo].FNAFloor
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE FUNCTION [dbo].FNAFloor(@arg1 float)
+	RETURNS INT 
+AS  
+BEGIN 
+	RETURN 1
+END

@@ -1,0 +1,2 @@
+IF NOT EXISTS (SELECT * FROM information_schema.columns WHERE table_name ='source_minor_location_meter' AND column_name='imbalance_applied')
+ALTER TABLE source_minor_location_meter ADD imbalance_applied CHAR(1)

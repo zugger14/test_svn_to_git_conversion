@@ -1,0 +1,1 @@
+update application_functions set file_path = '_accounting/derivative/transaction_processing/_etrm_interfeces/delete.voided.deals.php'  where function_id = 10233000

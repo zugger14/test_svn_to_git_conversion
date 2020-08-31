@@ -1,0 +1,1 @@
+UPDATE archive_data_policy_detail SET archive_db = NULL

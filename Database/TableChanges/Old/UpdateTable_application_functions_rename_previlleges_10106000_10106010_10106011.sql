@@ -1,0 +1,3 @@
+UPDATE application_functions SET function_name = 'Nomination Group Menu' ,function_desc = 'Nomination Group Menu' WHERE function_id = 10106000
+UPDATE application_functions SET function_name = 'Nomination Group Add/Save' ,function_desc = 'Nomination Group Add/Save' WHERE function_id = 10106010
+UPDATE application_functions SET function_name = 'Nomination Group Delete' ,function_desc = 'Nomination Group Delete' WHERE function_id = 10106011

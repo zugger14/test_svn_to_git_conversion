@@ -1,0 +1,1 @@
+UPDATE application_functions SET function_call = 'windowRunMtmCalc' WHERE function_id = '10181000'

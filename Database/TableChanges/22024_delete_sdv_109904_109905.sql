@@ -1,0 +1,2 @@
+-- deleted ice security / eex security exchange, both can be handled using ice / eex with existing configuration
+DELETE FROM static_data_value WHERE [type_id] = 109900 AND value_id IN (109904, 109905)

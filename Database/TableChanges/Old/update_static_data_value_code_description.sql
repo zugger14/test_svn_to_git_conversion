@@ -1,0 +1,1 @@
+update static_data_value set code='6th business day',description='6th business day' where value_id=970

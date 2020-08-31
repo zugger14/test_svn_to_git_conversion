@@ -1,0 +1,1 @@
+update process_table_archive_policy set frequency_type='d' , wherefield= 'as_of_date' where tbl_name='source_price_curve'

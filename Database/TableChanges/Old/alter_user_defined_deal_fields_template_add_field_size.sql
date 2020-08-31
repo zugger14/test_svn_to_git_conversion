@@ -1,0 +1,1 @@
+ALTER TABLE dbo.[user_defined_deal_fields_template] ADD field_size int

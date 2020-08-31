@@ -1,0 +1,16 @@
+source_counterparty_id,counterparty_name,counterparty_id,counterparty_contact_id,contact_type_id,contact_type,title,name,ID,address1,address2,city,state_id,state,zip,phone_no,cell_no,fax,email,email_cc,email_bcc,country_id,country,region,comment,is_active,is_primary
+6054,A and A Pacific,A and A Pacific,8019,309267,Primary Contact,NULL,A and A Pacific Inc.,NULL,NULL,Suite 500,Irvine,309268,California,CA 92612, 00 1 559 702 6241 ,NULL,00 1 949 756 8495,info@aapacificinc.com,NULL,NULL,307170,USA,NULL,Office,yes,no
+6063,Abbas,Abbas,8020,309267,Primary Contact,NULL,Abbas Cashew Co.,NULL,863 Huynh Van Luy Street,Kallumthazhan,Kollam,309268,California,691004,00 39 0461 991 688,NULL,00 91 474 711 561,abascasw@md3.vsnl.net.in,NULL,NULL,310678,India,NULL,Office,yes,no
+6063,Abbas,Abbas,8021,-32200,Trader,NULL,Mohammed Najeeb,NULL,Loi Binh Nhon,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,abbascashew@yahoo.co.in,NULL,NULL,NULL,NULL,NULL,Seller,yes,no
+6055,A and P Growers,A and P Growers,8022,309267,Primary Contact,NULL,A and P Growers Coop. Inc.,NULL,NULL,NULL,Bakersfield,309268,California,CA 93309,3455,54756756,00 1 559 458 7270,info@meridiannut.com,NULL,NULL,307170,USA,NULL,Office,yes,yes
+6058,AAA Trading (Canada),AAA Trading (Canada),8023,309267,Primary Contact,NULL,AAA Trading Co.,NULL,NULL,NULL,Mississauga,310743,Ontario,I5B 4 H5,NULL,NULL,NULL,NULL,NULL,NULL,307171,Canada,NULL,Office,yes,no
+6062,Ab Boden Lindeberg,Ab Boden Lindeberg,8024,-32200,Trader,NULL,Stefan Boden,NULL,NULL,NULL,NULL,NULL,NULL,NULL,00 91 474 271 2315,00 46 70 560 08 81,NULL,sb@bodenlindeberg.se,NULL,NULL,NULL,NULL,NULL,Buyer,yes,no
+6056,AAA Ag,AAA Ag,8025,309267,Primary Contact,NULL,AAA Ag,NULL,9 Neighborhood,NULL,Woodlake,309268,California,CA 93286,00 46 854440806,NULL,00 1 559 798 2265,NULL,NULL,NULL,307170,USA,NULL,Office,yes,no
+6062,Ab Boden Lindeberg,Ab Boden Lindeberg,8026,309267,Primary Contact,NULL,Ab Boden Lindeberg,NULL,Hamlet 2,NULL,Taby,NULL,NULL,18766,00 91 474 711 344,NULL,NULL,NULL,NULL,NULL,309282,Sweden ,NULL,Office,yes,no
+4459,A A Nutts ,A A Nutts ,8031,-32201,Confirm Email,Test,test,rips.,test add1,test add2,denver,309283,Almeria ,80011,123456789,123456789,1,abc@abc.com,abc@abc.com,abc@abc.com,310349,Australia,Liverpool,abc@abc.com,yes,no
+4459,A A Nutts ,A A Nutts ,8041,-32200,Trader,NULL,Suresh @ Surya Comm.,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,Broker,yes,no
+4656,Albina,Albina,8043,309267,Primary Contact,MR.,Albina Primary,NULL,Primary Albin1,Primary Albin12,Wisconsin,309268,California,44600,4371,54414,NULL,albina@gmail.com,albina_cc@gmail.com,NULL,307170,USA,NULL,NULL,yes,yes
+4459,A A Nutts ,A A Nutts ,8044,309267,Primary Contact,Mr,AA NUT PRimary,NULL,AA P1,AAp2,WISCONSIn,309268,California,44600,4371,541,5414,aanut@gmail.com,aanutcc@gmail.com,NULL,307170,USA,NULL,NULL,yes,yes
+6324,Cakmaklar,Cakmaklar,8045,309267,Primary Contact,mr,caz primary,NULL,m1,m2,san,310748,"San Miguel County, New Mexico",23545,132,123,436436,ss@gmail.com,NULL,NULL,310349,Australia,NULL,NULL,yes,yes
+4459,A A Nutts ,A A Nutts ,8046,-32300,Scheduler,NULL,test,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,yes,no
+4394,KCP,KCP,8047,-32300,Scheduler,test,test,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,yes,no

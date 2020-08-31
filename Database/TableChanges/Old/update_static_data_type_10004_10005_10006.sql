@@ -1,0 +1,1 @@
+UPDATE static_data_type SET internal = 0 WHERE type_id in (10004, 10005, 10006)

@@ -1,0 +1,424 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+ <farrms>
+
+    <!-- for ppl demo (in Germany) -->
+    <!--
+    <counterparty>Geschäftspartner</counterparty>
+    <trader>Handelsschiff</trader> 
+    <buy_sell>Kaufen/verkaufen</buy_sell>
+    <buysell>Kaufen/verkaufen</buysell>
+    <contract>Vertrag</contract>
+    <deal_date>Deal datum</deal_date>
+    <term_start>Periode beginnen</term_start>
+    <term_end>Periode Ende</term_end>
+    <deal_volume>Volumen</deal_volume>
+    <volume>Volumen</volume>
+    <fixed_price>Festgelegt Preis</fixed_price> 
+    <adder_currency>Addierer Währung</adder_currency>
+    <broker>Makler</broker>
+    <total_volume>Gesamtvolumen</total_volume>
+    <totalvolume>Gesamtvolumen</totalvolume>
+    -->
+    <!-- end of ppl demo (in Germany) -->   
+	
+	<!--German Language-->
+	
+	<!--Maintain static data,maintain definition,maintain deal template,maintain field template,maintain udf fields, maintain transaction,maintain blotter-->
+
+	<adder_currency>Adder Währung</adder_currency>
+	<aggregate_comments>Aggregierten Kommentare</aggregate_comments>
+	<aggregate_environment>Aggregierten Umfeld</aggregate_environment>
+	<assign_date>Zuweisen Datum</assign_date>
+	<assigned_by>Zugewiesen Von</assigned_by>
+	<assignment_type>Zuweisung Typ</assignment_type>
+	<backoff_signoff>Backoff Sign-Off</backoff_signoff>
+	<backoff_signoff_date>Backoff Sign-Off Datum</backoff_signoff_date>
+	<block_description>Block Beschreibung</block_description>
+	<block_type>Block Typ</block_type>
+	<book_transfer>Buch Verlagern</book_transfer>
+	<booked>Gebucht</booked>
+	<broker>Makler</broker>
+	<broker_cost>Makler Kosten</broker_cost>
+	<broker_currency>Makler  Währung</broker_currency>
+	<broker_unit_fee>Makler  Einheit Gebühr</broker_unit_fee>
+	<buysell>Kaufenverkaufen</buysell>
+	<capacity>Kapazität</capacity>
+	<category>Kategorie</category>
+	<commodity>Ware</commodity>
+	<compliance_year>Beachtung Jahre</compliance_year>
+	<confirm_status>Status Bestätigen</confirm_status>
+	<counterparty>Kontrahenten</counterparty>
+	<create_ts>Neues Ts</create_ts>
+	<create_user>Benutzer Erstellen</create_user>
+	<create_by>Erstellen Indem</create_by>
+	<curve_id>Kurveid</curve_id>
+	<day_count>Anzahl Der Tage</day_count>
+	<deal_contract>Abkommen Vertrag</deal_contract>
+	<deal_date>Abkommen Datum</deal_date>
+	<detail_description>Detailbeschreibung</detail_description>
+	<deal_id>Abkommen Id</deal_id>
+	<deal_lock>Abkommen Sperren</deal_lock>
+	<deal_ref_type>Abkommen Referenz Typ</deal_ref_type>
+	<deal_status>Abkommen Stellung</deal_status>
+	<deal_term_end>Abkommen Laufzeitende</deal_term_end>
+	<deal_term_start>Abkommen Laufzeitbeginn</deal_term_start>
+	<deal_type>Abkommen Typ</deal_type>
+	<deal_volume>Abkommen Volumen</deal_volume>
+	<description1>Beschreibung1</description1>
+	<description2>Beschreibung2</description2>
+	<description_3>Beschreibung 3</description_3>
+	<exersice_type>Exersice Typ</exersice_type>
+	<expire_date>Ablaufdatum</expire_date>
+	<ext_deal_id>Externe Abkommen Id</ext_deal_id>
+	<fixation>Fixierung</fixation>
+	<fixed_cost>Feste Kosten</fixed_cost>
+	<fixed_cost_currency>Feste Kosten Währung</fixed_cost_currency>
+	<fixed_price_>Festpreis</fixed_price_>
+	<fixed_price_currency>Festpreis Währung</fixed_price_currency>
+	<fixedfloat>Fixiertfloaten</fixedfloat>
+	<formula_currency>Formel Währung</formula_currency>
+	<formula_id>Formel Id</formula_id>
+	<generation_source>Generation Quelle</generation_source>
+	<generator_id>Generator Id</generator_id>
+	<granularity>Körnung</granularity>
+	<group1>Gruppe1</group1>
+	<group2>Gruppe2</group2>
+	<group3>Gruppe3</group3>
+	<group4>Gruppe4</group4>
+	<id>Identifikation</id>
+	<internal_deal_sub_type>Interne Abkommen Unterart</internal_deal_sub_type>
+	<internal_deal_type>Interne Abkommen Typ</internal_deal_type>
+	<internal_portfolio>Interne Portfolio</internal_portfolio>
+	<leg>Etappe</leg>
+	<legal_entity>Rechtsträger</legal_entity>
+	<location>Standort</location>
+	<meter>Meter</meter>
+	<multiplier>Multiplikator</multiplier>
+	<option>Optionen</option>
+	<option_sett.date>Optionen Begleichung Date</option_sett.date>
+	<option_strike_price>Optionen Ausübungspreis</option_strike_price>
+	<option_type>Optionen Typ</option_type>
+	<pay_opposite>Bezahlen Umgekehrt</pay_opposite>
+	<physicalfinancial>Physischfinanz</physicalfinancial>
+	<price_adder>Preis Adder</price_adder>
+	<price_adder2>Preis Adder2</price_adder2>
+	<price_adder_currency2>Preis Adder Währung2</price_adder_currency2>
+	<price_multiplier>Preis Multiplikator</price_multiplier>
+	<price_uom>Preis Maßeinheit</price_uom>
+	<pricing>Preise</pricing>
+	<process_deal_status>Prozess Abkommenstellung</process_deal_status>
+	<profile>Profil</profile>
+	<profile_code>Profilcode</profile_code>
+	<pv_party>Pv Gruppe</pv_party>
+	<rec_formula>Rec Formula</rec_formula>
+	<rec_price>Rec Preis</rec_price>
+	<reference>Referenz</reference>
+	<reference_deal>Referenz Abkommen</reference_deal>
+	<reference_id>Referenzid</reference_id>
+	<risk_signoff>Risiko Sign-Off</risk_signoff>
+	<risk_signoff_date>Risiko Sign-Off Datum</risk_signoff_date>
+	<rolling_average>Rolling Average</rolling_average>
+	<settlement_currency>Auszahlungswährung</settlement_currency>
+	<settlement_date>Fälligkeit Datum</settlement_date>
+	<settlement_uom>Fälligkeit Maßeinheit</settlement_uom>
+	<settlement_volume>Fälligkeit Volume</settlement_volume>
+	<source_system>Quellsystem</source_system>
+	<standard_yearly_volume>Standard Preisverlauf Volume</standard_yearly_volume>
+	<state_value>Stellung Wert</state_value>
+	<status>Stellung</status>
+	<status_date>Stellung Datum</status_date>
+	<structure_id>Strukturid</structure_id>
+	<sub_book>Sub Buchen</sub_book>
+	<sub_deal_type>Sub Abkommen Typ</sub_deal_type>
+	<template>Schablone</template>
+	<term_end>Laufzeitende</term_end>
+	<term_frequency>Begriff Frequenz</term_frequency>
+	<term_start>Laufzeitbeginn</term_start>
+	<total_volume>Gesamtvolumen</total_volume>
+	<trader>Händler</trader>
+	<unit_fixed_flag>Fixiert Flag</unit_fixed_flag>
+	<update_ts>Aktualisieren Ts</update_ts>
+	<update_user>Aktualisieren Benutzer</update_user>
+	<update_by>Update Durch</update_by>
+	<verified_by>Verifiziert Durch</verified_by>
+	<verified_date>Verifiziert Datum</verified_date>
+	<volume_frequency>Volumen Frequenz</volume_frequency>
+	<volume_left>Volumen Übrig</volume_left>
+	<volume_multiplier2>Volumen Multiplier 2</volume_multiplier2>
+	<volume_uom>Volumen Maßeinheit</volume_uom>
+	<general>General</general>
+	<id_from>Id Aus</id_from>
+	<id_to>Id</id_to>
+	<reference_id>Referenz Id</reference_id>
+	<cert_from>Cert. # Von</cert_from>
+	<cert_to>Cert # Zum</cert_to>
+	<deal_date_from>Deal Datum Von</deal_date_from>
+	<deal_date_to>Deal Datum Um</deal_date_to>
+	<create_date_from>Erstellungsdatum Aus</create_date_from>
+	<create_date_to>Erstellungsdatum Um</create_date_to>
+	<sort_by>Sortieren Nach</sort_by>
+	<view_deleted_deals>Ansicht Gelöscht Deals</view_deleted_deals>
+	<source_book_mapping>Quelle Buch Mapping</source_book_mapping>
+	<type>Typ</type>
+	<filter>Filtern</filter>
+	<physicalfinancial>Physikalische/Finanzielle</physicalfinancial>
+	<physical>Physisch</physical>
+	<financial>Finanzielle</financial>
+	<both>Beide</both>
+	<book>Buch</book>
+	<signed_off_by>Off By Unterzeichnet</signed_off_by>
+	<risk>Risiko</risk>
+	<back_office>Back Office</back_office>
+	<sub_type>Unterkategorie</sub_type>
+	<trade_group>Trade Group</trade_group>
+	<signed_off_status>Abgemeldet Status</signed_off_status>
+	<all>Alle</all>
+	<signed_off_only>Abgezeichnet Aus Nur</signed_off_only>
+	<not_signed_off>Nicht Abgemeldet</not_signed_off>
+	<location>Lage</location>
+	<deal_category>Deal Kategorie</deal_category>
+	<buysell_flag>Kaufen/Verkaufen Flag</buysell_flag>
+	<trade_type>Handel Typ</trade_type>
+	<deal_status>Deal-Status</deal_status>
+	<confirmation_status>Bestätigungsstatus</confirmation_status>
+	<index>Index</index>
+	<deal_type>Deal Typ</deal_type>
+	<none>Keiner</none>
+	<index_group>Index-Gruppe</index_group>
+	<advance_filter>Vorzurücken Filter</advance_filter>
+	<generatorcredit_source>Generator/Kredit Quelle</generatorcredit_source>
+	<compliance_year>Compliance Jahr</compliance_year>
+	<certification_entity>Certification Entity</certification_entity>
+	<certificate_date>Zertifikat Datum</certificate_date>
+	<generator>Generator</generator>
+	<certificate_no>Zertifikat Nr.</certificate_no>
+	<registered_date>Registriert Seit</registered_date>
+	<assignment_type>Assignment Type</assignment_type>
+	<assigned_jurisdiction>Assigned Gerichtsstand</assigned_jurisdiction>
+	<status>Status</status>
+	<assigned_date>Assigned Datum</assigned_date>
+	<status_date>Status Datum</status_date>
+	<reference_id>Reference Id</reference_id>
+	<deal_date>Deal Datum</deal_date>
+	<ext_id>Ext Id</ext_id>
+	<physicalfinancial_flag>Physikalische/Financial Flag</physicalfinancial_flag>
+	<deal_type>Deal Type</deal_type>
+	<option_flag>Option-Flag</option_flag>
+	<option_type>Option Typ</option_type>
+	<exercise_type>Ausübungsstil</exercise_type>
+	<book_name>Book Name</book_name>
+	<trade_type>Trade Type</trade_type>
+	<desc1>Beschreibung1</desc1>
+	<desc2>Beschreibung2</desc2>
+	<desc3>Beschreibung3</desc3>
+	<hedgeitem_flag>Hedge/Item Flag</hedgeitem_flag>
+	<hedge_type>Hedge Typ</hedge_type>
+	<assign_type>Typ Zuweisen</assign_type>
+	<locked>Verriegelt</locked>
+	<pricing>Pricing</pricing>
+	<created_date>Erstellungsdatum</created_date>
+	<signed_off_by>Off Unterzeichnet Von</signed_off_by>
+	<sign_off_date>Abmelden Datum</sign_off_date>
+	<comments>Kommentare</comments>
+	<sub_type>Subtyp</sub_type>
+	<contract_detail>Vertrag Details</contract_detail>
+	<ref_id>Referenz Id</ref_id>
+	<buysell>Kauf/Verkauf</buysell>
+	<buy>Kaufen</buy>
+	<sell>Verkaufen</sell>
+	<apply_to_all>Auf Alle Anwenden</apply_to_all>
+	<start_term>Starten Begriff</start_term>
+	<end_term>End-Terminus</end_term>
+	<frequency_term>Frequency Terminus</frequency_term>
+	<apply_>Bewerben%</apply_>
+	<rolling_avg>Im Betriebsdurchschnitt</rolling_avg>
+	<generatorcredit_source>Generator/Credit Quelle</generatorcredit_source>
+	<options>Optionen</options>
+	<include_tax_credits>Umfassen Steuer Kredit</include_tax_credits>
+	<use_for_pnl>Verwenden Sie Für Pnl</use_for_pnl>
+	<exercise_type>Ausübungsart</exercise_type>
+	<block_defination>Block Defination</block_defination>
+	<granularity>Granularität</granularity>
+	<leg>Bein</leg>
+	<fixedfloat>Fixed/Float</fixedfloat>
+	
+	<volume>Volumen</volume>
+	<frequency>Frequenz</frequency>
+	<update_user>Update User</update_user>
+	<block_description>Bausteinbeschreibung</block_description>
+	<formula>Formel</formula>
+	<opt._strike_price>Option Ausübungspreis</opt._strike_price>
+	<price_adder>Mehrpreis</price_adder>
+	<volume_multiplier>Volumen Multiplizieren</volume_multiplier>
+	<price_multiplier>Preis Multiplier</price_multiplier>
+	<price_currency>Preis Währung</price_currency>
+	<price_adder2>Preis Addierers3</price_adder2>
+	<adder_currency2>Adder Währung3</adder_currency2>
+	<volume_multiplier2>Volumen Multiplizieren3</volume_multiplier2>
+	<pay_opposite>Zahlen Gegenüber</pay_opposite>
+	<syv>Standard Jährliche Volumn</syv>
+	<price_uom>Preis Uom</price_uom>
+	<profilecode>Profilecode</profilecode>
+	<pr_party>Pr Partei</pr_party>
+	<source_book_mapping_offset>Quelle Buch Mapping Offset</source_book_mapping_offset>
+	<source_book_mapping_to>Quelle Book Zuordnung Zu</source_book_mapping_to>
+	<counterparty_from>Effective Date</counterparty_from>
+	<counterparty_to>Gegenpartei</counterparty_to>
+	<trader_from>Trader Aus</trader_from>
+	<trader_to>Händler Zu</trader_to>
+	<pice>Preis</pice>
+	<transfer_pricing_option>Transfer Pricing Option</transfer_pricing_option>
+	<original_deal_price>Original Deal Preis</original_deal_price>
+	<market_price>Marktpreis</market_price>
+	<fixed_price>Fixed Price</fixed_price>
+	<template>Template</template>
+	<term>Begriff</term>
+	<rows>Rows</rows>
+	<default>Default</default>
+	<show_edit_grid>Zeige Bearbeiten Grid</show_edit_grid>
+	<deal_header>Deal Kopfzeile</deal_header>
+	<deal_type>Deal-Typ</deal_type>
+	<counterperty>Kontrahenten</counterperty>
+	<deal_sub_type>Deal Subtyp</deal_sub_type>
+	<generatorcredit_source>Generator / Kredit Quelle</generatorcredit_source>
+	<contract_detail>Vertrag Detailliert</contract_detail>
+	<block_definition>Blockdefinition</block_definition>
+	<granuarity>Granularität</granuarity>
+	<deal_date>Deal Date</deal_date>
+	<rolling_average>Rollend Durchschnitt</rolling_average>
+	<delivary_path>Delivary Pfad</delivary_path>
+	<term_frequency>Term Frequenz</term_frequency>
+	<price_adder>Aufpreis</price_adder>
+	<strike_price>Basispreis</strike_price>	
+	<deal_detail>Deal Details</deal_detail>
+	<buysell>Kaufen/Verkaufen</buysell>
+	<buy_index>Kaufen Index</buy_index>
+	<volume_frequency>Volumen-Frequenz</volume_frequency>
+	<volume_uom>Volumen Uom</volume_uom>
+	<fixed_cost>Fixkosten</fixed_cost>
+	<opt._strike_price>Option Basispreis</opt._strike_price>
+	<strip_month_from>Streifen Monat Von</strip_month_from>
+	<lagmonths>Lagmonths</lagmonths>
+	<strip_month_to>Streifen Monat Zu</strip_month_to>
+	<convfactor>Convfactor</convfactor>
+	<sett.currency>Siedlung Währung</sett.currency>
+	<profile_code>Profil-Code</profile_code>
+	<generatorcredit_source>Generator / Kredit Quelle</generatorcredit_source>
+	<credit_price>Kreditkarten Preis</credit_price>
+	<contract_price>Vertrag Preis</contract_price>
+	<currency>Währung</currency>
+	<vintage_from>Vintage Von</vintage_from>
+	<vintage_to>Vintage Zu</vintage_to>
+	<certificate>Zertifikat</certificate>
+	<date>Datum</date>
+	<from>Von</from>
+	<to>Zu</to>
+	<source_system>Source System</source_system>
+	<active>Aktiv</active>
+	<blotter_support>Blotter Unterstützung</blotter_support>
+	<public>Öffentlichkeit</public>
+	<template_id>Template Id</template_id>
+	<templatename>Template Name</templatename>
+	<physicalfinancialflag>Physikalische/Financial Flag</physicalfinancialflag>
+	<frequencytype>Frequency-Typ</frequencytype>
+	<optionflag>Option-Flag</optionflag>
+	<optiontype>Option Typ</optiontype>
+	<exercisetype>Ausübungsart</exercisetype>
+	<dealsubtype>Deal Subtyp</dealsubtype>
+	<internalflag>Interne Flag</internalflag>
+	<internaldealtypeid>Interne Deal Type Id</internaldealtypeid>
+	<internaldealsubtypeid>Interne Deal Subtype Id</internaldealsubtypeid>
+	<blottersupported>Blotter Unterstützte</blottersupported>
+	<rollover_to_spot>Rollover An Den Spot</rollover_to_spot>
+	<discounting_does_not_applies>Diskontierung Doesnot Gilt</discounting_does_not_applies>
+	<do_not_show_term_end>Donot Show Laufzeitende</do_not_show_term_end>
+	<block>Blockieren</block>
+	<block_define>Block Definieren</block_define>
+	<model_name>Model Name</model_name>
+	<trade_ticket_template>Handel Ticket Vorlage</trade_ticket_template>
+	<field_template>Feldvorlage</field_template>
+	<template_name>Template Name</template_name>
+	<sub_deal_type>Deal Subtyp</sub_deal_type>
+	<buysell_flag>Buysell Flag</buysell_flag>
+	<term_frequency_type>Term Frequency Type</term_frequency_type>
+	<internal_deal_type>Interne Deal Typ</internal_deal_type>
+	<internal_sub_deal_type>Interne Sub Deal Typ</internal_sub_deal_type>
+	<cash_flow_earnings_model>Cash Flow Gewinn Modell</cash_flow_earnings_model>
+	<counterparty>Counterparty</counterparty>
+	<contract_details>Contract Details</contract_details>
+	<other>Andere</other>
+	<physicalfinancial>Physikalische / Finanzielle</physicalfinancial>
+	<description3>Beschreibung3</description3>
+	<product>Produkt</product>
+	<internal_portfolio>Internen Portfolio</internal_portfolio>
+	<deal_transfer>Deal Übertragung</deal_transfer>
+	<mapping_id>Mapping Id</mapping_id>
+	<source_book_mapping_from>Source Book Mapping Von</source_book_mapping_from>
+	<source_book_mapping_offset>Source Book Mapping Offset</source_book_mapping_offset>
+	<source_book_mapping_to>Source Book Mapping Um</source_book_mapping_to>
+	<trader_to>Trader</trader_to>
+	<counterparty_from>Geschäftspartner Von</counterparty_from>
+	<counterparty_to>Gegenpartei</counterparty_to>
+	<unapprove>Unapprove</unapprove>
+	<offset>Offsetdruck</offset>
+	<transfer>Übertragen</transfer>
+	<field_template>Felder Schablone</field_template>
+	<field_id>Feld Id</field_id>
+	<field_template_name>Feldvorlage Namen</field_template_name>
+	<field_template_description>Feldvorlage Beschreibung</field_template_description>
+	<group_tabs_details>Gruppe Registerkarten Detail</group_tabs_details>
+	<group_id>Gruppe Id</group_id>
+	<group_name>Gruppennamen</group_name>
+	<seq_no>Sequenznummer</seq_no>
+	<template_name>Schablone Namen</template_name>
+	<description>Beschreibung</description>
+	<group_iu>Gruppe Iu</group_iu>
+	<sequence>Folge</sequence>
+	<general>Allgemein</general>
+	<uncategorized>Kategorisierter</uncategorized>
+	<deal_term_start>Laufzeitbeginn</deal_term_start>
+	<field_label>Feldebene</field_label>
+	<buy_label>Kaufen Ebene</buy_label>
+	<sell_label>Verkaufen Ebene</sell_label>
+	<insert_required>Legen Erforderlich</insert_required>
+	<update_required>Update Erforderlich</update_required>
+	<hidden_field>Verstecktes Feld</hidden_field>
+	<disable>Deaktivieren</disable>
+	<default_value>Defaultwerte</default_value>
+	<display_format>Anzeigeformat</display_format>
+	<validation_rule>Validierungsregel</validation_rule>
+	<deal_term_end>Laufzeitende</deal_term_end>
+	<expire_date>Fälligkeitsdatum</expire_date>
+	<curve_id>Kurveid</curve_id>
+	<fixed_price>Festpreis</fixed_price>
+	<min_value>Minwert</min_value>
+	<max_value>Maxwert</max_value>
+	<deal_update_view>Abkommen  Aktualisierung Blick</deal_update_view>
+	<formula_currency>Formula Währung</formula_currency>
+	<pay_opposite>Pay Entgegengesetzte</pay_opposite>
+	<formula_curve>Formel Kurve</formula_curve>
+	<price_multiplier>Preismultiplikator</price_multiplier>
+	<pv_party>Pv Partei</pv_party>
+	<settlement_volume>Fälligkeitvolumens</settlement_volume>
+	<volume_left>Volume Links</volume_left>
+	<create_ts>Erstellen Ts</create_ts>
+	<settlement_currency>Abrechnungswährung</settlement_currency>
+	<standard_yearly_volume>Standard Jährliche Volumen</standard_yearly_volume>
+	<volume_multiplier2>Volume Multiplikator 2</volume_multiplier2>
+	<create_user>Benutzer Anlegen</create_user>
+	<option_strike_price>Option Ausübungspreis</option_strike_price>
+	<price_adder_currency1>Preis Kreuzotter Currency1</price_adder_currency1>
+	<process_deal_status>Prozess Deal Status</process_deal_status>
+	<settlement_date>Fälligkeit</settlement_date>
+	<update_ts>Update Ts</update_ts>
+	<volume_multiplier2>Volume Multiplier2</volume_multiplier2>
+	<price_adder_currency2>Mehrpreis Währung2</price_adder_currency2>
+	<uom>Maßeinheit</uom>
+	<price>Preis</price>
+	<fixed_cost_currency>Fixkosten Währung</fixed_cost_currency>
+
+
+    
+    
+    
+ </farrms> 

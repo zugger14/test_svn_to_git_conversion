@@ -1,0 +1,127 @@
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'source_deal_pnl')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('source_deal_pnl'
+           ,1
+           ,'DATE'
+           ,'pnl_as_of_date'
+           ,'PF_MTM_deal_pnl'
+           ,'PS_MTM_deal_pnl'
+           ,'d'
+           ,'FG_DATE'
+           ,'Y'
+           ,'source_deal_pnl'
+           ,NULL
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+
+----------Insert value for mv90_data_mins
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'source_deal_pnl_detail')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('source_deal_pnl_detail'
+           ,1
+           ,'DATE'
+           ,'pnl_as_of_date'
+           ,'PF_MTM_deal_pnl_detail'
+           ,'PS_MTM_deal_pnl_detail'
+           ,'d'
+           ,'FG_DATE'
+           ,'Y'
+           ,'source_deal_pnl_detail'
+           ,NULL
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+
+----------Insert value for mv90_data_hour
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'index_fees_breakdown')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('index_fees_breakdown'
+           ,1
+           ,'DATE'
+           ,'as_of_date'
+           ,'PF_MTM_index_fees'
+           ,'PS_MTM_index_fees'
+           ,'d'
+           ,'FG_DATE'
+           ,'Y'
+           ,'index_fees_breakdown'
+           ,NULL
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END

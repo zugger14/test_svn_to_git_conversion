@@ -1,0 +1,1 @@
+UPDATE application_functions SET document_path = 'Menu.htm' WHERE function_id=10000000

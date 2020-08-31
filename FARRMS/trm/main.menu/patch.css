@@ -1,0 +1,237 @@
+/* line 2, ../sass/patch.scss */
+.mont-fonts, .title, .form-signin .btn-lg {
+  font-family: 'montserrat';
+}
+
+/* line 8, ../sass/patch.scss */
+body {
+  background: url(http://subtlepatterns.com/patterns/dark_exa.png);
+}
+
+/* line 12, ../sass/patch.scss */
+.title {
+  background: transparent;
+  text-shadow: none;
+  text-align: center;
+  font-style: normal;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+/* line 22, ../sass/patch.scss */
+.form-signin {
+  box-shadow: none;
+  background: transparent;
+  width: 420px;
+}
+/* line 28, ../sass/patch.scss */
+.form-signin .btn-lg {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  text-transform: uppercase;
+  background: #3498db;
+  font-weight: 400;
+  padding: 6px 0 !important;
+  border-radius: 4px;
+  font-size: 17px !important;
+}
+/* line 40, ../sass/patch.scss */
+.form-signin .btn-lg.btn-login {
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  border-bottom: 3px solid #2F77AD;
+}
+/* line 46, ../sass/patch.scss */
+.form-signin .btn-lg.btn-block {
+  width: 30% !important;
+}
+/* line 49, ../sass/patch.scss */
+.form-signin .btn-lg:hover {
+  background: #3498db;
+}
+/* line 53, ../sass/patch.scss */
+.form-signin .alert_access {
+  text-align: center;
+  width: 100%;
+  display: inline-block;
+}
+/* line 58, ../sass/patch.scss */
+.form-signin .form-control {
+  text-align: center;
+  padding: 8px 0;
+  margin: 9px 0;
+}
+/* line 63, ../sass/patch.scss */
+.form-signin .form_container {
+  border: none;
+  border-radius: 4px;
+  height: 295px;
+  text-align: center;
+  box-shadow: 0px -1px 24px -3px rgba(235, 228, 235, 0.7);
+  padding: 14px 24px;
+  margin-top: 20px;
+}
+/* line 71, ../sass/patch.scss */
+.form-signin .form_container .form_title {
+  color: rgba(0, 0, 0, 0.8);
+  font-family: 'montserrat';
+  font-weight: 400;
+  font-size: 16px;
+  text-transform: uppercase;
+}
+/* line 79, ../sass/patch.scss */
+.form-signin .checkbox {
+  margin: 14px 0;
+}
+
+/* line 84, ../sass/patch.scss */
+.footer {
+  text-align: center;
+  background: transparent;
+  border: none;
+  margin-top: 50px;
+}
+/* line 89, ../sass/patch.scss */
+.footer img {
+  display: inline-block;
+  float: none;
+}
+
+/* line 94, ../sass/patch.scss */
+.dhxwins_vp_dhx_terrace div.dhxwin_hdr {
+  z-index: 0;
+  background: #3498db;
+  font-family: 'montserrat';
+  font-size: 14px;
+  height: auto;
+  color: #fff;
+}
+
+/* line 103, ../sass/patch.scss */
+.dhx_toolbar_dhx_terrace div.dhx_toolbar_btn {
+  height: auto !important;
+  padding: 4px 5px;
+  border: none;
+  background: #324B5C;
+}
+/* line 108, ../sass/patch.scss */
+.dhx_toolbar_dhx_terrace div.dhx_toolbar_btn div.dhxtoolbar_text {
+  color: #fff;
+  font-family: 'montserrat';
+}
+/* line 112, ../sass/patch.scss */
+.dhx_toolbar_dhx_terrace div.dhx_toolbar_btn.dhx_toolbar_btn_over {
+  background: none;
+}
+
+/* line 117, ../sass/patch.scss */
+.dhxlayout_base_dhx_terrace div.dhx_cell_layout div.dhx_cell_hdr {
+  text-align: center;
+  border: 1px solid #3498db;
+  background: #3498db;
+  color: #fff;
+}
+
+/* line 123, ../sass/patch.scss */
+.dhxlayout_base_dhx_terrace div.dhx_cell_layout div.dhx_cell_toolbar_def {
+  border: 1px solid #3498db;
+}
+
+/* line 128, ../sass/patch.scss */
+.dhxlayout_base_dhx_terrace div.dhx_cell_layout div.dhx_cell_cont_layout {
+  border-left: 1px solid #3498db;
+  border-right: 1px solid #3498db;
+  border-bottom: 1px solid #3498db;
+}
+
+/* line 134, ../sass/patch.scss */
+.xhdr {
+  background: none;
+}
+/* line 137, ../sass/patch.scss */
+.xhdr table.hdr {
+  width: initial !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  table-layout: auto !important;
+}
+/* line 142, ../sass/patch.scss */
+.xhdr table.hdr td {
+  font-family: 'montserrat';
+  cursor: e-resize;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* line 151, ../sass/patch.scss */
+div.gridbox_dhx_terrace.gridbox .xhdr {
+  background: #3498db !important;
+  border-left: 1px solid #3498db;
+  border-right: 1px solid #3498db;
+  color: #fff;
+}
+
+/* line 157, ../sass/patch.scss */
+div.gridbox_dhx_terrace.gridbox table.hdr td {
+  background: #3498db !important;
+  font-family: 'montserrat';
+  cursor: e-resize;
+  font-size: 13px;
+  text-align: center;
+  color: #fff;
+}
+/* line 164, ../sass/patch.scss */
+div.gridbox_dhx_terrace.gridbox table.hdr td div.hdrcell {
+  padding: 0;
+}
+
+/* line 168, ../sass/patch.scss */
+.dhxtabbar_base_dhx_terrace div.dhxtabbar_tabs {
+  background: #3498db;
+  border: 1px solid #3498db;
+  border-bottom: none;
+}
+
+/* line 174, ../sass/patch.scss */
+.dhxtabbar_base_dhx_terrace div.dhxtabbar_tabs div.dhxtabbar_tabs_ar_left {
+  border-bottom: none;
+  height: 32px;
+}
+/* line 177, ../sass/patch.scss */
+.dhxtabbar_base_dhx_terrace div.dhxtabbar_tabs div.dhxtabbar_tabs_ar_left div.dhxtabbar_arrow_img {
+  border: none;
+}
+/* line 182, ../sass/patch.scss */
+.dhxtabbar_base_dhx_terrace div.dhxtabbar_tabs div.dhxtabbar_tabs_base div.dhxtabbar_tabs_cont_left {
+  height: 35px;
+}
+/* line 186, ../sass/patch.scss */
+.dhxtabbar_base_dhx_terrace div.dhxtabbar_tabs div.dhxtabbar_tabs_ar_right {
+  border-bottom: none;
+  height: 32px;
+}
+/* line 189, ../sass/patch.scss */
+.dhxtabbar_base_dhx_terrace div.dhxtabbar_tabs div.dhxtabbar_tabs_ar_right div.dhxtabbar_arrow_img {
+  border: none;
+}
+/* line 195, ../sass/patch.scss */
+.dhxtabbar_base_dhx_terrace div.dhxtabbar_tabs div.dhxtabbar_tabs_base div.dhxtabbar_tabs_cont_right {
+  height: 35px;
+}
+
+/* line 200, ../sass/patch.scss */
+.dhxlayout_base_dhx_terrace div.dhx_cell_layout div.dhx_cell_toolbar_def div.dhx_toolbar_dhx_terrace {
+  margin-left: 15%;
+}
+
+/*.dhxtabbar_base_dhx_terrace div.dhxtabbar_tabs div.dhxtabbar_tabs_base div.dhxtabbar_tabs_cont_left
+*/
+  /*.dhxtabbar_base_dhx_terrace div.dhxtabbar_tabs div.dhxtabbar_tabs_ar_left{
+	div.dhxtabbar_arrow_img{
+		border: none;
+	}
+}*/
+/*.dhxtabbar_base_dhx_terrace div.dhxtabbar_tabs*/
+/*div.gridbox_dhx_terrace.gridbox table.hdr td*/

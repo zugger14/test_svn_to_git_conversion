@@ -1,0 +1,12 @@
+IF OBJECT_ID(N'FNADealSetPrice', N'FN') IS NOT NULL
+DROP FUNCTION FNADealSetPrice
+ GO 
+
+CREATE FUNCTION FNADealSetPrice(@deal_type INT)
+RETURNS float AS  
+BEGIN 
+	RETURN 1
+END
+
+
+

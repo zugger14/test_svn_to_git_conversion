@@ -1,0 +1,13 @@
+<rows profile='color'><head><columns><column  width='280' align='left' type='tree' hidden='false' sort='str' color='' id='role_type'><![CDATA[Roles]]></column></columns></head>
+<row level="0"><cell><![CDATA[Control Group]]></cell></row>
+<row level="0"><cell><![CDATA[Application Admin Group]]></cell></row>
+<row level="0"><cell><![CDATA[Reporting Admin Group]]></cell></row>
+<row level="0"><cell><![CDATA[Security Admin Group]]></cell></row>
+<row level="0"><cell><![CDATA[Data Import Integration Group]]></cell></row>
+<row level="0"><cell><![CDATA[Priority SaaS User Group]]></cell></row></rows><rows profile='color'><head><columns><column  width='280' align='left' type='tree' hidden='false' sort='str' color='' id='role_type'><![CDATA[Roles]]></column></columns></head>
+<row level="0"><cell><![CDATA[Control Group]]></cell></row>
+<row level="0"><cell><![CDATA[Application Admin Group]]></cell></row>
+<row level="0"><cell><![CDATA[Reporting Admin Group]]></cell></row>
+<row level="0"><cell><![CDATA[Security Admin Group]]></cell></row>
+<row level="0"><cell><![CDATA[Data Import Integration Group]]></cell></row>
+<row level="0"><cell><![CDATA[Priority SaaS User Group]]></cell></row></rows>

@@ -1,0 +1,253 @@
+
+--DELETE FROM dbo.static_data_value WHERE [type_id] IN (10009, 10010, 10011, 10021, 10022, 10023, 10050, 10075, 10079, 
+--10080, 10007, 10008, 10015, 10017, 10018, 10019, 10077, 10078, 10081, 10082, 10083, 10084, 10094)
+--
+--DELETE FROM dbo.static_data_type WHERE [type_id] IN (10009, 10010, 10011, 10021, 10022, 10023, 10050, 10075, 10079, 
+--10080, 10007, 10008, 10015, 10017, 10018, 10019, 10077, 10078, 10081, 10082, 10083, 10084, 10094)
+
+
+
+-- STATIC DATA TYPE
+
+INSERT INTO dbo.static_data_type ([type_id], [type_name], internal, description) 
+VALUES ( 675, 'Control Priority', 0, 'Control Priority') 
+
+INSERT INTO dbo.static_data_type ([type_id], [type_name], internal, description) 
+VALUES (5002,'Control Type',0,'Security Functional Area')
+
+INSERT INTO dbo.static_data_type ([type_id], [type_name], internal, description) 
+VALUES (5003,'Control Objective',0,'Control Objective')
+
+INSERT INTO dbo.static_data_type ([type_id], [type_name], internal, description) 
+VALUES (10013,'Compliance Assignment Type',0,'Compliance Assignment Type')
+
+INSERT INTO dbo.static_data_type ([type_id], [type_name], internal, description) 
+VALUES (10086,'Compliance Who For',0,'Compliance Who For')
+
+INSERT INTO dbo.static_data_type ([type_id], [type_name], internal, description) 
+VALUES (10087,'Compliance Where',0,'Compliance Where')
+
+INSERT INTO dbo.static_data_type ([type_id], [type_name], internal, description) 
+VALUES (10088,'Compliance Activity Area',0,'Compliance Activity Area')
+
+INSERT INTO dbo.static_data_type ([type_id], [type_name], internal, description) 
+VALUES (10089,'Compliance Activity Sub Area',0,'Compliance Activity Sub Area')
+
+INSERT INTO dbo.static_data_type ([type_id], [type_name], internal, description) 
+VALUES (10090,'Compliance Activity Action',0,'Compliance Activity Action')
+
+INSERT INTO dbo.static_data_type ([type_id], [type_name], internal, description) 
+VALUES (10091,'Compliance Standard Catgory',0,'Compliance Standard Catgory')
+
+INSERT INTO dbo.static_data_type ([type_id], [type_name], internal, description) 
+VALUES (10095,'reminder',1,'reminder')
+
+
+-- STATIC_DATA_VALUE
+
+SET IDENTITY_INSERT dbo.static_data_value ON
+
+insert static_data_value( value_id,type_id,code,description)
+values ( 730,725,'Mitigated','Mitigated after complete/memo')
+
+-- 675		Control Priority                                  
+insert static_data_value( value_id,type_id,code,description)
+values ( 5423,675,'1. Permit Renewals','1. Permit Renewals') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5424,675,'2. Agency Reports','2. Agency Reports') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5425,675,'2. Fee Payments','2. Fee Payments') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5426,675,'3. Required Compliance Actions','3. Required Compliance Actions') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 675,675,'High','High') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 676,675,'Medium','Medium') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 677,675,'Low','Low') 
+
+-- 5002		Control Type                                      
+insert static_data_value( value_id,type_id,code,description)
+values ( 5064,5002,'Manual',NULL) 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5068,5002,'System - Report 1','This report can be used to identify issues.') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5069,5002,'System - Report 2','System - Report 2') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5071,5002,'System - Report 3','System - Report 3') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5072,5002,'System - Report 4','System - Report 4') 
+
+-- 5003		Control Objective                                 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5127,5003,'Directive','Directive') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5128,5003,'Systematic','Systematic') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5126,5003,'Preventive','Preventive') 
+
+-- 10013		Compliance Assignment Type
+insert static_data_value( value_id,type_id,code,description)
+values ( 5173,10013,'Sold/Transfer','Sold/Transfer') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5144,10013,'WriteOff/Retire','WriteOff or Retire') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5146,10013,'RPS Compliance','RPS Compliance') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5147,10013,'Windsource','Windsource') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5148,10013,'Voluntary','Voluntary') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5149,10013,'Banked','Banked') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5180,10013,'Cap & Trade','Cap & Trade') 
+
+-- 10086		Compliance Who For
+insert static_data_value( value_id,type_id,code,description)
+values ( 5415,10086,'FERC','FERC') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5416,10086,'DOE','DOE') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5417,10086,'EIA','EIA') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5418,10086,'State PUC','State PUC') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5419,10086,'MRO','MRO') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5420,10086,'WECC','WECC') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5421,10086,'SPP','SPP') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5377,10086,'Adams County LEPC-CO','CO') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5378,10086,'Adams LEPC-CO','CO') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5379,10086,'Alamosa Fire Department-CO','CO') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5380,10086,'Alut-Pierce Fire Department-CO','CO') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5381,10086,'Amarillo Fire Department-TX','TX') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5382,10086,'Amherst Fire Department-TX','TX') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5385,10086,'Arapahoe Co LEPC and Fire Department-CO','CO') 
+
+-- 10087		Compliance Where
+insert static_data_value( value_id,type_id,code,description)
+values ( 5386,10087,'17th Street Plaza (SSP)','Unknown') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5387,10087,'34th St Pump - Energy Delivery','Energy Delivery') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5388,10087,'39TH AEC','Unknown') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5389,10087,'3rd & Western - Energy Delivery','Energy Delivery') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5390,10087,'7 Rivers Interchange - Energy Delivery','Energy Delivery') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5391,10087,'Alamosa Combustion Turbines - Peaking Plants','Peaking Plants') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5431,10087,'Hydropower licensese','Hydropower licenses') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5432,10087,'Major Electric Utilities','Major Electric Utilities') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5433,10087,'Other','Other') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5427,10087,'Market-based rate authority','Entities with market-based rate authority') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5428,10087,'FERC regulated entities','FERC regulated entities') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5429,10087,'Control Area Operator','Control Area Operator') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5430,10087,'Interstate Pipelines','Interstate Pipelines') 
+
+-- 10088		Compliance Activity Area
+insert static_data_value( value_id,type_id,code,description)
+values ( 5434,10088,'Reliablity Standards','Reliablity Standards') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5435,10088,'Anti-Market Manipulation','Anti-Market Manipulation') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5436,10088,'FERC Reporting','Anti-Market Manipulation') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5437,10088,'Interlocking Positions','Interlocking Positions') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5438,10088,'Hydro-electric','Hydro-electric') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5439,10088,'Standards of Conduct','Standards of Conduct') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5440,10088,'Market Base Rate Authority','Market Base Rate Authority') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5441,10088,'Merger, Acqs, Reorg','Merger, Acqs, Reorg') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5442,10088,'Securities Issuances & Assump of Liab','Securities Issuances & Assump of Liab') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5443,10088,' Records Retention & Accounting','Records Retention & Accounting') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5392,10088,'Air','Air') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5393,10088,'CERCLA','CERCLA') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5394,10088,'Drinking Water','Drinking Water') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5395,10088,'EPCRA','EPCRA') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5396,10088,'General','General') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5397,10088,'Tanks','Tanks') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5398,10088,'Waste','Waste') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5399,10088,'Water','Water') 
+
+-- 10089		Compliance Activity Sub Area
+insert static_data_value( value_id,type_id,code,description)
+values ( 5400,10089,'Administrative Order','Administrative Order') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5401,10089,'Ash','Ash') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5402,10089,'CEMS','CEMS') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5403,10089,'Emission Reductions','Emission Reductions') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5404,10089,'Emissions','Emissions') 
+
+-- 10090		Compliance Activity Action
+insert static_data_value( value_id,type_id,code,description)
+values ( 5405,10090,'Compliance Certificate Report','Compliance Certificate Report') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5406,10090,'Contract Renewal Due','Contract Renewal Due') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5407,10090,'Certification Test','Certification Test') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5408,10090,'Report to Colorado PUC','Report to Colorado PUC') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5409,10090,'Compliance Certification Report','Compliance Certification Report') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5410,10090,'Emission Fees','Emission Fees') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5411,10090,'Emission Limit Calculation','Emission Limit Calculation') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5412,10090,'Emission Limit Change','Emission Limit Change') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5445,10090,'Prepare Report','Prepare Report') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5446,10090,'Provide Status','Provide Status') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5449,10090,'Audit','Audit') 
+
+-- 10091		Compliance Standard Catgory
+insert static_data_value( value_id,type_id,code,description)
+values ( 5447,10091,'Environmental Requirements','Environmental Requirements') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5448,10091,'Corporate Requirements','Corporate Requirements') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5422,10091,'Reliability Standards','Reliability Standards') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5413,10091,'FERC Requirements','FERC Requirements') 
+insert static_data_value( value_id,type_id,code,description)
+values ( 5414,10091,'PUC Requirements','PUC Requirements') 
+
+-- 10095		reminder
+insert static_data_value( value_id,type_id,code,description)
+values ( -5,10095,'reminder','reminder') 
+
+SET IDENTITY_INSERT dbo.static_data_value OFF

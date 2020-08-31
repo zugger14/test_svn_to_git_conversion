@@ -1,0 +1,1 @@
+DELETE FROM setup_menu WHERE function_id IN (10111300, 10111400, 10222400) AND product_category = 15000000

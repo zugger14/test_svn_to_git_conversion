@@ -1,0 +1,200 @@
+html, body {
+	width: 100%;
+	height: 100vh;
+}
+
+.dhx_header_cmenu{
+	background-color:#ffffff;
+	border:2px outset silver;
+	z-index:2;
+}
+
+.dhx_header_cmenu_item{
+	white-space:nowrap;
+}   
+
+/* Status bar in layout is used for paging toolbar */
+/* web theme */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_statusbar_text {
+	/* remove extra paddings and borders inside status bar */
+	padding: 0px;
+	border: 0px solid white;
+}
+/* web theme */
+
+.disable_option {
+	color:gray;
+}
+
+div.dhxcombo_dhx_web div.dhxcombo_top_image_checked {
+    background-position: -18px 0;
+}
+
+div.dhxcombo_dhx_web div.dhxcombo_top_image {
+    width: 18px;
+    height: 18px;
+    top: 2px;
+    left: 2px;
+    background-image: url(themes/dhtmlx_jomsomGreen/imgs/dhxcombo_web/dhxcombo_chbx.gif) !important;
+    background-repeat: no-repeat;
+}
+
+div.dhxform_fs_nested {
+	/* remove extra paddings in fieldset */
+    padding-left: 0 !important;
+}
+
+div.dhxform_base div.dhxform_item_label_top {
+    padding-top: 6px !important;
+}
+
+/* Moved this code block from theme specific css patch.css. Top:-7 now handled by offsetTop.; */
+div.dhxform_obj_dhx_web div.dhxform_item_label_right {
+    position:relative;
+}
+
+div.dhxform_base div.fs_dhxform_item_label_top {
+	padding-top: 6px !important; /*Should be same with dhxform_item and dhxform label top*/
+}
+
+.dhxform_obj_dhx_web fieldset.dhxform_fs {
+	/* Reduce bottom padding and add margin bottom */
+    margin-bottom: 5px !important;
+    padding: 5px 10px 10px 5px!important; /*add bottom and right padding due to no space on bottom and right side*/
+}
+
+.browse_clear {
+    margin-top: 4px !important; /*dependent on top padding of dhxform_item_label_top */
+    margin-left: -30px !important;
+    z-index: 99999 !important;
+    opacity: 1!important;
+    
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0){
+.browse_clear {
+    margin-top: 3px !important; }
+}
+
+.browse_label input[type=text] {
+    background-color: #eaecef !important;
+}
+
+.dhxform_obj_dhx_web div.browse_clear div.dhxform_btn div.dhxform_btn_txt {
+	height: 23px !important;
+}
+
+.dhxform_obj_dhx_web div.dhxform_item_label_top div.dhxform_control { 
+	position: relative; /*to allow div overlay by positing child elements absolutely*/
+}
+
+.dhxform_obj_dhx_web div.dhxform_control div.dhxform_note { 
+	position: absolute; 
+	left: 0; /*Not sure why is it working without giving bottom value*/
+	z-index:9; 
+}
+
+.dhxform_obj_dhx_web textarea.dhxform_textarea {
+	padding-bottom: 3px!important;
+}
+
+.dhxform_obj_dhx_web div.dhxform_base {
+	/* Set minimum height of main div to fix field shift upon resizing.*/
+    min-height: 50px;
+	
+}
+
+.dhxlayout_base_dhx_web div.dhx_cell_layout.dhxlayout_collapsed_v div.dhx_cell_hdr div.dhxlayout_arrow.dhxlayout_arrow_vb {
+	background-position: -16px 0;
+	padding: 1px;
+	left:1px;
+}
+div.dynamic_ok_btn_adjust div.dhxform_btn { 
+	position: relative; top: -29px; 
+	left:61px; float: left; 
+	width: 32px; z-index: 9; 
+	/* transition: transform .1s;  */
+}
+div.dynamic_clear_btn_adjust div.dhxform_btn { 
+	position: relative; 
+	top: -59px; 
+	left:85px; 
+	width: 32px;
+	/* transition: transform 0.1s;    */
+}
+
+div.dynamic_ok_btn_adjust .dhxform_btn:hover { 
+	transform: scale(1.1);
+}
+
+div.dynamic_clear_btn_adjust .dhxform_btn:hover { 
+	transform: scale(1.1);
+}
+
+div.dyn-fields-container > div:first-of-type {
+	height: 112px !important;
+}
+
+/* due to issue only in IE9 in this page need to add CSS that only works for IE9 */
+
+div.__form_div__ div.dhxform_item_label_left.filter_save div.dhxform_btn_txt,
+div.__form_div__ div.dhxform_item_label_left.filter_delete div.dhxform_btn_txt,
+div.__form_div__ div.dhxform_item_label_left.filter_clear div.dhxform_btn_txt,
+div.__form_div__ div.dhxform_item_label_left.filter_publish div.dhxform_btn_txt
+{
+  margin-top: -4px\0 !important;    
+}
+
+div.code-editor { 
+	margin: 0;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+/*
+Ace javascript editor is used for code coloring in different areas like Report Manager data source.
+This editor requires monospaced fonts to work correctly. The editor saves the actual text in textarea but uses 
+a series of div/span for code coloring.
+
+We have a CSS rule :not(i), which uses Ubuntu font (not monospace) and this rule is used by many elements including Ace editor
+div/span to set font as Ubuntu, thus breaking the editor. So following CSS rule finds all div/span whose class name
+starts with "ace_" and reset the font to monospace inherting from parent;
+*/
+div.code-editor span[class^="ace_"], div.code-editor div[class^="ace_"] {
+	font-family: inherit !important;/*'PT Mono', monospace!important;*/
+}
+
+/* CSS for Setup workflow conformation popup */
+.gantt_modal_box {
+    box-shadow: rgb(51, 51, 51) 0px 0px 10px -2px; border-radius: 0px;  min-width: 325px;
+}
+.dhtmlx_popup_controls,.dhtmlx_popup_text {
+    border: 0!important;
+}
+.gantt_popup_text {
+    margin: 0px 0 5px 0;
+}
+.dhtmlx_popup_title {
+    background-color: #e8e3e3 !important;
+}
+
+.gantt_popup_title {
+  font: italic 16px/25px Trebuchet MS; height: 25px; color: #000 !important; border-radius: 0px;
+}
+
+.dhtmlx-alert-error .dhtmlx_popup_title {
+   background-color: #c8ddf0!important;
+   border:none!important;
+}
+	
+
+
+
+/* Reverted back editor css, can be removed after theme specific css is applied */
+/*.dhx_cell_editor .dhx_toolbar_dhx_web.dhxtoolbar_icons_18 {
+    background: rgb(61, 160, 227)!important;
+}*/
+

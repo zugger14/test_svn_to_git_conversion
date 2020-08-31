@@ -1,0 +1,1 @@
+update formula_function_mapping set arg1='CONVERT(VARCHAR(15), sdd.source_deal_detail_id)' where function_name='WACOGWD'

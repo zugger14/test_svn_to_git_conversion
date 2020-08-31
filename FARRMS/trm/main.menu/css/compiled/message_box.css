@@ -1,0 +1,634 @@
+/** initial setup **/
+.nano-message-box {
+  position : relative;
+  width    : 100%;
+  height   : 100%;
+  overflow : hidden;
+}
+.nano-message-box .message-board-content {
+  position      : absolute;
+  overflow      : scroll;
+  overflow-x    : hidden;
+  top           : 0;
+  right         : 0;
+  bottom        : 0;
+  left          : 0;
+}
+.nano-message-box .message-board-content:focus {
+  outline: thin dotted;
+}
+.nano-message-box .message-board-content::-webkit-scrollbar {
+  display: none;
+}
+.has-scrollbar .message-board-content::-webkit-scrollbar {
+  display: block;
+}
+.nano-message-box > .nano-pane {
+  background : #3498DB;
+  position   : absolute;
+  width      : 7px;
+  right      : 0;
+  top        : 0;
+  bottom     : 0;
+  visibility : hidden\9; /* Target only IE7 and IE8 with this hack */
+  opacity    : .01;
+  -webkit-transition    : .2s;
+  -moz-transition       : .2s;
+  -o-transition         : .2s;
+  transition            : .2s;
+  -moz-border-radius    : 7px;
+  -webkit-border-radius : 7px;
+  border-radius         : 7px;
+}
+.nano-message-box > .nano-pane > .nano-slider {
+    background: #fff;
+    position              : relative;
+    margin                : 0 1px;
+    -moz-border-radius    : 7px;
+    -webkit-border-radius : 7px;
+    border-radius         : 7px;
+}
+.nano-message-box:hover > .nano-pane, .nano-pane.active, .nano-pane.flashed {
+  visibility : visible\9; /* Target only IE7 and IE8 with this hack */
+  opacity    : 0.99;
+}
+
+.nano-message-box {height: 350px; }
+.nano-message-box .message-board-content { padding: 0 10px 0 0; }
+.nano-message-box .nano-pane   { background: #3498DB; }
+.nano-message-box .nano-slider { background: #fff; }
+
+.theme-white .nano-message-box .nano-pane   { background: #2ECC71; }
+.theme-blue-gradient .nano-message-box .nano-pane   { background: #2E8AC8; }
+.theme-turquoise .nano-message-box .nano-pane   { background: #1ABC9C; }
+.theme-amethyst .nano-message-box .nano-pane   { background: #8E44AD; }
+.theme-blue .nano-message-box .nano-pane   { background: #3498DB; }
+.theme-red .nano-message-box .nano-pane   { background: #E74C3C; }
+.theme-whbl .nano-message-box .nano-pane   { background: #3498DB; }
+
+#message-board {
+  list-style: none;
+  padding-left: 0px;
+}
+#alert-board {
+  list-style: none;
+  padding-left: 0px;
+}
+.message-board-wrapper .item > div {
+  padding-left: 5px;
+  padding-right: 5px;
+  padding-bottom: 25px;
+  -webkit-transition: border-color 0.1s ease-in-out 0s, background-color 0.1s ease-in-out 0s;
+          transition: border-color 0.1s ease-in-out 0s, background-color 0.1s ease-in-out 0s;
+}
+.message-board-wrapper .item > div > img {
+  position: absolute;
+  margin-top: 10px;
+}
+.message-board-wrapper .item > div > .content {
+  display: block;
+  padding-left: 5px;
+  padding-top: 5px;
+}
+.message-board-wrapper .item > div > .content .content-headline {
+  color: #605F5F;
+  display: block;
+  font-weight: 600;
+}
+.message-board-wrapper .item > div > .content .content-headline > i {
+  float:right;
+  cursor: pointer;
+}
+.message-board-wrapper .item > div > .content .content-text {
+  display: block;
+  line-height: 1.4;
+  font-size: 12px;
+}
+
+.message-board-wrapper .item > div > .time,
+.message-board-wrapper .item > div > .time-diff  {
+  color: #3498db;
+  float:right;
+  margin-right:10px;
+  font-weight: normal;
+  font-size: 11px;
+  padding-top: 5px;
+}
+.message-board-wrapper .item > div > .time i,
+.message-board-wrapper .item > div > .time-diff i {
+  margin-right: 3px;
+}
+
+.item-footer {
+  position: relative;
+}
+
+.item-footer a#footer-link {
+  color: #fff;
+  position:absolute; 
+  width:100%;
+  height: 32px;
+  top:0;
+  left: 0;
+  background:#4f7091/* #3498db*/; /*theme 1 footer color*/
+  cursor: pointer;
+  text-align: center;
+  text-align: center;
+  -webkit-transition: border-color 0.1s ease-in-out 0s, background-color 0.1s ease-in-out 0s;
+          transition: border-color 0.1s ease-in-out 0s, background-color 0.1s ease-in-out 0s;
+  
+}
+
+.item-footer a#footer-link:hover, 
+.item-footer a#footer-link:focus { /*theme 1 footer hover color*/
+  background-color:#34495e/* #2980b9*/; 
+  color: #fff;
+  text-decoration: none;
+}
+
+.link-spanner{
+  position:absolute; 
+  width:100%;
+  height:100%;
+  top:0;
+  left: 0;
+  z-index: 1;
+
+} 
+
+.navbar-nav > li > .dropdown-menu.notifications-list {
+  min-width: 320px;
+  padding-bottom: 0;
+  padding-top: 0;
+  margin-top: 8px;
+  color: #707070;
+  margin-left: -265px;
+}
+
+.message-board-wrapper .item-header {
+  font-size: 0.875em;
+  font-weight: bold;
+  line-height: 30px;
+  height: 30px;
+  text-align: center;
+  border-bottom:1px;
+  background-color:#4f7091/* #3498db*/;
+  color: #fff;
+}
+
+.message-board-wrapper .pointer {
+  height: 12px;
+  margin: 0;
+  padding: 0;
+  position: inherit;
+  right: 21px;
+  top: -12px;
+  width: 12px;
+}
+.message-board-wrapper .pointer .pointer-inner {
+  position: relative;
+}
+.message-board-wrapper .pointer .arrow {
+  border-color: transparent transparent #4f7091/*#3498db*/;
+  border-style: solid;
+  border-width: 6px;
+  cursor: pointer;
+  left: auto;
+  position: relative;
+  right: 0;
+  top: 0;
+  z-index: 1002;
+}
+.theme-white .message-board-wrapper .pointer .arrow { border-color: transparent transparent #2ECC71; }
+.theme-blue-gradient .message-board-wrapper .pointer .arrow { border-color: transparent transparent #2E8AC8; }
+.theme-turquoise .message-board-wrapper .pointer .arrow { border-color: transparent transparent #1ABC9C; }
+.theme-amethyst .message-board-wrapper .pointer .arrow { border-color: transparent transparent #8E44AD; }
+.theme-blue .message-board-wrapper .pointer .arrow { border-color: transparent transparent #3498DB; }
+.theme-red .message-board-wrapper .pointer .arrow { border-color: transparent transparent #E74C3C; }
+.theme-whbl .message-board-wrapper .pointer .arrow { border-color: transparent transparent #3498DB; }
+
+.message-board-wrapper .pointer .arrow-border {
+  border-color: transparent transparent rgba(0, 0, 0, 0.15);
+  border-style: solid;
+  border-width: 7px;
+  cursor: pointer;
+  left: -1px;
+  position: absolute;
+  top: -2px;
+  z-index: 1001;
+}
+
+
+.theme-amethyst .item-footer a#footer-link,
+.theme-amethyst .message-board-wrapper .item-header {
+  background-color: #9b59b6;
+}
+
+.theme-amethyst .item-footer a#footer-link:hover {
+  background-color: #8e44ad;
+}
+
+.theme-amethyst .message-board-wrapper .item div .time,
+.theme-amethyst .message-board-wrapper .item div .time-diff {
+  color: #9b59b6;
+}
+
+.theme-red .item-footer a#footer-link,
+.theme-red .message-board-wrapper .item-header  {
+  background-color: #e74c3c;
+}
+.theme-red .item-footer a#footer-link:hover {
+  background-color: #c0392b;
+}
+.theme-red .message-board-wrapper .item div .time,
+.theme-red .message-board-wrapper .item div .time-diff {
+  color: #e74c3c;
+}
+
+.theme-white .item-footer a#footer-link,
+.theme-white .message-board-wrapper .item-header  {
+  background-color: #2ecc71;
+}
+.theme-white .item-footer a#footer-link:hover {
+  background-color: #27ae60;
+}
+.theme-white .message-board-wrapper .item div .time,
+.theme-white .message-board-wrapper .item div .time-diff {
+  color: #2ecc71;
+}
+
+.theme-whbl .item-footer a#footer-link,
+.theme-whbl .message-board-wrapper .item-header {
+  background-color: #6588af/* #3498db*/;
+}
+.theme-whbl .item-footer a#footer-link:hover {
+  background-color:#47668a /*#2980b9*/;
+}
+.theme-whbl .message-board-wrapper .item div .time,
+.theme-whbl .message-board-wrapper .item div .time-diff {
+  color: #3498db;
+}
+
+.theme-turquoise .item-footer a#footer-link,
+.theme-turquoise .message-board-wrapper .item-header {
+  background-color: #1abc9c;
+}
+.theme-turquoise .item-footer a#footer-link:hover {
+  background-color: #16a085;
+}
+.theme-turquoise .message-board-wrapper .item div .time,
+.theme-turquoise .message-board-wrapper .item div .time-diff {
+  color: #1abc9c;
+}
+
+#link-box:hover {
+  background-color: #F6F6F6;
+}
+
+/* effects */
+.hovicon {
+    display: inline-block;
+    cursor: pointer;
+    text-align: center;
+    position: relative;
+    text-decoration: none;
+    z-index: 1;
+    color: #605F5F;
+}
+.hovicon:before {
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    display: block;
+    -webkit-font-smoothing: antialiased;
+}
+/* Effect 1 */
+ .hovicon.effect-1 {
+    background: rgba(255, 255, 255, 0.1);
+    -webkit-transition: background 0.2s, color 0.2s;
+    -moz-transition: background 0.2s, color 0.2s;
+    transition: all .2s ease-in-out;
+    transition: background 0.2s, color 0.2s;
+
+}
+/* Effect 1a */
+.hovicon.effect-1.sub-a:hover i {
+    color: #41ab6b;
+}
+.hovicon.effect-1.sub-a:hover:after {
+    -webkit-transform: scale(1);
+    -moz-transform: scale(1);
+    -ms-transform: scale(1);
+    transform: scale(1);
+    opacity: 1;
+}
+.theme-whbl .hovicon.effect-1.sub-a:hover {
+    background: #f6f6f6;
+    color: #3498db;
+    transform: scale(1.2);
+}
+.theme-amethyst .hovicon.effect-1.sub-a:hover {
+    background: #f6f6f6;
+    color: #9b59b6;
+    transform: scale(1.2);
+}
+.theme-red .hovicon.effect-1.sub-a:hover {
+    background: #f6f6f6;
+    color: #e74c3c;
+    transform: scale(1.2);
+}
+.theme-white .hovicon.effect-1.sub-a:hover {
+    background: #f6f6f6;
+    color: #2ecc71;
+    transform: scale(1.2);
+}
+.theme-turquoise .hovicon.effect-1.sub-a:hover {
+    background: #f6f6f6;
+    color: #1abc9c;
+    transform: scale(1.2);
+}
+
+.theme-blue-gradient .hovicon.effect-1.sub-a:hover {
+    background: #f6f6f6;
+    color: #3498DB;
+    transform: scale(1.2);
+}
+
+.hovicon.effect-1.sub-a:hover {
+    background: #f6f6f6;
+    color: #3498DB;
+    transform: scale(1.2);
+}
+
+/* full window message and alert styles */
+.messages_list_content {
+  position: relative;
+  margin-left: 5px;
+  height:auto;
+}
+
+hr { 
+    display: block;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    margin-left: auto;
+    margin-right: auto;
+    border-style: inset;
+    border-width: 1px;
+}
+
+.message-list {
+  padding: 10px 0 1px;
+  position:relative;
+  list-style: none;
+  min-height: 46px;
+}
+.message-list li {  
+	display: inline-block;
+	background-color: #fff;
+	height: auto;
+	overflow: visible;
+	position: relative;
+	line-height: 1.5;
+	width: 100%;
+	border-bottom: 1px solid #e7ebee;
+}
+
+.message-list li:hover {
+  background-color: #f3f7fa;
+}
+.message-list li:first-child {
+  border-top: 1px solid #d3d9dd;
+}
+
+.table-li{
+   display: table;
+   width: 100%;
+}
+.table-li > div {
+   display: table-cell;
+   text-align: center;
+   vertical-align: middle;
+}
+.message-list li .chbox {
+  left: 10px;
+  width: 24px;
+}
+.message-list li .chbox .checkbox-nice {
+	line-height: 10px;
+}
+@media (max-width: 767px) {
+  .message-list li .chbox {
+    top: 50%;
+    margin-top: -12px;
+  }
+}
+
+.message-list li.unread .source {
+	width:20% !important;
+	font-weight: 700;
+	text-align: left;
+    padding: 0px 10px 0px 10px;
+}
+
+.message-list li .source {
+    width: 20% !important;
+	font-size: 0.875em;
+    padding: 0px 10px 0px 10px;
+}
+
+@media (max-width: 767px) {
+	.message-list li .source {
+		line-height: 1.5;
+	}
+}
+
+.message-list li .message {
+  	font-size: 0.875em;
+  	text-align: left;
+  	width: 62%;
+}
+
+@media (max-width: 767px) {
+	.message-list li .message {
+		margin-top: 24px;
+		padding-bottom: 8px;
+	}
+}
+
+.message-list li .message > .body {
+	color: #777;
+	font-weight: 400;
+}
+
+.message-list li .meta-info .date {
+	font-size: 0.875em;
+	text-align: right;
+	width: 100%;
+}
+
+@media (max-width: 767px) {
+	.message-list li .meta-info .date {
+	    width: 100%;
+	    margin-top: 8px;
+	}
+}
+
+.message-header-tools {
+  margin-left: 0px;
+  position: relative;
+  float: left;
+}
+@media (max-width: 991px) {
+  .message-header-tools {
+    margin-left: 0;
+  }
+}
+
+.modal-content {
+	display: inline-block;
+	width:50vw;
+	height:100%;
+}
+
+.nano-message-list {
+  position : relative;
+  width    : 100%;
+  height   : 85%;
+  overflow : hidden;
+}
+.nano-message-list .message-list-content {
+  position      : absolute;
+  overflow      : scroll;
+  overflow-x    : hidden;
+  top           : 0;
+  right         : 0;
+  bottom        : 0;
+  left          : 0;
+}
+.nano-message-list .message-list-content:focus {
+  outline: thin dotted;
+}
+.nano-message-list .message-list-content::-webkit-scrollbar {
+  display: none;
+}
+.has-scrollbar .message-list-content::-webkit-scrollbar {
+  display: block;
+}
+.nano-message-list > .nano-pane {
+  background : #3498DB;
+  position   : absolute;
+  width      : 7px;
+  right      : 0;
+  top        : 0;
+  bottom     : 0;
+  visibility : hidden\9; /* Target only IE7 and IE8 with this hack */
+  opacity    : .01;
+  -webkit-transition    : .2s;
+  -moz-transition       : .2s;
+  -o-transition         : .2s;
+  transition            : .2s;
+  -moz-border-radius    : 7px;
+  -webkit-border-radius : 7px;
+  border-radius         : 7px;
+}
+.nano-message-list > .nano-pane > .nano-slider {
+    background: #fff;
+    position              : relative;
+    margin                : 0 1px;
+    -moz-border-radius    : 7px;
+    -webkit-border-radius : 7px;
+    border-radius         : 7px;
+}
+.nano-message-list:hover > .nano-pane, .nano-pane.active, .nano-pane.flashed {
+  visibility : visible\9; /* Target only IE7 and IE8 with this hack */
+  opacity    : 0.99;
+}
+
+.nano-message-list {height: 70vh; width:100%;}
+.nano-message-list .nano-pane   { background: #3498DB; }
+.nano-message-list .nano-slider { background: #fff; }
+
+.theme-white .nano-message-list .nano-pane   { background: #2ECC71; }
+.theme-blue-gradient .nano-message-list .nano-pane   { background: #2E8AC8; }
+.theme-turquoise .nano-message-list .nano-pane   { background: #1ABC9C; }
+.theme-amethyst .nano-message-list .nano-pane   { background: #8E44AD; }
+.theme-blue .nano-message-list .nano-pane   { background: #3498DB; }
+.theme-red .nano-message-list .nano-pane   { background: #E74C3C; }
+.theme-whbl .nano-message-list .nano-pane   { background: #3498DB; }
+
+/* nano scroller for menulist*/
+.nano-menu-list {
+  position : absolute;
+  width    : 100%;
+  height   : 85%;
+  overflow : hidden;
+}
+.nano-menu-list .menu-list-content {
+  position      : absolute;
+  overflow      : scroll;
+  overflow-x    : hidden;
+  top           : 0;
+  right         : 0;
+  bottom        : 0;
+  left          : 0;
+}
+.nano-menu-list .menu-list-content:focus {
+  outline: thin dotted;
+}
+.nano-menu-list .menu-list-content::-webkit-scrollbar {
+  display: none;
+}
+.has-scrollbar .menu-list-content::-webkit-scrollbar {
+  display: block;
+}
+.nano-menu-list > .nano-pane {
+  background : #3498DB;
+  position   : absolute;
+  width      : 7px;
+  right      : 0;
+  top        : 0;
+  bottom     : 0;
+  visibility : hidden\9; /* Target only IE7 and IE8 with this hack */
+  opacity    : .01;
+  -webkit-transition    : .2s;
+  -moz-transition       : .2s;
+  -o-transition         : .2s;
+  transition            : .2s;
+  -moz-border-radius    : 7px;
+  -webkit-border-radius : 7px;
+  border-radius         : 7px;
+}
+.nano-menu-list > .nano-pane > .nano-slider {
+    background: #fff;
+    position              : relative;
+    margin                : 0 1px;
+    -moz-border-radius    : 7px;
+    -webkit-border-radius : 7px;
+    border-radius         : 7px;
+}
+.nano-menu-list:hover > .nano-pane, .nano-pane.active, .nano-pane.flashed {
+  visibility : visible\9; /* Target only IE7 and IE8 with this hack */
+  opacity    : 0.99;
+}
+
+.nano-menu-list {height: 70vh; width:100%;}
+.nano-menu-list .nano-pane   { background: #3498DB; }
+.nano-menu-list .nano-slider { background: #fff; }
+
+.theme-white .nano-menu-list .nano-pane   { background: #2ECC71; }
+.theme-blue-gradient .nano-menu-list .nano-pane   { background: #2E8AC8; }
+.theme-turquoise .nano-menu-list .nano-pane   { background: #1ABC9C; }
+.theme-amethyst .nano-menu-list .nano-pane   { background: #8E44AD; }
+.theme-blue .nano-menu-list .nano-pane   { background: #3498DB; }
+.theme-red .nano-menu-list .nano-pane   { background: #E74C3C; }
+.theme-whbl .nano-menu-list .nano-pane   { background: #3498DB; }
+
+body::-webkit-scrollbar {
+  display: none;
+}
+body.has-scrollbar::-webkit-scrollbar {
+  display: block;
+}

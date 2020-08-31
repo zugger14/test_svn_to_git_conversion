@@ -1,0 +1,3 @@
+UPDATE application_functions SET function_name='Setup GL Codes Menu', function_desc='Setup GL Codes Menu' WHERE function_id=10101300
+UPDATE application_functions SET function_name='Setup GL Codes Add/Save', function_desc='Setup GL Codes Add/Save' WHERE function_id=10101310
+UPDATE application_functions SET function_name='Setup GL Codes Delete', function_desc='Setup GL Codes Delete' WHERE function_id=10101311

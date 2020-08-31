@@ -1,0 +1,5 @@
+UPDATE maintain_field_deal SET  sql_string= 'EXEC spa_source_uom_maintain ''c'', @uom_type = 44303'   WHERE farrms_field_id= 'deal_volume_uom_id'
+UPDATE maintain_field_deal SET  sql_string= 'EXEC spa_source_uom_maintain ''c'''   WHERE farrms_field_id= 'settlement_uom'
+UPDATE maintain_field_deal SET  sql_string= 'EXEC spa_source_uom_maintain ''c'', @uom_type = 44301'   WHERE farrms_field_id= 'price_uom_id'
+UPDATE maintain_field_deal SET  sql_string= 'EXEC spa_source_uom_maintain ''c'', @uom_type = 44303'   WHERE farrms_field_id= 'contractual_uom_id'
+UPDATE maintain_field_deal SET  sql_string= 'EXEC spa_source_uom_maintain ''c'', @uom_type = 44303'   WHERE farrms_field_id= 'position_uom'

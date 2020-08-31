@@ -1,0 +1,2 @@
+EXEC spa_contract_report_template i,NULL,'Hedging Template','Hedging Template', null, 'Hedging Template', null, 4307, 0
+EXEC spa_contract_report_template i,NULL,'Hedging Template - RSQ','Hedging Template - RSQ', null, 'Hedging Template - RSQ', null, 4307, 0

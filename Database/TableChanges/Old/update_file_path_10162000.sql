@@ -1,0 +1,1 @@
+ update application_functions set file_path = '_scheduling_delivery/gas/maintain_transportation_rate_schedule/maintain.transportation.rate.schedule.php' where function_id = 10162000

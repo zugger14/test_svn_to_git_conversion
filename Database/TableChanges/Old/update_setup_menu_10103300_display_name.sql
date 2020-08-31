@@ -1,0 +1,1 @@
+UPDATE setup_menu SET display_name='Setup GL Group' WHERE function_id = 10103300

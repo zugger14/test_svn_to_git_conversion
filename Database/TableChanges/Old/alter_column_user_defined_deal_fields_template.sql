@@ -1,0 +1,1 @@
+ALTER TABLE user_defined_deal_fields_template ADD udf_group INT

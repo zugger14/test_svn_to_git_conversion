@@ -1,0 +1,1 @@
+UPDATE application_functions SET file_path = '_accounting/derivative/transaction_processing/amortize_locked_aoci/amortize.locked.aoci.php' WHERE function_id = 10234100

@@ -1,0 +1,10 @@
+release_patch_id,patch_description,version,patch_executor,create_user,applied_date,create_ts,filename,executed,copied,error,sequence,success
+1,TRMTracker_Trunk_Hotfix_4.1.125,4.1.125,PSLDEV10\Administrator,sa,4/12/2017,4/12/2017,TRMTracker_Trunk_Hotfix_4.1.125\FARRMS\trm\adiha.php.scripts\dev\report_manager_views\Standard Credit Detail View.csv,,Yes,,1,1
+1,TRMTracker_Trunk_Hotfix_4.1.125,4.1.125,PSLDEV10\Administrator,sa,4/12/2017,4/12/2017,TRMTracker_Trunk_Hotfix_4.1.125\FARRMS\trm\adiha.php.scripts\dev\report_manager_views\Standard Credit Exposure Summary View.csv,,Yes,,2,1
+1,TRMTracker_Trunk_Hotfix_4.1.125,4.1.125,PSLDEV10\Administrator,sa,4/12/2017,4/12/2017,TRMTracker_Trunk_Hotfix_4.1.125\FARRMS\trm\adiha.php.scripts\dev\report_manager_views\Standard Credit Reserve View.csv,,Yes,,3,1
+2,TRMTracker_Trunk_Hotfix_4.1.125,4.1.125,PSLDEV10\Administrator,sa,4/12/2017,4/12/2017,TRMTracker_Trunk_Hotfix_4.1.125\FARRMS\trm\adiha.php.scripts\dev\report_manager_views\Standard Credit Detail View.csv,,Yes,,1,1
+2,TRMTracker_Trunk_Hotfix_4.1.125,4.1.125,PSLDEV10\Administrator,sa,4/12/2017,4/12/2017,TRMTracker_Trunk_Hotfix_4.1.125\FARRMS\trm\adiha.php.scripts\dev\report_manager_views\Standard Credit Exposure Summary View.csv,,Yes,,2,1
+2,TRMTracker_Trunk_Hotfix_4.1.125,4.1.125,PSLDEV10\Administrator,sa,4/12/2017,4/12/2017,TRMTracker_Trunk_Hotfix_4.1.125\FARRMS\trm\adiha.php.scripts\dev\report_manager_views\Standard Credit Reserve View.csv,,Yes,,3,1
+3,TRMTracker_Trunk_Hotfix_4.1.128,4.1.128,PSLDEV10\Administrator,sa,4/12/2017,4/12/2017,TRMTracker_Trunk_Hotfix_4.1.128\FARRMS\trm\adiha.php.scripts\dev\report_manager_views\Standard Credit Detail View.csv,,Yes,,4,1
+3,TRMTracker_Trunk_Hotfix_4.1.128,4.1.128,PSLDEV10\Administrator,sa,4/12/2017,4/12/2017,TRMTracker_Trunk_Hotfix_4.1.128\FARRMS\trm\adiha.php.scripts\dev\report_manager_views\Standard Credit Exposure Summary View.csv,,Yes,,5,1
+3,TRMTracker_Trunk_Hotfix_4.1.128,4.1.128,PSLDEV10\Administrator,sa,4/12/2017,4/12/2017,TRMTracker_Trunk_Hotfix_4.1.128\FARRMS\trm\adiha.php.scripts\dev\report_manager_views\Standard Credit Reserve View.csv,,Yes,,6,1

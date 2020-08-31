@@ -1,0 +1,527 @@
+@import url(http://fonts.googleapis.com/css?family=Montserrat:400,700);
+/* line 8, ../sass/patch.scss */
+.mont-fonts, .title, .form-signin .btn-lg {
+  font-family: 'montserrat';
+}
+
+/* line 14, ../sass/patch.scss */
+body {
+  /*background : url(http://subtlepatterns.com/patterns/dark_exa.png);*/
+  background: #f2f2f2;
+}
+
+/* line 19, ../sass/patch.scss */
+.title {
+  background: transparent;
+  text-shadow: none;
+  text-align: center;
+  font-style: normal;
+  text-transform: uppercase;
+  font-weight: 400;
+  color: #6C6C6C;
+}
+
+/* line 33, ../sass/patch.scss */
+*:not(i) {
+  font-family: Montserrat !important;
+}
+
+/* line 38, ../sass/patch.scss */
+.form-signin {
+  box-shadow: none;
+  background: transparent;
+  width: 420px;
+}
+/* line 44, ../sass/patch.scss */
+.form-signin .btn-lg {
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  text-transform: uppercase;
+  background: #3498db;
+  font-weight: 400;
+  padding: 6px 0 !important;
+  border-radius: 4px;
+  font-size: 17px !important;
+}
+/* line 56, ../sass/patch.scss */
+.form-signin .btn-lg.btn-login {
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  background-color: #3FC380 !important;
+  border-color: #2BA065 !important;
+}
+/* line 64, ../sass/patch.scss */
+.form-signin .btn-lg.btn-block {
+  width: 30% !important;
+}
+/* line 67, ../sass/patch.scss */
+.form-signin .btn-lg:hover {
+  background-color: #3FC380 !important;
+  border-color: #2BA065 !important;
+}
+/* line 73, ../sass/patch.scss */
+.form-signin .alert_access {
+  text-align: center;
+  width: 100%;
+  display: inline-block;
+}
+/* line 78, ../sass/patch.scss */
+.form-signin .form-control {
+  text-align: center;
+  padding: 8px 0;
+  margin: 9px 0;
+}
+/* line 83, ../sass/patch.scss */
+.form-signin .form_container {
+  border: 1px solid #E4E2E2;
+  border-radius: 4px;
+  /*height: 295px;*/
+  text-align: center;
+  box-shadow: 0px -1px 24px -3px rgba(100, 100, 100, 0.2);
+  padding: 50px;
+  margin-top: 20px;
+}
+/* line 92, ../sass/patch.scss */
+.form-signin .form_container .form_title {
+  color: rgba(0, 0, 0, 0.8);
+  font-family: 'montserrat';
+  font-weight: 400;
+  font-size: 16px;
+  text-transform: uppercase;
+}
+/* line 102, ../sass/patch.scss */
+.form-signin .form_container #inputEmail {
+  display: inline-block;
+  margin-bottom: 20px;
+}
+/* line 109, ../sass/patch.scss */
+.form-signin .checkbox {
+  margin: 14px 0;
+}
+
+/* line 114, ../sass/patch.scss */
+.footer {
+  text-align: center;
+  background: transparent;
+  border: none;
+  margin-top: 50px;
+}
+/* line 119, ../sass/patch.scss */
+.footer img {
+  display: inline-block;
+  float: none;
+}
+
+/*Message and Stuff*/
+/* line 128, ../sass/patch.scss */
+.nano-message-list .message-li a,
+.nano-message-box a {
+  color: #3FC380 !important;
+}
+
+/* line 132, ../sass/patch.scss */
+.nano-message-list .nano-pane,
+.message-board-wrapper .nano-pane {
+  background-color: #EEE !important;
+}
+
+/* line 138, ../sass/patch.scss */
+.nano-message-list > .nano-pane > .nano-slider,
+.nano-message-box > .nano-pane > .nano-slider {
+  background-color: #3FC380 !important;
+}
+
+/* line 144, ../sass/patch.scss */
+.btn-primary {
+  background-color: #3FC380 !important;
+  border-color: #2BA065 !important;
+}
+/* line 149, ../sass/patch.scss */
+.btn-primary:hover {
+  background-color: #3FC380 !important;
+  border-color: #2BA065 !important;
+}
+
+/* line 156, ../sass/patch.scss */
+.theme-blue-gradient .message-board-wrapper .pointer .arrow {
+  border-color: transparent transparent #3FC380 !important;
+}
+
+/* line 160, ../sass/patch.scss */
+.message-board-wrapper .item-header,
+.message-board-wrapper .item-footer a {
+  background-color: #3FC380 !important;
+}
+/* line 164, ../sass/patch.scss */
+.message-board-wrapper .item-header:hover,
+.message-board-wrapper .item-footer a:hover {
+  background-color: #3FC380 !important;
+}
+
+/* line 170, ../sass/patch.scss */
+.message-board-wrapper .item > div > .time, .message-board-wrapper .item > div > .time-diff {
+  color: #333 !important;
+}
+
+/* line 174, ../sass/patch.scss */
+.checkbox-nice label:after {
+  border-color: #3FC380;
+}
+
+/*Window and Stuffs.*/
+/* line 181, ../sass/patch.scss */
+div.dhxwin_inactive {
+  opacity: .5 !important;
+}
+
+/* line 185, ../sass/patch.scss */
+#footer-copyright {
+  background: #E7EBEE;
+}
+
+/* line 189, ../sass/patch.scss */
+#nav-col {
+  background: #FFF !important;
+}
+
+/* line 194, ../sass/patch.scss */
+#sidebar-nav .nav li {
+  padding: 10px 0 !important;
+}
+
+/* line 198, ../sass/patch.scss */
+#sidebar-nav .nav > li > a.dropdown-toggle {
+  color: #333;
+}
+/* line 200, ../sass/patch.scss */
+#sidebar-nav .nav > li > a.dropdown-toggle:hover {
+  background: none;
+  color: #333;
+}
+
+/* line 205, ../sass/patch.scss */
+#sidebar-nav .nav > li > a:hover {
+  border-left-color: #3FC380 !important;
+}
+
+/* line 209, ../sass/patch.scss */
+#sidebar-nav .nav > .open > .submenu > .open > a {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
+}
+
+/* line 213, ../sass/patch.scss */
+#logo {
+  font-style: normal;
+  text-transform: uppercase;
+  font-size: 18px;
+  padding: 14px;
+  display: inline-block;
+  width: 300px !important;
+}
+
+/* line 222, ../sass/patch.scss */
+#sidebar-nav .nav > li {
+  border-top: 1px dashed #EEE;
+}
+
+/* line 226, ../sass/patch.scss */
+.navbar > .container .navbar-brand {
+  background: none !important;
+  width: auto !important;
+}
+
+/* line 230, ../sass/patch.scss */
+#header-navbar {
+  /*background:#34495e !important;*/
+  background: #E7EBEE !important;
+  border: none;
+  box-shadow: none !important;
+}
+/* line 236, ../sass/patch.scss */
+#header-navbar i {
+  color: #333;
+}
+
+/*DHTMLX*/
+/* line 245, ../sass/patch.scss */
+.dhx_cell_hdr {
+  background-color: #f4f4f4 !important;
+  color: #666 !important;
+  border: none;
+  font-size: 17px !important;
+  /*border-right:1px solid #CCC;*/
+  padding-right: 10px;
+}
+
+/* line 254, ../sass/patch.scss */
+.dhxlayout_arrow {
+  background: #333;
+  /*border-radius:50%;*/
+}
+
+/* line 259, ../sass/patch.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_hdr div.dhxlayout_arrow.dhxlayout_arrow_va {
+  background-position: -16px 0px !important;
+}
+
+/* line 263, ../sass/patch.scss */
+.dhx_toolbar_dhx_web {
+  background: transparent !important;
+}
+
+/* line 266, ../sass/patch.scss */
+.dhx_toolbar_dhx_web div.dhx_toolbar_btn, .dhx_toolbar_dhx_web div.dhx_toolbar_arw {
+  background-color: transparent !important;
+  padding: 4px;
+  color: #333;
+  border-radius: 4px;
+}
+/* line 272, ../sass/patch.scss */
+.dhx_toolbar_dhx_web div.dhx_toolbar_btn:hover, .dhx_toolbar_dhx_web div.dhx_toolbar_arw:hover {
+  background: #F2F2F2;
+}
+
+/* line 276, ../sass/patch.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_toolbar_def {
+  padding: 0;
+  border-left: none;
+  border-right: none;
+}
+
+/* line 281, ../sass/patch.scss */
+div.gridbox_dhx_web.gridbox table.hdr td {
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+/* line 287, ../sass/patch.scss */
+div.gridbox_dhx_web.gridbox .xhdr {
+  border-bottom-color: #CCC;
+}
+
+/* line 291, ../sass/patch.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_cont_layout {
+  padding: 0 !important;
+  border: none;
+  /*border-right:1px solid #CCC;*/
+  padding-right: 0px !important;
+}
+
+/* line 300, ../sass/patch.scss */
+div.gridbox_dhx_web.gridbox table.hdr td div.hdrcell {
+  width: auto;
+  padding: 0 10px 0 0;
+}
+/* line 304, ../sass/patch.scss */
+div.gridbox_dhx_web.gridbox table.hdr td div.hdrcell input {
+  width: 90%;
+  margin: 0;
+  border: 0;
+}
+
+/* line 311, ../sass/patch.scss */
+.dhxlayout_base_dhx_web div.dhxlayout_sep.dhxlayout_sep_resize_v {
+  /*background: #B6DFFA;*/
+  background: #BBB;
+  border: none;
+}
+
+/* line 316, ../sass/patch.scss */
+.dhx_toolbar_dhx_web div.dhx_toolbar_text {
+  color: #333;
+}
+
+/* line 320, ../sass/patch.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tabs_cont_left div.dhxtabbar_tab {
+  background: #CCC;
+  /*border-radius: 10px 10px 0 0;*/
+  /*margin: 0 5px;*/
+  margin-left: 10px;
+  border: none;
+}
+/* line 328, ../sass/patch.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tabs_cont_left div.dhxtabbar_tab:hover {
+  background: #AAA;
+  color: #FFF;
+}
+
+/* line 335, ../sass/patch.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_statusbar_def div.dhx_cell_statusbar_text {
+  border: none;
+  border-top: 1px solid #CCC;
+}
+
+/* line 340, ../sass/patch.scss */
+.dhx_cell_statusbar_def {
+  background: transparent;
+}
+
+/* line 343, ../sass/patch.scss */
+.dhxlayout_base_dhx_web div.dhx_cell_layout {
+  /*background: #F0F0F0*/
+}
+
+/*arrowheads*/
+/* line 348, ../sass/patch.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tabs_ar_left div.dhxtabbar_arrow_img,
+.dhxtabbar_arrow_img {
+  /*remove this*/
+  display: none;
+  background-color: #e5e5e5;
+}
+/* line 359, ../sass/patch.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tabs_ar_left div.dhxtabbar_arrow_img:hover,
+.dhxtabbar_arrow_img:hover {
+  background-color: #CCC;
+}
+
+/*tab holder*/
+/* line 365, ../sass/patch.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs {
+  background-color: transparent;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+/*tab close*/
+/* line 372, ../sass/patch.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tab div.dhxtabbar_tab_close {
+  width: 13px;
+  background-position: 1px 0px !important;
+  background-color: #CCC !important;
+  top: 6px;
+}
+
+/* line 378, ../sass/patch.scss */
+div.gridbox_dhx_web.gridbox .xhdr,
+.dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_menu_def div.dhtmlxMenu_dhx_web_Middle, .dhxlayout_base_dhx_web div.dhx_cell_layout div.dhx_cell_menu_no_borders div.dhtmlxMenu_dhx_web_Middle {
+  background: #FFF !important;
+}
+
+/* line 385, ../sass/patch.scss */
+div.dhxwin_active div.dhxwin_hdr div.dhxwin_text {
+  /*background: #A2DED0 !important;*/
+  background: #89DAB2 !important;
+}
+/* line 390, ../sass/patch.scss */
+div.dhxwin_active div.dhxwin_brd {
+  border-color: #89DAB2 !important;
+  /*border-color:#A2DED0 !important;*/
+}
+
+/* line 398, ../sass/patch.scss */
+div.dhxwin_inactive div.dhxwin_hdr div.dhxwin_text {
+  background: #4ECDC4 !important;
+}
+/* line 402, ../sass/patch.scss */
+div.dhxwin_inactive div.dhxwin_brd {
+  border-color: #4ECDC4 !important;
+}
+
+/* line 407, ../sass/patch.scss */
+#sidebar-nav .nav > .open > .submenu > li > .submenu > li a:hover, #sidebar-nav .nav > .active > .submenu > li > .submenu > li a:hover, #sidebar-nav .nav > .active > .submenu > li > .submenu > li a.active {
+  color: #FFF !important;
+}
+
+/* line 413, ../sass/patch.scss */
+#logo {
+  /*background: #2C3E50 !important;*/
+  background: #3FC380 !important;
+  /*green*/
+}
+
+/* line 419, ../sass/patch.scss */
+.theme-blue-gradient #header-navbar .nav > li > a:hover, .theme-blue-gradient #header-navbar .nav > li > a:focus, .theme-blue-gradient #header-navbar .nav .open > a, .theme-blue-gradient #header-navbar .nav .open > a:hover, .theme-blue-gradient #header-navbar .nav .open > a:focus {
+  background-color: transparent !important;
+}
+
+/* line 423, ../sass/patch.scss */
+.theme-blue-gradient #header-navbar .nav > li > a {
+  color: #333 !important;
+}
+
+/* line 426, ../sass/patch.scss */
+#header-navbar .nav > li .caret {
+  border-top-color: #333 !important;
+}
+
+/* line 430, ../sass/patch.scss */
+div.gridbox_dhx_web.gridbox table.hdr td {
+  background: #86E2D5;
+  /*background:#3FC380;*/
+  text-transform: initial;
+  text-align: left;
+  padding-left: 10px;
+  color: #333;
+  font-size: 14px;
+}
+
+/* line 440, ../sass/patch.scss */
+#sidebar-nav .nav > li .submenu {
+  /*background:#2C3E50 !important;*/
+  background: #3D3D3D !important;
+}
+
+/* line 446, ../sass/patch.scss */
+div.gridbox_dhx_web.gridbox table.obj tr.rowselected,
+div.gridbox_dhx_web.gridbox table.obj tr.rowselected td,
+div.gridbox_dhx_web.gridbox table.obj.row20px tr.rowselected td,
+div.gridbox_dhx_web.gridbox table.obj tr.rowselected td.cellselected {
+  /*background-color:$color-set-2 !important;*/
+  background-color: #89DAB2 !important;
+  border-color: transparent !important;
+}
+
+/* line 455, ../sass/patch.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tab.dhxtabbar_tab_actv {
+  color: #333;
+  background: #86E2D5 !important;
+  /*background: #3FC380 !important;*/
+  /*font-weight: bold;
+  font-size: 14px;*/
+  /*border:2px solid*/
+}
+
+/* line 467, ../sass/patch.scss */
+div.dhxcombo_dhx_web div.dhxcombo_select_button div.dhxcombo_select_img {
+  background-color: #86E2D5 !important;
+}
+
+/*active tab text*/
+/* line 471, ../sass/patch.scss */
+.dhxtabbar_base_dhx_web div.dhxtabbar_tabs div.dhxtabbar_tab.dhxtabbar_tab_actv div.dhxtabbar_tab_text {
+  color: #333;
+  border: none;
+}
+
+/*Form Buttons*/
+/* line 479, ../sass/patch.scss */
+div.dhtmlxMenu_dhx_web_TopLevel_Item_Selected,
+div.dhtmlxMenu_dhx_web_SubLevelArea_Polygon table.dhtmlxMebu_SubLevelArea_Tbl tr.sub_item_selected td,
+.dhtmlxMenu_dh.dhtmlxcalendar_dhx_web div.dhtmlxcalendar_dates_cont ul.dhtmlxcalendar_line li.dhtmlxcalendar_cell.dhtmlxcalendar_cell_month_date_hover_web_TopLevel_Item_Selected,
+div.dhxcombolist_dhx_web div.dhxcombo_option.dhxcombo_option_selected,
+div.dhxcombolist_dhx_web.dhxcombolist_multicolumn div.dhxcombo_option.dhxcombo_option_selected,
+div.dhxcombo_in_grid_parent div.dhxcombo_dhx_web,
+div.dhx_toolbar_poly_dhx_web .tr_btn_selected td,
+.dhx_dataview_default_item_selected {
+  background-color: #86E2D5 !important;
+  border-color: transparent !important;
+}
+
+/* line 493, ../sass/patch.scss */
+label {
+  font-size: 13px;
+}
+
+/* line 497, ../sass/patch.scss */
+.dhxtabbar_base_dhx_web div.dhx_cell_tabbar div.dhx_cell_cont_tabbar {
+  border: none !important;
+}
+
+/* To disable the browser textbox */
+.browser_label_disable {
+    pointer-events: none; 
+}

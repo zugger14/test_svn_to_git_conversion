@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{0700A174-B7D6-437E-801C-EEEE9B970A24}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>FARRMSUtilities</RootNamespace>
+    <AssemblyName>FARRMSUtilities</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Ionic.Zip">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR\Ionic.Zip.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="PsXml.cs" />
+    <Compile Include="Utility.cs" />
+    <Compile Include="ImportXml.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+if "Debug" == "$(ConfigurationName)" (goto :donot_copy_to_clr_deploy_folder)
+if "Release" =="$(ConfigurationName)" (
+CD $(ProjectDir)
+
+copy /y bin\Debug\FARRMSUtilities.dll ..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FAARMSFileTransferCLR
+
+copy /y bin\Debug\FARRMSUtilities.dll ..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSExportCLR
+
+copy /y bin\Debug\FARRMSUtilities.dll ..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSExcelServerCLR
+
+copy /y bin\Debug\FARRMSUtilities.dll ..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSGenericCLR
+
+copy /y bin\Debug\FARRMSUtilities.dll ..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\FARRMSImportCLR
+)
+
+:donot_copy_to_clr_deploy_folder
+
+</PostBuildEvent>
+  </PropertyGroup>
+</Project>

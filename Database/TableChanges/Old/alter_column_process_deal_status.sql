@@ -1,0 +1,1 @@
+alter table source_deal_detail alter column process_deal_status int

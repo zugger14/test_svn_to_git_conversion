@@ -1,0 +1,15 @@
+IF OBJECT_ID(N'FNABuySell', N'FN') IS NOT NULL
+    DROP FUNCTION [dbo].[FNABuySell]
+ GO 
+
+
+CREATE FUNCTION [dbo].[FNABuySell]()
+RETURNS FLOAT
+AS
+BEGIN
+	RETURN 1
+END
+
+
+
+

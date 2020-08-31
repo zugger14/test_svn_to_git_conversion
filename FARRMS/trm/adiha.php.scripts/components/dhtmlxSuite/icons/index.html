@@ -1,0 +1,133 @@
+<html>
+<head>
+	<title>AJAX Application</title>
+	<script src="codebase/dhtmlx.js"></script>
+	<link rel="STYLESHEET" type="text/css" href="codebase/dhtmlx.css">
+	
+</head>
+
+<script>
+    var myLayout, myTree, myGrid, myFolders, myMenu, myToolbar;
+	var gl_view_type = "dlist";
+	var gl_view_bg = "";
+
+    function doOnLoad(){
+        myLayout = new dhtmlXLayoutObject(document.body, "2U", "dhx_blue");
+		myLayout.cells("a").setWidth(250);
+		myLayout.cells("a").setText("Folders");
+   		myLayout.cells("b").hideHeader();
+		
+		myMenu = myLayout.attachMenu();
+		myMenu.setImagePath("codebase/imgs/");
+		myMenu.setIconsPath("icons/");
+		myMenu.loadXML("xml/fileExplorerMenu.xml");
+		
+		myToolbar = myLayout.attachToolbar();
+		myToolbar.setIconsPath("icons/")
+     	myToolbar.loadXML("xml/fileExplorerToolbar.xml");
+		
+		myTree = myLayout.cells("a").attachTree("0");
+	    myTree.setImagePath("codebase/imgs/");
+	    myTree.setXMLAutoLoading("xml/directoryTree.php");
+	    myTree.loadXML("xml/directoryTree.php");
+		
+		//tree event handler onSelect passes selected item ID as argument to the function. This is what we need in showDirContent, as I used directories as items IDs 
+		myTree.attachEvent("onSelect",showDirContent)
+		//define event handlers for toolbar and menu 
+		myToolbar.attachEvent("onClick",defineTypeAndLoad);
+		myMenu.attachEvent("onRadioClick",defineTypeAndLoad);
+    }
+	function showDirContent(dir){
+        if(gl_view_type=="dlist"){
+            showDList(dir);
+        }else{
+            showOtherViews(dir);
+        }
+	}
+	
+	//this function we'll use for toolbar and menu event handlers
+	function defineTypeAndLoad(id){
+	    //set global variable value depending on user choice
+	    alert(id)
+		if(id=="view_dlist")
+	        gl_view_type="dlist";
+	    else if(id=="view_icons")
+	        gl_view_type="icons";
+	    else if(id=="view_tiles")
+	        gl_view_type="tiles";
+	    if(id.toString().indexOf("view")==0)
+	    	showDirContent(myTree.getSelectedItemId());
+		return true;
+	}
+
+	
+	function showDList(dir){
+	    myGrid = myLayout.cells("b").attachGrid();
+	    myGrid.setImagePath("codebase/imgs/");
+		myGrid.setIconsPath("icons/grid/");
+		myGrid.setHeader("&nbsp;,Name,Size,Type,Modified"); 
+		myGrid.setColTypes("img,ro,ro,ro"); 
+		myGrid.setInitWidths("20,250,50,100,*");
+		myGrid.setColAlign("center,left,right,left");
+	   	myGrid.load("xml/directoryContent.php?dir="+dir);
+	   	myGrid.init();
+		gl_view_bg = "grid";
+	}
+	
+	function showOtherViews(dir){
+	    if(gl_view_bg!="folders"){
+			myFolders = myLayout.cells("b").attachFolders();
+	    	myFolders.setItemTagName("row");
+	    	myFolders.enableSelection(true);
+		}
+			myFolders.clearAll();
+			myFolders.loadXML("xml/directoryContent.php?dir="+dir);
+	    if(gl_view_type=="icons"){
+	        myFolders.setItemType("js_generic",rendFuncIcons);
+	        myFolders.setCSSBaseName("ficon");
+	    }else if(gl_view_type=="tiles"){
+	        myFolders.setItemType("js_generic",rendFuncTiles);
+	        myFolders.setCSSBaseName("ftiles");
+	    }
+		gl_view_bg = "folders";
+	}
+	
+	//display items as Icons
+	function rendFuncIcons(obj,edit,selected,active){
+		var out = '<div align="center" onclick="event.cancelBuble = true;">';
+		out+= '<img border="0" src="./icons/icons/'+obj.cell[0]._nodevalue+'"/>';
+		out+= '<div class="dhx_folders_FICON_item_text" style="'+(active==true?'overflow:visible;width:auto;':'')+'" onclick="if(this.parentNode.parentNode.className==\'dhx_folders_FICON_item_selected\'){this.parentNode.parentNode.itemObj.edit(true)}">'+obj.cell[1]._nodevalue+'</div>';
+		out+= '</div>';
+		return out;
+	}
+	//display items as tiles
+	function rendFuncTiles(obj,edit,selected,active){
+		var out = '<img border="0" src="./icons/tiles/'+obj.cell[0]._nodevalue+'" style="float: left;"/>';
+		out+= '<div class="dhx_folders_FTILES_item_text" style="margin-top: 10px;">'+obj.cell[1]._nodevalue+'</div>';
+		out+= '<div class="dhx_folders_FTILES_item_text_gray">'+parseBytes(obj.cell[2]._nodevalue)+'</div>';
+		out+= '</div>';
+		return out;
+	}
+	
+	//format bytes
+	function parseBytes(num){
+		if (isNaN(num))
+			return "&nbsp;";
+		if (num > 1000000)
+			num=Math.round(num/100000)/10+" Mb";
+		else if (num > 1000)
+			num=Math.round(num/100)/10+" kb";
+		else if (num==0)
+			num = "";
+		else 
+			num=num+" bytes";
+		return num;
+	}
+</script>
+
+<body onload="doOnLoad()" style="width:100%; height:100%; margin:0px; overflow:hidden;">
+
+
+
+</body>
+</html>

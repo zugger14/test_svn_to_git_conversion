@@ -1,0 +1,127 @@
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'mv90_data')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('mv90_data'
+           ,6
+           ,'DATE'
+           ,'gen_date'
+           ,'PF_Allocation_data'
+           ,'PS_Allocation_data'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'mv90_data'
+           ,NULL
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+
+----------Insert value for mv90_data_mins
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'mv90_data_mins')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('mv90_data_mins'
+           ,6
+           ,'DATE'
+           ,'prod_date'
+           ,'PF_Allocation_mins'
+           ,'PS_Allocation_mins'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'mv90_data_mins'
+           ,NULL
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+
+----------Insert value for mv90_data_hour
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'mv90_data_hour')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('mv90_data_hour'
+           ,6
+           ,'DATE'
+           ,'prod_date'
+           ,'PF_Allocation_hour'
+           ,'PS_Allocation_hour'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'mv90_data_hour'
+           ,NULL
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END

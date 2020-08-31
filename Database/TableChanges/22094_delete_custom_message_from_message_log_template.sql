@@ -1,0 +1,1 @@
+DELETE FROM message_log_template WHERE message_number IN (10019, 10020)

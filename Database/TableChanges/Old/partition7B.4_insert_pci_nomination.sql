@@ -1,0 +1,42 @@
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'deal_detail_hour')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('deal_detail_hour'
+           ,2
+           ,'DATE'
+           ,'term_date'
+           ,'PF_nomination'
+           ,'PS_nomination'
+           ,'m'
+           ,'FG_DATE'
+           ,'Y'
+           ,'deal_detail_hour'
+           ,'deal_detail_hour_archive'
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+

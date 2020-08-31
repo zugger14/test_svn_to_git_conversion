@@ -1,0 +1,1 @@
+UPDATE application_functions SET file_path = '_deal_capture\maintain_deals\trade.ticket.php' WHERE function_id = 10131020

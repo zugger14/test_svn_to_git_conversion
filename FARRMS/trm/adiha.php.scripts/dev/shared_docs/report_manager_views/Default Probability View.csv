@@ -1,0 +1,6 @@
+debt_rating,effective_date,recovery,months,probability,debt_rating_id,as_of_date,rating_type_id,rating_type
+BBB+,00:00.0,No,24,0.72,309167,Jun 25 2016 12:00AM,10098,Debt Rating
+A3,00:00.0,No,24,0.6,309164,Jun 25 2016 12:00AM,10098,Debt Rating
+A+,00:00.0,No,24,0,307102,Jun 25 2016 12:00AM,11102,Debt Rating5
+A+,00:00.0,No,24,0,307099,Jun 25 2016 12:00AM,11101,Debt Rating4
+A+,00:00.0,No,24,0,307096,Jun 25 2016 12:00AM,11100,Debt Rating3

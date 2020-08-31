@@ -1,0 +1,174 @@
+<?xml version="1.0"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="QR_BC_CM">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="LIST_G_WEEK_OF_MONTH">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element minOccurs="0" maxOccurs="unbounded" name="G_WEEK_OF_MONTH">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element minOccurs="0" name="WEEK_OF_MONTH" type="xs:unsignedShort" />
+                    <xs:element minOccurs="0" name="LIST_G_NEW_DATE">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element minOccurs="0" maxOccurs="unbounded" name="G_NEW_DATE">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element minOccurs="0" name="BID_CURVE_DATE" type="xs:string" />
+                                <xs:element minOccurs="0" name="DAY_OF_WEEK" type="xs:string" />
+                                <xs:element minOccurs="0" name="LIST_G_BC_CAT">
+                                  <xs:complexType>
+                                    <xs:sequence>
+                                      <xs:element minOccurs="0" name="G_BC_CAT">
+                                        <xs:complexType>
+                                          <xs:sequence>
+                                            <xs:element minOccurs="0" name="BC_1MONTH" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BC_3MONTH" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BC_6MONTH" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BC_1YEAR" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BC_2YEAR" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BC_3YEAR" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BC_5YEAR" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BC_7YEAR" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BC_10YEAR" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BC_20YEAR" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BC_30YEAR" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BC_30YEARDISPLAY" type="xs:string" />
+                                            <xs:element minOccurs="0" name="BOND_MKT_UNAVAIL" type="xs:string" />
+                                          </xs:sequence>
+                                        </xs:complexType>
+                                      </xs:element>
+                                    </xs:sequence>
+                                  </xs:complexType>
+                                </xs:element>
+                                <xs:element minOccurs="0" name="NEW_DATE" type="xs:string" />
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element minOccurs="0" name="NUM_DAYS_IN_WEEK" type="xs:unsignedByte" />
+                    <xs:element minOccurs="0" name="NUM_DAYS_FOR_CALCULATION" type="xs:unsignedByte" />
+                    <xs:element minOccurs="0" name="SUM_1MONTH" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="SUM_3MONTH" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="SUM_6MONTH" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="SUM_1YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="SUM_2YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="SUM_3YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="SUM_5YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="SUM_7YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="SUM_10YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="SUM_20YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="SUM_30YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="AVERAGE_1MONTH" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="AVERAGE_3MONTH" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="AVERAGE_6MONTH" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="AVERAGE_1YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="AVERAGE_2YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="AVERAGE_3YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="AVERAGE_5YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="AVERAGE_7YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="AVERAGE_10YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="AVERAGE_20YEAR" type="xs:decimal" />
+                    <xs:element minOccurs="0" name="AVERAGE_30YEAR" type="xs:decimal" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element minOccurs="0" name="CF_YEARHIGH_1MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CP_YEARHIGH_1MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARHIGH_3MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARHIGH_6MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARHIGH_1YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CF_YEARHIGH_3MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARHIGH_6MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CP_YEARHIGH_2YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARHIGH_3YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARHIGH_5YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARHIGH_7YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARHIGH_10YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARHIGH_20YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CF_YEARHIGH_1YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARHIGH_2YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARHIGH_3YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARHIGH_5YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARHIGH_7YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARHIGH_10YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARHIGH_20YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARLOW_1MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CP_YEARLOW_1MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARLOW_3MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARLOW_6MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARLOW_1YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARLOW_2YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARLOW_3YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARLOW_5YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARLOW_7YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARLOW_10YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_YEARLOW_20YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CF_YEARLOW_3MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARLOW_6MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARLOW_1YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARLOW_2YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARLOW_3YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARLOW_7YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARLOW_10YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARLOW_20YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARLOW_5YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMEHIGH_1MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CP_ALLTIMEHIGH_1MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CF_ALLTIMEHIGH_3MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CP_ALLTIMEHIGH_3MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMEHIGH_6MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMEHIGH_1YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMEHIGH_2YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMEHIGH_3YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMEHIGH_5YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMEHIGH_7YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMEHIGH_10YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMEHIGH_20YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMELOW_1MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMELOW_3MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMELOW_6MONTH_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMELOW_1YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMELOW_2YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMELOW_3YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMELOW_5YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMELOW_7YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMELOW_10YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CP_ALLTIMELOW_20YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CF_ALLTIMEHIGH_6MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMEHIGH_1YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMEHIGH_2YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMEHIGH_3YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMEHIGH_5YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMEHIGH_7YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMEHIGH_10YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMEHIGH_20YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMELOW_1MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMELOW_3MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMELOW_6MONTH_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMELOW_1YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMELOW_2YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMELOW_3YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMELOW_5YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMELOW_7YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMELOW_10YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_ALLTIMELOW_20YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CP_ALLTIMEHIGH_30YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CF_ALLTIMEHIGH_30YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CP_YEARHIGH_30YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CF_YEARHIGH_30YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CF_YEARLOW_30YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CP_YEARLOW_30YEAR_DATE" type="xs:string" />
+        <xs:element minOccurs="0" name="CF_ALLTIMELOW_30YEAR_RATE" type="xs:decimal" />
+        <xs:element minOccurs="0" name="CP_ALLTIMELOW_30YEAR_DATE" type="xs:string" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

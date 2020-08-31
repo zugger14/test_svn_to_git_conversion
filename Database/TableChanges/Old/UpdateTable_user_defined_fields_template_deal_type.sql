@@ -1,0 +1,1 @@
+UPDATE user_defined_fields_template SET sql_string = 'SELECT source_deal_type_id, source_deal_type_name FROM source_deal_type sdt WHERE  (sdt.sub_type IS NULL OR  sdt.sub_type <> ''y'') AND sdt.source_system_id = 2 ORDER BY source_deal_type_name' WHERE Field_label = 'Deal Type' AND udf_template_id = 1298

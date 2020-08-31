@@ -1,0 +1,2 @@
+UPDATE maintain_field_deal SET window_function_id = 10101000 WHERE default_label = 'Block Definition'
+UPDATE maintain_field_deal SET window_function_id = 10131010 WHERE default_label = 'Reference Deal'

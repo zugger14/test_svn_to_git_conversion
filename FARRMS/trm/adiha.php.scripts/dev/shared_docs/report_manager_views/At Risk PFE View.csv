@@ -1,0 +1,2 @@
+criteria_id,criteria_name,as_of_date_from,as_of_date_to,counterparty_id,counterparty_name,measurement_approach,confidence_interval,fixed_exposure,current_forward_exposure,PFE,PFE_Value,total_potential_exposure,currency
+95,0 PFE,00:00.0,00:00.0,4235,RGCP,Monte Carlo Simulation,95%,0,54135,"<a target=""_blank"" href=""../../_valuation_risk_analysis/showPlot/showPlot.php?var_criteria_id=95&as_of_date=2016-06-01&counterparty=RGCP"">615874.82 </a>",615874.82,615874.82,NULL

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<magiumDefaultContext xmlns="http://www.magiumlib.com/ConfigurationContext">
+    <context id="primary">
+        <context id="secondary"/>
+    </context>
+</magiumDefaultContext>

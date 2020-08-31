@@ -1,0 +1,42 @@
+IF NOT EXISTS(SELECT 1 FROM partition_config_info  WHERE table_name = 'fx_exposure')
+BEGIN
+INSERT INTO [dbo].[partition_config_info]
+           ([table_name]
+           ,[no_partitions]
+           ,[partition_nature]
+           ,[partition_key]
+           ,[function_name]
+           ,[scheme_name]
+           ,[frequency]
+           ,[filegroup]
+           ,[archive_status]
+           ,[stage_table_name]
+           ,[archive_table_name]
+           ,[archive_db_name]
+           ,[archive_server]
+           ,[del_flg]
+           ,[create_user]
+           ,[create_ts]
+           ,[update_user]
+           ,[update_ts])
+     VALUES
+           ('fx_exposure'
+           ,2
+           ,'DATE'
+           ,'as_of_date'
+           ,'PF_fx_exposure'
+           ,'PS_fx_exposure'
+           ,'d'
+           ,'FG_DATE'
+           ,'Y'
+           ,'fx_exposure'
+           ,'fx_exposure_archive'
+           ,NULL
+           ,NULL
+           ,'N'
+           ,'SGUPTA'
+           ,GETDATE()
+           ,NULL
+           ,NULL)
+END
+

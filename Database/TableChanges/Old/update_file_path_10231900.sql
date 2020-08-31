@@ -1,0 +1,1 @@
+update application_functions set file_path = '_accounting/derivative/accounting_strategy/setup_hedge_rel_type/setup.hedge.rel.type.php' where function_id = 10231900

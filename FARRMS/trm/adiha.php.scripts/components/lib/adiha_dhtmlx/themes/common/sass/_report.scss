@@ -1,0 +1,392 @@
+
+/*copied from extra.scss*/
+ul.jtabs li.active a.theme-blue span { background-color: $jtabs-title!important; }
+
+/*Report Part*/
+.btn_save_class .dhxform_btn_filler
+{
+	background: #f9f9f9;
+}
+#output {
+	th.pvtAxisContainer {
+		background: none !important;
+		border: 1px dashed $color_celeste_approx;
+		font-weight: normal;
+	}
+	table:first-of-type {
+		tr {
+			&:nth-child(2) {
+				> th {
+					border: none;
+				}
+				> td {
+					table {
+						margin-left: 20px;
+						margin-top: 20px;
+					}
+					&:first-child {
+						margin-right: 20px;
+					}
+				}
+			}
+			&.pvtAxisContainer:nth-child(2) > td:nth-child(1) {
+				background-color: $color_celeste_approx;
+			}
+		}
+		.pvtFilterBox {
+			position: absolute;
+			background-color:$color-set-3; /*$white_90;*/
+			/*Instead of the line below you could use @include border-radius($radius, $vertical-radius)*/
+			border-radius: 4px;
+			border-color: $color_celeste_approx;
+			/*Instead of the line below you could use @include box-shadow($shadow-1, $shadow-2, $shadow-3, $shadow-4, $shadow-5, $shadow-6, $shadow-7, $shadow-8, $shadow-9, $shadow-10)*/
+			box-shadow: 0 0 8px 2px #ccc;
+			top: 0 !important;
+			left: 0 !important;
+		}
+		table td {
+			position: relative;
+		}
+		tbody:nth-child(2) > tr:first-child > td:nth-child(2) {
+			margin-left: 20px;
+			background: none;
+			border: 1px dashed $color_celeste_approx;
+		}
+	}
+}
+
+#layout-container {
+	table{
+	background: #FFF;
+    border: 1px solid #CCC;
+    border-radius: 5px;
+    box-shadow: 0 0 4px 0px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    cursor: move;
+    border-left: 10px solid #CCC;
+
+    table{
+    	border:none;
+    	box-shadow:none;
+
+    	a[id$="delete"] {    	
+    	background: #e74c3c; border-radius: 4px;
+		padding: 7px 10px;
+    	color: #FFF;
+    	font-size: 13px;
+    	font-weight: normal;
+
+    	}
+    	a[id$="update"]{
+    	color:$color-set-1; border-radius: 0px;
+		padding: 7px 10px;
+    	/*color: #FFF;*/
+    	font-size: 13px;
+    	font-weight: normal;
+
+    	}
+
+    	a[id$="edit"]{
+    	background:$color-set-1; border-radius: 4px;
+		padding: 7px 10px;
+    	color: #FFF;
+    	font-size: 13px;
+    	font-weight: normal;
+
+    	}
+    }
+	}
+}
+
+#layout .report-item{
+	background-color: transparent !important;
+}
+
+/*Paarameters*/
+.class-trm-paramset-detail{
+	border:none !important;
+
+	th{
+		border-radius: 5px 0 0 5px;
+		border-top: none !important; width: 24px!important; 
+		background-color: #709572!important; padding: 0;
+
+		&+td{
+			width:13px;
+		}
+		&:hover td{
+			color:#333 !important;
+		}
+
+	}
+	tr:hover td{
+		color:#333 !important;
+	}
+	td{
+		background: none !important;
+		//height: 47px; 
+		padding:4px 2px 0px!important;
+
+		input,select{
+
+			height: 21px;
+			border-color: #8A8787;
+			padding: 0 0 0 2px;
+			margin: 0;
+			color: #333;
+		}
+		select{
+		}
+		&:first-child{
+			width:30px !important;
+		}
+
+		td[width]{
+			background: red;
+		}
+
+		&:hover{
+			color: #333;
+		};
+
+	}
+
+	li{
+		//border-bottom: 1px solid #CCC;
+		//border-radius: 5px !important;	
+		overflow: hidden;
+		margin: 0px 0 0 0;
+		//box-shadow: 0 0 4px 0px rgba(0, 0, 0, 0.1);
+		//padding: 1px 1px 0px 1px;
+		//background: pink; 	
+		
+		.push-up{
+			margin:0;
+
+			label input{
+				position: relative;
+				//top:6px;
+			}
+		}
+	}
+	
+}
+
+.class-trm-tablix-advance-table .data-table tr:hover td  {
+	color:#666; background:$light-green!important; 
+}
+.class-trm-tablix-advance-tab-table .data-table tr:hover td  {
+	color:#666; background:$light-green!important;
+}
+
+.check_operator { }
+.data-table th  { background:$color-set-2!important; }
+.data-table td  { font-size: 12px!important;  }
+input[type="text"]:disabled {
+background-color:rgb(235, 235, 228); padding: 4px 4px!important; border:1px solid #d6d6d6; }
+.data-table .formlabel { font-weight: normal!important;  }
+.data-table td .dataset-alias, .dataset-tooltip, .defult_value_list { height:17px!important; padding-left: 2px!important; }
+
+.adiha_control {font-size: 12px!important;}
+.push-up .remove-param { } 
+
+/*Advanced*/
+.advanced-table{
+
+	.table-container{
+	padding: 20px;
+    border-bottom: 2px dashed #CCC;
+    padding-bottom: 20px;
+    margin-bottom: 10px;
+
+	}
+	.data-table {
+		        
+    th{
+	background-color: $adv_table!important;
+    	border-top:none !important;
+    	font-size: 12px;
+    	font-weight: normal!important; 
+    	padding: 5px;
+    	color: #000!important; 
+    }
+    td {
+    	background-color: #FFF;
+    	padding: 5px; border-bottom: 1px solid #dddddd; font-size: 12px!important; 
+     }
+
+	}
+
+	.FormLabelHeader{
+	font-size: 14px !important; position: relative; top: 20px;
+
+	}
+	hr{
+		display: none;
+	}
+	ul.jtabs{
+		
+		li.active{		
+			 background-color: $adv_table!important;
+			 border-radius: 3px 3px 0 0 !important;
+			 padding: 5px; color: #000!important;
+			 
+			 a.theme-blue,span{
+			 background-image: none !important; color: #000!important;
+			 }
+		}
+	}
+}
+ul.jtabs li { 
+	height: 22px!important; 
+}
+ul.jtabs li a { 
+	padding: 7px 0!important; 
+	font-size: 12px!important; font-weight: normal !important; 
+	background-color: #b7b7b7!important; 
+	border-radius: 2px 2px 0 0 !important; 
+	color: #fff!important;
+}
+/*eo advanced table*/
+.advanced-info{
+	padding: 20px;
+    background: #F9F9F9;
+    font-weight: bold;
+    border-top: 10px solid #CCC;
+}
+
+.class-trm-chart-advance-table,.class-trm-tablix-advance-tab-table,.class-trm-tablix-advance-table
+{@extend .advanced-table;}
+
+.class-trm-chart-advance-info,.class-trm-tablix-advance-info
+{@extend .advanced-info;}
+
+/*end of report designer*/
+
+.class-trm-report-item{
+	position: relative;
+
+	.class-trm-report-item-delete,
+	.class-trm-report-item-edit
+
+	{
+
+	}
+	.class-trm-report-item-delete{
+		top: 50px;
+	}
+
+	.trm-report-item-action-button{ 
+		width: 100px;
+		a{
+			display: inline-block;
+			margin-right: 10px;
+		}
+	}
+	td{
+		padding: 0;
+	}
+	.btn-text{
+		display: inline-block;
+		margin: 0 5px;
+		font-weight: bold;
+	}
+
+	.header{
+
+			td{
+				 padding: 16px 10px;
+   				 font-size: 14px;
+   				 text-transform: uppercase;
+
+   				 .its-name{
+   				 	font-weight: bold;
+   				 }
+			}
+	}
+
+	.itemlist{
+		td{
+			padding: 5px 10px;
+		}
+		input{
+			    padding: 6px;
+    border-radius: 3px;
+    border: none;
+    border-bottom: 1px dashed #777;
+		}
+
+		.change-btn{
+			font-weight: bold;
+		}
+	}
+
+	.fa{
+		font-size: 18px;
+	}
+
+}
+.template-info {  }
+.cdisplay { 
+	width: 110px; 
+}
+#overlay-info-template { 
+	border: 1px solid $color-set-3 !important; 
+}
+.data-table th.base, .data-table th.main  { 
+	border-bottom: 0px !important;  
+}
+.data-table th.aggr, .data-table th.cdisplay, .data-table th.display, .data-table th.hdisplay { 
+	border-bottom: 0px!important; 
+}
+
+/*CSS copied from extra.scss*/
+ 
+.hide-filter-inner::before { 
+  background-color: $color-set-6!important; 
+}
+
+.btn:focus, .btn:active:focus, .btn.active:focus, .btn.focus, .btn.focus:active, .btn.active.focus {
+  outline: none!important; 
+}
+
+.dhtmlx-confirm .dhtmlx_popup_title, .dhtmlx-confirm-error .dhtmlx_popup_title {
+   background-color: $light-red!important;
+   border: 1px solid $light-red!important;
+   color: #000!important; font-style: italic !important;
+}
+
+.dhtmlx-alert .dhtmlx_popup_title, .dhtmlx-alert-error .dhtmlx_popup_title {
+	background-color: $dhtmlx-alert!important; 
+	font-style: italic !important; 
+	color: #000!important; 
+	border: none!important;
+}
+
+.dhtmlx-alert-warning .dhtmlx_popup_title, .dhtmlx-alert-warning-error .dhtmlx_popup_title {
+	background-color: $alert-warning !important; 
+	border: 1px solid $alert-warning!important; 
+}
+
+.dhtmlx-alert-error .dhtmlx_popup_title, .dhtmlx-confirm-alert-error .dhtmlx_popup_title {
+	background-color: $alert-error!important;
+	border: 1px solid $alert-error!important; 
+}
+
+.dhtmlx_popup_button {
+    background-color: $color-set-6 !important; 
+    border-radius: 2px!important;
+}
+
+.dhtmlx_popup_button:active,
+.dhtmlx_popup_button:focus {
+    background-color: $color-set-4 !important; 
+    border-radius: 2px!important;
+}
+.dhxform_btn_txt {
+  color:#000 !important;
+}
+
+.message-board-wrapper .item-header, .message-board-wrapper .item-footer a { 
+  color: $msg-color !important; 
+}

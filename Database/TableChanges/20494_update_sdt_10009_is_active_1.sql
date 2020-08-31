@@ -1,0 +1,1 @@
+update static_data_type set is_active = 1 where type_id = 10009

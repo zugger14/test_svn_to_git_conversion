@@ -1,0 +1,23 @@
+IF OBJECT_ID(N'FNAPmt', N'FN') IS NOT NULL
+    DROP FUNCTION [dbo].[FNAPmt]
+GO 
+
+--Select dbo.FNAPmt (2479, 200.82/400, 1)
+CREATE FUNCTION [dbo].[FNAPmt]
+(
+	@FV      FLOAT,
+	@RATE    FLOAT,
+	@PERIOD  INT
+)
+RETURNS FLOAT
+AS
+BEGIN
+	DECLARE @PMT FLOAT
+	
+	IF @PERIOD = 1
+	    SET @PMT = @FV
+	ELSE
+	    SET @PMT = @FV / (((POWER(1 + @RATE, @PERIOD) -1) / @RATE))
+	
+	RETURN @PMT
+END

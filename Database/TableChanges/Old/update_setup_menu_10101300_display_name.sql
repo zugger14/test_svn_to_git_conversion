@@ -1,0 +1,1 @@
+UPDATE setup_menu SET display_name= 'Setup GL Codes' WHERE function_id = 10101300 AND product_category = 10000000

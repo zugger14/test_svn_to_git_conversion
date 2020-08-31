@@ -1,0 +1,32 @@
+IF NOT EXISTS(SELECT 1  FROM adiha_default_codes WHERE default_code_id = 86)
+BEGIN
+	INSERT INTO adiha_default_codes(default_code_id, default_code, code_description, code_def, instances)
+	VALUES(86, 'application_ui_template_settings', 'Application UI Template Settings', 'Application UI Template Settings', 6)
+
+	INSERT INTO adiha_default_codes_params(seq_no, default_code_id, var_name, type_id, var_length, value_type)
+	VALUES(1, 86, 'Field Size', 3, NULL, 'h')
+	INSERT INTO adiha_default_codes_params(seq_no, default_code_id, var_name, type_id, var_length, value_type)
+	VALUES(2, 86, 'Block Offset', 3, NULL, 'h')
+	INSERT INTO adiha_default_codes_params(seq_no, default_code_id, var_name, type_id, var_length, value_type)
+	VALUES(3, 86, 'Offset Left', 3, NULL, 'h')
+	INSERT INTO adiha_default_codes_params(seq_no, default_code_id, var_name, type_id, var_length, value_type)
+	VALUES(4, 86, 'Number of Column', 3, NULL, 'h')
+	INSERT INTO adiha_default_codes_params(seq_no, default_code_id, var_name, type_id, var_length, value_type)
+	VALUES(5, 86, 'Fieldset Offset Top', 3, NULL, 'h')
+	INSERT INTO adiha_default_codes_params(seq_no, default_code_id, var_name, type_id, var_length, value_type)
+	VALUES(6, 86, 'Checkbox Offset Top', 3, NULL, 'h')
+
+	INSERT INTO adiha_default_codes_values(instance_no, default_code_id, seq_no, var_value, [description])
+	VALUES( 1, 86, 1, 230, 'Field Size')
+	INSERT INTO adiha_default_codes_values(instance_no, default_code_id, seq_no, var_value, [description])
+	VALUES( 1, 86, 2, 0, 'Block Offset')
+	INSERT INTO adiha_default_codes_values(instance_no, default_code_id, seq_no, var_value, [description])
+	VALUES( 1, 86, 3, 15, 'Offset Left')
+	INSERT INTO adiha_default_codes_values(instance_no, default_code_id, seq_no, var_value, [description])
+	VALUES( 1, 86, 4, 200, 'Number of Column')
+	INSERT INTO adiha_default_codes_values(instance_no, default_code_id, seq_no, var_value, [description])
+	VALUES( 1, 86, 5, 5, 'Fieldset Offset Top')
+	INSERT INTO adiha_default_codes_values(instance_no, default_code_id, seq_no, var_value, [description])
+	VALUES( 1, 86, 6, 26, 'Checkbox Offset Top')
+
+END

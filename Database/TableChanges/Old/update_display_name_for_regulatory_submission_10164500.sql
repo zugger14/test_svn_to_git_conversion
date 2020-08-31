@@ -1,0 +1,2 @@
+UPDATE application_functions SET function_name = 'REMIT Submission' WHERE  function_id = 10164500
+UPDATE setup_menu SET display_name = 'REMIT Submission' WHERE function_id = 10164500 AND display_name = 'Regulatory Submission'

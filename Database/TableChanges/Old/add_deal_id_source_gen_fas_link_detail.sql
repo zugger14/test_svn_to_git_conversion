@@ -1,0 +1,2 @@
+IF not EXISTS(SELECT * FROM sys.[columns] WHERE [object_id]=object_id('gen_fas_link_detail') AND [name]='deal_id_source')
+	alter table gen_fas_link_detail add deal_id_source varchar(1) --s for system (source_deal_header) ;  f=generated deal_id as forecasted item

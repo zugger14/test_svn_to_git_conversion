@@ -1,0 +1,4 @@
+IF NOT EXISTS(SELECT 'X' FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'broker_fees' AND COLUMN_NAME = 'broker_contract')
+BEGIN
+	ALTER TABLE broker_fees ADD broker_contract INT
+END

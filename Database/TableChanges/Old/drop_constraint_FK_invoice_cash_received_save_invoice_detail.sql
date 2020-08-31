@@ -1,0 +1,2 @@
+IF EXISTS (SELECT * FROM sys.foreign_keys WHERE object_id = OBJECT_ID(N'[dbo].[FK_invoice_cash_received_save_invoice_detail]') )
+	Alter table invoice_cash_received drop constraint FK_invoice_cash_received_save_invoice_detail

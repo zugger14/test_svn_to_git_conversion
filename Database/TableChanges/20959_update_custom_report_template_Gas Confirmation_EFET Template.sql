@@ -1,0 +1,1 @@
+UPDATE contract_report_template SET template_name = 'EFET Template', template_desc = 'Renamed Gas Confirmation to EFET Template' WHERE template_name=  'Gas Confirmation'

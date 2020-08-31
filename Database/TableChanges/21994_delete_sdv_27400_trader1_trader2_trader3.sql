@@ -1,0 +1,1 @@
+DELETE from static_data_value where type_id = 27400 and code in ('Trader1','Trader2','Trader3')

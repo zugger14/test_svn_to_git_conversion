@@ -1,0 +1,6 @@
+ALTER TABLE save_confirm_status ALTER COLUMN counterparty_name VARCHAR(100)
+ALTER TABLE save_confirm_status ALTER COLUMN counterparty_address VARCHAR(255)
+ALTER TABLE save_confirm_status ALTER COLUMN counterparty_phone_no VARCHAR(100)
+ALTER TABLE save_confirm_status ALTER COLUMN counterparty_mailing_address VARCHAR(255)
+ALTER TABLE save_confirm_status ALTER COLUMN counterparty_fax_email VARCHAR(100)
+ALTER TABLE save_confirm_status ALTER COLUMN trade_confirmation_comment VARCHAR(255)
