@@ -4806,20 +4806,43 @@ BEGIN -- Insert/Update Deal data
 		WHILE @@FETCH_STATUS = 0   
 		BEGIN 
 			
+			--leg1 == sell
+			--leg2== buy
+
 			EXEC spa_deal_fields_mapping @flag = 'v'
 										, @deal_id = @source_deal_header_id										
 										, @counterparty_id = @deal_counterparty_id									
 										, @deal_fields = 'shipper_code1'
 										, @term_start =  @entire_term_start									
 										, @contract_id = @contract_id
+										, @buy_sell_flag = 'b'
 										, @json_string = @shipper_mapping_id OUTPUT
 			
-			UPDATE source_deal_detail
+			UPDATE sdd
 				SET shipper_code1 = @shipper_mapping_id,
 					shipper_code2 = @shipper_mapping_id
-			FROM source_deal_detail
+			FROM source_deal_detail sdd
 			WHERE source_deal_header_id = @source_deal_header_id
 			AND term_start BETWEEN @entire_term_start AND @entire_term_end
+			AND sdd.leg = 2
+
+			EXEC spa_deal_fields_mapping @flag = 'v'
+										, @deal_id = @source_deal_header_id										
+										, @counterparty_id = @deal_counterparty_id									
+										, @deal_fields = 'shipper_code1'
+										, @term_start =  @entire_term_start									
+										, @contract_id = @contract_id
+										, @buy_sell_flag = 's'
+										, @json_string = @shipper_mapping_id OUTPUT
+			
+			UPDATE sdd
+				SET shipper_code1 = @shipper_mapping_id,
+					shipper_code2 = @shipper_mapping_id
+			FROM source_deal_detail sdd
+			WHERE source_deal_header_id = @source_deal_header_id
+			AND term_start BETWEEN @entire_term_start AND @entire_term_end
+			AND sdd.leg = 1
+
 
 			FETCH NEXT FROM cur_shipper INTO @source_deal_header_id, @entire_term_start, @entire_term_end, @deal_counterparty_id, @contract_id
 		END
