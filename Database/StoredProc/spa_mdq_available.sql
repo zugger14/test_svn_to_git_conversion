@@ -12,6 +12,7 @@ GO
 	Contract volume MDQ related operations
 	Parameters
 	@flag : P - returns unpivoted data
+			v - Returns unformatted data
 	@contract_ids : Contract Ids
 	@flow_date_start : Flow Date Start
 	@flow_date_end : Flow Date End
@@ -437,7 +438,7 @@ BEGIN
 	END
 
 END
-ELSE IF @flag = 'h'
+ELSE IF @flag IN( 'h' , 'v')
 BEGIN
 	DROP TABLE IF EXISTS #temp_path_list
 
@@ -464,6 +465,8 @@ BEGIN
 		SELECT * FROM [dbo].[FNAGetPathMDQHourly] (dp.path_id, @flow_date_start, ISNULL(@flow_date_end, @flow_date_start), 'path_term_hour')
 	) mdq
 
+
+
 	SELECT @pvt_include = STUFF((SELECT DISTINCT ',' + '[' + CAST(hr AS VARCHAR) + ']'
 									FROM #final_total_available_mdq ft
 									FOR XML PATH (''))
@@ -475,6 +478,12 @@ BEGIN
 									GROUP BY effective_date, hr
 									FOR XML PATH (''))
 									, 1, 1, '')
+	IF @flag = 'v'
+	BEGIN
+		SELECT * FROM #final_total_available_mdq
+
+		RETURN;
+	END
 	
 	SET @sql = '
 		SELECT path_id, ' + @pvt_include + ' 
