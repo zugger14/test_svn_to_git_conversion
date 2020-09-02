@@ -43,6 +43,7 @@ DECLARE @source_deal_header_id INT =  12269 --11553  --11166  --8738
 --pegas sell
 
 --*/
+
 SET NOCOUNT ON
 
 DECLARE 
@@ -126,6 +127,8 @@ CREATE TABLE #temp_volume (
 	, volume NUMERIC(38,20)
 )
 
+
+--select @product_group, @all_physical_deals, @header_buy_sell_flag return;
 
 
 IF @product_group = 'Complex-EEX'
@@ -355,6 +358,7 @@ BEGIN
 
 	IF @header_buy_sell_flag = 'b'
 	BEGIN
+
 		SELECT @capacity_deal_id = sdh.source_deal_header_id
 		FROM source_deal_header sdh
 		INNER JOIN source_deal_header_template sdht
@@ -362,12 +366,13 @@ BEGIN
 			AND sdh.contract_id = @path_contract_id
 		INNER JOIN source_deal_detail sdd
 			ON sdd.source_deal_header_id = sdh.source_deal_header_id
-			AND sdd.location_id = CASE WHEN leg = 1 
-									THEN @from_location 
-									ELSE @to_location 							
-									END 
+			--AND sdd.location_id = CASE WHEN leg = 1 
+			--						THEN @from_location 
+			--						ELSE @to_location 							
+			--						END 
 		WHERE template_name = 'capacity bund'
 			AND sdh.header_buy_sell_flag = 's'
+			AND @deal_term_start BETWEEN sdd.term_start AND sdd.term_end
 			
 		IF @capacity_deal_id IS NOT NULL
 		BEGIN
@@ -649,13 +654,14 @@ BEGIN
 			AND sdh.contract_id = @path_contract_id 
 		INNER JOIN source_deal_detail sdd
 			ON sdd.source_deal_header_id = sdh.source_deal_header_id
-			AND sdd.location_id = CASE WHEN leg = 1 
-									THEN @from_location 
-									ELSE @to_location 						
-									END 
+			--AND sdd.location_id = CASE WHEN leg = 1 
+			--						THEN @from_location 
+			--						ELSE @to_location 						
+			--						END 
 		WHERE template_name = 'capacity bund'
 			AND sdh.header_buy_sell_flag = 's'
-			AND sdd.term_start BETWEEN @deal_term_start AND @deal_term_end
+			--AND sdd.term_start BETWEEN @deal_term_start AND @deal_term_end
+			AND @deal_term_start BETWEEN sdd.term_start AND sdd.term_end
 	
 		IF @capacity_deal_id IS NOT NULL
 		BEGIN
