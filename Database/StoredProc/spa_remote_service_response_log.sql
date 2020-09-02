@@ -1,0 +1,191 @@
+SET ANSI_NULLS ON
+GO
+ 
+SET QUOTED_IDENTIFIER ON 
+GO
+
+/**
+	Purpose							: Logging details of remote services response.
+	Created By						: ryadav@pioneersolutionsglobal.com
+	Created Date					: 2020-07-31
+	Modified By						: 
+	Modified Date					:
+	
+	Parameters 							
+	@flag							: Operation flag for various tasks and logic.
+									  m => Insertion for Message board.
+									  i => Insertion for Web serives.
+									  s= > Drilldown responses message.
+
+	@remote_service_response_log_id : Remote service response log Id 
+	@remote_service_type_id         : Remote service type Id
+	@response_status				: Response Status
+	@response_message				: Response Message
+	@process_id						: Process Id
+	@new_process_id					: New Process Id
+	@request_identifier				: Request Identifier
+	@response_file_name				: Response file name
+	@response_msg_detail			: Response message Detail
+	@request_msg_detail				: Request message Detail
+	@export_web_service_id			: Export web service Id
+	@generic_obj_id					: Generic object Id
+	@type							: Type
+	@source							: Source
+	@job_name						: Job name
+
+*/
+
+
+CREATE OR ALTER PROCEDURE [dbo].[spa_remote_service_response_log]
+      @flag								CHAR(50)        
+	, @remote_service_response_log_id   INT 			= NULL
+	, @remote_service_type_id           INT				= NULL
+	, @response_status                  VARCHAR(200)	= NULL
+	, @response_message					NVARCHAR(MAX)	= NULL
+	, @process_id						VARCHAR(100)    = NULL
+	, @new_process_id					VARCHAR(100)	= NULL
+	, @request_identifier				VARCHAR(MAX)	= NULL
+	, @response_file_name				VARCHAR(80)		= NULL
+	, @response_msg_detail				NVARCHAR(MAX)	= NULL
+	, @request_msg_detail				NVARCHAR(MAX)	= NULL
+	, @export_web_service_id			INT				= NULL
+	, @generic_obj_id					INT				= NULL
+	, @type                             CHAR(1)			= NULL
+	, @source                           NVARCHAR(100)	= NULL
+  	, @job_name                         NVARCHAR(400)	= NULL
+	
+AS
+
+SET NOCOUNT ON;
+
+/*
+--Added for Debugging Purpose
+DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
+SET CONTEXT_INFO @contextinfo
+EXEC spa_print 'Use spa_print instead of PRINT statement in debug mode.'
+
+DECLARE
+	 @flag								CHAR(50)        
+	, @remote_service_response_log_id   INT 			= NULL
+	, @remote_service_type_id           INT				= NULL
+	, @response_status                  VARCHAR(200)	= NULL
+	, @response_message					NVARCHAR(MAX)	= NULL
+	, @process_id						VARCHAR(100)    = NULL
+	, @new_process_id					VARCHAR(100)	= NULL
+	, @request_identifier				VARCHAR(MAX)	= NULL
+	, @response_file_name				VARCHAR(80)		= NULL
+	, @response_msg_detail				NVARCHAR(MAX)	= NULL
+	, @request_msg_detail				NVARCHAR(MAX)	= NULL
+	, @export_web_service_id			INT				= NULL
+	, @generic_obj_id					INT				= NULL
+	, @type                             CHAR(1)			= NULL
+	, @source                           NVARCHAR(100)	= NULL
+  	, @job_name                         NVARCHAR(400)	= NULL
+
+	
+--Drops all temp tables created in this scope.
+EXEC spa_drop_all_temp_table
+--*/
+
+DECLARE @SQL VARCHAR(MAX)
+DECLARE @detail_url varchar(MAX) , @url varchar(MAX)
+DECLARE @detail_description varchar(MAX)
+DECLARE @user_login_id NVARCHAR(250)
+SET @user_login_id =  dbo.FNADBUSER()
+
+
+IF @flag = 'm'
+BEGIN
+
+SET @url  = './dev/spa_html.php?__user_name__=' + @user_login_id + '&spa=exec spa_remote_service_response_log @process_id =''' + @new_process_id + ''',@flag=''s'''
+SET @detail_url =  '<a target="_blank" href="' + @url + '"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')</ul></a>' 
+
+INSERT INTO message_board (
+	 user_login_id
+	,source
+	,[description]
+	,url_desc
+	,url
+	,[type]
+	,job_name
+	,as_of_date
+	,process_id
+	)
+SELECT DISTINCT ISNULL(bpn.user_login_id, aru.user_login_id)
+	,@source
+	,ISNULL(@detail_url, 'Description is null')
+	,NULL
+	,NULL
+	,@type
+	,@job_name
+	,NULL
+	,@new_process_id
+FROM batch_process_notifications bpn
+LEFT JOIN application_role_user aru ON bpn.role_id = aru.role_Id
+WHERE bpn.process_id = RIGHT(@process_id, 13)
+	AND bpn.notification_type IN (751,752,755,756)
+	AND (bpn.user_login_id IS NOT NULL OR aru.user_login_id IS NOT NULL)
+
+END
+
+IF @flag = 'i'
+BEGIN
+	INSERT INTO remote_service_response_log (
+	  remote_service_type_id
+	, response_status
+	, response_message
+	, process_id
+	, request_identifier
+	, response_file_name
+	, response_msg_detail
+	, request_msg_detail
+	, export_web_service_id
+	, generic_obj_id
+	) 
+	VALUES (
+		  @remote_service_type_id
+		, @response_status
+		, @response_message
+		, @new_process_id
+		, @request_identifier
+		, @response_file_name
+		, @response_msg_detail
+		, @request_msg_detail
+		, @export_web_service_id
+		, @generic_obj_id
+		)
+
+
+	IF @new_process_id IS NOT NULL
+	BEGIN
+		UPDATE message_board
+		SET [description] =   IIF(@type = 's', [description], ([description] + '<font color="red">(Error(s) Found).</font>'))
+			, [source] = @source
+			, job_name = @job_name
+			, [type] = @type
+		WHERE process_id = @new_process_id
+	END
+
+END
+
+IF @flag = 's'
+BEGIN
+	 SELECT  
+		  remote_service_response_log_id [System Source ID]
+		, response_status [Response Status]
+		, response_message [Response Message]
+		, process_id [Process ID]
+		, request_identifier [Request Identifier]
+		, response_file_name [Response Filename]
+		, response_msg_detail [Response Message Detail]
+		, request_msg_detail [Request Message Detail]
+		, create_user [Create User]
+		, create_ts [Create TS]
+	FROM remote_service_response_log WHERE process_id  =  @process_id 
+END
+
+GO	
+
+
+
+
