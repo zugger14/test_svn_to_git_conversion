@@ -1,1 +1,0 @@
-php nymex.php
