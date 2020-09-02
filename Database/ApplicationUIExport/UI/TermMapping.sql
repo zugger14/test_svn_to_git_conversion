@@ -195,6 +195,11 @@ BEGIN
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20013000','no_of_days','no_of_days','No of Days','input','int','h','y',NULL,'200','y','n',NULL,'n','n','n','n','n','n','n','n',NULL,NULL,NULL)
+
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
+			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
+			VALUES('20013000','sequence','sequence','Sequence','combo','int','h','y','EXEC spa_StaticDataValues @flag=''h'', @type_id= ''978''','200','n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL)
 						
 		END 
 	
@@ -324,7 +329,8 @@ BEGIN
 		SELECT 68002,10740,67403,NULL,'General','working_day_id',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'7',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 68003,10740,67404,NULL,'General','holiday_calendar_id',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'8',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 68004,10740,67405,NULL,'General','relative_days',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 68005,10740,67406,NULL,'General','no_of_days',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+		SELECT 68005,10740,67406,NULL,'General','no_of_days',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL  UNION ALL
+		SELECT 68006,10741,67407,NULL,'General','sequence',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'12',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
 				
 		UPDATE otf
 		SET otf.new_group_id = ntg.new_id
