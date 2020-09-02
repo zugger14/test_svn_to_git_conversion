@@ -2,7 +2,7 @@
 DECLARE @web_service_url varchar(500) =   'https://demo.ez-operations.com/enercitydev/rest/1.0/tokens' --TODO Change 
  , @ContractGUID varchar(500) = 'EZ3ee6917c6a' --TODO Change 
  , @user_name varchar(50)= 'enercityapi'  --TODO change 
- , @password varchar(100) =  dbo.FNAENCRYPT('enercityapi_demo') --TODO change 
+ , @password varbinary(100) =  dbo.FNAENCRYPT('enercityapi_demo') --TODO change 
 
 IF NOT EXISTS (SELECT 1 FROM export_web_service WHERE handler_class_name = 'EznergyTDSExporter') 
 BEGIN
