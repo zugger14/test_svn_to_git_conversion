@@ -35,238 +35,238 @@
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_calc_process_table VARCHAR(500)
 DECLARE @_st VARCHAR(MAX)
 DECLARE @_source_deal_header_id VARCHAR(1000)
-
-
 IF OBJECT_ID(''tempdb..#injection_withdrawal_collection'') IS NOT NULL
     DROP TABLE #injection_withdrawal_collection
-
 SET @_calc_process_table = nullif(isnull(@_calc_process_table, nullif(''@calc_process_table'', replace(''@_calc_process_table'', ''@_'', ''@''))), ''null'')
-
 IF NULLIF(@_calc_process_table,''1900'') is null  -- debug mode only
 BEGIN
-	SET @_source_deal_header_id = ''11243''
+	SET @_source_deal_header_id = ''98082''
 	DECLARE @_user_login_id VARCHAR(50), @_process_id VARCHAR(100)
 	SET @_user_login_id = dbo.FNADBUser()
 	IF @_process_id IS NULL
-		SET @_process_id=REPLACE(NEWID(), ''-'', ''_'')
+ 		SET @_process_id=REPLACE(NEWID(), ''-'', ''_'')
 	SET @_calc_process_table = dbo.FNAProcessTableName(''calc_process_table'', @_user_login_id, @_process_id)
 	SET @_st = ''
-			CREATE TABLE ''+@_calc_process_table+''(
-				rowid INT IDENTITY(1,1),
-				counterparty_id INT,
-				contract_id INT,
-				curve_id INT,
-				prod_date DATETIME,
-				as_of_date DATETIME,
-				volume FLOAT,
-				onPeakVolume FLOAT,
-				source_deal_detail_id INT,
-				formula_id INT,
-				invoice_Line_item_id INT,			
-				invoice_line_item_seq_id INT,
-				price FLOAT,			
-				granularity INT,
-				volume_uom_id INT,
-				generator_id INT,
-				[Hour] INT,
-				commodity_id INT,
-				meter_id INT,
-				curve_source_value_id INT,
-				[mins] INT,
-				source_deal_header_id INT,
-				term_start DATETIME,
-				term_end DATETIME)	''
-		EXEC spa_print @_st
-		EXEC(@_st)	
-
-		SET @_st = '' 
-		INSERT INTO '' + @_calc_process_table + ''(counterparty_id, contract_id, curve_id, prod_date, as_of_date
-											, volume, onPeakVolume, source_deal_detail_id, formula_id
-											, invoice_Line_item_id, invoice_line_item_seq_id, price, granularity, volume_uom_id
-											, generator_id, [Hour], commodity_id, meter_id
-											, curve_source_value_id, [mins], source_deal_header_id, term_start, term_end
-											)
-		SELECT 	sdh.counterparty_id, sdh.contract_id, sdd.curve_id, cast(t.term_start as date), sdh.deal_date		
-			,  CASE WHEN sdd.buy_sell_flag = ''''s'''' THEN -1 ELSE 1 END * sdd.deal_volume, NULL onPeakVolume, sdd.source_deal_detail_id,
-			sdd.position_formula_id, NULL invoice_Line_item_id, NULL invoice_line_item_seq_id, NULL price, sdht.hourly_position_breakdown granularity, NULL volume_uom_id,
-			NULL generator_id, CASE WHEN sdht.hourly_position_breakdown IN ( 982, 987) THEN DATEPART(hh, t.term_start)+1 ELSE NULL END [hour],
-			sdh.commodity_id, NULL meter_id, 4500 curve_source_value_id,  
-			CASE WHEN sdht.hourly_position_breakdown IN (987) THEN DATEPART(MINUTE, t.term_start) ELSE 0 END [mins], sdh.source_deal_header_id, sdd.term_start, sdd.term_end
+ 				CREATE TABLE ''+@_calc_process_table+''(
+ 				rowid INT IDENTITY(1,1),
+ 				counterparty_id INT,
+ 				contract_id INT,
+ 				curve_id INT,
+ 				prod_date DATETIME,
+ 				as_of_date DATETIME,
+ 				volume FLOAT,
+ 				onPeakVolume FLOAT,
+ 				source_deal_detail_id INT,
+ 				formula_id INT,
+ 				invoice_Line_item_id INT,			
+ 				invoice_line_item_seq_id INT,
+ 				price FLOAT,			
+ 				granularity INT,
+ 				volume_uom_id INT,
+ 				generator_id INT,
+ 				[Hour] INT,
+ 				commodity_id INT,
+ 				meter_id INT,
+ 				curve_source_value_id INT,
+ 				[mins] INT,
+ 				source_deal_header_id INT,
+ 				term_start DATETIME,
+ 				term_end DATETIME,
+				location_id INT)	''
+ 		EXEC spa_print @_st
+ 		EXEC(@_st)	
+ 		SET @_st = '' 
+ 		INSERT INTO '' + @_calc_process_table + ''(counterparty_id, contract_id, curve_id, prod_date, as_of_date
+ 													, volume, onPeakVolume, source_deal_detail_id, formula_id
+ 													, invoice_Line_item_id, invoice_line_item_seq_id, price, granularity, volume_uom_id
+ 													, generator_id, [Hour], commodity_id, meter_id
+ 													, curve_source_value_id, [mins], source_deal_header_id, term_start, term_end
+													, location_id
+ 												)
+ 		SELECT 	sdh.counterparty_id, sdh.contract_id, sdd.curve_id, cast(t.term_start as date), sdh.deal_date		
+ 			,  CASE WHEN sdd.buy_sell_flag = ''''s'''' THEN -1 ELSE 1 END * sdd.deal_volume, NULL onPeakVolume, sdd.source_deal_detail_id,
+ 			sdd.position_formula_id, NULL invoice_Line_item_id, NULL invoice_line_item_seq_id, NULL price, sdht.hourly_position_breakdown granularity, NULL volume_uom_id,
+ 			NULL generator_id, CASE WHEN sdht.hourly_position_breakdown IN ( 982, 987) THEN DATEPART(hh, t.term_start)+1 ELSE NULL END [hour],
+ 			sdh.commodity_id, NULL meter_id, 4500 curve_source_value_id,  
+ 			CASE WHEN sdht.hourly_position_breakdown IN (987) THEN DATEPART(MINUTE, t.term_start) ELSE 0 END [mins], sdh.source_deal_header_id, sdd.term_start, sdd.term_end
+ 			, sdd.location_id
 		FROM  source_deal_header sdh 
-		INNER JOIN dbo.FNASplit('''''' + @_source_deal_header_id + '''''', '''','''') i ON i.item = sdh.source_deal_header_id
-		INNER JOIN source_deal_header_template sdht ON sdht.template_id = sdh.template_id
-		INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
-		CROSS APPLY [dbo].[FNATermBreakdown] (CASE sdht.hourly_position_breakdown WHEN 982 THEN ''''h'''' WHEN 980 THEN ''''m'''' 
-		WHEN 987 THEN ''''f'''' WHEN 993 THEN ''''a'''' ELSE ''''d'''' END, sdd.term_start, CASE sdht.hourly_position_breakdown WHEN 982 THEN DATEADD(hh, 23, sdd.term_end) ELSE sdd.term_end END ) t
-		''
-		EXEC spa_print @_st
-		EXEC(@_st)
+ 		INNER JOIN dbo.FNASplit('''''' + @_source_deal_header_id + '''''', '''','''') i ON i.item = sdh.source_deal_header_id
+ 		INNER JOIN source_deal_header_template sdht ON sdht.template_id = sdh.template_id
+ 		INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+ 		CROSS APPLY [dbo].[FNATermBreakdown] (CASE sdht.hourly_position_breakdown WHEN 982 THEN ''''h'''' WHEN 980 THEN ''''m'''' 
+ 		WHEN 987 THEN ''''f'''' WHEN 993 THEN ''''a'''' ELSE ''''d'''' END, sdd.term_start, CASE sdht.hourly_position_breakdown WHEN 982 THEN DATEADD(hh, 23, sdd.term_end) ELSE sdd.term_end END ) t
+ 		''
+ 		EXEC spa_print @_st
+ 		EXEC(@_st)
 END
---EXEC(''select * from '' + @_calc_process_table)
-
-SELECT
-	sdd.location_id
-	, sdh.source_deal_header_id source_deal_header_id
-	, NULL buy_deal_id
-	, sdd.term_start
-	, sdd.term_end
- 	, sdd.buy_sell_flag   
-	, MAX(sdd.deal_volume) deal_volume
-	, MAX(sdht.template_name) template_name
-	INTO #injection_withdrawal_collection  
-FROM source_deal_header sdh
-INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id 
-INNER JOIN source_deal_type sdt ON sdt.source_deal_type_id = sdh.source_deal_type_id
-INNER JOIN source_deal_type sub_sdt ON sub_sdt.source_deal_type_id = sdh.deal_sub_type_type_id
-LEFT JOIN source_deal_header_template sdht ON sdht.template_id = sdh.template_id
-WHERE 1 = 1
-	AND sdh.source_deal_header_id IN( 11160 , 11171)
-	AND sdt.deal_type_id = ''Storage''
-	AND template_name IN (''Storage Injection'', ''Storage WithDrawal'')
-GROUP BY sdd.term_start
-	, sdh.source_deal_header_id
-	, sdd.location_id
-	, sdd.term_start
-	, sdd.term_end
-	, buy_sell_flag   
-	, sdd.source_deal_detail_id
-	, sdht.template_name
+CREATE TABLE #injection_withdrawal_collection(
+	location_id					INT
+	, source_deal_header_id		INT
+	, buy_deal_id				INT
+	, term_start				DATETIME
+	, term_end					DATETIME
+	, buy_sell_flag				CHAR(1)   
+	, deal_volume				NUMERIC(38, 18)
+	, template_name				VARCHAR(1000)
+)
+SET @_st = ''
+	INSERT INTO #injection_withdrawal_collection
+	SELECT
+ 		sdd.location_id
+ 		, sdh.source_deal_header_id source_deal_header_id
+ 		, NULL buy_deal_id
+ 		, sdd.term_start
+ 		, sdd.term_end
+  		, sdd.buy_sell_flag   
+ 		, MAX(sdd.deal_volume) deal_volume
+ 		, MAX(sdht.template_name) template_name
+	FROM source_deal_header sdh
+	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id 
+	INNER JOIN source_deal_type sdt ON sdt.source_deal_type_id = sdh.source_deal_type_id
+	--INNER JOIN source_deal_type sub_sdt ON sub_sdt.source_deal_type_id = sdh.deal_sub_type_type_id
+	INNER JOIN '' + @_calc_process_table + '' ll ON ll.location_id = sdd.location_id
+		--AND sdd.term_start = ll.term_start
+	LEFT JOIN source_deal_header_template sdht ON sdht.template_id = sdh.template_id
+	WHERE 1 = 1
+ 		AND sdt.deal_type_id = ''''Storage''''
+ 		AND template_name IN (''''Storage Injection'''', ''''Storage WithDrawal'''')
+		AND sdd.deal_volume IS NOT NULL
+	GROUP BY sdd.term_start
+ 		, sdh.source_deal_header_id
+ 		, sdd.location_id
+ 		, sdd.term_start
+ 		, sdd.term_end
+ 		, buy_sell_flag   
+ 		, sdd.source_deal_detail_id
+ 		, sdht.template_name ''
+EXEC spa_print @_st
+EXEC(@_st)	
 
 IF OBJECT_ID(''tempdb..#generation_deals'') IS NOT NULL
 	DROP TABLE #generation_deals
-
 SELECT 
-	sdd.location_id
-	, sdh.source_deal_header_id source_deal_header_id
-	, NULL buy_deal_id
-	, sdd.term_start
-	, sdd.term_end
- 	, sdd.buy_sell_flag   
-	, MAX(sdd.deal_volume) deal_volume
-	, ''Generation'' template_name
-	--, sdt.deal_type_id
-	, sc.source_commodity_id commodity_id
-	INTO #generation_deals
+ 	sdd.location_id
+ 	, sdh.source_deal_header_id source_deal_header_id
+ 	, NULL buy_deal_id
+ 	, sdd.term_start
+ 	, sdd.term_end
+  	, sdd.buy_sell_flag   
+ 	, MAX(sdd.deal_volume) deal_volume
+ 	, ''Generation'' template_name
+ 	--, sdt.deal_type_id
+ 	, sc.source_commodity_id commodity_id
+ 	INTO #generation_deals
 FROM source_deal_header sdh
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id 
 INNER JOIN source_deal_type sdt ON sdt.source_deal_type_id = sdh.source_deal_type_id
-LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
-INNER JOIN source_commodity sc ON sc.source_commodity_id = ISNULL(sdd.detail_commodity_id, spcd.commodity_id)
+INNER JOIN source_commodity sc ON sc.source_commodity_id = sdh.commodity_id 
+INNER JOIN source_system_book_map ssbm ON ssbm.book_deal_type_map_id = sdh.sub_book
 WHERE 1 = 1 
-	AND sdd.Leg =  2
-	AND sc.commodity_id = ''GAS''
-	AND sdt.deal_type_id = ''Generation''
-	AND sdh.source_deal_header_id IN (7248)
+ 	AND sc.commodity_id = ''GAS''
+ 	AND sdt.deal_type_id = ''Generation''
+	AND ssbm.logical_name = ''ConvGen''
+	AND sdh.close_reference_id IS NULL
 GROUP BY sdd.term_start
-	, sdh.source_deal_header_id
-	, sdd.location_id
-	, sdd.term_start
-	, sdd.term_end
-	, buy_sell_flag   
- 	, sdd.source_deal_detail_id
-	, sc.source_commodity_id
+ 	, sdh.source_deal_header_id
+ 	, sdd.location_id
+ 	, sdd.term_start
+ 	, sdd.term_end
+ 	, buy_sell_flag   
+  	, sdd.source_deal_detail_id
+ 	, sc.source_commodity_id
 
 IF OBJECT_ID(''tempdb..#position'') IS NOT NULL
     DROP TABLE #position
-
 IF OBJECT_ID(''tempdb..#position_generation'') IS NOT NULL
     DROP TABLE #position_generation
-
 SELECT t1.location_id,rhpd.term_start
---,  rhpd.hr1
---,  rhpd.curve_id , sdd01.curve_id
-	 , SUM(rhpd.hr1) hr1 
-	, SUM(rhpd.hr2) hr2 
-	, SUM(rhpd.hr3) hr3 
-	, SUM(rhpd.hr4) hr4 
-	, SUM(rhpd.hr5) hr5 
-	, SUM(rhpd.hr6) hr6 
-	, SUM(rhpd.hr7) hr7 
-	, SUM(rhpd.hr8) hr8 
-	, SUM(rhpd.hr9 ) hr9 
-	, SUM(rhpd.hr10) hr10
-	, SUM(rhpd.hr11) hr11
-	, SUM(rhpd.hr12) hr12
-	, SUM(rhpd.hr13) hr13
-	, SUM(rhpd.hr14) hr14
-	, SUM(rhpd.hr15) hr15
-	, SUM(rhpd.hr16) hr16
-	, SUM(rhpd.hr17) hr17
-	, SUM(rhpd.hr18) hr18
-	, SUM(rhpd.hr19) hr19
-	, SUM(rhpd.hr20) hr20
-	, SUM(rhpd.hr21) hr21
-	, SUM(rhpd.hr22) hr22
-	, SUM(rhpd.hr23) hr23
-	, SUM(rhpd.hr24) hr24
-	, t1.template_name
+ 	, SUM(rhpd.hr1) hr1 
+ 	, SUM(rhpd.hr2) hr2 
+ 	, SUM(rhpd.hr3) hr3 
+ 	, SUM(rhpd.hr4) hr4 
+ 	, SUM(rhpd.hr5) hr5 
+ 	, SUM(rhpd.hr6) hr6 
+ 	, SUM(rhpd.hr7) hr7 
+ 	, SUM(rhpd.hr8) hr8 
+ 	, SUM(rhpd.hr9 ) hr9 
+ 	, SUM(rhpd.hr10) hr10
+ 	, SUM(rhpd.hr11) hr11
+ 	, SUM(rhpd.hr12) hr12
+ 	, SUM(rhpd.hr13) hr13
+ 	, SUM(rhpd.hr14) hr14
+ 	, SUM(rhpd.hr15) hr15
+ 	, SUM(rhpd.hr16) hr16
+ 	, SUM(rhpd.hr17) hr17
+ 	, SUM(rhpd.hr18) hr18
+ 	, SUM(rhpd.hr19) hr19
+ 	, SUM(rhpd.hr20) hr20
+ 	, SUM(rhpd.hr21) hr21
+ 	, SUM(rhpd.hr22) hr22
+ 	, SUM(rhpd.hr23) hr23
+ 	, SUM(rhpd.hr24) hr24
+ 	, t1.template_name
 INTO #position
 FROM #injection_withdrawal_collection t1  
- INNER JOIN report_hourly_position_deal rhpd on rhpd.source_deal_header_id = t1.source_deal_header_id
-	AND rhpd.location_id = t1.location_id 
-	--AND rhpd.term_start = t1.term_start 
-	AND rhpd.term_start BETWEEN t1.term_start AND t1.term_end
+INNER JOIN report_hourly_position_deal rhpd on rhpd.source_deal_header_id = t1.source_deal_header_id
+ 	AND rhpd.location_id = t1.location_id 
+ 	--AND rhpd.term_start = t1.term_start 
+ 	AND rhpd.term_start BETWEEN t1.term_start AND t1.term_end
 WHERE  t1.template_name <> ''generation''
 GROUP BY t1.location_id,rhpd.term_start, t1.template_name
-
-SELECT NULL location_id
-	, rhpd.term_start
-  	, SUM(rhpd.hr1) hr1 
-	, SUM(rhpd.hr2) hr2 
-	, SUM(rhpd.hr3) hr3 
-	, SUM(rhpd.hr4) hr4 
-	, SUM(rhpd.hr5) hr5 
-	, SUM(rhpd.hr6) hr6 
-	, SUM(rhpd.hr7) hr7 
-	, SUM(rhpd.hr8) hr8 
-	, SUM(rhpd.hr9) hr9 
-	, SUM(rhpd.hr10) hr10
-	, SUM(rhpd.hr11) hr11
-	, SUM(rhpd.hr12) hr12
-	, SUM(rhpd.hr13) hr13
-	, SUM(rhpd.hr14) hr14
-	, SUM(rhpd.hr15) hr15
-	, SUM(rhpd.hr16) hr16
-	, SUM(rhpd.hr17) hr17
-	, SUM(rhpd.hr18) hr18
-	, SUM(rhpd.hr19) hr19
-	, SUM(rhpd.hr20) hr20
-	, SUM(rhpd.hr21) hr21
-	, SUM(rhpd.hr22) hr22
-	, SUM(rhpd.hr23) hr23
-	, SUM(rhpd.hr24) hr24
-	, t1.template_name
-	, rhpd.source_deal_header_id 
-	INTO #position_generation
+ SELECT NULL location_id
+ 	, rhpd.term_start
+   	, SUM(rhpd.hr1) hr1 
+ 	, SUM(rhpd.hr2) hr2 
+ 	, SUM(rhpd.hr3) hr3 
+ 	, SUM(rhpd.hr4) hr4 
+ 	, SUM(rhpd.hr5) hr5 
+ 	, SUM(rhpd.hr6) hr6 
+ 	, SUM(rhpd.hr7) hr7 
+ 	, SUM(rhpd.hr8) hr8 
+ 	, SUM(rhpd.hr9) hr9 
+ 	, SUM(rhpd.hr10) hr10
+ 	, SUM(rhpd.hr11) hr11
+ 	, SUM(rhpd.hr12) hr12
+ 	, SUM(rhpd.hr13) hr13
+ 	, SUM(rhpd.hr14) hr14
+ 	, SUM(rhpd.hr15) hr15
+ 	, SUM(rhpd.hr16) hr16
+ 	, SUM(rhpd.hr17) hr17
+ 	, SUM(rhpd.hr18) hr18
+ 	, SUM(rhpd.hr19) hr19
+ 	, SUM(rhpd.hr20) hr20
+ 	, SUM(rhpd.hr21) hr21
+ 	, SUM(rhpd.hr22) hr22
+ 	, SUM(rhpd.hr23) hr23
+ 	, SUM(rhpd.hr24) hr24
+ 	, t1.template_name
+ 	, rhpd.source_deal_header_id 
+ 	INTO #position_generation
 FROM #generation_deals t1  
- INNER JOIN report_hourly_position_profile rhpd on rhpd.source_deal_header_id = t1.source_deal_header_id
-where  rhpd.location_id = t1.location_id 
-AND rhpd.commodity_id = t1.commodity_id 
---AND rhpd.term_start = t1.term_start 
-	AND rhpd.term_start BETWEEN t1.term_start AND t1.term_end
-AND  t1.template_name = ''generation''
+INNER JOIN report_hourly_position_profile rhpd on rhpd.source_deal_header_id = t1.source_deal_header_id
+WHERE  rhpd.location_id = t1.location_id 
+	AND rhpd.commodity_id = t1.commodity_id 
+ 	AND rhpd.term_start BETWEEN t1.term_start AND t1.term_end
+	AND  t1.template_name = ''generation''
 GROUP BY rhpd.term_start, t1.template_name, rhpd.source_deal_header_id 
-
 IF OBJECT_ID(''tempdb..#position_unpvt'') IS NOT NULL
     DROP TABLE #position_unpvt
-
 IF OBJECT_ID(''tempdb..#position_unpvt_generation'') IS NOT NULL
     DROP TABLE #position_unpvt_generation
-
 SELECT unpvt.location_id,unpvt.term_start,unpvt.[hour],ABS(unpvt.[value]) [value], template_name
 INTO #position_unpvt
 FROM
-	(
-	SELECT location_id,term_start,hr1 [1],hr2 [2],hr3 [3],hr4 [4],hr5 [5],hr6 [6]
+(
+SELECT location_id,term_start,hr1 [1],hr2 [2],hr3 [3],hr4 [4],hr5 [5],hr6 [6]
 	,hr7 [7],hr8 [8],hr9 [9],hr10 [10],hr11 [11],hr12 [12],hr13 [13],hr14 [14]
 	,hr15 [15],hr16 [16],hr17 [17],hr18 [18],hr19 [19],hr20 [20],hr21 [21],hr22 [22],hr23 [23],hr24 [24], template_name
-	FROM #position 
-	) P
-	UNPIVOT (value for hour IN ([1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13]
-		,[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24])
-	) AS unpvt;
-
-SELECT unpvt.location_id,unpvt.term_start,unpvt.[hour], ABS(unpvt.[value]) [value], template_name
+FROM #position 
+) P
+UNPIVOT (value for hour IN ([1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13]
+ 	,[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24])
+) AS unpvt;
+SELECT MAX(unpvt.location_id) location_id,unpvt.term_start,unpvt.[hour], SUM(ABS(unpvt.[value])) [value], MAX(template_name) template_name
 INTO #position_unpvt_generation
 FROM (
 	SELECT location_id,term_start,hr1 [1],hr2 [2],hr3 [3],hr4 [4],hr5 [5],hr6 [6]
@@ -275,84 +275,78 @@ FROM (
 	FROM #position_generation 
 	) P
 	UNPIVOT (value for hour IN ([1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13]
-		,[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24])
-	) as unpvt;
-
- 
-
+ 		,[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24])
+) AS unpvt
+GROUP BY unpvt.term_start,unpvt.[hour] ;
 IF OBJECT_ID(''tempdb..#inj_with_hrly'') IS NOT NULL
 	DROP TABLE #inj_with_hrly
-
-SELECT location_id,  term_start, CAST([hour] as int) [hour], [Storage injection], [Storage withdrawal]
-	INTO #inj_with_hrly
+SELECT MAX(location_id) location_id, term_start, CAST([hour] AS int) [hour], SUM([Storage injection]) [Storage injection], SUM([Storage withdrawal]) [Storage withdrawal]
+INTO #inj_with_hrly
 FROM (
 	SELECT location_id,term_start,[hour], template_name , [value]
 	FROM #position_unpvt
-	) up
+) up
 PIVOT (SUM([value]) FOR template_name IN ([Storage withdrawal], [Storage injection], [Generation])) AS pvt
-
+GROUP BY term_start, [hour]    
 IF OBJECT_ID(''tempdb..#pre_final_data'') IS NOT NULL
 	DROP TABLE #pre_final_data
-
 SELECT 
-	  iwh.[location_id]
+ 	iwh.[location_id]
 	, iwh.[term_start]
 	, iwh.[hour]
 	, iwh.[Storage injection]
 	, iwh.[Storage withdrawal]
-	, SUM(iwh.[Storage injection] - iwh.[Storage withdrawal])  OVER(ORDER BY  iwh.term_start,iwh.[hour]) [Cumm Inv]
+	, SUM(iwh.[Storage injection] - ISNULL(iwh.[Storage withdrawal], 0))  OVER(ORDER BY  iwh.term_start,iwh.[hour]) [Cumm Inv]
 	, pug.[value] [Gas Plant Demand]
-	, CAST(pug.[value] * 0.075 AS NUMERIC(28, 18)) [Tolerance Level]
+	, CAST(ISNULL(pug.[value], 0) * 0.075 AS NUMERIC(28, 18)) [Tolerance Level]
 	, CAST(0 AS NUMERIC (38, 18)) [Tolerance Violated]
-	INTO #pre_final_data
+INTO #pre_final_data
 FROM #inj_with_hrly iwh 
 LEFT JOIN #position_unpvt_generation pug ON pug.term_start = iwh.term_start
 	AND pug.[hour] = iwh.[hour]
-ORDER BY iwh.term_start, iwh.[hour]
-
+ 
 UPDATE f
 SET f.[Tolerance Violated] = CASE WHEN ([Cumm Inv] - [Tolerance Level] > 0) THEN CAST([Cumm Inv] - [Tolerance Level] AS NUMERIC(38, 18)) ELSE 0.0000 END  
 FROM #pre_final_data f 
-
+--select * from #pre_final_data order by term_start, hour 
+--return 
 SET @_st = ''
-			UPDATE sdd 
-			SET sdd.deal_volume = pos.[value]  
-			--select *, pos.[value]  
-			FROM ''+ @_calc_process_table +'' s
-			INNER JOIN source_deal_detail sdd on sdd.source_deal_detail_id = s.source_deal_detail_id
-			INNER JOIN (SELECT location_id
-							, term_start
-							, SUM([Tolerance Violated]) value
-						FROM #pre_final_data 
-						GROUP BY location_id, term_start
-					) pos on pos.location_id = sdd.location_id 
-				AND pos.term_start = s.prod_date  ''
+ 			UPDATE sdd 
+ 			SET sdd.deal_volume = pos.[value]  
+ 			--select *, pos.[value]  
+ 			FROM ''+ @_calc_process_table +'' s
+ 			INNER JOIN source_deal_detail sdd on sdd.source_deal_detail_id = s.source_deal_detail_id
+ 			INNER JOIN (SELECT location_id
+ 							, term_start
+ 							, SUM([Tolerance Violated]) value
+ 						FROM #pre_final_data 
+ 						GROUP BY location_id, term_start
+ 					) pos on pos.location_id = sdd.location_id 
+ 				AND pos.term_start = s.prod_date  ''
 EXEC spa_print @_st
 EXEC(@_st)
-
---EXEC(''select * from '' + @_calc_process_table)
 
 SET @_st=''
-		SELECT DISTINCT 
-			s.source_deal_header_id,
-			s.source_deal_detail_id,
-			s.counterparty_id,
-			s.contract_id,
-			s.prod_date,
-			s.[hour],
-			s.[mins],
-			ABS(pos.[Tolerance Violated]) [value],
-			'''''' + @_calc_process_table + '''''' calc_process_table
-			--[__batch_report__]
-		FROM ''+ @_calc_process_table +'' s
-		INNER JOIN source_deal_detail sdd on sdd.source_deal_detail_id=s.source_deal_detail_id
-		INNER JOIN #pre_final_data pos on pos.location_id = sdd.location_id AND pos.term_start=s.prod_date AND pos.[hour] = s.[hour]
-		order by 5,6
-''
+ 		SELECT DISTINCT 
+ 			s.source_deal_header_id,
+ 			s.source_deal_detail_id,
+ 			s.counterparty_id,
+ 			s.contract_id,
+ 			s.prod_date,
+ 			s.[hour],
+ 			s.[mins],
+ 			ABS(pos.[Tolerance Violated]) [value],
+ 			'''''' + @_calc_process_table + '''''' calc_process_table
+ 			--[__batch_report__]
+ 		FROM ''+ @_calc_process_table +'' s
+ 		INNER JOIN source_deal_detail sdd on sdd.source_deal_detail_id=s.source_deal_detail_id
+ 		INNER JOIN #pre_final_data pos on pos.location_id = sdd.location_id AND pos.term_start=s.prod_date AND pos.[hour] = s.[hour]
+ 		--order by 5,6
+ ''
 EXEC spa_print @_st
 EXEC(@_st)
---*/
- ', report_id = @report_id_data_source_dest,
+ --*/
+  ', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106501' 
 	WHERE [name] = 'FlexPosition'
