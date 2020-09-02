@@ -2,6 +2,31 @@ IF OBJECT_ID(N'[dbo].[spa_convert_xml]', N'P') IS NOT NULL
     DROP PROCEDURE [dbo].[spa_convert_xml]
 GO
 
+/**
+	Used to generated xml for regulatory reporting (remit,ecm)
+
+	Parameters
+	@sub_id				 : Subsidiay ID
+	@stra_id			 : Strategy ID
+	@book_id			 : Book ID
+	@sub_book_id		 : Sub Book ID
+	@Delivery_Start_Date : Delivery Start Date
+	@Delivery_End_Date	 : Delivery End Date
+	@process_id			 : Process ID
+	@report_type		 : Report Type
+	@mirror_reporting	 : 1 for enabling mirror reporting
+	@intragroup			 : Intra Group
+	@as_of_date			 : As of Date
+	@generate_uti		 : 1 for generating UTI
+	@batch_process_id	 : Batch Process ID
+	@batch_report_param  : Batch Report Param
+	@enable_paging		 : Enable Paging
+	@page_size			 : Page Size
+	@page_no			 : Page Number
+	@call_from_export	 : Call from export
+	@xml_out             : Generated xml
+*/
+
 CREATE PROCEDURE [dbo].[spa_convert_xml]
 	@sub_id VARCHAR(1000) = NULL,
 	@stra_id VARCHAR(1000) = NULL,
@@ -136,7 +161,7 @@ BEGIN
 	DECLARE @msg VARCHAR(100)
 	SET @msg = IIF(@report_type IS NOT NULL, 'Remit ' + @report_code + ' Report', 'ECM XML Report')
 
-	SELECT @str_batch_table = dbo.FNABatchProcess('x', @batch_process_id, @batch_report_param, @as_of_date, 'spa_convert_xml', @msg)   
+	SELECT @str_batch_table = dbo.FNABatchProcess('c', @batch_process_id, @batch_report_param, @as_of_date, 'spa_convert_xml', @msg)   
 	EXEC (@str_batch_table)     
 	RETURN
 END

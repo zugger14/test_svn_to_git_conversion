@@ -171,4 +171,4 @@ COMMIT
 			IF OBJECT_ID('tempdb..#temp_all_grids_columns') IS NOT NULL
 				DROP TABLE #temp_all_grids_columns
 				
-		END 
+		END     

@@ -8,6 +8,39 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
+/**
+	Used for Remit reporting
+
+	Parameters
+	@create_date_from		   : Create Date From
+	@create_date_to			   : Create Date To
+	@generate_xml			   : Generate XML
+	@generate_uti			   : - '1' Generate UTI
+	                             - '0' UTI won't be generated
+	@report_type			   :  Report Type
+	@process_id				   :  Process ID
+	@flag					   :  Flag
+								  - 'i' Generate report
+								  - 'r'	Capture response
+	@batch_unique_id		   : Batch Unique ID
+	@cancellation			   : Cancellation
+	@source					   : Source
+	@mirror_reporting		   : Mirror reporting1 
+	                             - '1' -> Mirror reporting
+								 - '0' -> Mirror reporting is not done
+	@intragroup				   :  Intra Group
+	@as_of_date				   : As of date
+	@batch_file_path		   : Batch File Path
+	@force_process			   : Force Process
+	@sub_type				   : Sub Type
+	@include_bfi			   : Include BFI 
+	@submission_type		   : Submission Type
+	@submission_status		   : Submission Status
+	@filter_table_process_id   : Filter Table Process ID
+	@batch_process_id		   : Batch process ID
+	@batch_report_param	       : Batch report param
+*/
+
 CREATE PROCEDURE [dbo].[spa_remit]
 	@create_date_from VARCHAR(100) = NULL,
 	@create_date_to VARCHAR(100) = NULL,
@@ -63,9 +96,20 @@ SET NOCOUNT ON
 /*************************************Hardcoding Value Start********************************************************/
 DECLARE @RRM VARCHAR(50),
         @RRM_code CHAR(3),
-        @dayaheadcurve VARCHAR(500)
+        @dayaheadcurve VARCHAR(500),
+		@output_result NVARCHAR(MAX),
+	    @download_files NVARCHAR(MAX),
+	    @xml_file_content VARCHAR(MAX),
+	    @remote_location NVARCHAR(2000),
+	    @server_location NVARCHAR(1000),
+        @user_name VARCHAR(50),
+	    @desc_success VARCHAR(MAX),
+	    @url VARCHAR(MAX),
+	    @process_table VARCHAR(200),
+	    @full_file_path VARCHAR(200),
+	    @email_description VARCHAR(MAX)
 
-SET @RRM = 'B0000116N.NO'---RWE Group Business Services GmbH
+SET @RRM = 'B00001014.NL'---RWE Group Business Services GmbH
 SET @RRM_code = 'ACE'
 SET @dayaheadcurve = '23,164,166,198,199,1959,1958,169,165,486,82,206,207,10,152,155,5,145,352,97,355'
 
@@ -170,7 +214,7 @@ BEGIN
 		DROP TABLE #remit_message_validate
 
 	CREATE TABLE #remit_message_validate (
-		ID VARCHAR(100)
+		ID VARCHAR(100) COLLATE DATABASE_DEFAULT
 	)
 
 	DECLARE @sql_message_validate VARCHAR(MAX)
@@ -780,12 +824,23 @@ BEGIN
 				@col_delivery_start AS VARCHAR(500), @col_delivery_end AS VARCHAR(500), @col_price AS VARCHAR(500), @col_total_contract_value AS VARCHAR(500),
 				@col_contract_capacity VARCHAR(100), @col_buyer_hubcode VARCHAR(100), @col_seller_hubcode VARCHAR(100), @col_trader_name VARCHAR(100),
 				@col_reference_document_id AS VARCHAR(500), @col_reference_document_version AS VARCHAR(500), @col_broker_fee VARCHAR(100),
-				@file_path VARCHAR(1000), @baseload_block_define_id INT, @xml_string VARCHAR(MAX), @result VARCHAR(MAX), @file_name VARCHAR(255)
+				@file_path VARCHAR(1000), @baseload_block_define_id INT, @xml_string VARCHAR(MAX), @result VARCHAR(MAX), @file_name VARCHAR(255), @xml_inner4 XML,
+				@include_broker NVARCHAR(12) = 'n', @file_name_export NVARCHAR(MAX) = '', @file_transfer_endpoint_id INT, @ecm_document_type NVARCHAR(20)
+				, @mapping_table_id INT
+
+	
+		SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id
+		FROM file_transfer_endpoint
+		WHERE [name] = 'Enercity SFTP ECM'
 		
 		SELECT @file_path = gmv.clm1_value
 		FROM generic_mapping_header gmh
 		INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id
 		WHERE gmh.mapping_name = 'Ecm_Config'
+
+		SELECT @mapping_table_id = mapping_table_id
+		FROM generic_mapping_header
+		WHERE mapping_name = 'ECM Broker'
 
 		SELECT @file_path = ISNULL(@file_path, document_path + '/temp_Note/')
 		FROM connection_string
@@ -818,44 +873,103 @@ BEGIN
 					   seller_party, load_type, agreement, currency, CAST(total_volume AS NUMERIC(38,2)), total_volume_unit, 
 					   trade_date, capacity_unit, price_unit_currency, price_unit_capacity_unit, delivery_start, delivery_end,
 					   price, CAST(total_contract_value AS NUMERIC(38,2)), CAST(contract_capacity AS NUMERIC(38,2)),
-					   buyer_hubcode, seller_hubcode, trader_name
+					   buyer_hubcode, seller_hubcode, trader_name, ecm_document_type, CAST(broker_fee AS NUMERIC(38,2))
 			    FROM source_ecm se																												  
 			    WHERE process_id = @process_id
-					AND ecm_document_type = 'CNF'																			  
+					AND ecm_document_type IN ('CNF', 'BCN')																			  
 				    AND error_validation_message IS NULL 	
 			OPEN c1 
 			FETCH NEXT FROM c1 INTO @col_source_deal_header_id, @col_document_id, @col_document_usage, @col_sender_id, @col_receiver_id, @col_receiver_role, @col_document_version, @col_market, @col_commodity, @col_transaction_type, @col_delivery_point_area,
 									@col_buyer_party, @col_seller_party, @col_load_type, @col_agreement, @col_currency, @col_total_volume, @col_total_volume_unit, @col_trade_date, @col_capacity_unit, @col_price_unit_currency, @col_price_unit_capacity_unit,
-									@col_delivery_start, @col_delivery_end, @col_price, @col_total_contract_value, @col_contract_capacity, @col_buyer_hubcode, @col_seller_hubcode, @col_trader_name
+									@col_delivery_start, @col_delivery_end, @col_price, @col_total_contract_value, @col_contract_capacity, @col_buyer_hubcode, @col_seller_hubcode, @col_trader_name, @ecm_document_type
+									,@col_broker_fee
 		    WHILE @@FETCH_STATUS = 0
 		    BEGIN
 				TRUNCATE TABLE #tempblock
+				
+				SELECT @include_broker = 'y'
+				FROM source_deal_header sdh
+				INNER JOIN maintain_udf_static_data_detail_values musddv
+						ON musddv.primary_field_object_id = sdh.broker_id
+					INNER JOIN application_ui_template_fields autf
+						ON autf.application_field_id = musddv.application_field_id
+					INNER JOIN user_defined_fields_template udft
+						ON udft.udf_template_id = autf.udf_template_id
+				WHERE sdh.source_deal_header_id = @col_source_deal_header_id
+				AND sdh.broker_id IS NOT NULL
+				AND udft.Field_label = 'ECM Reportable'
+				AND ISNULL(musddv.static_data_udf_values, 'n') = 'y'
 
-			    IF @col_commodity = 'Gas'
-			    BEGIN
+				IF @include_broker = 'y'
+				BEGIN
+					IF EXISTS(SELECT 1 
+							  FROM source_deal_header sdh
+							  LEFT JOIN setup_submission_rule ssr
+								ON ssr.counterparty_id = sdh.counterparty_id
+								AND ssr.submission_type_id = 44705
+							  WHERE ssr.rule_id IS NULL
+					)
+					BEGIN
+						SELECT @col_trader_name = NULL
+						SELECT @xml_inner4 = (SELECT 'Broker' AS [Agent/AgentType]
+							,sc.counterparty_name AS [Agent/AgentName]
+							,gmv.clm2_value AS [Agent/Broker/BrokerID]
+							,@col_broker_fee [Agent/Broker/TotalFee]
+						   -- ,@col_currency AS [Agent/Broker/FeeCurrency]
+						FROM source_deal_header sdh
+						INNER JOIN source_counterparty sc
+							ON sc.source_counterparty_id = 	sdh.broker_id
+						LEFT JOIN generic_mapping_values gmv
+							ON gmv.mapping_table_id = @mapping_table_id
+							AND gmv.clm1_value = CAST(sdh.broker_id AS VARCHAR(20))
+						WHERE sdh.source_deal_header_id = @col_source_deal_header_id
+						FOR XML PATH(''), ROOT('Agents'))
+					END
+					ELSE
+					BEGIN
+						SELECT @xml_inner4 = (SELECT 'Broker' AS [Agent/AgentType]
+											  ,sc.counterparty_name AS [Agent/AgentName]
+											 ,gmv.clm2_value AS [Agent/Broker/BrokerID]
+						FROM source_deal_header sdh
+						INNER JOIN source_counterparty sc
+							ON sc.source_counterparty_id = sdh.broker_id
+						LEFT JOIN generic_mapping_values gmv
+							ON gmv.mapping_table_id = @mapping_table_id
+							AND gmv.clm1_value = CAST(sdh.broker_id AS VARCHAR(20))
+						WHERE sdh.source_deal_header_id = @col_source_deal_header_id
+						FOR XML PATH(''), ROOT('Agents'))
+					END				
+				END
+				ELSE
+				BEGIN
+					SET @xml_inner4 = NULL
+				END
+
+				IF @col_commodity = 'Gas'
+				BEGIN
 					IF NOT EXISTS (
 						SELECT 1 
 						FROM source_deal_header 
 						WHERE source_deal_header_id = @col_source_deal_header_id
 							AND ISNULL(block_define_id, @baseload_block_define_id) = @baseload_block_define_id
 					)
-				    BEGIN
+					BEGIN
 						INSERT INTO #tempblock(hr, source_deal_header_id, term_date, hr_mult)
 						SELECT CAST(SUBSTRING([hour], 3, 5) AS INT) hr,
-							   source_deal_header_id,
-							   term_date,
-							   hr_mult
+								source_deal_header_id,
+								term_date,
+								hr_mult
 						FROM (
 							SELECT se.process_id, se.ecm_document_type, se.error_validation_message, se.source_deal_header_id,
-								   hb.term_date, hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13, hr14,
-								   hr15, hr16, hr17, hr18, hr19, hr20, hr21, hr22, hr23, hr24
+									hb.term_date, hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13, hr14,
+									hr15, hr16, hr17, hr18, hr19, hr20, hr21, hr22, hr23, hr24
 							FROM source_ecm se
 							INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = se.source_deal_header_id
 							CROSS APPLY (
 								SELECT h.hr7 AS hr1, h.hr8 AS hr2, h.hr9 AS hr3, h.hr10 AS hr4, h.hr11 AS hr5, h.hr12 AS hr6, h.hr13 AS hr7,
-									   h.hr14 AS hr8, h.hr15 AS hr9, h.hr16 AS hr10, h.hr17 AS hr11, h.hr18 AS hr12, h.hr19 AS hr13, h.hr20 AS hr14,
-									   h.hr21 AS hr15, h.hr22 AS hr16, h.hr23 AS hr17, h.hr24 AS hr18, h1.hr1 AS hr19, h1.hr2 AS hr20, h1.hr3 AS hr21,
-									   h1.hr4 AS hr22, h1.hr5 AS hr23, h1.hr6 AS hr24, h.term_Date
+										h.hr14 AS hr8, h.hr15 AS hr9, h.hr16 AS hr10, h.hr17 AS hr11, h.hr18 AS hr12, h.hr19 AS hr13, h.hr20 AS hr14,
+										h.hr21 AS hr15, h.hr22 AS hr16, h.hr23 AS hr17, h.hr24 AS hr18, h1.hr1 AS hr19, h1.hr2 AS hr20, h1.hr3 AS hr21,
+										h1.hr4 AS hr22, h1.hr5 AS hr23, h1.hr6 AS hr24, h.term_Date
 								FROM hour_block_term h WITH (NOLOCK) 
 								LEFT JOIN hour_block_term h1 (NOLOCK) ON h1.block_define_id = h.block_define_id
 									AND h1.block_type = 12000
@@ -871,84 +985,85 @@ BEGIN
 						) AS unpvt  
 						WHERE unpvt.source_deal_header_id = @col_source_deal_header_id
 							AND unpvt.process_id = @process_id
-							AND unpvt.ecm_document_type = 'CNF'
+							AND unpvt.ecm_document_type = @ecm_document_type
 							AND unpvt.error_validation_message IS NULL
 
  						SELECT @xml_inner3 = (
 							SELECT CONVERT(VARCHAR(19), DATEADD(hh, 6, DATEADD(hh, min(hr-1), term_date)), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
-								   CONVERT(VARCHAR(19), DATEADD(hh, 6, DATEADD(hh, max(hr), term_date)), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
-								   @col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
-								   @col_price AS [TimeIntervalQuantity/Price]
+									CONVERT(VARCHAR(19), DATEADD(hh, 6, DATEADD(hh, max(hr), term_date)), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+									@col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
+									@col_price AS [TimeIntervalQuantity/Price]
 							FROM #tempblock WHERE hr_mult = 1
 							GROUP BY term_date
 							ORDER BY term_date
 							FOR XML PATH(''), ROOT('TimeIntervalQuantities')
 						)
-				    END
+					END
 					ELSE
-				    BEGIN
+					BEGIN
  						SELECT @xml_inner3 = (
 							SELECT CONVERT(VARCHAR(19), CAST(@col_delivery_start AS DATETIME), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
-								   CONVERT(VARCHAR(19), CAST(@col_delivery_end AS DATETIME), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
-								   @col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
-								   @col_price AS [TimeIntervalQuantity/Price]
+									CONVERT(VARCHAR(19), CAST(@col_delivery_end AS DATETIME), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+									@col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
+									@col_price AS [TimeIntervalQuantity/Price]
 							FOR XML PATH(''), ROOT('TimeIntervalQuantities')
 						)
 					END
 
-				    ;WITH XMLNAMESPACES ('dummy' AS xsi) -- declaration of xml namespace prefix xsi is required for xsi:noNamespaceSchemaLocation, later to be removed.
-				    SELECT @xml_inner = (
-						SELECT 'http://www.efet.org/schemas/eCM/V4R0/EFET-CNF-V4R0.xsd' AS '@xsi:noNamespaceSchemaLocation',
-							   '0' AS '@SchemaRelease',
-							   '4' AS '@SchemaVersion',
-							   @col_document_id AS [DocumentID],
-							   @col_document_usage AS [DocumentUsage],
-							   @col_sender_id AS [SenderID],
-							   @col_receiver_id AS [ReceiverID],
-							   @col_receiver_role AS [ReceiverRole],
-							   @col_document_version AS [DocumentVersion],
-							   @col_market AS [Market],
-							   @col_commodity as [Commodity],
-							   @col_transaction_type AS [TransactionType],
-							   @col_delivery_point_area AS [DeliveryPointArea],
-							   @col_buyer_party AS [BuyerParty],
-							   @col_seller_party AS [SellerParty],
-							   @col_load_type AS [LoadType],
-							   @col_agreement AS [Agreement],
-							   CASE WHEN @col_delivery_point_area = '21Z0000000000090' THEN 'true' ELSE 'false' END AS 'Currency/@UseFractionUnit',
-							   @col_currency AS [Currency],
-							   @col_total_volume AS [TotalVolume],
-							   @col_total_volume_unit AS [TotalVolumeUnit],
-							   CONVERT(VARCHAR(10), CAST(@col_trade_date AS DATETIME), 120) AS [TradeDate],
-							   @col_capacity_unit AS [CapacityUnit],
-							   CASE WHEN @col_delivery_point_area = '21Z0000000000090' THEN 'true' ELSE 'false' END AS 'PriceUnit/Currency/@UseFractionUnit',
-							   @col_price_unit_currency AS [PriceUnit/Currency],
-							   @col_price_unit_capacity_unit AS [PriceUnit/CapacityUnit],				    
-							   @xml_inner3,  --TimeIntervalQuantities
-							   @col_total_contract_value AS [TotalContractValue],
-							   @col_buyer_hubcode AS [HubCodificationInformation/BuyerHubCode],
-							   @col_seller_hubcode AS [HubCodificationInformation/SellerHubCode],
-							   @col_trader_name AS [TraderName] 
-    				    FOR XML PATH('TradeConfirmation'), TYPE)
-			    END
-			    ELSE 
-			    BEGIN  -- Power does not contain HubCodificationInformation
-				    IF NOT EXISTS (
+					;WITH XMLNAMESPACES ('dummy' AS xsi) -- declaration of xml namespace prefix xsi is required for xsi:noNamespaceSchemaLocation, later to be removed.
+					SELECT @xml_inner = (
+						SELECT 'http://www.efet.org/ecm/schemas/V3r2/EFET-CNF-V3R2.xsd' AS '@xsi:noNamespaceSchemaLocation',
+								'3' AS '@SchemaRelease',
+								'3' AS '@SchemaVersion',
+								@col_document_id AS [DocumentID],
+								@col_document_usage AS [DocumentUsage],
+								@col_sender_id AS [SenderID],
+								@col_receiver_id AS [ReceiverID],
+								@col_receiver_role AS [ReceiverRole],
+								@col_document_version AS [DocumentVersion],
+								@col_market AS [Market],
+								@col_commodity as [Commodity],
+								@col_transaction_type AS [TransactionType],
+								@col_delivery_point_area AS [DeliveryPointArea],
+								@col_buyer_party AS [BuyerParty],
+								@col_seller_party AS [SellerParty],
+								@col_load_type AS [LoadType],
+								@col_agreement AS [Agreement],
+								--CASE WHEN @col_delivery_point_area = '21Z0000000000090' THEN 'true' ELSE 'false' END AS 'Currency/@UseFractionUnit',
+								@col_currency AS [Currency],
+								@col_total_volume AS [TotalVolume],
+								@col_total_volume_unit AS [TotalVolumeUnit],
+								CONVERT(VARCHAR(10), CAST(@col_trade_date AS DATETIME), 120) AS [TradeDate],
+								@col_capacity_unit AS [CapacityUnit],
+								--CASE WHEN @col_delivery_point_area = '21Z0000000000090' THEN 'true' ELSE 'false' END AS 'PriceUnit/Currency/@UseFractionUnit',
+								@col_price_unit_currency AS [PriceUnit/Currency],
+								@col_price_unit_capacity_unit AS [PriceUnit/CapacityUnit],				    
+								@xml_inner3,  --TimeIntervalQuantities
+								@col_total_contract_value AS [TotalContractValue],
+								@xml_inner4,								
+								@col_buyer_hubcode AS [HubCodificationInformation/BuyerHubCode],
+								@col_seller_hubcode AS [HubCodificationInformation/SellerHubCode],
+								@col_trader_name AS [TraderName] 
+    					FOR XML PATH('TradeConfirmation'), TYPE)
+				END
+				ELSE 
+				BEGIN  -- Power does not contain HubCodificationInformation
+					IF NOT EXISTS (
 						SELECT 1 
 						FROM source_deal_header 
 						WHERE source_deal_header_id = @col_source_deal_header_id 
 							AND ISNULL(block_define_id, @baseload_block_define_id) = @baseload_block_define_id
 					)
-				    BEGIN
-					   INSERT INTO #tempblock(hr, source_deal_header_id, term_date, hr_mult)
-					   SELECT CAST(SUBSTRING([hour], 3, 5) AS INT) hr,
-							   source_deal_header_id,
-							   term_date,
-							   hr_mult
+					BEGIN
+						INSERT INTO #tempblock(hr, source_deal_header_id, term_date, hr_mult)
+						SELECT CAST(SUBSTRING([hour], 3, 5) AS INT) hr,
+								source_deal_header_id,
+								term_date,
+								hr_mult
 						FROM (
 							SELECT se.process_id, se.ecm_document_type, se.error_validation_message, se.source_deal_header_id, hb.term_date,
-								   hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13, hr14, hr15, hr16, hr17, hr18, hr19,
-								   hr20, hr21, hr22, hr23, hr24
+									hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13, hr14, hr15, hr16, hr17, hr18, hr19,
+									hr20, hr21, hr22, hr23, hr24
 							FROM source_ecm se
 							INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id =  se.source_deal_header_id
 							CROSS APPLY	(
@@ -966,77 +1081,78 @@ BEGIN
 						) AS unpvt
 						WHERE unpvt.source_deal_header_id = @col_source_deal_header_id
 							AND unpvt.process_id = @process_id
-							AND unpvt.ecm_document_type = 'CNF'
+							AND unpvt.ecm_document_type = @ecm_document_type
 							AND unpvt.error_validation_message IS NULL
 
  						SELECT @xml_inner3 = (
 							SELECT CONVERT(VARCHAR(19), DATEADD(hh, min(hr-1), term_date), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
-								   CONVERT(VARCHAR(19), DATEADD(hh, max(hr), term_date), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
-								   @col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
-								   @col_price AS [TimeIntervalQuantity/Price]
+									CONVERT(VARCHAR(19), DATEADD(hh, max(hr), term_date), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+									@col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
+									@col_price AS [TimeIntervalQuantity/Price]
 							FROM #tempblock
 							WHERE hr_mult = 1
 							GROUP BY term_date
 							ORDER BY term_date
 							FOR XML PATH(''), ROOT('TimeIntervalQuantities')
 						)
-				    END
+					END
 					ELSE
-				    BEGIN
+					BEGIN
  						SELECT @xml_inner3 = (
 							SELECT CONVERT(VARCHAR(19), CAST(@col_delivery_start AS DATETIME), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
-								   CONVERT(VARCHAR(19), CAST(@col_delivery_end AS DATETIME), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
-								   @col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
-								   @col_price AS [TimeIntervalQuantity/Price]
+									CONVERT(VARCHAR(19), CAST(@col_delivery_end AS DATETIME), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+									@col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
+									@col_price AS [TimeIntervalQuantity/Price]
 							FOR XML PATH(''), ROOT('TimeIntervalQuantities')
 						)
-				    END
+					END
 
-				    ;WITH XMLNAMESPACES ('dummy' as xsi) -- declaration of xml namespace prefix xsi is required for xsi:noNamespaceSchemaLocation, later to be removed.
+					;WITH XMLNAMESPACES ('dummy' as xsi) -- declaration of xml namespace prefix xsi is required for xsi:noNamespaceSchemaLocation, later to be removed.
 					SELECT @xml_inner = (
-						SELECT 'http://www.efet.org/schemas/eCM/V4R0/EFET-CNF-V4R0.xsd' AS '@xsi:noNamespaceSchemaLocation',
-							   '0' AS '@SchemaRelease',
-							   '4' AS '@SchemaVersion',
-							   @col_document_id AS [DocumentID],
-							   @col_document_usage AS [DocumentUsage],
-							   @col_sender_id AS [SenderID],
-							   @col_receiver_id AS [ReceiverID],
-							   @col_receiver_role AS [ReceiverRole],
-							   @col_document_version AS [DocumentVersion],
-							   @col_market AS [Market],
-							   @col_commodity as [Commodity],
-							   @col_transaction_type AS [TransactionType],
-							   @col_delivery_point_area AS [DeliveryPointArea],
-							   @col_buyer_party AS [BuyerParty],
-							   @col_seller_party AS [SellerParty],
-							   @col_load_type AS [LoadType],
-							   @col_agreement AS [Agreement],
-							   CASE WHEN @col_delivery_point_area = '21Z0000000000090' THEN 'true' ELSE 'false' END AS 'Currency/@UseFractionUnit',
-							   @col_currency AS [Currency],
-							   @col_total_volume AS [TotalVolume],
-							   @col_total_volume_unit AS [TotalVolumeUnit],
-							   CONVERT(VARCHAR(10), CAST(@col_trade_date AS DATETIME), 120) AS [TradeDate],
-							   @col_capacity_unit AS [CapacityUnit],
-							   CASE WHEN @col_delivery_point_area = '21Z0000000000090' THEN 'true' ELSE 'false' END AS 'PriceUnit/Currency/@UseFractionUnit',
-							   @col_price_unit_currency AS [PriceUnit/Currency],
-							   @col_price_unit_capacity_unit AS [PriceUnit/CapacityUnit],
-							   @xml_inner3, --TimeIntervalQuantities
-							   @col_total_contract_value AS [TotalContractValue],
-							   @col_trader_name AS [TraderName] 
+						SELECT 'http://www.efet.org/ecm/schemas/V3r2/EFET-CNF-V3R2.xsd' AS '@xsi:noNamespaceSchemaLocation',
+								'3' AS '@SchemaRelease',
+								'3' AS '@SchemaVersion',
+								@col_document_id AS [DocumentID],
+								@col_document_usage AS [DocumentUsage],
+								@col_sender_id AS [SenderID],
+								@col_receiver_id AS [ReceiverID],
+								@col_receiver_role AS [ReceiverRole],
+								@col_document_version AS [DocumentVersion],
+								@col_market AS [Market],
+								@col_commodity as [Commodity],
+								@col_transaction_type AS [TransactionType],
+								@col_delivery_point_area AS [DeliveryPointArea],
+								@col_buyer_party AS [BuyerParty],
+								@col_seller_party AS [SellerParty],
+								@col_load_type AS [LoadType],
+								@col_agreement AS [Agreement],
+								--CASE WHEN @col_delivery_point_area = '21Z0000000000090' THEN 'true' ELSE 'false' END AS 'Currency/@UseFractionUnit',
+								@col_currency AS [Currency],
+								@col_total_volume AS [TotalVolume],
+								@col_total_volume_unit AS [TotalVolumeUnit],
+								CONVERT(VARCHAR(10), CAST(@col_trade_date AS DATETIME), 120) AS [TradeDate],
+								@col_capacity_unit AS [CapacityUnit],
+								-- CASE WHEN @col_delivery_point_area = '21Z0000000000090' THEN 'true' ELSE 'false' END AS 'PriceUnit/Currency/@UseFractionUnit',
+								@col_price_unit_currency AS [PriceUnit/Currency],
+								@col_price_unit_capacity_unit AS [PriceUnit/CapacityUnit],
+								@xml_inner3, --TimeIntervalQuantities
+								@col_total_contract_value AS [TotalContractValue],
+								@xml_inner4,							
+								@col_trader_name AS [TraderName] 
     					FOR XML PATH('TradeConfirmation'), TYPE)
-			    END
+				END
 
 				SELECT @xml_inner2 = (
 					SELECT @col_document_id AS [ReferencedDocumentID],
-						   CONVERT(VARCHAR(19), GETDATE(), 126) AS [CreationTimestamp]
+							CONVERT(VARCHAR(19), GETDATE(), 126) AS [CreationTimestamp]
 					FOR XML PATH('ECMAdditionalData'), TYPE
 				) 
 
 				;WITH XMLNAMESPACES ( 'http://www.w3.org/2001/XMLSchema-instance' AS xsi)
 				SELECT @xml = (
 					SELECT 'http://www.efet.org/schemas/V4R2/EFET-ENV-V4R2.xsd' AS '@xsi:noNamespaceSchemaLocation', 
-						   @xml_inner,
-						   @xml_inner2
+							@xml_inner,
+							@xml_inner2
 					FOR XML PATH('ECMEnvelope'), TYPE
 				)
 
@@ -1045,51 +1161,60 @@ BEGIN
 				SET @file_name = @file_path + @col_document_id + '.xml'
 
 				EXEC [spa_write_to_file] @xml_string, 'n',  @file_name, @result OUTPUT
-				
+				IF @result = '1'
+				BEGIN
+					SELECT @file_name_export += IIF(NULLIF(@file_name_export,'') IS NULL, @file_name, ',' + @file_name)
+				END
+			
 				FETCH NEXT FROM c1 INTO 
 					@col_source_deal_header_id, @col_document_id, @col_document_usage, @col_sender_id, @col_receiver_id, 
 					@col_receiver_role, @col_document_version, @col_market, @col_commodity, @col_transaction_type, @col_delivery_point_area,
 					@col_buyer_party, @col_seller_party, @col_load_type, @col_agreement, @col_currency, @col_total_volume, @col_total_volume_unit,
 					@col_trade_date, @col_capacity_unit, @col_price_unit_currency, @col_price_unit_capacity_unit, @col_delivery_start, @col_delivery_end,
-					@col_price, @col_total_contract_value, @col_contract_capacity, @col_buyer_hubcode, @col_seller_hubcode, @col_trader_name
+					@col_price, @col_total_contract_value, @col_contract_capacity, @col_buyer_hubcode, @col_seller_hubcode, @col_trader_name, @ecm_document_type
+					,@col_broker_fee
 		    END
 		    CLOSE c1
 		    DEALLOCATE c1 
 
 			--BFI
 			DECLARE c2 CURSOR FOR
-			    SELECT document_id, document_usage, sender_id, receiver_id, receiver_role, document_version, currency, CAST(broker_fee AS NUMERIC(38,2))
+			    SELECT document_id, document_usage, sender_id, receiver_id, receiver_role, document_version, currency, CAST(broker_fee AS NUMERIC(38,2)), source_deal_header_id
 			    FROM source_ecm se
 				WHERE process_id = @process_id
 					AND ecm_document_type = 'BFI'
 					AND error_validation_message IS NULL 	
 			OPEN c2
-			FETCH NEXT FROM c2 INTO @col_document_id, @col_document_usage, @col_sender_id, @col_receiver_id, @col_receiver_role, @col_document_version, @col_currency, @col_broker_fee
+			FETCH NEXT FROM c2 INTO @col_document_id, @col_document_usage, @col_sender_id, @col_receiver_id, @col_receiver_role, @col_document_version, @col_currency, @col_broker_fee, @col_source_deal_header_id
 		    WHILE @@FETCH_STATUS = 0
 			BEGIN
+				
 				;WITH XMLNAMESPACES ('http://www.w3.org/2001/XMLSchema-instance' AS xsi)
 				SELECT @xml = (
-					SELECT 'http://www.efet.org/schemas/eCM/V4R0/EFET-BFI-V4R0.xsd' AS '@xsi:noNamespaceSchemaLocation',
-						   '0' AS '@SchemaRelease', '4' AS '@SchemaVersion',
+					SELECT 'http://www.efet.org/ecm/schemas/V3r2/EFET-CNF-V3R2.xsd' AS '@xsi:noNamespaceSchemaLocation',
+						   '3' AS '@SchemaRelease', '3' AS '@SchemaVersion',
 						   @col_document_id AS [DocumentID],
 						   @col_document_usage AS [DocumentUsage],
 						   @col_sender_id AS [SenderID],
 						   @col_receiver_id AS [ReceiverID],
 						   @col_receiver_role AS [ReceiverRole],
 						   @col_document_version AS [DocumentVersion],
-						   'CNF' + SUBSTRING(@col_document_id, 3, LEN(@col_document_id)) [LinkedTo],
+						   'CNF' + SUBSTRING(@col_document_id, 4, LEN(@col_document_id)) [LinkedTo],
 						   @col_broker_fee [TotalFee],
 						   @col_currency AS [FeeCurrency]
-					FOR XML PATH('BrokerFeeInformation'), TYPE
-				)
+						FOR XML PATH('BrokerFeeInformation'), TYPE
+					)
 				
-				SET @xml = CONVERT(XML, @xml, 1)
-				SET @xml_string = @addxml + CONVERT(VARCHAR(MAX), @xml, 1)
-				SET @file_name = @file_path + @col_document_id + '.xml'
+					SET @xml = CONVERT(XML, @xml, 1)
+					SET @xml_string = @addxml + CONVERT(VARCHAR(MAX), @xml, 1)
+					SET @file_name = @file_path + @col_document_id + '.xml'
 				
-				EXEC [spa_write_to_file] @xml_string, 'n',  @file_name, @result OUTPUT
-
-			    FETCH NEXT FROM c2 INTO @col_document_id, @col_document_usage, @col_sender_id, @col_receiver_id, @col_receiver_role, @col_document_version, @col_currency, @col_broker_fee
+					EXEC [spa_write_to_file] @xml_string, 'n',  @file_name, @result OUTPUT
+					IF @result = '1'
+					BEGIN
+						SELECT @file_name_export += IIF(NULLIF(@file_name_export,'') IS NULL, @file_name, ',' + @file_name)
+					END
+			    FETCH NEXT FROM c2 INTO @col_document_id, @col_document_usage, @col_sender_id, @col_receiver_id, @col_receiver_role, @col_document_version, @col_currency, @col_broker_fee, @col_source_deal_header_id
 			END
 		    CLOSE c2
 		    DEALLOCATE c2 	   
@@ -1107,9 +1232,9 @@ BEGIN
 			BEGIN
 				;WITH XMLNAMESPACES ('http://www.w3.org/2001/XMLSchema-instance' AS xsi)
 				SELECT @xml = (
-					SELECT 'http://www.efet.org/schemas/eCM/V4R0/EFET-CAN-V4R0.xsd' AS '@xsi:noNamespaceSchemaLocation',
-						   '0' AS '@SchemaRelease',
-						   '4' AS '@SchemaVersion',
+					SELECT 'http://www.efet.org/ecm/schemas/V3r2/EFET-CNF-V3R2.xsd' AS '@xsi:noNamespaceSchemaLocation',
+						   '3' AS '@SchemaRelease',
+						   '3' AS '@SchemaVersion',
 						   @col_document_id AS [DocumentID],
 						   @col_document_usage AS [DocumentUsage],
 						   @col_sender_id AS [SenderID],
@@ -1125,6 +1250,10 @@ BEGIN
 				SET @file_name = @file_path + @col_document_id + '.xml'
 				
 				EXEC [spa_write_to_file] @xml_string, 'n',  @file_name, @result OUTPUT
+				IF @result = '1'
+				BEGIN
+					SELECT @file_name_export += IIF(NULLIF(@file_name_export,'') IS NULL, @file_name, ',' + @file_name)
+				END
 
 			    FETCH NEXT FROM c3 INTO @col_document_id, @col_document_usage, @col_sender_id, @col_receiver_id, @col_receiver_role, @col_reference_document_id, @col_reference_document_version
 		    END
@@ -1132,17 +1261,56 @@ BEGIN
 		    DEALLOCATE c3
 			
 			SELECT @source = @xml
-			
+
 			UPDATE source_ecm
 			SET acer_submission_status = 39501
 			WHERE process_id = @process_id
 
             SET @desc = 'Export process completed for ECM Xml for process_id: ' + @process_id + '. File has been saved at ' + @file_path
 			EXEC spa_message_board 'i', @user_login_id, NULL, 'Export Xml', @desc, '', '', 's', 'ECM Xml Export'
+			EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-TEST/', @file_name_export, @result OUTPUT
 			RETURN
 		END
         ELSE IF @report_type = 39400
         BEGIN
+			IF OBJECT_ID('tempdb..#temp_formula_data') IS NOT NULL
+				DROP TABLE #temp_formula_data
+			CREATE TABLE #temp_formula_data (
+				[source_deal_header_id] INT,
+				[term_start] DATETIME,
+				[term_end] DATETIME,
+				[Curve ID] INT,
+				[Strip Month To] INT
+			)
+			DECLARE @insert_query NVARCHAR(2000),@select_query NVARCHAR(2000), @sql NVARCHAR(MAX)
+			SELECT @insert_query = STUFF((SELECT ',' + '[' + field_label + ']'
+										FROM formula_editor_parameter
+										WHERE function_name = 'LagCurve'
+										AND field_label IN ('Curve ID', 'Strip Month To')
+										ORDER BY [sequence]
+										FOR XML PATH('')), 1, 1, '')
+			SELECT @select_query = STUFF((SELECT ',' + 'arg' + CAST(sequence AS VARCHAR(10))
+										FROM formula_editor_parameter
+										WHERE function_name = 'LagCurve'
+										AND field_label IN ('Curve ID', 'Strip Month To')
+										ORDER BY [sequence]
+										FOR XML PATH('')), 1, 1, '')
+			SET @sql = 'INSERT INTO #temp_formula_data(source_deal_header_id,term_start,term_end, ' + @insert_query + ') 
+						SELECT srns.source_deal_header_id,sdd.term_start,sdd.term_end,' + @select_query + '
+						FROM source_remit_non_standard srns
+						INNER JOIN source_deal_header sdh
+							ON sdh.source_deal_header_id = srns.source_deal_header_id
+						OUTER APPLY (SELECT MAX(formula_id) formula_id, MIN(term_start) term_start, MAX(term_end) term_end
+									 FROM source_deal_detail sdd
+									 WHERE source_deal_header_id = srns.source_deal_header_id
+						) sdd
+						INNER JOIN formula_breakdown fb
+							ON fb.formula_id = sdd.formula_id
+						WHERE srns.process_id = ''' + @process_id + '''
+						AND fb.func_name IN (''LagCurve'')
+						'
+			EXEC(@sql)
+		
 			SELECT @xml_innermost = (
 				SELECT ROW_NUMBER() OVER(ORDER BY [Action_type]) AS
 					   RecordSeqNumber,
@@ -1176,7 +1344,7 @@ BEGIN
 					   SUBSTRING([Volume_optionality_intervals], 0, 11) AS [volumeOptionalityIntervals/startDate],
 					   SUBSTRING([Volume_optionality_intervals], CHARINDEX('/', [Volume_optionality_intervals]) + 1, 10) AS [volumeOptionalityIntervals/endDate],
 					   [Type_of_Index_Price] AS typeOfIndexPrice,
-					   tbl.xml_detail temp_fixingIndexDetails,
+					   COALESCE(tbl.xml_detail,tbl_f.xml_detail,tbl_index.xml_detail) temp_fixingIndexDetails,
 					   [Settlement_Method] AS settlementMethod,
                        [Option_Style] AS [optionDetails/optionStyle],
                        [Option_Type] AS [optionDetails/optionType],
@@ -1225,6 +1393,40 @@ BEGIN
 					GROUP BY dpd.pricing_index
 					FOR XML PATH ('fixingIndexDetails'), TYPE
 					) AS tbl(xml_detail)
+				OUTER APPLY (
+					SELECT  spcd.[curve_id] [fixingIndex]
+					   ,'FW' [fixingIndexType]
+					   ,ISNULL(sdv.code,'') [fixingIndexSource]
+					   ,CONVERT(VARCHAR(10),DATEADD(month, -ISNULL(tfd.[Strip Month To],0), tfd.term_start),120) [firstFixingDate]
+					   ,CONVERT(VARCHAR(10),DATEADD(month, -ISNULL(tfd.[Strip Month To],0), tfd.term_end),120) [lastFixingDate]
+					   ,'M' [fixingFrequency] 
+					FROM #temp_formula_data tfd
+					INNER JOIN source_price_curve_def spcd
+						ON spcd.source_curve_def_id = tfd.[Curve ID]
+					LEFT JOIN static_data_value sdv
+									ON sdv.value_id = spcd.market_value_desc
+									AND sdv.type_id = 29700
+					WHERE tfd.source_deal_header_id = srs.source_deal_header_id
+					FOR XML PATH ('fixingIndexDetails'), TYPE
+				) AS tbl_f(xml_detail)
+				OUTER APPLY (
+					SELECT  MAX(spcd.curve_id) [fixingIndex]
+							,'FW' [fixingIndexType]
+							,ISNULL(MAX(sdv.code),'') [fixingIndexSource]
+							,CONVERT(VARCHAR(10),MIN(sdd.term_start),120) [firstFixingDate]
+							,CONVERT(VARCHAR(10),MAX(term_end),120) [lastFixingDate]
+							,'M' [fixingFrequency] 
+					FROM source_deal_header sdh
+					INNER JOIn source_deal_detail sdd
+						ON sdd.source_deal_header_id = sdh.source_deal_header_id
+					INNER JOIN source_price_curve_def spcd
+						ON spcd.source_curve_def_id = sdd.formula_curve_id
+					LEFT JOIN static_data_value sdv
+						ON sdv.value_id = spcd.market_value_desc
+						AND sdv.type_id = 29700
+					WHERE sdh.source_deal_header_id = srs.source_deal_header_id
+					FOR XML PATH ('fixingIndexDetails'), TYPE
+				) AS tbl_index(xml_detail)
                 WHERE process_id = @process_id
 				FOR XML PATH('nonStandardContractReport'), ROOT('TradeList'), TYPE
 			)
@@ -1299,7 +1501,18 @@ BEGIN
 
 			SELECT @xml_inner = CONVERT(XML, REPLACE(CONVERT(VARCHAR(MAX), @xml_inner), 'xmlns:ns1', 'xmlns'))
 
-	 		SELECT @source = @xml_inner  
+	 		SELECT @source = @xml_inner
+			SELECT @xml_string = @addxml + CAST(@xml_inner AS VARCHAR(MAX))
+			SET @file_name = @file_path + 'remit_non_standard_' + @process_id + '_' + CONVERT(VARCHAR(7), GETDATE(), 112) + '.xml'
+			EXEC [spa_write_to_file] @xml_string, 'n',  @file_name, @result OUTPUT
+			IF @result = '1'
+			BEGIN
+				UPDATE source_remit_non_standard
+				SET file_export_name = @file_name
+				WHERE process_id = @process_id
+
+				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @file_name, @result OUTPUT
+			END
             RETURN
         END
         ELSE IF @report_type = 39401
@@ -1447,6 +1660,16 @@ BEGIN
 			SELECT @xml = CONVERT(XML, REPLACE(CONVERT(VARCHAR(MAX), @xml), 'xmlns:ns2', 'xmlns'))
 			SELECT @xml = CONVERT(XML, REPLACE(CONVERT(VARCHAR(MAX), @xml), 'xmlns:ns1', 'xmlns'))
 	 		SELECT @source = @xml
+			SELECT @xml_string = @addxml + CAST(@xml AS VARCHAR(MAX))
+			SET @file_name = @file_path + 'remit_standard_' + @process_id + '_' + CONVERT(VARCHAR(7), GETDATE(), 112) + '.xml'
+			EXEC [spa_write_to_file] @xml_string, 'n',  @file_name, @result OUTPUT
+			IF @result = '1'
+			BEGIN
+				UPDATE source_remit_standard
+				SET file_export_name = @file_name
+				WHERE process_id = @process_id
+				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @file_name, @result OUTPUT
+			END
 			RETURN
 		END
 		ELSE IF @report_type = 39405
@@ -1642,7 +1865,16 @@ BEGIN
 			SELECT @xml = CONVERT(XML, REPLACE(CONVERT(VARCHAR(MAX), @xml), 'xmlns:ns2', 'xmlns'))
 			SELECT @xml = CONVERT(XML, REPLACE(CONVERT(VARCHAR(MAX), @xml), 'xmlns:ns1', 'xmlns'))
 	 		SELECT @source = @xml
-			
+			SELECT @xml_string = @addxml + CAST(@xml AS VARCHAR(MAX))
+			SET @file_name = @file_path + 'remit_execution_' + @process_id + '_' + CONVERT(VARCHAR(7), GETDATE(), 112) + '.xml'
+			EXEC [spa_write_to_file] @xml_string, 'n',  @file_name, @result OUTPUT
+			IF @result = '1'
+			BEGIN
+				UPDATE source_remit_standard
+				SET file_export_name = @file_name
+				WHERE process_id = @process_id
+				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @file_name, @result OUTPUT
+			END
 			RETURN
 		END
 		ELSE IF @report_type = 39402
@@ -1733,20 +1965,20 @@ BEGIN
            
     CREATE TABLE #temp_deals (
         source_deal_header_id INT,
-        deal_id VARCHAR(200),
+        deal_id VARCHAR(200) COLLATE DATABASE_DEFAULT,
         template_id INT,
         counterparty_id INT,
         sub_book_id INT,
         deal_date DATETIME,
-        physical_financial_flag CHAR(10),
+        physical_financial_flag CHAR(10) COLLATE DATABASE_DEFAULT,
         entire_term_start DATETIME,
         entire_term_end DATETIME,
         source_deal_type_id INT,
         deal_sub_type_type_id INT,
-        option_flag CHAR(1),
-        option_type CHAR(1),
-        option_excercise_type CHAR(1),
-        header_buy_sell_flag VARCHAR(1),
+        option_flag CHAR(1) COLLATE DATABASE_DEFAULT,
+        option_type CHAR(1) COLLATE DATABASE_DEFAULT,
+        option_excercise_type CHAR(1) COLLATE DATABASE_DEFAULT,
+        header_buy_sell_flag VARCHAR(1) COLLATE DATABASE_DEFAULT,
         create_ts DATETIME,
         update_ts DATETIME,
         internal_desk_id INT,
@@ -1754,13 +1986,13 @@ BEGIN
         commodity_id INT,
         block_define_id INT,
         deal_status INT,
-        description1 VARCHAR(260),
-        description2 VARCHAR(260),
+        description1 VARCHAR(260) COLLATE DATABASE_DEFAULT,
+        description2 VARCHAR(260) COLLATE DATABASE_DEFAULT,
 		trader_id INT,
 		contract_id INT,
 		deal_group_id INT,
-		ext_deal_id VARCHAR(512),
-		confirm_status VARCHAR(1000),
+		ext_deal_id VARCHAR(512) COLLATE DATABASE_DEFAULT,
+		confirm_status VARCHAR(1000) COLLATE DATABASE_DEFAULT,
 		[commodity_name] VARCHAR(1000) COLLATE DATABASE_DEFAULT
     )
 
@@ -1841,15 +2073,15 @@ BEGIN
 		[term_start] DATETIME NOT NULL,
 		[term_end] DATETIME NOT NULL,
 		[leg] INT NOT NULL,
-		[fixed_float_leg] CHAR(1) NOT NULL,
-		[buy_sell_flag] CHAR(1) NOT NULL,
+		[fixed_float_leg] CHAR(1) COLLATE DATABASE_DEFAULT NOT NULL,
+		[buy_sell_flag] CHAR(1) COLLATE DATABASE_DEFAULT NOT NULL,
 		[curve_id] INT NULL,
 		[location_id] INT NULL,
-		[physical_financial_flag] CHAR(1) NULL,
+		[physical_financial_flag] CHAR(1) COLLATE DATABASE_DEFAULT NULL,
 		[deal_volume] NUMERIC(38, 20) NULL,
 		[total_volume] NUMERIC(38, 20) NULL,
 		[standard_yearly_volume] NUMERIC(22, 8) NULL,
-		[deal_volume_frequency] CHAR(1) NOT NULL,
+		[deal_volume_frequency] CHAR(1) COLLATE DATABASE_DEFAULT NOT NULL,
 		[deal_volume_uom_id] INT NOT NULL,
 		[multiplier] NUMERIC(38, 20) NULL,
 		[volume_multiplier2] NUMERIC(38, 20) NULL,
@@ -1884,8 +2116,8 @@ BEGIN
     WHERE field_id = -5616
 
     CREATE TABLE #temp_source_code_map (
-        value_id VARCHAR(150),
-        code VARCHAR(150)
+        value_id VARCHAR(150) COLLATE DATABASE_DEFAULT,
+        code VARCHAR(150) COLLATE DATABASE_DEFAULT
     )
 		
     IF @_cpty_udf_source_code_sql IS NOT NULL
@@ -1898,10 +2130,10 @@ BEGIN
         	
     CREATE TABLE #temp_cpty_udf_values (
         source_deal_header_id INT,
-        [Sub Code] VARCHAR(150),
-        [Sub Code Type] VARCHAR(150),
-        [Deal Code] VARCHAR(150),
-        [Deal Code Type] VARCHAR(150)
+        [Sub Code] VARCHAR(150) COLLATE DATABASE_DEFAULT,
+        [Sub Code Type] VARCHAR(150) COLLATE DATABASE_DEFAULT,
+        [Deal Code] VARCHAR(150) COLLATE DATABASE_DEFAULT,
+        [Deal Code Type] VARCHAR(150) COLLATE DATABASE_DEFAULT
     )
         	
     SET @_sql = '
@@ -1953,10 +2185,11 @@ BEGIN
 		[API2 Base Value] VARCHAR(100) COLLATE DATABASE_DEFAULT,
 		[D35 Weight] VARCHAR(100) COLLATE DATABASE_DEFAULT,
 		[D35 Base Value] VARCHAR(100) COLLATE DATABASE_DEFAULT,
+		[Price Formula] VARCHAR(500) COLLATE DATABASE_DEFAULT
 	)
 
-	INSERT INTO #temp_deal_udf_values (source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value])
-	SELECT source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value]
+	INSERT INTO #temp_deal_udf_values (source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value],[Price Formula])
+	SELECT source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value], [Price Formula]
 	FROM (
 		SELECT sdh.source_deal_header_id, udft.field_label, uddf.udf_value
 		FROM #temp_deals sdh
@@ -1970,7 +2203,7 @@ BEGIN
 		INNER JOIN user_defined_fields_template udft
 			ON udft.field_id = uddft.field_id
 		) AS a
-	PIVOT (MAX(a.udf_value) FOR a.Field_label IN ([Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value])) AS p
+	PIVOT (MAX(a.udf_value) FOR a.Field_label IN ([Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value], [Price Formula])) AS p
 		
 	/*************************************Counterparty UDF Values END********************************************************/
         		
@@ -2053,7 +2286,7 @@ BEGIN
         curve_id INT,
         total_notional_contract_quantity NUMERIC(20, 5),
         notional_quantity_unit INT,
-        Volume_optionality VARCHAR(1),
+        Volume_optionality VARCHAR(1) COLLATE DATABASE_DEFAULT,
         estimated_notional_amount NUMERIC(20, 5),
         notional_currency INT,
         price_uom_id INT,
@@ -2178,13 +2411,13 @@ BEGIN
         	
         CREATE TABLE #temp_fixing1 (
         	[source_deal_header_id] INT,
-        	[type_of_index_price] VARCHAR(1),
-        	[fixing_index] VARCHAR(150),
-        	[fixing_index_types] VARCHAR(2),
-        	[fixing_index_sources] VARCHAR(100),
+        	[type_of_index_price] VARCHAR(1) COLLATE DATABASE_DEFAULT,
+        	[fixing_index] VARCHAR(150) COLLATE DATABASE_DEFAULT,
+        	[fixing_index_types] VARCHAR(2) COLLATE DATABASE_DEFAULT,
+        	[fixing_index_sources] VARCHAR(100) COLLATE DATABASE_DEFAULT,
         	[first_fixing_date] DATETIME,
         	[last_fixing_date] DATETIME,
-        	[fixing_frequency] VARCHAR(1)
+        	[fixing_frequency] VARCHAR(1) COLLATE DATABASE_DEFAULT
         )
         	
         INSERT INTO #temp_fixing1 (
@@ -2546,13 +2779,13 @@ BEGIN
         	
 		CREATE TABLE #temp_fixing2 (
 			[source_deal_header_id] INT,
-			[type_of_index_price] VARCHAR(1),
-			[fixing_index] VARCHAR(2000),
-			[fixing_index_types] VARCHAR(200),
-			[fixing_index_sources] VARCHAR(1000),
-			[first_fixing_date] VARCHAR(1000),
-			[last_fixing_date] VARCHAR(1000),
-			[fixing_frequency] VARCHAR(50)
+			[type_of_index_price] VARCHAR(1) COLLATE DATABASE_DEFAULT,
+			[fixing_index] VARCHAR(2000) COLLATE DATABASE_DEFAULT,
+			[fixing_index_types] VARCHAR(200) COLLATE DATABASE_DEFAULT,
+			[fixing_index_sources] VARCHAR(1000) COLLATE DATABASE_DEFAULT,
+			[first_fixing_date] VARCHAR(1000) COLLATE DATABASE_DEFAULT,
+			[last_fixing_date] VARCHAR(1000) COLLATE DATABASE_DEFAULT,
+			[fixing_frequency] VARCHAR(50) COLLATE DATABASE_DEFAULT
 		)
 
 		INSERT INTO #temp_fixing2
@@ -2593,8 +2826,8 @@ BEGIN
 	/* for validation messaging */
 	CREATE TABLE #temp_messages (
 		source_deal_header_id INT,
-		[column] VARCHAR(100),
-		[messages] VARCHAR(5000)
+		[column] VARCHAR(100) COLLATE DATABASE_DEFAULT,
+		[messages] VARCHAR(5000) COLLATE DATABASE_DEFAULT
 	)
 
 	IF OBJECT_ID ('tempdb..#cancelled_deals') IS NOT NULL
@@ -2691,7 +2924,9 @@ BEGIN
 											  WHEN (scom.commodity_name) = 'LNG' THEN 'LNG'
 											  END),
 				[Price] = CASE WHEN MAX(td.physical_financial_flag) = 'f' THEN NULL ELSE MAX(tvf.price)END,
-				[Price formula] = '(' +   MAX(tduv.[Brent Weight]) + '*Brent_6kk/' + MAX(tduv.[Brent Base Value]) + ')+' + '(' + MAX(tduv.[API2 Weight]) + '*API2_6kk/' + MAX(tduv.[API2 Base Value]) + ')+' +'(' + MAX(tduv.[D35 Weight]) + '*D35_6kk/' + MAX(tduv.[D35 Base Value]) + ')', 
+				[Price formula] = CASE WHEN ISNULL(MAX(tduv.[Price Formula]),'') IS NOT NULL THEN MAX(tduv.[Price Formula])
+								  ELSE '(' +   MAX(tduv.[Brent Weight]) + '*Brent_6kk/' + MAX(tduv.[Brent Base Value]) + ')+' + '(' + MAX(tduv.[API2 Weight]) + '*API2_6kk/' + MAX(tduv.[API2 Base Value]) + ')+' +'(' + MAX(tduv.[D35 Weight]) + '*D35_6kk/' + MAX(tduv.[D35 Base Value]) + ')'
+								  END , 
 				[Estimated notional amount] = ABS(CASE WHEN MAX(td.physical_financial_flag) = 'f' THEN NULL ELSE ROUND(MAX(tvf.estimated_notional_amount), 5) END),
         		[Notional currency] = CASE WHEN MAX(td.physical_financial_flag) = 'f' THEN NULL
 										   WHEN MAX(tvf.price) IS NULL THEN NULL
@@ -2730,7 +2965,7 @@ BEGIN
         		[Last fixing date] = MAX(tf2.last_fixing_date),
         		[Fixing frequency] = MAX(tf2.fixing_frequency),
         		[Settlement method] = 'P',
-				--For contracts such as options on forwards, futures or swaps, as the option settles into the underlying forward, future or swap, this should be considered for physical delivery of the underlying contract and the value of “P” should be reported.
+				--For contracts such as options on forwards, futures or swaps, as the option settles into the underlying forward, future or swap, this should be considered for physical delivery of the underlying contract and the value of GǣPGǥ should be reported.
 				--A majority of contracts traded under REMIT are for physical delivery, but there may also be derivative contracts that are not reported under EMIR and thus reported under REMIT		
         		[Option style] = NULL,
         		[Option type] = NULL,
@@ -3128,10 +3363,10 @@ BEGIN
 							  WHEN MAX(sdv_block.code) LIKE '%OffPeak%' THEN 'OP' ELSE 'OT'
 						END,
 			[days_of_the_week] = NULL, --Derive based on term start and term end
-			[load_delivery_intervals] = CASE WHEN DATEDIFF(DAY, MAX(td.entire_term_start),MAX(td.entire_term_end)) = 0 AND MAX(td.deal_group_id) = 1 THEN MAX(delivery_profile.load_delivery_intervals) 
-											 WHEN  (MAX(td.deal_group_id) = 2 AND MAX(sdv_block.code) LIKE 'Peak%') THEN '08:00 / 20:00'  
-											 WHEN  (MAX(td.deal_group_id) = 2 AND MAX(sdv_block.code) NOT LIKE 'Peak%') THEN '00:00 / 00:00'  
-											 WHEN MAX(td.deal_group_id) = 3 AND MAX(td.commodity_id)=-1 THEN '06:00 / 06:00'
+			[load_delivery_intervals] = CASE WHEN DATEDIFF(DAY, MAX(td.entire_term_start),MAX(td.entire_term_end)) = 0 AND ISNULL(MAX(gm_ts.deal_group_id),MAX(td.deal_group_id)) = 1 THEN MAX(delivery_profile.load_delivery_intervals) 
+											 WHEN  (ISNULL(MAX(gm_ts.deal_group_id),MAX(td.deal_group_id)) = 2 AND MAX(sdv_block.code) LIKE 'Peak%') THEN '08:00 / 20:00'  
+											 WHEN  (ISNULL(MAX(gm_ts.deal_group_id),MAX(td.deal_group_id)) = 2 AND MAX(sdv_block.code) NOT LIKE 'Peak%') THEN '00:00 / 00:00'  
+											 WHEN ISNULL(MAX(gm_ts.deal_group_id),MAX(td.deal_group_id)) = 3 AND MAX(td.commodity_id)=-1 THEN '06:00 / 06:00'
 											 ELSE ISNULL(MAX(hb.interval),'')  
 			                            END, -- Daily deal, power and shaped only
 			[delivery_capacity] =CASE WHEN DATEDIFF(DAY, MAX(td.entire_term_start),MAX(td.entire_term_end)) = 0 AND MAX(td.internal_desk_id) = 17302 AND MAX(td.commodity_name) = 'Power' THEN  MAX(delivery_profile.delivery_capacity) ELSE '' END, -- Daily deal, power and shaped only
@@ -3256,13 +3491,14 @@ BEGIN
 							END [Contract Type]
 				) rs_contract_type
 				OUTER APPLY(
-					SELECT TOP 1 ISNULL(gmv.clm6_value, '12:00:00') [timestamp]
+					SELECT TOP 1 ISNULL(gmv.clm6_value, '12:00:00') [timestamp], gmv.clm5_value [deal_group_id]
 					FROM generic_mapping_header gmh
 					INNER JOIN generic_mapping_values gmv ON gmh.mapping_table_id = gmv.mapping_table_id
 					WHERE gmh.mapping_name = 'Remit'
 						AND CAST(gmv.clm1_value AS VARCHAR(25)) = CAST(td.counterparty_id AS VARCHAR(25))
 						AND CAST(gmv.clm2_value AS VARCHAR(25)) = CAST(td.contract_id AS VARCHAR(25))
-						AND CAST(gmv.clm5_value AS VARCHAR(25)) = CAST(td.deal_group_id  AS VARCHAR(25))
+						--AND CAST(gmv.clm5_value AS VARCHAR(25)) = CAST(td.deal_group_id  AS VARCHAR(25))
+						AND CAST(gmv.clm3_value AS VARCHAR(25)) = CAST(td.internal_desk_id  AS VARCHAR(25))
 				) gm_ts
 			GROUP BY  td.source_deal_header_id
 		
@@ -3495,7 +3731,7 @@ BEGIN
 											  END),
 				   [fixing_index_or_reference_price] = NULL,
 				   [Settlement method] = 'P',
-				   --For contracts such as options on forwards, futures or swaps, as the option settles into the underlying forward, future or swap, this should be considered for physical delivery of the underlying contract and the value of “P” should be reported.
+				   --For contracts such as options on forwards, futures or swaps, as the option settles into the underlying forward, future or swap, this should be considered for physical delivery of the underlying contract and the value of GǣPGǥ should be reported.
 				   --A majority of contracts traded under REMIT are for physical delivery, but there may also be derivative contracts that are not reported under EMIR and thus reported under REMIT
 				   [organised_market_place_id_otc] = 'XBIL',
 				   [contract_trading_hours] = NULL,
@@ -4095,12 +4331,12 @@ BEGIN
         	
 		CREATE TABLE #temp_strTrade (
 			source_deal_header_id INT,
-			strTrade VARCHAR(MAX)
+			strTrade VARCHAR(MAX) COLLATE DATABASE_DEFAULT
 		)
 
 		CREATE TABLE #temp_strHash (
 			source_deal_header_id INT,
-			strHash VARCHAR(MAX)
+			strHash VARCHAR(MAX) COLLATE DATABASE_DEFAULT
 		)
         	
 		--Start UTI Generation
@@ -4304,4 +4540,196 @@ BEGIN
 		'')
 	')
 	RETURN
+END
+ELSE IF @flag = 'r'
+BEGIN
+	SELECT @server_location = document_path + '\temp_note\ECM'
+	FROM connection_string 
+
+	SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id
+			,@remote_location = remote_directory + 'inbox/CMS-ERR3-REMIT-TEST'
+	FROM file_transfer_endpoint
+	WHERE [name] = 'Enercity SFTP ECM'
+
+	IF OBJECT_ID('tempdb..#temp_ftp_files') IS NOT NULL
+		DROP TABLE #temp_ftp_files
+	CREATE TABLE #temp_ftp_files(ftp_url NVARCHAR(1000), dir_file NVARCHAR(2000))
+	INSERT INTO #temp_ftp_files
+	EXEC spa_list_ftp_contents_using_clr @file_transfer_endpoint_id, @remote_location , @output_result OUTPUT
+
+	DELETE FROM #temp_ftp_files 
+	WHERE dir_file not like '%.xml%'
+
+	SELECT @download_files = STUFF((SELECT DISTINCT ',' +  dir_file 
+									FROM #temp_ftp_files
+									WHERE (CHARINDEX('payload-id',dir_file) > 0 
+									)
+							FOR XML PATH('')), 1, 1, '')
+	--SELECT @download_files
+	IF @download_files IS NOT NULL
+	BEGIN
+		EXEC spa_download_file_from_ftp_using_clr @file_transfer_endpoint_id, @remote_location, @download_files, @server_location, '.xml', @output_result OUTPUT
+		
+		IF OBJECT_ID('tempdb..#temp_remit_xml_data') IS NOT NULL
+			DROP TABLE #temp_remit_xml_data
+
+		CREATE TABLE #temp_remit_xml_data(
+			receipt_timestamp  NVARCHAR(100) COLLATE DATABASE_DEFAULT,
+			acer  NVARCHAR(100) COLLATE DATABASE_DEFAULT,
+			data_type  NVARCHAR(100) COLLATE DATABASE_DEFAULT,
+			reported_filename  NVARCHAR(200) COLLATE DATABASE_DEFAULT,
+			error_count  NVARCHAR(100) COLLATE DATABASE_DEFAULT,
+			logical_record_identifier  NVARCHAR(100) COLLATE DATABASE_DEFAULT,
+			logical_record_type  NVARCHAR(100) COLLATE DATABASE_DEFAULT,
+			[status]  NVARCHAR(200) COLLATE DATABASE_DEFAULT,
+			error_code  NVARCHAR(500) COLLATE DATABASE_DEFAULT,
+			error_description  NVARCHAR(2000) COLLATE DATABASE_DEFAULT,
+			error_details  NVARCHAR(4000) COLLATE DATABASE_DEFAULT,
+			comment  NVARCHAR(1000) COLLATE DATABASE_DEFAULT,
+			logical_record_timestamp  NVARCHAR(100) COLLATE DATABASE_DEFAULT,
+			download_file_name  NVARCHAR(100) COLLATE DATABASE_DEFAULT	
+		)
+
+		DECLARE @dir_file NVARCHAR(1000), @target_remote_directory VARCHAR(MAX)
+				, @success_files VARCHAR(MAX)
+				, @error_files VARCHAR(MAX)
+		SELECT @success_files = '', @error_files = ''
+		DECLARE db_cursor CURSOR FOR  
+			SELECT dir_file 
+			FROM #temp_ftp_files
+		OPEN db_cursor   
+		FETCH NEXT FROM db_cursor INTO @dir_file
+		WHILE @@FETCH_STATUS = 0   
+		BEGIN   
+			SELECT @xml_file_content = dbo.FNAReadFileContents(@server_location + '\' + @dir_file)
+			IF @xml_file_content IS NOT NULL
+			BEGIN
+				;WITH XMLNAMESPACES ('http://www.acer.europa.eu/REMIT/REMITReceiptSchema_V1.xsd' AS ns)	
+				INSERT INTO #temp_remit_xml_data(receipt_timestamp,acer,data_type,reported_filename,error_count,logical_record_identifier,logical_record_type,[status],error_code,error_description,error_details,comment
+									  ,logical_record_timestamp, download_file_name)
+				SELECT x.xml_col.value('(ns:receiptTimestamp)[1]','VARCHAR(100)') as [receipt_timestamp]
+						, x.xml_col.value('(ns:rrmId/ns:acer)[1]','VARCHAR(100)') as [acer]
+						, x.xml_col.value('(ns:dataType)[1]','VARCHAR(100)') [data_type]
+						, x.xml_col.value('(ns:validationReceipt/ns:reportedFilename)[1]','VARCHAR(200)') [reported_filename]
+						, x.xml_col.value('(ns:validationReceipt/ns:errorCount)[1]','VARCHAR(100)') [error_count]
+						, child.xml_col.value('(ns:logicalRecordIdentifier)[1]','VARCHAR(100)') [logical_record_identifier]
+						, child.xml_col.value('(ns:logicalRecordType)[1]','VARCHAR(100)') [logical_record_type]
+						, child.xml_col.value('(ns:status)[1]','VARCHAR(200)') [status]
+						, child.xml_col.value('(ns:errorCode)[1]','VARCHAR(500)') [error_code]
+						, child.xml_col.value('(ns:errorDescription)[1]','VARCHAR(2000)') [error_description]
+						, child.xml_col.value('(ns:errorDetails)[1]','VARCHAR(4000)') [error_details]
+						, child.xml_col.value('(ns:comment)[1]','VARCHAR(1000)') [comment]
+						, child.xml_col.value('(ns:logicalRecordTimestamp)[1]','VARCHAR(100)') [logical_record_timestamp]
+						, @dir_file
+				FROM ( SELECT  CAST(@xml_file_content AS xml) RawXml) b
+				CROSS APPLY b.RawXml.nodes('/ns:REMITReceipt') x(xml_col)
+				CROSS APPLY b.RawXml.nodes('/ns:REMITReceipt/ns:validationReceipt/ns:globalReceiptItem') child(xml_col);
+
+				IF EXISTS(SELECT 1 FROM #temp_remit_xml_data WHERE [status] IN ('Accepted') AND download_file_name = @dir_file)
+				BEGIN
+					SELECT @success_files += IIF(NULLIF(@success_files,'') IS NULL, @dir_file, ',' + @dir_file)
+		
+				END
+				ELSE IF EXISTS(SELECT 1 FROM #temp_remit_xml_data WHERE [status] IN ('Rejected_Content') AND download_file_name = @dir_file)
+				BEGIN
+					SELECT @error_files += IIF(NULLIF(@error_files,'') IS NULL, @dir_file, ',' + @dir_file)
+				END
+			END
+			FETCH NEXT FROM db_cursor INTO @dir_file
+		END   
+
+		CLOSE db_cursor   
+		DEALLOCATE db_cursor
+
+		IF EXISTS(SELECT 1 FROM #temp_remit_xml_data WHERE [status] IN ('Accepted','Rejected_Content'))
+		BEGIN
+			IF @success_files IS NOT NULL
+			BEGIN
+				SET @target_remote_directory = @remote_location + '/Processed/' + CONVERT(VARCHAR(7), GETDATE(), 120) + '/'
+				EXEC spa_move_ftp_file_to_folder_using_clr @file_transfer_endpoint_id, @remote_location , @target_remote_directory, @success_files, @output_result OUTPUT
+			END
+
+			IF @error_files IS NOT NULL
+			BEGIN
+				SET @target_remote_directory = @remote_location + '/Error/' + CONVERT(VARCHAR(7), GETDATE(), 120) + '/'
+				EXEC spa_move_ftp_file_to_folder_using_clr @file_transfer_endpoint_id, @remote_location , @target_remote_directory, @error_files, @output_result OUTPUT
+			END
+
+
+			INSERT INTO source_remit_audit(message_received_timestamp, [status],  error_code, error_description, [type], [source_file_name])
+			SELECT receipt_timestamp, [status], error_code, error_description + ' ' + ISNULL(error_details,'') + ' ' + ISNULL(comment,'')
+				  , NULL
+				  , reported_filename
+			FROM #temp_remit_xml_data
+
+			SELECT @process_id = dbo.FNAGETNEWID()
+					SELECT @user_name  = dbo.FNAdbuser()
+					SELECT @file_name = 'ECM_Remit_Feedback_' + CONVERT(VARCHAR(30), GETDATE(),112) + REPLACE(CONVERT(VARCHAR(30), GETDATE(),108),':','') + '.csv'
+
+					SELECT @process_table = dbo.FNAProcessTableName('ecm_remit_feedback_', dbo.FNADBUser(), @process_id) 
+					SELECT @server_location = document_path
+					FROM connection_string 
+					SELECT @full_file_path = @server_location + '\temp_Note\' + @file_name
+
+					EXEC('SELECT receipt_timestamp,acer,data_type,reported_filename,error_count,logical_record_identifier,logical_record_type,[status],error_code
+								,error_description,error_details,comment
+							   ,logical_record_timestamp
+						  INTO ' + @process_table + ' FROM #temp_remit_xml_data
+						  WHERE [status] IN (''Accepted'',''Rejected_Content'')
+						  ')
+
+
+					IF EXISTS(SELECT 1 FROM #temp_remit_xml_data temp
+							WHERE ISNULL([status],'-1') IN ('Rejected_Content')
+					)
+					BEGIN
+						EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@output_result OUTPUT
+						INSERT INTO source_system_data_import_status (process_id, code, module, source, type, description)
+						SELECT @process_id, temp.[status], 'ECM Remit Feedback', 'ECM Remit Feedback', temp.[status], temp.error_description + ' ' + ISNULL(temp.error_details,'') + ' ' + ISNULL(temp.comment,'')
+						FROM #temp_remit_xml_data temp
+						WHERE [status] IN ('Accepted','Rejected_Content')
+						SELECT @url = '../../adiha.php.scripts/dev/spa_html.php?__user_name__=' + @user_name + '&spa=exec spa_get_import_process_status ''' + @process_id + ''','''+@user_name+''''
+						SELECT @desc_success = 'ECM Remit Feedback captured with error. <a target="_blank" href="' + @url + '">Click here.</a>'
+					END
+					ELSE
+					BEGIN
+						EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@output_result OUTPUT
+						SET @desc_success = 'ECM Remit Feedback captured successfully.<br>'
+											+  '<b>Response :</b> ' + 'Success'
+					END
+
+					INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type)
+					SELECT DISTINCT au.user_login_id, 'ECM Remit Feedback' , ISNULL(@desc_success, 'Description is null'), NULL, NULL, 's',NULL, NULL,@process_id,NULL
+					FROM dbo.application_role_user aru
+					INNER JOIN dbo.application_security_role asr ON aru.role_id = asr.role_id 
+					INNER JOIN dbo.application_users au ON aru.user_login_id = au.user_login_id
+					WHERE (au.user_active = 'y') AND (asr.role_type_value_id = 22) AND au.user_emal_add IS NOT NULL
+					GROUP BY au.user_login_id, au.user_emal_add	
+
+					INSERT INTO email_notes
+						(
+							notes_subject,
+							notes_text,
+							send_from,
+							send_to,
+							send_status,
+							active_flag,
+							notes_attachment
+						)		
+					SELECT DB_NAME() + ': ECM Remit Feedback',
+						'Dear <b>' + MAX(au.user_l_name) + '</b><br><br>
+
+						 ECM Remit Feedback has been captured. Please check the Summary Report attachement in mail.',
+						'noreply@pioneersolutionsglobal.com',
+						au.user_emal_add,
+						'n',
+						'y',
+						'temp_Note/'+ @file_name +''
+					FROM dbo.application_role_user aru
+					INNER JOIN dbo.application_security_role asr ON aru.role_id = asr.role_id 
+					INNER JOIN dbo.application_users au ON aru.user_login_id = au.user_login_id
+					WHERE (au.user_active = 'y') AND (asr.role_type_value_id = 22) AND au.user_emal_add IS NOT NULL
+					GROUP BY au.user_login_id, au.user_emal_add
+		END
+	END
 END

@@ -44,15 +44,14 @@
 
             grid_obj.forEachRow(function(ids) {
                 xml_grid = xml_grid + '<GridRow ';
-                 
+                var counterparty_idx = grid_obj.getColIndexById('counterparty_id');
+                var broker_idx = grid_obj.getColIndexById('broker_id');
+                var broker_val = grid_obj.cells(ids,broker_idx).getValue();
                 grid_obj.forEachCell(ids, function(cellObj, ind) {
                     var grid_index = grid_obj.getColumnId(ind);
                     var value = cellObj.getValue(ind);                    
                     xml_grid = xml_grid + grid_index + '="' + value  + '" ';
-
-                    var counterparty_idx = grid_obj.getColIndexById('counterparty_id');
-
-                    if (counterparty_idx == ind && value == '') {
+                    if ((counterparty_idx == ind && value == '') && (!broker_val || broker_val == '')) {
                         validate_flag = 1;
                     }
                 });
