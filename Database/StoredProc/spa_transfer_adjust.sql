@@ -1,26 +1,26 @@
-IF OBJECT_ID(N'dbo.spa_transfer_adjust') IS NOT NULL
-    DROP PROCEDURE dbo.spa_transfer_adjust
-GO
+--IF OBJECT_ID(N'dbo.spa_transfer_adjust') IS NOT NULL
+--    DROP PROCEDURE dbo.spa_transfer_adjust
+--GO
  
-SET ANSI_NULLS ON
-GO
+--SET ANSI_NULLS ON
+--GO
 
  
-SET QUOTED_IDENTIFIER ON 
-GO
+--SET QUOTED_IDENTIFIER ON 
+--GO
 
-/**
-	Adjust transfer deal accorder to the physical deal
+--/**
+--	Adjust transfer deal accorder to the physical deal
 
-	Parameters 
-	@source_deal_header_id: Deal id according to which transfer deal needs to be adjusted
-*/
+--	Parameters 
+--	@source_deal_header_id: Deal id according to which transfer deal needs to be adjusted
+--*/
 
-CREATE PROCEDURE spa_transfer_adjust
-	@source_deal_header_id INT
-AS
+--CREATE PROCEDURE spa_transfer_adjust
+--	@source_deal_header_id INT
+--AS
 
-/* DEBUG
+--/* DEBUG
 
 IF OBJECT_ID('tempdb..#temp_mdq_avail') IS NOT NULL
 DROP TABLE #temp_mdq_avail
@@ -38,7 +38,7 @@ EXEC spa_print 'Use spa_print instead of PRINT statement in debug mode.'
 --Drops all temp tables created in this scope.
 EXEC [spa_drop_all_temp_table] 
 
-DECLARE @source_deal_header_id INT =  12237 --11553  --11166  --8738 
+DECLARE @source_deal_header_id INT =  12269 --11553  --11166  --8738 
 
 --pegas sell
 
@@ -125,6 +125,7 @@ CREATE TABLE #temp_volume (
 	, granularity INT
 	, volume NUMERIC(38,20)
 )
+
 
 
 IF @product_group = 'Complex-EEX'
@@ -900,3 +901,68 @@ BEGIN
 	END
 
 END 
+ELSE IF  @product_group IS NULL
+BEGIN
+	SELECT @path_id = uddf.udf_value
+	FROM source_deal_header sdh
+	INNER JOIN user_defined_deal_fields_template_main uddft
+		ON uddft.template_id = sdh.template_id
+	INNER JOIN user_defined_deal_fields uddf
+		ON uddf.source_deal_header_id = sdh.source_deal_header_id 
+		AND uddf.udf_template_id = uddft.udf_template_id
+	INNER JOIN user_defined_fields_template udft
+		ON udft.field_id = uddft.field_id
+	WHERE sdh.source_deal_header_id = @source_deal_header_id 
+		AND udft.Field_label = 'Delivery Path'
+		AND NULLIF(uddf.udf_value, '') IS NOT NULL
+		--AND ISNULL(sdh.description4, '') <> 'HAS_BEEN_ADJUSTED'
+
+	SELECT  @from_location = from_location
+			, @to_location = to_location
+			, @path_contract_id = contract
+	FROM delivery_path 
+	WHERE path_id = @path_id
+
+	--SET @flow_date_from = [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_start, 'f')
+	--SET @flow_date_to = [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_end, 'f')
+
+	SET @flow_date_from = @deal_term_start -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_start, 'f')
+	SET @flow_date_to = @deal_term_end -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_end, 'f')
+
+
+
+	WHILE (@flow_date_from <= @flow_date_to)
+	BEGIN
+		SET @process_id = dbo.FNAGetNewID()
+		
+		IF EXISTS (SELECT 1
+					FROM optimizer_detail_downstream odd
+					INNER JOIN SplitCommaSeperatedValues(@all_physical_deals) t
+						ON t.item = odd.source_deal_header_id
+						AND flow_date BETWEEN [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'f')
+							AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')
+					)
+		BEGIN
+			SET @reschedule = 1
+		END
+		ELSE 
+		BEGIN
+			SET @reschedule = 0
+		END
+
+		EXEC [dbo].[spa_auto_deal_schedule]
+			@source_deal_header_id = @source_deal_header_id,
+			@reschedule = @reschedule,
+			@flow_date = @flow_date_from,
+			@transport_deal_id = @transport_deal_id,
+			@process_id = @process_id
+
+		SET @flow_date_from =  [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, 1, @flow_date_from), 'f')
+	END
+
+	
+END
+
+--12269
+
+--select * from  source_Deal_header order by source_Deal_header_id desc
