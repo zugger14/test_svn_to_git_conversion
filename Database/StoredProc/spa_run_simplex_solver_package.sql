@@ -23,7 +23,7 @@ DECLARE @process_id  VARCHAR(100)
 	, @flag CHAR(1) = 'n'
 	, @user_login_id VARCHAR(500) = NULL	
 
-SELECT @flag='d', @process_id='0BE958FC_1A6D_4E62_AC18_2D571CC0EF1F', @user_login_id='adangol'
+SELECT @flag='m', @process_id='604727B5_520E_43C6_9B1F_8776CB2EA3B5', @user_login_id='adangol'
 
 --*/
 
@@ -73,8 +73,8 @@ BEGIN
 	SELECT CAST(d.from_loc_id AS INT ) [Id]
 	    , d.from_loc [Description]
 	    , CAST(d.from_rank AS INT ) [Rank]
-	    , CAST(COALESCE(SUM(sp.position), IIF(SUM(d.supply_position) < 0, 0, MAX(lpi.total_pos)), 0) AS FLOAT ) [FixedPosition]
-	    , CAST(COALESCE(SUM(sp.position), IIF(SUM(d.supply_position) < 0, 0, MAX(lpi.total_pos)), 0) AS FLOAT ) [Position]                    
+	    , CAST(COALESCE(MAX(sp.position), IIF(SUM(d.supply_position) < 0, 0, MAX(lpi.total_pos)), 0) AS FLOAT ) [FixedPosition]
+	    , CAST(COALESCE(MAX(sp.position), IIF(SUM(d.supply_position) < 0, 0, MAX(lpi.total_pos)), 0) AS FLOAT ) [Position]                    
         , ISNULL(
 			IIF(MAX(d.granularity) = 982, MAX(s.from_max_withdrawal) / 24, SUM(s.from_max_withdrawal))
 		  , 999999999) [max_withdrawal]                   
@@ -136,20 +136,27 @@ BEGIN
 		, CAST(d.term_start AS DATETIME) [TermStart]
 		, ISNULL(d.hour, 0) [Hour]
 		, d.granularity [Granularity]
-		, ABS(CAST(ISNULL(d.supply_position, 0) AS FLOAT)) [SupplyPosition]
-		, IIF(d.to_loc_grp_name = ''storage'', 9999999, ABS(CAST(ISNULL(d.demand_position, 0) AS FLOAT)))  [DemandPosition]
+		
+		, [SupplyPosition] = ABS(CAST(ISNULL(IIF(d.from_loc_grp_name = ''storage'', sp_w.position, d.supply_position), 0) AS FLOAT))
+		, [DemandPosition] = IIF(d.to_loc_grp_name = ''storage'', 9999999, ABS(CAST(ISNULL(d.demand_position, 0) AS FLOAT)))
+		, [StorageType] = CASE WHEN d.from_loc_grp_name = ''storage'' THEN ''Withdrawal'' WHEN d.to_loc_grp_name = ''storage'' THEN ''Injection'' ELSE '''' END
+		
 	
 	FROM ' + @contractwise_detail_mdq_group + ' d
-	LEFT JOIN counterparty_contract_rate_schedule ccrs ON  ccrs.path_id = d.path_id and ccrs.contract_id = d.contract_id 
+	LEFT JOIN ' + @storage_position + ' sp_w ON sp_w.location_id = d.from_loc_id  AND sp_w.type= ''w'' 
+	LEFT JOIN ' + @storage_constraint + ' s ON d.box_id = s.box_id
+    LEFT JOIN counterparty_contract_rate_schedule ccrs ON  ccrs.path_id = d.path_id and ccrs.contract_id = d.contract_id 
     LEFT JOIN contract_group cg ON  d.contract_id = cg.contract_id 
     LEFT OUTER JOIN static_data_value sdvc ON  sdvc.value_id = ccrs.[RANK] AND sdvc.[type_id] = 32100 
     LEFT OUTER JOIN static_data_value sdvp ON  sdvp.value_id = d.priority_id AND sdvp.[type_id] = 31400 
-    WHERE d.path_id <> 0 
+	WHERE d.path_id <> 0 
 		AND d.path_id IS NOT NULL 
 		AND d.contract_id IS NOT NULL 
 		AND d.box_type = ''no_proxy'' 
 		AND d.path_ormdq > 0
+	ORDER BY CAST(d.from_rank AS INT ), [FromLocation], CAST(d.to_rank AS INT), [ToLocationName], ISNULL(d.hour, 0)
 	'
+	--print(@sql)
 	EXEC(@sql)
 END
 ELSE IF @flag = 'u' --Update process table with solver decisions values

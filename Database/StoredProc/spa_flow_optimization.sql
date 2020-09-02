@@ -1619,7 +1619,7 @@ BEGIN
 		END  + sml.location_name + ISNULL(' [' + tlpi.location_type + ']', '') [location_name]
 		, tlpi.location_id
 		, tlpi.location_type
-		, dbo.FNARemoveTrailingZero(ROUND(COALESCE(tlpi.proxy_pos,lrt.[beg_pos],0), 0)) [position]
+		, dbo.FNARemoveTrailingZero(ROUND(COALESCE(tlpi.proxy_pos,IIF(pmj.location_name = 'storage',tlpi.position,lrt.[beg_pos]),0), 0)) [position]
 		, dbo.FNARemoveTrailingZero(ROUND(ISNULL( CASE pmj.location_name WHEN 'storage' THEN tlpi.position ELSE COALESCE(tlpi.proxy_pos_total,lrt.total_position,0) END,0), 0)) [total_pos]
 		, tlpi.[rank]
 		, CASE WHEN tlpi.proxy_loc_id = tlpi.location_id THEN -1 ELSE tlpi.proxy_loc_id END [proxy_loc_id]
