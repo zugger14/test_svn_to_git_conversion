@@ -1,26 +1,26 @@
---IF OBJECT_ID(N'dbo.spa_transfer_adjust') IS NOT NULL
---    DROP PROCEDURE dbo.spa_transfer_adjust
---GO
+IF OBJECT_ID(N'dbo.spa_transfer_adjust') IS NOT NULL
+    DROP PROCEDURE dbo.spa_transfer_adjust
+GO
  
---SET ANSI_NULLS ON
---GO
+SET ANSI_NULLS ON
+GO
 
  
---SET QUOTED_IDENTIFIER ON 
---GO
+SET QUOTED_IDENTIFIER ON 
+GO
 
---/**
---	Adjust transfer deal accorder to the physical deal
+/**
+	Adjust transfer deal accorder to the physical deal
 
---	Parameters 
---	@source_deal_header_id: Deal id according to which transfer deal needs to be adjusted
---*/
+	Parameters 
+	@source_deal_header_id: Deal id according to which transfer deal needs to be adjusted
+*/
 
---CREATE PROCEDURE spa_transfer_adjust
---	@source_deal_header_id INT
---AS
+CREATE PROCEDURE spa_transfer_adjust
+	@source_deal_header_id INT
+AS
 
---/* DEBUG
+/* DEBUG
 
 IF OBJECT_ID('tempdb..#temp_mdq_avail') IS NOT NULL
 DROP TABLE #temp_mdq_avail
