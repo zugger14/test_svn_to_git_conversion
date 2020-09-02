@@ -2208,7 +2208,7 @@ BEGIN
 				SELECT 'Error' ErrorCode,
 					   'Calculate vol_cor' MODULE,
 					   'spa_calc_vol_cor' Area,
-               'DB Error' STATUS,
+						--'DB Error' STATUS,
 					   'Technical Error' STATUS,
 					   'Volatility/Correlation Calculation process has been run with error, Please view this report. '
 					   + @url_desc MESSAGE,
