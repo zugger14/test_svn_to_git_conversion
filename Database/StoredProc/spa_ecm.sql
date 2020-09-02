@@ -763,7 +763,7 @@ BEGIN
 				ON ssr.submission_type_id = 44705
 				AND ssr.broker_id = sdh.broker_id
 			INNER JOIN maintain_udf_static_data_detail_values musddv
-				ON musddv.primary_field_object_id = sdh.counterparty_id
+				ON musddv.primary_field_object_id = sdh.broker_id
 			INNER JOIN application_ui_template_fields autf
 				ON autf.application_field_id = musddv.application_field_id
 			INNER JOIN user_defined_fields_template udft
