@@ -281,9 +281,18 @@ IF @email_description IS NULL
 	SET @email_description = 'Batch process completed for <b>' + @report_RDL_name + '</b>.'	
 
 
-SET @desc_success = 'Batch process completed for <b>' + @trimmed_report_name + '</b>. Report has been saved. Please
-					<a target="_blank" href="'+  @url + @final_output_full_file_path + '">
-					<b> Click Here</b></a> to download.'
+IF @export_web_services_id IS NOT NULL
+BEGIN
+	 SELECT @desc_success = 'Batch process completed for Web Service <b>' + Isnull(ews.ws_name, 'Not defined') + '</b> .'
+	 FROM export_web_service ews WHERE ews.id = @export_web_services_id
+ 
+END
+ELSE 
+BEGIN
+	SET @desc_success = 'Batch process completed for <b>' + @trimmed_report_name + '</b>. Report has been saved. Please
+						<a target="_blank" href="'+  @url + @final_output_full_file_path + '">
+						<b> Click Here</b></a> to download.'
+END
 
 --(File generation including compression for csv, xml and txt is handled by spa_dump_csv in spa_message_board)
 IF @export_extension = 'xlsx'
@@ -306,7 +315,7 @@ BEGIN
 		'
 	END
 
-	SET @report_param_success += 'EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description =''' + @desc_success + ''', @url_desc='''', @url ='''', @type = ''s'', @job_name='''+@export_job_name+''', @process_id= ''' + @process_id + ''', @email_enable =''y'', @email_description=''' + @email_description + ''', @email_subject=''' + @email_subject + ''',@file_name =''' + @final_output_full_file_path  + ''''
+	SET @report_param_success += 'EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description =''' + @desc_success + ''', @url_desc='''', @url ='''', @type = ''s'', @job_name='''+@export_job_name+''', @process_id= ''' + @process_id + ''', @email_enable =''y'', @email_description=''' + @email_description + ''', @email_subject=''' + @email_subject + ''',@file_name =''' + @final_output_full_file_path  + ''',@report_sp =' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ''
 END
 ELSE
 BEGIN
