@@ -2,34 +2,62 @@ BEGIN TRY
 		BEGIN TRAN
 
 		DECLARE @report_id_dest INT 
-		
-		IF 'e ' = 'p'
-		BEGIN
-			Set @report_id_dest = NULL
-		END
 	
 
+		--RETAIN APPLICATION FILTER DETAILS START (PART1)
+		if object_id('tempdb..#paramset_map') is not null drop table #paramset_map
+		create table #paramset_map (
+			deleted_paramset_id int null, 
+			paramset_hash varchar(36) COLLATE DATABASE_DEFAULT NULL, 
+			inserted_paramset_id int null
+
+		)
 		IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='54DFBBBD_11F5_4AEF_A7C6_FCDFA0ACDD96')
 		BEGIN
 			declare @report_id_to_delete int
 			select @report_id_to_delete = report_id from report where report_hash = '54DFBBBD_11F5_4AEF_A7C6_FCDFA0ACDD96'
 
+			insert into #paramset_map(deleted_paramset_id, paramset_hash)
+			select rp.report_paramset_id, rp.paramset_hash
+			from report_paramset rp
+			inner join report_page pg on pg.report_page_id = rp.page_id
+			where pg.report_id = @report_id_to_delete
+
 			EXEC spa_rfx_report @flag='d', @report_id=@report_id_to_delete, @retain_privilege=1, @process_id=NULL
-		END
 
-		IF @report_id_dest IS NULL
-		BEGIN
-			INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-			SELECT TOP 1 'EOD - Price Verification' [name], 'farrms_admin' [owner], 1 is_system, 0 is_excel, 0 is_mobile, '54DFBBBD_11F5_4AEF_A7C6_FCDFA0ACDD96' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
-			FROM sys.objects o
-			LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
-			SET @report_id_dest = SCOPE_IDENTITY()
+		
 		END
+		--RETAIN APPLICATION FILTER DETAILS END (PART1)
+		
 
+		declare @report_copy_name varchar(200)
+		
+		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'EOD - Price Verification')
+		
+
+		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
+		SELECT TOP 1 'EOD - Price Verification' [name], 'dev_admin' [owner], 1 is_system, 0 is_excel, 0 is_mobile, '54DFBBBD_11F5_4AEF_A7C6_FCDFA0ACDD96' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		FROM sys.objects o
+		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
+		SET @report_id_dest = SCOPE_IDENTITY()
+		
 		
 BEGIN TRY
 		BEGIN TRAN
 	
+
+	declare @new_ds_alias varchar(10) = 'pv'
+	/** IF DATA SOURCE ALIAS ALREADY EXISTS ON DESTINATION, RAISE ERROR **/
+	if exists(select top 1 1 from data_source where alias = 'pv' and name <> 'Price Verification')
+	begin
+		select top 1 @new_ds_alias = 'pv' + cast(s.n as varchar(5))
+		from seq s
+		left join data_source ds on ds.alias = 'pv' + cast(s.n as varchar(5))
+		where ds.data_source_id is null
+			and s.n < 10
+
+		--RAISERROR ('Datasource alias already exists on system.', 16, 1);
+	end
 
 	DECLARE @report_id_data_source_dest INT 
 	
@@ -44,12 +72,12 @@ BEGIN TRY
 	AND NOT EXISTS (SELECT 1 FROM map_function_category WHERE [function_name] = 'Price Verification' AND '106500' = '106501') 
 	BEGIN
 		INSERT INTO data_source([type_id], [name], [alias], [description], [tsql], report_id, system_defined,category)
-		SELECT TOP 1 2 AS [type_id], 'Price Verification' AS [name], 'pv' AS ALIAS, NULL AS [description],null AS [tsql], @report_id_data_source_dest AS report_id,NULL AS [system_defined]
+		SELECT TOP 1 2 AS [type_id], 'Price Verification' AS [name], @new_ds_alias AS ALIAS, NULL AS [description],null AS [tsql], @report_id_data_source_dest AS report_id,NULL AS [system_defined]
 			,'106500' AS [category]
 	END
 
 	UPDATE data_source
-	SET alias = 'pv', description = NULL
+	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10)  = ''@as_of_date'',
 		@_process_id VARCHAR(100) = ''@process_id''  
 		
@@ -390,37 +418,22 @@ COMMIT TRAN
 		DROP TABLE #data_source_column	
 	
 
-		IF NOT EXISTS(SELECT 1 FROM report_dataset rd WHERE rd.report_id = @report_id_dest AND rd.[alias] =  'pv')
-		BEGIN
-			INSERT INTO report_dataset (source_id, report_id, [alias], root_dataset_id, is_free_from, relationship_sql)
-			SELECT TOP 1 ds.data_source_id AS source_id, @report_id_dest AS report_id, 'pv' [alias], rd_root.report_dataset_id AS root_dataset_id,0 AS is_free_from, 'NULL' AS relationship_sql
-			FROM sys.objects o
-			INNER JOIN data_source ds ON ds.[name] = 'Price Verification'
-				AND ISNULL(ds.report_id, @report_id_dest) = @report_id_dest
-			LEFT JOIN report_dataset rd_root ON rd_root.[alias] = NULL
-				AND rd_root.report_id = @report_id_dest
-		END			
+		INSERT INTO report_dataset (source_id, report_id, [alias], root_dataset_id, is_free_from, relationship_sql)
+		SELECT TOP 1 ds.data_source_id AS source_id, @report_id_dest AS report_id, 'pv' [alias], rd_root.report_dataset_id AS root_dataset_id,0 AS is_free_from, 'NULL' AS relationship_sql
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Price Verification'
+			AND ISNULL(ds.report_id, @report_id_dest) = @report_id_dest
+		LEFT JOIN report_dataset rd_root ON rd_root.[alias] = NULL
+			AND rd_root.report_id = @report_id_dest		
 		
 
-	IF NOT EXISTS(SELECT 1 FROM report_page rp 
-	              WHERE rp.report_id = CASE WHEN 'e ' = 'p' 
-											Then 36017 
-											ELSE @report_id_dest 
-						               END 
-					AND rp.name =  'EOD - Price Verification'  
-	)
-	BEGIN
-		INSERT INTO report_page(report_id, [name], report_hash, width, height)
-		SELECT CASE WHEN 'e ' = 'p' 
-					Then 36017 
-					ELSE @report_id_dest 
-		       END  AS report_id, 'EOD - Price Verification' [name], '54DFBBBD_11F5_4AEF_A7C6_FCDFA0ACDD96' report_hash, 11.5 width,5.5 height
-	END 
+	INSERT INTO report_page(report_id, [name], report_hash, width, height)
+	SELECT @report_id_dest AS report_id, 'EOD - Price Verification' [name], '54DFBBBD_11F5_4AEF_A7C6_FCDFA0ACDD96' report_hash, 11.5 width,5.5 height
 	
 
-		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file)
+		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
 		SELECT TOP 1 rpage.report_page_id, 'EOD - Price Verification', 'D25F43EB_3EC5_4804_84FC_ECEA2A1C6807', 1,'','','.xlsx',',', 
-		-100000,'n','n'	
+		-100000,'n','n',NULL	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 			on rpage.[name] = 'EOD - Price Verification'
@@ -441,10 +454,7 @@ COMMIT TRAN
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Price Verification'
 		INNER JOIN report_dataset rd 
-			ON rd.report_id = CASE WHEN 'e ' = 'p' 
-									Then 36017 
-									ELSE @report_id_dest 
-			                  END
+			ON rd.report_id = @report_id_dest
 			AND rd.[alias] = 'pv'
 	
 
@@ -528,7 +538,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Price Verification_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Price Verification'
+			AND rpage.[name] = 'EOD - Price Verification'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Price Verification'
@@ -550,7 +560,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Price Verification_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Price Verification'
+			AND rpage.[name] = 'EOD - Price Verification'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Price Verification'
@@ -572,7 +582,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Price Verification_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Price Verification'
+			AND rpage.[name] = 'EOD - Price Verification'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Price Verification'
@@ -594,7 +604,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Price Verification_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Price Verification'
+			AND rpage.[name] = 'EOD - Price Verification'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Price Verification'
@@ -616,7 +626,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Price Verification_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Price Verification'
+			AND rpage.[name] = 'EOD - Price Verification'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Price Verification'
@@ -638,7 +648,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Price Verification_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Price Verification'
+			AND rpage.[name] = 'EOD - Price Verification'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Price Verification'
@@ -816,6 +826,32 @@ COMMIT TRAN
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Recommendation' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
+
+		--RETAIN APPLICATION FILTER DETAILS START (PART2)
+		update pm
+		set inserted_paramset_id = rp.report_paramset_id
+		from #paramset_map pm
+		inner join report_paramset rp on rp.paramset_hash = pm.paramset_hash
+		
+		update f set f.report_id = pm.inserted_paramset_id
+		from application_ui_filter f
+		inner join #paramset_map pm on pm.deleted_paramset_id = isnull(f.report_id, -1)
+		where f.application_function_id is null
+	
+		delete fd
+		--select *
+		from application_ui_filter_details fd
+		inner join application_ui_filter f on f.application_ui_filter_id = fd.application_ui_filter_id
+		inner join #paramset_map pm on pm.inserted_paramset_id = isnull(f.report_id, -1)
+		where abs(fd.report_column_id) not in (
+			select distinct rp.column_id
+			from report_param rp
+			inner join report_dataset_paramset rdp on rdp.report_dataset_paramset_id = rp.dataset_paramset_id
+			inner join report_paramset rpm on rpm.report_paramset_id = rdp.paramset_id
+			where rpm.report_paramset_id = f.report_id
+		)
+		--RETAIN APPLICATION FILTER DETAILS END (PART2)
+	
 COMMIT 
 
 END TRY
@@ -826,12 +862,3 @@ BEGIN CATCH
 	DECLARE @error_message VARCHAR(MAX) = ERROR_MESSAGE()
 	RAISERROR(@error_message,16,1)
 END CATCH
-	
-		IF OBJECT_ID(N'tempdb..#pages_dest', 'U') IS NOT NULL DROP TABLE #pages_dest
-		
-		IF OBJECT_ID(N'tempdb..#paramset_dest', 'U') IS NOT NULL DROP TABLE #paramset_dest
-		
-		IF OBJECT_ID(N'tempdb..#del_report_page', 'U') IS NOT NULL DROP TABLE #del_report_page	
-		
-		IF OBJECT_ID(N'tempdb..#del_report_paramset', 'U') IS NOT NULL DROP TABLE #del_report_paramset	
-	

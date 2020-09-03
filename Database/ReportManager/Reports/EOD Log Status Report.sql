@@ -36,9 +36,9 @@ BEGIN TRY
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'EOD Log Status Report' [name], 'farrms_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, '6575A7C1_8439_4B07_833E_3C48DD5FDCA4' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'EOD Log Status Report' [name], 'dev_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, '6575A7C1_8439_4B07_833E_3C48DD5FDCA4' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
-		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = NULL AND sdv_cat.type_id = -1 
+		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
 		
 		
@@ -293,9 +293,9 @@ COMMIT TRAN
 	SELECT @report_id_dest AS report_id, 'EOD Log Status Report' [name], '6575A7C1_8439_4B07_833E_3C48DD5FDCA4' report_hash, 11.5 width,5.5 height
 	
 
-		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file)
+		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
 		SELECT TOP 1 rpage.report_page_id, 'EOD Log Status Report', 'F1E6534B_88C9_4CE9_9F19_F0D0F1A61744', 2,'','','.xlsx',',', 
-		-100000,'n','n'	
+		-100000,'n','n',NULL	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 			on rpage.[name] = 'EOD Log Status Report'

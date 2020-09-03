@@ -12,10 +12,10 @@ BEGIN TRY
 			inserted_paramset_id int null
 
 		)
-		IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='FBB5FEB8_045A_459B_A5C8_D5B089765857')
+		IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='CF6AE2A8_402A_4CE0_9EEA_EE849EA4C7FC')
 		BEGIN
 			declare @report_id_to_delete int
-			select @report_id_to_delete = report_id from report where report_hash = 'FBB5FEB8_045A_459B_A5C8_D5B089765857'
+			select @report_id_to_delete = report_id from report where report_hash = 'CF6AE2A8_402A_4CE0_9EEA_EE849EA4C7FC'
 
 			insert into #paramset_map(deleted_paramset_id, paramset_hash)
 			select rp.report_paramset_id, rp.paramset_hash
@@ -32,11 +32,11 @@ BEGIN TRY
 
 		declare @report_copy_name varchar(200)
 		
-		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'EOD - Run Settlement')
+		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'EOD - PNL Attribution')
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'EOD - Run Settlement' [name], 'dev_admin' [owner], 1 is_system, 0 is_excel, 0 is_mobile, 'FBB5FEB8_045A_459B_A5C8_D5B089765857' report_hash, 'EOD - Run Settlement' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'EOD - PNL Attribution' [name], 'dev_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, 'CF6AE2A8_402A_4CE0_9EEA_EE849EA4C7FC' report_hash, 'EOD - PNL Attribution' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
@@ -46,13 +46,13 @@ BEGIN TRY
 		BEGIN TRAN
 	
 
-	declare @new_ds_alias varchar(10) = 'rs'
+	declare @new_ds_alias varchar(10) = 'pa'
 	/** IF DATA SOURCE ALIAS ALREADY EXISTS ON DESTINATION, RAISE ERROR **/
-	if exists(select top 1 1 from data_source where alias = 'rs' and name <> 'Run Settlement')
+	if exists(select top 1 1 from data_source where alias = 'pa' and name <> 'PNl Attribution')
 	begin
-		select top 1 @new_ds_alias = 'rs' + cast(s.n as varchar(5))
+		select top 1 @new_ds_alias = 'pa' + cast(s.n as varchar(5))
 		from seq s
-		left join data_source ds on ds.alias = 'rs' + cast(s.n as varchar(5))
+		left join data_source ds on ds.alias = 'pa' + cast(s.n as varchar(5))
 		where ds.data_source_id is null
 			and s.n < 10
 
@@ -63,103 +63,161 @@ BEGIN TRY
 	
 	SELECT @report_id_data_source_dest = report_id
 	FROM report r
-	WHERE r.[name] = 'EOD - Run Settlement'
+	WHERE r.[name] = 'EOD - PNL Attribution'
 
 	IF NOT EXISTS (SELECT 1 
 	           FROM data_source 
-	           WHERE [name] = 'Run Settlement'
+	           WHERE [name] = 'PNl Attribution'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	AND NOT EXISTS (SELECT 1 FROM map_function_category WHERE [function_name] = 'Run Settlement' AND '106500' = '106501') 
+	AND NOT EXISTS (SELECT 1 FROM map_function_category WHERE [function_name] = 'PNl Attribution' AND '106500' = '106501') 
 	BEGIN
 		INSERT INTO data_source([type_id], [name], [alias], [description], [tsql], report_id, system_defined,category)
-		SELECT TOP 1 2 AS [type_id], 'Run Settlement' AS [name], @new_ds_alias AS ALIAS, NULL AS [description],null AS [tsql], @report_id_data_source_dest AS report_id,NULL AS [system_defined]
+		SELECT TOP 1 2 AS [type_id], 'PNl Attribution' AS [name], @new_ds_alias AS ALIAS, NULL AS [description],null AS [tsql], @report_id_data_source_dest AS report_id,NULL AS [system_defined]
 			,'106500' AS [category]
 	END
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'',
-		@_term_start VARCHAR(10) = NULL,
-		@_term_end VARCHAR(10) = NULL,
-		@_process_id VARCHAR(100) = ''@process_id'' 
-		
-IF ''@process_id'' <> ''NULL''
-    SET @_process_id = ''@process_id''
- ELSE    
-    SET @_process_id = NULL 		
-		
-SET @_term_start = CONVERT(VARCHAR(10), [dbo].[FNAGetFirstLastDayOfMonth](@_as_of_date, ''f''), 120) 
-SET @_term_end = CONVERT(VARCHAR(10), @_as_of_date, 120)
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'', 
 
-SELECT sub.entity_id sub_id,
-	  stra.entity_id stra_id,
-	  book.entity_id book_id,
-	  sub.entity_name AS sub_name,
-	  stra.entity_name AS stra_name,
-	  book.entity_name AS book_name,
-	  ssbm.source_system_book_id1, 
-	  ssbm.source_system_book_id2, 
-	  ssbm.source_system_book_id3, 
-	  ssbm.source_system_book_id4,
-      ssbm.logical_name,
-      ssbm.book_deal_type_map_id [sub_book_id]
-INTO  #books
-FROM   portfolio_hierarchy book(NOLOCK)
-INNER JOIN Portfolio_hierarchy stra(NOLOCK)
-	ON  book.parent_entity_id = stra.entity_id
-INNER JOIN portfolio_hierarchy sub (NOLOCK)
-	ON  stra.parent_entity_id = sub.entity_id
-INNER JOIN source_system_book_map ssbm
-	ON  ssbm.fas_book_id = book.entity_id
-AND (''@sub_id'' = ''NULL'' OR sub.entity_id IN (@sub_id))
-AND (''@stra_id'' = ''NULL'' OR stra.entity_id IN (@stra_id))
-AND (''@book_id'' = ''NULL'' OR book.entity_id IN (@book_id))
-AND (''@sub_book_id'' = ''NULL'' OR ssbm.book_deal_type_map_id IN (@sub_book_id))
-    		
+		@_process_id VARCHAR(100) = ''@process_id'',       
+
+		@_sub_id VARCHAR(MAX) = ''@sub_id'',
+
+        @_stra_id VARCHAR(MAX) = ''@stra_id'',
+
+        @_book_id VARCHAR(MAX) = ''@book_id'',
+
+        @_sub_book_id VARCHAR(MAX) = ''@sub_book_id'' 
+
+		
+
+IF ''@process_id'' <> ''NULL''
+
+    SET @_process_id = ''@process_id''
+
+ ELSE    
+
+    SET @_process_id = NULL 		
+
+
+
+	
+
+
+
+IF ''@sub_id'' <> ''NULL''
+
+    SET @_sub_id = ''@sub_id''
+
+IF ''@stra_id'' <> ''NULL''
+
+    SET @_stra_id = ''@stra_id''
+
+IF ''@book_id'' <> ''NULL''
+
+    SET @_book_id = ''@book_id''
+
+IF ''@sub_book_id'' <> ''NULL''
+
+    SET @_sub_book_id = ''@sub_book_id''
+
+
+
+
+
+	
+
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result
+
 CREATE TABLE #tmp_result (
-	ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Module VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Area VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Status VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Message VARCHAR(1000) COLLATE DATABASE_DEFAULT ,
-	Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
+
+    ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
+    Module VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
+    Area VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
+    Status VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
+    Message VARCHAR(1000) COLLATE DATABASE_DEFAULT ,
+
+    Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
+
 )
 
 
+
+
+
 IF ''@sub_id'' = ''1900'' AND  ''@stra_id'' = ''1900'' AND ''@book_id'' = ''1900'' AND ''@sub_book_id'' = ''1900'' 
+
 BEGIN
+
       INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
+
       SELECT NULL, NUll, NULL, NULL, NUll, NULL  
-END
-ELSE 
-BEGIN
-    INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
-    EXEC spa_calc_mtm_job   ''@sub_id'',''@stra_id'',''@book_id'',''@sub_book_id'',NULL, @_as_of_date ,4500,775,NULL,@_process_id , NULL,NULL, 77,NULL,NULL,NULL,NULL,''d'',NULL,NULL,NULL,''n'',@_term_start ,@_term_end ,''s'',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,@_process_id
+
+    
+
 END
 
-SELECT  
+ELSE 
+
+BEGIN
+
+	INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
+
+	EXEC spa_calc_mtm_job  @_sub_id,@_stra_id,@_book_id,@_sub_book_id, NULL, @_as_of_date, 4500, NULL, ''b'', @_process_id, NULL, 
+
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ''n'', @_as_of_date, @_as_of_date, ''m'', NULL, 
+
+	NULL, NULL, NULL, NULL, NULL, NULL, ''400,401'', 1, 0, 0, NULL, @_process_id
+
+
+
+	UPDATE #tmp_result SET [Message] = ''PNL Attribution completed for run as of date'' + @_as_of_date + '' .'' WHERE [Status] = ''Success''
+
+END
+
+SELECT  TOP 1
+
     @_as_of_date as_of_date, 
-    @_term_start term_start,
-    @_term_end term_end, 
+
+    @_as_of_date term_start,
+
+    @_as_of_date term_end, 
+
     @_process_id process_id,
-	''@sub_id'' sub_id,
-    ''@stra_id'' stra_id,
-    ''@book_id'' book_id,
-    ''@sub_book_id'' sub_book_id,
-	[ErrorCode],
-	[Module],
+
+    @_sub_id sub_id,
+
+    @_stra_id stra_id,
+
+    @_book_id book_id,
+
+    @_sub_book_id sub_book_id,
+
+    [ErrorCode],
+
+    [Module],
+
 	[Area],
+
 	[Status],
+
 	[Message],
+
 	[Recommendation]
+
 --[__batch_report__] 
+
 FROM #tmp_result
-WHERE 1=1
-', report_id = @report_id_data_source_dest,
+
+WHERE 1=1 ', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
-	WHERE [name] = 'Run Settlement'
+	WHERE [name] = 'PNl Attribution'
 		AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1)
 		
 	
@@ -171,7 +229,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'Area'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -181,7 +239,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'Area'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -192,7 +250,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'Area' AS [name], 'Area' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -205,17 +263,17 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'as_of_date'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'As of Date'
-			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 4, key_column = 0, required_filter = 1
+			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 4, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'as_of_date'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -224,9 +282,9 @@ WHERE 1=1
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'as_of_date' AS [name], 'As of Date' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, 1 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'as_of_date' AS [name], 'As of Date' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -239,7 +297,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'book_id'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -249,7 +307,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'book_id'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -260,7 +318,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'book_id' AS [name], 'Book ID' AS ALIAS, NULL AS reqd_param, 5 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -273,7 +331,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'ErrorCode'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -283,7 +341,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'ErrorCode'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -294,7 +352,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'ErrorCode' AS [name], 'Errorcode' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -307,7 +365,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'Message'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -317,7 +375,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'Message'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -328,7 +386,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'Message' AS [name], 'Message' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -341,7 +399,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'Module'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -351,7 +409,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'Module'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -362,7 +420,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'Module' AS [name], 'Module' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -375,7 +433,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'process_id'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -385,7 +443,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'process_id'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -396,7 +454,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'process_id' AS [name], 'Process Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -409,7 +467,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'Recommendation'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -419,7 +477,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'Recommendation'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -430,7 +488,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'Recommendation' AS [name], 'Recommendation' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -443,7 +501,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'Status'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -453,7 +511,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'Status'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -464,7 +522,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'Status' AS [name], 'Status' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -477,7 +535,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'stra_id'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -487,7 +545,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'stra_id'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -498,7 +556,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'stra_id' AS [name], 'Strategy ID' AS ALIAS, NULL AS reqd_param, 4 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -511,7 +569,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'sub_book_id'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -521,7 +579,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'sub_book_id'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -532,7 +590,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'sub_book_id' AS [name], 'Sub Book ID' AS ALIAS, NULL AS reqd_param, 8 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -545,7 +603,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'sub_id'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -555,7 +613,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'sub_id'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -566,7 +624,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'sub_id' AS [name], 'Subsidiary ID' AS ALIAS, NULL AS reqd_param, 3 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -579,7 +637,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'term_end'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -589,7 +647,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'term_end'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -600,7 +658,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'term_end' AS [name], 'Term End' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -613,7 +671,7 @@ WHERE 1=1
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Run Settlement'
+	           WHERE ds.[name] = 'PNl Attribution'
 	            AND dsc.name =  'term_start'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -623,7 +681,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Run Settlement'
+		WHERE ds.[name] = 'PNl Attribution'
 			AND dsc.name =  'term_start'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
@@ -634,7 +692,7 @@ WHERE 1=1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'term_start' AS [name], 'Term Start' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
 		LEFT JOIN report r ON r.report_id = ds.report_id
 			AND ds.[type_id] = 2
@@ -647,7 +705,7 @@ WHERE 1=1
 	DELETE dsc
 	FROM data_source_column dsc 
 	INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		AND ds.[name] = 'Run Settlement'
+		AND ds.[name] = 'PNl Attribution'
 		AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1)
 	LEFT JOIN #data_source_column tdsc ON tdsc.column_id = dsc.data_source_column_id
 	WHERE tdsc.column_id IS NULL
@@ -669,43 +727,43 @@ COMMIT TRAN
 	
 
 		INSERT INTO report_dataset (source_id, report_id, [alias], root_dataset_id, is_free_from, relationship_sql)
-		SELECT TOP 1 ds.data_source_id AS source_id, @report_id_dest AS report_id, 'rs' [alias], rd_root.report_dataset_id AS root_dataset_id,0 AS is_free_from, 'NULL' AS relationship_sql
+		SELECT TOP 1 ds.data_source_id AS source_id, @report_id_dest AS report_id, 'pa' [alias], rd_root.report_dataset_id AS root_dataset_id,0 AS is_free_from, 'NULL' AS relationship_sql
 		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Run Settlement'
+		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id, @report_id_dest) = @report_id_dest
 		LEFT JOIN report_dataset rd_root ON rd_root.[alias] = NULL
 			AND rd_root.report_id = @report_id_dest		
 		
 
 	INSERT INTO report_page(report_id, [name], report_hash, width, height)
-	SELECT @report_id_dest AS report_id, 'EOD - Run Settlement' [name], 'FBB5FEB8_045A_459B_A5C8_D5B089765857' report_hash, 11.5 width,5.5 height
+	SELECT @report_id_dest AS report_id, 'EOD - PNL Attribution' [name], 'CF6AE2A8_402A_4CE0_9EEA_EE849EA4C7FC' report_hash, 11.5 width,5.5 height
 	
 
 		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
-		SELECT TOP 1 rpage.report_page_id, 'EOD - Run Settlement', '332CC656_4ACD_4E4A_BAC7_9A018EAE94AF', 1,'','','.xlsx',',', 
+		SELECT TOP 1 rpage.report_page_id, 'EOD - PNL Attribution', '1837A6E6_458F_4BEA_A85E_7682FB5D6613', 1,'','','.xlsx',',', 
 		-100000,'n','n',NULL	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
-			on rpage.[name] = 'EOD - Run Settlement'
+			on rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 		ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 	
 
 		INSERT INTO report_dataset_paramset(paramset_id, root_dataset_id, where_part, advance_mode)
 		SELECT TOP 1 rp.report_paramset_id AS paramset_id, rd.report_dataset_id AS root_dataset_id, NULL AS where_part, 0
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Run Settlement'
+			ON rp.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Run Settlement'
+			AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = @report_id_dest
-			AND rd.[alias] = 'rs'
+			AND rd.[alias] = 'pa'
 	
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
@@ -713,24 +771,24 @@ COMMIT TRAN
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Run Settlement'
+			ON rp.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Run Settlement'
+			AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'rs'
+			AND rd_root.[alias] = 'pa'
 		INNER JOIN report_dataset_paramset rdp 
 			ON rdp.paramset_id = rp.report_paramset_id
 			AND rdp.root_dataset_id = rd_root.report_dataset_id
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'rs'
+			AND rd.[alias] = 'pa'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Run Settlement' 
+			AND ds.[name] = 'PNl Attribution' 
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'as_of_date'	
@@ -741,24 +799,24 @@ COMMIT TRAN
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Run Settlement'
+			ON rp.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Run Settlement'
+			AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'rs'
+			AND rd_root.[alias] = 'pa'
 		INNER JOIN report_dataset_paramset rdp 
 			ON rdp.paramset_id = rp.report_paramset_id
 			AND rdp.root_dataset_id = rd_root.report_dataset_id
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'rs'
+			AND rd.[alias] = 'pa'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Run Settlement' 
+			AND ds.[name] = 'PNl Attribution' 
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'process_id'	
@@ -769,24 +827,24 @@ COMMIT TRAN
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Run Settlement'
+			ON rp.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Run Settlement'
+			AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'rs'
+			AND rd_root.[alias] = 'pa'
 		INNER JOIN report_dataset_paramset rdp 
 			ON rdp.paramset_id = rp.report_paramset_id
 			AND rdp.root_dataset_id = rd_root.report_dataset_id
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'rs'
+			AND rd.[alias] = 'pa'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Run Settlement' 
+			AND ds.[name] = 'PNl Attribution' 
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'book_id'	
@@ -797,24 +855,24 @@ COMMIT TRAN
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Run Settlement'
+			ON rp.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Run Settlement'
+			AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'rs'
+			AND rd_root.[alias] = 'pa'
 		INNER JOIN report_dataset_paramset rdp 
 			ON rdp.paramset_id = rp.report_paramset_id
 			AND rdp.root_dataset_id = rd_root.report_dataset_id
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'rs'
+			AND rd.[alias] = 'pa'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Run Settlement' 
+			AND ds.[name] = 'PNl Attribution' 
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'stra_id'	
@@ -825,24 +883,24 @@ COMMIT TRAN
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Run Settlement'
+			ON rp.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Run Settlement'
+			AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'rs'
+			AND rd_root.[alias] = 'pa'
 		INNER JOIN report_dataset_paramset rdp 
 			ON rdp.paramset_id = rp.report_paramset_id
 			AND rdp.root_dataset_id = rd_root.report_dataset_id
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'rs'
+			AND rd.[alias] = 'pa'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Run Settlement' 
+			AND ds.[name] = 'PNl Attribution' 
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'sub_book_id'	
@@ -853,85 +911,41 @@ COMMIT TRAN
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Run Settlement'
+			ON rp.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Run Settlement'
+			AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'rs'
+			AND rd_root.[alias] = 'pa'
 		INNER JOIN report_dataset_paramset rdp 
 			ON rdp.paramset_id = rp.report_paramset_id
 			AND rdp.root_dataset_id = rd_root.report_dataset_id
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'rs'
+			AND rd.[alias] = 'pa'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Run Settlement' 
+			AND ds.[name] = 'PNl Attribution' 
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'sub_id'	
 	
 
 		INSERT INTO report_page_tablix(page_id,root_dataset_id, [name], width, height, [top], [left], group_mode, border_style, page_break, type_id, cross_summary, no_header, export_table_name, is_global)
-		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'EOD _ Run Settlement_tablix' [name], '4.773333333333333' width, '3.2266666666666666' height, '0' [top], '0' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
+		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'EOD _ PNL Attribution_tablix' [name], '4.64' width, '2.96' height, '0' [top], '0.05333333333333334' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
-		ON rpage.[name] = 'EOD - Run Settlement'
+		ON rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id 
-			AND rd.[alias] = 'rs' 
+			AND rd.[alias] = 'pa' 
 	
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 0 column_order,NULL aggregation, NULL functions, 'Errorcode' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'EOD _ Run Settlement_tablix'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Run Settlement'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'rs' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'ErrorCode' 
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 1 column_order,NULL aggregation, NULL functions, 'Module' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'EOD _ Run Settlement_tablix'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Run Settlement'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'rs' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Module' 
 
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
@@ -941,17 +955,17 @@ COMMIT TRAN
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'EOD _ Run Settlement_tablix'
+			ON rpt.[name] = 'EOD _ PNL Attribution_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Run Settlement'
+			AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'rs' 	
+			ON rd.report_id = r.report_id AND rd.[alias] = 'pa' 	
 		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Area' 
 
@@ -963,19 +977,63 @@ COMMIT TRAN
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'EOD _ Run Settlement_tablix'
+			ON rpt.[name] = 'EOD _ PNL Attribution_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Run Settlement'
+			AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'rs' 	
+			ON rd.report_id = r.report_id AND rd.[alias] = 'pa' 	
 		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Status' 
+
+		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
+					, functions, [alias], sortable, rounding, thousand_seperation, font
+					, font_size, font_style, text_align, text_color, background, default_sort_order
+					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 1 column_order,NULL aggregation, NULL functions, 'Module' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+			
+		FROM sys.objects o
+		INNER JOIN report_page_tablix rpt 
+			ON rpt.[name] = 'EOD _ PNL Attribution_tablix'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rpt.page_id 
+			AND rpage.[name] = 'EOD - PNL Attribution'
+		INNER JOIN report r 
+			ON r.report_id = rpage.report_id
+			AND r.[name] = 'EOD - PNL Attribution'
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id AND rd.[alias] = 'pa' 	
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Module' 
+
+		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
+					, functions, [alias], sortable, rounding, thousand_seperation, font
+					, font_size, font_style, text_align, text_color, background, default_sort_order
+					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 0 column_order,NULL aggregation, NULL functions, 'Errorcode' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+			
+		FROM sys.objects o
+		INNER JOIN report_page_tablix rpt 
+			ON rpt.[name] = 'EOD _ PNL Attribution_tablix'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rpt.page_id 
+			AND rpage.[name] = 'EOD - PNL Attribution'
+		INNER JOIN report r 
+			ON r.report_id = rpage.report_id
+			AND r.[name] = 'EOD - PNL Attribution'
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id AND rd.[alias] = 'pa' 	
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'ErrorCode' 
 
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
@@ -985,17 +1043,17 @@ COMMIT TRAN
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'EOD _ Run Settlement_tablix'
+			ON rpt.[name] = 'EOD _ PNL Attribution_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Run Settlement'
+			AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'rs' 	
+			ON rd.report_id = r.report_id AND rd.[alias] = 'pa' 	
 		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Message' 
 
@@ -1007,17 +1065,17 @@ COMMIT TRAN
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'EOD _ Run Settlement_tablix'
+			ON rpt.[name] = 'EOD _ PNL Attribution_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Run Settlement'
+			AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'rs' 	
+			ON rd.report_id = r.report_id AND rd.[alias] = 'pa' 	
 		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Recommendation' 
  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
@@ -1032,15 +1090,15 @@ COMMIT TRAN
 			rtc.report_tablix_column_id			 		       
 		FROM   sys.objects o
 		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'EOD _ Run Settlement_tablix'
+			ON  rpt.[name] = 'EOD _ PNL Attribution_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Run Settlement'
+		AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Area' 
 		INNER JOIN report_tablix_column rtc 
@@ -1060,15 +1118,15 @@ COMMIT TRAN
 			rtc.report_tablix_column_id			 		       
 		FROM   sys.objects o
 		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'EOD _ Run Settlement_tablix'
+			ON  rpt.[name] = 'EOD _ PNL Attribution_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Run Settlement'
+		AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'ErrorCode' 
 		INNER JOIN report_tablix_column rtc 
@@ -1088,15 +1146,15 @@ COMMIT TRAN
 			rtc.report_tablix_column_id			 		       
 		FROM   sys.objects o
 		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'EOD _ Run Settlement_tablix'
+			ON  rpt.[name] = 'EOD _ PNL Attribution_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Run Settlement'
+		AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Message' 
 		INNER JOIN report_tablix_column rtc 
@@ -1116,15 +1174,15 @@ COMMIT TRAN
 			rtc.report_tablix_column_id			 		       
 		FROM   sys.objects o
 		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'EOD _ Run Settlement_tablix'
+			ON  rpt.[name] = 'EOD _ PNL Attribution_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Run Settlement'
+		AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Module' 
 		INNER JOIN report_tablix_column rtc 
@@ -1144,15 +1202,15 @@ COMMIT TRAN
 			rtc.report_tablix_column_id			 		       
 		FROM   sys.objects o
 		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'EOD _ Run Settlement_tablix'
+			ON  rpt.[name] = 'EOD _ PNL Attribution_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Run Settlement'
+		AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Recommendation' 
 		INNER JOIN report_tablix_column rtc 
@@ -1172,15 +1230,15 @@ COMMIT TRAN
 			rtc.report_tablix_column_id			 		       
 		FROM   sys.objects o
 		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'EOD _ Run Settlement_tablix'
+			ON  rpt.[name] = 'EOD _ PNL Attribution_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Run Settlement'
+		AND rpage.[name] = 'EOD - PNL Attribution'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Run Settlement'
+			AND r.[name] = 'EOD - PNL Attribution'
 		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Run Settlement' 	
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'PNl Attribution' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Status' 
 		INNER JOIN report_tablix_column rtc 

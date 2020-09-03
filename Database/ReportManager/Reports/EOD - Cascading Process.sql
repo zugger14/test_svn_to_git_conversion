@@ -133,10 +133,14 @@ SET @_source_deal_header_ids = STUFF((
 										INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
 
 										INNER JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.counterparty_id 
+										
+										INNER JOIN source_deal_type sdt on sdt.source_deal_type_id = sdh.source_deal_type_id
 
 										LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
 
 										WHERE gmh.mapping_name =  ''Cascading'' 
+										
+										    AND sdt.deal_type_id = ''Future''
 
 											AND sc.counterparty_id = ''EEX''
 

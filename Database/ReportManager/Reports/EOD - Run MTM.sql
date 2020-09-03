@@ -36,7 +36,7 @@ BEGIN TRY
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'EOD - Run MTM' [name], 'farrms_admin' [owner], 1 is_system, 0 is_excel, 0 is_mobile, '328BD88E_C636_4762_9555_155218CA1680' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'EOD - Run MTM' [name], 'dev_admin' [owner], 1 is_system, 0 is_excel, 0 is_mobile, '328BD88E_C636_4762_9555_155218CA1680' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
@@ -79,64 +79,71 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'', 
-		@_process_id VARCHAR(100) = ''@process_id'' 
-		
+        @_process_id VARCHAR(100) = ''@process_id'' 
+        
 IF ''@process_id'' <> ''NULL''
    SET @_process_id = ''@process_id''
  ELSE    
-   SET @_process_id = NULL 		
+   SET @_process_id = NULL         
 --SET @_as_of_date = ''2019-06-25''
+
+ 
 
 
 SELECT sub.entity_id sub_id,
-	  stra.entity_id stra_id,
-	  book.entity_id book_id,
-	  sub.entity_name AS sub_name,
-	  stra.entity_name AS stra_name,
-	  book.entity_name AS book_name,
-	  ssbm.source_system_book_id1, 
-	  ssbm.source_system_book_id2, 
-	  ssbm.source_system_book_id3, 
-	  ssbm.source_system_book_id4,
+      stra.entity_id stra_id,
+      book.entity_id book_id,
+      sub.entity_name AS sub_name,
+      stra.entity_name AS stra_name,
+      book.entity_name AS book_name,
+      ssbm.source_system_book_id1, 
+      ssbm.source_system_book_id2, 
+      ssbm.source_system_book_id3, 
+      ssbm.source_system_book_id4,
       ssbm.logical_name,
       ssbm.book_deal_type_map_id [sub_book_id]
 INTO  #books
 FROM   portfolio_hierarchy book(NOLOCK)
 INNER JOIN Portfolio_hierarchy stra(NOLOCK)
-	ON  book.parent_entity_id = stra.entity_id
+    ON  book.parent_entity_id = stra.entity_id
 INNER JOIN portfolio_hierarchy sub (NOLOCK)
-	ON  stra.parent_entity_id = sub.entity_id
+    ON  stra.parent_entity_id = sub.entity_id
 INNER JOIN source_system_book_map ssbm
-	ON  ssbm.fas_book_id = book.entity_id
+    ON  ssbm.fas_book_id = book.entity_id
 AND (''@sub_id'' = ''NULL'' OR sub.entity_id IN (@sub_id))
 AND (''@stra_id'' = ''NULL'' OR stra.entity_id IN (@stra_id))
 AND (''@book_id'' = ''NULL'' OR book.entity_id IN (@book_id))
 AND (''@sub_book_id'' = ''NULL'' OR ssbm.book_deal_type_map_id IN (@sub_book_id))
 
+ 
 
-IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result
-CREATE TABLE #tmp_result (
-	ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Module VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Area VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Status VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Message VARCHAR(1000) COLLATE DATABASE_DEFAULT ,
-	Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
+
+IF OBJECT_ID(''tempdb..#tmp_result_new'') IS NOT NULL DROP TABLE #tmp_result_new
+CREATE TABLE #tmp_result_new (
+    ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+    Module VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+    Area VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+    Status VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+    Message VARCHAR(1000) COLLATE DATABASE_DEFAULT ,
+    Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
 )
+
+ 
 
 
 IF ''@sub_id'' = ''1900'' AND  ''@stra_id'' = ''1900'' AND ''@book_id'' = ''1900'' AND ''@sub_book_id'' = ''1900'' 
 BEGIN
-      INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
+      INSERT INTO #tmp_result_new (ErrorCode, Module, Area, Status, Message, Recommendation) 
       SELECT NULL, NUll, NULL, NULL, NUll, NULL  
     
 END
 ELSE 
 BEGIN
-    INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
-    EXEC spa_calc_mtm_job  ''@sub_id'',''@stra_id'',''@book_id'',''@sub_book_id'',NULL, @_as_of_date ,4500,775,NULL,@_process_id , NULL,NULL, 77,NULL,NULL,NULL,NULL,''d'',NULL,NULL,NULL,''n'',@_as_of_date ,@_as_of_date ,''m'',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,@_process_id
-
+    INSERT INTO #tmp_result_new (ErrorCode, Module, Area, Status, Message, Recommendation) 
+    EXEC spa_calc_mtm_job  ''@sub_id'',''@stra_id'',''@book_id'',''@sub_book_id'',NULL, @_as_of_date ,4500,NULL,NULL,@_process_id , NULL,NULL, 77,NULL,NULL,NULL,NULL,''d'',NULL,NULL,NULL,''n'',@_as_of_date ,@_as_of_date ,''m'',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,@_process_id
 END 
+
+ 
 
 SELECT  
     @_as_of_date as_of_date, 
@@ -147,16 +154,19 @@ SELECT
     ''@stra_id'' stra_id,
     ''@book_id'' book_id,
     ''@sub_book_id'' sub_book_id,
-	[ErrorCode],
-	[Module],
-	[Area],
-	[Status],
-	[Message],
-	[Recommendation]
+    [ErrorCode],
+    [Module],
+    [Area],
+    [Status],
+    [Message],
+    [Recommendation]
 --[__batch_report__] 
-FROM #tmp_result
+
+ 
+
+FROM #tmp_result_new
 WHERE 1=1
-', report_id = @report_id_data_source_dest,
+ ', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
 	WHERE [name] = 'Run MTM'
@@ -681,9 +691,9 @@ COMMIT TRAN
 	SELECT @report_id_dest AS report_id, 'EOD - Run MTM' [name], '328BD88E_C636_4762_9555_155218CA1680' report_hash, 11.5 width,5.5 height
 	
 
-		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file)
+		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
 		SELECT TOP 1 rpage.report_page_id, 'EOD - Run MTM', '9205BFCC_3026_4D60_BBDC_5F0DB4745F89', 1,'','','.xlsx',',', 
-		-100000,'n','n'	
+		-100000,'n','n',NULL	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 			on rpage.[name] = 'EOD - Run MTM'
