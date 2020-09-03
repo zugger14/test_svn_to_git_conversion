@@ -1910,7 +1910,7 @@ BEGIN
  			WHERE  udft.udf_type = 'd'
  					AND mftd.field_template_id = @field_template_id
  					AND mftd.field_group_id IS NULL
- 					AND uddft.leg = 1
+ 					--AND uddft.leg = 1
  					AND (
  						(ISNULL(mftd.update_required, 'n') = 'y' AND @source_deal_header_id IS NOT NULL) 
  						OR (ISNULL(mftd.insert_required, 'n') = 'y' AND @source_deal_header_id IS NULL) 

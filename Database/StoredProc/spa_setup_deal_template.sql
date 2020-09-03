@@ -1079,7 +1079,7 @@ BEGIN
 				   udft.internal_field_type,
 				   NULL currency_field_id,
 				   udft.udf_template_id udf_user_field_id,	       
-				   detail_leg.leg leg,
+				   NULL leg, --detail_leg.leg leg,
 				   udft.default_value
 			FROM #temp_template_detail_fields a
 			LEFT JOIN user_defined_fields_template udft
@@ -1088,7 +1088,7 @@ BEGIN
 				ON  uddft.udf_user_field_id = udft.udf_template_id AND uddft.template_id = ' + CAST(@deal_header_template_id AS VARCHAR(100))  + '
 			LEFT JOIN udf_data_source uds
 				ON uds.udf_data_source_id = udft.data_source_type_id
-			CROSS JOIN (SELECT leg FROM ' + @detail_grid_xml_table_name + ') detail_leg
+			--CROSS JOIN (SELECT leg FROM ' + @detail_grid_xml_table_name + ') detail_leg
 			WHERE a.udf_or_system = ''u'' AND uddft.udf_template_id IS NULL
 			'
 			EXEC(@sql)
@@ -1425,7 +1425,7 @@ BEGIN
 				   udft.internal_field_type,
 				   NULL currency_field_id,
 				   udft.udf_template_id udf_user_field_id,	       
-				   detail_leg.leg leg,
+				   NULL leg, --detail_leg.leg leg,
 				   udft.default_value
 			FROM #temp_template_detail_fields a
 			LEFT JOIN user_defined_fields_template udft
@@ -1434,7 +1434,7 @@ BEGIN
 				ON  uddft.udf_user_field_id = udft.udf_template_id AND uddft.template_id = ' + CAST(@deal_header_template_id AS VARCHAR(100))  + '
 			LEFT JOIN udf_data_source uds
 				ON uds.udf_data_source_id = udft.data_source_type_id
-			CROSS JOIN (SELECT leg FROM ' + @detail_grid_xml_table_name + ') detail_leg
+			--CROSS JOIN (SELECT leg FROM ' + @detail_grid_xml_table_name + ') detail_leg
 			WHERE a.udf_or_system = ''u'' AND uddft.udf_template_id IS NULL
 			'
 			EXEC(@sql)
