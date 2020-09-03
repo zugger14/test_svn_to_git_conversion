@@ -1,4 +1,4 @@
- SET NOCOUNT ON
+SET NOCOUNT ON
 BEGIN
 	BEGIN TRY
 		BEGIN TRAN			
@@ -126,7 +126,7 @@ BEGIN
 	
 				
 		INSERT INTO #temp_all_grids(old_grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at)
-		SELECT 318,'SourceFeeProduct',NULL,NULL,'EXEC spa_setup_fees_grid_data @flag =''e'', @source_fee_id = <ID>','Product','g',NULL,'20001201','20001202',NULL UNION ALL SELECT 319,'SourceFeeVolume',NULL,NULL,NULL,'Volume','g',NULL,'20001201','20001202',NULL
+		SELECT 321,'SourceFeeProduct',NULL,NULL,'EXEC spa_setup_fees_grid_data @flag =''e'', @source_fee_id = <ID>','Product','g',NULL,'20001201','20001202',NULL UNION ALL SELECT 322,'SourceFeeVolume',NULL,NULL,NULL,'Volume','g',NULL,'20001201','20001202',NULL
 				
 		UPDATE tag
 		SET tag.new_grid_id = agd.grid_id
@@ -204,36 +204,36 @@ BEGIN
 
 		INSERT INTO #temp_all_grids_columns(old_grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
 		
-		SELECT 318,'Commodity','Commodity','combo','EXEC spa_setup_fees_grid_data @flag=''b''','y','n','3','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 318,'deal_type','Deal Type','combo','EXEC spa_setup_fees_grid_data @flag=''d''','y','n','4','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 318,'location','Location','combo','EXEC spa_setup_fees_grid_data @flag=''l''','y','n','5','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 318,'index','Index','combo','EXEC spa_setup_fees_grid_data @flag=''x''','y','n','6','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 318,'product_id','ID','ro',NULL,'n','n','1','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 318,'source_fee_id','Source ID','ro',NULL,'n','n','2','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'subsidiary','Subsidiary','combo','EXEC get_subsidiaries_for_rights @function_id=''10211200''','y','n','6','y',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'deal_type','Deal Type','combo','EXEC spa_setup_fees_grid_data @flag=''d''','y','n','7','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'buy_sell','Buy/Sell','combo','SELECT ''b'' [value], ''Buy'' [name] UNION ALL SELECT ''s'', ''Sell''','y','n','8','y',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'index_market','Index/Market','combo','EXEC spa_source_price_curve_def_maintain ''l''','y','n','9','y',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'commodity','Commodity','combo','EXEC spa_setup_fees_grid_data @flag=''b''','y','n','10','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'location','Location','combo','EXEC spa_source_minor_location @flag=''o''','y','n','11','y',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'product','Product','combo','EXEC spa_staticDataValues @flag=''h'', @type_id=39800','y','n','12','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'jurisdiction','Jurisdiction','combo','EXEC spa_StaticDataValues @flag = ''h'', @type_id = 10002','y','n','13','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'tier','Tier','combo','EXEC spa_staticDataValues @flag=''h'', @type_id=15000','y','n','14','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'type','Type','combo','EXEC spa_setup_fees_grid_data @flag=''t''','y','n','15','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'uom','UOM','combo','EXEC spa_setup_fees_grid_data @flag=''u''','y','n','20','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'currency','Currency','combo','EXEC spa_setup_fees_grid_data @flag=''h''','y','n','21','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'rec_pay','Rec/Pay','combo','SELECT ''r'' [value], ''Receive'' [name] UNION ALL SELECT ''p'', ''Pay''','y','n','24','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'effective_date','Effective Date','dhxCalendarA',NULL,'y','n','3','n',NULL,NULL,'n','150','date',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'fee_for_agressor','Fee for Agressor','ed',NULL,'y','n','22','n',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'fee_for_initiator','Fee for Initiator','ed',NULL,'y','n','23','n',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'minimum_amount_agressor','Minimum Amount Agressor','ed_a',NULL,'y','n','5','n',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'minimum_value','Minimum Value/Trade','ed_no',NULL,'y','n','18','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'maximum_value','Maximum Value/Trade','ed_no',NULL,'y','n','19','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'from_volume','From Volume','ed_v',NULL,'y','n','16','n',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'to_volume','To Volume','ed_v',NULL,'y','n','17','n',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'value','Value','ed_no',NULL,'y','n','4','n',NULL,NULL,'n','150','int','ValidNumeric','left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'volume_id','ID','ro',NULL,'n','n','1','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 319,'source_fee_id','Source ID','ro',NULL,'y','n','2','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL
+		SELECT 321,'Commodity','Commodity','combo','EXEC spa_setup_fees_grid_data @flag=''b''','y','n','3','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 321,'deal_type','Deal Type','combo','EXEC spa_setup_fees_grid_data @flag=''d''','y','n','4','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 321,'location','Location','combo','EXEC spa_setup_fees_grid_data @flag=''l''','y','n','5','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 321,'index','Index','combo','EXEC spa_setup_fees_grid_data @flag=''x''','y','n','6','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 321,'product_id','ID','ro',NULL,'n','n','1','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 321,'source_fee_id','Source ID','ro',NULL,'n','n','2','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'subsidiary','Subsidiary','combo','EXEC get_subsidiaries_for_rights @function_id=''10211200''','y','n','6','y',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'deal_type','Deal Type','combo','EXEC spa_setup_fees_grid_data @flag=''d''','y','n','7','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'buy_sell','Buy/Sell','combo','SELECT ''b'' [value], ''Buy'' [name] UNION ALL SELECT ''s'', ''Sell''','y','n','8','y',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'index_market','Index/Market','combo','EXEC spa_source_price_curve_def_maintain ''l''','y','n','9','y',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'commodity','Commodity','combo','EXEC spa_setup_fees_grid_data @flag=''b''','y','n','10','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'location','Location','combo','EXEC spa_source_minor_location @flag=''o''','y','n','11','y',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'product','Product','combo','EXEC spa_staticDataValues @flag=''h'', @type_id=39800','y','n','12','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'jurisdiction','Jurisdiction','combo','EXEC spa_StaticDataValues @flag = ''h'', @type_id = 10002','y','n','13','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'tier','Tier','combo','EXEC spa_staticDataValues @flag=''h'', @type_id=15000','y','n','14','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'type','Type','combo','EXEC spa_setup_fees_grid_data @flag=''t''','y','n','15','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'uom','UOM','combo','EXEC spa_setup_fees_grid_data @flag=''u''','y','n','20','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'currency','Currency','combo','EXEC spa_setup_fees_grid_data @flag=''h''','y','n','21','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'rec_pay','Rec/Pay','combo','SELECT ''r'' [value], ''Receive'' [name] UNION ALL SELECT ''p'', ''Pay''','y','n','24','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'effective_date','Effective Date','dhxCalendarA',NULL,'y','n','3','n',NULL,NULL,'n','150','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'minimum_amount_agressor','Minimum Amount Agressor','ed_a',NULL,'y','n','5','n',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'fee_for_agressor','Fee for Agressor','ed_no',NULL,'y','n','22','n',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'fee_for_initiator','Fee for Initiator','ed_no',NULL,'y','n','23','n',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'minimum_value','Minimum Value/Trade','ed_no',NULL,'y','n','18','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'maximum_value','Maximum Value/Trade','ed_no',NULL,'y','n','19','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'value','Value','ed_no',NULL,'y','n','4','n',NULL,NULL,'n','150','int','ValidNumeric','left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'from_volume','From Volume','ed_v',NULL,'y','n','16','n',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'to_volume','To Volume','ed_v',NULL,'y','n','17','n',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'volume_id','ID','ro',NULL,'n','n','1','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 322,'source_fee_id','Source ID','ro',NULL,'y','n','2','y',NULL,NULL,'n','150','int',NULL,'left', NULL,'n',NULL
 
 		UPDATE tagc
 		SET tagc.new_grid_id = tag.new_grid_id
@@ -443,12 +443,12 @@ BEGIN
 					
 		INSERT INTO #temp_old_template_fields(old_field_id, old_group_id, old_application_ui_field_id, old_fieldset_id, group_name, ui_field_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, udf_field_name, position, dependent_field, dependent_query, old_grid_id, validation_message, load_child_without_parent)
 		
-		SELECT 117473,20383,116239,NULL,'General','',NULL,'','',' ',' ','0','settings',NULL,'0','0',NULL,NULL,'',NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 117474,20383,116240,NULL,'General','source_fee_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 117475,20383,116241,NULL,'General','counterparty',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 117476,20383,116242,NULL,'General','contract',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'4',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 117477,20383,116243,NULL,'General','fees',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 117478,20383,116244,NULL,'General','fee_name',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'3',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+		SELECT 75341,10857,74493,NULL,'General','',NULL,'','',' ',' ','0','settings',NULL,'0','0',NULL,NULL,'',NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 75342,10857,74494,NULL,'General','source_fee_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 75343,10857,74495,NULL,'General','counterparty',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 75344,10857,74496,NULL,'General','contract',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'4',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 75345,10857,74497,NULL,'General','fees',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 75346,10857,74498,NULL,'General','fee_name',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'3',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
 				
 		UPDATE otf
 		SET otf.new_group_id = ntg.new_id
@@ -550,7 +550,7 @@ BEGIN
 		)	
 					
 		INSERT INTO #temp_old_ui_layout(old_layout_grid_id, old_group_id, group_name, layout_cell, old_grid_id, grid_name, sequence, num_column, cell_height,grid_object_name,grid_object_unique_column)
-		SELECT 22491,20383,'General','a','FORM',NULL,1,NULL,NULL,NULL,NULL UNION ALL SELECT 22492,20383,'General','b','319','SourceFeeVolume',1,NULL,NULL,NULL,NULL UNION ALL SELECT 22493,20384,'Product','a','318','SourceFeeProduct',2,NULL,NULL,NULL,NULL
+		SELECT 9263,10857,'General','a','FORM',NULL,1,NULL,NULL,NULL,NULL UNION ALL SELECT 9264,10857,'General','b','322','SourceFeeVolume',1,NULL,NULL,NULL,NULL UNION ALL SELECT 9265,10858,'Product','a','321','SourceFeeProduct',2,NULL,NULL,NULL,NULL
 				
 		UPDATE oul
 		SET oul.new_group_id = ntg.new_id
@@ -699,4 +699,4 @@ BEGIN
 		EXEC [spa_manage_memcache] @flag = 'd', @key_prefix = @memcache_key, @cmbobj_key_source = NULL, @other_key_source=NULL, @source_object = 'spa_application_ui_export'
 	END
 	
-END 
+END
