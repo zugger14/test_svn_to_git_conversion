@@ -1061,10 +1061,10 @@ BEGIN
 				@process_id
 		
 		DECLARE @return_status VARCHAR(100) = 'Success'
-		IF EXISTS (SELECT 1 FROM source_system_data_import_status WHERE Process_id = @process_id AND code = 'Warning')
-		BEGIN
-			SET @return_status = 'Technical Error'
-		END
+		--IF EXISTS (SELECT 1 FROM source_system_data_import_status WHERE Process_id = @process_id AND code = 'Warning')
+		--BEGIN
+		--	SET @return_status = 'Technical Error'
+		--END
 	
 				
 		 EXEC spa_ErrorHandler 0,
