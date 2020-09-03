@@ -17982,7 +17982,7 @@ Begin
 
 
 	-- Calling Post MTM Calculation event for deal module in workflow
-	IF EXISTS(SELECT 1 FROM workflow_module_event_mapping WHERE module_id = 20601 AND event_id = 20581 AND is_active = 1)
+	IF EXISTS(SELECT 1 FROM workflow_module_event_mapping WHERE module_id = 20601 AND event_id = 20581 AND is_active = 1) AND EXISTS(SELECT 1 FROM #ok_deals)
 	BEGIN
 		DECLARE @alert_process_table NVARCHAR(200)
 		DECLARE @alert_process_id NVARCHAR(100)
@@ -17990,18 +17990,18 @@ Begin
 		SET @alert_process_id = dbo.FNAGetNewID()
 		SET @alert_process_table = 'adiha_process.dbo.alert_post_mtm_calc_' + @alert_process_id + '_apmc'
 	
-		 SELECT @source_deal_header_id = STUFF((
-			SELECT DISTINCT ','+ CAST(source_deal_header_id AS NVARCHAR(MAX)) 
-			FROM #ok_deals 
-			FOR XML PATH('')
-			),1,1,'')
+		 --SELECT @source_deal_header_id = STUFF((
+			--SELECT DISTINCT ','+ CAST(source_deal_header_id AS NVARCHAR(MAX)) 
+			--FROM #ok_deals 
+			--FOR XML PATH('')
+			--),1,1,'')
 
 		EXEC('CREATE TABLE ' + @alert_process_table + ' (
 				source_deal_header_id INT NOT NULL, as_of_date NVARCHAR(20) COLLATE DATABASE_DEFAULT
 				)')
 
 		SET @sqlstmt = 'INSERT INTO ' + @alert_process_table + '(source_deal_header_id, as_of_date) 
-							SELECT item, '''+ @as_of_date +''' FROM SplitCommaSeperatedValues(''' + @source_deal_header_id + ''')'	
+							SELECT DISTINCT source_deal_header_id, '''+ @as_of_date +''' FROM #ok_deals'	
 		EXEC(@sqlstmt)			
 		SET @sqlstmt = 'spa_register_event 20601,20581' + ',''' + @alert_process_table + '''' + ',1,''' + @alert_process_id + ''''
 		SET @job_name = 'Register_Event' + '_' + @alert_process_id
