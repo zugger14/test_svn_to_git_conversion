@@ -1100,7 +1100,7 @@
             **/
             gen_as_of_date = 0;
             var filter_list = exec_call.split('&');
-            exec_call = filter_list[0];
+            exec_call = filter_list[0].replace(/"/g, "'");
            
             if (exec_call != false) {
                 var param = 'report_type=standard&call_from=' + report_name + '&gen_as_of_date=' + gen_as_of_date + '&as_of_date=' + as_of_date; 
