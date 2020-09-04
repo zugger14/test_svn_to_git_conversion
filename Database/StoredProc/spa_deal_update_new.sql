@@ -5022,7 +5022,7 @@ BEGIN TRY
  		WHERE  udf_or_system = 'u'
  				AND udf_temp.udf_type = 'd'
  				AND field_template_id = @field_template_id
- 				AND udft.leg = 1
+ 				--AND udft.leg = 1
 
  		SET @udf_field = @udf_field + ',temp.source_deal_detail_id'
  		SET @udf_add_field = @udf_add_field + ',source_deal_detail_id NVARCHAR(500)  COLLATE DATABASE_DEFAULT'
