@@ -38,6 +38,7 @@ DECLARE @_source_deal_header_id VARCHAR(1000)
 IF OBJECT_ID(''tempdb..#injection_withdrawal_collection'') IS NOT NULL
     DROP TABLE #injection_withdrawal_collection
 SET @_calc_process_table = nullif(isnull(@_calc_process_table, nullif(''@calc_process_table'', replace(''@_calc_process_table'', ''@_'', ''@''))), ''null'')
+
 IF NULLIF(@_calc_process_table,''1900'') is null  -- debug mode only
 BEGIN
 	SET @_source_deal_header_id = ''98082''
@@ -75,6 +76,7 @@ BEGIN
 				location_id INT)	''
  		EXEC spa_print @_st
  		EXEC(@_st)	
+
  		SET @_st = '' 
  		INSERT INTO '' + @_calc_process_table + ''(counterparty_id, contract_id, curve_id, prod_date, as_of_date
  													, volume, onPeakVolume, source_deal_detail_id, formula_id
@@ -100,6 +102,9 @@ BEGIN
  		EXEC spa_print @_st
  		EXEC(@_st)
 END
+
+--exec (''select * from '' + @_calc_process_table)
+  
 CREATE TABLE #injection_withdrawal_collection(
 	location_id					INT
 	, source_deal_header_id		INT
@@ -139,9 +144,11 @@ SET @_st = ''
  		, sdd.term_end
  		, buy_sell_flag   
  		, sdd.source_deal_detail_id
- 		, sdht.template_name ''
+ 		, sdht.template_name 
+	HAVING sdd.term_start >= MIN(ll.term_start)
+		AND sdd.term_end <= MAX(ll.term_end)''
 EXEC spa_print @_st
-EXEC(@_st)	
+EXEC(@_st)
 
 IF OBJECT_ID(''tempdb..#generation_deals'') IS NOT NULL
 	DROP TABLE #generation_deals
@@ -674,4 +681,4 @@ EXEC(@_st)
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
- 
+	 
