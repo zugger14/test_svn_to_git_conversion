@@ -899,47 +899,32 @@ BEGIN
 					INNER JOIN #temp_transfer_deal_headers TEMP ON sdh.source_deal_header_id = TEMP.source_deal_header_id
 				END
 				
+				--[TO DO] changes done as per latest requirement in enercity which was done only for product_id IN (4100, 4101)
 				UPDATE sdh
-				SET deal_id = CAST(t1.source_deal_header_id AS NVARCHAR(20)) + '_Offset_' + CAST(t1.original_deal_id AS NVARCHAR(20)),
-					create_user = dbo.FNADBUser(),
-					create_ts = GETDATE()
+				SET deal_id = t2.deal_id + '_offset_' + CAST(t1.original_deal_id AS NVARCHAR(20))
+				   --,close_reference_id = t2.close_reference_id
+				   ,create_user = dbo.FNADBUser()
+				   ,create_ts = GETDATE()
 				FROM #temp_offset_deal_headers t1
-				INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = t1.source_deal_header_id
-			
+				INNER JOIN source_deal_header sdh
+					ON sdh.source_deal_header_id = t1.source_deal_header_id
+				INNER JOIN source_deal_header t2
+					ON t2.source_deal_header_id = t1.original_deal_id
+				--WHERE t2.product_id IN (4100, 4101)
+				
 				UPDATE sdh
-				SET deal_id = CAST(t1.source_deal_header_id AS NVARCHAR(20)) + '_Xferred_' + CAST(t1.original_deal_id AS NVARCHAR(20)),
-					create_user = dbo.FNADBUser(),
-					create_ts = GETDATE()
+				SET deal_id = t2.deal_id + '_Xferred_' + CAST(t1.original_deal_id AS NVARCHAR(20))
+				   --,close_reference_id = t2.close_reference_id
+				   ,create_user = dbo.FNADBUser()
+				   ,create_ts = GETDATE()
 				FROM #temp_transfer_deal_headers t1
-				INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = t1.source_deal_header_id
-
-				--Update deal_id as of original for fixation deals
-				IF EXISTS (
-					SELECT 1						
-					FROM #temp_original_deal_header													
-					WHERE product_id IN (4100, 4101)						
-				)
-				BEGIN
-					UPDATE sdh
-					SET deal_id = t2.deal_id + '_offset'
-					   ,close_reference_id = t2.close_reference_id
-					FROM #temp_offset_deal_headers t1
-					INNER JOIN source_deal_header sdh
-						ON sdh.source_deal_header_id = t1.source_deal_header_id
-					INNER JOIN source_deal_header t2
-						ON t2.source_deal_header_id = t1.original_deal_id
-					WHERE t2.product_id IN (4100, 4101)
+				INNER JOIN source_deal_header sdh
+					ON sdh.source_deal_header_id = t1.source_deal_header_id
+				INNER JOIN source_deal_header t2
+					ON t2.source_deal_header_id = t1.original_deal_id
+				--WHERE t2.product_id IN (4100, 4101)
 					
-					UPDATE sdh
-					SET deal_id = t2.deal_id + '_Xferred' 
-					   ,close_reference_id = t2.close_reference_id
-					FROM #temp_transfer_deal_headers t1
-					INNER JOIN source_deal_header sdh
-						ON sdh.source_deal_header_id = t1.source_deal_header_id
-					INNER JOIN source_deal_header t2
-						ON t2.source_deal_header_id = t1.original_deal_id
-					WHERE t2.product_id IN (4100, 4101)
-				END
+				
 	
 				IF OBJECT_ID('tempdb..#temp_all_deal_ids') IS NOT NULL
 					DROP TABLE #temp_all_deal_ids 
