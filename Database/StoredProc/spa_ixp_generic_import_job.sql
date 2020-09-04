@@ -24855,16 +24855,17 @@ BEGIN
  	SET @pos_job_name4 =  'calc_position_breakdown_' + @process_id4
  	EXEC spa_update_deal_total_volume NULL, @process_id4, 0,1,@user_login_id
 
-	--insert into process table for spa_transfer adjust call from post trigger in complex gas gas hour shaped import(enercity demo)
-	DECLARE @spa_transfer_adjust_process NVARCHAR(100)
-	SET @spa_transfer_adjust_process = dbo.FNAProcessTableName('spa_transfer_adjust', @user_login_id, @process_id)
+	--[TO DO]: Removed because this is called from Deal Transfer adjust alert
+	----insert into process table for spa_transfer adjust call from post trigger in complex gas gas hour shaped import(enercity demo)
+	--DECLARE @spa_transfer_adjust_process NVARCHAR(100)
+	--SET @spa_transfer_adjust_process = dbo.FNAProcessTableName('spa_transfer_adjust', @user_login_id, @process_id)
 	
-	EXEC ('CREATE TABLE ' + @spa_transfer_adjust_process + '(source_deal_header_id INT)')
-	SET @sql = 'INSERT INTO ' + @spa_transfer_adjust_process + '(source_deal_header_id) 
- 				SELECT  t.source_deal_header_id
- 				FROM #sdh_temp t
-  		        GROUP BY t.source_deal_header_id'
- 	EXEC(@sql)
+	--EXEC ('CREATE TABLE ' + @spa_transfer_adjust_process + '(source_deal_header_id INT)')
+	--SET @sql = 'INSERT INTO ' + @spa_transfer_adjust_process + '(source_deal_header_id) 
+ --				SELECT  t.source_deal_header_id
+ --				FROM #sdh_temp t
+ -- 		        GROUP BY t.source_deal_header_id'
+ --	EXEC(@sql)
 END
  
 IF @table_name = 'ixp_monthly_allocation_data_template'

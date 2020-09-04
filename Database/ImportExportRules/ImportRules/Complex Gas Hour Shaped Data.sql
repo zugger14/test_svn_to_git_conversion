@@ -19,15 +19,14 @@ BEGIN
 			 
 			IF @old_ixp_rule_id IS NOT NULL 
 			BEGIN 
-				-- Added to preserve rule detail like folder location, FTP URL, username and password.
+				-- Added to preserve rule detail like folder location, File endpoint details.
 				IF OBJECT_ID('tempdb..#pre_ixp_import_data_source') IS NOT NULL
 					DROP TABLE #pre_ixp_import_data_source
 
 				SELECT rules_id
-					,folder_location
-					,ftp_url
-					,ftp_username
-					,ftp_password 
+					, folder_location
+					, file_transfer_endpoint_id
+					, remote_directory 
 				INTO #pre_ixp_import_data_source
 				FROM ixp_import_data_source 
 				WHERE rules_id = @old_ixp_rule_id
@@ -89,10 +88,10 @@ INNER JOIN source_deal_detail sdd
 LEFT JOIN source_price_curve_def spcd 
     ON spcd.source_curve_def_id = sdd.curve_id
 WHERE spcd.commodity_id = -1',
-					'DECLARE @set_process_id NVARCHAR(40) 
-SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37)) 
+					'--DECLARE @set_process_id NVARCHAR(40) 
+--SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37)) 
 
-EXEC spa_transfer_adjust_wrapper @set_process_id
+--EXEC spa_transfer_adjust_wrapper @set_process_id
 
 IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
 	DROP TABLE 	#temp_trans_off
@@ -317,10 +316,10 @@ INNER JOIN source_deal_detail sdd
 LEFT JOIN source_price_curve_def spcd 
     ON spcd.source_curve_def_id = sdd.curve_id
 WHERE spcd.commodity_id = -1'
-				, after_insert_trigger = 'DECLARE @set_process_id NVARCHAR(40) 
-SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37)) 
+				, after_insert_trigger = '--DECLARE @set_process_id NVARCHAR(40) 
+--SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37)) 
 
-EXEC spa_transfer_adjust_wrapper @set_process_id
+--EXEC spa_transfer_adjust_wrapper @set_process_id
 
 IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
 	DROP TABLE 	#temp_trans_off
@@ -493,11 +492,13 @@ INSERT INTO ixp_export_tables (ixp_rules_id, table_id, dependent_table_id, seque
 									LEFT JOIN ixp_tables dependent_table ON dependent_table.ixp_tables_name = NULL
 									WHERE it.ixp_tables_name = 'ixp_source_deal_detail_15min_template'
 									
-INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_string, data_source_location, destination_table, delimiter, source_system_id, data_source_alias, is_customized, customizing_query, is_header_less, no_of_columns, folder_location, custom_import, use_parameter, excel_sheet, ssis_package, soap_function_id, clr_function_id, ws_function_name, use_sftp, enable_email_import, send_email_import_reply)
+INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_string, data_source_location, destination_table, delimiter, source_system_id, data_source_alias, is_customized, customizing_query, is_header_less, no_of_columns, folder_location, custom_import, use_parameter
+					, excel_sheet, ssis_package, soap_function_id, clr_function_id, ws_function_name, enable_email_import
+					, send_email_import_reply, file_transfer_endpoint_id, remote_directory)
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-T-SQL01\shared_docs_TRMTracker_Release_Enercity\temp_Note\0',
+						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
@@ -512,12 +513,12 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   '',
 						   isc.ixp_ssis_configurations_id,
 						   isf.ixp_soap_functions_id,
-						  
 						   icf.ixp_clr_functions_id,
 						   '', 
-						   NULL,
 						   '0',
-						   '0'
+						   '0',
+						   NULL,
+						   NULL
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
 					LEFT JOIN ixp_soap_functions isf ON isf.ixp_soap_functions_name = '' 
@@ -527,9 +528,8 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						BEGIN
 							UPDATE iids
 							SET folder_location = piids.folder_location
-								, ftp_url = piids.ftp_url
-								, ftp_username = piids.ftp_username
-								, ftp_password = piids.ftp_password
+								, file_transfer_endpoint_id = piids.file_transfer_endpoint_id
+								, remote_directory = piids.remote_directory
 							FROM ixp_import_data_source iids
 							INNER JOIN #pre_ixp_import_data_source piids 
 							ON iids.rules_id = piids.rules_id
