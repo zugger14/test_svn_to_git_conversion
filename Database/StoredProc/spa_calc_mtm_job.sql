@@ -7921,31 +7921,31 @@ FROM(
 	SELECT vol.source_deal_header_id,
 		vol.source_deal_detail_id,
 		vol.term_start,
-		ISNULL(CASE WHEN sddh.hr1 <> 0 THEN sddh.hr1 ELSE t.hr1 END, 0) hr1,
-		ISNULL(CASE WHEN sddh.hr2 <> 0 THEN sddh.hr2 ELSE t.hr2 END, 0) hr2,
-		ISNULL(CASE WHEN sddh.hr3 <> 0 THEN sddh.hr3 ELSE t.hr3 END, 0) hr3,
-		ISNULL(CASE WHEN sddh.hr4 <> 0 THEN sddh.hr4 ELSE t.hr4 END, 0) hr4,
-		ISNULL(CASE WHEN sddh.hr5 <> 0 THEN sddh.hr5 ELSE t.hr5 END, 0) hr5,
-		ISNULL(CASE WHEN sddh.hr6 <> 0 THEN sddh.hr6 ELSE t.hr6 END, 0) hr6,
-		ISNULL(CASE WHEN sddh.hr7 <> 0 THEN sddh.hr7 ELSE t.hr7 END, 0) hr7,
-		ISNULL(CASE WHEN sddh.hr8 <> 0 THEN sddh.hr8 ELSE t.hr8 END, 0) hr8,
-		ISNULL(CASE WHEN sddh.hr9 <> 0 THEN sddh.hr9 ELSE t.hr9 END, 0) hr9,
-		ISNULL(CASE WHEN sddh.hr10 <> 0 THEN sddh.hr10 ELSE t.hr10 END, 0) hr10,
-		ISNULL(CASE WHEN sddh.hr11 <> 0 THEN sddh.hr11 ELSE t.hr11 END, 0) hr11,
-		ISNULL(CASE WHEN sddh.hr12 <> 0 THEN sddh.hr12 ELSE t.hr12 END, 0) hr12,
-		ISNULL(CASE WHEN sddh.hr13 <> 0 THEN sddh.hr13 ELSE t.hr13 END, 0) hr13,
-		ISNULL(CASE WHEN sddh.hr14 <> 0 THEN sddh.hr14 ELSE t.hr14 END, 0) hr14,
-		ISNULL(CASE WHEN sddh.hr15 <> 0 THEN sddh.hr15 ELSE t.hr15 END, 0) hr15,
-		ISNULL(CASE WHEN sddh.hr16 <> 0 THEN sddh.hr16 ELSE t.hr16 END, 0) hr16,
-		ISNULL(CASE WHEN sddh.hr17 <> 0 THEN sddh.hr17 ELSE t.hr17 END, 0) hr17,
-		ISNULL(CASE WHEN sddh.hr18 <> 0 THEN sddh.hr18 ELSE t.hr18 END, 0) hr18,
-		ISNULL(CASE WHEN sddh.hr19 <> 0 THEN sddh.hr19 ELSE t.hr19 END, 0) hr19,
-		ISNULL(CASE WHEN sddh.hr20 <> 0 THEN sddh.hr20 ELSE t.hr20 END, 0) hr20,
-		ISNULL(CASE WHEN sddh.hr21 <> 0 THEN sddh.hr21 ELSE t.hr21 END, 0) hr21,
-		ISNULL(CASE WHEN sddh.hr22 <> 0 THEN sddh.hr22 ELSE t.hr22 END, 0) hr22,
-		ISNULL(CASE WHEN sddh.hr23 <> 0 THEN sddh.hr23 ELSE t.hr23 END, 0) hr23,
-		ISNULL(CASE WHEN sddh.hr24 <> 0 THEN sddh.hr24 ELSE t.hr24 END, 0) hr24,
-		ISNULL(CASE WHEN sddh.hr25 <> 0 THEN sddh.hr25 ELSE t.hr25 END, 0) hr25,
+		ISNULL(CASE WHEN sddh.hr1 <> 0 THEN sddh.hr1 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN t.hr1_c ELSE t.hr1 END END, 0) hr1,
+		ISNULL(CASE WHEN sddh.hr2 <> 0 THEN sddh.hr2 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr2_c) ELSE ISNULL(pr.price, t.hr2) END END, 0) hr2,
+		ISNULL(CASE WHEN sddh.hr3 <> 0 THEN sddh.hr3 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr3_c) ELSE ISNULL(pr.price, t.hr3) END END, 0) hr3,
+		ISNULL(CASE WHEN sddh.hr4 <> 0 THEN sddh.hr4 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr4_c) ELSE ISNULL(pr.price, t.hr4) END END, 0) hr4,
+		ISNULL(CASE WHEN sddh.hr5 <> 0 THEN sddh.hr5 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr5_c) ELSE ISNULL(pr.price, t.hr5) END END, 0) hr5,
+		ISNULL(CASE WHEN sddh.hr6 <> 0 THEN sddh.hr6 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr6_c) ELSE ISNULL(pr.price, t.hr6) END END, 0) hr6,
+		ISNULL(CASE WHEN sddh.hr7 <> 0 THEN sddh.hr7 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr7_c) ELSE ISNULL(pr.price, t.hr7) END END, 0) hr7,
+		ISNULL(CASE WHEN sddh.hr8 <> 0 THEN sddh.hr8 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr8_c) ELSE ISNULL(pr.price, t.hr8) END END, 0) hr8,
+		ISNULL(CASE WHEN sddh.hr9 <> 0 THEN sddh.hr9 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr9_c) ELSE ISNULL(pr.price, t.hr9) END END, 0) hr9,
+		ISNULL(CASE WHEN sddh.hr10 <> 0 THEN sddh.hr10 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr10_c) ELSE ISNULL(pr.price, t.hr10) END END, 0) hr10,
+		ISNULL(CASE WHEN sddh.hr11 <> 0 THEN sddh.hr11 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr11_c) ELSE ISNULL(pr.price, t.hr11) END END, 0) hr11,
+		ISNULL(CASE WHEN sddh.hr12 <> 0 THEN sddh.hr12 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr12_c) ELSE ISNULL(pr.price, t.hr12) END END, 0) hr12,
+		ISNULL(CASE WHEN sddh.hr13 <> 0 THEN sddh.hr13 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr13_c) ELSE ISNULL(pr.price, t.hr13) END END, 0) hr13,
+		ISNULL(CASE WHEN sddh.hr14 <> 0 THEN sddh.hr14 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr14_c) ELSE ISNULL(pr.price, t.hr14) END END, 0) hr14,
+		ISNULL(CASE WHEN sddh.hr15 <> 0 THEN sddh.hr15 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr15_c) ELSE ISNULL(pr.price, t.hr15) END END, 0) hr15,
+		ISNULL(CASE WHEN sddh.hr16 <> 0 THEN sddh.hr16 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr16_c) ELSE ISNULL(pr.price, t.hr16) END END, 0) hr16,
+		ISNULL(CASE WHEN sddh.hr17 <> 0 THEN sddh.hr17 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr17_c) ELSE ISNULL(pr.price, t.hr17) END END, 0) hr17,
+		ISNULL(CASE WHEN sddh.hr18 <> 0 THEN sddh.hr18 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr18_c) ELSE ISNULL(pr.price, t.hr18) END END, 0) hr18,
+		ISNULL(CASE WHEN sddh.hr19 <> 0 THEN sddh.hr19 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr19_c) ELSE ISNULL(pr.price, t.hr19) END END, 0) hr19,
+		ISNULL(CASE WHEN sddh.hr20 <> 0 THEN sddh.hr20 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr20_c) ELSE ISNULL(pr.price, t.hr20) END END, 0) hr20,
+		ISNULL(CASE WHEN sddh.hr21 <> 0 THEN sddh.hr21 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr21_c) ELSE ISNULL(pr.price, t.hr21) END END, 0) hr21,
+		ISNULL(CASE WHEN sddh.hr22 <> 0 THEN sddh.hr22 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr22_c) ELSE ISNULL(pr.price, t.hr22) END END, 0) hr22,
+		ISNULL(CASE WHEN sddh.hr23 <> 0 THEN sddh.hr23 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr23_c) ELSE ISNULL(pr.price, t.hr23) END END, 0) hr23,
+		ISNULL(CASE WHEN sddh.hr24 <> 0 THEN sddh.hr24 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr24_c) ELSE ISNULL(pr.price, t.hr24) END END, 0) hr24,
+		ISNULL(CASE WHEN sddh.hr25 <> 0 THEN sddh.hr25 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr25_c) ELSE ISNULL(pr.price, t.hr25) END END, 0) hr25,
 		vol.hr1   vol1,
 		vol.hr2   vol2,
 		vol.hr3   vol3,
@@ -7971,7 +7971,8 @@ FROM(
 		vol.hr23  vol23,
 		vol.hr24  vol24,
 		vol.hr25  vol25
-	FROM '+@position_table_name+' vol 
+	FROM #temp_deals td
+	INNER JOIN '+@position_table_name+' vol ON vol.source_deal_detail_id = td.source_deal_detail_id
 	inner join #vwDealTimezone tz on  vol.source_deal_header_id=tz.source_deal_header_id
 		and tz.curve_id=vol.curve_id  and tz.location_id=vol.location_id 
 	left join #sddh1 sddh on sddh.source_deal_detail_id=vol.source_deal_detail_id and sddh.term_date=vol.term_start
@@ -7979,6 +7980,11 @@ FROM(
 	left join #tou_hour hb  ON hb.dst_group_value_id=tz.dst_group_value_id and spcd.udf_block_group_id=hb.block_type_group_id  
 		and vol.term_start=hb.term_date	 and vol.calc_mtm_at_tou_level=''y''
 	LEFT JOIN #tmp_hourly_price_only t on t.rowid=vol.rowid
+	OUTER APPLY(SELECT CASE WHEN td.physical_financial_flag = ''p'' THEN t.hr1_c ELSE t.hr1 END price
+				WHERE 1 = 1
+				AND ((td.physical_financial_flag = ''p'' AND t.granularity_c IN (980,981)) OR
+					 (td.physical_financial_flag <> ''p'' AND t.granularity IN (980,981)))
+				) pr
 	LEFT JOIN #mv90_dst dst on dst.date = vol.term_start and dst.insert_delete = ''i'' 
 		and dst.source_commodity_id = vol.commodity_id and dst.dst_group_value_id=tz.dst_group_value_id
 	LEFT JOIN #mv90_dst dst1 on dst1.date = vol.term_start and dst1.insert_delete = ''d'' 
