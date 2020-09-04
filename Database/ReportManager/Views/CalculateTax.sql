@@ -1,7 +1,6 @@
-BEGIN TRY
+ BEGIN TRY
 		BEGIN TRAN
 	
-
 	declare @new_ds_alias varchar(10) = 'ct'
 	/** IF DATA SOURCE ALIAS ALREADY EXISTS ON DESTINATION, RAISE ERROR **/
 	if exists(select top 1 1 from data_source where alias = 'ct' and name <> 'CalculateTax')
@@ -20,7 +19,6 @@ BEGIN TRY
 	SELECT @report_id_data_source_dest = report_id
 	FROM report r
 	WHERE r.[name] = NULL
-
 	IF NOT EXISTS (SELECT 1 
 	           FROM data_source 
 	           WHERE [name] = 'CalculateTax'
@@ -55,10 +53,10 @@ IF ''@charge_type''<>''NULL''
 IF ''@tax_type''<>''NULL''
 	SET @_tax_type = ''@tax_type''
 
---SET @_source_deal_header_id = 11227 --227305 
+--SET @_source_deal_header_id = 12023 --227305 
 --SET @_charge_type = ''-10019''
 --SET @_tax_type = ''v''  -- vat, energy
---SET @_price = ''n'' 
+--SET @_price = ''p'' 
 
 IF OBJECT_ID(''tempdb..#ud_function_evaluation'') IS NULL
 CREATE TABLE #ud_function_evaluation(
@@ -76,7 +74,6 @@ CREATE TABLE #ud_function_evaluation(
 	mins INT,
 	value NUMERIC(28,10)
 )
-
 SELECT @_tax_value = a.value FROM #ud_function_evaluation a
 OUTER APPLY (
 	SELECT MAX(field_name) field_name FROM user_defined_deal_fields_template uddft 
@@ -90,7 +87,9 @@ IF OBJECT_ID(''tempdb..#table_tax_rules'') IS NOT NULL
     DROP TABLE #table_tax_rules  
 IF OBJECT_ID(''tempdb..#table_cpty_tax_info'') IS NOT NULL
     DROP TABLE #table_cpty_tax_info  
-SELECT CAST(clm1_value AS VARCHAR(MAX)) effective_date, 
+
+SELECT generic_mapping_values_id,
+	CAST(clm1_value AS VARCHAR(MAX)) effective_date, 
 	CAST(clm2_value AS VARCHAR(MAX)) region,
 	CAST(clm3_value AS VARCHAR(MAX)) counterparty_type,
 	CAST(clm4_value AS VARCHAR(MAX)) commodity,
@@ -121,12 +120,15 @@ AND gmh.mapping_name = ''Counterparty Tax Info''
 --SELECT * FROM #table_cpty_tax_info
 
 --SELECT 
---	*,
+--	DISTINCT 
 --	ttr.tax_unit,
 --	ttr.tax_percentage,
 --	sds.volume,
 --	sds.net_price,  
---	sds.settlement_amount
+--	sds.settlement_amount,
+--	ttr_both.document_type,
+--	ttr_inv_rem.document_type
+
 SELECT
 	@_source_deal_header_id [source_deal_header_id],
 	@_prod_date_from [prod_date],
@@ -139,16 +141,18 @@ SELECT
 	CASE WHEN @_tax_type = ''v'' 
 		THEN MAX(CAST(ttr.tax_percentage AS FLOAT)) 
 	ELSE MAX(CAST(ttr.tax_unit AS FLOAT)) 
-	END 
-	* CASE WHEN MAX(sdh.profile_granularity) <> 982 THEN
-		CASE WHEN @_tax_type = ''v'' 
-			THEN MAX(sds.settlement_amount) + ISNULL(@_tax_value, 0)
-		ELSE ABS(MAX(sds.volume)) END  
+	END * 
+	(CASE WHEN @_tax_type = ''v'' THEN 
+		CASE WHEN @_price = ''n'' THEN ISNULL(MAX(fees_negative.[value]), 0) 
+			WHEN @_price = ''p'' THEN ISNULL(MAX(fees_positive.[value]),0) 
+			ELSE ISNULL(MAX(fees_positive.[value]),0) + ISNULL(MAX(fees_negative.[value]), 0)
+		END + ISNULL(@_tax_value, 0)
 	ELSE 
-		CASE WHEN @_tax_type = ''v'' 
-			THEN CASE WHEN @_price = ''n'' THEN ISNULL(MAX(fees_negative.[value]), 0) ELSE ISNULL(MAX(fees_positive.[value]),0) END + ISNULL(@_tax_value, 0)
-		ELSE CASE WHEN @_price = ''n'' THEN ISNULL(MAX(fees_negative.volume), 0) ELSE ISNULL(MAX(fees_positive.volume), 0) END END
-	END [value],
+		CASE WHEN @_price = ''n'' THEN ISNULL(MAX(fees_negative.volume), 0) 
+			WHEN @_price = ''p'' THEN ISNULL(MAX(fees_positive.volume), 0) 
+		ELSE ISNULL(MAX(fees_positive.volume), 0) + ISNULL(MAX(fees_negative.volume), 0) END 
+	END)
+	[value],
 	@_price [price],
 	@_charge_type [charge_type],
 	@_tax_type [tax_type]
@@ -167,7 +171,6 @@ OUTER APPLY (
 	ON udft.field_label = ifbs.field_name AND udft.udf_category = 101902
 	WHERE source_deal_header_id = sdh.source_deal_header_id
 ) tax_amt
-
 INNER JOIN #table_tax_rules ttr 
 	ON sdh.entire_term_start = ttr.effective_date
 	AND r.region = ttr.region
@@ -185,6 +188,26 @@ OUTER APPLY (
 	INNER JOIN static_data_value sdv ON sdv.value_id = field_id
 	WHERE source_deal_header_id = @_source_deal_header_id AND sdv.code = ''Positive Price Commodity''
 ) fees_positive
+
+OUTER APPLY (
+	SELECT MAX(b.document_type) document_type FROM (
+		SELECT a.document_type
+			FROM #table_tax_rules a 
+		WHERE a.effective_date = ttr.effective_date
+		AND a.region = ttr.region
+		AND a.counterparty_type = ttr.counterparty_type
+		AND a.commodity = ttr.commodity
+		AND a.charge_type = ttr.charge_type
+		AND a.tax_type = ttr.tax_type 
+		AND a.price = ttr.price
+		AND a.reseller_certificate = ttr.reseller_certificate
+		AND a.energy_tax_exemption = ttr.energy_tax_exemption
+		AND a.document_type = ''b''
+		UNION ALL 
+		SELECT NULL
+	) b
+) ttr_both
+
 LEFT JOIN source_Deal_settlement sds 
 	ON sdh.source_deal_header_id = sds.source_deal_header_id
 INNER JOIN #table_cpty_tax_info ti
@@ -197,22 +220,29 @@ INNER JOIN #table_cpty_tax_info ti2
 	ON ti2.counterparty_id = sdh.counterparty_id 
 	AND ti2.[yes_no] = ttr.energy_tax_exemption
 	AND ti2.[value] = ''energy_tax_exemption''
+LEFT JOIN #table_tax_rules ttr_inv_rem 
+	ON ttr_inv_rem.generic_mapping_values_id = ttr.generic_mapping_values_id 
+	AND ttr_inv_rem.document_type = 
+	CASE
+		WHEN ttr_inv_rem.document_type <> ''b'' AND CAST(ttr_inv_rem.tax_percentage AS FLOAT) < 0 THEN ''r''
+		WHEN ttr_inv_rem.document_type <> ''b'' AND CAST(ttr_inv_rem.tax_percentage AS FLOAT) > 0 THEN ''i'' 
+	END
 WHERE sdh.source_deal_header_id = @_source_deal_header_id
 AND ttr.charge_type = @_charge_type
 AND ttr.tax_type = @_tax_type
 AND ttr.price = ISNULL(@_price, ttr.price)
- ', report_id = @report_id_data_source_dest,
+AND ttr.document_type = ISNULL(NULLIF(ttr_both.document_type, ''a''), ttr_inv_rem.document_type)
+
+', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106501' 
 	WHERE [name] = 'CalculateTax'
 		AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1)
 		
 	
-
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
 	CREATE TABLE #data_source_column(column_id INT)	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -246,7 +276,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -280,7 +309,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -314,7 +342,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -348,7 +375,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -382,7 +408,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -416,7 +441,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -450,7 +474,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -484,7 +507,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -518,7 +540,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -552,7 +573,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -586,7 +606,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -620,7 +639,6 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 	END 
 	
 	
-
 	DELETE dsc
 	FROM data_source_column dsc 
 	INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -628,8 +646,7 @@ AND ttr.price = ISNULL(@_price, ttr.price)
 		AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1)
 	LEFT JOIN #data_source_column tdsc ON tdsc.column_id = dsc.data_source_column_id
 	WHERE tdsc.column_id IS NULL
-	
-COMMIT TRAN
+	COMMIT TRAN
 
 	END TRY
 	BEGIN CATCH
@@ -643,4 +660,3 @@ COMMIT TRAN
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
-	
