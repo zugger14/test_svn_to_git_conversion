@@ -340,8 +340,8 @@ SET @_sql = '
 	ut.counterparty_id,
 	ut.source_counterparty_id,	
 	CASE WHEN (cca.apply_netting_rule = 'y' and cg.contract_name = 'EFET GAS'  and Broker_Notification = 3) then 2  else Broker_Notification end  Broker_Notification, 
-	CASE WHEN year(as_of_date) = year(getdate()) Then 3 Else 
-	2 end data_order,
+	CASE WHEN year(as_of_date) = year(getdate()) Then -3 Else 
+	-2 end data_order,
 	cg.contract_name,
 	ut.broker_relevant
 	into #temp_year_data_g
@@ -362,17 +362,9 @@ SET @_sql = '
 	case when (cca.apply_netting_rule = 'y' and cg.contract_name = 'EFET GAS' and Broker_Notification = 3) then 2  else Broker_Notification end  Broker_Notification, 
 	ut.broker_relevant,
 	as_of_date as_of_date_to,
-	CASE WHEN year(as_of_date) = year(getdate()) and month (as_of_date) = month (getdate()) Then 1 
-		WHEN year(as_of_date) = year(getdate()) and month (as_of_date) != month (getdate()) Then 0 
-		 WHEN year(as_of_date) = (year(getdate()) + 1) Then -1
-		 WHEN year(as_of_date) = (year(getdate()) + 2) Then -2
-		 WHEN year(as_of_date) = (year(getdate()) + 3) Then -3
-		 WHEN year(as_of_date) = (year(getdate()) + 4) Then -4
-		 WHEN year(as_of_date) = (year(getdate()) + 5) Then -5
-		 WHEN year(as_of_date) = (year(getdate()) + 6) Then -6
-	Else 
-	NULL end data_order,
-	cg.contract_name AS grouping_contract
+	CASE WHEN year(as_of_date) = year(getdate()) and month (as_of_date) = month (getdate()) Then -1 
+		else  concat(year(as_of_date), CONVERT(char(2),as_of_date, 101)) end data_order,
+	 cg.contract_name AS grouping_contract
 	FROM 
 	#ultimate_final	 ut
 	INNER JOIN source_counterparty sc on sc.counterparty_id = ut.counterparty_id
@@ -394,11 +386,11 @@ SET @_sql = '
 	t.data_order,
 	contract_name grouping_contract
 	from #temp_year_data_g t
-	JOIN (select as_of_date, source_counterparty_id, min(broker_notification) broker_notification from #temp_year_data_g group by as_of_date, source_counterparty_id) a
+	JOIN (select as_of_date, source_counterparty_id, MAX(broker_notification) broker_notification from #temp_year_data_g group by as_of_date, source_counterparty_id) a
 	ON a.as_of_date = a.as_of_date and
 	t.source_counterparty_id = a.source_counterparty_id and a.broker_notification  = t.Broker_Notification
 	where  broker_relevant = 'y' and contract_name  = 'EFET GAS' and a.as_of_date = t.as_of_date
-	Order by data_order desc ,as_of_date,source_counterparty_id			
+	Order by data_order asc ,as_of_date,source_counterparty_id			
 END
 ELSE IF (@flag = 'c')
  BEGIN
@@ -409,8 +401,8 @@ ELSE IF (@flag = 'c')
 	ut.counterparty_id,
 	ut.source_counterparty_id,	
 	CASE WHEN (cca.apply_netting_rule = 'y' and cg.contract_name =  'EFET POWER'  and Broker_Notification = 3) then 2  else Broker_Notification end  Broker_Notification, 
-	CASE WHEN year(as_of_date) = year(getdate()) Then 3 Else
-        2 end data_order,
+	CASE WHEN year(as_of_date) = year(getdate()) Then -3 Else
+       - 2 end data_order,
 	cg.contract_name,
 	ut.broker_relevant
 	into #temp_year_data_p
@@ -431,16 +423,8 @@ ELSE IF (@flag = 'c')
 	case when (cca.apply_netting_rule = 'y' and cg.contract_name =  'EFET POWER' and Broker_Notification = 3) then 2  else Broker_Notification end  Broker_Notification, 
 	ut.broker_relevant,
 	as_of_date as_of_date_to,
-	CASE WHEN year(as_of_date) = year(getdate()) and month (as_of_date) = month (getdate()) Then 1 
-	    WHEN year(as_of_date) = year(getdate()) and month (as_of_date) != month (getdate()) Then 0 
-		 WHEN year(as_of_date) = (year(getdate()) + 1) Then -1
-		 WHEN year(as_of_date) = (year(getdate()) + 2) Then -2
-		 WHEN year(as_of_date) = (year(getdate()) + 3) Then -3
-		 WHEN year(as_of_date) = (year(getdate()) + 4) Then -4
-		 WHEN year(as_of_date) = (year(getdate()) + 5) Then -5
-		 WHEN year(as_of_date) = (year(getdate()) + 6) Then -6
-	Else 
-	NULL end data_order,
+	CASE WHEN year(as_of_date) = year(getdate()) and month (as_of_date) = month (getdate()) Then -1 
+	     else  concat(year(as_of_date), CONVERT(char(2),as_of_date, 101)) end data_order,
 	cg.contract_name AS grouping_contract
 	FROM 
 	#ultimate_final	 ut
@@ -462,12 +446,12 @@ ELSE IF (@flag = 'c')
 	t.data_order,
 	contract_name grouping_contract
 	from #temp_year_data_p t
-	JOIN (select as_of_date, source_counterparty_id, min(broker_notification) broker_notification from #temp_year_data_p group by as_of_date, source_counterparty_id) a
+	JOIN (select as_of_date, source_counterparty_id, MAX(broker_notification) broker_notification from #temp_year_data_p group by as_of_date, source_counterparty_id) a
 	ON a.as_of_date = a.as_of_date and
 	t.source_counterparty_id = a.source_counterparty_id and a.broker_notification  = t.Broker_Notification
 	WHERE broker_relevant = 'y'
 	AND contract_name  = 'EFET POWER' and a.as_of_date = t.as_of_date
-	Order by data_order desc ,as_of_date,source_counterparty_id			
+	Order by data_order asc ,as_of_date,source_counterparty_id			
 END
 ELSE 
 BEGIN	
