@@ -48,19 +48,12 @@ drop table #tmp_header_deal_id
 drop table #tmp_position_breakdown
 declare @process_id varchar(50),@insert_type int,@partition_no int,@user_login_id varchar(30),@deal_delete varchar(1)
 drop table #source_deal_detail_hour
-select  @process_id='5D53DC5C_40E1_4183_9584_8EFDFF53ED48',@insert_type=0,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
+select  @process_id='454082FB_7742_4691_ABF4_2AF408EA3450',@insert_type=0,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
 --report_position_farrms_admin_49AFBFA8_BC35_404B_8590_78F087008D35
 --TRUNCATE TABLE select * from adiha_process.dbo.report_position_farrms_admin_E5D1C26F_C332_4A0A_8082_F3936706EEA8
 --insert into adiha_process.dbo.report_position_farrms_admin_testing select 4100,'d'
 DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
 SET CONTEXT_INFO @contextinfo
-
-
-
-
-
-
-
 
 DROP TABLE #report_hourly_position_profile
 drop table #report_hourly_position_breakdown_main_inserted
@@ -127,8 +120,6 @@ IF object_id('tempdb..#tmp_pos_deal_detail') IS NOT NULL
 	DROP TABLE #tmp_pos_deal_detail
 
 
-
-
 DECLARE @col_exp1 VARCHAR(MAX)
 	,@col_exp2 VARCHAR(MAX)
 	,@col_exp3 VARCHAR(MAX)
@@ -167,7 +158,7 @@ DECLARE @inserted_source_deal_detail VARCHAR(150)
 
 DECLARE @deal_type INT
 	--,@commodity_id INT
-	--,@fixation INT
+	,@fixation INT
 	,@tmp_location_profile varchar(250)
 	,@total_yr_fraction varchar(250),@mw_uoms varchar(100) 
 	,@mw_id int,@kw_id int,@CFD_id varchar(30)
@@ -225,7 +216,7 @@ BEGIN
 	SELECT --@insert_type = insert_type,
 		@deal_type = deal_type
 		--,@commodity_id = commodity_id
-		--,@fixation = fixation
+		,@fixation = fixation
 	FROM #process_option
 
 	TRUNCATE TABLE #process_option
@@ -336,7 +327,7 @@ BEGIN
 		,period INT
 		,granularity INT
 		,source_deal_detail_id int
-		,rowid int
+		,rowid int,calc_total_volume bit 
 	)
 
 	CREATE TABLE #report_hourly_position_financial_main_old (
@@ -496,12 +487,12 @@ BEGIN TRY
 						and sdd.source_deal_header_id=a.source_deal_header_id
 				where sdd.source_deal_detail_id is null
 					and p.source_deal_header_id=a.source_deal_header_id
-
 		) del'
 
 	EXEC spa_print @st_sql
 	EXEC (@st_sql)
 
+	CREATE INDEX indx_tmp_header_deal_id_del_zzz ON #tmp_header_deal_id_del (source_deal_detail_id)
 
 	---------------------------------------------------------------------------------------------------------
 	--deleting deal
@@ -528,13 +519,13 @@ BEGIN TRY
 		SET @st_sql = 'DELETE rhpf ' + CASE WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
 			' output getdate() as_of_date, deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id
 	,-1*deleted.hr1,-1*deleted.hr2,-1*deleted.hr3,-1*deleted.hr4,-1*deleted.hr5,-1*deleted.hr6,-1*deleted.hr7,-1*deleted.hr8,-1*deleted.hr9,-1*deleted.hr10,-1*deleted.hr11,-1*deleted.hr12
-	,-1*deleted.hr13,-1*deleted.hr14,-1*deleted.hr15,-1*deleted.hr16,-1*deleted.hr17,-1*deleted.hr18,-1*deleted.hr19
-	,-1*deleted.hr20,-1*deleted.hr21,-1*deleted.hr22,-1*deleted.hr23
-	,-1*deleted.hr24,-1*deleted.hr25,deleted.create_ts,deleted.create_user,17402 delta_type ,deleted.expiration_date
-	,DELETED.period, DELETED.granularity,deleted.source_deal_detail_id,deleted.rowid
-	into dbo.delta_report_hourly_position_main(as_of_date,source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,delta_type,expiration_date,period,granularity,source_deal_detail_id,rowid)'
-	END +
-	' FROM report_hourly_position_profile_main rhpf INNER JOIN #tmp_header_deal_id_del d ON rhpf.source_deal_detail_id = d.source_deal_detail_id'
+			,-1*deleted.hr13,-1*deleted.hr14,-1*deleted.hr15,-1*deleted.hr16,-1*deleted.hr17,-1*deleted.hr18,-1*deleted.hr19
+			,-1*deleted.hr20,-1*deleted.hr21,-1*deleted.hr22,-1*deleted.hr23
+			,-1*deleted.hr24,-1*deleted.hr25,deleted.create_ts,deleted.create_user,17402 delta_type ,deleted.expiration_date
+			,DELETED.period, DELETED.granularity,deleted.source_deal_detail_id,deleted.rowid
+			into dbo.delta_report_hourly_position_main(as_of_date,source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,delta_type,expiration_date,period,granularity,source_deal_detail_id,rowid)'
+			END +
+			' FROM report_hourly_position_profile_main rhpf INNER JOIN #tmp_header_deal_id_del d ON rhpf.source_deal_detail_id = d.source_deal_detail_id'
 
 		EXEC spa_print @st_sql
 		EXEC (@st_sql)
@@ -560,15 +551,14 @@ BEGIN TRY
 	--fixed data inserting
 	-----------------------------------------------------------------------------------------------------------------
 
-
 	IF EXISTS (SELECT TOP 1 1 FROM #tmp_header_deal_id_del) AND @orginal_insert_type NOT IN ( 111 ,222 ) --delete updated deals before inserting
 	BEGIN
 		SET @st_sql = 'delete s ' + CASE 
-			WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
-			' output deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id,deleted.hr1,deleted.hr2,deleted.hr3,deleted.hr4,deleted.hr5,deleted.hr6,deleted.hr7,deleted.hr8,deleted.hr9,deleted.hr10,deleted.hr11,deleted.hr12,deleted.hr13,deleted.hr14,deleted.hr15,deleted.hr16,deleted.hr17,deleted.hr18,deleted.hr19,deleted.hr20,deleted.hr21,deleted.hr22,deleted.hr23,deleted.hr24,deleted.hr25,deleted.create_ts,deleted.create_user,deleted.expiration_date,deleted.period,deleted.granularity,deleted.source_deal_detail_id,deleted.rowid 
+		WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
+		' output deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id,deleted.hr1,deleted.hr2,deleted.hr3,deleted.hr4,deleted.hr5,deleted.hr6,deleted.hr7,deleted.hr8,deleted.hr9,deleted.hr10,deleted.hr11,deleted.hr12,deleted.hr13,deleted.hr14,deleted.hr15,deleted.hr16,deleted.hr17,deleted.hr18,deleted.hr19,deleted.hr20,deleted.hr21,deleted.hr22,deleted.hr23,deleted.hr24,deleted.hr25,deleted.create_ts,deleted.create_user,deleted.expiration_date,deleted.period,deleted.granularity,deleted.source_deal_detail_id,deleted.rowid 
 		into #report_hourly_position_old (source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid)'
-		END 
-		+ ' 
+			END 
+			+ ' 
 		From report_hourly_position_deal_main s 
 			INNER JOIN #tmp_header_deal_id_del h ON s.source_deal_detail_id=h.source_deal_detail_id' -- where h.[action]=''u''' 
 
@@ -576,15 +566,46 @@ BEGIN TRY
 		EXEC (@st_sql)
 
 		SET @st_sql = 'delete s ' + CASE 
-		WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
-	' output deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id,deleted.hr1,deleted.hr2,deleted.hr3,deleted.hr4,deleted.hr5,deleted.hr6,deleted.hr7,deleted.hr8,deleted.hr9,deleted.hr10,deleted.hr11,deleted.hr12,deleted.hr13,deleted.hr14,deleted.hr15,deleted.hr16,deleted.hr17,deleted.hr18,deleted.hr19,deleted.hr20,deleted.hr21,deleted.hr22,deleted.hr23,deleted.hr24,deleted.hr25,deleted.create_ts,deleted.create_user,deleted.expiration_date,deleted.period,deleted.granularity ,deleted.source_deal_detail_id,deleted.rowid
-		into #report_hourly_position_old (source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid)'
-		END 
-	+ ' from report_hourly_position_profile_main s INNER JOIN #tmp_header_deal_id_del h ON s.source_deal_detail_id=h.source_deal_detail_id' -- where h.[action]=''u'''
+			WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
+		' output deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id,deleted.hr1,deleted.hr2,deleted.hr3,deleted.hr4,deleted.hr5,deleted.hr6,deleted.hr7,deleted.hr8,deleted.hr9,deleted.hr10,deleted.hr11,deleted.hr12,deleted.hr13,deleted.hr14,deleted.hr15,deleted.hr16,deleted.hr17,deleted.hr18,deleted.hr19,deleted.hr20,deleted.hr21,deleted.hr22,deleted.hr23,deleted.hr24,deleted.hr25,deleted.create_ts,deleted.create_user,deleted.expiration_date,deleted.period,deleted.granularity ,deleted.source_deal_detail_id,deleted.rowid
+			into #report_hourly_position_old (source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid)'
+			END 
+		+ ' from report_hourly_position_profile_main s INNER JOIN #tmp_header_deal_id_del h ON s.source_deal_detail_id=h.source_deal_detail_id' -- where h.[action]=''u'''
 
 		EXEC spa_print @st_sql
 		EXEC (@st_sql)
-	END
+
+
+		SET @st_sql = ' DELETE rhpf ' + CASE WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
+			' output deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id,deleted.hr1,deleted.hr2,deleted.hr3,deleted.hr4,deleted.hr5,deleted.hr6,deleted.hr7,deleted.hr8,deleted.hr9,deleted.hr10,deleted.hr11,deleted.hr12,deleted.hr13,deleted.hr14,deleted.hr15,deleted.hr16,deleted.hr17,deleted.hr18,deleted.hr19,deleted.hr20,deleted.hr21,deleted.hr22,deleted.hr23,deleted.hr24,deleted.hr25,deleted.create_ts,deleted.create_user,deleted.expiration_date,deleted.period,deleted.granularity,deleted.source_deal_detail_id,deleted.rowid 
+			into #report_hourly_position_old (source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) '
+				END + '
+			FROM report_hourly_position_fixed_main  rhpf (nolock)
+				INNER JOIN #tmp_header_deal_id_del thdi on rhpf.source_deal_detail_id=thdi.source_deal_detail_id '
+
+		EXEC spa_print @st_sql
+
+		EXEC (@st_sql)
+
+
+		IF EXISTS (SELECT 1	FROM #tmp_header_deal_id) AND isnull(@orginal_insert_type, 0) NOT IN (111,222) --delete updated deals before inserting
+		BEGIN
+			SET @st_sql = 'delete s ' + CASE WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
+			' output deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id,deleted.hr1,deleted.hr2,deleted.hr3,deleted.hr4,deleted.hr5,deleted.hr6,deleted.hr7,deleted.hr8,deleted.hr9,deleted.hr10,deleted.hr11,deleted.hr12,deleted.hr13,deleted.hr14,deleted.hr15,deleted.hr16,deleted.hr17,deleted.hr18,deleted.hr19,deleted.hr20,deleted.hr21,deleted.hr22,deleted.hr23,deleted.hr24,deleted.hr25,deleted.create_ts,deleted.create_user,deleted.expiration_date,deleted.period,deleted.granularity
+			,deleted.source_deal_detail_id,deleted.rowid 
+			into #report_hourly_position_old(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) '
+			END + ' 
+			from report_hourly_position_profile_main s INNER JOIN #tmp_header_deal_id_del h ON s.source_deal_detail_id=h.source_deal_detail_id
+				inner join source_deal_detail sdd on sdd.source_deal_detail_id=h.source_deal_detail_id
+			where sdd.position_formula_id is null
+				' -- where h.[action]=''u'''\
+
+			EXEC spa_print @st_sql
+			EXEC (@st_sql)
+		END
+
+
+	END -- EXISTS (SELECT TOP 1 1 FROM #tmp_header_deal_id_del)
 
 	IF object_id('tempdb..#density_multiplier') IS NOT NULL
 		DROP TABLE #density_multiplier
@@ -597,11 +618,11 @@ BEGIN TRY
 	BEGIN
 		TRUNCATE TABLE #tmp_header_deal_id
 
-		SET @st_sql = 'INSERT INTO #tmp_header_deal_id (source_deal_header_id,create_user,granularity,source_deal_detail_id) 
+		SET @st_sql = 'INSERT INTO #tmp_header_deal_id (source_deal_header_id,create_user,granularity,source_deal_detail_id,rowid) 
 		select max(ed.source_deal_header_id),max(ed.create_user)
 			,max(hourly_position_breakdown) hourly_position_breakdown
 			--,982 hourly_position_breakdown
-			,source_deal_detail_id
+			,source_deal_detail_id,max(ed.rowid) rowid
 		FROM ' + @effected_deals + ' ed (nolock) 
 			INNER JOIN source_deal_header sdh (nolock) on ed.source_deal_header_id=sdh.source_deal_header_id 
 			INNER JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id
@@ -614,237 +635,148 @@ BEGIN TRY
 		CREATE INDEX indx_tmp_header_deal_id_zzz ON #tmp_header_deal_id (source_deal_detail_id)
 
 		SET @destination_tbl = CASE WHEN isnull(@orginal_insert_type, 0) IN (111,222) THEN '' ELSE 
-		'insert into dbo.report_hourly_position_deal_main(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity,inserted.source_deal_detail_id,inserted.rowid 
-		into #report_hourly_position_inserted(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) '
-		END
+			'insert into dbo.report_hourly_position_deal_main(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity,inserted.source_deal_detail_id,inserted.rowid ,1
+			into #report_hourly_position_inserted(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid,calc_total_volume) '
+			END
 
-	update ed set dst_group_value_id=isnull(tz.dst_group_value_id, @default_dst_group)
-	FROM source_deal_detail sdd  with (nolock)
-		INNER JOIN #tmp_header_deal_id ed  with (nolock) ON ed.source_deal_detail_id = sdd.source_deal_detail_id 
-		left join dbo.vwDealTimezone tz  on  tz.source_deal_header_id=sdd.source_deal_header_id
-				and tz.curve_id=isnull(sdd.curve_id,-1)  and tz.location_id=isnull(sdd.location_id,-1) 
+		update ed set dst_group_value_id=isnull(tz.dst_group_value_id, @default_dst_group)
+		FROM source_deal_detail sdd  with (nolock)
+			INNER JOIN #tmp_header_deal_id ed  with (nolock) ON ed.source_deal_detail_id = sdd.source_deal_detail_id 
+			left join dbo.vwDealTimezone tz  on  tz.source_deal_header_id=sdd.source_deal_header_id
+					and tz.curve_id=isnull(sdd.curve_id,-1)  and tz.location_id=isnull(sdd.location_id,-1) 
 		
-	insert into #density_multiplier (source_deal_detail_id,physical_density_mult,financial_density_mult)
-		select distinct sdd.source_deal_detail_id,isnull(cf_p1.factor,cf_p.factor),cf_f.factor
-	from #tmp_header_deal_id sdh inner join source_deal_detail sdd on sdh.source_deal_header_id=sdd.source_deal_header_id
-		left join source_price_curve_def spcd on spcd.source_curve_def_id=sdd.curve_id --and spcd.conversion_value_id
-		left join source_minor_location sml on sml.source_minor_location_id=sdd.location_id and sml.conversion_value_id is not null
-		left join forecast_profile fp on fp.profile_id=COALESCE(sdd.profile_id,sml.profile_id,sml.proxy_profile_id)
-		left join [dbo].[conversion_factor] h_p on h_p.conversion_value_id=sml.conversion_value_id	
-			and h_p.from_uom=sdd.deal_volume_uom_id and h_p.to_uom=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
-		left join [dbo].[conversion_factor] h_p1 on h_p1.conversion_value_id=sml.conversion_value_id	
-			and h_p1.from_uom=fp.uom_id and h_p1.to_uom=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
-		left join [dbo].[conversion_factor] h_f on h_f.conversion_value_id=spcd.conversion_value_id
-			and h_f.from_uom=sdd.deal_volume_uom_id and h_f.to_uom=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
-		outer apply
-		(
-			select max(d.effective_date) effective_date from  [conversion_factor_detail] d where d.conversion_factor_id=h_p.conversion_factor_id
-				and d.effective_date<=sdd.term_start
-		) cf_p_date
-		outer apply
-		(
-			select max(d.effective_date) effective_date from [dbo].[conversion_factor_detail] d where d.conversion_factor_id=h_p1.conversion_factor_id
-				and d.effective_date<=sdd.term_start
-		) cf_p1_date
-		outer apply
-		(
+		insert into #density_multiplier (source_deal_detail_id,physical_density_mult,financial_density_mult)
+			select distinct sdd.source_deal_detail_id,isnull(cf_p1.factor,cf_p.factor),cf_f.factor
+		from #tmp_header_deal_id sdh inner join source_deal_detail sdd on sdh.source_deal_detail_id=sdd.source_deal_detail_id
+			left join source_price_curve_def spcd on spcd.source_curve_def_id=sdd.curve_id --and spcd.conversion_value_id
+			left join source_minor_location sml on sml.source_minor_location_id=sdd.location_id and sml.conversion_value_id is not null
+			left join forecast_profile fp on fp.profile_id=COALESCE(sdd.profile_id,sml.profile_id,sml.proxy_profile_id)
+			left join [dbo].[conversion_factor] h_p on h_p.conversion_value_id=sml.conversion_value_id	
+				and h_p.from_uom=sdd.deal_volume_uom_id and h_p.to_uom=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
+			left join [dbo].[conversion_factor] h_p1 on h_p1.conversion_value_id=sml.conversion_value_id	
+				and h_p1.from_uom=fp.uom_id and h_p1.to_uom=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
+			left join [dbo].[conversion_factor] h_f on h_f.conversion_value_id=spcd.conversion_value_id
+				and h_f.from_uom=sdd.deal_volume_uom_id and h_f.to_uom=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
+			outer apply
+			(
+				select max(d.effective_date) effective_date from  [conversion_factor_detail] d where d.conversion_factor_id=h_p.conversion_factor_id
+					and d.effective_date<=sdd.term_start
+			) cf_p_date
+			outer apply
+			(
+				select max(d.effective_date) effective_date from [dbo].[conversion_factor_detail] d where d.conversion_factor_id=h_p1.conversion_factor_id
+					and d.effective_date<=sdd.term_start
+			) cf_p1_date
+			outer apply
+			(
 
-			select max(d.effective_date) effective_date from [dbo].[conversion_factor_detail] d where d.conversion_factor_id=h_f.conversion_factor_id
-				and d.effective_date<=sdd.term_start
-		) cf_f_date
-		left join [dbo].[conversion_factor_detail] cf_p on cf_p.conversion_factor_id=h_p.conversion_factor_id
-			and cf_p.effective_date=cf_p_date.effective_date
-		left join [dbo].[conversion_factor_detail] cf_p1 on cf_p1.conversion_factor_id=h_p1.conversion_factor_id
-			and cf_p1.effective_date=cf_p1_date.effective_date
-		left join dbo.[conversion_factor_detail] cf_f on cf_f.conversion_factor_id=h_f.conversion_factor_id
-			and cf_f.effective_date=cf_f_date.effective_date
+				select max(d.effective_date) effective_date from [dbo].[conversion_factor_detail] d where d.conversion_factor_id=h_f.conversion_factor_id
+					and d.effective_date<=sdd.term_start
+			) cf_f_date
+			left join [dbo].[conversion_factor_detail] cf_p on cf_p.conversion_factor_id=h_p.conversion_factor_id
+				and cf_p.effective_date=cf_p_date.effective_date
+			left join [dbo].[conversion_factor_detail] cf_p1 on cf_p1.conversion_factor_id=h_p1.conversion_factor_id
+				and cf_p1.effective_date=cf_p1_date.effective_date
+			left join dbo.[conversion_factor_detail] cf_f on cf_f.conversion_factor_id=h_f.conversion_factor_id
+				and cf_f.effective_date=cf_f_date.effective_date
 
-	if object_id('tempdb..#position_report_group_map') is not null
-		drop table #position_report_group_map
+		--deal
+		IF EXISTS ( SELECT * FROM #process_option WHERE deal_type = 17302 ) 
+			AND ISNULL(@fixation, 4101) <> 4100 --shaped deal AND NOT FIXATION DEAL
+		BEGIN
+			set @col_exp2='case when sdd.deal_volume_uom_id in ('+@mw_uoms+') then sddh.volume/isnull(mw.factor,1) else sddh.volume end'
 
-	select 
-		sdd.source_deal_detail_id
-		,isnull(sdd.curve_id,-1) curve_id
-		, isnull(sdd.location_id,-1) location_id
-		,coalesce(spcd.commodity_id,sdh.commodity_id,-1) commodity_id
-		,isnull(sdh.counterparty_id,-1) counterparty_id
-		,isnull(sdh.trader_id,-1) trader_id
-		,isnull(sdh.contract_id,-1) contract_id
-		,ssbm.book_deal_type_map_id subbook_id
-		--,coalesce(sdd.position_uom,spcd.display_uom_id,spcd.uom_id,-1) deal_volume_uom_id
-		,isnull(sdh.deal_status,-1) deal_status_id
-		,isnull(sdh.source_deal_type_id,-1) deal_type 
-		,isnull(sdh.pricing_type,-1) pricing_type
-		,isnull(sdh.internal_portfolio_id,-1) internal_portfolio_id
-		,isnull(sdd.physical_financial_flag,'p') physical_financial_flag
-	into #position_report_group_map
-	FROM  source_deal_header sdh (nolock) 
-		INNER JOIN source_deal_detail sdd (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id 
-		INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id
-		INNER JOIN source_system_book_map ssbm (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
-			and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
-			and sdh.source_system_book_id4=ssbm.source_system_book_id4
-		LEFT JOIN source_price_curve_def spcd (nolock) ON spcd.source_curve_def_id=sdd.curve_id
-
-	insert into dbo.position_report_group_map (
-		curve_id
-		,location_id
-		,commodity_id
-		,counterparty_id
-		,trader_id
-		,contract_id
-		,subbook_id
-		--,deal_volume_uom_id
-		,deal_status_id
-		,deal_type 
-		,pricing_type
-		,internal_portfolio_id
-		,physical_financial_flag
-	)
-	select distinct 
-		isnull(s.curve_id,-1)
-		,isnull(s.location_id,-1)
-		,isnull(s.commodity_id,-1)
-		,isnull(s.counterparty_id,-1)
-		,isnull(s.trader_id,-1)
-		,isnull(s.contract_id,-1)
-		,isnull(s.subbook_id,-1)
-		--,s.deal_volume_uom_id
-		,isnull(s.deal_status_id,-1)
-		,isnull(s.deal_type,-1)
-		,isnull(s.pricing_type,-1)
-		,isnull(s.internal_portfolio_id,-1)
-		,isnull(s.physical_financial_flag,'p')
-	from #position_report_group_map s 
-		left join position_report_group_map d on s.curve_id=d.curve_id
-			and s.location_id=d.location_id
-			and s.commodity_id=d.commodity_id
-			and s.counterparty_id=d.counterparty_id
-			and s.trader_id=d.trader_id
-			and s.contract_id=d.contract_id
-			and s.subbook_id=d.subbook_id
-		--	and s.deal_volume_uom_id=d.deal_volume_uom_id
-			and s.deal_status_id=d.deal_status_id
-			and s.deal_type =d.deal_type
-			and s.pricing_type=d.pricing_type
-			and s.internal_portfolio_id=d.internal_portfolio_id
-			and s.physical_financial_flag=d.physical_financial_flag
-	where d.rowid is null
-
-	update thdi set rowid=d.rowid
-	from #tmp_header_deal_id thdi 
-		inner join #position_report_group_map s on s.source_deal_detail_id=thdi.source_deal_detail_id
-		inner join position_report_group_map d  on s.curve_id=d.curve_id
-			and s.location_id=d.location_id
-			and s.commodity_id=d.commodity_id
-			and s.counterparty_id=d.counterparty_id
-			and s.trader_id=d.trader_id
-			and s.contract_id=d.contract_id
-			and s.subbook_id=d.subbook_id
-			--and s.deal_volume_uom_id=d.deal_volume_uom_id
-			and s.deal_status_id=d.deal_status_id
-			and s.deal_type =d.deal_type
-			and s.pricing_type=d.pricing_type
-			and s.internal_portfolio_id=d.internal_portfolio_id
-			and s.physical_financial_flag=d.physical_financial_flag
-
-	--deal
-	IF EXISTS ( SELECT * FROM #process_option WHERE deal_type = 17302 ) 
-		--AND ISNULL(@fixation, 4101) <> 4100 --shaped deal AND NOT FIXATION DEAL
-	BEGIN
-		set @col_exp2='case when sdd.deal_volume_uom_id in ('+@mw_uoms+') then sddh.volume/isnull(mw.factor,1) else sddh.volume end'
-
-		SET @st_sql='
-		SELECT sddh.source_deal_detail_id,term_date
-			,CASE WHEN sddh.granularity IN (987,989)THEN right(hr, 2) ELSE 0 END period,sddh.granularity
-			,cast(sum(CASE WHEN cast(left(hr, 2) AS INT) = 1 THEN CASE WHEN sddh.granularity = 981 THEN volume ELSE '+@col_exp2+' END 
-				ELSE 0 END) AS NUMERIC(28, 14)) [1]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 2 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [2]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 3 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [3]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 4 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [4]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 5 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [5]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 6 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [6]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 7 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [7]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 8 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [8]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 9 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [9]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 10 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [10]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 11 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [11]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 12 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [12]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 13 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [13]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 14 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [14]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 15 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [15]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 16 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [16]'
-		set @st_sql1='
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 17 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [17]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 18 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [18]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 19 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [19]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 20 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [20]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 21 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [21]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 22 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [22]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 23 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [23]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN cast(left(hr, 2) AS INT) = 24 THEN  '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [24]
-			,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
-				ELSE CASE WHEN is_dst = 1 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [25]
-		INTO #source_deal_detail_hour
-		FROM source_deal_detail_hour sddh(NOLOCK)
-			INNER JOIN source_deal_detail sdd(NOLOCK) ON sdd.source_deal_detail_id = sddh.source_deal_detail_id
-			INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
-			INNER JOIN #tmp_header_deal_id thdi ON thdi.source_deal_detail_id = sddh.source_deal_detail_id 
-			left join (select distinct granularity , factor from #minute_break) mw on mw.granularity=sddh.granularity
-		where  ISNULL(sdh.product_id,4101)<>4100
-		GROUP BY sddh.source_deal_detail_id
-			,sddh.term_date,CASE WHEN sddh.granularity IN (987,989) THEN right(hr, 2) ELSE 0 END,sddh.granularity
-		HAVING count(*) > 0;
+			SET @st_sql='
+			SELECT sddh.source_deal_detail_id,term_date
+				,CASE WHEN sddh.granularity IN (987,989)THEN right(hr, 2) ELSE 0 END period,sddh.granularity
+				,cast(sum(CASE WHEN cast(left(hr, 2) AS INT) = 1 THEN CASE WHEN sddh.granularity = 981 THEN volume ELSE '+@col_exp2+' END 
+					ELSE 0 END) AS NUMERIC(28, 14)) [1]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 2 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [2]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 3 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [3]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 4 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [4]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 5 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [5]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 6 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [6]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 7 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [7]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 8 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [8]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 9 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [9]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 10 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [10]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 11 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [11]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 12 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [12]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 13 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [13]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 14 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [14]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 15 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [15]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 16 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [16]'
+			set @st_sql1='
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 17 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [17]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 18 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [18]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 19 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [19]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 20 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [20]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 21 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [21]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 22 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [22]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 23 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [23]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 24 THEN  '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [24]
+				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
+					ELSE CASE WHEN is_dst = 1 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [25]
+				INTO #source_deal_detail_hour
+				FROM source_deal_detail_hour sddh(NOLOCK)
+					INNER JOIN source_deal_detail sdd(NOLOCK) ON sdd.source_deal_detail_id = sddh.source_deal_detail_id
+					INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+					INNER JOIN #tmp_header_deal_id thdi ON thdi.source_deal_detail_id = sddh.source_deal_detail_id 
+					left join (select distinct granularity , factor from #minute_break) mw on mw.granularity=sddh.granularity
+				where  ISNULL(sdh.product_id,4101)<>4100
+				GROUP BY sddh.source_deal_detail_id
+					,sddh.term_date,CASE WHEN sddh.granularity IN (987,989) THEN right(hr, 2) ELSE 0 END,sddh.granularity
+				HAVING count(*) > 0;
 			
-		create index idx_source_deal_detail_hour_001 on #source_deal_detail_hour (source_deal_detail_id) ;
-		create index idx_source_deal_detail_hour_002 on #source_deal_detail_hour (source_deal_detail_id,term_date) 
-			;
-		'
+				create index idx_source_deal_detail_hour_001 on #source_deal_detail_hour (source_deal_detail_id) ;
+				create index idx_source_deal_detail_hour_002 on #source_deal_detail_hour (source_deal_detail_id,term_date) 
+				;
+			'
 
-		SET @dst_column = 'cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END,0)<=0 THEN 0 else 1 end as numeric(1,0))'
-				--BEGIN TRAN ---tran01
-				--Inserting for hourly data
-		SET @col_exp3 = 'cast(COALESCE(case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,conv.conversion_factor,1) as numeric(21,16))
-			*cast(cast(cast(ISNULL(sdd.multiplier,1) as numeric(21,16))*cast(ISNULL(sdd.volume_multiplier2,1) as numeric(21,16)) as numeric(21,16))
-			*cast(CASE WHEN sdd.buy_sell_flag=''b'' THEN 1 ELSE -1 END  as numeric(1,0)) as numeric(21,16))'
+			SET @dst_column = 'cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END,0)<=0 THEN 0 else 1 end as numeric(1,0))'
+					--BEGIN TRAN ---tran01
+					--Inserting for hourly data
+			SET @col_exp3 = 'cast(COALESCE(case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,conv.conversion_factor,1) as numeric(21,16))
+				*cast(cast(cast(ISNULL(sdd.multiplier,1) as numeric(21,16))*cast(ISNULL(sdd.volume_multiplier2,1) as numeric(21,16)) as numeric(21,16))
+				*cast(CASE WHEN sdd.buy_sell_flag=''b'' THEN 1 ELSE -1 END  as numeric(1,0)) as numeric(21,16))'
 
-		SET @st_sql2 = @destination_tbl + '
+			SET @st_sql2 = @destination_tbl + '
 				SELECT 	sdh.source_deal_header_id,sddh.term_date term_start,max(sdh.deal_date) deal_date,
-				COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id) deal_volume_uom_id,
-				SUM([1]*' + @col_exp3 + ') AS Hr1, SUM([2]*' + @col_exp3 + ')  AS Hr2, 
-				SUM([3]*' + @col_exp3 + ')  AS Hr3, SUM([4]*' + @col_exp3 + ')  AS Hr4, '
+					COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id) deal_volume_uom_id,
+					SUM([1]*' + @col_exp3 + ') AS Hr1, SUM([2]*' + @col_exp3 + ')  AS Hr2, 
+					SUM([3]*' + @col_exp3 + ')  AS Hr3, SUM([4]*' + @col_exp3 + ')  AS Hr4, '
 
-		SET @st_sql3 = 'SUM([5]*' + @col_exp3 + ')  AS Hr5, 
+			SET @st_sql3 = 'SUM([5]*' + @col_exp3 + ')  AS Hr5, 
 				SUM([6]*' + @col_exp3 + ')  AS Hr6, 
 				SUM([7]*' + @col_exp3 + ')  AS Hr7,       
 				SUM([8]*' + @col_exp3 + ')  AS Hr8,       
 				SUM([9]*' + @col_exp3 + ')  AS Hr9,  
 				SUM([10]*' + @col_exp3 + ')  AS Hr10, 
-			SUM([11]*' + @col_exp3 + ')  AS Hr11,
-			SUM([12]*' + @col_exp3 + ')  AS Hr12, 
+				SUM([11]*' + @col_exp3 + ')  AS Hr11,
+				SUM([12]*' + @col_exp3 + ')  AS Hr12, 
 				SUM([13]*' + @col_exp3 + ')  AS Hr13, 	SUM([14]*' + @col_exp3 + ')  AS Hr14, 
 				SUM([15]*' + @col_exp3 + ')  AS Hr15,   SUM([16]*' + @col_exp3 + ')  AS Hr16,       
 				SUM([17]*' + @col_exp3 + ')  AS Hr17, 	SUM([18]*' + @col_exp3 + ')  AS Hr18, 
@@ -855,179 +787,185 @@ BEGIN TRY
 				,isnull(sddh.period,0) period,sddh.granularity,thdi.source_deal_detail_id,thdi.rowid'
 
 
+	--select * from static_data_value where value_id= 17606
+			SET @st_sql4 = @report_hourly_position_deal_main + 
+			'
+			FROM  source_deal_header sdh
+				INNER JOIN source_deal_detail sdd ON sdh.source_deal_header_id=sdd.source_deal_header_id 
+					and sdd.curve_id is not null and ISNULL(sdh.internal_desk_id,17300)=17302
+				INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id
+				INNER JOIN #source_deal_detail_hour sddh (nolock) on sddh.source_deal_detail_id=sdd.source_deal_detail_id and sddh.granularity<>981 
+				LEFT JOIN source_price_curve_def spcd (nolock) ON spcd.source_curve_def_id=sdd.curve_id
+				left join rec_volume_unit_conversion conv (nolock) on conv.from_source_uom_id=sdd.deal_volume_uom_id
+						and conv.to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
+				LEFT JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id		
+				left join #density_multiplier dm on sdd.source_deal_detail_id=dm.source_deal_detail_id
+				outer apply (select MAX(exp_date) exp_date from holiday_group where  hol_group_value_id=spcd.exp_calendar_id
+							and ((sdd.physical_financial_flag=''p'' and sdh.internal_deal_subtype_value_id='+@CFD_id+') or sdd.physical_financial_flag=''f'' or ISNULL(spcd.hourly_volume_allocation,17601) =17606)
+							and sddh.term_date between hol_date AND isnull(nullif(hol_date_to,''1900-01-01''),hol_date)
+					) h_grp 
+			WHERE   sddh.term_date is not null  
+					--spcd.formula_id IS  NULL 
+					AND sdd.fixed_float_leg=''t''  AND ISNULL(sdh.product_id,4101)<>4100
+					AND ISNULL(sdht.internal_deal_type_value_id,-1)<>21 --- Do not include Schedule
+					and sdd.position_formula_id is null
+			group by sdh.source_deal_header_id,sddh.term_date,
+					COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id),sddh.period,sddh.granularity
+					,thdi.source_deal_detail_id,thdi.rowid,isnull(h_grp.exp_date,sddh.term_date) ;'
 
---select * from static_data_value where value_id= 17606
-		SET @st_sql4 = @report_hourly_position_deal_main + 
-		'
-		FROM  source_deal_header sdh
-			INNER JOIN source_deal_detail sdd ON sdh.source_deal_header_id=sdd.source_deal_header_id 
-				and sdd.curve_id is not null and ISNULL(sdh.internal_desk_id,17300)=17302
-			INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id
-			INNER JOIN #source_deal_detail_hour sddh (nolock) on sddh.source_deal_detail_id=sdd.source_deal_detail_id and sddh.granularity<>981 
-			LEFT JOIN source_price_curve_def spcd (nolock) ON spcd.source_curve_def_id=sdd.curve_id
-			left join rec_volume_unit_conversion conv (nolock) on conv.from_source_uom_id=sdd.deal_volume_uom_id
-					and conv.to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
-			LEFT JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id		
-			left join #density_multiplier dm on sdd.source_deal_detail_id=dm.source_deal_detail_id
-			outer apply (select MAX(exp_date) exp_date from holiday_group where  hol_group_value_id=spcd.exp_calendar_id
-						and ((sdd.physical_financial_flag=''p'' and sdh.internal_deal_subtype_value_id='+@CFD_id+') or sdd.physical_financial_flag=''f'' or ISNULL(spcd.hourly_volume_allocation,17601) =17606)
-						and sddh.term_date between hol_date AND isnull(nullif(hol_date_to,''1900-01-01''),hol_date)
-				) h_grp 
-		WHERE   sddh.term_date is not null  
-				--spcd.formula_id IS  NULL 
-				AND sdd.fixed_float_leg=''t''  AND ISNULL(sdh.product_id,4101)<>4100
-				AND ISNULL(sdht.internal_deal_type_value_id,-1)<>21 --- Do not include Schedule
-				and sdd.position_formula_id is null
-		group by sdh.source_deal_header_id,sddh.term_date,
-				COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id),sddh.period,sddh.granularity
-				,thdi.source_deal_detail_id,thdi.rowid,isnull(h_grp.exp_date,sddh.term_date) ;'
-
-			--breakdown shaped deal for granularity daily into hourly	
-		SET @col_exp2 = 'cast(cast(sddh.[1] as numeric(24,12))/nullif(isnull(hb_term.term_hours,term_hrs_exp.term_no_hrs),0) AS NUMERIC(32,16))'
-		SET @col_exp3 = 'cast(CASE WHEN sdd.buy_sell_flag=''b'' THEN 1 ELSE -1 END as numeric(1,0))'
+				--breakdown shaped deal for granularity daily into hourly	
+			SET @col_exp2 = 'cast(cast(sddh.[1] as numeric(24,12))/nullif(isnull(hb_term.term_hours,term_hrs_exp.term_no_hrs),0) AS NUMERIC(32,16))'
+			SET @col_exp3 = 'cast(CASE WHEN sdd.buy_sell_flag=''b'' THEN 1 ELSE -1 END as numeric(1,0))'
             	
 
 			
-		SET @st_sql5 = @destination_tbl + ' SELECT sdh.source_deal_header_id,
-			hb.term_date  term_start,max(sdh.deal_date) deal_date,
-			COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id) deal_volume_uom_id,
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 7 ELSE 1  END THEN 1.000 else 0 end + isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr7 ELSE hb.hr1 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr1,  
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 8 ELSE 2 END THEN 1.000 else 0 end + isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr8 ELSE hb.hr2 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr2, 
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 9 ELSE 3 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr9 ELSE hb.hr3 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr3, 
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 10 ELSE 4 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr10 ELSE hb.hr4 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr4, 
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 11 ELSE 5 END THEN 1 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr11 ELSE hb.hr5 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr5, 
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 12 ELSE 6 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr12 ELSE hb.hr6 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr6,
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 13 ELSE 7 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr13 ELSE hb.hr7 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr7,       
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 14 ELSE 8 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr14 ELSE hb.hr8 END,0) as numeric(1,0)))*' + @col_exp2 +'*' + @col_exp3 + ' )  AS Hr8, 
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 15 ELSE 9 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr15 ELSE hb.hr9 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr9,  
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 16 ELSE 10 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr16 ELSE hb.hr10 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr10, 
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 17 ELSE 11 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr17 ELSE hb.hr11 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr11, '
+			SET @st_sql5 = @destination_tbl + ' SELECT sdh.source_deal_header_id,
+				hb.term_date  term_start,max(sdh.deal_date) deal_date,
+				COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id) deal_volume_uom_id,
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 7 ELSE 1  END THEN 1.000 else 0 end + isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr7 ELSE hb.hr1 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr1,  
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 8 ELSE 2 END THEN 1.000 else 0 end + isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr8 ELSE hb.hr2 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr2, 
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 9 ELSE 3 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr9 ELSE hb.hr3 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr3, 
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 10 ELSE 4 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr10 ELSE hb.hr4 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr4, 
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 11 ELSE 5 END THEN 1 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr11 ELSE hb.hr5 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr5, 
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 12 ELSE 6 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr12 ELSE hb.hr6 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr6,
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 13 ELSE 7 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr13 ELSE hb.hr7 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr7,       
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 14 ELSE 8 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr14 ELSE hb.hr8 END,0) as numeric(1,0)))*' + @col_exp2 +'*' + @col_exp3 + ' )  AS Hr8, 
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 15 ELSE 9 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr15 ELSE hb.hr9 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr9,  
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 16 ELSE 10 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr16 ELSE hb.hr10 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr10, 
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 17 ELSE 11 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr17 ELSE hb.hr11 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr11, '
 			
-		SET @st_sql6 = 'SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 18 ELSE 12 END THEN 1 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr18 ELSE hb.hr12 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr12, 
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 19 ELSE 13 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr19 ELSE hb.hr13 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr13, 	
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 20 ELSE 14 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr20 ELSE hb.hr14 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr14, 
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 21 ELSE 15 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr21 ELSE hb.hr15 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr15,   
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 22 ELSE 16 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr22 ELSE hb.hr16 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr16,       
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 23 ELSE 17 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr23 ELSE hb.hr17 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr17, 	
-			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 24 ELSE 18 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr24 ELSE hb.hr18 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr18, 
-			SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 1 ELSE 19 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr1 ELSE hb.hr19 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr19, 
-			SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 2 ELSE 20 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr2 ELSE hb.hr20 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr20 ,
-			SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 3 ELSE 21 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr3 ELSE hb.hr21 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 +' )  AS Hr21,	
-			SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 4 ELSE 22 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr4 ELSE hb.hr22 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr22, 
-			SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 5 ELSE 23 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr5 ELSE hb.hr23 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr23, 
-			SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 6 ELSE 24 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr6 ELSE hb.hr24 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr24, 
-			SUM(isnull(' + @dst_column + ',0)*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr25,getdate() create_ts,max(thdi.create_user) create_user
-			,isnull(h_grp.exp_date,hb.term_date) expiration_date,0 period,982 granularity,thdi.source_deal_detail_id,thdi.rowid'
+			SET @st_sql6 = 'SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 18 ELSE 12 END THEN 1 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr18 ELSE hb.hr12 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr12, 
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 19 ELSE 13 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr19 ELSE hb.hr13 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr13, 	
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 20 ELSE 14 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr20 ELSE hb.hr14 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr14, 
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 21 ELSE 15 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr21 ELSE hb.hr15 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr15,   
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 22 ELSE 16 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr22 ELSE hb.hr16 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr16,       
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 23 ELSE 17 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr23 ELSE hb.hr17 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr17, 	
+				SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 24 ELSE 18 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr24 ELSE hb.hr18 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr18, 
+				SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 1 ELSE 19 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr1 ELSE hb.hr19 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr19, 
+				SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 2 ELSE 20 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr2 ELSE hb.hr20 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr20 ,
+				SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 3 ELSE 21 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr3 ELSE hb.hr21 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 +' )  AS Hr21,	
+				SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 4 ELSE 22 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr4 ELSE hb.hr22 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr22, 
+				SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 5 ELSE 23 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr5 ELSE hb.hr23 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr23, 
+				SUM((cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN spcd.commodity_id=-1 THEN 6 ELSE 24 END THEN 1.000 else 0 end +isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.hr6 ELSE hb.hr24 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ' )  AS Hr24, 
+				SUM(isnull(' + @dst_column + ',0)*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr25,getdate() create_ts,max(thdi.create_user) create_user
+				,isnull(h_grp.exp_date,hb.term_date) expiration_date,0 period,982 granularity,thdi.source_deal_detail_id,thdi.rowid'
 		
-		SET @st_from = @report_hourly_position_deal_main + 
-				'
-		 FROM source_deal_header sdh  with (nolock) 
-			INNER JOIN source_deal_detail sdd  with (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id 
-				 and  ISNULL(sdh.internal_desk_id,17300)=17302
-			INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id 
-			--INNER JOIN source_system_book_map ssbm  with (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
-			--	and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
-			--	and sdh.source_system_book_id4=ssbm.source_system_book_id4
-			INNER JOIN #source_deal_detail_hour sddh (NOLOCK) ON sddh.source_deal_detail_id = sdd.source_deal_detail_id 
-				AND sddh.granularity=981 
-			LEFT JOIN source_price_curve_def spcd  with (nolock) ON spcd.source_curve_def_id=sdd.curve_id
-			LEFT JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=spcd.settlement_curve_id
-			outer apply ( select nullif(sum(volume_mult),0) term_hours from hour_block_term (nolock) where
-				dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') and
-				block_define_id = COALESCE(spcd.block_define_id,sdh.block_define_id,'+ @baseload_block_define_id + ')
-				AND term_date=sddh.term_date and (isnull(spcd.hourly_volume_allocation,17601) <17603 or sdd.physical_financial_flag=''p'')
-			) hb_term		
-			outer apply (
-				select sum(volume_mult) term_no_hrs from hour_block_term hbt (nolock) 
-					inner join (select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date=sddh.term_date 
-					) ex on ex.exp_date=hbt.term_date
-				where  hbt.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') and hbt.block_define_id=COALESCE(spcd.block_define_id,' + @baseload_block_define_id + ') 
-				and hbt.term_date =sddh.term_date
-				and  isnull(spcd.hourly_volume_allocation,17601) IN(17603,17604) and sdd.physical_financial_flag=''f''
-			) term_hrs_exp
-			LEFT JOIN hour_block_term hb WITH (NOLOCK) ON hb.dst_group_value_id = isnull(thdi.dst_group_value_id,'+@default_dst_group+') 
-				AND hb.block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id, ' + @baseload_block_define_id + ')  
-				AND hb.block_type = COALESCE(spcd.block_type, sdh.block_type, ' + @baseload_block_type + ')
-				and hb.term_date =sddh.term_date
-			left join rec_volume_unit_conversion conv (nolock) on conv.from_source_uom_id=sdd.deal_volume_uom_id
-				and conv.to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
-			outer apply  (select distinct exp_date from holiday_group h (nolock) where h.exp_date=hb.term_date and h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date =sddh.term_date ) hg  
-			LEFT OUTER JOIN hour_block_term hb1 (nolock) ON hb1.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+')
-				AND hb1.block_define_id=hb.block_define_id
-				AND hb1.term_date-1=hb.term_date
-			LEFT JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id			
-			outer apply (
-				select MAX(exp_date) exp_date from holiday_group where  hol_group_value_id=spcd.exp_calendar_id
-					and ((sdd.physical_financial_flag=''p'' and sdh.internal_deal_subtype_value_id='+@CFD_id+') or sdd.physical_financial_flag=''f'' or   ISNULL(spcd.hourly_volume_allocation,17601) =17606)
-					and hb.term_date between hol_date AND isnull(nullif(hol_date_to,''1900-01-01''),hol_date)
-			) h_grp 
-			LEFT JOIN report_hourly_position_deal_main rhpd
-				ON rhpd.source_deal_detail_id = sdd.source_deal_detail_id
-				 AND rhpd.term_start = hb.term_date
-			where     hb.term_date is not null 
-				--spcd.formula_id IS  NULL 
-				AND (sdd.fixed_float_leg = ''t'')  AND ISNULL(sdh.product_id, 4101) <> 4100	
-				AND ((ISNULL(spcd.hourly_volume_allocation, 17601) IN (17603, 17604) 
-					  AND hg.exp_date IS NOT NULL) OR (ISNULL(spcd.hourly_volume_allocation,17601) < 17603) OR sdd.physical_financial_flag = ''p'')
-					AND ISNULL(sdht.internal_deal_type_value_id,-1) NOT IN(21,20) --- Do not include nomination and schedule
-					and sdd.position_formula_id is null AND rhpd.source_deal_header_id IS NULL
-			GROUP BY sdh.source_deal_header_id,  hb.term_date,
-				ISNULL(h_grp.exp_date, hb.term_date), COALESCE(sdd.position_uom, spcd.display_uom_id, spcd.uom_id), thdi.source_deal_detail_id,thdi.rowid '
+			SET @st_from = @report_hourly_position_deal_main + 
+					'
+			 FROM source_deal_header sdh  with (nolock) 
+				INNER JOIN source_deal_detail sdd  with (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id 
+					 and  ISNULL(sdh.internal_desk_id,17300)=17302
+				INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id 
+				--INNER JOIN source_system_book_map ssbm  with (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
+				--	and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
+				--	and sdh.source_system_book_id4=ssbm.source_system_book_id4
+				INNER JOIN #source_deal_detail_hour sddh (NOLOCK) ON sddh.source_deal_detail_id = sdd.source_deal_detail_id 
+					AND sddh.granularity=981 
+				LEFT JOIN source_price_curve_def spcd  with (nolock) ON spcd.source_curve_def_id=sdd.curve_id
+				LEFT JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=spcd.settlement_curve_id
+				outer apply ( select nullif(sum(volume_mult),0) term_hours from hour_block_term (nolock) where
+					dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') and
+					block_define_id = COALESCE(spcd.block_define_id,sdh.block_define_id,'+ @baseload_block_define_id + ')
+					AND term_date=sddh.term_date and (isnull(spcd.hourly_volume_allocation,17601) <17603 or sdd.physical_financial_flag=''p'')
+				) hb_term		
+				outer apply (
+					select sum(volume_mult) term_no_hrs from hour_block_term hbt (nolock) 
+						inner join (select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date=sddh.term_date 
+						) ex on ex.exp_date=hbt.term_date
+					where  hbt.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') and hbt.block_define_id=COALESCE(spcd.block_define_id,' + @baseload_block_define_id + ') 
+					and hbt.term_date =sddh.term_date
+					and  isnull(spcd.hourly_volume_allocation,17601) IN(17603,17604) and sdd.physical_financial_flag=''f''
+				) term_hrs_exp
+				LEFT JOIN hour_block_term hb WITH (NOLOCK) ON hb.dst_group_value_id = isnull(thdi.dst_group_value_id,'+@default_dst_group+') 
+					AND hb.block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id, ' + @baseload_block_define_id + ')  
+					AND hb.block_type = COALESCE(spcd.block_type, sdh.block_type, ' + @baseload_block_type + ')
+					and hb.term_date =sddh.term_date
+				left join rec_volume_unit_conversion conv (nolock) on conv.from_source_uom_id=sdd.deal_volume_uom_id
+					and conv.to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
+				outer apply  (select distinct exp_date from holiday_group h (nolock) where h.exp_date=hb.term_date and h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date =sddh.term_date ) hg  
+				LEFT OUTER JOIN hour_block_term hb1 (nolock) ON hb1.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+')
+					AND hb1.block_define_id=hb.block_define_id
+					AND hb1.term_date-1=hb.term_date
+				LEFT JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id			
+				outer apply (
+					select MAX(exp_date) exp_date from holiday_group where  hol_group_value_id=spcd.exp_calendar_id
+						and ((sdd.physical_financial_flag=''p'' and sdh.internal_deal_subtype_value_id='+@CFD_id+') or sdd.physical_financial_flag=''f'' or   ISNULL(spcd.hourly_volume_allocation,17601) =17606)
+						and hb.term_date between hol_date AND isnull(nullif(hol_date_to,''1900-01-01''),hol_date)
+				) h_grp 
+				LEFT JOIN report_hourly_position_deal_main rhpd
+					ON rhpd.source_deal_detail_id = sdd.source_deal_detail_id
+					 AND rhpd.term_start = hb.term_date
+				where     hb.term_date is not null 
+					--spcd.formula_id IS  NULL 
+					AND (sdd.fixed_float_leg = ''t'')  AND ISNULL(sdh.product_id, 4101) <> 4100	
+					AND ((ISNULL(spcd.hourly_volume_allocation, 17601) IN (17603, 17604) 
+						  AND hg.exp_date IS NOT NULL) OR (ISNULL(spcd.hourly_volume_allocation,17601) < 17603) OR sdd.physical_financial_flag = ''p'')
+						AND ISNULL(sdht.internal_deal_type_value_id,-1) NOT IN(21,20) --- Do not include nomination and schedule
+						and sdd.position_formula_id is null AND rhpd.source_deal_header_id IS NULL
+				GROUP BY sdh.source_deal_header_id,  hb.term_date,
+					ISNULL(h_grp.exp_date, hb.term_date), COALESCE(sdd.position_uom, spcd.display_uom_id, spcd.uom_id), thdi.source_deal_detail_id,thdi.rowid '
 
-			EXEC spa_print @st_sql
-			EXEC spa_print @st_sql1
-			EXEC spa_print @st_sql2
-			EXEC spa_print @st_sql3
-			EXEC spa_print @st_sql4
-			EXEC spa_print @st_sql5
-			EXEC spa_print @st_sql6
-			EXEC spa_print @st_from
+				EXEC spa_print @st_sql
+				EXEC spa_print @st_sql1
+				EXEC spa_print @st_sql2
+				EXEC spa_print @st_sql3
+				EXEC spa_print @st_sql4
+				EXEC spa_print @st_sql5
+				EXEC spa_print @st_sql6
+				EXEC spa_print @st_from
 
-			EXEC (@st_sql + @st_sql1 + @st_sql2 + @st_sql3 + @st_sql4 + @st_sql5 + @st_sql6 + @st_from)
-		END --shaped deal
+				EXEC (@st_sql + @st_sql1 + @st_sql2 + @st_sql3 + @st_sql4 + @st_sql5 + @st_sql6 + @st_from)
+			END --shaped deal
 
 		--Inserting for fixed deal data
 		IF EXISTS ( SELECT 1 FROM #process_option WHERE deal_type = 17300 )
-		-- AND ISNULL(@fixation, 4101) <> 4100 --deal_volume deal AND NOT FIXATION DEAL
+		 AND ISNULL(@fixation, 4101) <> 4100 --deal_volume deal AND NOT FIXATION DEAL
 		BEGIN
-			SET @col_exp2 = 'cast(CASE WHEN pdd.deal_volume_frequency in (''h'',''x'',''y'') THEN cast(pdd.deal_volume  as numeric(22,10)) *pdd.conversion_factor*cast(pdd.multiplier *pdd.volume_multiplier2 as numeric(21,16)) ELSE cast(pdd.total_volume as numeric(26,10))/(isnull(hb_term_day.no_days,term_hrs_exp_day.no_days)*isnull(hb_term.term_hours,term_hrs_exp.term_no_hrs)) END AS NUMERIC(32,16))'
 
-			SET @col_exp3 = 'cast(CASE WHEN pdd.buy_sell_flag=''b'' THEN 1.000000 ELSE -1.000000 END /case when pdd.deal_detail_volume_uom_id in ('+@mw_uoms+') then isnull(mb.factor,1) else 1.00 end as numeric(20,18))'
+
+		SET @destination_tbl = CASE WHEN isnull(@orginal_insert_type, 0) IN (111,222) THEN '' ELSE 
+			'insert into dbo.report_hourly_position_deal_main(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity,inserted.source_deal_detail_id,inserted.rowid ,0
+			into #report_hourly_position_inserted(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid,calc_total_volume) '
+			END
+
+		SET @col_exp2 = 'cast(CASE WHEN pdd.deal_volume_frequency in (''h'',''x'',''y'') THEN cast(pdd.deal_volume  as numeric(22,10)) *pdd.conversion_factor*cast(pdd.multiplier *pdd.volume_multiplier2 as numeric(21,16)) ELSE cast(pdd.total_volume as numeric(26,10))/(isnull(hb_term_day.no_days,term_hrs_exp_day.no_days)*isnull(hb_term.term_hours,term_hrs_exp.term_no_hrs)) END AS NUMERIC(32,16))'
+
+		SET @col_exp3 = 'cast(CASE WHEN pdd.buy_sell_flag=''b'' THEN 1.000000 ELSE -1.000000 END /case when pdd.deal_detail_volume_uom_id in ('+@mw_uoms+') then isnull(mb.factor,1) else 1.00 end as numeric(20,18))'
             	
-			SET @dst_column = 'cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END,0)<=0 THEN 0 else 1 end as numeric(1,0))'
+		SET @dst_column = 'cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END,0)<=0 THEN 0 else 1 end as numeric(1,0))'
 
-			SET @st_sql0 ='
-				select distinct sdh.source_deal_header_id,isnull(sdd.curve_id,-1) curve_id,isnull(sdd.location_id,-1) location_id
-					,sdh.deal_date ,spcd.commodity_id,sdh.counterparty_id,ssbm.fas_book_id
-					,sdh.source_system_book_id1,sdh.source_system_book_id2,sdh.source_system_book_id3 ,sdh.source_system_book_id4
-					,COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id) deal_volume_uom_id, sdd.deal_volume_frequency
-					,cast(COALESCE(case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,conv.conversion_factor,1) as numeric(21,16)) conversion_factor
-					,cast(isnull(sdd.multiplier,1) as numeric(21,16)) multiplier,cast(ISNULL(sdd.volume_multiplier2,1) as numeric(21,16)) volume_multiplier2
-					,sdd.buy_sell_flag ,sdd.deal_volume,sddp.total_volume,isnull(thdi.dst_group_value_id,'+@default_dst_group+') dst_group_value_id
-					,COALESCE(spcd.block_define_id,sdh.block_define_id,' + @baseload_block_define_id + ') block_define_id
-					,ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) exp_calendar_id, sdd.term_start ,sdd.term_END
-					,isnull(spcd.hourly_volume_allocation,17601) hourly_volume_allocation,sdd.physical_financial_flag
-					,thdi.create_user,thdi.granularity,thdi.source_deal_detail_id,thdi.rowid,sdd.deal_volume_uom_id deal_detail_volume_uom_id
-					,sdh.internal_deal_subtype_value_id
-				into #tmp_pos_deal_detail
-				FROM  source_deal_header sdh  with (nolock) 
-					INNER JOIN source_deal_detail sdd  with (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id --  and sdd.curve_id is not null
-					INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id  
-						and ISNULL(sdh.internal_desk_id,17300)=17300 --and ISNULL(sdh.product_id,-1)<>4100  --this condition is for applying fixation so it will not inserted for fixation logic.
-					INNER JOIN source_system_book_map ssbm  with (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
-						and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
-						and sdh.source_system_book_id4=ssbm.source_system_book_id4
-					left join dbo.source_deal_detail_position sddp on sddp.source_deal_detail_id=sdd.source_deal_detail_id
-					LEFT JOIN source_price_curve_def spcd  with (nolock) ON spcd.source_curve_def_id=sdd.curve_id
-					LEFT JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=spcd.settlement_curve_id
-					left join rec_volume_unit_conversion conv (nolock) on conv.from_source_uom_id=sdd.deal_volume_uom_id
-						and conv.to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
-					left join #density_multiplier dm on sdd.source_deal_detail_id=dm.source_deal_detail_id
-					LEFT JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id			
-				where   
-					sdd.position_formula_id IS NULL and  (sdd.fixed_float_leg=''t'') AND ISNULL(sdh.product_id,4101)<>4100	
-						AND ISNULL(sdht.internal_deal_type_value_id,-1) NOT IN(21,20) --- Do not include nomination and schedule
-				;
+		SET @st_sql0 ='
+			select distinct sdh.source_deal_header_id,isnull(sdd.curve_id,-1) curve_id,isnull(sdd.location_id,-1) location_id
+				,sdh.deal_date ,spcd.commodity_id,sdh.counterparty_id,ssbm.fas_book_id
+				,sdh.source_system_book_id1,sdh.source_system_book_id2,sdh.source_system_book_id3 ,sdh.source_system_book_id4
+				,COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id) deal_volume_uom_id, sdd.deal_volume_frequency
+				,cast(COALESCE(case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,conv.conversion_factor,1) as numeric(21,16)) conversion_factor
+				,cast(isnull(sdd.multiplier,1) as numeric(21,16)) multiplier,cast(ISNULL(sdd.volume_multiplier2,1) as numeric(21,16)) volume_multiplier2
+				,sdd.buy_sell_flag ,sdd.deal_volume,sddp.total_volume,isnull(thdi.dst_group_value_id,'+@default_dst_group+') dst_group_value_id
+				,COALESCE(spcd.block_define_id,sdh.block_define_id,' + @baseload_block_define_id + ') block_define_id
+				,ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) exp_calendar_id, sdd.term_start ,sdd.term_END
+				,isnull(spcd.hourly_volume_allocation,17601) hourly_volume_allocation,sdd.physical_financial_flag
+				,thdi.create_user,thdi.granularity,thdi.source_deal_detail_id,thdi.rowid,sdd.deal_volume_uom_id deal_detail_volume_uom_id
+				,sdh.internal_deal_subtype_value_id
+			into #tmp_pos_deal_detail
+			FROM  source_deal_header sdh  with (nolock) 
+				INNER JOIN source_deal_detail sdd  with (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id --  and sdd.curve_id is not null
+				INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id  
+					and ISNULL(sdh.internal_desk_id,17300)=17300 --and ISNULL(sdh.product_id,-1)<>4100  --this condition is for applying fixation so it will not inserted for fixation logic.
+				INNER JOIN source_system_book_map ssbm  with (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
+					and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
+					and sdh.source_system_book_id4=ssbm.source_system_book_id4
+				left join dbo.source_deal_detail_position sddp on sddp.source_deal_detail_id=sdd.source_deal_detail_id
+				LEFT JOIN source_price_curve_def spcd  with (nolock) ON spcd.source_curve_def_id=sdd.curve_id
+				LEFT JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=spcd.settlement_curve_id
+				left join rec_volume_unit_conversion conv (nolock) on conv.from_source_uom_id=sdd.deal_volume_uom_id
+					and conv.to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
+				left join #density_multiplier dm on sdd.source_deal_detail_id=dm.source_deal_detail_id
+				LEFT JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id			
+			where   
+				sdd.position_formula_id IS NULL and  (sdd.fixed_float_leg=''t'') AND ISNULL(sdh.product_id,4101)<>4100	
+					AND ISNULL(sdht.internal_deal_type_value_id,-1) NOT IN(21,20) --- Do not include nomination and schedule
+			;
 		'
 			
 		SET @st_sql = @destination_tbl + ' SELECT max(pdd.source_deal_header_id),
@@ -1095,7 +1033,7 @@ BEGIN TRY
 						where hbt.dst_group_value_id=pdd.dst_group_value_id AND hbt.block_define_id=pdd.block_define_id
 							and hbt.term_date between pdd.term_start  and pdd.term_END
 							and pdd.hourly_volume_allocation IN(17603,17604) and pdd.physical_financial_flag=''f'' and hbt.hol_date is null
-					and hbt.volume_mult<>0
+							and hbt.volume_mult<>0
 					) term_hrs_exp_day
 				outer apply ( select nullif(sum(volume_mult),0) term_hours from hour_block_term (nolock) where
 					dst_group_value_id=pdd.dst_group_value_id AND block_define_id = pdd.block_define_id
@@ -1125,15 +1063,12 @@ BEGIN TRY
 
 		EXEC (@st_sql0+@st_sql + @st_sql1 + @st_sql2 + @st_sql3 + @st_from)
 
-
-
 			--Inserting for Schedule deals whose nomination does not exists
 		SET @col_exp2 = 'cast(CASE WHEN pdd.deal_volume_frequency=''h'' THEN pdd.deal_volume *pdd.conversion_factor*cast(pdd.multiplier*pdd.volume_multiplier2 as numeric(21,16)) ELSE pdd.total_volume/nullif(isnull(hb_term_day.no_days,term_hrs_exp_day.no_days)*isnull(CASE WHEN pdd.commodity_id=-1 THEN nullif(hb_term1.volume_mult,0) ELSE nullif(hb_term.volume_mult,0) END ,term_hrs_exp.term_no_hrs),0) END AS NUMERIC(32,16))'
 
 			SET @col_exp3 = 'cast(CASE WHEN pdd.buy_sell_flag=''b'' THEN 1.000000 ELSE -1.000000 END /case when pdd.deal_volume_uom_id in ('+@mw_uoms+') then isnull(mb.factor,1) else 1.00 end as numeric(20,18))'
 
 		SET @dst_column = 'cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END,0)<=0 THEN 0 else 1 end as numeric(1,0))'
-
 
 		SET @st_sql0 ='
 		select distinct sdh.source_deal_header_id,isnull(sdd.curve_id,-1) curve_id,isnull(sdd.location_id,-1) location_id
@@ -1168,98 +1103,100 @@ BEGIN TRY
 			WHERE   sdd.fixed_float_leg=''t'' AND sdh.product_id<>4100 and sdd.position_formula_id is null	;
 			'
 
-			SET @st_sql = @destination_tbl + ' SELECT max(pdd.source_deal_header_id),
-				hb.term_date term_start,max(pdd.deal_date) deal_date,max(pdd.deal_volume_uom_id),
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 7 ELSE 1  END THEN 1.000 else 0 end + isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr7 ELSE hb.hr1 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr1,  
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 8 ELSE 2 END THEN 1.000 else 0 end + isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr8 ELSE hb.hr2 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr2, 
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 9 ELSE 3 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr9 ELSE hb.hr3 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr3, 
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 10 ELSE 4 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr10 ELSE hb.hr4 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr4, '
+		SET @st_sql = @destination_tbl + ' SELECT max(pdd.source_deal_header_id),
+			hb.term_date term_start,max(pdd.deal_date) deal_date,max(pdd.deal_volume_uom_id),
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 7 ELSE 1  END THEN 1.000 else 0 end + isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr7 ELSE hb.hr1 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr1,  
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 8 ELSE 2 END THEN 1.000 else 0 end + isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr8 ELSE hb.hr2 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr2, 
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 9 ELSE 3 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr9 ELSE hb.hr3 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr3, 
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 10 ELSE 4 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr10 ELSE hb.hr4 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr4, '
 		
-			SET @st_sql1 = '
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 11 ELSE 5 END THEN 1 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr11 ELSE hb.hr5 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr5, 
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 12 ELSE 6 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr12 ELSE hb.hr6 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr6,
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 13 ELSE 7 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr13 ELSE hb.hr7 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr7,       
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 14 ELSE 8 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr14 ELSE hb.hr8 END,0) as numeric(1,0)))*' + @col_exp2 +'*' + @col_exp3 + ') AS Hr8, 
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 15 ELSE 9 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr15 ELSE hb.hr9 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr9,  
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 16 ELSE 10 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr16 ELSE hb.hr10 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr10, 
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 17 ELSE 11 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr17 ELSE hb.hr11 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr11, '
+		SET @st_sql1 = '
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 11 ELSE 5 END THEN 1 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr11 ELSE hb.hr5 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr5, 
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 12 ELSE 6 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr12 ELSE hb.hr6 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr6,
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 13 ELSE 7 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr13 ELSE hb.hr7 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr7,       
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 14 ELSE 8 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr14 ELSE hb.hr8 END,0) as numeric(1,0)))*' + @col_exp2 +'*' + @col_exp3 + ') AS Hr8, 
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 15 ELSE 9 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr15 ELSE hb.hr9 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr9,  
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 16 ELSE 10 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr16 ELSE hb.hr10 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr10, 
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 17 ELSE 11 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr17 ELSE hb.hr11 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr11, '
 		
-			SET @st_sql2 = '
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 18 ELSE 12 END THEN 1 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr18 ELSE hb.hr12 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr12, 
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 19 ELSE 13 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr19 ELSE hb.hr13 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr13, 	
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 20 ELSE 14 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr20 ELSE hb.hr14 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr14, 
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 21 ELSE 15 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr21 ELSE hb.hr15 END,0) as numeric(1,0)))*' +@col_exp2 + '*' + @col_exp3 + ') AS Hr15,   
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 22 ELSE 16 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr22 ELSE hb.hr16 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr16,       
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 23 ELSE 17 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr23 ELSE hb.hr17 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr17, 	
-				sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 24 ELSE 18 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr24 ELSE hb.hr18 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr18, '
+		SET @st_sql2 = '
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 18 ELSE 12 END THEN 1 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr18 ELSE hb.hr12 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr12, 
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 19 ELSE 13 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr19 ELSE hb.hr13 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr13, 	
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 20 ELSE 14 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr20 ELSE hb.hr14 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr14, 
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 21 ELSE 15 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr21 ELSE hb.hr15 END,0) as numeric(1,0)))*' +@col_exp2 + '*' + @col_exp3 + ') AS Hr15,   
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 22 ELSE 16 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr22 ELSE hb.hr16 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr16,       
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 23 ELSE 17 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr23 ELSE hb.hr17 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr17, 	
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 24 ELSE 18 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr24 ELSE hb.hr18 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr18, '
 			
-			SET @st_sql3 = '
-				sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 1 ELSE 19 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr1 ELSE hb.hr19 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr19, 
-				sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 2 ELSE 20 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr2 ELSE hb.hr20 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr20 ,
-				sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 3 ELSE 21 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr3 ELSE hb.hr21 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr21,	
-				sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 4 ELSE 22 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr4 ELSE hb.hr22 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr22, 
-				sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 5 ELSE 23 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr5 ELSE hb.hr23 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr23, 
-				sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 6 ELSE 24 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr6 ELSE hb.hr24 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ')  AS Hr24, 
-				sum(isnull(' +@dst_column + ',0)*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr25,getdate() create_ts,max(pdd.create_user) create_user
-				,hb.term_date expiration_date,isnull(mb.period,0) period,max(pdd.granularity) granularity,pdd.source_deal_detail_id,pdd.rowid' --15 minute & 30 min is replace by  hour
+		SET @st_sql3 = '
+			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 1 ELSE 19 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr1 ELSE hb.hr19 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr19, 
+			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 2 ELSE 20 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr2 ELSE hb.hr20 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr20 ,
+			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 3 ELSE 21 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr3 ELSE hb.hr21 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr21,	
+			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 4 ELSE 22 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr4 ELSE hb.hr22 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr22, 
+			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 5 ELSE 23 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr5 ELSE hb.hr23 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr23, 
+			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 6 ELSE 24 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr6 ELSE hb.hr24 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ')  AS Hr24, 
+			sum(isnull(' +@dst_column + ',0)*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr25,getdate() create_ts,max(pdd.create_user) create_user
+			,hb.term_date expiration_date,isnull(mb.period,0) period,max(pdd.granularity) granularity,pdd.source_deal_detail_id,pdd.rowid' --15 minute & 30 min is replace by  hour
 			
-			SET @st_from = @report_hourly_position_deal_main + 
-					'
-			 From #tmp_pos_deal_detail pdd
-				outer apply (
-					select nullif(count(1),0) no_days from hour_block_term (nolock) where
-						dst_group_value_id=pdd.dst_group_value_id AND block_define_id = pdd.block_define_id
-						and term_date between pdd.term_start and pdd.term_end and (pdd.hourly_volume_allocation <17603 or pdd.physical_financial_flag=''p'') and volume_mult<>0
-				) hb_term_day	
-				outer apply (
-					select nullif(count(1),0) no_days from hour_block_term hbt (nolock) 
-						inner join (select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date between pdd.term_start  and pdd.term_END ) ex on ex.exp_date=hbt.term_date
-					where  hbt.dst_group_value_id=pdd.dst_group_value_id and hbt.block_define_id=pdd.block_define_id
-						and hbt.term_date between pdd.term_start  and pdd.term_END and pdd.hourly_volume_allocation IN(17603,17604) and pdd.physical_financial_flag=''f'' and hbt.volume_mult<>0
-				) term_hrs_exp_day
-				LEFT JOIN hour_block_term hb with (nolock) on
-					hb.dst_group_value_id=pdd.dst_group_value_id and hb.block_define_id=pdd.block_define_id
-					and hb.term_date between pdd.term_start and pdd.term_end
-				LEFT OUTER JOIN hour_block_term hb1 (nolock) ON  hb1.dst_group_value_id=hb.dst_group_value_id
-					AND hb1.block_define_id=hb.block_define_id AND hb1.term_date-1=hb.term_date
-				left join hour_block_term hb_term1 (nolock) 
-					on  hb_term1.dst_group_value_id=pdd.dst_group_value_id AND hb_term1.block_define_id =pdd.block_define_id
-					and hb_term1.term_date = hb1.term_date and (pdd.hourly_volume_allocation <17603 or pdd.physical_financial_flag=''p'')
-				left join hour_block_term hb_term (nolock) on hb_term.dst_group_value_id=pdd.dst_group_value_id
-					AND hb_term.block_define_id = pdd.block_define_id and
-						hb_term.term_date=hb.term_date and (pdd.hourly_volume_allocation <17603 or pdd.physical_financial_flag=''p'')
-				outer apply (
-					select  nullif(sum(volume_mult),0) term_no_hrs from hour_block_term hbt (nolock) inner join 
-					(select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb.term_date ) ex 
-						on hbt.dst_group_value_id=pdd.dst_group_value_id
-							 and hbt.block_define_id=pdd.block_define_id and hbt.term_date=hb.term_date and
-						ex.exp_date=hbt.term_date and pdd.hourly_volume_allocation IN(17603,17604) and pdd.physical_financial_flag=''f''
-				) term_hrs_exp	
-				outer apply  (select distinct exp_date from holiday_group h (nolock) WHERE h.exp_date=hb.term_date and h.hol_group_value_id=pdd.exp_calendar_id
-					 and h.exp_date between pdd.term_start  and pdd.term_END ) hg 
-				LEFT JOIN report_hourly_position_deal rhpd 
-					ON rhpd.source_deal_detail_id = pdd.source_deal_detail_id
-						AND rhpd.term_start = hb.term_date  and isnull(rhpd.curve_id,-1)=-1
-				left join #minute_break mb on mb.granularity=pdd.granularity  
-			WHERE   rhpd.source_deal_header_id IS NULL AND hb.term_date is not null
-					and ((pdd.hourly_volume_allocation IN(17603,17604) and  hg.exp_date is not null) or (pdd.hourly_volume_allocation<17603 )  or pdd.physical_financial_flag=''p'')
-			group by pdd.source_deal_detail_id,pdd.rowid,hb.term_date,isnull(mb.period,0)
+		SET @st_from = @report_hourly_position_deal_main + 
+				'
+			From #tmp_pos_deal_detail pdd
+			outer apply (
+				select nullif(count(1),0) no_days from hour_block_term (nolock) where
+					dst_group_value_id=pdd.dst_group_value_id AND block_define_id = pdd.block_define_id
+					and term_date between pdd.term_start and pdd.term_end and (pdd.hourly_volume_allocation <17603 or pdd.physical_financial_flag=''p'') and volume_mult<>0
+			) hb_term_day	
+			outer apply (
+				select nullif(count(1),0) no_days from hour_block_term hbt (nolock) 
+					inner join (select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date between pdd.term_start  and pdd.term_END ) ex on ex.exp_date=hbt.term_date
+				where  hbt.dst_group_value_id=pdd.dst_group_value_id and hbt.block_define_id=pdd.block_define_id
+					and hbt.term_date between pdd.term_start  and pdd.term_END and pdd.hourly_volume_allocation IN(17603,17604) and pdd.physical_financial_flag=''f'' and hbt.volume_mult<>0
+			) term_hrs_exp_day
+			LEFT JOIN hour_block_term hb with (nolock) on
+				hb.dst_group_value_id=pdd.dst_group_value_id and hb.block_define_id=pdd.block_define_id
+				and hb.term_date between pdd.term_start and pdd.term_end
+			LEFT OUTER JOIN hour_block_term hb1 (nolock) ON  hb1.dst_group_value_id=hb.dst_group_value_id
+				AND hb1.block_define_id=hb.block_define_id AND hb1.term_date-1=hb.term_date
+			left join hour_block_term hb_term1 (nolock) 
+				on  hb_term1.dst_group_value_id=pdd.dst_group_value_id AND hb_term1.block_define_id =pdd.block_define_id
+				and hb_term1.term_date = hb1.term_date and (pdd.hourly_volume_allocation <17603 or pdd.physical_financial_flag=''p'')
+			left join hour_block_term hb_term (nolock) on hb_term.dst_group_value_id=pdd.dst_group_value_id
+				AND hb_term.block_define_id = pdd.block_define_id and
+					hb_term.term_date=hb.term_date and (pdd.hourly_volume_allocation <17603 or pdd.physical_financial_flag=''p'')
+			outer apply (
+				select  nullif(sum(volume_mult),0) term_no_hrs from hour_block_term hbt (nolock) inner join 
+				(select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb.term_date ) ex 
+					on hbt.dst_group_value_id=pdd.dst_group_value_id
+							and hbt.block_define_id=pdd.block_define_id and hbt.term_date=hb.term_date and
+					ex.exp_date=hbt.term_date and pdd.hourly_volume_allocation IN(17603,17604) and pdd.physical_financial_flag=''f''
+			) term_hrs_exp	
+			outer apply  (select distinct exp_date from holiday_group h (nolock) WHERE h.exp_date=hb.term_date and h.hol_group_value_id=pdd.exp_calendar_id
+					and h.exp_date between pdd.term_start  and pdd.term_END ) hg 
+			LEFT JOIN report_hourly_position_deal rhpd 
+				ON rhpd.source_deal_detail_id = pdd.source_deal_detail_id
+					AND rhpd.term_start = hb.term_date  and isnull(rhpd.curve_id,-1)=-1
+			left join #minute_break mb on mb.granularity=pdd.granularity  
+		WHERE   rhpd.source_deal_header_id IS NULL AND hb.term_date is not null
+				and ((pdd.hourly_volume_allocation IN(17603,17604) and  hg.exp_date is not null) or (pdd.hourly_volume_allocation<17603 )  or pdd.physical_financial_flag=''p'')
+		group by pdd.source_deal_detail_id,pdd.rowid,hb.term_date,isnull(mb.period,0)
 	'
-			EXEC spa_print @st_sql0
-			EXEC spa_print @st_sql
-			EXEC spa_print @st_sql1
-			EXEC spa_print @st_sql2
-			EXEC spa_print @st_sql3
-			EXEC spa_print @st_from
+		EXEC spa_print @st_sql0
+		EXEC spa_print @st_sql
+		EXEC spa_print @st_sql1
+		EXEC spa_print @st_sql2
+		EXEC spa_print @st_sql3
+		EXEC spa_print @st_from
 
-			EXEC (@st_sql0+@st_sql + @st_sql1 + @st_sql2 + @st_sql3 + @st_from)
-		END --deal_volume	
-	END
+		EXEC (@st_sql0+@st_sql + @st_sql1 + @st_sql2 + @st_sql3 + @st_from)
+	END --deal_volume	
+	END --ISNULL(@insert_type, 0) IN (0,12)
+
+
 
 	-----------------------------------------------------------------------------------------------------
 	--profile & forcaste data inserting
 	--------------------------------------------------------------------------------------------------------
-	--if isnull(@deal_type,17301)=17301 --profile & forcaste  deal
+	if isnull(@deal_type,17301)=17301 --profile & forcaste  deal
 	BEGIN
 		SET @deal_detail_hour = 'dbo.deal_detail_hour'
 
@@ -1279,21 +1216,7 @@ BEGIN TRY
 
 			EXEC (@st_sql)
 			*/
-			IF EXISTS (SELECT 1	FROM #tmp_header_deal_id) AND isnull(@orginal_insert_type, 0) NOT IN (111,222) --delete updated deals before inserting
-			BEGIN
-				SET @st_sql = 'delete s ' + CASE WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
-			' output deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id,deleted.hr1,deleted.hr2,deleted.hr3,deleted.hr4,deleted.hr5,deleted.hr6,deleted.hr7,deleted.hr8,deleted.hr9,deleted.hr10,deleted.hr11,deleted.hr12,deleted.hr13,deleted.hr14,deleted.hr15,deleted.hr16,deleted.hr17,deleted.hr18,deleted.hr19,deleted.hr20,deleted.hr21,deleted.hr22,deleted.hr23,deleted.hr24,deleted.hr25,deleted.create_ts,deleted.create_user,deleted.expiration_date,deleted.period,deleted.granularity
-			,deleted.source_deal_detail_id,deleted.rowid 
-			into #report_hourly_position_old(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) '
-			END + ' 
-			from report_hourly_position_profile_main s INNER JOIN #tmp_header_deal_id h ON s.source_deal_detail_id=h.source_deal_detail_id
-			   inner join source_deal_detail sdd on sdd.source_deal_detail_id=h.source_deal_detail_id
-			where sdd.position_formula_id is null
-			  ' -- where h.[action]=''u'''\
 
-				EXEC spa_print @st_sql
-				EXEC (@st_sql)
-			END
 		END
 
 		--IF ISNULL(@insert_type, 0) = 0
@@ -1301,14 +1224,13 @@ BEGIN TRY
 			SET @destination_tbl = 'dbo.report_hourly_position_profile_main'
 		--END
 		
-
 		SET @destination_tbl = CASE WHEN isnull(@orginal_insert_type, 0) IN (111,222) THEN '' ELSE ' INSERT INTO ' + @destination_tbl + '(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid)' 
-		+ CASE WHEN ISNULL(@insert_type, 0) = 0 THEN ' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity,inserted.source_deal_detail_id,inserted.rowid
-		into #report_hourly_position_inserted(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid)
+		+ CASE WHEN ISNULL(@insert_type, 0) = 0 THEN ' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity,inserted.source_deal_detail_id,inserted.rowid,1
+		into #report_hourly_position_inserted(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid,calc_total_volume)
 		'
-	 ELSE '' END END
+		ELSE '' END END
 
-	--	IF isnull(@fixation, 4101) <> 4100 --orginal or not fixation deal
+		IF isnull(@fixation, 4101) <> 4100 --orginal or not fixation deal
 		BEGIN
 			--IF OBJECT_ID('tempdb..#tmp_location_profile1') IS NOT NULL
 			--	DROP TABLE #tmp_location_profile1
@@ -1319,43 +1241,66 @@ BEGIN TRY
 			IF  OBJECT_ID('tempdb..#tmp_location_profile_mtj') IS  NOT NULL
 				DROP TABLE #tmp_location_profile_mtj
 
+			IF  OBJECT_ID('tempdb..#profile_info') IS  NOT NULL
+				DROP TABLE #profile_info
+
 			IF  OBJECT_ID('tempdb..#temp_deal_detail_hour') IS NOT NULL
 				DROP TABLE #temp_deal_detail_hour
 
 			IF OBJECT_ID('tempdb..#tmp_profile_header') IS NOT NULL
 				DROP TABLE #tmp_profile_header
 
-			create table #tmp_location_profile_mtj (
-				 source_deal_detail_id int
-				,profile_id int
-				,profile_type int
-				,term_date date
-				,term_start date
-				,term_end date
-				,dst_group_value_id int
-			)
+			-- performance _tuning
+			SELECT DISTINCT sdd.source_deal_detail_id
+				,spcd.commodity_id
+				,ISNULL(sdd.profile_id,sml.profile_id) profile_id
+				,fp1.profile_type profile_type1
+				,fp.profile_type
+				,isnull(ed.dst_group_value_id,@default_dst_group) dst_group_value_id ,sml.proxy_profile_id
+				,isnull(spcd.block_define_id,@baseload_block_define_id) block_define_id
+				,sdd.term_start
+				,sdd.term_end
+			into #profile_info -- select * from #profile_info
+			FROM source_minor_location sml  
+					inner join source_deal_detail sdd  on sdd.location_id=sml.source_minor_location_id and sdd.position_formula_id is null
+					inner join #tmp_header_deal_id ed  on sdd.source_deal_detail_id=ed.source_deal_detail_id
+					left join [forecast_profile] fp  on fp.profile_id =ISNULL(sdd.profile_id,sml.profile_id)
+					left join [forecast_profile] fp1  on fp1.profile_id =sml.proxy_profile_id  
+					left join source_price_curve_def spcd  on spcd.source_curve_def_id=sdd.curve_id
 
-		set @st_sql='insert into #tmp_location_profile_mtj (source_deal_detail_id,profile_id,profile_type,term_start,term_end,dst_group_value_id ) SELECT source_deal_detail_id,profile_id,profile_type,term_start,term_end,dst_group_value_id FROM '+@tmp_location_profile
-		
-		EXEC spa_print @st_sql
-		exec(@st_sql)
+			SELECT 
+				prof.source_deal_detail_id
+				,case when ddh.vol is null or (prof.commodity_id=-1 and ddh.vol=0) then COALESCE(prof.proxy_profile_id,prof.profile_id) else prof.profile_id end  profile_id
+				,case when ddh.vol is null or (prof.commodity_id=-1 and ddh.vol=0) then isnull(prof.profile_type1,prof.profile_type) else prof.profile_type end profile_type
+				,prof.term_start ,prof.term_end ,prof.dst_group_value_id 
+			into #tmp_location_profile_mtj
+			FROM #profile_info prof
+			outer apply
+			(
+				select max(isnull(d.Hr7,0)+isnull(d.Hr8,0)+isnull(d.Hr9,0)+isnull(d.Hr10,0)
+					+isnull(d.Hr11,0)+isnull(d.Hr12,0)
+					+isnull(d.Hr13,0)+isnull(d.Hr14,0)+isnull(d.Hr15,0)+isnull(d.Hr16,0)+isnull(d.Hr17,0)+isnull(d.Hr18,0)
+					+isnull(d.Hr19,0)+isnull(d.Hr20,0)+isnull(d.Hr21,0)+isnull(d.Hr22,0)+isnull(d.Hr23,0)+isnull(d.Hr24,0)) vol  
+				from  deal_detail_hour d where d.profile_id=prof.profile_id and d.term_date between  prof.term_start and prof.term_end
+			) ddh
+			WHERE case when ddh.vol is null or (prof.commodity_id=-1 and ddh.vol=0) then COALESCE(prof.proxy_profile_id,prof.profile_id) else prof.profile_id end  is not null 
+					
+
+
+			CREATE index indx_tmp_location_profile_location_id on #tmp_location_profile_mtj ([source_deal_detail_id])
+			CREATE index indx_tmp_location_profile_profile_id on #tmp_location_profile_mtj ([profile_id])
+
 
 
 		select tlp.profile_id,sdh.source_deal_header_id, isnull(sdd.curve_id,-1) curve_id,isnull(sdd.location_id,-1) location_id,sdh.deal_date,spcd.commodity_id,sdh.counterparty_id,ssbm.fas_book_id
 			,sdh.source_system_book_id1,sdh.source_system_book_id2,sdh.source_system_book_id3,sdh.source_system_book_id4,COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id) volume_uom_id,sdd.physical_financial_flag ,sdd.term_start,sdd.term_end
 			,COALESCE(spcd.block_define_id,sdh.block_define_id,@baseload_block_define_id ) block_define_id,COALESCE(spcd.block_type,sdh.block_type,@baseload_block_type) block_type
-			--,case when tlp.profile_type is null then 
-			--cast(CASE WHEN sdd.deal_volume_frequency='h' THEN cast(sdd.deal_volume  as numeric(20,10)) *cast(cast(ISNULL(sdd.multiplier,1) as numeric(21,16)) *cast(ISNULL(sdd.volume_multiplier2,1) as numeric(21,16)) as numeric(21,16)) ELSE cast(sddp.total_volume as numeric(26,10))/nullif(hb_term.term_hours,0) END AS numeric(32,16))
-			--else 
-			--cast(cast(COALESCE(case when sdd.physical_financial_flag='p' then dm.physical_density_mult else dm.financial_density_mult end,conv.conversion_factor,1) as numeric(21,16))*cast(COALESCE(conv1.conversion_factor,1) as numeric(21,16)) as numeric(21,16))*cast(ISNULL(sdd.multiplier,1)*ISNULL(sdd.volume_multiplier2,1) AS  numeric(25,16))
-			--end  * cast(CASE WHEN sdd.buy_sell_flag='b' THEN 1 ELSE -1 END as numeric(1,0)) AS Hr_factor
 			,case when tlp.profile_type is null then 
 				cast(CASE WHEN sdd.deal_volume_frequency='h' THEN cast(sdd.deal_volume  as numeric(20,10)) *cast(cast(ISNULL(sdd.multiplier,1) as numeric(21,16)) *cast(ISNULL(sdd.volume_multiplier2,1) as numeric(21,16)) as numeric(21,16)) ELSE cast(sdd.total_volume as numeric(26,10))/nullif(hb_term.term_hours,0) END AS numeric(32,16))
 			 else 
 				cast(COALESCE(case when sdd.physical_financial_flag='p' then dm.physical_density_mult else dm.financial_density_mult end,conv1.conversion_factor,conv.conversion_factor,1) as numeric(21,16))
 				*cast(ISNULL(sdd.multiplier,1)*case when sdd.deal_volume_uom_id =@mw_id or sdd.deal_volume_uom_id =@kw_id then ISNULL(sdd.volume_multiplier2,1)/isnull(mw.factor,1.00) else ISNULL(sdd.volume_multiplier2,1) end  AS numeric(25,16))
 			end * cast(CASE WHEN sdd.buy_sell_flag='b' THEN 1 ELSE -1 END as numeric(1,0)) AS Hr_factor
-
 			,isnull(sdh.product_id,4101) product_id,sdh.internal_desk_id,sdd.standard_yearly_volume,tlp.profile_type,sdd.term_end expiration_date
 			,sdh.close_reference_id ref_deal_id ,isnull(sdh.product_id,4101) fixation,ISNULL(sdd.multiplier,1) multiplier
 			,ISNULL(sdd.volume_multiplier2,1) volume_multiplier2,sdh.deal_status
@@ -1384,16 +1329,11 @@ BEGIN TRY
 					and term_date between sdd.term_start and sdd.term_end  
 			) hb_term
 			left join (select distinct granularity,factor from #minute_break) mw on mw.granularity=thdi.granularity
-		
 		where  (sdd.fixed_float_leg='t') AND ISNULL(sdh.product_id,4101)<>4100 and sdd.position_formula_id is null
-
-
 
 			/* Added to handle case of duplicate term date caused by blocks. 
 				Same term date hour data is summed to handle the issue
 			*/
-
-		
 
 		select DISTINCT profile_id into #tmp_profile_data  FROM #tmp_location_profile_mtj
 
@@ -1416,20 +1356,65 @@ BEGIN TRY
 
 		CREATE INDEX indx_tmp_profile_header_term ON #tmp_profile_header (term_start,term_end)
 
+
+
+--sum yearly fraction for the Power profile type=National profile
+	SET @st_sql0 = '
+		SELECT	yr.source_deal_header_id,yr.yr,yr.location_id,yr.curve_id,tot_yr.tot_fraction tot_yr_fraction
+		into #total_yr_fraction
+		FROM 
+		( 
+			SELECT distinct [source_deal_header_id],year(term_start) yr ,block_define_id,block_type
+				,profile_id,location_id,curve_id,dst_group_value_id FROM #tmp_profile_header
+			WHERE commodity_id=-2 and profile_type=17502 and fixation=4101)  yr
+			outer apply (
+			SELECT  SUM(
+				case when ISNULL(hb.hr1,0)=0 then 0 else ISNULL(ddh.Hr1,0) end +
+				case when ISNULL(hb.hr2,0)=0 then 0 else ISNULL(ddh.Hr2,0) end +
+				case when ISNULL(hb.hr3,0)=0 then 0 else ISNULL(ddh.Hr3,0) end +
+				case when ISNULL(hb.hr4,0)=0 then 0 else ISNULL(ddh.Hr4,0) end +
+				case when ISNULL(hb.hr5,0)=0 then 0 else ISNULL(ddh.Hr5,0) end +
+				case when ISNULL(hb.hr6,0)=0 then 0 else ISNULL(ddh.Hr6,0) end +
+				case when ISNULL(hb.hr7,0)=0 then 0 else ISNULL(ddh.Hr7,0) end +
+				case when ISNULL(hb.hr8,0)=0 then 0 else ISNULL(ddh.Hr8,0) end +
+				case when ISNULL(hb.hr9,0)=0 then 0 else ISNULL(ddh.Hr9,0) end +
+				case when ISNULL(hb.hr10,0)=0 then 0 else ISNULL(ddh.Hr10,0) end +
+				case when ISNULL(hb.hr11,0)=0 then 0 else ISNULL(ddh.Hr11,0) end +
+				case when ISNULL(hb.hr12,0)=0 then 0 else ISNULL(ddh.Hr12,0) end +
+				case when ISNULL(hb.hr13,0)=0 then 0 else ISNULL(ddh.Hr13,0) end +
+				case when ISNULL(hb.hr14,0)=0 then 0 else ISNULL(ddh.Hr14,0) end +
+				case when ISNULL(hb.hr15,0)=0 then 0 else ISNULL(ddh.Hr15,0) end +
+				case when ISNULL(hb.hr16,0)=0 then 0 else ISNULL(ddh.Hr16,0) end +
+				case when ISNULL(hb.hr17,0)=0 then 0 else ISNULL(ddh.Hr17,0) end +
+				case when ISNULL(hb.hr18,0)=0 then 0 else ISNULL(ddh.Hr18,0) end +
+				case when ISNULL(hb.hr19,0)=0 then 0 else ISNULL(ddh.Hr19,0) end +
+				case when ISNULL(hb.hr20,0)=0 then 0 else ISNULL(ddh.Hr20,0) end +
+				case when ISNULL(hb.hr21,0)=0 then 0 else ISNULL(ddh.Hr21,0) end +
+				case when ISNULL(hb.hr22,0)=0 then 0 else ISNULL(ddh.Hr22,0) end +
+				case when ISNULL(hb.hr23,0)=0 then 0 else ISNULL(ddh.Hr23,0) end +
+				case when ISNULL(hb.hr24,0)=0 then 0 else ISNULL(ddh.Hr24,0) end 
+			) tot_fraction FROM ' + @deal_detail_hour +'  ddh
+			inner join hour_block_term hb ON hb.dst_group_value_id=yr.dst_group_value_id and hb.block_define_id=yr.block_define_id
+			and ddh.term_date=hb.term_date and ddh.profile_id=yr.profile_id AND year(ddh.term_date)=yr.yr
+				and hb.block_type=yr.block_type
+		) tot_yr;'
+
+
 		set @st_sql='UPDATE #tmp_profile_header
 		SET Hr_factor = cast(Hr_factor AS NUMERIC(24, 16)) 
 		* cast(CASE WHEN commodity_id = - 2 AND profile_type = 17502 THEN ---Power profile type=National profile
 			cast(cast(sdd.standard_yearly_volume AS NUMERIC(24, 14)) / nullif(yr.tot_yr_fraction, 0) AS NUMERIC(26, 14))
 			ELSE sdd.standard_yearly_volume END AS NUMERIC(26, 14))
 		FROM #tmp_profile_header sdd
-			LEFT JOIN '+@total_yr_fraction+'  yr ON sdd.[source_deal_header_id] = yr.source_deal_header_id
+			LEFT JOIN #total_yr_fraction yr ON sdd.[source_deal_header_id] = yr.source_deal_header_id
 				AND sdd.location_id = yr.location_id AND sdd.curve_id = yr.curve_id AND yr.yr = year(sdd.term_start)
 		WHERE profile_type <> 17500
 			AND profile_type IS NOT NULL --profile_type:forecast
 			'
-
+		
+		exec spa_print @st_sql0
 		exec spa_print @st_sql
-		exec(@st_sql)
+		exec(@st_sql0+@st_sql)
 
 
 		SET @dst_column = 'cast(CASE WHEN isnull(hb.add_dst_hour,0)<=0 THEN 0 else 1 end as numeric(1,0))'
@@ -1496,11 +1481,11 @@ BEGIN TRY
 				EXEC (@st_sql + @st_sql1 + @st_sql2 + @st_from)
 			END --if @commodity_id is null or @commodity_id<>-1
 
-			SET @dst_column = 'cast(CASE WHEN isnull(CASE WHEN tph.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END,0)<=0 THEN 0 else 1 end as numeric(1,0))'
+		SET @dst_column = 'cast(CASE WHEN isnull(CASE WHEN tph.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END,0)<=0 THEN 0 else 1 end as numeric(1,0))'
 
 			--inserting FOR PROFILE TYPE =Forecast (profile_type=17500 ) and commodity=GAS
 		--	IF  @commodity_id = - 1
-			BEGIN
+		BEGIN
 				SET @st_sql = @destination_tbl + 
 				'
 				SELECT distinct tph.source_deal_header_id,hb.term_date term_start,deal_date,volume_uom_id deal_volume_uom_id,
@@ -1564,12 +1549,11 @@ BEGIN TRY
 				EXEC (@st_sql + @st_sql1 + @st_sql2 + @st_from)
 			END
 
-
-			SET @dst_column = 'cast(CASE WHEN isnull(CASE WHEN tph.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END,0)<=0 THEN 0 else 1 end as numeric(1,0))'
+		SET @dst_column = 'cast(CASE WHEN isnull(CASE WHEN tph.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END,0)<=0 THEN 0 else 1 end as numeric(1,0))'
 			---------------------------------------------------------------------------
 			-- Forecast deal that do not have profile id in location table treat as deal volume type where hourly position is equal for all the hour of the term
 			------------------------------------------------------------------
-			SET @st_sql = @destination_tbl + 
+		SET @st_sql = @destination_tbl + 
 			'
 			SELECT distinct tph.source_deal_header_id,hb.term_date term_start,tph.deal_date,
 			tph.volume_uom_id deal_volume_uom_id,
@@ -1628,17 +1612,6 @@ BEGIN TRY
 
 	IF  isnull(@orginal_insert_type, 0) NOT IN (111,222)
 	BEGIN
-		SET @st_sql = ' DELETE rhpf ' + CASE WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
-		' output deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id,deleted.hr1,deleted.hr2,deleted.hr3,deleted.hr4,deleted.hr5,deleted.hr6,deleted.hr7,deleted.hr8,deleted.hr9,deleted.hr10,deleted.hr11,deleted.hr12,deleted.hr13,deleted.hr14,deleted.hr15,deleted.hr16,deleted.hr17,deleted.hr18,deleted.hr19,deleted.hr20,deleted.hr21,deleted.hr22,deleted.hr23,deleted.hr24,deleted.hr25,deleted.create_ts,deleted.create_user,deleted.expiration_date,deleted.period,deleted.granularity,deleted.source_deal_detail_id,deleted.rowid 
-		into #report_hourly_position_old (source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) '
-			END + '
-		FROM report_hourly_position_fixed_main  rhpf (nolock)
-			INNER JOIN #tmp_header_deal_id_del thdi on rhpf.source_deal_detail_id=thdi.source_deal_detail_id '
-
-		EXEC spa_print @st_sql
-
-		EXEC (@st_sql)
-
 
 		--	set @col_exp1='cast(ISNULL(sdd.multiplier,1) as numeric(21,16))*cast(ISNULL(sdd.volume_multiplier2,1) as numeric(21,16))* cast(CASE WHEN sdd.buy_sell_flag=''b'' THEN 1 ELSE -1 END as numeric(1,0))'
 		SET @col_exp1 = 'cast(ISNULL(sdd.multiplier,1) as numeric(21,16))'
@@ -1647,8 +1620,8 @@ BEGIN TRY
 				,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17
 				,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period, granularity,source_deal_detail_id,rowid
 			)' + CASE WHEN ISNULL(@insert_type, 0) = 0 THEN 
-			' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity ,inserted.source_deal_detail_id,inserted.rowid
-			into #report_hourly_position_inserted (source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid)'
+			' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity ,inserted.source_deal_detail_id,inserted.rowid,1
+			into #report_hourly_position_inserted (source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid,calc_total_volume)'
 		 ELSE '' END + '
 		SELECT
 			sdh.source_deal_header_id,
@@ -1683,6 +1656,7 @@ BEGIN TRY
 			coalesce(rhpp.period,rhpd.period,0) period
 			,ISNULL(rhpp.granularity,rhpd.granularity) granularity,thdi.source_deal_detail_id,thdi.rowid
 		'
+		
 		SET @st_sql1 ='		
 		FROM source_deal_header sdh  with (nolock) 
 			INNER JOIN source_deal_detail sdd  with (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id 
@@ -1710,10 +1684,11 @@ BEGIN TRY
 		SET @col_exp2 = 'cast(CASE WHEN sdd.deal_volume_frequency=''h'' THEN cast(sdd.deal_volume  as numeric(22,10)) *cast(COALESCE(case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,conv.conversion_factor,1) as numeric(21,16))*cast(cast(ISNULL(sdd.multiplier,1) as numeric(21,16)) *cast(ISNULL(sdd.volume_multiplier2,1) as numeric(15,10)) as numeric(21,16)) ELSE cast(sddp.total_volume as numeric(26,10))/nullif(isnull(hb_term.term_hours,term_hrs_exp.term_no_hrs),0) END AS NUMERIC(32,16))'
 		SET @col_exp3 = 'cast(CASE WHEN buy_sell_flag=''b'' THEN 1 ELSE -1 END as numeric(1,0))'
 		SET @dst_column = 'cast(CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END,0)<=0 THEN 0 else 1 end as numeric(1,0))'
+		
 		SET @st_sql = 'insert into dbo.report_hourly_position_fixed_main(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) ' 
 		+ CASE WHEN ISNULL(@insert_type, 0) = 0 THEN 
-		' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity,inserted.source_deal_detail_id,inserted.rowid
-		into #report_hourly_position_inserted(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) '  ELSE '' END + '
+		' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity,inserted.source_deal_detail_id,inserted.rowid,1
+		into #report_hourly_position_inserted(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid,calc_total_volume) '  ELSE '' END + '
 		SELECT max(sdh.source_deal_header_id),
 			hb.term_date term_start,max(sdh.deal_date) deal_date,max(COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)) deal_volume_uom_id,
 			SUM((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN spcd.commodity_id=-1 THEN 7 ELSE 1  END THEN 1.000 else 0 end + isnull(CASE WHEN spcd.commodity_id=-1 THEN hb.hr7 ELSE hb.hr1 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 +') AS Hr1,  
@@ -1795,61 +1770,40 @@ BEGIN TRY
 
 		EXEC (@st_sql + @st_sql1 + @st_sql2 + @st_sql3 + @st_from)
 
-		--------------------------------------------------------------------------------------------------------------
-		----total volume update
-		---------------------------------------------------------------------------------------------------------------
-	
+	END --fixation deal 4100
 
-
-	
-		SET @st_sql = '
-			SELECT isnull(sdd.curve_id, - 1) fixation_curve_id,sdd.term_start,sdd.term_end,sdd.curve_id
-				,rl.location_id,sdd.leg,rl.fixation_deal_id,rl.source_deal_header_id,rl.multiplier,rl.volume_multiplier2
-			INTO #tmp_fixation
-			FROM source_deal_detail sdd(NOLOCK)
-			INNER JOIN '+@ref_location+' rl ON rl.[fixation_deal_id] = sdd.[source_deal_header_id]
-				AND rl.curve_id = sdd.curve_id
-				AND sdd.curve_id IS NOT NULL
-			UNION ALL
-			SELECT isnull(sdd.curve_id, - 1) fixation_curve_id,sdd.term_start,sdd.term_end,rl.curve_id
-				,rl.location_id,sdd.leg,rl.fixation_deal_id
-				,rl.source_deal_header_id,rl.multiplier,rl.volume_multiplier2
-			FROM source_deal_detail sdd(NOLOCK)
-			INNER JOIN '+@ref_location+' rl ON rl.[fixation_deal_id] = sdd.[source_deal_header_id]
-				AND sdd.curve_id IS NULL;
-
-			select tft.fixation_deal_id source_deal_header_id,tft.fixation_curve_id curve_id,tft.term_start,tft.term_end,tft.leg,sum(abs(CAST(vol.term_volume AS NUMERIC(22,10))*(CAST(ISNULL(tft.multiplier,1) AS NUMERIC(24,16))*CAST(ISNULL(tft.volume_multiplier2,1) AS NUMERIC(24,16))))) fixation_vol 
-			into #fixation_volume
-			from #tmp_fixation tft
-				outer  apply 
-				(
-					select term_start,hr1+hr2+hr3+hr4+hr5+hr6+hr7+hr8+hr9+hr10+hr11+hr12+hr13+hr14+hr15+hr16+hr17+hr18+hr19+hr20+hr21+hr22+hr23+hr24 term_volume 
-					from report_hourly_position_profile_main rp 
-						inner join dbo.position_report_group_map map on map.rowid=rp.rowid
-					where rp.term_start between tft.term_start and tft.term_end 
-						and map.curve_id=tft.curve_id and map.location_id=isnull(tft.location_id,-1) and tft.source_deal_header_id=rp.source_deal_header_id
-				) vol	
-			group by tft.fixation_deal_id ,tft.term_start,tft.term_end,tft.leg,tft.fixation_curve_id;		  	
+	EXEC spa_print '================================================================================================='
+	EXEC spa_print 'Total Volume Insert from sum of hourly volume'
+	EXEC spa_print '=================================================================================================='
+	-------------------------------------------------------------------------------------------
+	-- Total Volume Insert from sum of hourly volume
+	-------------------------------------------------------------------------------------------------------------			
+		if object_id('tempdb..#deal_detail_total_volume') is not null
+		drop table #deal_detail_total_volume
 		
-			delete sddp
-				FROM source_deal_detail  sdd with (nolock)
-				inner join dbo.source_deal_detail_position sddp on sddp.source_deal_detail_id=sdd.source_deal_detail_id
-				INNER JOIN #fixation_volume f on f.source_deal_header_id=sdd.source_deal_header_id and isnull(sdd.curve_id,-1)=f.curve_id 
-					and f.term_start=sdd.term_start and f.term_end=sdd.term_end and f.leg =sdd.leg;
+		select source_deal_detail_id,sum(hr1+hr2+hr3+hr4+hr5+hr6+hr7+hr8+hr9+hr10+hr11+hr12+hr13+hr14+hr15+hr16+hr17+hr18+hr19+hr20+hr21+hr22+hr23+hr24) total_volume
+		into #deal_detail_total_volume -- select * from #deal_detail_total_volume
+		from #report_hourly_position_inserted 
+		where calc_total_volume=1
+		group by source_deal_detail_id
 
-			insert into source_deal_detail_position(source_deal_detail_id,total_volume,position_report_group_map_rowid)
-			select sdd.source_deal_detail_id,
-				CAST(f.fixation_vol AS NUMERIC(22,10))*cast(CAST(ISNULL(sdd.multiplier,1) AS NUMERIC(24,16))*CAST(ISNULL(sdd.volume_multiplier2,1) AS NUMERIC(24,16)) AS NUMERIC(21,14))
-				,thdi.rowid
-			FROM source_deal_detail  sdd with (nolock)
-				INNER JOIN #fixation_volume f on f.source_deal_header_id=sdd.source_deal_header_id and isnull(sdd.curve_id,-1)=f.curve_id 
-					and f.term_start=sdd.term_start and f.term_end=sdd.term_end and f.leg =sdd.leg	
-				left JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id; 
-				'
+		delete sddp
+			FROM dbo.source_deal_detail_position sddp
+			INNER JOIN #deal_detail_total_volume v on v.source_deal_detail_id=sddp.source_deal_detail_id ;
 
-		EXEC spa_print @st_sql
-		EXEC (@st_sql)
-	END --fixation deal 4100			
+		insert into source_deal_detail_position(source_deal_detail_id,total_volume,position_report_group_map_rowid)
+		select sdd.source_deal_detail_id,
+			round(abs(ddtv.total_volume),isnull(rnd.position_calc_round,100)) total_volume,thdi.rowid
+		FROM #deal_detail_total_volume ddtv	
+			inner join source_deal_detail sdd on sdd.source_deal_detail_id=ddtv.source_deal_detail_id
+			inner join source_deal_header sdh on sdh.source_deal_header_id=sdd.source_deal_header_id
+			inner join source_price_curve_def spcd on spcd.source_curve_def_id=sdd.curve_id
+			left JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id 
+			outer apply (
+				select top(1) position_calc_round from deal_default_value where isnull(deal_type_id,-1)=COALESCE(sdh.source_deal_type_id,deal_type_id,-1)
+				--and isnull(pricing_type,-1)=COALESCE(sdd.pricing_type,pricing_type,-1)
+					and commodity=COALESCE(sdd.detail_commodity_id,sdh.commodity_id,spcd.commodity_id) and buy_sell_flag=isnull(sdd.buy_sell_flag,buy_sell_flag)
+			) rnd
 
 	--------------------------------------------------------------------------------------------------------------
 	----inserting delta for left hand side deal
@@ -1970,10 +1924,10 @@ BEGIN TRY
 
 
 		/*	
-value_id type_id	code
-17602	17600	Daily Allocation
-17601	17600	Monthly Average Allocations
-17600	17600	TOU Allocations	
+				value_id type_id	code
+				17602	17600	Daily Allocation
+				17601	17600	Monthly Average Allocations
+				17600	17600	TOU Allocations	
 	*/
 	SET @st_sql = 
 	'
@@ -2256,8 +2210,8 @@ value_id type_id	code
 		' ELSE '' END
 		END
 	END
-		SET @st_sql1 = 
-			'  SELECT   vol.[source_deal_header_id],vol.[term_start],vol.[deal_date],vol.[deal_volume_uom_id],
+		SET @st_sql1 = '  
+		SELECT   vol.[source_deal_header_id],vol.[term_start],vol.[deal_date],vol.[deal_volume_uom_id],
 			CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr1,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr2,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr3
 				,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr4,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr5,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr6
 				,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr7,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr8,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr9
