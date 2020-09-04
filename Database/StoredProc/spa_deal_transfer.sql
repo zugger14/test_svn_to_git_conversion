@@ -923,7 +923,25 @@ BEGIN
 				INNER JOIN source_deal_header t2
 					ON t2.source_deal_header_id = t1.original_deal_id
 				--WHERE t2.product_id IN (4100, 4101)
-					
+				
+				----Update close reference id  as of original for fixation deals
+				UPDATE sdh
+				SET close_reference_id = t2.close_reference_id				   
+				FROM #temp_offset_deal_headers t1
+				INNER JOIN source_deal_header sdh
+					ON sdh.source_deal_header_id = t1.source_deal_header_id
+				INNER JOIN source_deal_header t2
+					ON t2.source_deal_header_id = t1.original_deal_id
+				WHERE t2.product_id IN (4100, 4101)
+
+				UPDATE sdh
+				SET close_reference_id = t2.close_reference_id				   
+				FROM #temp_transfer_deal_headers t1
+				INNER JOIN source_deal_header sdh
+					ON sdh.source_deal_header_id = t1.source_deal_header_id
+				INNER JOIN source_deal_header t2
+					ON t2.source_deal_header_id = t1.original_deal_id
+				WHERE t2.product_id IN (4100, 4101)				
 				
 	
 				IF OBJECT_ID('tempdb..#temp_all_deal_ids') IS NOT NULL
