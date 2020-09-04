@@ -246,12 +246,13 @@ BEGIN
 			RETURN
 		END		 			 
 				
-		INSERT INTO contract_group (contract_name,source_contract_id, contract_desc, contract_type_def_id, source_system_id)
+		INSERT INTO contract_group (contract_name,source_contract_id, contract_desc, contract_type_def_id, source_system_id, is_active)
 		SELECT	netting_contract, 
 				netting_contract,
 				[description],
 				38405,
-				2 
+				2,
+				'y'
 		FROM #temp_contract_netting t
 		LEFT JOIN contract_group cg
 			ON cg.contract_id = t.contract_id
