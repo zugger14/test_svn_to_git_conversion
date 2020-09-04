@@ -889,6 +889,7 @@ echo $sch_obj->close_layout();
 
             loss = subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 1), cInd).getValue();
             var new_del_volume = parseFloat(nValue) * (1 - loss);
+            new_del_volume = roundTo(new_del_volume, 2);
             subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 2), cInd).setValue(new_del_volume);
 
             var new_path_rmdq = parseFloat(hourly_info[0]['path_ormdq']) - parseFloat(new_del_volume);
@@ -932,6 +933,7 @@ echo $sch_obj->close_layout();
         } else if (subgrid.cells(rId, subgrid.getColIndexById('volume')).getValue() == 'Fuel') {
             loss = nValue;
             var new_del_volume = subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) -1), cInd).getValue() * (1 - loss);
+            new_del_volume = roundTo(new_del_volume, 2);
 			subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 1), cInd).setValue(new_del_volume);
             
             if(APPLY_VALIDATION_MESSAGE) {
@@ -954,6 +956,7 @@ echo $sch_obj->close_layout();
         } else if (subgrid.cells(rId, subgrid.getColIndexById('volume')).getValue() == 'Del') {
             loss = subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) - 1), cInd).getValue();
             var new_rec_volume = parseFloat(nValue) / (1 - loss);
+            new_rec_volume = roundTo(new_rec_volume, 2);
            	subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) - 2), cInd).setValue(new_rec_volume);
 
            	var new_path_rmdq = parseFloat(hourly_info[0]['path_ormdq']) - nValue;
