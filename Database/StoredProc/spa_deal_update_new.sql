@@ -5817,36 +5817,36 @@ BEGIN TRY
 	COMMIT TRAN
 
 	--AUTO DEAL SCHEDULE BLOCK
-	BEGIN
-		IF EXISTS(	SELECT  uddf.udf_value
-					FROM source_deal_header sdh
-					INNER JOIN user_defined_deal_fields_template_main uddft
-						ON uddft.template_id = sdh.template_id
-					INNER JOIN user_defined_deal_fields uddf
-						ON uddf.source_deal_header_id = sdh.source_deal_header_id 
-						AND uddf.udf_template_id = uddft.udf_template_id
-					INNER JOIN user_defined_fields_template udft
-						ON udft.field_id = uddft.field_id
-					WHERE sdh.source_deal_header_id = @source_deal_header_id --7385 --
-						AND udft.Field_label = 'Delivery Path'
-						AND NULLIF(uddf.udf_value, '') IS NOT NULL
-		)
-		BEGIN
+	--BEGIN
+	--	IF EXISTS(	SELECT  uddf.udf_value
+	--				FROM source_deal_header sdh
+	--				INNER JOIN user_defined_deal_fields_template_main uddft
+	--					ON uddft.template_id = sdh.template_id
+	--				INNER JOIN user_defined_deal_fields uddf
+	--					ON uddf.source_deal_header_id = sdh.source_deal_header_id 
+	--					AND uddf.udf_template_id = uddft.udf_template_id
+	--				INNER JOIN user_defined_fields_template udft
+	--					ON udft.field_id = uddft.field_id
+	--				WHERE sdh.source_deal_header_id = @source_deal_header_id --7385 --
+	--					AND udft.Field_label = 'Delivery Path'
+	--					AND NULLIF(uddf.udf_value, '') IS NOT NULL
+	--	)
+	--	BEGIN
 
-			DECLARE @col INT
-			DECLARE @job_name1 NVARCHAR(100)
+	--		DECLARE @col INT
+	--		DECLARE @job_name1 NVARCHAR(100)
 
-			SET @sql = ' [dbo].[spa_transfer_adjust] ' + 
-							CAST(@source_deal_header_id AS VARCHAR(10)) 
+	--		SET @sql = ' [dbo].[spa_transfer_adjust] ' + 
+	--						CAST(@source_deal_header_id AS VARCHAR(10)) 
 
-			SET @job_name1 = 'transfer_adjust_' + @process_id
+	--		SET @job_name1 = 'transfer_adjust_' + @process_id
 
 
  		
-			EXEC spa_run_sp_as_job @job_name1, @sql, 'spa_transfer_adjust', @user_name	
+	--		EXEC spa_run_sp_as_job @job_name1, @sql, 'spa_transfer_adjust', @user_name	
 
-		END
-	END
+	--	END
+	--END
 	
 
 	DECLARE @return_value NVARCHAR(100)
