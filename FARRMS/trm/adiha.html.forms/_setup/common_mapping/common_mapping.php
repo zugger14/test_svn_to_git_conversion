@@ -774,9 +774,9 @@
             if (selected_item == 'Flow Optimization Mapping') {
                 Generic_Mapping["grd_inner_obj_" + selected_item_id].setInitWidths("180,750");                
             } else if (selected_item == 'Nomination Mapping') {
-                Generic_Mapping["grd_inner_obj_" + selected_item_id].setInitWidths("0,150,750");              
+                Generic_Mapping["grd_inner_obj_" + selected_item_id].setInitWidths("0,150,750");
             } else {
-                Generic_Mapping["grd_inner_obj_" + selected_item_id].setInitWidths("180,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150");              
+                Generic_Mapping["grd_inner_obj_" + selected_item_id].setInitWidths("180,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150");              
             }
             Generic_Mapping["grd_inner_obj_" + selected_item_id].setDateFormat(user_date_format, "%Y-%m-%d");
             Generic_Mapping["grd_inner_obj_" + selected_item_id].attachHeader(filter_string);
