@@ -19382,7 +19382,7 @@ BEGIN
  		'
 	EXEC(@sql)
 
- 	
+
 
 	-- Custom validation to validate Invalid data in Shipper Code 1.
 	EXEC('INSERT INTO #import_status (temp_id, process_id, error_code, [module], [source], [type], [description], [next_step], [import_file_name])
@@ -19402,13 +19402,15 @@ BEGIN
 			WHERE ixp_columns_name = ''shipper_code1''
 		) scm
 		INNER JOIN source_deal_header sdh ON sdh.deal_id = a.deal_id
-		INNER JOIN source_counterparty sc ON sc.counterparty_name = a.counterparty_id
-		LEFT JOIN source_minor_location sml ON sml.location_name = a.location_id
-		LEFT JOIN shipper_code_mapping_detail scmd ON scmd.shipper_code1 = a.shipper_code1
-			AND scmd.effective_date <= a.term_start
-			AND ISNULL(scmd.location_id, -1) = ISNULL(sml.source_minor_location_id, -1)
-		LEFT JOIN shipper_code_mapping shcm ON scmd.shipper_code_id = shcm.shipper_code_id
-			AND shcm.counterparty_id = sc.source_counterparty_id
+		INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
+		LEFT JOIN source_minor_location sml ON sml.location_id = a.location_id
+		LEFT JOIN shipper_code_mapping shcm 
+			ON shcm.counterparty_id = sc.source_counterparty_id
+		LEFT JOIN shipper_code_mapping_detail scmd 
+			ON scmd.shipper_code_id = shcm.shipper_code_id
+				AND scmd.shipper_code1 = a.shipper_code1
+				AND scmd.effective_date <= a.term_start
+				AND ISNULL(scmd.location_id, -1) = ISNULL(sml.source_minor_location_id, -1)
 		WHERE (shcm.shipper_code_id IS NULL) AND a.shipper_code1 IS NOT NULL
 	')
 
@@ -19431,12 +19433,14 @@ BEGIN
 		) scm
 		INNER JOIN source_deal_header sdh ON sdh.deal_id = a.deal_id
 		INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
-		LEFT JOIN source_minor_location sml ON sml.location_name = a.location_id
-		LEFT JOIN shipper_code_mapping_detail scmd ON scmd.shipper_code = a.shipper_code2
-			AND scmd.effective_date <= a.term_start
-			AND ISNULL(scmd.location_id, -1) = ISNULL(sml.source_minor_location_id, -1)
-		LEFT JOIN shipper_code_mapping shcm ON scmd.shipper_code_id = shcm.shipper_code_id
-			AND shcm.counterparty_id = sc.source_counterparty_id
+		LEFT JOIN source_minor_location sml ON sml.location_id = a.location_id
+		LEFT JOIN shipper_code_mapping shcm 
+				ON shcm.counterparty_id = sc.source_counterparty_id
+		LEFT JOIN shipper_code_mapping_detail scmd 
+			ON scmd.shipper_code_id = shcm.shipper_code_id
+				AND scmd.shipper_code = a.shipper_code2
+				AND scmd.effective_date <= a.term_start
+				AND ISNULL(scmd.location_id, -1) = ISNULL(sml.source_minor_location_id, -1)
 		WHERE (shcm.shipper_code_id IS NULL) AND a.shipper_code2 IS NOT NULL
 	')
 
@@ -20760,7 +20764,7 @@ BEGIN
 				AND scmd1.effective_date <= a.term_start
 				AND scmd1.shipper_code_id = scm.shipper_code_id
 		LEFT JOIN shipper_code_mapping_detail scmd2 
-			ON scmd1.shipper_code = a.shipper_code2 
+			ON scmd2.shipper_code = a.shipper_code2 
 				AND scmd2.location_id = sml.source_minor_location_id 
 				AND scmd2.effective_date <= a.term_start
 				AND scmd2.shipper_code_id = scm.shipper_code_id
@@ -20981,7 +20985,7 @@ BEGIN
 							AND scmd1.effective_date <= a.term_start
 							AND scmd1.shipper_code_id = scm.shipper_code_id
 					LEFT JOIN shipper_code_mapping_detail scmd2 
-						ON scmd1.shipper_code = a.shipper_code2 
+						ON scmd2.shipper_code = a.shipper_code2 
 							AND scmd2.location_id = sml.source_minor_location_id 
 							AND scmd2.effective_date <= a.term_start
 							AND scmd2.shipper_code_id = scm.shipper_code_id
