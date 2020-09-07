@@ -35,17 +35,14 @@ BEGIN TRY
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + '--DECLARE @_contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), ''DEBUG_MODE_ON'')
 --SET CONTEXT_INFO @_contextinfo
 --SET NOCOUNT off
-
-
 SET NOCOUNT on
-
-DECLARE @_summary_option CHAR(6) =null --''y'' -- ''m'' --''d'' -------  ''d'' Detail, ''h'' =hourly,''x''/''y'' = 15/30 minute, q=quatar, a=annual
+DECLARE @_summary_option CHAR(6) =null --''x'' --''y'' -- ''m'' --''d'' -------  ''d'' Detail, ''h'' =hourly,''x''/''y'' = 15/30 minute, q=quatar, a=annual
 	,@_sub_id VARCHAR(MAX) = NULL
 	,@_stra_id VARCHAR(MAX) = NULL
 	,@_book_id VARCHAR(MAX) = null
 	,@_subbook_id VARCHAR(MAX) = NULL
-	,@_as_of_date VARCHAR(20) =null --''2020-06-30''
-	,@_source_deal_header_id VARCHAR(1000) = null --540 -- --223683,
+	,@_as_of_date VARCHAR(20) =null --''2020-09-07'' --''2020-06-30''
+	,@_source_deal_header_id VARCHAR(1000) = 45871 --540 -- --223683,
 	,@_period_from VARCHAR(6) = NULL
 	,@_period_to VARCHAR(6) = NULL
 	,@_tenor_option VARCHAR(6) = NULL
@@ -61,8 +58,8 @@ DECLARE @_summary_option CHAR(6) =null --''y'' -- ''m'' --''d'' -------  ''d'' D
 	,@_deal_status VARCHAR(8) = NULL
 	,@_confirm_status VARCHAR(8) = NULL
 	,@_profile VARCHAR(8) = NULL
-	,@_term_start VARCHAR(20) =null -- ''2021-10-30''
-	,@_term_end VARCHAR(20) =null -- ''2021-12-01''
+	,@_term_start VARCHAR(20) =null --''2021-03-12'' -- ''2021-10-30''
+	,@_term_end VARCHAR(20) =null --''2021-03-12'' -- ''2021-12-01''
 	,@_deal_type VARCHAR(MAX) = NULL
 	,@_deal_sub_type VARCHAR(MAX) = NULL
 	,@_buy_sell_flag VARCHAR(6)
@@ -86,22 +83,17 @@ DECLARE @_summary_option CHAR(6) =null --''y'' -- ''m'' --''d'' -------  ''d'' D
 	,@_proxy_curve_view CHAR(1)
     ,@_pricing_type VARCHAR(1000)
 	,@_product_group VARCHAR(1000)
-
 DECLARE @_reporting_group1 VARCHAR(1000)
 DECLARE @_reporting_group2 VARCHAR(1000)
 DECLARE @_reporting_group3 VARCHAR(1000)
 DECLARE @_reporting_group4 VARCHAR(1000)
 DECLARE @_reporting_group5 VARCHAR(1000)
-
 DECLARE @_dst_group_value_id INT
-
 SELECT @_dst_group_value_id = tz.dst_group_value_id FROM dbo.adiha_default_codes_values adcv
 		INNER JOIN time_zones tz ON tz.timezone_id = adcv.var_value
 	WHERE adcv.instance_no = 1
 		AND adcv.default_code_id = 36
 		AND adcv.seq_no = 1
-
-
 SET @_summary_option = nullif(isnull(@_summary_option, nullif(''@summary_option'', replace(''@_summary_option'', ''@_'', ''@''))), ''null'')
 SET @_proxy_curve_view = nullif(isnull(@_proxy_curve_view,nullif(''@proxy_curve_view'', replace(''@_proxy_curve_view'',''@_'',''@''))),''null'')
 SET @_sub_id = nullif(isnull(@_sub_id, nullif(''@sub_id'', replace(''@_sub_id'', ''@_'', ''@''))), ''null'')
@@ -155,15 +147,11 @@ SET @_show_delta_volume = isnull(@_show_delta_volume, ''n'')
 SET @_include_storage = NULLIF(  ISNULL(@_include_storage,NULLIF(''@include_storage'', replace(''@_include_storage'',''@_'',''@''))),''n'')
 SET @_pricing_type = NULLIF(ISNULL(@_pricing_type, NULLIF(''@pricing_type'', REPLACE(''@_pricing_type'', ''@_'', ''@''))), ''NULL'')
 SET @_product_group = NULLIF(ISNULL(@_product_group, NULLIF(''@product_group'', REPLACE(''@_product_group'', ''@_'', ''@''))), ''NULL'')
-
-
 SET @_reporting_group1 = NULLIF(ISNULL(@_reporting_group1, NULLIF(''@reporting_group1'', REPLACE(''@_reporting_group1'', ''@_'', ''@''))), ''NULL'')
 SET @_reporting_group2 = NULLIF(ISNULL(@_reporting_group2, NULLIF(''@reporting_group2'', REPLACE(''@_reporting_group2'', ''@_'', ''@''))), ''NULL'')
 SET @_reporting_group3 = NULLIF(ISNULL(@_reporting_group3, NULLIF(''@reporting_group3'', REPLACE(''@_reporting_group3'', ''@_'', ''@''))), ''NULL'')
 SET @_reporting_group4 = NULLIF(ISNULL(@_reporting_group4, NULLIF(''@reporting_group4'', REPLACE(''@_reporting_group4'', ''@_'', ''@''))), ''NULL'')
 SET @_reporting_group5 = NULLIF(ISNULL(@_reporting_group5, NULLIF(''@reporting_group5'', REPLACE(''@_reporting_group5'', ''@_'', ''@''))), ''NULL'')
-
-
 DECLARE @_format_option CHAR(1) = ''r''
 	,@_group_by CHAR(1) = ''i''
 	,-- ''i''- Index, ''l'' - Location   
@@ -189,7 +177,6 @@ DECLARE @_format_option CHAR(1) = ''r''
 	,@_column_level VARCHAR(100)
 	,@_temp_process_id VARCHAR(100)
 	,@_sql_final VARCHAR(MAX)
-
 IF object_id(''tempdb..#temp_deals'') IS NOT NULL
 	DROP TABLE #temp_deals
 IF object_id(''tempdb..#source_deal_header_id'') IS NOT NULL
@@ -222,34 +209,22 @@ IF OBJECT_ID(''tempdb..#tmp_pos_detail_torage'') IS NOT NULL
 	DROP TABLE #tmp_pos_detail_torage
 IF OBJECT_ID(''tempdb..#density_multiplier'') IS NOT NULL 
 	DROP TABLE #density_multiplier
-
 IF OBJECT_ID(''tempdb..#period_display_format'') IS NOT NULL
 	DROP TABLE #period_display_format
-
-
-
 --SELECT * FROM REPORT_hourly_position_deal where source_deal_header_id=46750
 --SELECT * FROM REPORT_hourly_position_financial where source_deal_header_id=46750
 ---START Batch initilization--------------------------------------------------------
 --------------------------------------------------------------------------------------
 DECLARE @_forward_storage_inventory_template_id VARCHAR(10) , @_actual_storage_inventory_template_id VARCHAR(10) , @_storage_inj_wthd_template_id VARCHAR(100) 
-
 select @_forward_storage_inventory_template_id=template_id
 from source_deal_header_template where template_name in (''Forward Storage Inventory'')
-
 select @_actual_storage_inventory_template_id=template_id
 from source_deal_header_template where template_name in (''Actual Storage Inventory'')
-
 select @_storage_inj_wthd_template_id=isnull(@_storage_inj_wthd_template_id+'','','''')+cast(template_id as varchar)
 from source_deal_header_template where template_name in (''Storage Injection'',''Storage Withdrawal'')
-
-
 set @_forward_storage_inventory_template_id=isnull(nullif(@_forward_storage_inventory_template_id,''''),''-99999'')
 set @_actual_storage_inventory_template_id=isnull(nullif(@_actual_storage_inventory_template_id,''''),''-99999'')
 set @_storage_inj_wthd_template_id=isnull(nullif(@_storage_inj_wthd_template_id,''''),''-99999'')
-
-
-
 DECLARE @_sqry2 VARCHAR(MAX)
 DECLARE @_user_login_id VARCHAR(50)
 	,@_hypo_breakdown VARCHAR(MAX)
@@ -307,7 +282,6 @@ SET @_temp_process_id = dbo.FNAGetNewID()
 SET @_user_login_id = dbo.FNADBUser()
 -- If group by proxy curvem set group by =''l'' and assign another variable
 --SET @_proxy_curve_view = ''n''
-
 IF @_group_by = ''p''
 BEGIN
 	SET @_group_by = ''i''
@@ -341,7 +315,7 @@ IF NULLIF(@_format_option, '''') IS NULL
 DECLARE @_term_start_temp DATETIME
 	,@_term_END_temp DATETIME
 
-CREATE TABLE #temp_deals ( source_deal_header_id int,physical_financial CHAR(1) COLLATE DATABASE_DEFAULT, pricing_type INT, internal_portfolio_id INT,template_id int)
+CREATE TABLE #temp_deals (term_start date,term_end date, source_deal_detail_id int,source_deal_header_id int,physical_financial CHAR(1) COLLATE DATABASE_DEFAULT, pricing_type INT, internal_portfolio_id INT,template_id int)
 --print @_term_start
 --print @_as_of_date
 IF @_period_from IS NOT NULL
@@ -377,16 +351,11 @@ IF @_deal_date_from IS NOT NULL
 IF @_deal_date_from IS NULL
 	AND @_deal_date_to IS NOT NULL
 	SET @_deal_date_from = @_deal_date_to
-
-
 SELECT rowid,clm_name, is_dst, alias_name, RIGHT(''0'' + CAST(LEFT(clm_name, 2) + 1 AS VARCHAR(10)), 2) + ''_'' + RIGHT(clm_name, 2) [process_clm_name]
 INTO #period_display_format
 FROM dbo.FNAGetPivotGranularityColumn(@_term_start,@_term_end,case @_summary_option when ''h'' then 982 when ''x'' then 987 when ''y'' then 989 else null end,@_dst_group_value_id) 
 where 1= case when @_summary_option in ( ''h'',''x'',''y'') then 1 else 0 end
-
 --select * from static_data_value where type_id= 978
-
-
 ----print ''CREATE TABLE #books ( fas_book_id INT, source_system_book_id1 INT ,source_system_book_id2 INT,source_system_book_id3 INT,source_system_book_id4 INT)    ''
 CREATE TABLE #books (
 	fas_book_id INT
@@ -406,7 +375,6 @@ FROM portfolio_hierarchy book(NOLOCK)
 INNER JOIN Portfolio_hierarchy stra(NOLOCK) ON book.parent_entity_id = stra.entity_id
 INNER JOIN source_system_book_map ssbm ON ssbm.fas_book_id = book.entity_id
 WHERE ( fas_deal_type_value_id IS NULL OR fas_deal_type_value_id BETWEEN 400 AND 401 )  '' 
-
 +case when @_as_of_date is null then '' and 1=2'' else '''' end
 IF @_sub_id IS NOT NULL
 	SET @_Sql_Select = @_Sql_Select + '' AND stra.parent_entity_id IN  ( '' + @_sub_id + '') ''
@@ -416,23 +384,22 @@ IF @_book_id IS NOT NULL
 	SET @_Sql_Select = @_Sql_Select + '' AND (book.entity_id IN('' + @_book_id + '')) ''
 IF @_subbook_id IS NOT NULL
 	SET @_Sql_Select = @_Sql_Select + '' AND ssbm.book_deal_type_map_id IN ('' + @_subbook_id + '' ) ''
-
 EXEC spa_print @_Sql_Select   
 EXEC (@_Sql_Select)
-
 CREATE INDEX [IX_Book] ON [#books] ([fas_book_id])     
-
 set @_as_of_date=isnull(@_as_of_date,''9999-01-01'')
-
 SET @_Sql_Select = ''
-	INSERT INTO #temp_deals (source_deal_header_id,physical_financial, pricing_type, internal_portfolio_id,template_id)
-SELECT sdh.source_deal_header_id,sdh.physical_financial_flag, sdh.pricing_type, sdh.internal_portfolio_id,sdh.template_id
+	INSERT INTO #temp_deals (term_start,term_end, source_deal_detail_id,source_deal_header_id,physical_financial, pricing_type, internal_portfolio_id,template_id)
+SELECT 
+sdd.term_start,sdd.term_end, sdd.source_deal_detail_id,
+sdh.source_deal_header_id,sdh.physical_financial_flag, sdh.pricing_type, sdh.internal_portfolio_id,sdh.template_id
 FROM dbo.source_deal_header sdh
 INNER JOIN #books b ON sdh.source_system_book_id1 = b.source_system_book_id1
 	AND sdh.source_system_book_id2 = b.source_system_book_id2
 	AND sdh.source_system_book_id3 = b.source_system_book_id3
 	AND sdh.source_system_book_id4 = b.source_system_book_id4
 	and sdh.template_id<>''+@_forward_storage_inventory_template_id+''
+inner join dbo.source_deal_detail sdd on sdd.source_deal_header_id=sdh.source_deal_header_id
 WHERE 1=1  '' --sdh.source_deal_type_id <> 1177
 	+ CASE 
 	WHEN @_source_deal_header_id IS NOT NULL
@@ -492,20 +459,16 @@ WHERE 1=1  '' --sdh.source_deal_type_id <> 1177
 	+ CASE WHEN @_reporting_group3 IS NULL THEN '''' ELSE '' AND sdh.reporting_group3 = '''''' + @_reporting_group3 + '''''''' END
 	+ CASE WHEN @_reporting_group4 IS NULL THEN '''' ELSE '' AND sdh.reporting_group4 = '''''' + @_reporting_group4 + '''''''' END
 	+ CASE WHEN @_reporting_group5 IS NULL THEN '''' ELSE '' AND sdh.reporting_group5 = '''''' + @_reporting_group5 + '''''''' END
-
 EXEC spa_print @_Sql_Select   
 EXEC ( @_Sql_Select)  
-
 IF OBJECT_ID(N''tempdb..#temp_block_type_group_table'') IS NOT NULL
 	DROP TABLE #temp_block_type_group_table
-
 CREATE TABLE #temp_block_type_group_table (
 	block_type_group_id INT
 	,block_type_id INT
 	,block_name VARCHAR(200) COLLATE DATABASE_DEFAULT
 	,hourly_block_id INT
 	)
-
 IF (@_block_type_group_id IS NOT NULL)	
 	SET @_Sql_Select = ''INSERT INTO #temp_block_type_group_table (
 		block_type_group_id
@@ -628,7 +591,8 @@ FROM (
 			,s.term_start
 			,s.term_end
 	FROM report_hourly_position_breakdown s (NOLOCK)
-			INNER JOIN #temp_deals td on td.source_deal_header_id=s.source_deal_header_id
+			INNER JOIN #temp_deals td on s.term_start between td.term_start and td.term_end
+			 and td.source_deal_detail_id=s.source_deal_detail_id
 			INNER JOIN [deal_status_group] dsg ON dsg.status_value_id = s.deal_status_id
 			LEFT JOIN source_price_curve_def spcd WITH (NOLOCK) ON spcd.source_curve_def_id = s.curve_id
 			LEFT JOIN vwDealTimezone tz ON tz.source_deal_header_id = s.source_deal_header_id
@@ -754,7 +718,6 @@ SET @_scrt = CASE WHEN @_source_deal_header_id IS NOT NULL
 		+ CASE WHEN @_physical_financial_flag <> ''b''
 			THEN '' AND s.physical_financial_flag='''''' + @_physical_financial_flag + ''''''''
 		ELSE '''' END
-
 ----print @_scrt
 ----print ''--------------------------------------------''
 ---------------------------Start hourly_position_breakdown=null------------------------------------------------------------
@@ -770,9 +733,9 @@ begin
 		,spcd.commodity_id,sdd.physical_financial_flag,sdd.deal_volume_uom_id,bk.fas_book_id,sdd.contract_expiration_date expiration_date,
 		isnull(spcd.block_define_id,''+@_baseload_block_define_id+'') block_define_id
 		  into ''+ @_position_no_breakdown+''
-		from source_deal_header sdh with (nolock) inner join source_deal_header_template sdht on sdh.template_id=sdht.template_id and sdht.hourly_position_breakdown is null
-		inner join #temp_deals td on td.source_deal_header_id=sdh.source_deal_header_id
-		inner join source_deal_detail sdd with (nolock) on sdh.source_deal_header_id=sdd.source_deal_header_id
+		from source_deal_header sdh inner join source_deal_header_template sdht on sdh.template_id=sdht.template_id and sdht.hourly_position_breakdown is null
+		inner join source_deal_detail sdd on sdh.source_deal_header_id=sdd.source_deal_header_id
+		inner join #temp_deals td on td.source_deal_detail_id=sdh.source_deal_detail_id
 		INNER JOIN [deal_status_group] dsg ON dsg.deal_status_group_id = sdh.deal_status 
 		'' +CASE WHEN isnull(@_source_deal_header_id ,-1) <>-1 THEN '' and sdh.source_deal_header_id IN ('' +CAST(@_source_deal_header_id AS VARCHAR) + '')'' ELSE '''' END 
 		+''	INNER JOIN #books bk ON bk.source_system_book_id1=sdh.source_system_book_id1 AND bk.source_system_book_id2=sdh.source_system_book_id2 
@@ -831,8 +794,10 @@ begin
 		,''+@_dst_column+ @_vol_multiplier+'' AS Hr25 '' 
 	SET @_rpn2=
 		'',s.source_deal_header_id,s.commodity_id,s.counterparty_id,s.fas_book_id,s.source_system_book_id1,s.source_system_book_id2,s.source_system_book_id3,s.source_system_book_id4,s.expiration_date ,''''y'''' AS is_fixedvolume ,deal_status_id 
-		 from ''+@_position_no_breakdown + '' s inner join #temp_deals td on td.source_deal_header_id=s.source_deal_header_id''
-		+'' left join #term_date_no_break hb on hb.term_start = s.term_start and hb.term_end=s.term_end  and hb.block_define_id=s.block_define_id''
+	from ''+@_position_no_breakdown + '' s inner join #temp_deals td on
+		 s.term_start between td.term_start and td.term_end
+			 and td.source_deal_detail_id=s.source_deal_detail_id
+		 left join #term_date_no_break hb on hb.term_start = s.term_start and hb.term_end=s.term_end  and hb.block_define_id=s.block_define_id''
 		+case when @_summary_option in (''x'',''y'')  then 
 			'' left join #minute_break hrs on hrs.granularity=982 ''
 		else '''' end+''
@@ -842,6 +807,9 @@ begin
 		--+CASE WHEN @_tenor_option <> ''a'' THEN '' AND s.expiration_date>''''''+@_as_of_date+'''''' AND s.term_start>''''''+@_as_of_date+'''''''' ELSE '''' END 
 end
 	---------------------------end hourly_position_breakdown=null------------------------------------------------------------
+
+
+
 if @_physical_financial_flag<>''p'' 
 BEGIN 
 	SET @_dst_column = ''cast(CASE WHEN isnull(hb.add_dst_hour,0)<=0 THEN 0 ELSE 1 END as numeric(1,0))''  
@@ -849,7 +817,7 @@ BEGIN
 	SET @_remain_month =''*(CASE WHEN (hb.term_date)>=CAST(YEAR(DATEADD(m,1,''''''+@_as_of_date+'''''')) AS VARCHAR)+''''-''''+CAST(MONTH(DATEADD(m,1,''''''+@_as_of_date+'''''')) AS VARCHAR)+''''-01'''' THEN ISNULL(remain_month.remain_days/CAST(remain_month.total_days AS FLOAT),1) ELSE 1 END)''+case when @_summary_option in (''x'',''y'')  then '' /hrs.factor ''	else '''' end    
 	--SET @_dst_column=''CASE WHEN (dst.insert_delete)=''''i'''' THEN isnull(CASE dst.hour WHEN 1 THEN hb.hr1 WHEN 2 THEN hb.hr2 WHEN 3 THEN hb.hr3 WHEN 4 THEN hb.hr4 WHEN 5 THEN hb.hr5 WHEN 6 THEN hb.hr6 WHEN 7 THEN hb.hr7 WHEN 8 THEN hb.hr8 WHEN 9 THEN hb.hr9 WHEN 10 THEN hb.hr10 WHEN 11 THEN hb.hr11 WHEN 12 THEN hb.hr12 WHEN 13 THEN hb.hr13 WHEN 14 THEN hb.hr14 WHEN 15 THEN hb.hr15 WHEN 16 THEN hb.hr16 WHEN 17 THEN hb.hr17 WHEN 18 THEN hb.hr18 WHEN 19 THEN hb.hr19 WHEN 20 THEN hb.hr20 WHEN 21 THEN hb.hr21 WHEN 22 THEN hb.hr22 WHEN 23 THEN hb.hr23 WHEN 24 THEN hb.hr24 END,0) END''              	
 	SET @_vol_multiplier=''/cast(nullif(isnull(term_hrs.term_no_hrs,term_hrs_exp.term_no_hrs),0) as numeric(8,0))''
-	SET @_rhpb=''select s.curve_id,''+ CASE WHEN @_view_name1=''vwHourly_position_AllFilter'' THEN ''-1'' ELSE ''ISNULL(s.location_id,-1)'' END +'' location_id,hb.term_date term_start,''+case when @_summary_option in (''x'',''y'')  then '' hrs.period ''	else ''0'' end +'' period,s.deal_date,s.deal_volume_uom_id,s.physical_financial_flag
+	SET @_rhpb=''select s.source_deal_detail_id,s.curve_id,''+ CASE WHEN @_view_name1=''vwHourly_position_AllFilter'' THEN ''-1'' ELSE ''ISNULL(s.location_id,-1)'' END +'' location_id,hb.term_date term_start,''+case when @_summary_option in (''x'',''y'')  then '' hrs.period ''	else ''0'' end +'' period,s.deal_date,s.deal_volume_uom_id,s.physical_financial_flag
 		,(cast(cast(cast(s.calc_volume as numeric(22,10))* cast(isnull(hb.hr1,0) as numeric(1,0)) as numeric(22,10))*cast(CASE WHEN isnull(hb.add_dst_hour,0)=1 THEN 2 ELSE 1 END as numeric(1,0)) as numeric(22,10)))''+ @_vol_multiplier +@_remain_month+''  AS Hr1
 		,(cast(cast(cast(s.calc_volume as numeric(22,10))* cast(isnull(hb.hr2,0) as numeric(1,0)) as numeric(22,10))*cast(CASE WHEN isnull(hb.add_dst_hour,0)=2 THEN 2 ELSE 1 END as numeric(1,0)) as numeric(22,10)))''+ @_vol_multiplier +@_remain_month+''  AS Hr2
 		,(cast(cast(cast(s.calc_volume as numeric(22,10))* cast(isnull(hb.hr3,0) as numeric(1,0)) as numeric(22,10))*cast(CASE WHEN isnull(hb.add_dst_hour,0)=3 THEN 2 ELSE 1 END as numeric(1,0)) as numeric(22,10)))''+ @_vol_multiplier +@_remain_month+''  AS Hr3
@@ -878,7 +846,7 @@ BEGIN
 	SET @_rhpb2=
 	'',s.source_deal_header_id,s.commodity_id,s.counterparty_id,s.fas_book_id,s.source_system_book_id1,s.source_system_book_id2,s.source_system_book_id3,s.source_system_book_id4,CASE WHEN s.formula IN(''''dbo.FNACurveH'''',''''dbo.FNACurveD'''') THEN ISNULL(hg.exp_date,hb.term_date) WHEN ISNULL(spcd.hourly_volume_allocation,17601) IN(17603,17604) THEN ISNULL(hg.exp_date,s.expiration_date) ELSE s.expiration_date END expiration_date,''''y'''' AS is_fixedvolume ,deal_status_id,1 breakdown, spcd.block_define_id
 			from ''+@_view_name1+''_breakdown s ''+CASE WHEN @_view_nameq=''vwHourly_position_AllFilter'' THEN '' WITH(NOEXPAND) '' ELSE '' (nolock) '' END +'' 
-			 inner join #temp_deals td on td.source_deal_header_id=s.source_deal_header_id
+			 inner join #temp_deals td on s.term_start between td.term_start and td.term_end and td.source_deal_detail_id=s.source_deal_detail_id
 			INNER JOIN #books bk ON bk.fas_book_id=s.fas_book_id 
 			'' +CASE WHEN @_source_deal_header_id IS NOT NULL THEN '' and s.source_deal_header_id IN ('' +CAST(@_source_deal_header_id AS VARCHAR) + '')'' ELSE '''' END 
 			+''	AND bk.source_system_book_id1=s.source_system_book_id1 AND bk.source_system_book_id2=s.source_system_book_id2 AND bk.source_system_book_id3=s.source_system_book_id3 AND bk.source_system_book_id4=s.source_system_book_id4 '' 
@@ -979,7 +947,7 @@ ELSE
 			ROUND((cast(SUM(cast(''+ case WHEN @_group_by=''b'' THEN '' case when vw.commodity_id=-1 AND vw.is_fixedvolume =''''n'''' then hb1.hr5 else hb.hr23 end *'' else '''' end +''vw.hr23 as numeric(20,8))''+CASE WHEN @_convert_to_uom_id IS NOT NULL THEN ''*cast(uc.conversion_factor as numeric(21,16))'' ELSE '''' END+'') as numeric(38,20))), '' + @_round_value + '') Hr''+ CASE WHEN ISNULL(@_col_7_to_6,''n'')=''y'' AND @_format_option<>''r'' THEN ''5'' ELSE ''23'' END  +'',
 			ROUND((cast(SUM(cast(''+ case WHEN @_group_by=''b'' THEN '' case when vw.commodity_id=-1 AND vw.is_fixedvolume =''''n'''' then hb1.hr6 else hb.hr24 end *'' else '''' end +''vw.hr24 as numeric(20,8))''+CASE WHEN @_convert_to_uom_id IS NOT NULL THEN ''*cast(uc.conversion_factor as numeric(21,16))'' ELSE '''' END+'') as numeric(38,20))), '' + @_round_value + '') Hr''+ CASE WHEN ISNULL(@_col_7_to_6,''n'')=''y'' AND @_format_option<>''r'' THEN ''6'' ELSE ''24'' END  +'',
 		''+CASE WHEN @_format_option =''r'' THEN +''ROUND((cast(SUM(cast(''+case WHEN @_group_by=''b'' THEN '' case when vw.commodity_id=-1 AND vw.is_fixedvolume =''''n'''' then hb.hr9 else hb.hr3 end *'' else '''' end +''vw.hr25 as numeric(20,8))''+CASE WHEN @_convert_to_uom_id IS NOT NULL THEN ''*cast(uc.conversion_factor as numeric(21,16))'' ELSE '''' END+'') as numeric(38,20))), '' + @_round_value + '') Hr25,'' ELSE '''' END
-SET @_sqry=''select s.curve_id,s.location_id,s.term_start,''+
+SET @_sqry=''select s.source_deal_detail_id,s.curve_id,s.location_id,s.term_start,''+
 		+case  @_summary_option when ''y'' then  ''case when s.granularity=987 then case s.period when 15 then 0 when 45 then 30 else COALESCE(hrs.period,s.period) END else  COALESCE(hrs.period,s.period) end''
 				when ''x'' then  ''COALESCE(hrs.period,m30.period,s.period)''
 				else ''0''
@@ -1017,10 +985,11 @@ SET @_sqry=''select s.curve_id,s.location_id,s.term_start,''+
 	+'',s.source_deal_header_id,s.commodity_id,s.counterparty_id,s.fas_book_id,s.source_system_book_id1,s.source_system_book_id2
 		,s.source_system_book_id3,s.source_system_book_id4,s.expiration_date,''''n'''' AS is_fixedvolume,deal_status_id,0 breakdown, spcd.block_define_id
 	INTO ''+ @_position_deal +''  
-	from ''+@_view_nameq+'' s  (nolock) inner join #temp_deals td on td.source_deal_header_id=s.source_deal_header_id 
-	INNER JOIN #books bk ON bk.fas_book_id=s.fas_book_id AND bk.source_system_book_id1=s.source_system_book_id1	
-		AND bk.source_system_book_id2=s.source_system_book_id2 AND bk.source_system_book_id3=s.source_system_book_id3
-		AND bk.source_system_book_id4=s.source_system_book_id4 
+	from ''+@_view_nameq+'' s  (nolock) inner join #temp_deals td on s.term_start between td.term_start and td.term_end
+			and td.source_deal_detail_id=s.source_deal_detail_id 
+		INNER JOIN #books bk ON bk.fas_book_id=s.fas_book_id AND bk.source_system_book_id1=s.source_system_book_id1	
+			AND bk.source_system_book_id2=s.source_system_book_id2 AND bk.source_system_book_id3=s.source_system_book_id3
+			AND bk.source_system_book_id4=s.source_system_book_id4 
 		left join source_price_curve_def spcd on spcd.source_curve_def_id=s.curve_id ''	
 	+ CASE WHEN  @_deal_status IS NULL AND @_source_deal_header_id IS NULL THEN 
 	'' INNER JOIN [deal_status_group] dsg ON dsg.status_value_id = s.deal_status_id'' ELSE '''' END
@@ -1033,7 +1002,7 @@ SET @_sqry=''select s.curve_id,s.location_id,s.term_start,''+
 	+ @_scrt 
 SET @_sqry1=''
 	union all
-	select s.curve_id,s.location_id,s.term_start,''
+	select s.source_deal_detail_id,s.curve_id,s.location_id,s.term_start,''
 		+case  @_summary_option when ''y'' then  ''case when s.granularity=987 then case s.period when 15 then 0 when 45 then 30 else COALESCE(hrs.period,s.period) end else  COALESCE(hrs.period,s.period) end''
 				when ''x'' then  ''COALESCE(hrs.period,m30.period,s.period)''
 				else ''0''
@@ -1070,8 +1039,9 @@ SET @_sqry1=''
 		end
 	+'',s.source_deal_header_id,s.commodity_id,s.counterparty_id,s.fas_book_id,s.source_system_book_id1,s.source_system_book_id2,s.source_system_book_id3,s.source_system_book_id4 
 	,s.expiration_date,''''n'''' AS is_fixedvolume,deal_status_id,0 breakdown, spcd.block_define_id
-	from ''+@_view_name1+''_profile s  (nolock) inner join #temp_deals td on td.source_deal_header_id=s.source_deal_header_id''  
-	+'' INNER JOIN #books bk ON bk.fas_book_id=s.fas_book_id AND bk.source_system_book_id1=s.source_system_book_id1	
+	from ''+@_view_name1+''_profile s  (nolock) inner join #temp_deals td on s.term_start between td.term_start and td.term_end
+			 and td.source_deal_detail_id=s.source_deal_detail_id
+	 INNER JOIN #books bk ON bk.fas_book_id=s.fas_book_id AND bk.source_system_book_id1=s.source_system_book_id1	
 		AND bk.source_system_book_id2=s.source_system_book_id2	AND bk.source_system_book_id3=s.source_system_book_id3
 		AND bk.source_system_book_id4=s.source_system_book_id4 
 		left join source_price_curve_def spcd on spcd.source_curve_def_id=s.curve_id ''	
@@ -1086,7 +1056,7 @@ SET @_sqry1=''
 	+ @_scrt 
 	SET @_sqry2=''
 	union all
-	select s.curve_id,s.location_id,s.term_start,''
+	select s.source_deal_detail_id,s.curve_id,s.location_id,s.term_start,''
 		+case  @_summary_option when ''y'' then  ''case when s.granularity=987 then case s.period when 15 then 0 when 45 then 30 else COALESCE(hrs.period,s.period) end else  COALESCE(hrs.period,s.period) end''
 				when ''x'' then  ''COALESCE(hrs.period,m30.period,s.period)''
 				else ''0''
@@ -1123,10 +1093,12 @@ SET @_sqry1=''
 		end
 	+'',s.source_deal_header_id,s.commodity_id,s.counterparty_id,s.fas_book_id,s.source_system_book_id1,s.source_system_book_id2,s.source_system_book_id3,s.source_system_book_id4 
 			,s.expiration_date,''''n'''' AS is_fixedvolume,deal_status_id,1 breakdown, spcd.block_define_id
-	from ''+replace(@_view_nameq,''_deal'','''')+''_financial s  (nolock) inner join #temp_deals td on td.source_deal_header_id=s.source_deal_header_id INNER JOIN #books bk ON bk.fas_book_id=s.fas_book_id AND bk.source_system_book_id1=s.source_system_book_id1	
+	from ''+replace(@_view_nameq,''_deal'','''')+''_financial s  (nolock) inner join #temp_deals td on s.term_start between td.term_start and td.term_end
+		and td.source_deal_detail_id=s.source_deal_detail_id 
+	INNER JOIN #books bk ON bk.fas_book_id=s.fas_book_id AND bk.source_system_book_id1=s.source_system_book_id1	
 		AND bk.source_system_book_id2=s.source_system_book_id2	AND bk.source_system_book_id3=s.source_system_book_id3
 		AND bk.source_system_book_id4=s.source_system_book_id4 
-		left join source_price_curve_def spcd on spcd.source_curve_def_id=s.curve_id ''	
+	left join source_price_curve_def spcd on spcd.source_curve_def_id=s.curve_id ''	
 	+ CASE WHEN  @_deal_status IS NULL AND @_source_deal_header_id IS NULL THEN 
 	'' INNER JOIN [deal_status_group] dsg ON dsg.status_value_id = s.deal_status_id'' ELSE '''' END
 	+case  @_summary_option	when ''y'' then  '' left join #minute_break hrs on s.granularity=hrs.granularity and hrs.granularity=982 ''
@@ -1148,7 +1120,6 @@ END
 set @_rpn=isnull(@_rpn,'''')
 set @_rpn1= isnull(@_rpn1,'''')
 set @_rpn2=isnull(@_rpn2,'''')
-
 EXEC spa_print  @_sqry
 EXEC spa_print  @_sqry1
 EXEC spa_print  @_sqry2
@@ -1162,10 +1133,6 @@ exec(
 	@_sqry +@_sqry1+@_sqry2+ @_rhpb+ @_rhpb1+ @_rhpb2
 	+ @_rpn+@_rpn1+@_rpn2
 )
-
-
-
-
 exec(''CREATE INDEX indx_tmp_subqry1''+@_temp_process_id+'' ON ''+@_position_deal +''(curve_id);
 	CREATE INDEX indx_tmp_subqry2''+@_temp_process_id+'' ON ''+@_position_deal +''(location_id);
 	CREATE INDEX indx_tmp_subqry3''+@_temp_process_id+'' ON ''+@_position_deal +''(counterparty_id)''
@@ -1203,7 +1170,7 @@ set @_sqry=CASE WHEN @_convert_to_uom_id IS NULL then '''' else ''
 ''
 end
 SET @_Sql_Select=  
-	'' SELECT  isnull(sdd.source_deal_detail_id,sdd_fin.source_deal_detail_id ) source_deal_detail_id,vw.physical_financial_flag,su.source_uom_id
+	'' SELECT sdd.source_deal_detail_id,vw.physical_financial_flag,su.source_uom_id
 		,isnull(spcd1.source_curve_def_id,spcd.source_curve_def_id) source_curve_def_id,vw.location_id,vw.counterparty_id,vw.fas_book_id,''
 		+CASE WHEN  @_summary_option IN (''d'',''h'',''x'',''y'')  THEN ''vw.term_start'' ELSE CASE WHEN @_summary_option=''m'' THEN ''convert(varchar(7),vw.term_start,120)'' WHEN @_summary_option=''a'' THEN ''year(vw.term_start)'' WHEN @_summary_option=''q'' THEN ''dbo.FNATermGrouping(vw.term_start,''''q'''')''  ELSE ''vw.term_start'' END END+'' [Term], ''
 		+CASE WHEN  @_summary_option IN (''x'',''y'')  THEN ''vw.period'' ELSE ''0'' END+'' [Period], ''
@@ -1217,13 +1184,9 @@ SET @_rhpb3=
 		ELSE '''' END +''
 		INNER JOIN source_price_curve_def spcd (nolock) ON spcd.source_curve_def_id=vw.curve_id 
 		LEFT JOIN dbo.location_price_index lpi ON lpi.location_id = vw.location_id AND lpi.commodity_id = vw.commodity_id	
-		left join dbo.source_deal_detail sdd on sdd.source_deal_header_id=vw.source_deal_header_id 
-			and CASE WHEN vw.physical_financial_flag=''''f''''  then COALESCE(sdd.formula_curve_id,lpi.curve_id,sdd.curve_id) else ISNULL(lpi.curve_id,sdd.curve_id) end=vw.curve_id and vw.term_start between sdd.term_start and sdd.term_end and vw.is_fixedvolume=''''n''''
-			and isnull(sdd.location_id,-1)=vw.location_id
-		outer apply
-			( select top(1) * from dbo.source_deal_detail where vw.is_fixedvolume=''''y'''' 
-				and source_deal_header_id=vw.source_deal_header_id and vw.curve_id =isnull(sdd.formula_curve_id,vw.curve_id)) sdd_fin 
-		LEFT JOIN  source_price_curve_def spcd1 (nolock) ON  spcd1.source_curve_def_id=''+CASE WHEN @_proxy_curve_view = ''y'' THEN  ''spcd.proxy_curve_id'' ELSE ''spcd.source_curve_def_id'' END
+		left join dbo.source_deal_detail sdd on sdd.source_deal_detail_id=vw.source_deal_detail_id 
+		LEFT JOIN  source_price_curve_def spcd1 (nolock) ON  spcd1.source_curve_def_id=''
+		+CASE WHEN @_proxy_curve_view = ''y'' THEN  ''spcd.proxy_curve_id'' ELSE ''spcd.source_curve_def_id'' END
 	+'' LEFT JOIN source_minor_location sml (nolock) ON sml.source_minor_location_id=vw.location_id
 		left join static_data_value sdv1 (nolock) on sdv1.value_id=sml.grid_value_id
 		left join static_data_value sdv (nolock)  on sdv.value_id=sml.country
@@ -1253,8 +1216,8 @@ SET @_rhpb3=
 	+CASE WHEN @_grid IS NOT NULL THEN '' AND sdv1.value_id=''+ @_grid ELSE '''' END
 	+CASE WHEN @_province IS NOT NULL THEN '' AND sdv_prov.value_id=''+ @_province ELSE '''' END
  	+CASE WHEN @_deal_status IS NOT NULL THEN '' AND deal_status_id IN(''+@_deal_status+'')'' ELSE '''' END
-	+CASE WHEN @_buy_sell_flag is not null THEN '' AND  isnull(sdd.buy_sell_flag,sdd_fin.buy_sell_flag)=''''''+@_buy_sell_flag+'''''''' ELSE '''' END
-	+'' GROUP BY isnull(sdd.source_deal_detail_id,sdd_fin.source_deal_detail_id ),isnull(spcd1.source_curve_def_id ,spcd.source_curve_def_id),vw.location_id,''
+	+CASE WHEN @_buy_sell_flag is not null THEN '' AND  sdd.buy_sell_flag=''''''+@_buy_sell_flag+'''''''' ELSE '''' END
+	+'' GROUP BY sdd.source_deal_detail_id,isnull(spcd1.source_curve_def_id ,spcd.source_curve_def_id),vw.location_id,''
 	+CASE WHEN  @_summary_option IN (''d'',''h'',''x'',''y'')  THEN ''vw.term_start'' ELSE CASE WHEN @_summary_option=''m'' THEN ''convert(varchar(7),vw.term_start,120)'' WHEN @_summary_option=''a'' THEN ''year(vw.term_start)'' WHEN @_summary_option=''q'' THEN ''dbo.FNATermGrouping(vw.term_start,''''q'''')''  ELSE ''vw.term_start'' END END
 	+CASE WHEN  @_summary_option IN (''x'',''y'')  THEN '',vw.period'' ELSE '''' END+'',su.source_uom_id,vw.physical_financial_flag,vw.counterparty_id,vw.fas_book_id,spcd.proxy_curve_id,breakdown''  --,vw.commodity_id
 EXEC spa_print @_sqry
@@ -1541,7 +1504,7 @@ set @_rhpb2=''
 	reporting_group3.code reporting_group3_name,
 	reporting_group4.code reporting_group4_name,
 	reporting_group5.code reporting_group5_name
-
+	,vw.source_deal_detail_id
 INTO #tmp_position_detail
 	FROM ''
 		+case when  @_summary_option IN (''h'',''x'',''y'') then	''#unpvt''
@@ -1635,8 +1598,6 @@ SET @_rhpb3 = ''
 	LEFT JOIN static_data_value reporting_group3 ON reporting_group3.value_id = sdh.[reporting_group3] AND reporting_group3.type_id = 113200
 	LEFT JOIN static_data_value reporting_group4 ON reporting_group4.value_id = sdh.[reporting_group4] AND reporting_group4.type_id = 113300
 	LEFT JOIN static_data_value reporting_group5 ON reporting_group5.value_id = sdh.[reporting_group5] AND reporting_group5.type_id = 113400
-
-
 	--from demo4
 	LEFT JOIN mv90_DST mvd (nolock) ON YEAR(sdd.[term_start]) = YEAR(mvd.[date]) AND MONTH(sdd.[term_start]) = MONTH(mvd.[date]) AND mvd.insert_delete=''''d'''' AND tz.dst_group_value_id = mvd.dst_group_value_id
 	LEFT JOIN mv90_DST mvi (nolock) ON YEAR(sdd.[term_start]) = YEAR(mvi.[date]) AND MONTH(sdd.[term_start]) = MONTH(mvi.[date]) AND mvi.insert_delete=''''i'''' AND tz.dst_group_value_id = mvi.dst_group_value_id
@@ -1690,124 +1651,125 @@ set @_rhpb4=''
 --CASE WHEN @_physical_financial_flag IS NOT NULL THEN '' WHERE vw.physical_financial_flag = '''''' + @_physical_financial_flag + '''''''' ELSE '''' END end
 	+CASE WHEN @_leg IS NOT NULL THEN '' AND sdd.leg =''+@_leg ELSE '''' END
 	--from demo4
-    IF @_show_delta_volume = ''y''
-	SET @_rhpb5 = ''
-		select row_number() over(partition by t.source_deal_header_id,t.leg order by t.term_start) row_no,t.source_deal_header_id,t.Leg ,t.term_start,sdpdo.DELTA,sdpdo.DELTA2 
-		into #delta_leg1
-		from #tmp_position_detail t
-			INNER JOIN source_deal_pnl_detail_options sdpdo ON sdpdo.source_deal_header_id = t.source_deal_header_id
-				AND sdpdo.as_of_date = t.as_of_date AND sdpdo.term_start = t.term_start
-				and t.Leg=1 ;
-		select row_number() over(partition by t2.source_deal_header_id,t2.leg order by t2.term_start) row_no,t2.source_deal_header_id,t2.Leg ,t2.term_start
-		into #delta_leg2
-		from #tmp_position_detail t2
-			inner join (select distinct source_deal_header_id from #delta_leg1) t1 on t1.source_deal_header_id=t2.source_deal_header_id
-				and t2.Leg=2;
-		UPDATE tp SET position = tp.position *d.DELTA
-			,delta=d.DELTA
-		FROM #tmp_position_detail tp
-		inner join
-		(
-		select source_deal_header_id,1 leg, term_start, DELTA from #delta_leg1 
-		union all
-		select t2.source_deal_header_id,2 leg, t2.term_start, t1.DELTA2 DELTA from #delta_leg2 t2
-			inner join #delta_leg1 t1 on t1.source_deal_header_id=t2.source_deal_header_id
-				and t2.row_no=t1.row_no
-		) d on d.source_deal_header_id=tp.source_deal_header_id and d.leg=tp.leg and d.term_start=tp.term_start''
-	--from demo4
-	SET @_sql_final = ''
-		SELECT DISTINCT tpd.source_deal_header_id, tpd.term_end, tpd.index_id, tpd.position
-			INTO #tmp_weekend_holiday_position
+IF @_show_delta_volume = ''y''
+SET @_rhpb5 = ''
+	select row_number() over(partition by t.source_deal_header_id,t.leg order by t.term_start) row_no,t.source_deal_header_id,t.Leg ,t.term_start,sdpdo.DELTA,sdpdo.DELTA2 
+	into #delta_leg1
+	from #tmp_position_detail t
+		INNER JOIN source_deal_pnl_detail_options sdpdo ON sdpdo.source_deal_header_id = t.source_deal_header_id
+			AND sdpdo.as_of_date = t.as_of_date AND sdpdo.term_start = t.term_start
+			and t.Leg=1 ;
+	select row_number() over(partition by t2.source_deal_header_id,t2.leg order by t2.term_start) row_no,t2.source_deal_header_id,t2.Leg ,t2.term_start
+	into #delta_leg2
+	from #tmp_position_detail t2
+		inner join (select distinct source_deal_header_id from #delta_leg1) t1 on t1.source_deal_header_id=t2.source_deal_header_id
+			and t2.Leg=2;
+	UPDATE tp SET position = tp.position *d.DELTA
+		,delta=d.DELTA
+	FROM #tmp_position_detail tp
+	inner join
+	(
+	select source_deal_header_id,1 leg, term_start, DELTA from #delta_leg1 
+	union all
+	select t2.source_deal_header_id,2 leg, t2.term_start, t1.DELTA2 DELTA from #delta_leg2 t2
+		inner join #delta_leg1 t1 on t1.source_deal_header_id=t2.source_deal_header_id
+			and t2.row_no=t1.row_no
+	) d on d.source_deal_header_id=tp.source_deal_header_id and d.leg=tp.leg and d.term_start=tp.term_start''
+--from demo4
+SET @_sql_final = ''
+	SELECT DISTINCT tpd.source_deal_header_id, tpd.term_end, tpd.index_id, tpd.position
+		INTO #tmp_weekend_holiday_position
+	FROM #tmp_position_detail tpd
+	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = tpd.source_deal_header_id
+	OUTER APPLY (SELECT 1 total
+				FROM source_price_curve_def spcd 
+				INNER JOIN holiday_group hg ON hg.hol_group_value_id = spcd.holiday_calendar_id
+				AND hg.hol_date = tpd.term_end
+				WHERE spcd.source_curve_def_id = tpd.index_id) t
+	WHERE (DATEPART(DW, tpd.term_end) IN (1,7) OR t.total IS NOT NULL)
+	AND EXISTS(SELECT 1 FROM deal_price_deemed dpd WHERE dpd.source_deal_detail_id = sdd.source_deal_detail_id)
+	AND tpd.physical_financial_flag = ''''Financial''''
+	AND '''''' + @_summary_option + '''''' = ''''d''''
+	SELECT twhp.source_deal_header_id, twhp.index_id, tt.term_end, SUM(twhp.position) position, MIN(twhp.term_end) holiday
+		INTO #tmp_final_position
+		FROM #tmp_weekend_holiday_position twhp
+		OUTER APPLY (SELECT TOP 1 term_end AS term_end 
+						FROM #tmp_position_detail tpd
+						WHERE tpd.term_end < twhp.term_end
+						AND tpd.source_deal_header_id = twhp.source_deal_header_id
+						AND tpd.index_id = twhp.index_id
+						AND NOT EXISTS(SELECT TOP 1 1 FROM #tmp_weekend_holiday_position WHERE term_end = tpd.term_end)
+						ORDER BY tpd.term_end DESC) tt
+		GROUP BY twhp.source_deal_header_id, twhp.index_id, tt.term_end
+		SELECT tfp.source_deal_header_id, 
+			tfp.index_id, 
+			dd.sql_date_value AS term_end, 
+			tfp.holiday,
+			tfp.position
+		INTO #tmp_prev_working_day
+		FROM #tmp_final_position tfp
+		OUTER APPLY(SELECT TOP 1 sql_date_value 
+			FROM date_details dd 
+			WHERE dd.sql_date_value < tfp.holiday
+			AND NOT EXISTS(SELECT 1 total
+							FROM source_price_curve_def spcd 
+							INNER JOIN holiday_group hg ON hg.hol_group_value_id = spcd.holiday_calendar_id
+							AND hg.hol_date = dd.sql_date_value
+							WHERE spcd.source_curve_def_id = tfp.index_id)
+			AND (DATEPART(DW, dd.sql_date_value) NOT IN (1,7))
+			ORDER BY dd.sql_date_value DESC) dd
+		WHERE tfp.term_end IS NULL
+		DELETE FROM #tmp_final_position WHERE term_end IS NULL
+		DELETE tpd
 		FROM #tmp_position_detail tpd
-		INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = tpd.source_deal_header_id
-		OUTER APPLY (SELECT 1 total
-					FROM source_price_curve_def spcd 
-					INNER JOIN holiday_group hg ON hg.hol_group_value_id = spcd.holiday_calendar_id
-					AND hg.hol_date = tpd.term_end
-					WHERE spcd.source_curve_def_id = tpd.index_id) t
-		WHERE (DATEPART(DW, tpd.term_end) IN (1,7) OR t.total IS NOT NULL)
-		AND EXISTS(SELECT 1 FROM deal_price_deemed dpd WHERE dpd.source_deal_detail_id = sdd.source_deal_detail_id)
-		AND tpd.physical_financial_flag = ''''Financial''''
-		AND '''''' + @_summary_option + '''''' = ''''d''''
-		SELECT twhp.source_deal_header_id, twhp.index_id, tt.term_end, SUM(twhp.position) position, MIN(twhp.term_end) holiday
-			INTO #tmp_final_position
-			FROM #tmp_weekend_holiday_position twhp
-			OUTER APPLY (SELECT TOP 1 term_end AS term_end 
-							FROM #tmp_position_detail tpd
-							WHERE tpd.term_end < twhp.term_end
-							AND tpd.source_deal_header_id = twhp.source_deal_header_id
-							AND tpd.index_id = twhp.index_id
-							AND NOT EXISTS(SELECT TOP 1 1 FROM #tmp_weekend_holiday_position WHERE term_end = tpd.term_end)
-							ORDER BY tpd.term_end DESC) tt
-			GROUP BY twhp.source_deal_header_id, twhp.index_id, tt.term_end
-			SELECT tfp.source_deal_header_id, 
-				tfp.index_id, 
-				dd.sql_date_value AS term_end, 
-				tfp.holiday,
-				tfp.position
-			INTO #tmp_prev_working_day
-			FROM #tmp_final_position tfp
-			OUTER APPLY(SELECT TOP 1 sql_date_value 
-				FROM date_details dd 
-				WHERE dd.sql_date_value < tfp.holiday
-				AND NOT EXISTS(SELECT 1 total
-								FROM source_price_curve_def spcd 
-								INNER JOIN holiday_group hg ON hg.hol_group_value_id = spcd.holiday_calendar_id
-								AND hg.hol_date = dd.sql_date_value
-								WHERE spcd.source_curve_def_id = tfp.index_id)
-				AND (DATEPART(DW, dd.sql_date_value) NOT IN (1,7))
-				ORDER BY dd.sql_date_value DESC) dd
-			WHERE tfp.term_end IS NULL
-			DELETE FROM #tmp_final_position WHERE term_end IS NULL
-			DELETE tpd
-			FROM #tmp_position_detail tpd
-			INNER JOIN #tmp_weekend_holiday_position tfp ON tfp.source_deal_header_id = tpd.source_deal_header_id
-				AND tfp.term_end = tpd.term_end
-				AND tfp.index_id = tpd.index_id
-			WHERE NOT EXISTS(SELECT 1 
-							FROM #tmp_prev_working_day tpwp
-							WHERE tpwp.source_deal_header_id = tfp.source_deal_header_id
-							AND tpwp.holiday = tfp.term_end
-							AND tpwp.index_id = tfp.index_id)
-			UPDATE tpd SET tpd.position = (tpd.position+tfp.position)
-			FROM #tmp_position_detail tpd
-			INNER JOIN #tmp_final_position tfp ON tfp.source_deal_header_id = tpd.source_deal_header_id
-				AND tfp.term_end = tpd.term_end
-				AND tfp.index_id = tpd.index_id
-			UPDATE tpd SET tpd.term_end = tpwp.term_end, 
-				tpd.position = tpwp.position,
-				tpd.term_start_disp = CONVERT(VARCHAR(10),tpwp.term_end, 101)
-			FROM #tmp_position_detail tpd
-			INNER JOIN #tmp_prev_working_day tpwp ON tpwp.source_deal_header_id = tpd.source_deal_header_id
-				AND tpwp.holiday = tpd.term_end
-				AND tpwp.index_id = tpd.index_id
-		SELECT tpd.*,
-			CASE WHEN ISNULL(tpd.internal_deal_type_id,-1) IN (15) THEN ''''1900-01-01'''' WHEN COALESCE(t.date_from,t1.exp_date,tpd.term_start) < tpd.as_of_date AND tpd.physical_financial_flag = ''''physical'''' THEN ''''1900-01-01'''' ELSE COALESCE(t.date_from,t1.date_from,tpd.term_start) END date_from,
-			CASE WHEN ISNULL(tpd.internal_deal_type_id,-1) IN (15) THEN ''''1'''' WHEN COALESCE(t.date_from,t1.exp_date,tpd.term_start) < tpd.as_of_date AND tpd.physical_financial_flag = ''''physical'''' THEN ''''1'''' ELSE CAST(YEAR(COALESCE(t.date_from,t1.date_from,tpd.term_start)) AS VARCHAR)+RIGHT(''''0''''+CAST(MONTH(COALESCE(t.date_from,t1.date_from,tpd.term_start)) AS VARCHAR),2) END date_sort
-			, ''''@include_storage'''' include_storage , sdv.code [pricing_type], sdv_product.code [product_group],pdf.alias_name period_alias_name,pdf.rowid hr_rowid  
-		--[__batch_report__]
+		INNER JOIN #tmp_weekend_holiday_position tfp ON tfp.source_deal_header_id = tpd.source_deal_header_id
+			AND tfp.term_end = tpd.term_end
+			AND tfp.index_id = tpd.index_id
+		WHERE NOT EXISTS(SELECT 1 
+						FROM #tmp_prev_working_day tpwp
+						WHERE tpwp.source_deal_header_id = tfp.source_deal_header_id
+						AND tpwp.holiday = tfp.term_end
+						AND tpwp.index_id = tfp.index_id)
+		UPDATE tpd SET tpd.position = (tpd.position+tfp.position)
 		FROM #tmp_position_detail tpd
-		INNER JOIN #temp_deals td ON td.source_deal_header_id = tpd.source_deal_header_id
-                 LEFT JOIN static_data_value sdv ON sdv.value_id = td.pricing_type AND sdv.type_id = 46700
-		LEFT JOIN static_data_value sdv_product ON sdv_product.value_id = td.internal_portfolio_id AND sdv_product.type_id = 39800	
-		OUTER APPLY(
-			SELECT hg.delivery_period AS date_from FROM source_price_curve_def spcd 
-			lEFT JOIN expiration_calendar hg ON hg.calendar_id = spcd.exp_calendar_id
-				AND tpd.term_end BETWEEN hg.expiration_from AND hg.expiration_to AND  ((td.physical_financial = ''''p'''' AND tpd.physical_financial_flag=''''financial'''') OR (td.physical_financial = ''''f'''' AND spcd.hourly_volume_allocation = 17607))
-			WHERE spcd.source_curve_def_id = tpd.index_id AND hg.delivery_period IS NOT NULL
-			AND '''''' + @_summary_option + '''''' = ''''d'''') t
-		OUTER APPLY(
-			SELECT MAX(hg.exp_date) AS exp_date,MAX(hg.hol_date) date_from
-			FROM source_price_curve_def spcd 
-			LEFT JOIN holiday_group hg ON hg.hol_group_value_id = spcd.exp_calendar_id
-				AND CONVERT(VARCHAR(7),hg.hol_date,120) = CONVERT(VARCHAR(7),tpd.term_end,120) 
-				AND tpd.physical_financial_flag=''''physical'''' 
-			WHERE spcd.source_curve_def_id = tpd.index_id AND hg.hol_date IS NOT NULL
-			AND '''''' + @_summary_option + '''''' = ''''d'''') t1
-		left join #period_display_format pdf on pdf.[process_clm_name]= right(''''0''''+cast(tpd.[hour] as varchar),2)+''''_''''+right(''''0''''+cast(tpd.[period] as varchar),2)
-					and pdf.is_dst=tpd.dst
-		''
-
+		INNER JOIN #tmp_final_position tfp ON tfp.source_deal_header_id = tpd.source_deal_header_id
+			AND tfp.term_end = tpd.term_end
+			AND tfp.index_id = tpd.index_id
+		UPDATE tpd SET tpd.term_end = tpwp.term_end, 
+			tpd.position = tpwp.position,
+			tpd.term_start_disp = CONVERT(VARCHAR(10),tpwp.term_end, 101)
+		FROM #tmp_position_detail tpd
+		INNER JOIN #tmp_prev_working_day tpwp ON tpwp.source_deal_header_id = tpd.source_deal_header_id
+			AND tpwp.holiday = tpd.term_end
+			AND tpwp.index_id = tpd.index_id
+	SELECT tpd.*,
+		CASE WHEN ISNULL(tpd.internal_deal_type_id,-1) IN (15) THEN ''''1900-01-01'''' WHEN COALESCE(t.date_from,t1.exp_date,tpd.term_start) < tpd.as_of_date AND tpd.physical_financial_flag = ''''physical'''' THEN ''''1900-01-01'''' ELSE COALESCE(t.date_from,t1.date_from,tpd.term_start) END date_from,
+		CASE WHEN ISNULL(tpd.internal_deal_type_id,-1) IN (15) THEN ''''1'''' WHEN COALESCE(t.date_from,t1.exp_date,tpd.term_start) < tpd.as_of_date AND tpd.physical_financial_flag = ''''physical'''' THEN ''''1'''' ELSE CAST(YEAR(COALESCE(t.date_from,t1.date_from,tpd.term_start)) AS VARCHAR)+RIGHT(''''0''''+CAST(MONTH(COALESCE(t.date_from,t1.date_from,tpd.term_start)) AS VARCHAR),2) END date_sort
+		, ''''@include_storage'''' include_storage , sdv.code [pricing_type], sdv_product.code [product_group],pdf.alias_name period_alias_name,pdf.rowid hr_rowid  
+	--[__batch_report__]
+	FROM #tmp_position_detail tpd
+	INNER JOIN #temp_deals td ON td.source_deal_detail_id = tpd.source_deal_detail_id
+    LEFT JOIN static_data_value sdv ON sdv.value_id = td.pricing_type AND sdv.type_id = 46700
+	LEFT JOIN static_data_value sdv_product ON sdv_product.value_id = td.internal_portfolio_id AND sdv_product.type_id = 39800	
+	OUTER APPLY(
+		SELECT hg.delivery_period AS date_from FROM source_price_curve_def spcd 
+		lEFT JOIN expiration_calendar hg ON hg.calendar_id = spcd.exp_calendar_id
+			AND tpd.term_end BETWEEN hg.expiration_from AND hg.expiration_to AND  ((td.physical_financial = ''''p'''' AND tpd.physical_financial_flag=''''financial'''') OR (td.physical_financial = ''''f'''' AND spcd.hourly_volume_allocation = 17607))
+		WHERE spcd.source_curve_def_id = tpd.index_id AND hg.delivery_period IS NOT NULL
+		AND '''''' + @_summary_option + '''''' = ''''d'''') t
+	OUTER APPLY(
+		SELECT MAX(hg.exp_date) AS exp_date,MAX(hg.hol_date) date_from
+		FROM source_price_curve_def spcd 
+		LEFT JOIN holiday_group hg ON hg.hol_group_value_id = spcd.exp_calendar_id
+			AND CONVERT(VARCHAR(7),hg.hol_date,120) = CONVERT(VARCHAR(7),tpd.term_end,120) 
+			AND tpd.physical_financial_flag=''''physical'''' 
+		WHERE spcd.source_curve_def_id = tpd.index_id AND hg.hol_date IS NOT NULL
+		AND '''''' + @_summary_option + '''''' = ''''d'''') t1
+	left join #period_display_format pdf on pdf.[process_clm_name]= right(''''0''''+cast(tpd.[hour] as varchar),2)+''''_''''+right(''''0''''+cast(tpd.[period] as varchar),2)
+				and pdf.is_dst=tpd.dst
+	--where tpd.term_end=''''2021-03-12'''' and tpd.source_deal_detail_id=339702
+	--order by period_alias_name
+	''
 DECLARE @_injection_withdrawal_deals VARCHAR(MAX)
 SET @_injection_withdrawal_deals = CASE WHEN @_include_storage = ''y'' THEN ''
 SELECT 
@@ -1846,16 +1808,16 @@ LEFT JOIN source_uom su On su.source_uom_id = sdd.deal_volume_uom_id
 WHERE CAST(td.movement_date_time AS DATE) <= '''''' + CONVERT(VARCHAR(10), @_as_of_date, 120) + ''''''
 	AND deal_type_id IN (''''Injection'''', ''''Withdrawal'''')
 	''
-+ CASE WHEN @_source_deal_header_id IS NOT NULL  THEN '' AND sdh.source_deal_header_id IN (''+ CAST(@_source_deal_header_id AS VARCHAR) + '')'' ELSE '''' END
-+ CASE WHEN @_term_start IS NOT NULL THEN '' AND sdd.term_start>= '''''' + CONVERT(VARCHAR(10), @_as_of_date, 120) + '''''' AND sdd.term_start<= '''''' + CONVERT(VARCHAR(10), @_as_of_date, 120) + '''''''' ELSE '''' END 
-+ CASE WHEN @_commodity_id IS NOT NULL THEN '' AND sc.source_commodity_id IN ('' + @_commodity_id + '')'' ELSE '''' END
-+ CASE WHEN @_curve_id IS NOT NULL THEN '' AND sdd.curve_id IN ('' + @_curve_id + '')'' ELSE '''' END
-+ CASE WHEN @_location_id IS NOT NULL THEN '' AND sml.source_minor_location_id IN ('' + @_location_id + '')'' ELSE '''' END
-+ CASE WHEN @_reporting_group1 IS NULL THEN '''' ELSE '' AND sdh.reporting_group1 = '''''' + @_reporting_group1 + '''''''' END
-+ CASE WHEN @_reporting_group2 IS NULL THEN '''' ELSE '' AND sdh.reporting_group2 = '''''' + @_reporting_group2 + '''''''' END
-+ CASE WHEN @_reporting_group3 IS NULL THEN '''' ELSE '' AND sdh.reporting_group3 = '''''' + @_reporting_group3 + '''''''' END
-+ CASE WHEN @_reporting_group4 IS NULL THEN '''' ELSE '' AND sdh.reporting_group4 = '''''' + @_reporting_group4 + '''''''' END
-+ CASE WHEN @_reporting_group5 IS NULL THEN '''' ELSE '' AND sdh.reporting_group5 = '''''' + @_reporting_group5 + '''''''' END
+	+ CASE WHEN @_source_deal_header_id IS NOT NULL  THEN '' AND sdh.source_deal_header_id IN (''+ CAST(@_source_deal_header_id AS VARCHAR) + '')'' ELSE '''' END
+	+ CASE WHEN @_term_start IS NOT NULL THEN '' AND sdd.term_start>= '''''' + CONVERT(VARCHAR(10), @_as_of_date, 120) + '''''' AND sdd.term_start<= '''''' + CONVERT(VARCHAR(10), @_as_of_date, 120) + '''''''' ELSE '''' END 
+	+ CASE WHEN @_commodity_id IS NOT NULL THEN '' AND sc.source_commodity_id IN ('' + @_commodity_id + '')'' ELSE '''' END
+	+ CASE WHEN @_curve_id IS NOT NULL THEN '' AND sdd.curve_id IN ('' + @_curve_id + '')'' ELSE '''' END
+	+ CASE WHEN @_location_id IS NOT NULL THEN '' AND sml.source_minor_location_id IN ('' + @_location_id + '')'' ELSE '''' END
+	+ CASE WHEN @_reporting_group1 IS NULL THEN '''' ELSE '' AND sdh.reporting_group1 = '''''' + @_reporting_group1 + '''''''' END
+	+ CASE WHEN @_reporting_group2 IS NULL THEN '''' ELSE '' AND sdh.reporting_group2 = '''''' + @_reporting_group2 + '''''''' END
+	+ CASE WHEN @_reporting_group3 IS NULL THEN '''' ELSE '' AND sdh.reporting_group3 = '''''' + @_reporting_group3 + '''''''' END
+	+ CASE WHEN @_reporting_group4 IS NULL THEN '''' ELSE '' AND sdh.reporting_group4 = '''''' + @_reporting_group4 + '''''''' END
+	+ CASE WHEN @_reporting_group5 IS NULL THEN '''' ELSE '' AND sdh.reporting_group5 = '''''' + @_reporting_group5 + '''''''' END
 + ''
 GROUP BY sdd.location_id, sdh.contract_id, ISNULL(sdd.detail_commodity_id, sdh.commodity_id) 				 				  
 '' 
@@ -1868,8 +1830,8 @@ NULL block_name,NULL user_defined_block,NULL user_defined_block_id,NULL block_ty
 INTO  #tmp_pos_detail_torage
 FROM 
 	#temp_deals td 
+	INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = td.source_deal_detail_id
 	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = td.source_deal_header_id
 	INNER JOIN source_uom su ON su.source_uom_id = sdd.deal_volume_uom_id
 	LEFT JOIN source_price_curve_def spcd (nolock) ON spcd.source_curve_def_id=sdd.curve_id 
 	LEFT JOIN location_price_index lpi ON lpi.location_id = sdd.location_id AND lpi.commodity_id = ISNULL(sdd.detail_commodity_id,sdh.commodity_id)
@@ -1898,9 +1860,7 @@ exec(
 	''+@_storage_deals+'';
 	''+@_injection_withdrawal_deals+ '';
 	''+@_rhpb_0 +@_rhpb1 +@_rhpb2+@_rhpba1+@_rhpb3+@_rhpb4+@_rhpb5+@_sql_final
-)
-
-', report_id = @report_id_data_source_dest,
+)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
 	WHERE [name] = 'Position Detail View'
@@ -6897,6 +6857,72 @@ exec(
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
 	           WHERE ds.[name] = 'Position Detail View'
+	            AND dsc.name =  'period_alias_name'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Period Alias Name'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Position Detail View'
+			AND dsc.name =  'period_alias_name'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'period_alias_name' AS [name], 'Period Alias Name' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Position Detail View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Position Detail View'
+	            AND dsc.name =  'hr_rowid'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Hr Rowid'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Position Detail View'
+			AND dsc.name =  'hr_rowid'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'hr_rowid' AS [name], 'Hr Rowid' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Position Detail View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Position Detail View'
 	            AND dsc.name =  'reporting_group1'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -7227,50 +7253,17 @@ exec(
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
 	           WHERE ds.[name] = 'Position Detail View'
-	            AND dsc.name =  'period_alias_name'
+	            AND dsc.name =  'source_deal_detail_id'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
 		UPDATE dsc  
-		SET alias = 'Period Alias Name'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Position Detail View'
-			AND dsc.name =  'period_alias_name'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'period_alias_name' AS [name], 'Period Alias Name' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Position Detail View'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Position Detail View'
-	            AND dsc.name =  'hr_rowid'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Hr Rowid'
+		SET alias = 'Source Deal Detail Id'
 			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
 		WHERE ds.[name] = 'Position Detail View'
-			AND dsc.name =  'hr_rowid'
+			AND dsc.name =  'source_deal_detail_id'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
 	ELSE
@@ -7278,7 +7271,7 @@ exec(
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'hr_rowid' AS [name], 'Hr Rowid' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'source_deal_detail_id' AS [name], 'Source Deal Detail Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Position Detail View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -7310,4 +7303,3 @@ exec(
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
-	
