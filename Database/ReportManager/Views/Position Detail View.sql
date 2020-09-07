@@ -1,4 +1,4 @@
-BEGIN TRY
+ BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'SPDV019'
@@ -42,7 +42,7 @@ DECLARE @_summary_option CHAR(6) =null --''x'' --''y'' -- ''m'' --''d'' ------- 
 	,@_book_id VARCHAR(MAX) = null
 	,@_subbook_id VARCHAR(MAX) = NULL
 	,@_as_of_date VARCHAR(20) =null --''2020-09-07'' --''2020-06-30''
-	,@_source_deal_header_id VARCHAR(1000) = 45871 --540 -- --223683,
+	,@_source_deal_header_id VARCHAR(1000) =NULL -- 45871 --540 -- --223683,
 	,@_period_from VARCHAR(6) = NULL
 	,@_period_to VARCHAR(6) = NULL
 	,@_tenor_option VARCHAR(6) = NULL
@@ -314,7 +314,6 @@ IF NULLIF(@_format_option, '''') IS NULL
 	SET @_format_option = ''c''
 DECLARE @_term_start_temp DATETIME
 	,@_term_END_temp DATETIME
-
 CREATE TABLE #temp_deals (term_start date,term_end date, source_deal_detail_id int,source_deal_header_id int,physical_financial CHAR(1) COLLATE DATABASE_DEFAULT, pricing_type INT, internal_portfolio_id INT,template_id int)
 --print @_term_start
 --print @_as_of_date
@@ -807,9 +806,6 @@ begin
 		--+CASE WHEN @_tenor_option <> ''a'' THEN '' AND s.expiration_date>''''''+@_as_of_date+'''''' AND s.term_start>''''''+@_as_of_date+'''''''' ELSE '''' END 
 end
 	---------------------------end hourly_position_breakdown=null------------------------------------------------------------
-
-
-
 if @_physical_financial_flag<>''p'' 
 BEGIN 
 	SET @_dst_column = ''cast(CASE WHEN isnull(hb.add_dst_hour,0)<=0 THEN 0 ELSE 1 END as numeric(1,0))''  
@@ -1338,7 +1334,7 @@ SELECT
 	sdh.deal_id deal_id,
 	CASE WHEN vw.physical_financial_flag = ''''p'''' THEN ''''Physical'''' ELSE ''''Financial'''' END physical_financial_flag,
 	sdh.deal_date deal_date,
-	sml.Location_Name location,
+	CASE WHEN vw.physical_financial_flag = ''''f'''' THEN coalesce(sml.Location_Name, spcd.curve_name) ELSE sml.Location_Name END location,
 	spcd.source_curve_def_id [index_id],
 	spcd.curve_name [index],
 	spcd_proxy.curve_name proxy_index,
@@ -7303,3 +7299,4 @@ exec(
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
+	
