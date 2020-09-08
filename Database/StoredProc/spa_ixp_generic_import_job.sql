@@ -20703,8 +20703,8 @@ BEGIN
 			sdd.no_of_strikes = a.no_of_strikes,
 			sdd.payment_date = a.payment_date,
 			sdd.delivery_date = a.delivery_date,
-			sdd.shipper_code1 = scmd1.shipper_code_id,
-			sdd.shipper_code2 = scmd2.shipper_code_id
+			sdd.shipper_code1 = scmd1.shipper_code_mapping_detail_id,
+			sdd.shipper_code2 = scmd2.shipper_code_mapping_detail_id
 		'
  		SET @sql1 += ' FROM 
  		#temp_inserting_deal t
@@ -20931,8 +20931,8 @@ BEGIN
 							a.no_of_strikes,
 							a.payment_date,
 							a.delivery_date,
-							scmd1.shipper_code_id,
-							scmd2.shipper_code_id
+							scmd1.shipper_code_mapping_detail_id,
+							scmd2.shipper_code_mapping_detail_id
 							'
  				SET @sql1 += '	FROM #temp_inserting_deal t
  					INNER JOIN ' + @import_temp_table_name + ' a ON a.temp_id = t.temp_id
@@ -20996,7 +20996,7 @@ BEGIN
  				'
  	EXEC spa_print @sql1
  	EXEC(@sql1)
-
+	
 	UPDATE sdh
 	SET sdh.pricing_type = CASE
 								WHEN sdh.physical_financial_flag = 'f' THEN CASE WHEN sdd.formula_curve_id IS NULL THEN 46704 ELSE 46705 END
