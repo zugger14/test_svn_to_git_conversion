@@ -321,7 +321,44 @@ EXEC spa_get_output_schema_or_data @sql_query = @sql
 
 create nonclustered index indx_src_hour_breakdown on #src_hour_breakdown (hr,[period])
 
---select  '#src_hour_breakdown',count(1) from #src_hour_breakdown --order by term,hr,[period]
+IF @debug_mode = 1
+select  '#src_hour_breakdown',count(1) from #src_hour_breakdown --order by term,hr,[period]
+
+IF @mapping_id = 112704	--storage case
+BEGIN
+	DROP TABLE IF EXISTS #group_deals
+	CREATE TABLE #group_deals(group_source_deal_header_id INT, group_deal_id NVARCHAR(500))
+
+	INSERT INTO #group_deals(group_source_deal_header_id, group_deal_id)
+	SELECT DISTINCT lnk_deal.*
+	FROM #deal_max_term dmt
+	CROSS APPLY (
+		select source_deal_header_id,deal_id from source_deal_header where structured_deal_id = dmt.source_deal_header_id --AND source_deal_header_id <> dmt.source_deal_header_id
+	) lnk_deal
+	LEFT JOIN #deal_max_term dmt1 ON dmt1.source_deal_header_id = lnk_deal.source_deal_header_id
+	WHERE dmt1.source_deal_header_id is null
+	
+	drop table if exists #src_hour_breakdown_grp
+
+	IF EXISTS(SELECT 1 FROM #group_deals)
+	BEGIN
+		
+		SELECT *
+		INTO #src_hour_breakdown_grp
+		from #src_hour_breakdown sdh
+		cross join #group_deals a
+		UNION
+		SELECT *,null,deal_id
+		from #src_hour_breakdown 
+
+		UPDATE a
+		SET deal_id = group_deal_id
+		from #src_hour_breakdown_grp a
+		--INNER JOIN #src_hour_breakdown b ON a.deal_id = b.deal_id	AND a.term = b.term and a.hour = b.hour and a.minute = b.minute and a.is_dst = b.is_dst
+
+		
+	END
+END
 
 --Collect deals either from file, generic mapping
 IF OBJECT_ID(N'tempdb..#collect_deals') IS NOT NULL
@@ -351,9 +388,13 @@ SELECT DISTINCT sdh.source_deal_header_id, sdh.deal_id,sdh.counterparty_id,sdh.s
 	, sdd.location_id
 	, sdd.buy_sell_flag
 	, dmt.profile_name
+	, sdh.structured_deal_id
 INTO #collect_deals	
 FROM #deal_max_term dmt
-INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = dmt.source_deal_header_id
+OUTER APPLY (
+	select source_deal_header_id from source_deal_header where structured_deal_id = dmt.source_deal_header_id AND source_deal_header_id <> dmt.source_deal_header_id
+) lnk_deal
+INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = dmt.source_deal_header_id OR sdh.source_deal_header_id = lnk_deal.source_deal_header_id
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
 	AND sdd.term_start >= dmt.term_start 
 	AND sdd.term_end <= dmt.term_end
@@ -502,8 +543,12 @@ SET @sql = 'select  cd.profile_name, cd.deal_id,src.Term,src.hr , src.[period], 
 		, src.src_hr_min
 		, src.src_term_start 
 		, src.src_term_end 
-	FROM #src_hour_breakdown src
+	
 	'
+IF OBJECT_ID('tempdb..#src_hour_breakdown_grp') IS NULL
+SET @sql += ' FROM #src_hour_breakdown src '
+ELSE 
+SET @sql += ' FROM  #src_hour_breakdown_grp src '
 
 IF @mapping_id IN (112700,112703,112704)
 BEGIN
@@ -526,14 +571,17 @@ SET @sql += '
 		AND sddh.term_date = src.term 
 		AND sddh.hr_min = src.hr_min
 	'
+
 	
+
 EXEC spa_get_output_schema_or_data @sql_query = @sql
 		,@process_table_name = '#src_term_breakdown'
 		,@data_output_col_count = @total_columns OUTPUT
 		,@flag = 'data'
---select @sql
---SELECT TOP 10 '#src_term_breakdown', * FROM #src_term_breakdown		
---return
+
+If @debug_mode = 1
+SELECT '#src_term_breakdown',@sql, * FROM #src_term_breakdown	where term = '2020-01-01' and hr=1	
+
 IF OBJECT_ID(N'tempdb..#original_deal') IS NOT NULL
 	DROP TABLE #original_deal
 
@@ -556,8 +604,9 @@ IF OBJECT_ID(N'tempdb..#original_deal') IS NOT NULL
 		, src.src_term_end
 		, cd.contract_id
 		, cd.template_id
+		, cd.structured_deal_id
 	INTO #original_deal
-	--select top 1 *
+	--select top 1 * from #collect_deals
 	FROM #src_term_breakdown src
 	INNER JOIN #collect_deals cd ON (src.profile_name = cd.profile_name  OR src.deal_id = cd.deal_id)
 		AND src.term between cd.term_start AND cd.term_end
@@ -630,8 +679,9 @@ SET @sql = CAST('' AS NVARCHAR(MAX)) + N'
 		, IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, NULL,(IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume)*spc.curve_value)
 			) delta_pfc_price
 		, IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) + org.original_volume total_volume
-		, IIF( org.template_id = ' + CAST(@stg_withdrawal_template_id AS NVARCHAR(20)) + ', ISNULL(csw.wacog,0),
-			IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, src.uploaded_fixed_price,(org.original_volume*org.original_price 
+		, IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, src.uploaded_fixed_price,
+			IIF( org.template_id = ' + CAST(@stg_withdrawal_template_id AS NVARCHAR(20)) + ', ISNULL(csw.wacog,0),
+			(org.original_volume*org.original_price 
 				+ IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) * spc.curve_value
 				)/CASE WHEN IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) 
 					+ iif(nullIF(org.original_price,0) is null,0,org.original_volume) = 0 
@@ -642,13 +692,34 @@ SET @sql = CAST('' AS NVARCHAR(MAX)) + N'
 			)wap
 		, CAST(LEFT(org.src_hr_min,2) AS INT)  src_hr
 		, CAST(RIGHT(org.src_hr_min,2) AS INT)  src_period
+		, IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, src.uploaded_fixed_price,(org.original_volume*org.original_price 
+				+ IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) * spc.curve_value
+				)/CASE WHEN IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) 
+					+ iif(nullIF(org.original_price,0) is null,0,org.original_volume) = 0 
+				THEN 1 ELSE
+					IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) + iif(nullIF(org.original_price,0) is null,0,org.original_volume)
+					END
+				) pfc_wap
 	FROM #original_deal org 
 	INNER JOIN #src_term_breakdown  src ON src.deal_id = org.deal_id
 		AND org.term_start = src.[Term]
 		AND org.hr = src.hr
 		AND org.[period] =  src.[period]
-		AND org.is_dst = src.is_dst	
-	CROSS JOIN #generic_mapping_values gmv
+		AND org.is_dst = src.is_dst
+	OUTER APPLY(SELECT DISTINCT gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
+		FROM #generic_mapping_values gmv
+		LEFT JOIN source_deal_header sdh ON ISNULL(gmv.clm13_value,sdh.template_id) = sdh.template_id
+			AND sdh.source_deal_header_id = ISNULL(org.structured_deal_id,org.source_deal_header_id)
+		LEFT JOIN user_defined_deal_fields_template uddft ON uddft.template_id = sdh.template_id
+		INNER JOIN static_data_value sdv ON sdv.type_id = 5500 
+				AND uddft.field_id = sdv.value_id 
+				AND sdv.code = ''Delivery Path''
+		LEFT JOIN user_defined_deal_fields uddf ON uddf.udf_template_id = uddft.udf_template_id 
+			AND uddf.source_deal_header_id = sdh.source_deal_header_id
+		WHERE 1=1 
+			AND (gmv.clm13_value IS NULL OR gmv.clm13_value = ISNULL(sdh.template_id,-1))
+			AND (gmv.clm20_value IS NULL OR gmv.clm20_value = ISNULL(uddf.udf_value,-1))		
+	) gmv
 	LEFT JOIN #source_price_curve max_curve ON max_curve.source_curve_def_id = COALESCE(src.uploaded_curve_id,gmv.clm18_value,org.curve_id)
 			AND CONVERT(date, max_curve.maturity_date) =  org.term_start 
 			AND DATEPART(hour,max_curve.maturity_date) = org.hr -1
@@ -709,6 +780,7 @@ SET @sql = '
 		, AVG(pv.total_volume) volume
 		, AVG(pv.wap) price
 		, MAX(pv.internal_desk_id) internal_desk_id
+		, AVG(pv.pfc_wap) pfc_price
 	INTO ' + @calc_process_table + '
 	FROM #pfc_view pv	' +
 	CASE WHEN @aggregation_level = 980 --monthly
@@ -725,5 +797,4 @@ SET @sql = '
 	IF @debug_mode = 1
 	EXEC('select ''final data'', * from ' + @calc_process_table + ' order by deal_id,term_start,term_end,hr,period,is_dst' )
 END
-	
-GO
+

@@ -44,7 +44,8 @@ BEGIN
 					'Storage PFC' ,
 					'N' ,
 					NULL ,
-					'UPDATE [temp_process_table]
+					'
+UPDATE [temp_process_table]
 SET [Term Date] = CONVERT(VARCHAR(10),dbo.FNAClientTosqlDate([Term Date]), 120)
 
 UPDATE a
@@ -222,8 +223,41 @@ BEGIN
 		AND sddh.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
+END
 
 
+
+DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
+DECLARE @user_name VARCHAR(100) = dbo.FNADBUser()
+DECLARE @job_name VARCHAR(MAX)
+DECLARE @sql NVARCHAR(MAX)
+DECLARE @after_insert_process_table VARCHAR(300)
+DECLARE @set_process_id VARCHAR(40), @output_table  NVARCHAR(200)
+SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37)) 
+
+SET @output_table = ''adiha_process.dbo.temp_output_details_''+ @set_process_id 
+							
+							
+
+    SET @sql = ''
+	UPDATE sddh
+	SET price = a.pfc_price
+		, volume = a.volume
+	OUTPUT inserted.source_deal_detail_id
+	INTO #temp_inserted_sdd(source_deal_detail_id)
+	FROM '' + @output_table + '' a
+	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = a.source_deal_header_id	AND sdh.structured_deal_id <> a.source_deal_header_id	
+	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	INNER JOIN source_deal_detail_hour sddh ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+		AND sddh.term_date = a.term_start --BETWEEN a.term_start AND a.term_end
+		AND CAST(LEFT(sddh.hr,2) AS INT) = a.hr
+		AND CAST(RIGHT(sddh.hr,2) AS INT) = a.period
+		AND sddh.[is_dst] = a.is_dst''
+		
+	EXEC (@sql)
+	
+IF EXISTS(SELECT 1 FROM #temp_inserted_sdd)	 
+BEGIN		
 	UPDATE sdd
 		SET deal_volume = sub.volume, 
 			fixed_price = sub.price
@@ -239,22 +273,14 @@ BEGIN
 	) sub
 	ON sub.source_deal_detail_id = sdd.source_deal_detail_id
 
-
-	DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
-	DECLARE @user_name VARCHAR(100) = dbo.FNADBUser()
-	DECLARE @job_name VARCHAR(MAX)
-	DECLARE @sql NVARCHAR(MAX)
-	DECLARE @after_insert_process_table VARCHAR(300)
 	
 	SET @after_insert_process_table = dbo.FNAProcessTableName(''after_insert_process_table'', @user_name, @_process_id)
 	EXEC (''CREATE TABLE '' + @after_insert_process_table + ''( source_deal_header_id INT)'')
 		
 	SET @sql = ''INSERT INTO '' + @after_insert_process_table + ''(source_deal_header_id) 
-				SELECT ISNULL(temp.transfer_deal_id, temp.offset_deal_id) [source_deal_header_id] 
-				FROM #temp_trans_off temp 
-				UNION ALL 
-				SELECT temp.source_deal_header_id [source_deal_header_id] 
-				FROM #temp_trans_off temp
+				SELECT DISTINCT source_deal_header_id 
+				FROM  #temp_inserted_sdd sdd
+				INNER JOIN source_deal_detail sdd1 ON sdd1.source_deal_detail_id = sdd.source_deal_detail_id
 				''
 	EXEC (@sql)
 		
@@ -301,7 +327,8 @@ ALTER COLUMN term_date VARCHAR(50)
 			SET ixp_rules_name = 'Storage PFC'
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
-				, before_insert_trigger = 'UPDATE [temp_process_table]
+				, before_insert_trigger = '
+UPDATE [temp_process_table]
 SET [Term Date] = CONVERT(VARCHAR(10),dbo.FNAClientTosqlDate([Term Date]), 120)
 
 UPDATE a
@@ -479,8 +506,41 @@ BEGIN
 		AND sddh.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
+END
 
 
+
+DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
+DECLARE @user_name VARCHAR(100) = dbo.FNADBUser()
+DECLARE @job_name VARCHAR(MAX)
+DECLARE @sql NVARCHAR(MAX)
+DECLARE @after_insert_process_table VARCHAR(300)
+DECLARE @set_process_id VARCHAR(40), @output_table  NVARCHAR(200)
+SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37)) 
+
+SET @output_table = ''adiha_process.dbo.temp_output_details_''+ @set_process_id 
+							
+							
+
+    SET @sql = ''
+	UPDATE sddh
+	SET price = a.pfc_price
+		, volume = a.volume
+	OUTPUT inserted.source_deal_detail_id
+	INTO #temp_inserted_sdd(source_deal_detail_id)
+	FROM '' + @output_table + '' a
+	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = a.source_deal_header_id	AND sdh.structured_deal_id <> a.source_deal_header_id	
+	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	INNER JOIN source_deal_detail_hour sddh ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+		AND sddh.term_date = a.term_start --BETWEEN a.term_start AND a.term_end
+		AND CAST(LEFT(sddh.hr,2) AS INT) = a.hr
+		AND CAST(RIGHT(sddh.hr,2) AS INT) = a.period
+		AND sddh.[is_dst] = a.is_dst''
+		
+	EXEC (@sql)
+	
+IF EXISTS(SELECT 1 FROM #temp_inserted_sdd)	 
+BEGIN		
 	UPDATE sdd
 		SET deal_volume = sub.volume, 
 			fixed_price = sub.price
@@ -496,22 +556,14 @@ BEGIN
 	) sub
 	ON sub.source_deal_detail_id = sdd.source_deal_detail_id
 
-
-	DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
-	DECLARE @user_name VARCHAR(100) = dbo.FNADBUser()
-	DECLARE @job_name VARCHAR(MAX)
-	DECLARE @sql NVARCHAR(MAX)
-	DECLARE @after_insert_process_table VARCHAR(300)
 	
 	SET @after_insert_process_table = dbo.FNAProcessTableName(''after_insert_process_table'', @user_name, @_process_id)
 	EXEC (''CREATE TABLE '' + @after_insert_process_table + ''( source_deal_header_id INT)'')
 		
 	SET @sql = ''INSERT INTO '' + @after_insert_process_table + ''(source_deal_header_id) 
-				SELECT ISNULL(temp.transfer_deal_id, temp.offset_deal_id) [source_deal_header_id] 
-				FROM #temp_trans_off temp 
-				UNION ALL 
-				SELECT temp.source_deal_header_id [source_deal_header_id] 
-				FROM #temp_trans_off temp
+				SELECT DISTINCT source_deal_header_id 
+				FROM  #temp_inserted_sdd sdd
+				INNER JOIN source_deal_detail sdd1 ON sdd1.source_deal_detail_id = sdd.source_deal_detail_id
 				''
 	EXEC (@sql)
 		
@@ -556,7 +608,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-T-SQL01\shared_docs_TRMTracker_Release_Enercity\temp_Note\0',
+						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
@@ -658,4 +710,4 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-		
+	
