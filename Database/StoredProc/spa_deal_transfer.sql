@@ -558,7 +558,7 @@ BEGIN
 					SET source_deal_group_id = sdg.source_deal_groups_id
 					FROM source_deal_detail sdd
 					INNER JOIN #temp_sdg_transfer sdg ON sdg.source_deal_header_id = sdd.source_deal_header_id
-						AND sdd.source_deal_group_id = sdg.old_id
+						--AND sdd.source_deal_group_id = sdg.old_id
 						AND sdd.leg =  ISNULL(sdg.leg,sdd.leg)
 						
 					--UPDATE sdd
@@ -770,7 +770,7 @@ BEGIN
 					FROM source_deal_detail sdd
 					INNER JOIN #temp_sdg_transfer sdg
 						ON sdg.source_deal_header_id = sdd.source_deal_header_id
-						AND sdd.source_deal_group_id = sdg.old_id
+						--AND sdd.source_deal_group_id = sdg.old_id
 						AND sdd.leg =  ISNULL(sdg.leg,sdd.leg)
 
 					--UPDATE sdd
