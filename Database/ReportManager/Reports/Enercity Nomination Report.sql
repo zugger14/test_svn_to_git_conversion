@@ -57,7 +57,7 @@ BEGIN TRY
 	
 
 		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
-		SELECT TOP 1 rpage.report_page_id, 'Enercity Nomination Report', '9F239C20_03E5_4F47_81A9_55A6A1EB2959', 1,'','','.xlsx',',', 
+		SELECT TOP 1 rpage.report_page_id, 'Enercity Nomination Report', '9F239C20_03E5_4F47_81A9_55A6A1EB2959', 2,'','','.xlsx',',', 
 		-100000,'n','n',0	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
@@ -68,7 +68,7 @@ BEGIN TRY
 	
 
 		INSERT INTO report_dataset_paramset(paramset_id, root_dataset_id, where_part, advance_mode)
-		SELECT TOP 1 rp.report_paramset_id AS paramset_id, rd.report_dataset_id AS root_dataset_id, '(  ENDEV1.[External ID/Time Series ID] = ''@External ID/Time Series ID'')' AS where_part, 0
+		SELECT TOP 1 rp.report_paramset_id AS paramset_id, rd.report_dataset_id AS root_dataset_id, NULL AS where_part, 0
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -113,7 +113,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 11 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 12 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -141,7 +141,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 12 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 13 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -169,35 +169,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 20 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Enercity Nomination Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Enercity Nomination Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Enercity Nomination Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'ENDEV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'ENDEV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Enercity Nomination Data Extract View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'External ID/Time Series ID'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, 'n' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 16 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, 'n' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 17 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -225,7 +197,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 6 AS param_order, 0 AS param_depth, 'Deal ID' AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 7 AS param_order, 0 AS param_depth, 'Deal ID' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -253,7 +225,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 19 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 20 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -281,7 +253,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 10 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 11 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -309,7 +281,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 9 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 10 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -337,7 +309,91 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '14' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, 'Convert Timezone' AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Enercity Nomination Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Enercity Nomination Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Enercity Nomination Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'ENDEV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'ENDEV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Enercity Nomination Data Extract View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'external_id1'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Enercity Nomination Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Enercity Nomination Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Enercity Nomination Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'ENDEV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'ENDEV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Enercity Nomination Data Extract View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'book_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 6 AS param_order, 0 AS param_depth, 'Commodity' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Enercity Nomination Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Enercity Nomination Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Enercity Nomination Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'ENDEV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'ENDEV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Enercity Nomination Data Extract View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'commodity_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '14' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, 'Convert Timezone' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -365,7 +421,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 7 AS param_order, 0 AS param_depth, 'Counterparty' AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 8 AS param_order, 0 AS param_depth, 'Counterparty' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -393,7 +449,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 13 AS param_order, 0 AS param_depth, 'Deal Status' AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 14 AS param_order, 0 AS param_depth, 'Deal Status' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -421,7 +477,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 14 AS param_order, 0 AS param_depth, 'Deal Type' AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 15 AS param_order, 0 AS param_depth, 'Deal Type' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -449,7 +505,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 8 AS param_order, 0 AS param_depth, 'Location' AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 9 AS param_order, 0 AS param_depth, 'Location' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -477,7 +533,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, 'p' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 15 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, 'p' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 16 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -505,7 +561,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 17 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 18 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -533,7 +589,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 18 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 19 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
@@ -584,68 +640,12 @@ BEGIN TRY
 			AND ds.[name] = 'Enercity Nomination Data Extract View' 
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'book_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, 'Commodity' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Enercity Nomination Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Enercity Nomination Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Enercity Nomination Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'ENDEV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'ENDEV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Enercity Nomination Data Extract View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'commodity_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Enercity Nomination Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Enercity Nomination Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Enercity Nomination Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'ENDEV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'ENDEV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Enercity Nomination Data Extract View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'sub_id'	
 	
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Enercity Nomination Report'
