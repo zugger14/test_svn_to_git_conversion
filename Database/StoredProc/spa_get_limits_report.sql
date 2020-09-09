@@ -21,7 +21,8 @@ CREATE PROC [dbo].[spa_get_limits_report]
     @drillPosLimitType VARCHAR(10) = NULL,
     @drillflag VARCHAR(1) = NULL,
     @drillTenorLimit FLOAT = NULL,
-	@deal_level CHAR(1) = 'n'
+	@deal_level CHAR(1) = 'n',
+	@source_deal_header_id  VARCHAR(MAX) = NULL
  AS
 /*
 
@@ -234,6 +235,7 @@ BEGIN
 		--CASE WHEN @c_book_id is not null THEN ' AND ssbm.fas_book_id in ('+@c_book_id+')' ELSE '' END
 	
 		+ ' WHERE 1 = 1 '
+		+ CASE WHEN @source_deal_header_id IS NOT NULL AND @deal_level= 'y' THEN ' AND sdh.source_deal_header_id  IN ('+CAST(@source_deal_header_id AS VARCHAR(50) )+')' ELSE '' END
 		+CASE WHEN @c_deal_type IS NOT NULL THEN ' AND sdh.source_deal_type_id ='+CAST(@c_deal_type AS VARCHAR) ELSE '' END
 		+CASE WHEN @c_deal_subtype IS NOT NULL THEN ' AND sdh.deal_sub_type_type_id ='+CAST(@c_deal_subtype AS VARCHAR(20)) ELSE '' END
 		+CASE WHEN @c_party_id IS NOT NULL THEN 
