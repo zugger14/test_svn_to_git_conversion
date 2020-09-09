@@ -129,7 +129,7 @@ BEGIN
 			NULLIF(remote_directory, '') remote_directory,
 			IIF(is_inbound_default = 'y', 1, 0) is_inbound_default,
 			IIF(is_outbound_default = 'y', 1, 0) is_outbound_default,
-			endpoint_type
+			NULLIF(endpoint_type , '') endpoint_type
 		INTO #temp_general_form
 		FROM   OPENXML(@idoc_form, 'Root/FormXML', 1)
 		WITH (
