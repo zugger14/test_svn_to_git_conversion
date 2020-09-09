@@ -43,12 +43,11 @@ SET NOCOUNT ON
 --EXEC spa_maintain_transaction_job 'EE1CC915_2180_4241_81A8_7D9C88779535',0,null,'farrms_admin'
 
 
-
 drop table #tmp_header_deal_id
 drop table #tmp_position_breakdown
 declare @process_id varchar(50),@insert_type int,@partition_no int,@user_login_id varchar(30),@deal_delete varchar(1)
 drop table #source_deal_detail_hour
-select  @process_id='454082FB_7742_4691_ABF4_2AF408EA3450',@insert_type=0,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
+select  @process_id='A53DFDA7_1254_4D9C_89BE_EA5485A4DA5C',@insert_type=0,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
 --report_position_farrms_admin_49AFBFA8_BC35_404B_8590_78F087008D35
 --TRUNCATE TABLE select * from adiha_process.dbo.report_position_farrms_admin_E5D1C26F_C332_4A0A_8082_F3936706EEA8
 --insert into adiha_process.dbo.report_position_farrms_admin_testing select 4100,'d'
@@ -1528,7 +1527,7 @@ BEGIN TRY
 				LEFT OUTER JOIN hour_block_term hb1 (nolock) ON hb1.dst_group_value_id=hb.dst_group_value_id
 					AND hb1.block_define_id=hb.block_define_id
 					AND hb1.term_date-1=hb.term_date
-				inner join ' + @deal_detail_hour + 
+				left join ' + @deal_detail_hour + 
 					' ddh1 (nolock) on tph.profile_id=ddh1.profile_id AND  hb1.term_date=ddh1.term_date and ddh.period=ddh1.period
 				LEFT JOIN #tmp_header_deal_id thdi ON tph.source_deal_detail_id=thdi.source_deal_detail_id
 				outer apply (select MAX(exp_date) exp_date from holiday_group h
@@ -1538,7 +1537,7 @@ BEGIN TRY
 						and tph.term_start between h.hol_date AND isnull(nullif(h.hol_date_to,''1900-01-01''),h.hol_date)
 				) h_grp 
 				where tph.profile_type is NOT NULL and hb.term_date is not null
-					and tph.profile_id is not null
+					and tph.profile_id is not null and isnull(ddh.profile_id ,ddh1.profile_id) is not null
 				'
 
 				EXEC spa_print @st_sql
