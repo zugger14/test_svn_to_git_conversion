@@ -111,7 +111,7 @@ SELECT
 	,g.deal_type
 	,g.pricing_type
 	,g.internal_portfolio_id
-	,g.physical_financial_flag
+	,'f' physical_financial_flag
    	,ssbm.source_system_book_id1
 	,ssbm.source_system_book_id2
 	,ssbm.source_system_book_id3
