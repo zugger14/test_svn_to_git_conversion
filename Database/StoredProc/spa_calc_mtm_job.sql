@@ -199,8 +199,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =268799 ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2020-03-27' , --'2017-02-15',
+	@source_deal_header_id =98447 ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2019-01-31' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -217,9 +217,9 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2020-01-01' ,
-	@term_end = '2020-02-29' ,
-	@calc_type = 'm',
+	@term_start = '2019-01-01' ,
+	@term_end = '2019-01-31' ,
+	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
 	@deal_list_table = null,
@@ -12465,6 +12465,7 @@ FROM #temp_deals td
 /*
 Added logic for Tiered based fees calculations
 */
+
 CREATE TABLE #tmp_fees(
 		[id] INT identity(1,1),
 		source_deal_detail_id INT,
@@ -12482,12 +12483,13 @@ CREATE TABLE #tmp_fees(
 		from_volume FLOAT,
 		to_volume FLOAT,
 		vol_slot FLOAT
-		,counterparty_id int, contract_id int
+		,counterparty_id int, contract_id int,
+		rec_pay CHAR(1)
 	)
 
 
 SET @qry8a='
-	INSERT INTO #tmp_fees(source_deal_detail_id,leg,term_start,term_end,index_market,field_id,field_name,price,volume,[value],minimum_value,maximum_value,from_volume,to_volume,vol_slot,counterparty_id, contract_id )
+	INSERT INTO #tmp_fees(source_deal_detail_id,leg,term_start,term_end,index_market,field_id,field_name,price,volume,[value],minimum_value,maximum_value,from_volume,to_volume,vol_slot,counterparty_id, contract_id ,rec_pay)
 	SELECT	 
 			td.source_deal_detail_id,
 			td.leg,
@@ -12499,12 +12501,13 @@ SET @qry8a='
 			COALESCE(spc.curve_value, sfv2.value, sfv.value) price,
 			abs(td.total_volume) volume,
 			COALESCE(spc.curve_value,sfv2.value, sfv.value) value,		
-			ISNULL(sfv2.minimum_value, sfv.minimum_value) minimum_value,
-			ISNULL(sfv2.maximum_value, sfv.maximum_value) maximum_value,
+			sfv.minimum_value minimum_value,
+			sfv.maximum_value maximum_value,
 			ISNULL(sfv.from_volume,0),
 			ISNULL(sfv.to_volume,999999999),
 			CASE WHEN sfv.type=3 then sfv.to_volume - sfv.from_volume+1 ELSE abs(td.total_volume) END vol_slot
-			,isnull(udddf.counterparty_id,uddf.counterparty_id) counterparty_id,isnull(udddf.contract_id,uddf.contract_id) contract_id
+			,isnull(udddf.counterparty_id,uddf.counterparty_id) counterparty_id,isnull(udddf.contract_id,uddf.contract_id) contract_id,
+			sfv.rec_pay
 	FROM	(
 			SELECT 
 				source_deal_header_id,
@@ -12549,6 +12552,12 @@ SET @qry8a='
 		INNER JOIN #uddft udddft ON uddf.udf_template_id=udddft.udf_template_id 
 		WHERE uddf.source_deal_header_id=td.source_deal_header_id 
 		AND udddft.template_id = sdh.template_id and udddft.field_id IN (-5604,-5658,-10000261)) udf
+	
+		LEFT JOIN #uddft udsa ON udsa.template_id = sdh.template_id
+		AND udsa.field_id = -10000329  --Initiator/Aggressor
+		LEFT JOIN #uddf uddfsa on uddfsa.udf_template_id = udsa.udf_template_id 
+		AND uddfsa.source_deal_header_id = td.source_deal_header_id
+
 	LEFT JOIN source_fee sf On sf.fees=CAST(uddft.field_id AS VARCHAR) 
 		AND ((sf.counterparty = td.broker_id AND calc_for = CASE WHEN udft.internal_field_type IN (18723,18724,18733,18737) THEN ''b'' WHEN udft.internal_field_type = 18739 THEN ''o'' ELSE ''t'' END)
 			OR (calc_for = ''o'' AND udft.internal_field_type NOT IN(18723,18724,18733,18737,18739,18740,18741)) 
@@ -12566,6 +12575,7 @@ SET @qry8a='
 	else '' end	+' ) sfv1
 		LEFT JOIN source_fee_volume sfv ON 	sfv.source_fee_id = sf.source_fee_id AND ISNULL(sfv.effective_date,''1900-01-01'') = sfv1.effective_date AND ISNULL(sfv.subsidiary,td.fas_sub_id) = td.fas_sub_id AND	ISNULL(sfv.deal_type,td.source_deal_type_id) = td.source_deal_type_id AND	ISNULL(sfv.buy_sell,td.buy_sell_flag) = td.buy_sell_flag
 			AND	COALESCE(sfv.commodity,sdh.commodity_id,-1) = ISNULL(sdh.commodity_id,-1) AND	COALESCE(sfv.location,td.location_id,-1) = ISNULL(td.location_id,-1)
+			AND ISNULL(sfv.aggressor_initiator,'''') = CASE  uddfsa.udf_value WHEN 1 THEN ''i'' WHEN 0 THEN ''a'' ELSE '''' END
 	'+case when @calc_type='s' then 
 	' AND COALESCE(sdh.reporting_jurisdiction_id,sdh.state_value_id,-1)=COALESCE(sfv.jurisdiction,sdh.reporting_jurisdiction_id,sdh.state_value_id,-1) and COALESCE(sdh.reporting_tier_id,sdh.tier_value_id,-1)=COALESCE(sfv.tier,sdh.reporting_tier_id,sdh.tier_value_id,-1)'
 	else '' end	+'
@@ -12573,11 +12583,6 @@ SET @qry8a='
 	LEFT JOIN source_price_curve spc on spc.source_curve_def_id = sfv.index_market AND spc.as_of_date = spc1.as_of_date  AND spc.maturity_date = td.term_start
 
 	--------------Checking condition for Sleeve, Spread AND Initiator/Aggressor--------------
-
-	LEFT JOIN user_defined_deal_fields_template_main udsa ON udsa.template_id = sdh.template_id
-		AND udsa.field_id = -10000329  --Initiator/Aggressor
-	LEFT JOIN user_defined_deal_fields uddfsa on uddfsa.udf_template_id = udsa.udf_template_id 
-		AND uddfsa.source_deal_header_id = td.source_deal_header_id
 	LEFT JOIN user_defined_deal_fields_template_main uds ON uds.template_id = sdh.template_id
 		AND uds.field_id = -10000335  --Sleeve
 	LEFT JOIN user_defined_deal_fields uddfs on uddfs.udf_template_id = uds.udf_template_id 
@@ -12586,12 +12591,8 @@ SET @qry8a='
 		AND uds1.field_id= -10000336	 --Spread	
 	LEFT JOIN user_defined_deal_fields uddfs1 on uddfs1.udf_template_id = uds1.udf_template_id 
 		AND uddfs1.source_deal_header_id = td.source_deal_header_id
-	OUTER APPLY(SELECT CASE WHEN COALESCE(sfv.fee_for_agressor, sfv.fee_for_initiator) IS NOT NULL THEN 
-					CASE WHEN uddfsa.udf_value = ''y'' THEN sfv.fee_for_initiator ELSE sfv.fee_for_agressor END
-					ELSE sfv.[value] END * 
-				CASE WHEN uddfs.udf_value = ''y'' THEN 0 WHEN uddfs1.udf_value = ''y'' THEN 0.5 ELSE 1 END [value],
-				CASE WHEN uddfsa.udf_value = ''n'' THEN sfv.minimum_amount_agressor ELSE sfv.minimum_value END minimum_value,
-				CASE WHEN uddfsa.udf_value = ''n'' THEN NULL ELSE sfv.maximum_value END maximum_value
+	OUTER APPLY(SELECT sfv.[value]  * 
+				CASE WHEN uddfs.udf_value = ''y'' THEN 0 WHEN uddfs1.udf_value = ''y'' THEN 0.5 ELSE 1 END [value]
 				WHERE udft.internal_field_type IN (18723,18739,18740,18741)) sfv2
 	WHERE 1 = 1 --	udft.internal_field_type IN(18723,18724,18733,18737)			
 	AND ISNUMERIC(ISNULL(sfv2.value, sfv.value)) = 1
@@ -12601,9 +12602,7 @@ SET @qry8a='
 
 
 
-
-
-
+	
 
 	;WITH CTE AS (
 		SELECT [id],
@@ -12624,7 +12623,7 @@ SET @qry8a='
 			vol_slot,
 			vol_slot running_total,
 			CAST(0 AS FLOAT) pre_total 
-			,counterparty_id,contract_id
+			,counterparty_id,contract_id,rec_pay
 		FROM #tmp_fees
 		UNION ALL
 		SELECT tmp.id,
@@ -12645,7 +12644,7 @@ SET @qry8a='
 			tmp.vol_slot,
 			tmp.vol_slot+CTE.running_total running_total,
 			CTE.vol_slot+CTE.pre_total pre_total 
-			,CTE.counterparty_id,CTE.contract_id
+			,CTE.counterparty_id,CTE.contract_id,CTE.rec_pay
 		FROM #tmp_fees tmp 
 		INNER JOIN CTE on CTE.id+1 = tmp.id 
 		AND tmp.source_deal_detail_id = CTE.source_deal_detail_id
@@ -12664,7 +12663,7 @@ SET @qry8a='
 			ELSE c.vol_slot  END * c.[value])/nullif(MAX(c.volume),0) [value],
 		MIN(c.minimum_value) minimum_value,
 		MAX(c.maximum_value) maximum_value
-		,max(c.counterparty_id) counterparty_id,max(c.contract_id) contract_id
+		,max(c.counterparty_id) counterparty_id,max(c.contract_id) contract_id,MAX(c.rec_pay) rec_pay
 	INTO #tmp_source_fees
 	FROM CTE c
 	GROUP BY c.source_deal_detail_id,
@@ -13006,7 +13005,7 @@ set @qry7b='
 		group by source_deal_header_id,source_deal_detail_id,leg, term_start, term_end
 	) tlm	
 	outer apply ( SELECT 
-					CASE WHEN COALESCE(udddf.receive_pay,uddf.receive_pay,case when ISNULL(gaivs.st_buy_sell_flag,td.buy_sell_flag)=''b'' then ''p'' else ''r'' end)=''r'' THEN  
+					CASE WHEN COALESCE(sfv.rec_pay,udddf.receive_pay,uddf.receive_pay,case when ISNULL(gaivs.st_buy_sell_flag,td.buy_sell_flag)=''b'' then ''p'' else ''r'' end)=''r'' THEN  
 						1  
 					ELSE -1 END * CASE WHEN udft.internal_field_type = 18743 THEN -1 ELSE 1 END sgn) sgn
 		 '		
@@ -13392,7 +13391,7 @@ set @qry8a='
 				FROM source_deal_settlement  where source_deal_header_id = td.source_deal_header_id
 			) sds
 		OUTER APPLY(SELECT SUM(settlement_amount) settlement_amount FROM source_deal_settlement WHERE source_deal_header_id = td.source_deal_header_id AND as_of_date = sds.as_of_date) sds1
-		outer apply ( select case when COALESCE(udddf.receive_pay,uddf.receive_pay,case when td.buy_sell_flag=''b'' then ''p'' else ''r'' end)=''r'' then 1 else -1 end sgn ) sgn		--------#############--------------------
+		outer apply ( select case when COALESCE(sfv.rec_pay,udddf.receive_pay,uddf.receive_pay,case when td.buy_sell_flag=''b'' then ''p'' else ''r'' end)=''r'' then 1 else -1 end sgn ) sgn		--------#############--------------------
 	WHERE	udft.internal_field_type IN(18723,18724,18733,18737,18740)			
 			 AND ISNUMERIC(COALESCE(sfv.value, udddf.udf_value,uddf.udf_value,cast(udf_formula.formula_eval_value as varchar))) = 1
 			 AND ((op.source_deal_header_id is not null and td.leg = 1) or op.source_deal_header_id is null) '
@@ -13507,6 +13506,9 @@ exec('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'
 	+@sqlstmt+@qry1b+@qry2b+@qry3b+@qry4b+@qry5b+@qry6b+@qry7b+@qry8b+@qry1a
 	+@qry2a+@qry3a+@qry4a+@qry5a+@qry6a+@qry7a+@qry8a+@qry9a
 )
+
+
+
 
 IF ((SELECT COUNT(*) FROM #fees_breakdown) = 0 AND @calc_type = 's'
 	AND (SELECT COUNT(*) FROM #temp_deals) = 0
