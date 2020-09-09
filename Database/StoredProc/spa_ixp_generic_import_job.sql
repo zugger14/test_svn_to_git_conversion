@@ -128,8 +128,8 @@ DECLARE @sql								NVARCHAR(MAX),
 		@source_deal_header_ids				NVARCHAR(MAX),
 		@final_stg_table					NVARCHAR(400) = ''--This variable is used to preserve original data set to avoid issue in debug mode where same script is run multiple times. In some template like ixp_meter_data_template original data is manupulated before proceeding to insert data in main table.
 		, @total_columns					INT = NULL		
-		, @source_ixp_column_mapping		NVARCHAR(100)		
-		, @ixp_destination_column_mapping	NVARCHAR(100)	-- This variable is used to collect ixp_column and destination table column mapping.
+		, @source_ixp_column_mapping		NVARCHAR(200)		
+		, @ixp_destination_column_mapping	NVARCHAR(200)	-- This variable is used to collect ixp_column and destination table column mapping.
 		, @translate_language				BIT = 0
 		, @destination_table_name			NVARCHAR(500)
 		, @dest_columns_to_exclude			NVARCHAR(MAX)

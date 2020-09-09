@@ -206,7 +206,7 @@ DECLARE @user_name              NVARCHAR(100)
 	, @debug_mode NVARCHAR(50) 
 	, @status NVARCHAR(100)
 	, @total_columns INT = NULL
-	, @source_ixp_column_mapping NVARCHAR(100)
+	, @source_ixp_column_mapping NVARCHAR(200)
 
 IF @execute_in_queue IS NULL
 BEGIN
