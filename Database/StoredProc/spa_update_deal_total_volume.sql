@@ -94,7 +94,7 @@ SET CONTEXT_INFO @contextinfo
 -- select * from update process_deal_position_breakdown set process_status=0
 -- delete process_deal_position_breakdown
 
-select @source_deal_header_ids=13638, 
+select @source_deal_header_ids=99786 , 
 	@process_id = null, --'52C2B537_BDBA_41DB_BE8D_B657F070A041',
 	@insert_type =1,
 	@partition_no =1,
@@ -716,8 +716,7 @@ BEGIN TRY
 				end 
 			end factor
 		) term_factor
-		left join source_deal_detail_position ext on ext.source_deal_detail_id=sdd.source_deal_detail_id
-		where sdd.position_formula_id is null and ext.source_deal_detail_id is null;
+		where sdd.position_formula_id is null; 
 
 		delete sddp
 		from source_deal_detail_position sddp 
@@ -732,6 +731,7 @@ BEGIN TRY
 		EXEC dbo.spa_print @sql
 		EXEC(@sql)	
 	end
+
 
 
 	run_job_breakdown:
