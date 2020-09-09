@@ -20979,16 +20979,24 @@ BEGIN
 			SET @sql1 += '
 					LEFT JOIN shipper_code_mapping scm
 						ON scm.counterparty_id = cpty.source_counterparty_id
-					LEFT JOIN shipper_code_mapping_detail scmd1 
-						ON scmd1.shipper_code1 = a.shipper_code1 
-							AND scmd1.location_id = sml.source_minor_location_id 
-							AND scmd1.effective_date <= a.term_start
-							AND scmd1.shipper_code_id = scm.shipper_code_id
-					LEFT JOIN shipper_code_mapping_detail scmd2 
-						ON scmd2.shipper_code = a.shipper_code2 
-							AND scmd2.location_id = sml.source_minor_location_id 
-							AND scmd2.effective_date <= a.term_start
-							AND scmd2.shipper_code_id = scm.shipper_code_id
+					OUTER APPLY (
+						SELECT TOP 1 shipper_code_mapping_detail_id shipper_code_mapping_detail_id
+						FROM shipper_code_mapping_detail  scmd
+						WHERE   scmd.shipper_code_id = scm.shipper_code_id
+							AND scmd.shipper_code1 = a.shipper_code1 
+							AND scmd.location_id = sml.source_minor_location_id 
+							AND scmd.effective_date >= a.term_start
+						ORDER BY scmd.effective_date, scmd.shipper_code1
+					) scmd1
+					OUTER APPLY (
+						SELECT top 1 shipper_code_mapping_detail_id shipper_code_mapping_detail_id
+						FROM shipper_code_mapping_detail  scmd
+						WHERE scmd.shipper_code_id = scm.shipper_code_id
+							AND scmd.shipper_code = a.shipper_code2
+							AND scmd.location_id = sml.source_minor_location_id 
+							AND scmd.effective_date >= a.term_start
+						ORDER BY scmd.effective_date, scmd.shipper_code
+					) scmd2
 					LEFT JOIN static_data_value sdv_sg 
 						ON sdv_sg.code = a.strike_granularity 
 						AND sdv_sg.type_id = 978
@@ -20996,7 +21004,7 @@ BEGIN
  				'
  	EXEC spa_print @sql1
  	EXEC(@sql1)
-	
+
 	UPDATE sdh
 	SET sdh.pricing_type = CASE
 								WHEN sdh.physical_financial_flag = 'f' THEN CASE WHEN sdd.formula_curve_id IS NULL THEN 46704 ELSE 46705 END
