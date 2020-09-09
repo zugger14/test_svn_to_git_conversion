@@ -190,7 +190,8 @@ BEGIN
 			IIF(fee_for_agressor = '', NULL, fee_for_agressor) fee_for_agressor,
 			IIF(fee_for_initiator = '', NULL, fee_for_initiator) fee_for_initiator,
 			IIF(minimum_amount_agressor = '', NULL, minimum_amount_agressor) minimum_amount_agressor,
-			IIF(rec_pay = '', NULL, rec_pay) rec_pay
+			IIF(rec_pay = '', NULL, rec_pay) rec_pay,
+            IIF(aggressor_initiator = '', NULL,aggressor_initiator ) aggressor_initiator
 	    INTO   #source_fee_volume
 	    FROM   OPENXML(@idoc, '/Root/GridGroup/GridSourceFeeVolume/GridRow', 2)
 	           WITH (
@@ -220,7 +221,8 @@ BEGIN
 				   fee_for_agressor VARCHAR(100) '@fee_for_agressor',
 				   fee_for_initiator VARCHAR(100) '@fee_for_initiator',
 				   minimum_amount_agressor VARCHAR(100) '@minimum_amount_agressor',
-				   rec_pay NCHAR(1) '@rec_pay'
+				   rec_pay NCHAR(1) '@rec_pay',
+                   aggressor_initiator NCHAR(1) '@aggressor_initiator'
 	           )
 	    
 	    IF OBJECT_ID('tempdb..#source_fee_product') IS NOT NULL
@@ -321,7 +323,8 @@ BEGIN
 						fee_for_agressor,
 						fee_for_initiator,
 						minimum_amount_agressor,
-						rec_pay
+						rec_pay,
+                        aggressor_initiator
 	        	      )
 	        	    SELECT @source_fee_id,
 	        			effective_date,
@@ -348,7 +351,8 @@ BEGIN
 						fee_for_agressor,
 						fee_for_initiator,
 						minimum_amount_agressor,
-						rec_pay
+						rec_pay,
+                        aggressor_initiator
 	        	    FROM   #source_fee_volume
 	        	END 
 	        	
@@ -546,7 +550,8 @@ BEGIN
 						fee_for_agressor,
 						fee_for_initiator,
 						minimum_amount_agressor,
-						rec_pay
+						rec_pay,
+                        aggressor_initiator
 
 	        	    INTO   #insert_source_fee_volume
 	        	    FROM   #source_fee_volume
@@ -602,7 +607,8 @@ BEGIN
 						fee_for_agressor,
 						fee_for_initiator,
 						minimum_amount_agressor,
-						rec_pay
+						rec_pay,
+                        aggressor_initiator
 	        	      )
 	        	    SELECT @source_fee_id,
 						effective_date,
@@ -629,7 +635,8 @@ BEGIN
 						fee_for_agressor,
 						fee_for_initiator,
 						minimum_amount_agressor,
-						rec_pay
+						rec_pay,
+                        aggressor_initiator
 	        	    FROM   #insert_source_fee_volume
 	        	END
 	        	
@@ -668,7 +675,8 @@ BEGIN
 						IIF(fee_for_agressor = '', NULL, fee_for_agressor) fee_for_agressor,
 						IIF(fee_for_initiator = '', NULL, fee_for_initiator) fee_for_initiator,
 						IIF(minimum_amount_agressor = '', NULL, minimum_amount_agressor) minimum_amount_agressor,
-						IIF(rec_pay = '', NULL, rec_pay) rec_pay
+						IIF(rec_pay = '', NULL, rec_pay) rec_pay,
+                        IIF(aggressor_initiator = '',NULL, aggressor_initiator) aggressor_initiator
 
 	        	    INTO   #update_source_fee_volume
 	        	    FROM   #source_fee_volume
@@ -700,7 +708,8 @@ BEGIN
 							source_fee_volume.fee_for_agressor = IIF(usfp.fee_for_agressor ='',NULL,usfp.fee_for_agressor),
 							source_fee_volume.fee_for_initiator = IIF(usfp.fee_for_initiator ='',NULL,usfp.fee_for_initiator),
 							source_fee_volume.minimum_amount_agressor = IIF(usfp.minimum_amount_agressor ='',NULL,usfp.minimum_amount_agressor),
-							source_fee_volume.rec_pay = IIF(usfp.rec_pay ='',NULL,usfp.rec_pay)
+							source_fee_volume.rec_pay = IIF(usfp.rec_pay ='',NULL,usfp.rec_pay),
+                            source_fee_volume.aggressor_initiator = IIF(usfp.aggressor_initiator ='',NULL,usfp.aggressor_initiator)
 							 
 	        	    FROM   source_fee_volume sfp
 	        	           INNER JOIN #update_source_fee_volume usfp
