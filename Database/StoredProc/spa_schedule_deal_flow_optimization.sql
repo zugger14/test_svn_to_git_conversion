@@ -4239,7 +4239,8 @@ BEGIN -- Insert/Update Deal data
 		, [deal_rules]
 		, [confirm_rule]
 		, [description4]
-		, [timezone_id])
+		, [timezone_id]
+		, [profile_granularity])
 	OUTPUT 
 		inserted.[source_system_id]
 		, inserted.[deal_id]
@@ -4404,7 +4405,8 @@ BEGIN -- Insert/Update Deal data
 		, h.[deal_rules]
 		, h.[confirm_rule]
 		, h.[description4]
-		, h.[timezone_id] --    SELECT *
+		, h.[timezone_id]
+		, IIF(@is_hourly_calc = 1, @granularity, NULL) --    SELECT *
 	FROM #tmp_vol_split_deal_final_grp p
 	INNER JOIN #source_deal_header h 
 		ON h.source_deal_header_id = p.templete_deal_id	 
