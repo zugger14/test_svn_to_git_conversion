@@ -29,9 +29,11 @@ AS
 DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
 SET CONTEXT_INFO @contextinfo
 DECLARE @parent_deal_ids VARCHAR(1000)
-DECLARE @max_as_of_date DATETIME = '2019-12-27'
-SELECT @parent_deal_ids = '266700,267217,267234,267417,268026'
+DECLARE @max_as_of_date DATETIME = NULL--'2019-12-27'
+DECLARE @flag VARCHAR(1000)
 
+SELECT @parent_deal_ids = '94125'
+set @flag = 'rewind_cascade'
 --select *from static_data_value where type_id = 5600
 --select deal_status, * from source_deal_header where source_deal_header_id=359
 --update source_deal_header set deal_status=5604 where source_deal_header_id=359
@@ -47,6 +49,9 @@ DECLARE @sdv_from_deal INT, @sdv_to_deal INT, @sql VARCHAR(MAX), @err_status VAR
  
 DECLARE @clm1_value VARCHAR(50), @clm2_value VARCHAR(50), @clm3_value VARCHAR(50), @clm4_value VARCHAR(50), @clm5_value VARCHAR(50), @clm6_value VARCHAR(50),
 		@clm7_value VARCHAR(50), @clm8_value VARCHAR(50), @clm9_value VARCHAR(50), @clm10_value VARCHAR(50), @clm11_value VARCHAR(50)
+
+DECLARE @after_update_process_table VARCHAR(300), @job_name VARCHAR(200), @job_process_id VARCHAR(200) = dbo.FNAGETNEWID()
+DECLARE @error_message VARCHAR(1000)
 
 IF OBJECT_ID(N'tempdb..#mapping') IS NOT NULL
 	DROP TABLE #mapping
@@ -454,7 +459,6 @@ BEGIN
 
 		COMMIT TRAN
 
-		DECLARE @after_update_process_table VARCHAR(300), @job_name VARCHAR(200), @job_process_id VARCHAR(200) = dbo.FNAGETNEWID()
 		SET @after_update_process_table = dbo.FNAProcessTableName('after_insert_process_table', @user_name, @job_process_id)
 
 		IF OBJECT_ID(@after_update_process_table) IS NOT NULL
@@ -478,7 +482,6 @@ BEGIN
 		SELECT 'Success' ErrorCode, 'Deal Cascading' Module, 'spa_cascade_deal' Area, 'Success' [Status], 'Deal Cascading successfully completed.' [Message], '' Recommendation
 	END TRY
 	BEGIN CATCH
-		DECLARE @error_message VARCHAR(1000)
 		SET @error_message = ERROR_MESSAGE()
 	
 		IF @@TRANCOUNT > 0
@@ -504,11 +507,186 @@ BEGIN
 
 	EXEC spa_message_board 'i', @user_name, NULL, 'Cascade Deals', @url_desc, '', '', @err_status, 'Cascade deal', NULL, @process_id
 END
-
 IF @flag = 'rewind_cascade'
 BEGIN 
+	BEGIN TRY 
+		BEGIN TRAN
 
-	select 1 
+		IF OBJECT_ID('tempdb..#data_collection_reverse_cascade') IS NOT NULL
+			DROP TABLE #data_collection_reverse_cascade
+
+		IF OBJECT_ID('tempdb..#detail_collection_reverse_cascade') IS NOT NULL
+			DROP TABLE #detail_collection_reverse_cascade
+
+		-- collect cascaded deals
+		;WITH REVERSE_CASCADE_CTE AS (
+		SELECT sdh.source_deal_header_id, sdh.ext_deal_id 
+		FROM source_deal_header sdh
+		INNER JOIN dbo.FNASplit(@parent_deal_ids, ',') i ON i.item = sdh.source_deal_header_id
+		UNION ALL
+		SELECT e.source_deal_header_id, e.ext_deal_id
+		FROM source_deal_header  e
+		INNER JOIN REVERSE_CASCADE_CTE ecte ON CAST(ecte.source_deal_header_id AS VARCHAR(100)) = e.ext_deal_id
+		)
+		SELECT *, CASE WHEN source_deal_header_id IN(@parent_deal_ids) THEN 1 ELSE CASE WHEN ext_deal_id IN(@parent_deal_ids) THEN 2 ELSE 3 END END [level]
+			INTO #data_collection_reverse_cascade
+		FROM REVERSE_CASCADE_CTE
+
+		IF OBJECT_ID('tempdb..#min_parent_term_start') IS NOT NULL
+			DROP TABLE #min_parent_term_start
+
+		CREATE TABLE #min_parent_term_start (term_start DATETIME, term_end DATETIME, source_deal_header_id INT, leg INT, physical_financial_flag CHAR(1) COLLATE DATABASE_DEFAULT)
+
+		-- get detail of cascasde deals
+		SELECT sdh.source_deal_header_id, sdd.source_deal_detail_id, sdd.term_start, sdd.term_end, sdh.[level], sdd.leg, sdd.location_id, sdh.ext_deal_id
+			INTO #detail_collection_reverse_cascade
+		FROM #data_collection_reverse_cascade  sdh 
+		INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	
+		--get parent deal term start and term end
+		INSERT INTO #min_parent_term_start
+		SELECT MIN(r.term_start) term_start, MAX(r.term_end) term_end, i.item, r.leg, MAX(sdh.physical_financial_flag) physical_financial_flag
+		FROM #detail_collection_reverse_cascade r
+		INNER JOIN dbo.FNASplit(@parent_deal_ids, ',') i ON i.item = r.source_deal_header_id
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = r.source_deal_header_id 
+		GROUP BY i.item, r.leg
+
+
+		DECLARE @report_position VARCHAR(1000)
+		DECLARE @user_login_id VARCHAR(1000) = dbo.FNADBUser()
+		SET @report_position = dbo.FNAProcessTableName('report_position', @user_login_id, @process_id)
+ 
+		-- delete position of all parent leg except leg, also delete all child cascade deals position
+		SET @sql = 'CREATE TABLE ' + @report_position + ' (source_deal_header_id INT, source_deal_detail_id INT)
+				
+					INSERT INTO ' + @report_position + ' 
+					SELECT source_deal_header_id, source_deal_detail_id
+					FROM (SELECT source_deal_header_id, source_deal_detail_id, term_start FROM #detail_collection_reverse_cascade dc
+						EXCEPT 
+						SELECT sdd.source_deal_header_id, sdd.source_deal_detail_id, sdd.term_start 
+						FROM #detail_collection_reverse_cascade sdd
+						INNER JOIN #min_parent_term_start m ON m.source_deal_header_id = sdd.source_deal_header_id
+							AND sdd.Leg = m.leg
+							AND sdd.term_start = m.term_start
+					) z '
+		EXEC spa_print @sql
+		EXEC(@sql)
+	
+		--delete other legs for parent
+		SET @sql = '
+					--SELECT * 
+					DELETE sdd 
+					FROM ' + @report_position + ' rp
+					INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = rp.source_deal_detail_id 
+					INNER JOIN dbo.FNASplit(''' + @parent_deal_ids + ''' , '','') i ON i.item = sdd.source_deal_header_id '
+
+		EXEC spa_print @sql
+		EXEC(@sql)
+
+		--/*
+		-- update parent leg 1 detail
+		--SELECT 
+		--	--* 
+		UPDATE sdd
+		SET sdd.term_start					= m.term_start,
+			sdd.term_end					= m.term_end,
+			sdd.contract_expiration_date	= m.term_start,
+			sdd.price_adder 				= NULL,	
+			sdd.formula_curve_id			= NULL
+		FROM #min_parent_term_start m
+		INNER JOIN source_deal_detail sdd ON m.source_deal_header_id = sdd.source_deal_header_id
+			AND sdd.Leg = m.leg
+			AND sdd.term_start = m.term_start
+
+		-- update parent header
+		UPDATE sdh
+		SET 
+			--* 
+		sdh.pricing_type = 46700
+		FROM #min_parent_term_start m
+		INNER JOIN source_deal_detail sdd ON m.source_deal_header_id = sdd.source_deal_header_id
+			AND sdd.Leg = m.leg
+			AND sdd.term_start = m.term_start
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+
+		--update detail physical_financial_flag
+		UPDATE sdd
+		SET sdd.physical_financial_flag = m.physical_financial_flag
+		FROM #min_parent_term_start m
+		INNER JOIN source_deal_detail sdd ON m.source_deal_header_id = sdd.source_deal_header_id
+			AND sdd.Leg = m.leg
+			AND sdd.term_start = m.term_start
+
+		-- parent id location update start
+		IF OBJECT_ID('tempdb..#parent_location_id') IS NOT NULL
+			DROP TABLE #parent_location_id
+
+		CREATE TABLE #parent_location_id (source_deal_header_id INT, location_id INT) 
+
+		INSERT INTO #parent_location_id
+		SELECT dc.ext_deal_id, MAX(sdd.location_id) location_id
+		FROM #min_parent_term_start mp
+		INNER JOIN #detail_collection_reverse_cascade dc ON CAST(mp.source_deal_header_id AS VARCHAR(1000)) = dc.ext_deal_id
+		INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id =  dc.source_deal_detail_id
+		WHERE mp.physical_financial_flag = 'p'
+		GROUP BY dc.ext_deal_id
+
+		--select * 
+		UPDATE sdd
+		SET sdd.location_id = pli.location_id
+		FROM #parent_location_id pli 
+		INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = pli.source_deal_header_id
+		-- parent id location update end
+
+		--*/
+	
+		--/*
+		--EXEC('select * from ' + @report_position)
+		--position delete
+		EXEC [dbo].[spa_maintain_transaction_job] @process_id, 7, NULL, @user_login_id
+
+		DECLARE @to_delete_deal_ids VARCHAR(MAX)
+
+		--quaterly and monthly cascade deals to delete
+		SELECT @to_delete_deal_ids = STUFF((SELECT DISTINCT ',' + CAST(tdi.source_deal_header_id AS VARCHAR(1000))
+											FROM #data_collection_reverse_cascade tdi
+ 											WHERE  tdi.level > 1
+											FOR XML PATH('')), 1, 1, '')
+
+		--SELECT @to_delete_deal_ids
+		EXEC spa_source_deal_header @flag ='d', @deal_ids = @to_delete_deal_ids, @comments='cascasde rewind', @call_from = 'scheduling', @call_from_import = 'y'
+
+		SET @after_update_process_table = dbo.FNAProcessTableName('after_insert_process_table', @user_name, @job_process_id)
+
+		IF OBJECT_ID(@after_update_process_table) IS NOT NULL
+		BEGIN
+			EXEC('DROP TABLE ' + @after_update_process_table)
+		END
+				
+		EXEC ('CREATE TABLE ' + @after_update_process_table + '(source_deal_header_id INT)')
+
+		SET @sql = 'INSERT INTO ' + @after_update_process_table + '(source_deal_header_id) 
+					SELECT item source_deal_header_id FROM dbo.FNASplit(''' + @parent_deal_ids + ''', '','')'
+		EXEC(@sql)
+			
+		SET @sql = 'spa_deal_insert_update_jobs ''i'', ''' + @after_update_process_table + ''''
+		SET @job_name = 'spa_deal_insert_update_jobs_' + @job_process_id
+ 		
+		EXEC spa_run_sp_as_job @job_name, @sql, 'spa_deal_insert_update_jobs', @user_name	
+
+		SELECT 'Success' ErrorCode, 'Deal Cascading Rewind' Module, 'spa_cascade_deal' Area, 'Success' [Status], 'Deal Cascading Rewind successfully completed.' [Message], '' Recommendation
+		--*/
+		COMMIT TRAN 
+		--ROLLBACK TRAN 
+	END TRY 
+	BEGIN CATCH
+ 		SET @error_message = ERROR_MESSAGE()
+	
+		IF @@TRANCOUNT > 0
+			ROLLBACK TRAN 
+
+		SELECT 'Error' ErrorCode, 'Deal Cascading Rewind' Module, 'spa_cascade_deal' Area, 'Error' [Status], @error_message [Message], '' Recommendation
+	END CATCH
 END
 
 GO
