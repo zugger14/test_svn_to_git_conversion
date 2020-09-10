@@ -88,8 +88,31 @@ SET NOCOUNT ON
 	EXEC [spa_drop_all_temp_table] 
 	
 	-- SPA parameter values
-	SELECT @flag = 'i', @box_ids = '1', @flow_date_from = '2000-09-01', @flow_date_to = '2000-09-01', @sub = NULL, @str = NULL, @book = NULL, @sub_book = NULL, @contract_process_id = '1B0CD287_A6BD_433C_BC13_A95BA7638394', @from_priority = NULL, @to_priority = NULL, @call_from = 'flow_opt', @target_uom = '1158', @reschedule = '0', @granularity = '982'
 
+
+
+	select 
+	@flag = 'i'
+	, @box_ids = '1'
+	, @flow_date_from = '2002-02-01'
+	, @flow_date_to = '2002-02-01'
+	, @sub = NULL
+	, @str = NULL
+	, @book = NULL
+	, @sub_book = NULL
+	, @contract_process_id = 'BCCDACBA_F5F1_4D04_BEA0_97C771CFF55C'
+	, @from_priority = NULL
+	, @to_priority = NULL
+	, @call_from = 'flow_auto'
+	, @target_uom = 1158
+	, @reschedule = 1
+	, @granularity = 982
+	, @receipt_deals_id  = -1 
+	, @delivery_deals_id  = 100901
+
+
+
+	
 
 
 --transport_deal_id	deal_volume		up_down_stream	source_deal_header_id
@@ -3879,6 +3902,54 @@ BEGIN --Data Prepararion
 			AND sdh.deal_id LIKE 'WTHD[_]%'
 			--AND epg.product_name IS NULL
 
+		IF  CHARINDEX(',', @delivery_deals_id) = 0 
+		BEGIN 
+			IF EXISTS(			
+					SELECT 1 
+					FROM  source_deal_header sdh				
+					LEFT JOIN static_data_value sdv
+						ON sdv.value_id = sdh.internal_portfolio_id
+						AND sdv.type_id = 39800
+					WHERE ISNULL(sdv.code, '-1') = 'Complex-LTO'
+					AND sdh.source_deal_header_id = @delivery_deals_id --@delivery_deals_id
+			)
+			BEGIN
+				DECLARE @header_buy_sell_flag CHAR(1)
+
+				SELECT @header_buy_sell_flag = header_buy_sell_flag
+				FROM  source_deal_header sdh				
+				LEFT JOIN static_data_value sdv
+					ON sdv.value_id = sdh.internal_portfolio_id
+					AND sdv.type_id = 39800
+				WHERE ISNULL(sdv.code, '-1') = 'Complex-LTO'
+					AND sdh.source_deal_header_id = @delivery_deals_id --@delivery_deals_id
+
+				IF @header_buy_sell_flag = 'b'
+				BEGIN
+
+					DELETE ed 
+					FROM #existing_deals ed
+					INNER JOIN source_deal_detail sdd
+						ON ed.source_deal_header_id  = sdd.source_deal_header_id				
+					WHERE leg = 1 
+						AND	sdd.buy_sell_flag = 's'
+					
+				END
+				ELSE
+				BEGIN
+					DELETE ed
+					FROM #existing_deals ed
+					INNER JOIN source_deal_detail sdd
+						ON ed.source_deal_header_id  = sdd.source_deal_header_id				
+					WHERE leg = 1 
+						AND	sdd.buy_sell_flag = 'b'
+					
+				END
+				
+			END
+		END
+
+
 	END
 	ELSE 
 	BEGIN
@@ -4012,6 +4083,9 @@ BEGIN --Data Prepararion
 				
 	END
 
+
+
+	
 END --Data Prepararion
 
 IF EXISTS(SELECT 1 FROM  #collect_deals) --Checked Template deals 
@@ -4050,12 +4124,14 @@ BEGIN TRY
 			WHERE source_deal_header_id = od.transport_deal_id
 				
 		) sdd
-		INNER JOIN #existing_deals rs 
+		INNER JOIN #existing_deals rs 		
 			ON rs.leg1_loc_id = sdd.leg1_loc_id
 			AND rs.leg2_loc_id = sdd.leg2_loc_id
 			AND rs.contract_id = od.contract_id
+			AND od.transport_deal_id = rs.source_deal_header_id 
 		WHERE od.flow_date BETWEEN @flow_date_from AND @flow_date_to 
-					 
+
+	 
 		DELETE optimizer_detail 
 		OUTPUT	deleted.optimizer_header_id
 				,deleted.flow_date
@@ -4872,8 +4948,6 @@ BEGIN -- Insert/Update Deal data
 	INTO  #inserted_deal_detail111 -- SELECT * FROM #inserted_deal_detail111
 	FROM #inserted_deal_detail
 
-	
-
 	IF @call_from IN( 'flow_opt', 'flow_auto') AND @is_hourly_calc = 1
 	BEGIN
 
@@ -4888,6 +4962,12 @@ BEGIN -- Insert/Update Deal data
 					INNER JOIN source_deal_detail_hour sddh
 						ON sddh.source_deal_detail_id = idd.source_deal_detail_id
 						AND sddh.hr =  RIGHT(''0'' + CAST(cdmh.hour AS VARCHAR(10)), 2) + '':00''
+					INNER JOIN source_deal_header sdh
+						ON sdh.source_deal_header_id = idd.source_deal_header_id
+					LEFT JOIN static_data_value sdv
+						ON sdv.value_id = sdh.internal_portfolio_id
+						AND sdv.type_id = 39800
+					WHERE ISNULL(sdv.code, ''-1'') <> ''Complex-LTO''
 					'
 		EXEC(@sql)
 

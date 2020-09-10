@@ -25,7 +25,7 @@ AS
 
 /* DEBUG
 
---select * from process_deal_position_breakdown
+
 
 IF OBJECT_ID('tempdb..#temp_mdq_avail') IS NOT NULL
 DROP TABLE #temp_mdq_avail
@@ -43,9 +43,10 @@ EXEC spa_print 'Use spa_print instead of PRINT statement in debug mode.'
 --Drops all temp tables created in this scope.
 EXEC [spa_drop_all_temp_table] 
 
-DECLARE @source_deal_header_id INT = 100766 --b
+DECLARE @source_deal_header_id INT = 100901 --s
+--DECLARE @source_deal_header_id INT = 100903 --b
 --DECLARE @source_deal_header_id INT = 100573 -- 100582 --s(1) -- 100573 --s (22) --100546 -b (1)
-
+ 
 --DECLARE @source_deal_header_id INT = 100582 -- 100582 --s(1) -- 100573 --s (22) --100546 -b (1)
 
 --DECLARE @source_deal_header_id INT = 100633 -- 100582 --s(1) -- 100573 --s (22) --100546 -b (1)
@@ -131,6 +132,7 @@ FROM(
 
 
 SET @all_physical_deals = @source_deal_header_id
+
 
 
 --select @all_physical_deals return;
@@ -604,7 +606,6 @@ BEGIN
 	SET @flow_date_from = @deal_term_start -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_start, 'f')
 	SET @flow_date_to = @deal_term_end -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_end, 'f')
 
-
 	
 	WHILE (@flow_date_from <= @flow_date_to)
 	BEGIN
@@ -625,7 +626,14 @@ BEGIN
 			SET @reschedule = 0
 		END
 
-		--select @source_deal_header_id, @reschedule, @flow_date_from, @transport_deal_id, @process_id return;
+
+		--select @reschedule,@flow_date_from
+
+		--if @flow_date_from = '2002-02-01'
+		--BEGIN
+		--	select @source_deal_header_id, @reschedule,@flow_date_from,@transport_deal_id,@process_id  return;
+		--END
+
 
 
 		EXEC [dbo].[spa_auto_deal_schedule]
@@ -636,6 +644,10 @@ BEGIN
 			@process_id = @process_id
 
 		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
+
+
+
+
 
 		SET @sql = '
 			INSERT INTO #temp_transport_deal
@@ -655,6 +667,9 @@ BEGIN
 					')'
 		EXEC(@sql)
 
+		--	print @sql
+
+
 		IF @header_buy_sell_flag = 'b'
 		BEGIN
 			SET @sql = '
@@ -669,6 +684,30 @@ BEGIN
 					'
 			EXEC(@sql)
 
+		END 
+
+
+	
+		IF @header_buy_sell_flag = 'b'
+		BEGIN
+
+	
+			DELETE ttd
+			FROM #temp_transport_deal ttd
+			INNER JOIN source_deal_detail sdd
+				ON ttd.source_deal_header_id = sdd.source_deal_header_id
+			WHERE leg = 1 
+				AND	sdd.buy_sell_flag = 's'
+		END
+		ELSE
+		BEGIN
+			
+			DELETE ttd
+			FROM #temp_transport_deal ttd
+			INNER JOIN source_deal_detail sdd
+				ON ttd.source_deal_header_id = sdd.source_deal_header_id
+			WHERE leg = 1 
+				AND	sdd.buy_sell_flag = 'b'
 		END 
 
 		SET @flow_date_from =  [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, 1, @flow_date_from), 'f')
@@ -771,6 +810,7 @@ BEGIN
 	SELECT source_deal_header_id
 	FROM #temp_transport_deal
 	WHERE type = 'Transport'
+
 
 	IF EXISTS(SELECT 1 FROM #temp_updated_deals)
 	BEGIN
@@ -1049,7 +1089,7 @@ BEGIN
 	WHERE type = 'Withdrawal' 
 		AND @header_buy_sell_flag = 'b'
 
-	/*	
+	/*
 	SELECT @capacity_deal_id = sdh.source_deal_header_id
 	FROM source_deal_header sdh
 	INNER JOIN source_deal_header_template sdht
