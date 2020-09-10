@@ -47,9 +47,9 @@ DECLARE
 	@_deal_type_id NVARCHAR(20),
 	@_physical_financial_flag NVARCHAR(20)=''p'',
 	@_deal_status_id NVARCHAR(30),
-	@_as_of_date  NVARCHAR(100)= NULL,--''2020-07-24'',--''2020-07-21'',  
-    @_term_start NVARCHAR(100)= NULL, --''2020-08-19'',--''2021-10-31'',--''2020-07-22'',  
-	@_term_END NVARCHAR(100)= NULL,--''2020-08-19'',--''2021-10-31'', --''2020-07-22'',  
+	@_as_of_date  NVARCHAR(100)=NULL, -- ''2020-09-01'',--''2020-07-21'',  
+    @_term_start NVARCHAR(100)=NULL, -- ''2020-09-02'',--''2021-10-31'',--''2020-07-22'',  
+	@_term_END NVARCHAR(100)=NULL, -- ''2020-09-02'',--''2021-10-31'', --''2020-07-22'',  
 	@_location_ids NVARCHAR(500),
 	@_shipper_code_ids1  NVARCHAR(500),
 	@_shipper_code_ids2  NVARCHAR(500),
@@ -86,7 +86,6 @@ DECLARE
 --	SET @_source_deal_header_id = ''@source_deal_header_id''		
 --IF ''@position_hour_end'' <> ''NULL''
 --	SET @_position_hour_end = ''@position_hour_end''
-		
 IF OBJECT_ID(N''tempdb..#books'') IS NOT NULL
 DROP TABLE #books
 IF OBJECT_ID(N''tempdb..#temp_deals'') IS NOT NULL
@@ -171,7 +170,6 @@ CREATE TABLE #books (
 	sub_book NVARCHAR(150) COLLATE DATABASE_DEFAULT
 	,counterparty_id int
  )   
-  
 SET @_Sql = 
 ''
 	INSERT INTO  #books   
@@ -189,16 +187,39 @@ SET @_Sql =
 	+isnull('' AND stra.entity_id IN ('' + @_stra_id + '')''  ,'''')       
 	+isnull('' AND book.entity_id IN ('' + @_book_id + '')''   ,'''')         
 	+isnull('' AND ssbm.book_deal_type_map_id IN ('' + @_subbook_id + '')''  ,'''')  
-        
 exec spa_print @_Sql    
 EXEC ( @_Sql)    
 -- select * from #temp_deals
 select @_Sql =''
-insert into #temp_deals(source_deal_header_id,buy_sell_flag,source_deal_detail_id,leg,physical_financial_flag
-	,shipper_code1,shipper_code2,shipper_code_id1,shipper_code_id2,term_start,term_end,curve_id,location_id,external_id)
-	
-select sdd.source_deal_header_id,sdd.buy_sell_flag,sdd.source_deal_detail_id,sdd.leg,sdd.physical_financial_flag,scmd.shipper_code
-	,scmd.shipper_code1,sdd.shipper_code1,sdd.shipper_code2,sdd.term_start,sdd.term_end,sdd.curve_id,sdd.location_id,scmd.external_id
+				insert into #temp_deals(
+				source_deal_header_id,
+				buy_sell_flag,
+				source_deal_detail_id,
+				leg,physical_financial_flag,
+				shipper_code2,
+				shipper_code1,
+				shipper_code_id1,
+				shipper_code_id2,
+				term_start,
+				term_end,
+				curve_id,
+				location_id,
+				external_id)
+select 
+		sdd.source_deal_header_id,
+		sdd.buy_sell_flag,
+		sdd.source_deal_detail_id,
+		sdd.leg,
+		sdd.physical_financial_flag,
+		scmd.shipper_code,
+		scmd.shipper_code1,
+		sdd.shipper_code1,
+		sdd.shipper_code2,
+		sdd.term_start,
+		sdd.term_end,
+		sdd.curve_id,
+		sdd.location_id,
+		scmd.external_id
 ''
 + case when isnull(@_source_deal_header_ids,'''')<>'''' then
 '' FROM dbo.SplitCommaSeperatedValues(''+@_source_deal_header_ids+'') f
@@ -226,11 +247,14 @@ end +''
 		--(select max(effective_date) effective_date from shipper_code_mapping_detail where shipper_code_id=sdd.shipper_code2
 		--	and location_id=sdd.location_id and effective_date<=''''''+@_as_of_date+''''''
 		--) max_eff2
-		left join shipper_code_mapping_detail scmd on scmd.shipper_code_mapping_detail_id=sdd.shipper_code1
+		
+	left join shipper_code_mapping_detail scmd on scmd.shipper_code_mapping_detail_id=sdd.shipper_code2
+		
 		--	--and scmd1.location_id=sdd.location_id and scmd1.effective_date=max_eff1.effective_date
 		--left join shipper_code_mapping_detail scmd2 on scmd2.shipper_code_mapping_detail_id=sdd.shipper_code1
 		--	and scmd2.location_id=sdd.location_id and scmd2.effective_date=max_eff2.effective_date
-	where sdd.shipper_code1 is not null and sdd.shipper_code2 is not null 
+	
+	where sdd.shipper_code2 is not null and sdd.shipper_code1 is not null 
 		and scmd.shipper_code is not null  and scmd.shipper_code1 is not null and scmd.external_id is not null 
 	''
 	+isnull('' AND sdh.counterparty_id in ('' + @_counterparty_ids+'')'','''')
@@ -312,7 +336,6 @@ FROM  #position_deal vw
 GROUP BY isnull(spcd1.source_curve_def_id ,spcd.source_curve_def_id),vw.source_deal_header_id
 	,isnull(spcd1.source_curve_def_id ,spcd.source_curve_def_id) ,vw.location_id
 	, vw.term_start,su.uom_name,su.source_uom_id,vw.Period,vw.source_deal_detail_id
-	 
 SELECT s.source_deal_header_id,s.[physical/Financial],s.commodity_id,s.[Term],cast((s.hr25) AS NUMERIC(38,20)) dst_hr,
 	CAST(s.hr1 AS NUMERIC(38,20)) [1],
 	CAST(s.hr2 - CASE WHEN s.apply_dst=''y'' THEN  CASE WHEN hb.add_dst_hour=2 THEN isnull(s.hr25,0) ELSE 0 END ELSE 0 END  AS NUMERIC(38,20)) [2],
@@ -449,7 +472,6 @@ SET @_Sql = ''SELECT from_tz.TIMEZONE_NAME timezone_from
 	,CASE WHEN '''''' + ISNULL(@_position_hour_end, ''n'') + '''''' = ''''y'''' THEN ''''Yes'''' ELSE ''''No'''' END [position_hour_end]
 	,convert(varchar(5), dateadd(minute,tdp.Period,to_dt.to_dt), 8) [Interval_Start]
 	,convert(varchar(5),dateadd(minute,case when tdp.granularity=982 then 60  else 15 end,dateadd(minute,tdp.Period,to_dt.to_dt)), 8) [Interval_end]
-	
 	--,position,source_uom_id uom_id ,uom_name
 	,books.sub_id
 	,books.strat_id
