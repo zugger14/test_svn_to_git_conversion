@@ -1028,7 +1028,7 @@ BEGIN
 				BEGIN		
 
 					INSERT INTO #storage_position_html
-					EXEC spa_storage_position_report @book_entity_id = ''' + @book + ''', @location_id = ''' + @from_location + ISNULL(',' + @to_location, '') + ''', @term_start = ''' + convert(VARCHAR(50), @flow_date_from, 21)+ ''',@term_end = ''' + convert(VARCHAR(50), @flow_date_to, 21) + ''', @uom = ''' + CAST(@uom AS VARCHAR(10))+ ''', @volume_conversion = ''' + CAST(@uom AS VARCHAR(10)) + ''', @call_from=''optimization''
+					EXEC spa_storage_position_report ' + ISNULL('@book_entity_id = ''' + @book + ''', ', '') + '@location_id = ''' + @from_location + ISNULL(',' + @to_location, '') + ''', @term_start = ''' + convert(VARCHAR(50), @flow_date_from, 21)+ ''',@term_end = ''' + convert(VARCHAR(50), @flow_date_to, 21) + ''', @uom = ''' + CAST(@uom AS VARCHAR(10))+ ''', @volume_conversion = ''' + CAST(@uom AS VARCHAR(10)) + ''', @call_from=''optimization''
 		
 					IF OBJECT_ID(''' + @storage_position_interim + ''') IS NOT NULL drop table ' + @storage_position_interim + '
 					SELECT * into ' + @storage_position_interim + ' from #storage_position_html
