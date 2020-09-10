@@ -207,7 +207,8 @@ if ($read_only_mode)  {
                             ]}
                             ]},
                             {id:"calc_position", text:"Calculate Position", img:"calc_position.gif", imgdis:"calc_position_dis.gif", title: "Calculate Position", enabled:false},
-                            {id:"cascade", text:"Cascade", img:"calc_position.gif", imgdis:"calc_position_dis.gif", title: "Cascade", enabled:false},							
+                            {id:"cascade", text:"Cascade", img:"calc_position.gif", imgdis:"calc_position_dis.gif", title: "Cascade", enabled:false},	
+							{id:"rewind_cascade", text:"Rewind Cascade", img:"calc_position.gif", imgdis:"calc_position_dis.gif", title: "Rewind Cascade", enabled:false},										
                             {id:"update_volume", text:"Update Volume", img:"update_volume.gif", imgdis:"update_volume_dis.gif", title: "Update Volume", enabled:false},
                             {id:"copy", text:"Copy", img:"copy.gif", imgdis:"copy_dis.gif", title: "Copy", enabled:false},
                             {id:"transfer", text:"Transfer", img:"transfer.gif", imgdis:"transfer_dis.gif", title: "Transfer", enabled:false},
@@ -481,10 +482,17 @@ $form_data_json = json_encode($form_data_array);
             case 'cascade':
                 confirm_messagebox("Are you sure you want to cascade selected deal(s)?",function(){
                     var selected_ids = setupDeals.setup_deals.getColumnValues(0);
-					data = {"action": "spa_cascade_deal", "parent_deal_ids":selected_ids};
+					data = {"action": "spa_cascade_deal", "parent_deal_ids":selected_ids, flag: "cascade"};
 					adiha_post_data("alert", data, '', '');
                 });
-                break;					
+                break;		
+			case 'rewind_cascade':
+				confirm_messagebox("Are you sure you want to rewind cascade selected deal(s)?",function(){
+                    var selected_ids = setupDeals.setup_deals.getColumnValues(0);
+					data = {"action": "spa_cascade_deal", "parent_deal_ids":selected_ids, flag: "rewind_cascade"};
+					adiha_post_data("alert", data, '', '');
+                });
+				break;
             case 'lock':
                 setupDeals.lock_unlock_deals('y');
                 break;
@@ -1377,7 +1385,8 @@ $form_data_json = json_encode($form_data_array);
 
             if (has_rights_deal_edit) {
                 setupDeals.deal_menu.setItemEnabled('calc_position');
-                setupDeals.deal_menu.setItemEnabled('cascade');				
+                setupDeals.deal_menu.setItemEnabled('cascade');		
+				setupDeals.deal_menu.setItemEnabled('rewind_cascade');					
                 setupDeals.deal_menu.setItemEnabled('update_book');
             }
             setupDeals.deal_menu.setItemEnabled('generate_confirmation');
@@ -1405,7 +1414,8 @@ $form_data_json = json_encode($form_data_array);
             setupDeals.deal_menu.setItemDisabled('unlock');
             setupDeals.deal_menu.setItemDisabled('audit_report');
             setupDeals.deal_menu.setItemDisabled('calc_position');
-            setupDeals.deal_menu.setItemDisabled('cascade');			
+            setupDeals.deal_menu.setItemDisabled('cascade');	
+			setupDeals.deal_menu.setItemDisabled('rewind_cascade');						
             setupDeals.deal_menu.setItemDisabled('position_report');
             setupDeals.deal_menu.setItemDisabled('generate_confirmation');
             setupDeals.deal_menu.setItemDisabled('trade_ticket');
