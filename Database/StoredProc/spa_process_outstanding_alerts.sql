@@ -517,6 +517,12 @@ BEGIN
 				SET @sql = 'SELECT * INTO ' + @sp_table_name + '
 							FROM ' + @process_table + ' WHERE ' + @primary_table + ' = ' + CAST(@sp_source_id AS NVARCHAR) + '
 
+
+							IF COL_LENGTH(''' + @sp_table_name + ''',''attachment_files'') IS NOT NULL 
+							BEGIN
+								UPDATE ' + @sp_table_name + ' SET attachment_files = NULL
+							END
+							
 							DECLARE @xml_var_p XML
 			
 							SET @xml_var_p =  ' + CASE WHEN @sp_table_name IS NOT NULL THEN '
@@ -535,6 +541,12 @@ BEGIN
 							WHERE source_id = ' + CAST(@sp_source_id AS NVARCHAR)
 							EXEC spa_print @sql
 				EXEC(@sql)
+
+				UPDATE wa 
+				SET XML_process_data = tmp1.process_table_xml
+				FROM #temp_workflow_activities tmp
+				INNER JOIN workflow_activities wa ON tmp.workflow_activity_id = wa.workflow_activity_id
+				INNER JOIN #splitted_process_table_mapping tmp1 ON tmp1.source_id = wa.source_id
 
 				IF EXISTS(	SELECT	1
 							FROM workflow_event_message_documents wemd
