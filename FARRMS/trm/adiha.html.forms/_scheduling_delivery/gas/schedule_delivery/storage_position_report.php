@@ -171,7 +171,9 @@
                                 param_list.push('@strategy_entity_id' + "='" + value + "'");
                             } else if (name == 'book_id') {
                                 param_list.push('@book_entity_id' + "='" + value + "'");
-                            } else if (name == 'subbook_id' || name == 'label_location_id') {
+							} else if (name == 'subbook_id') {
+                                param_list.push('@sub_book_id' + "='" + value + "'");
+                            } else if (name == 'label_location_id') {
                                 
                             } else {
                                param_list.push('@' + name + "='" + value + "'"); 

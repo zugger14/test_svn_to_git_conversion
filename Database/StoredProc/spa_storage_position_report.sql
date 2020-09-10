@@ -32,7 +32,8 @@ GO
 	@page_no  				: page no
 	@is_pivot  				: pivot flag
 	@volume_conversion 		: volume conversion
-	@counterparty_id			: counterparty flag
+	@counterparty_id		: counterparty flag
+	@sub_book_id			: Sub book filter
 **/
 CREATE PROC [dbo].[spa_storage_position_report]
 	@sub_entity_id VARCHAR(MAX) = NULL, 
@@ -58,7 +59,8 @@ CREATE PROC [dbo].[spa_storage_position_report]
 	@page_no INT = NULL,
 	@is_pivot char = NULL,
 	@volume_conversion INT = NULL,
-	@counterparty_id VARCHAR(5000) = NULL
+	@counterparty_id VARCHAR(5000) = NULL,
+	@sub_book_id VARCHAR(MAX) = NULL
 	
 AS
 SET NOCOUNT ON
@@ -88,7 +90,8 @@ SET NOCOUNT ON
 	@page_no INT = NULL,
 	@is_pivot char = NULL,
 	@volume_conversion INT = NULL,
-	@counterparty_id VARCHAR(5000) = NULL
+	@counterparty_id VARCHAR(5000) = NULL,
+	@sub_book_id VARCHAR(MAX) = NULL
 
 	/* for link reports within std report */
 	--select @commodity_id=50, @drill_location=2794, @term_start='2018-07-01', @term_end='2018-07-31' ,@drill_term='2018-07-24',@drill_type='NULL',@drill_contract_id=10317,@deal_type='w'
@@ -269,6 +272,7 @@ BEGIN
 		+ CASE WHEN @sub_entity_id IS NOT NULL THEN ' AND stra.parent_entity_id IN  ( ' + @sub_entity_id + ') ' ELSE '' END
 		+ CASE WHEN @strategy_entity_id IS NOT NULL THEN ' AND stra.entity_id IN  ( ' + @strategy_entity_id + ') ' ELSE '' END
 		+ CASE WHEN @book_entity_id IS NOT NULL THEN ' AND book.entity_id IN  ( ' + @book_entity_id + ') ' ELSE '' END
+		+ CASE WHEN @sub_book_id IS NOT NULL THEN ' AND ssbm.book_deal_type_map_id IN  ( ' + @sub_book_id + ') ' ELSE '' END
 
 	EXEC(@Sql_SELECT)
 
