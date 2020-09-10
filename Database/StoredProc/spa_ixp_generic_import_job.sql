@@ -20985,7 +20985,7 @@ BEGIN
 						WHERE   scmd.shipper_code_id = scm.shipper_code_id
 							AND scmd.shipper_code1 = a.shipper_code1 
 							AND scmd.location_id = sml.source_minor_location_id 
-							AND scmd.effective_date >= a.term_start
+							AND scmd.effective_date <= CAST(a.term_start AS DATE)
 						ORDER BY scmd.effective_date, scmd.shipper_code1
 					) scmd1
 					OUTER APPLY (
@@ -20994,7 +20994,7 @@ BEGIN
 						WHERE scmd.shipper_code_id = scm.shipper_code_id
 							AND scmd.shipper_code = a.shipper_code2
 							AND scmd.location_id = sml.source_minor_location_id 
-							AND scmd.effective_date >= a.term_start
+							AND scmd.effective_date <= CAST(a.term_start AS DATE)
 						ORDER BY scmd.effective_date, scmd.shipper_code
 					) scmd2
 					LEFT JOIN static_data_value sdv_sg 
@@ -21004,7 +21004,7 @@ BEGIN
  				'
  	EXEC spa_print @sql1
  	EXEC(@sql1)
-
+ 	
 	UPDATE sdh
 	SET sdh.pricing_type = CASE
 								WHEN sdh.physical_financial_flag = 'f' THEN CASE WHEN sdd.formula_curve_id IS NULL THEN 46704 ELSE 46705 END
