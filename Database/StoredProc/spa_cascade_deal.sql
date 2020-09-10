@@ -550,39 +550,7 @@ BEGIN
 		INNER JOIN dbo.FNASplit(@parent_deal_ids, ',') i ON i.item = r.source_deal_header_id
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = r.source_deal_header_id 
 		GROUP BY i.item, r.leg
-
-
-		DECLARE @report_position VARCHAR(1000)
-		DECLARE @user_login_id VARCHAR(1000) = dbo.FNADBUser()
-		SET @report_position = dbo.FNAProcessTableName('report_position', @user_login_id, @process_id)
- 
-		-- delete position of all parent leg except leg, also delete all child cascade deals position
-		SET @sql = 'CREATE TABLE ' + @report_position + ' (source_deal_header_id INT, source_deal_detail_id INT)
-				
-					INSERT INTO ' + @report_position + ' 
-					SELECT source_deal_header_id, source_deal_detail_id
-					FROM (SELECT source_deal_header_id, source_deal_detail_id, term_start FROM #detail_collection_reverse_cascade dc
-						EXCEPT 
-						SELECT sdd.source_deal_header_id, sdd.source_deal_detail_id, sdd.term_start 
-						FROM #detail_collection_reverse_cascade sdd
-						INNER JOIN #min_parent_term_start m ON m.source_deal_header_id = sdd.source_deal_header_id
-							AND sdd.Leg = m.leg
-							AND sdd.term_start = m.term_start
-					) z '
-		EXEC spa_print @sql
-		EXEC(@sql)
 	
-		--delete other legs for parent
-		SET @sql = '
-					--SELECT * 
-					DELETE sdd 
-					FROM ' + @report_position + ' rp
-					INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = rp.source_deal_detail_id 
-					INNER JOIN dbo.FNASplit(''' + @parent_deal_ids + ''' , '','') i ON i.item = sdd.source_deal_header_id '
-
-		EXEC spa_print @sql
-		EXEC(@sql)
-
 		--/*
 		-- update parent leg 1 detail
 		--SELECT 
@@ -641,6 +609,25 @@ BEGIN
 		--*/
 	
 		--/*
+		DECLARE @report_position VARCHAR(1000)
+		DECLARE @user_login_id VARCHAR(1000) = dbo.FNADBUser()
+		SET @report_position = dbo.FNAProcessTableName('report_position', @user_login_id, @process_id)
+ 
+		-- delete position of all parent leg except leg, also delete all child cascade deals position
+		SET @sql = 'CREATE TABLE ' + @report_position + ' (source_deal_header_id INT, source_deal_detail_id INT)
+				
+					INSERT INTO ' + @report_position + ' 
+					SELECT source_deal_header_id, source_deal_detail_id
+					FROM (SELECT source_deal_header_id, source_deal_detail_id, term_start FROM #detail_collection_reverse_cascade dc
+						EXCEPT 
+						SELECT sdd.source_deal_header_id, sdd.source_deal_detail_id, sdd.term_start 
+						FROM #detail_collection_reverse_cascade sdd
+						INNER JOIN #min_parent_term_start m ON m.source_deal_header_id = sdd.source_deal_header_id
+							AND sdd.Leg = m.leg
+							AND sdd.term_start = m.term_start
+					) z '
+		EXEC spa_print @sql
+		EXEC(@sql)
 		--EXEC('select * from ' + @report_position)
 		--position delete
 		EXEC [dbo].[spa_maintain_transaction_job] @process_id, 7, NULL, @user_login_id
@@ -654,7 +641,18 @@ BEGIN
 											FOR XML PATH('')), 1, 1, '')
 
 		--SELECT @to_delete_deal_ids
-		EXEC spa_source_deal_header @flag ='d', @deal_ids = @to_delete_deal_ids, @comments='cascasde rewind', @call_from = 'scheduling', @call_from_import = 'y'
+		EXEC spa_source_deal_header @flag = 'd', @deal_ids = @to_delete_deal_ids, @comments='cascasde rewind', @call_from = 'scheduling', @call_from_import = 'y'
+
+		--delete other legs for parent
+		SET @sql = '
+					--SELECT * 
+					DELETE sdd 
+					FROM ' + @report_position + ' rp
+					INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = rp.source_deal_detail_id 
+					INNER JOIN dbo.FNASplit(''' + @parent_deal_ids + ''' , '','') i ON i.item = sdd.source_deal_header_id '
+
+		EXEC spa_print @sql
+		EXEC(@sql)
 
 		SET @after_update_process_table = dbo.FNAProcessTableName('after_insert_process_table', @user_name, @job_process_id)
 
@@ -675,6 +673,8 @@ BEGIN
 		EXEC spa_run_sp_as_job @job_name, @sql, 'spa_deal_insert_update_jobs', @user_name	
 
 		SELECT 'Success' ErrorCode, 'Deal Cascading Rewind' Module, 'spa_cascade_deal' Area, 'Success' [Status], 'Deal Cascading Rewind successfully completed.' [Message], '' Recommendation
+		--EXEC spa_message_board 'i', @user_name, NULL, 'Cascade Deals', @url_desc, '', '', 's', 'Cascade deal', NULL, @process_id
+
 		--*/
 		COMMIT TRAN 
 		--ROLLBACK TRAN 
