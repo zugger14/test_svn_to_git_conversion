@@ -199,8 +199,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =98447 ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2019-01-31' , --'2017-02-15',
+	@source_deal_header_id =98064 ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2021-04-30' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -219,7 +219,7 @@ SELECT
 	@run_incremental = 'n',
 	@term_start = '2019-01-01' ,
 	@term_end = '2019-01-31' ,
-	@calc_type = 's',
+	@calc_type = 'm',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
 	@deal_list_table = null,
@@ -2460,11 +2460,39 @@ End
 
 if object_id('tempdb..#udf_header') is not null drop table #udf_header
 if object_id('tempdb..#udf_detail') is not null drop table #udf_detail
+if object_id('tempdb..#var_fee_amount') is not null drop table #var_fee_amount
+if object_id('tempdb..#var_fee_amount_001') is not null drop table #var_fee_amount_001
+
+SELECT * INTO #udft from user_defined_fields_template 
 
 
+
+SELECT uddft.*,udft.udf_category
+INTO #uddft 
+FROM (
+		select uddf.udf_template_id from
+		(
+			SELECT source_deal_header_id FROM #temp_deals
+			UNION  
+			SELECT source_deal_header_id FROM #temp_deals_broker 
+		) sdh 
+		inner join user_defined_deal_fields uddf on uddf.source_deal_header_id=sdh.source_deal_header_id
+			and try_cast(NULLIF(uddf.udf_value,'') as numeric(20,4)) is not null
+		UNION
+		select udddf.udf_template_id from
+		(
+			SELECT source_deal_detail_id FROM #temp_deals td 
+			UNION  
+			SELECT source_deal_detail_id FROM #temp_deals_broker 
+		) sdd 
+		inner join user_defined_deal_detail_fields udddf on udddf.source_deal_detail_id=sdd.source_deal_detail_id
+			and try_cast(NULLIF(udddf.udf_value,'') as numeric(20,4)) is not null
+) udf 
+	inner join user_defined_deal_fields_template uddft on uddft.udf_template_id=udf.udf_template_id
+	inner join #udft udft on udft.udf_template_id=abs(udf.udf_template_id)
 
 select td.source_deal_header_id
-	,uddf.udf_value
+	,try_cast(NULLIF(uddf.udf_value,'') as numeric(20,4)) udf_value
 	,uddf.udf_template_id
 	,uddft.internal_field_type
 	,uddft.field_name 
@@ -2478,7 +2506,7 @@ select td.source_deal_header_id
 into #udf_header -- select distinct * from #udf_header
 from (select  source_deal_header_id FROM #temp_deals union select  source_deal_header_id from #temp_deals_broker ) td 
 	left JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-	left JOIN user_defined_deal_fields_template uddft ON uddft.template_id=sdh.template_id	 and uddft.udf_type='h'	
+	left JOIN #uddft uddft ON uddft.template_id=sdh.template_id	 and uddft.udf_type='h'
 	LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = td.source_deal_header_id 
 			AND uddf.udf_template_id = uddft.udf_template_id
 	--left JOIN user_defined_fields_template udft ON	udft.field_id = uddft.field_id  --udft.udf_template_id = uddft.udf_user_field_id 
@@ -2486,7 +2514,7 @@ from (select  source_deal_header_id FROM #temp_deals union select  source_deal_h
 where nullif(uddf.udf_value,'') is not null
 
 select td.source_deal_header_id,td.source_deal_detail_id
-	,udddf.udf_value
+	,try_cast(NULLIF(udddf.udf_value,'') as numeric(20,4)) udf_value
 	,udddf.udf_template_id
 	,uddft.internal_field_type
 	,uddft.field_name 
@@ -2499,13 +2527,102 @@ into #udf_detail
 FROM 
 	(select  source_deal_header_id,source_deal_detail_id,leg FROM #temp_deals union select  source_deal_header_id,source_deal_detail_id,leg from #temp_deals_broker ) td 
 	left JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-	left JOIN user_defined_deal_fields_template uddft ON uddft.template_id=sdh.template_id	
+	left JOIN #uddft uddft ON uddft.template_id=sdh.template_id	
 		and td.leg= ISNULL(uddft.leg,td.leg) and uddft.udf_type='d'	
 	LEFT JOIN user_defined_deal_detail_fields udddf ON udddf.udf_template_id = uddft.udf_template_id
 		AND udddf.source_deal_detail_id = td.source_deal_detail_id
 	--left JOIN user_defined_fields_template udft ON	udft.field_id = uddft.field_id  --udft.udf_template_id = uddft.udf_user_field_id 
 	--	and td.leg= ISNULL(udft.leg,td.leg)	 and udft.udf_type='d'	
 where nullif(udddf.udf_value,'') is not null
+
+
+create index ix_pt_1 on #uddft(template_id) include(leg,field_id,udf_template_id)
+create index ix_pt_3 on #uddft(internal_field_type)
+create index ix_pt_4 on #udft(leg,field_id,udf_template_id)
+
+
+
+select  sdh.source_deal_header_id, variable_charge.rate fee_amt
+into #var_fee_amount_001 --  select * from #var_fee_amount_001
+FROM (
+			SELECT source_deal_header_id,max(fx_conversion_market) fx_conversion_market
+			,max(fixed_price_currency_id) fixed_price_currency_id,max(source_system_id) source_system_id
+			,max(deal_volume_uom_id) deal_volume_uom_id, min(term_start) term_start, max(term_end) term_end,max(contract_id) contract_id FROM #temp_deals
+			group by source_deal_header_id
+			UNION  
+			SELECT source_deal_header_id,null fx_conversion_market,null fixed_price_currency_id,null source_system_id 
+				,null deal_volume_uom_id, min(term_start) term_start, max(term_end) term_end ,null contract_id
+			FROM #temp_deals_broker 
+			group by source_deal_header_id
+	) td
+	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
+	outer apply (
+		select  try_cast(NULLIF(uddf.udf_value,'') as int) path_id from #uddft ud 
+			inner JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = td.source_deal_header_id AND ud.udf_template_id = uddf.udf_template_id
+			AND ud.field_id = 293432
+		where ud.template_id = sdh.template_id
+	) udf_dp
+	outer apply (
+		select  try_cast(NULLIF(uddf.udf_value,'') as int) schedule_id from #uddft ud 
+			inner JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = td.source_deal_header_id AND ud.udf_template_id = uddf.udf_template_id
+			AND ud.field_id = -5678
+		where ud.template_id = sdh.template_id
+	) rate_schedule
+	LEFT JOIN delivery_path dp ON dp.path_id =udf_dp.path_id
+	LEFT JOIN contract_group cg ON cg.contract_id = td.contract_id
+	LEFT JOIN counterparty_contract_rate_schedule ccrs ON ccrs.counterparty_id = dp.counterparty 
+			AND ccrs.contract_id = cg.contract_id AND dp.path_id = ccrs.path_id
+	outer apply
+	(
+		select --sum(vc.rate*isnull(fx_v_deal.price_fx_conv_factor, 1)*ISNULL(conv_v.conversion_factor,1)) rate
+		sum(vc.rate*ISNULL(conv_v.conversion_factor,1)) rate
+		from variable_charge vc
+			LEFT JOIN rec_volume_unit_conversion conv_v ON vc.uom_id=conv_v.FROM_source_uom_id AND conv_v.to_source_uom_id=td.deal_volume_uom_id  
+				AND conv_v.state_value_id is null AND conv_v.assignment_type_value_id is null AND conv_v.curve_id is null  
+			--outer apply
+			--( select avg(price_fx_conv_factor) price_fx_conv_factor from #fx_curves  
+			--	where fx_currency_id = vc.currency_id AND 
+			--		func_cur_id = td.fixed_price_currency_id AND source_system_id = td.source_system_id 
+			--		AND  maturity_date between td.term_start and td.term_end and market_value_desc=td.fx_conversion_market
+			--		and as_of_date between case when  @calc_type='s' then @term_start else @curve_as_of_date end
+			--		and case when  @calc_type='s' then @term_end else @curve_as_of_date end
+			--) fx_v_deal	
+		where vc.rate_schedule_id = COALESCE(rate_schedule.schedule_id,ccrs.rate_schedule_id,dp.rateSchedule,cg.maintain_rate_schedule)
+			and td.term_start between isnull(vc.begin_date,'1900-01-01') and isnull(vc.end_date,'9999-01-01')
+	) variable_charge
+union all
+select td.source_deal_header_id
+	,sum(try_cast(NULLIF(uddf.udf_value,'') as numeric(20,4))) fee_amt
+from (select  source_deal_header_id FROM #temp_deals union select  source_deal_header_id from #temp_deals_broker ) td 
+	left JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
+	left JOIN #uddft uddft ON uddft.template_id=sdh.template_id	 and uddft.udf_type='h'	and uddft.udf_category=101901
+	LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = td.source_deal_header_id 
+			AND uddf.udf_template_id = uddft.udf_template_id
+where nullif(uddf.udf_value,'') is not null
+group by td.source_deal_header_id
+union all
+select td.source_deal_header_id
+	,sum(try_cast(NULLIF(udddf.udf_value,'') as numeric(20,4))) fee_amt
+FROM 
+	(select  source_deal_header_id,source_deal_detail_id,leg FROM #temp_deals union select  source_deal_header_id,source_deal_detail_id,leg from #temp_deals_broker ) td 
+	inner JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
+	inner JOIN #uddft uddft ON uddft.template_id=sdh.template_id	
+		and td.leg= ISNULL(uddft.leg,td.leg) and uddft.udf_type='d' and uddft.udf_category=101901
+	LEFT JOIN user_defined_deal_detail_fields udddf ON udddf.udf_template_id = uddft.udf_template_id
+		AND udddf.source_deal_detail_id = td.source_deal_detail_id
+	--left JOIN user_defined_fields_template udft ON	udft.field_id = uddft.field_id  --udft.udf_template_id = uddft.udf_user_field_id 
+	--	and td.leg= ISNULL(udft.leg,td.leg)	 and udft.udf_type='d'	
+where nullif(udddf.udf_value,'') is not null
+group by td.source_deal_header_id
+
+
+select source_deal_header_id,sum(fee_amt) fee_amt
+	into #var_fee_amount
+from #var_fee_amount_001
+group by source_deal_header_id
+
+
+
 
 
 If @print_diagnostic = 1
@@ -3273,9 +3390,6 @@ into #duplicate_fx -- select * from #duplicate_fx
 from #fx_curves
 group by fx_currency_id, func_cur_id,as_of_date, maturity_date,market_value_desc
 having count(1)>1
-
-
-
 
 
 --  select * from #fx_curves where fx_currency_id=1 and func_cur_id=1109 and as_of_date='2019-11-01 00:00:00.000' and maturity_date='2019-11-01 00:00:00.000'
@@ -6847,33 +6961,34 @@ EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@qry1+@qry4+@qry2+@qry5
 
 --td.buy_sell_flag=''b''
 set @qry1='update vol set 
-		hr1 = iif(isnull(t.hr1,0)<isnull(t.hr1_c,0),0,vol.hr1),
-		hr2 = iif(isnull(t.hr2,0)<isnull(t.hr2_c,0),0,vol.hr2),
-		hr3 = iif(isnull(t.hr3,0)<isnull(t.hr3_c,0),0,vol.hr3),
-		hr4 = iif(isnull(t.hr4,0)<isnull(t.hr4_c,0),0,vol.hr4),
-		hr5 = iif(isnull(t.hr5,0)<isnull(t.hr5_c,0),0,vol.hr5),
-		hr6 = iif(isnull(t.hr6,0)<isnull(t.hr6_c,0),0,vol.hr6),
-		hr7 = iif(isnull(t.hr7,0)<isnull(t.hr7_c,0),0,vol.hr7),
-		hr8 = iif(isnull(t.hr8,0)<isnull(t.hr8_c,0),0,vol.hr8),
-		hr9 = iif(isnull(t.hr9,0)<isnull(t.hr9_c,0),0,vol.hr9),
-		hr10 = iif(isnull(t.hr10,0)<isnull(t.hr10_c,0),0,vol.hr10),
-		hr11 = iif(isnull(t.hr11,0)<isnull(t.hr11_c,0),0,vol.hr11),
-		hr12 = iif(isnull(t.hr12,0)<isnull(t.hr12_c,0),0,vol.hr12),
-		hr13 = iif(isnull(t.hr13,0)<isnull(t.hr13_c,0),0,vol.hr13),
-		hr14 = iif(isnull(t.hr14,0)<isnull(t.hr14_c,0),0,vol.hr14),
-		hr15 = iif(isnull(t.hr15,0)<isnull(t.hr15_c,0),0,vol.hr15),
-		hr16 = iif(isnull(t.hr16,0)<isnull(t.hr16_c,0),0,vol.hr16),
-		hr17 = iif(isnull(t.hr17,0)<isnull(t.hr17_c,0),0,vol.hr17),
-		hr18 = iif(isnull(t.hr18,0)<isnull(t.hr18_c,0),0,vol.hr18),
-		hr19 = iif(isnull(t.hr19,0)<isnull(t.hr19_c,0),0,vol.hr19),
-		hr20 = iif(isnull(t.hr20,0)<isnull(t.hr20_c,0),0,vol.hr20),
-		hr21 = iif(isnull(t.hr21,0)<isnull(t.hr21_c,0),0,vol.hr21),
-		hr22 = iif(isnull(t.hr22,0)<isnull(t.hr22_c,0),0,vol.hr22),
-		hr23 = iif(isnull(t.hr23,0)<isnull(t.hr23_c,0),0,vol.hr23),
-		hr24 = iif(isnull(t.hr24,0)<isnull(t.hr24_c,0),0,vol.hr24),
-		hr25 = iif(isnull(t.hr25,0)<isnull(t.hr25_c,0),0,vol.hr25)
+		hr1 = iif(isnull(t.hr1,0)+isnull(vfa.fee_amt,0)<isnull(t.hr1_c,0),0,vol.hr1),
+		hr2 = iif(isnull(t.hr2,0)+isnull(vfa.fee_amt,0)<isnull(t.hr2_c,0),0,vol.hr2),
+		hr3 = iif(isnull(t.hr3,0)+isnull(vfa.fee_amt,0)<isnull(t.hr3_c,0),0,vol.hr3),
+		hr4 = iif(isnull(t.hr4,0)+isnull(vfa.fee_amt,0)<isnull(t.hr4_c,0),0,vol.hr4),
+		hr5 = iif(isnull(t.hr5,0)+isnull(vfa.fee_amt,0)<isnull(t.hr5_c,0),0,vol.hr5),
+		hr6 = iif(isnull(t.hr6,0)+isnull(vfa.fee_amt,0)<isnull(t.hr6_c,0),0,vol.hr6),
+		hr7 = iif(isnull(t.hr7,0)+isnull(vfa.fee_amt,0)<isnull(t.hr7_c,0),0,vol.hr7),
+		hr8 = iif(isnull(t.hr8,0)+isnull(vfa.fee_amt,0)<isnull(t.hr8_c,0),0,vol.hr8),
+		hr9 = iif(isnull(t.hr9,0)+isnull(vfa.fee_amt,0)<isnull(t.hr9_c,0),0,vol.hr9),
+		hr10 = iif(isnull(t.hr10,0)+isnull(vfa.fee_amt,0)<isnull(t.hr10_c,0),0,vol.hr10),
+		hr11 = iif(isnull(t.hr11,0)+isnull(vfa.fee_amt,0)<isnull(t.hr11_c,0),0,vol.hr11),
+		hr12 = iif(isnull(t.hr12,0)+isnull(vfa.fee_amt,0)<isnull(t.hr12_c,0),0,vol.hr12),
+		hr13 = iif(isnull(t.hr13,0)+isnull(vfa.fee_amt,0)<isnull(t.hr13_c,0),0,vol.hr13),
+		hr14 = iif(isnull(t.hr14,0)+isnull(vfa.fee_amt,0)<isnull(t.hr14_c,0),0,vol.hr14),
+		hr15 = iif(isnull(t.hr15,0)+isnull(vfa.fee_amt,0)<isnull(t.hr15_c,0),0,vol.hr15),
+		hr16 = iif(isnull(t.hr16,0)+isnull(vfa.fee_amt,0)<isnull(t.hr16_c,0),0,vol.hr16),
+		hr17 = iif(isnull(t.hr17,0)+isnull(vfa.fee_amt,0)<isnull(t.hr17_c,0),0,vol.hr17),
+		hr18 = iif(isnull(t.hr18,0)+isnull(vfa.fee_amt,0)<isnull(t.hr18_c,0),0,vol.hr18),
+		hr19 = iif(isnull(t.hr19,0)+isnull(vfa.fee_amt,0)<isnull(t.hr19_c,0),0,vol.hr19),
+		hr20 = iif(isnull(t.hr20,0)+isnull(vfa.fee_amt,0)<isnull(t.hr20_c,0),0,vol.hr20),
+		hr21 = iif(isnull(t.hr21,0)+isnull(vfa.fee_amt,0)<isnull(t.hr21_c,0),0,vol.hr21),
+		hr22 = iif(isnull(t.hr22,0)+isnull(vfa.fee_amt,0)<isnull(t.hr22_c,0),0,vol.hr22),
+		hr23 = iif(isnull(t.hr23,0)+isnull(vfa.fee_amt,0)<isnull(t.hr23_c,0),0,vol.hr23),
+		hr24 = iif(isnull(t.hr24,0)+isnull(vfa.fee_amt,0)<isnull(t.hr24_c,0),0,vol.hr24),
+		hr25 = iif(isnull(t.hr25,0)+isnull(vfa.fee_amt,0)<isnull(t.hr25_c,0),0,vol.hr25)
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
+	left join #var_fee_amount_001 vfa on vfa.source_deal_header_id=vol.source_deal_header_id
 where td.buy_sell_flag=''b'' and td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102 -- Linear model option'
 
 EXEC spa_print  @qry1
@@ -6883,33 +6998,34 @@ exec(@qry1)
 
 --td.buy_sell_flag=''s''
 set @qry1='update vol set 
-		hr1 = iif(isnull(t.hr1,0)>isnull(t.hr1_c,0),0,vol.hr1),
-		hr2 = iif(isnull(t.hr2,0)>isnull(t.hr2_c,0),0,vol.hr2),
-		hr3 = iif(isnull(t.hr3,0)>isnull(t.hr3_c,0),0,vol.hr3),
-		hr4 = iif(isnull(t.hr4,0)>isnull(t.hr4_c,0),0,vol.hr4),
-		hr5 = iif(isnull(t.hr5,0)>isnull(t.hr5_c,0),0,vol.hr5),
-		hr6 = iif(isnull(t.hr6,0)>isnull(t.hr6_c,0),0,vol.hr6),
-		hr7 = iif(isnull(t.hr7,0)>isnull(t.hr7_c,0),0,vol.hr7),
-		hr8 = iif(isnull(t.hr8,0)>isnull(t.hr8_c,0),0,vol.hr8),
-		hr9 = iif(isnull(t.hr9,0)>isnull(t.hr9_c,0),0,vol.hr9),
-		hr10 = iif(isnull(t.hr10,0)>isnull(t.hr10_c,0),0,vol.hr10),
-		hr11 = iif(isnull(t.hr11,0)>isnull(t.hr11_c,0),0,vol.hr11),
-		hr12 = iif(isnull(t.hr12,0)>isnull(t.hr12_c,0),0,vol.hr12),
-		hr13 = iif(isnull(t.hr13,0)>isnull(t.hr13_c,0),0,vol.hr13),
-		hr14 = iif(isnull(t.hr14,0)>isnull(t.hr14_c,0),0,vol.hr14),
-		hr15 = iif(isnull(t.hr15,0)>isnull(t.hr15_c,0),0,vol.hr15),
-		hr16 = iif(isnull(t.hr16,0)>isnull(t.hr16_c,0),0,vol.hr16),
-		hr17 = iif(isnull(t.hr17,0)>isnull(t.hr17_c,0),0,vol.hr17),
-		hr18 = iif(isnull(t.hr18,0)>isnull(t.hr18_c,0),0,vol.hr18),
-		hr19 = iif(isnull(t.hr19,0)>isnull(t.hr19_c,0),0,vol.hr19),
-		hr20 = iif(isnull(t.hr20,0)>isnull(t.hr20_c,0),0,vol.hr20),
-		hr21 = iif(isnull(t.hr21,0)>isnull(t.hr21_c,0),0,vol.hr21),
-		hr22 = iif(isnull(t.hr22,0)>isnull(t.hr22_c,0),0,vol.hr22),
-		hr23 = iif(isnull(t.hr23,0)>isnull(t.hr23_c,0),0,vol.hr23),
-		hr24 = iif(isnull(t.hr24,0)>isnull(t.hr24_c,0),0,vol.hr24),
-		hr25 = iif(isnull(t.hr25,0)>isnull(t.hr25_c,0),0,vol.hr25)
+		hr1 = iif(isnull(t.hr1,0)>isnull(t.hr1_c,0)+isnull(vfa.fee_amt,0),0,vol.hr1),
+		hr2 = iif(isnull(t.hr2,0)>isnull(t.hr2_c,0)+isnull(vfa.fee_amt,0),0,vol.hr2),
+		hr3 = iif(isnull(t.hr3,0)>isnull(t.hr3_c,0)+isnull(vfa.fee_amt,0),0,vol.hr3),
+		hr4 = iif(isnull(t.hr4,0)>isnull(t.hr4_c,0)+isnull(vfa.fee_amt,0),0,vol.hr4),
+		hr5 = iif(isnull(t.hr5,0)>isnull(t.hr5_c,0)+isnull(vfa.fee_amt,0),0,vol.hr5),
+		hr6 = iif(isnull(t.hr6,0)>isnull(t.hr6_c,0)+isnull(vfa.fee_amt,0),0,vol.hr6),
+		hr7 = iif(isnull(t.hr7,0)>isnull(t.hr7_c,0)+isnull(vfa.fee_amt,0),0,vol.hr7),
+		hr8 = iif(isnull(t.hr8,0)>isnull(t.hr8_c,0)+isnull(vfa.fee_amt,0),0,vol.hr8),
+		hr9 = iif(isnull(t.hr9,0)>isnull(t.hr9_c,0)+isnull(vfa.fee_amt,0),0,vol.hr9),
+		hr10 = iif(isnull(t.hr10,0)>isnull(t.hr10_c,0)+isnull(vfa.fee_amt,0),0,vol.hr10),
+		hr11 = iif(isnull(t.hr11,0)>isnull(t.hr11_c,0)+isnull(vfa.fee_amt,0),0,vol.hr11),
+		hr12 = iif(isnull(t.hr12,0)>isnull(t.hr12_c,0)+isnull(vfa.fee_amt,0),0,vol.hr12),
+		hr13 = iif(isnull(t.hr13,0)>isnull(t.hr13_c,0)+isnull(vfa.fee_amt,0),0,vol.hr13),
+		hr14 = iif(isnull(t.hr14,0)>isnull(t.hr14_c,0)+isnull(vfa.fee_amt,0),0,vol.hr14),
+		hr15 = iif(isnull(t.hr15,0)>isnull(t.hr15_c,0)+isnull(vfa.fee_amt,0),0,vol.hr15),
+		hr16 = iif(isnull(t.hr16,0)>isnull(t.hr16_c,0)+isnull(vfa.fee_amt,0),0,vol.hr16),
+		hr17 = iif(isnull(t.hr17,0)>isnull(t.hr17_c,0)+isnull(vfa.fee_amt,0),0,vol.hr17),
+		hr18 = iif(isnull(t.hr18,0)>isnull(t.hr18_c,0)+isnull(vfa.fee_amt,0),0,vol.hr18),
+		hr19 = iif(isnull(t.hr19,0)>isnull(t.hr19_c,0)+isnull(vfa.fee_amt,0),0,vol.hr19),
+		hr20 = iif(isnull(t.hr20,0)>isnull(t.hr20_c,0)+isnull(vfa.fee_amt,0),0,vol.hr20),
+		hr21 = iif(isnull(t.hr21,0)>isnull(t.hr21_c,0)+isnull(vfa.fee_amt,0),0,vol.hr21),
+		hr22 = iif(isnull(t.hr22,0)>isnull(t.hr22_c,0)+isnull(vfa.fee_amt,0),0,vol.hr22),
+		hr23 = iif(isnull(t.hr23,0)>isnull(t.hr23_c,0)+isnull(vfa.fee_amt,0),0,vol.hr23),
+		hr24 = iif(isnull(t.hr24,0)>isnull(t.hr24_c,0)+isnull(vfa.fee_amt,0),0,vol.hr24),
+		hr25 = iif(isnull(t.hr25,0)>isnull(t.hr25_c,0)+isnull(vfa.fee_amt,0),0,vol.hr25)
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
+		left join #var_fee_amount_001 vfa on vfa.source_deal_header_id=vol.source_deal_header_id
 where td.buy_sell_flag=''s'' and td.internal_deal_type_value_id=103 
 	and td.internal_deal_subtype_value_id=102 -- Linear model option'
 
@@ -6922,33 +7038,34 @@ exec(@qry1)
 
 --td.buy_sell_flag=''b''
 set @qry1='update t set 
-		hr1 = iif(isnull(t.hr1,0)<isnull(t.hr1_c,0),0,isnull(t.hr1,0)-isnull(t.hr1_c,0)),
-		hr2 = iif(isnull(t.hr2,0)<isnull(t.hr2_c,0),0,isnull(t.hr2,0)-isnull(t.hr2_c,0)),
-		hr3 = iif(isnull(t.hr3,0)<isnull(t.hr3_c,0),0,isnull(t.hr3,0)-isnull(t.hr3_c,0)),
-		hr4 = iif(isnull(t.hr4,0)<isnull(t.hr4_c,0),0,isnull(t.hr4,0)-isnull(t.hr4_c,0)),
-		hr5 = iif(isnull(t.hr5,0)<isnull(t.hr5_c,0),0,isnull(t.hr5,0)-isnull(t.hr5_c,0)),
-		hr6 = iif(isnull(t.hr6,0)<isnull(t.hr6_c,0),0,isnull(t.hr6,0)-isnull(t.hr6_c,0)),
-		hr7 = iif(isnull(t.hr7,0)<isnull(t.hr7_c,0),0,isnull(t.hr7,0)-isnull(t.hr7_c,0)),
-		hr8 = iif(isnull(t.hr8,0)<isnull(t.hr8_c,0),0,isnull(t.hr8,0)-isnull(t.hr8_c,0)),
-		hr9 = iif(isnull(t.hr9,0)<isnull(t.hr9_c,0),0,isnull(t.hr9,0)-isnull(t.hr9_c,0)),
-		hr10 = iif(isnull(t.hr10,0)<isnull(t.hr10_c,0),0,isnull(t.hr10,0)-isnull(t.hr10_c,0)),
-		hr11 = iif(isnull(t.hr11,0)<isnull(t.hr11_c,0),0,isnull(t.hr11,0)-isnull(t.hr11_c,0)),
-		hr12 = iif(isnull(t.hr12,0)<isnull(t.hr12_c,0),0,isnull(t.hr12,0)-isnull(t.hr12_c,0)),
-		hr13 = iif(isnull(t.hr13,0)<isnull(t.hr13_c,0),0,isnull(t.hr13,0)-isnull(t.hr13_c,0)),
-		hr14 = iif(isnull(t.hr14,0)<isnull(t.hr14_c,0),0,isnull(t.hr14,0)-isnull(t.hr14_c,0)),
-		hr15 = iif(isnull(t.hr15,0)<isnull(t.hr15_c,0),0,isnull(t.hr15,0)-isnull(t.hr15_c,0)),
-		hr16 = iif(isnull(t.hr16,0)<isnull(t.hr16_c,0),0,isnull(t.hr16,0)-isnull(t.hr16_c,0)),
-		hr17 = iif(isnull(t.hr17,0)<isnull(t.hr17_c,0),0,isnull(t.hr17,0)-isnull(t.hr17_c,0)),
-		hr18 = iif(isnull(t.hr18,0)<isnull(t.hr18_c,0),0,isnull(t.hr18,0)-isnull(t.hr18_c,0)),
-		hr19 = iif(isnull(t.hr19,0)<isnull(t.hr19_c,0),0,isnull(t.hr19,0)-isnull(t.hr19_c,0)),
-		hr20 = iif(isnull(t.hr20,0)<isnull(t.hr20_c,0),0,isnull(t.hr20,0)-isnull(t.hr20_c,0)),
-		hr21 = iif(isnull(t.hr21,0)<isnull(t.hr21_c,0),0,isnull(t.hr21,0)-isnull(t.hr21_c,0)),
-		hr22 = iif(isnull(t.hr22,0)<isnull(t.hr22_c,0),0,isnull(t.hr22,0)-isnull(t.hr22_c,0)),
-		hr23 = iif(isnull(t.hr23,0)<isnull(t.hr23_c,0),0,isnull(t.hr23,0)-isnull(t.hr23_c,0)),
-		hr24 = iif(isnull(t.hr24,0)<isnull(t.hr24_c,0),0,isnull(t.hr24,0)-isnull(t.hr24_c,0)),
-		hr25 = iif(isnull(t.hr25,0)<isnull(t.hr25_c,0),0,isnull(t.hr25,0)-isnull(t.hr25_c,0))
+		hr1 = iif(isnull(t.hr1,0)+isnull(vfa.fee_amt,0)<isnull(t.hr1_c,0),0,isnull(t.hr1,0)-isnull(t.hr1_c,0)),
+		hr2 = iif(isnull(t.hr2,0)+isnull(vfa.fee_amt,0)<isnull(t.hr2_c,0),0,isnull(t.hr2,0)-isnull(t.hr2_c,0)),
+		hr3 = iif(isnull(t.hr3,0)+isnull(vfa.fee_amt,0)<isnull(t.hr3_c,0),0,isnull(t.hr3,0)-isnull(t.hr3_c,0)),
+		hr4 = iif(isnull(t.hr4,0)+isnull(vfa.fee_amt,0)<isnull(t.hr4_c,0),0,isnull(t.hr4,0)-isnull(t.hr4_c,0)),
+		hr5 = iif(isnull(t.hr5,0)+isnull(vfa.fee_amt,0)<isnull(t.hr5_c,0),0,isnull(t.hr5,0)-isnull(t.hr5_c,0)),
+		hr6 = iif(isnull(t.hr6,0)+isnull(vfa.fee_amt,0)<isnull(t.hr6_c,0),0,isnull(t.hr6,0)-isnull(t.hr6_c,0)),
+		hr7 = iif(isnull(t.hr7,0)+isnull(vfa.fee_amt,0)<isnull(t.hr7_c,0),0,isnull(t.hr7,0)-isnull(t.hr7_c,0)),
+		hr8 = iif(isnull(t.hr8,0)+isnull(vfa.fee_amt,0)<isnull(t.hr8_c,0),0,isnull(t.hr8,0)-isnull(t.hr8_c,0)),
+		hr9 = iif(isnull(t.hr9,0)+isnull(vfa.fee_amt,0)<isnull(t.hr9_c,0),0,isnull(t.hr9,0)-isnull(t.hr9_c,0)),
+		hr10 = iif(isnull(t.hr10,0)+isnull(vfa.fee_amt,0)<isnull(t.hr10_c,0),0,isnull(t.hr10,0)-isnull(t.hr10_c,0)),
+		hr11 = iif(isnull(t.hr11,0)+isnull(vfa.fee_amt,0)<isnull(t.hr11_c,0),0,isnull(t.hr11,0)-isnull(t.hr11_c,0)),
+		hr12 = iif(isnull(t.hr12,0)+isnull(vfa.fee_amt,0)<isnull(t.hr12_c,0),0,isnull(t.hr12,0)-isnull(t.hr12_c,0)),
+		hr13 = iif(isnull(t.hr13,0)+isnull(vfa.fee_amt,0)<isnull(t.hr13_c,0),0,isnull(t.hr13,0)-isnull(t.hr13_c,0)),
+		hr14 = iif(isnull(t.hr14,0)+isnull(vfa.fee_amt,0)<isnull(t.hr14_c,0),0,isnull(t.hr14,0)-isnull(t.hr14_c,0)),
+		hr15 = iif(isnull(t.hr15,0)+isnull(vfa.fee_amt,0)<isnull(t.hr15_c,0),0,isnull(t.hr15,0)-isnull(t.hr15_c,0)),
+		hr16 = iif(isnull(t.hr16,0)+isnull(vfa.fee_amt,0)<isnull(t.hr16_c,0),0,isnull(t.hr16,0)-isnull(t.hr16_c,0)),
+		hr17 = iif(isnull(t.hr17,0)+isnull(vfa.fee_amt,0)<isnull(t.hr17_c,0),0,isnull(t.hr17,0)-isnull(t.hr17_c,0)),
+		hr18 = iif(isnull(t.hr18,0)+isnull(vfa.fee_amt,0)<isnull(t.hr18_c,0),0,isnull(t.hr18,0)-isnull(t.hr18_c,0)),
+		hr19 = iif(isnull(t.hr19,0)+isnull(vfa.fee_amt,0)<isnull(t.hr19_c,0),0,isnull(t.hr19,0)-isnull(t.hr19_c,0)),
+		hr20 = iif(isnull(t.hr20,0)+isnull(vfa.fee_amt,0)<isnull(t.hr20_c,0),0,isnull(t.hr20,0)-isnull(t.hr20_c,0)),
+		hr21 = iif(isnull(t.hr21,0)+isnull(vfa.fee_amt,0)<isnull(t.hr21_c,0),0,isnull(t.hr21,0)-isnull(t.hr21_c,0)),
+		hr22 = iif(isnull(t.hr22,0)+isnull(vfa.fee_amt,0)<isnull(t.hr22_c,0),0,isnull(t.hr22,0)-isnull(t.hr22_c,0)),
+		hr23 = iif(isnull(t.hr23,0)+isnull(vfa.fee_amt,0)<isnull(t.hr23_c,0),0,isnull(t.hr23,0)-isnull(t.hr23_c,0)),
+		hr24 = iif(isnull(t.hr24,0)+isnull(vfa.fee_amt,0)<isnull(t.hr24_c,0),0,isnull(t.hr24,0)-isnull(t.hr24_c,0)),
+		hr25 = iif(isnull(t.hr25,0)+isnull(vfa.fee_amt,0)<isnull(t.hr25_c,0),0,isnull(t.hr25,0)-isnull(t.hr25_c,0))
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
+		left join #var_fee_amount_001 vfa on vfa.source_deal_header_id=vol.source_deal_header_id
 where td.buy_sell_flag=''b'' and td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102 -- Linear model option'
 
 EXEC spa_print  @qry1
@@ -6958,33 +7075,34 @@ exec(@qry1)
 
 --td.buy_sell_flag=''s''
 set @qry1='update t set 
-		hr1 = iif(isnull(t.hr1,0)>isnull(t.hr1_c,0),0,-1*(isnull(t.hr1,0)-isnull(t.hr1_c,0))),
-		hr2 = iif(isnull(t.hr2,0)>isnull(t.hr2_c,0),0,-1*(isnull(t.hr2,0)-isnull(t.hr2_c,0))),
-		hr3 = iif(isnull(t.hr3,0)>isnull(t.hr3_c,0),0,-1*(isnull(t.hr3,0)-isnull(t.hr3_c,0))),
-		hr4 = iif(isnull(t.hr4,0)>isnull(t.hr4_c,0),0,-1*(isnull(t.hr4,0)-isnull(t.hr4_c,0))),
-		hr5 = iif(isnull(t.hr5,0)>isnull(t.hr5_c,0),0,-1*(isnull(t.hr5,0)-isnull(t.hr5_c,0))),
-		hr6 = iif(isnull(t.hr6,0)>isnull(t.hr6_c,0),0,-1*(isnull(t.hr6,0)-isnull(t.hr6_c,0))),
-		hr7 = iif(isnull(t.hr7,0)>isnull(t.hr7_c,0),0,-1*(isnull(t.hr7,0)-isnull(t.hr7_c,0))),
-		hr8 = iif(isnull(t.hr8,0)>isnull(t.hr8_c,0),0,-1*(isnull(t.hr8,0)-isnull(t.hr8_c,0))),
-		hr9 = iif(isnull(t.hr9,0)>isnull(t.hr9_c,0),0,-1*(isnull(t.hr9,0)-isnull(t.hr9_c,0))),
-		hr10 = iif(isnull(t.hr10,0)>isnull(t.hr10_c,0),0,-1*(isnull(t.hr10,0)-isnull(t.hr10_c,0))),
-		hr11 = iif(isnull(t.hr11,0)>isnull(t.hr11_c,0),0,-1*(isnull(t.hr11,0)-isnull(t.hr11_c,0))),
-		hr12 = iif(isnull(t.hr12,0)>isnull(t.hr12_c,0),0,-1*(isnull(t.hr12,0)-isnull(t.hr12_c,0))),
-		hr13 = iif(isnull(t.hr13,0)>isnull(t.hr13_c,0),0,-1*(isnull(t.hr13,0)-isnull(t.hr13_c,0))),
-		hr14 = iif(isnull(t.hr14,0)>isnull(t.hr14_c,0),0,-1*(isnull(t.hr14,0)-isnull(t.hr14_c,0))),
-		hr15 = iif(isnull(t.hr15,0)>isnull(t.hr15_c,0),0,-1*(isnull(t.hr15,0)-isnull(t.hr15_c,0))),
-		hr16 = iif(isnull(t.hr16,0)>isnull(t.hr16_c,0),0,-1*(isnull(t.hr16,0)-isnull(t.hr16_c,0))),
-		hr17 = iif(isnull(t.hr17,0)>isnull(t.hr17_c,0),0,-1*(isnull(t.hr17,0)-isnull(t.hr17_c,0))),
-		hr18 = iif(isnull(t.hr18,0)>isnull(t.hr18_c,0),0,-1*(isnull(t.hr18,0)-isnull(t.hr18_c,0))),
-		hr19 = iif(isnull(t.hr19,0)>isnull(t.hr19_c,0),0,-1*(isnull(t.hr19,0)-isnull(t.hr19_c,0))),
-		hr20 = iif(isnull(t.hr20,0)>isnull(t.hr20_c,0),0,-1*(isnull(t.hr20,0)-isnull(t.hr20_c,0))),
-		hr21 = iif(isnull(t.hr21,0)>isnull(t.hr21_c,0),0,-1*(isnull(t.hr21,0)-isnull(t.hr21_c,0))),
-		hr22 = iif(isnull(t.hr22,0)>isnull(t.hr22_c,0),0,-1*(isnull(t.hr22,0)-isnull(t.hr22_c,0))),
-		hr23 = iif(isnull(t.hr23,0)>isnull(t.hr23_c,0),0,-1*(isnull(t.hr23,0)-isnull(t.hr23_c,0))),
-		hr24 = iif(isnull(t.hr24,0)>isnull(t.hr24_c,0),0,-1*(isnull(t.hr24,0)-isnull(t.hr24_c,0))),
-		hr25 = iif(isnull(t.hr25,0)>isnull(t.hr25_c,0),0,-1*(isnull(t.hr25,0)-isnull(t.hr25_c,0)))
+		hr1 = iif(isnull(t.hr1,0)>isnull(t.hr1_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr1,0)-isnull(t.hr1_c,0))),
+		hr2 = iif(isnull(t.hr2,0)>isnull(t.hr2_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr2,0)-isnull(t.hr2_c,0))),
+		hr3 = iif(isnull(t.hr3,0)>isnull(t.hr3_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr3,0)-isnull(t.hr3_c,0))),
+		hr4 = iif(isnull(t.hr4,0)>isnull(t.hr4_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr4,0)-isnull(t.hr4_c,0))),
+		hr5 = iif(isnull(t.hr5,0)>isnull(t.hr5_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr5,0)-isnull(t.hr5_c,0))),
+		hr6 = iif(isnull(t.hr6,0)>isnull(t.hr6_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr6,0)-isnull(t.hr6_c,0))),
+		hr7 = iif(isnull(t.hr7,0)>isnull(t.hr7_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr7,0)-isnull(t.hr7_c,0))),
+		hr8 = iif(isnull(t.hr8,0)>isnull(t.hr8_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr8,0)-isnull(t.hr8_c,0))),
+		hr9 = iif(isnull(t.hr9,0)>isnull(t.hr9_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr9,0)-isnull(t.hr9_c,0))),
+		hr10 = iif(isnull(t.hr10,0)>isnull(t.hr10_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr10,0)-isnull(t.hr10_c,0))),
+		hr11 = iif(isnull(t.hr11,0)>isnull(t.hr11_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr11,0)-isnull(t.hr11_c,0))),
+		hr12 = iif(isnull(t.hr12,0)>isnull(t.hr12_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr12,0)-isnull(t.hr12_c,0))),
+		hr13 = iif(isnull(t.hr13,0)>isnull(t.hr13_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr13,0)-isnull(t.hr13_c,0))),
+		hr14 = iif(isnull(t.hr14,0)>isnull(t.hr14_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr14,0)-isnull(t.hr14_c,0))),
+		hr15 = iif(isnull(t.hr15,0)>isnull(t.hr15_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr15,0)-isnull(t.hr15_c,0))),
+		hr16 = iif(isnull(t.hr16,0)>isnull(t.hr16_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr16,0)-isnull(t.hr16_c,0))),
+		hr17 = iif(isnull(t.hr17,0)>isnull(t.hr17_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr17,0)-isnull(t.hr17_c,0))),
+		hr18 = iif(isnull(t.hr18,0)>isnull(t.hr18_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr18,0)-isnull(t.hr18_c,0))),
+		hr19 = iif(isnull(t.hr19,0)>isnull(t.hr19_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr19,0)-isnull(t.hr19_c,0))),
+		hr20 = iif(isnull(t.hr20,0)>isnull(t.hr20_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr20,0)-isnull(t.hr20_c,0))),
+		hr21 = iif(isnull(t.hr21,0)>isnull(t.hr21_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr21,0)-isnull(t.hr21_c,0))),
+		hr22 = iif(isnull(t.hr22,0)>isnull(t.hr22_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr22,0)-isnull(t.hr22_c,0))),
+		hr23 = iif(isnull(t.hr23,0)>isnull(t.hr23_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr23,0)-isnull(t.hr23_c,0))),
+		hr24 = iif(isnull(t.hr24,0)>isnull(t.hr24_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr24,0)-isnull(t.hr24_c,0))),
+		hr25 = iif(isnull(t.hr25,0)>isnull(t.hr25_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr25,0)-isnull(t.hr25_c,0)))
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
+	left join #var_fee_amount_001 vfa on vfa.source_deal_header_id=vol.source_deal_header_id
 where td.buy_sell_flag=''s'' and td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102 -- Linear model option'
 
 EXEC spa_print  @qry1
@@ -12402,12 +12520,13 @@ EXEC spa_calculate_formula	@as_of_date, @formula_table5,@process_id,@calc_result
 --select * into #uddft from user_defined_deal_fields_template_main
 --select udf_deal_id,source_deal_header_id,udf_template_id,NULLIF(udf_value,'') udf_value,create_user,create_ts,update_user,update_ts,currency_id,uom_id,counterparty_id into #uddf from user_defined_deal_fields
 --select udf_deal_id,source_deal_detail_id,udf_template_id,NULLIF(udf_value,'') udf_value,create_user,create_ts,update_user,update_ts,currency_id,uom_id,counterparty_id into #udddf from user_defined_deal_detail_fields 
-SELECT * INTO #udft from user_defined_fields_template 
 
-SELECT * INTO #uddft 
-FROM 
-	user_defined_deal_fields_template uddft 
-WHERE template_id IN(SELECT template_id FROM #temp_deals td INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id UNION ALL SELECT template_id FROM #temp_deals_broker td INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id)
+--SELECT * INTO #uddft 
+--FROM 
+--	user_defined_deal_fields_template uddft 
+--WHERE template_id IN(SELECT template_id FROM #temp_deals td INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id UNION ALL SELECT template_id FROM #temp_deals_broker td INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id)
+
+
 
 SELECT DISTINCT uddf.udf_deal_id,uddf.source_deal_header_id,uddf.udf_template_id,try_cast(NULLIF(uddf.udf_value,'') as numeric(20,4)) udf_value,uddf.create_user,uddf.create_ts,uddf.update_user,uddf.update_ts,uddf.currency_id,uddf.uom_id,uddf.counterparty_id 
 ,seq_no
@@ -12427,10 +12546,9 @@ FROM user_defined_deal_detail_fields uddf  WHERE uddf.source_deal_detail_id IN(S
 and try_cast(NULLIF(uddf.udf_value,'') as numeric(20,4)) is not null
 
 
-create index ix_pt_1 on #uddft(template_id) include(leg,field_id,udf_template_id)
-create index ix_pt_2 on #uddf(source_deal_header_id,udf_template_id) include(udf_value)
-create index ix_pt_3 on #uddft(internal_field_type)
-create index ix_pt_4 on #udft(leg,field_id,udf_template_id)
+--create index ix_pt_1 on #uddft(template_id) include(leg,field_id,udf_template_id)
+--create index ix_pt_2 on #uddf(source_deal_header_id,udf_template_id) include(udf_value)
+--create index ix_pt_3 on #uddft(internal_field_type)
 CREATE INDEX [IX_PT_temp_deals_pricing_contract_id] ON [#temp_deals] ([pricing], [contract_id]) INCLUDE ([source_deal_detail_id])
 CREATE INDEX [IX_PT_temp_deals_pricing] ON [#temp_deals] ([pricing]) INCLUDE ([source_deal_detail_id], [contract_id])
 
