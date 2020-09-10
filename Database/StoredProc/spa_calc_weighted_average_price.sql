@@ -122,7 +122,7 @@ EXEC('INSERT INTO #mapping_name(mapping_id,mapping_name)
 		INNER JOIN static_data_value sdv ON sdv.code = src.mapping_name AND sdv.type_id = 112700'
 		)
 
- -- alter table adiha_process.dbo.src_capacity_33333 drop column mapping_name
+ 
 
 DECLARE @mapping_id INT = 112700 
 
@@ -132,7 +132,52 @@ SELECT @mapping_id = mapping_id  FROM #mapping_name
 IF OBJECT_ID(N'tempdb..#generic_mapping_values') IS NOT NULL
 DROP TABLE #generic_mapping_values
 
-SELECT gmv.[mapping_table_id]	 
+CREATE TABLE #generic_mapping_values(mapping_table_id	int,
+			clm1_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm2_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm3_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm4_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm5_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm6_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm7_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm8_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm9_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm10_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm11_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm12_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm13_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm14_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm15_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm16_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm17_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm18_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm19_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT,
+			clm20_value	nvarchar(MAX) COLLATE DATABASE_DEFAULT
+			)
+SET @sql = '
+	INSERT INTO #generic_mapping_values(mapping_table_id
+		, clm1_value	
+		, clm2_value	
+		, clm3_value	
+		, clm4_value	
+		, clm5_value	
+		, clm6_value	
+		, clm7_value	
+		, clm8_value	
+		, clm9_value	
+		, clm10_value
+		, clm11_value
+		, clm12_value
+		, clm13_value
+		, clm14_value
+		, clm15_value
+		, clm16_value
+		, clm17_value
+		, clm18_value
+		, clm19_value
+		, clm20_value
+	)
+	SELECT gmv.[mapping_table_id]	 
 	   , gmv.[clm1_value]
 	   , gmv.[clm2_value]		
 	   , gmv.[clm3_value]		
@@ -153,35 +198,84 @@ SELECT gmv.[mapping_table_id]
 	   , gmv.[clm18_value]		
 	   , gmv.[clm19_value]		
 	   , gmv.[clm20_value]	
-INTO #generic_mapping_values
 FROM  generic_mapping_header gmh
 INNER JOIN generic_mapping_definition gmd ON gmd.mapping_table_id = gmh.mapping_table_id
-CROSS APPLY (
-	SELECT clm1_value, MAX(clm2_value) clm2_value FROM generic_mapping_values gmv 
-	WHERE gmv.mapping_table_id = gmh.mapping_table_id
-	GROUP BY clm1_value
-) mx
-INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id 
-	AND gmv.clm1_value = mx.clm1_value
-	AND gmv.clm2_value = mx.clm2_value
-WHERE gmh.mapping_name = 'Transfer Volume Mapping' 
-	AND TRY_CAST(gmv.clm1_value AS INT) = @mapping_id
+'  
+
+IF @mapping_id = 112704
+BEGIN
+	--Storage ST case pick process_type, template, delivery max effective date
+	SET @sql += '
+		CROSS APPLY (
+			SELECT clm1_value, MAX(clm2_value) clm2_value,clm13_value,clm20_value 
+			FROM generic_mapping_values gmv 
+			WHERE gmv.mapping_table_id = gmh.mapping_table_id
+			GROUP BY clm1_value,clm13_value,clm20_value
+		) mx
+		INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id 
+			AND gmv.clm1_value = mx.clm1_value
+			AND gmv.clm2_value = mx.clm2_value
+			AND ISNULL(gmv.clm13_value, '''') = ISNULL(mx.clm13_value,'''')
+			AND ISNULL(gmv.clm20_value,'''') = ISNULL(mx.clm20_value,'''')
+		'
+END
+ELSE IF @mapping_id = 112707
+BEGIN
+	--Storage ST case pick process_type, subbook, buysell, template, offset deal max effective date
+	SET @sql += '
+		CROSS APPLY (
+			SELECT clm1_value, MAX(clm2_value) clm2_value,clm3_value,clm12_value,clm13_value
+			FROM generic_mapping_values gmv 
+			WHERE gmv.mapping_table_id = gmh.mapping_table_id
+			GROUP BY clm1_value,clm3_value,clm12_value,clm13_value
+		) mx
+		INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id 
+			AND gmv.clm1_value = mx.clm1_value
+			AND gmv.clm2_value = mx.clm2_value
+			AND ISNULL(gmv.clm3_value, '''') = ISNULL(mx.clm3_value,'''')
+			AND ISNULL(gmv.clm12_value, '''') = ISNULL(mx.clm12_value,'''')
+			AND ISNULL(gmv.clm13_value,'''') = ISNULL(mx.clm13_value,'''')
+		'
+END
+ELSE
+BEGIN
+	--Max effective data of process type
+	SET @sql += '
+		CROSS APPLY (
+			SELECT clm1_value, MAX(clm2_value) clm2_value
+			FROM generic_mapping_values gmv 
+			WHERE gmv.mapping_table_id = gmh.mapping_table_id
+			GROUP BY clm1_value
+		) mx
+		INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id 
+			AND gmv.clm1_value = mx.clm1_value
+			AND gmv.clm2_value = mx.clm2_value
+		'
+END
+
+SET @sql += '
+	WHERE gmh.mapping_name = ''Transfer Volume Mapping'' 
+		AND TRY_CAST(gmv.clm1_value AS INT) = ' + CAST(@mapping_id AS NVARCHAR(10))
+	
+EXEC(@sql)
+
+--/* Line 168 Note: Only in case of storage process type template and delivery path are defined. For other process type these values are blank. */
 
 IF @debug_mode = 1
-select 'generic_mapping_values', * from #generic_mapping_values
---return
+SELECT 'generic_mapping_values', * from #generic_mapping_values
+
 
 DROP TABLE IF EXISTS #gm_deals
 CREATE TABLE #gm_deals(source_deal_header_id INT)
 
 INSERT INTO #gm_deals
-select close_reference_id source_deal_header_id 
+SELECT sdh.close_reference_id source_deal_header_id 
 FROM source_deal_header sdh
-INNER JOIN #generic_mapping_values gmv ON gmv.clm15_value = sdh.source_deal_header_id OR gmv.clm15_value = sdh.source_deal_header_id 
+INNER JOIN #generic_mapping_values gmv ON gmv.clm15_value = sdh.deal_id OR gmv.clm16_value = sdh.deal_id 
 UNION
-select source_deal_header_id
+SELECT sdh.source_deal_header_id
 FROM source_deal_header sdh
-INNER JOIN #generic_mapping_values gmv ON gmv.clm14_value = sdh.source_deal_header_id
+INNER JOIN #generic_mapping_values gmv ON gmv.clm14_value = sdh.deal_id
 
 IF OBJECT_ID(N'tempdb..#deal_max_term') IS NOT NULL
 DROP TABLE #deal_max_term
@@ -239,7 +333,7 @@ BEGIN
 		) rs
 		'
 END
-ELSE IF @mapping_id IN (112702,112703,112704)
+ELSE IF @mapping_id IN (112702,112703,112704,112707)
 BEGIN	
 	IF @mapping_id = 112702
 BEGIN	
@@ -324,7 +418,7 @@ create nonclustered index indx_src_hour_breakdown on #src_hour_breakdown (hr,[pe
 IF @debug_mode = 1
 select  '#src_hour_breakdown',count(1) from #src_hour_breakdown --order by term,hr,[period]
 
-IF @mapping_id = 112704	--storage case
+IF @mapping_id IN (112704,112707)	--storage and storage st case
 BEGIN
 	DROP TABLE IF EXISTS #group_deals
 	CREATE TABLE #group_deals(group_source_deal_header_id INT, group_deal_id NVARCHAR(500))
@@ -550,7 +644,7 @@ SET @sql += ' FROM #src_hour_breakdown src '
 ELSE 
 SET @sql += ' FROM  #src_hour_breakdown_grp src '
 
-IF @mapping_id IN (112700,112703,112704)
+IF @mapping_id IN (112700,112703,112704,112707)
 BEGIN
 	SET @sql += '
 			INNER JOIN #collect_deals cd ON src.deal_id = cd.deal_id 
@@ -705,21 +799,42 @@ SET @sql = CAST('' AS NVARCHAR(MAX)) + N'
 		AND org.term_start = src.[Term]
 		AND org.hr = src.hr
 		AND org.[period] =  src.[period]
-		AND org.is_dst = src.is_dst
-	OUTER APPLY(SELECT DISTINCT gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
-		FROM #generic_mapping_values gmv
-		LEFT JOIN source_deal_header sdh ON ISNULL(gmv.clm13_value,sdh.template_id) = sdh.template_id
-			AND sdh.source_deal_header_id = ISNULL(org.structured_deal_id,org.source_deal_header_id)
-		LEFT JOIN user_defined_deal_fields_template uddft ON uddft.template_id = sdh.template_id
-		INNER JOIN static_data_value sdv ON sdv.type_id = 5500 
-				AND uddft.field_id = sdv.value_id 
-				AND sdv.code = ''Delivery Path''
-		LEFT JOIN user_defined_deal_fields uddf ON uddf.udf_template_id = uddft.udf_template_id 
-			AND uddf.source_deal_header_id = sdh.source_deal_header_id
-		WHERE 1=1 
-			AND (gmv.clm13_value IS NULL OR gmv.clm13_value = ISNULL(sdh.template_id,-1))
-			AND (gmv.clm20_value IS NULL OR gmv.clm20_value = ISNULL(uddf.udf_value,-1))		
-	) gmv
+		AND org.is_dst = src.is_dst '
+
+IF @mapping_id = 112704	--Storage case check template and delivery path if defined in generic mapping.
+BEGIN
+	SET @sql += ' OUTER APPLY(SELECT DISTINCT gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
+			FROM #generic_mapping_values gmv
+			LEFT JOIN source_deal_header sdh ON ISNULL(gmv.clm13_value,sdh.template_id) = sdh.template_id
+				AND sdh.source_deal_header_id = ISNULL(org.structured_deal_id,org.source_deal_header_id)
+			LEFT JOIN user_defined_deal_fields_template uddft ON uddft.template_id = sdh.template_id
+			INNER JOIN static_data_value sdv ON sdv.type_id = 5500 
+					AND uddft.field_id = sdv.value_id 
+					AND sdv.code = ''Delivery Path''
+			LEFT JOIN user_defined_deal_fields uddf ON uddf.udf_template_id = uddft.udf_template_id 
+				AND uddf.source_deal_header_id = sdh.source_deal_header_id
+			WHERE 1=1 
+				AND (gmv.clm13_value IS NULL OR gmv.clm13_value = ISNULL(sdh.template_id,-1))
+				AND (gmv.clm20_value IS NULL OR gmv.clm20_value = ISNULL(uddf.udf_value,-1))		
+		) gmv'
+END
+ELSE  IF @mapping_id = 112707	--Storage ST case check offset deal defined in generic mapping.
+BEGIN
+	SET @sql += ' OUTER APPLY(SELECT DISTINCT gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
+			FROM #generic_mapping_values gmv
+			INNER JOIN source_deal_header sdh ON sdh.deal_id = gmv.clm15_value		
+		) gmv'
+END
+ELSE
+BEGIN
+	SET @sql += ' OUTER APPLY(SELECT DISTINCT gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
+			FROM #generic_mapping_values gmv		
+		) gmv'
+END
+
+
+SET @sql += 
+	'
 	LEFT JOIN #source_price_curve max_curve ON max_curve.source_curve_def_id = COALESCE(src.uploaded_curve_id,gmv.clm18_value,org.curve_id)
 			AND CONVERT(date, max_curve.maturity_date) =  org.term_start 
 			AND DATEPART(hour,max_curve.maturity_date) = org.hr -1
