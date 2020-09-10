@@ -80,7 +80,8 @@ class DB extends REST {
         $params = array();
         // Reconfigure query timeout option of SQLSRV
         $options = array(
-            'QueryTimeout' => 6000
+            'QueryTimeout' => 6000,
+			'FormatDecimals' => true
         );
 
         $sql_result = sqlsrv_query(self::$db, $sql, $params, $options);
