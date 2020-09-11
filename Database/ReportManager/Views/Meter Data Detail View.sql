@@ -39,7 +39,7 @@ DECLARE @_meter_id VARCHAR(MAX)=NULL,
   @_granularity_id VARCHAR(MAX),
   @_channel varchar(max)= NULL,
   @_term_start varchar(20)=NULL, 
-  @_term_end varchar(20) =NULL      
+  @_term_end varchar(20) =NULL    
  
  select 
  @_meter_id= nullif( isnull(@_meter_id,nullif(''@meter_id'', replace(''@_meter_id'',''@_'',''@''))),''null'')        
@@ -98,9 +98,23 @@ SELECT
  , MAX(su.uom_name) [UOM] 
  , mdh.prod_date [term_start]
  , mdh.prod_date [term_end]
- , iif(mdh.hour = 25, concat(mdst.hour,''''DST''''), right(''''0''''+cast(mdh.hour as varchar),2)) [hour] 
+ --, iif(mdh.hour = 25, concat(mdst.hour,''''DST''''), right(''''0''''+cast(mdh.hour as varchar),2)) [hour] 
+  , CASE 
+		WHEN mi.granularity = 987 AND mdh.period <> 45 THEN  (mdh.hour - 1) 
+		WHEN mi.granularity = 994 AND mdh.period <> 50 THEN  (mdh.hour - 1)
+		WHEN mi.granularity = 989 AND mdh.period <> 30 THEN  (mdh.hour - 1)
+		WHEN mi.granularity = 995 AND mdh.period <> 55 THEN  (mdh.hour - 1)
+		ELSE mdh.hour
+	END [hour]
  , SUM(mdh.value) [value]
- , MAX(mdh.period) [Period]
+ --, MAX(mdh.period) [Period]
+ , CASE 
+		WHEN mi.granularity = 987 AND mdh.period <> 45 THEN  (mdh.period + 15) 
+		WHEN mi.granularity = 994 AND mdh.period <> 50 THEN  (mdh.period + 10)
+		WHEN mi.granularity = 989 AND mdh.period <> 30 THEN  (mdh.period + 30)
+		WHEN mi.granularity = 995 AND mdh.period <> 55 THEN  (mdh.period + 5)
+		ELSE 0
+	END [Period]
  , MAX(sml.location_id) [location_id]
  , MAX(sml.location_name) [location_name]
  , MAX(sml.source_minor_location_id) [source_minor_location_id]
@@ -135,8 +149,8 @@ CASE WHEN @_meter_id IS NULL THEN '''' ELSE '' AND mi.meter_id IN ('' + @_meter_
 CASE WHEN @_granularity_id IS NULL THEN '''' ELSE '' AND mi.granularity IN ('' + @_granularity_id + '')'' END + 
 --CASE WHEN @_prod_date IS NULL THEN '''' ELSE '' AND mdh.prod_date IN ('' + @_prod_date + '')'' END +
 --CASE WHEN @_location_id IS NULL THEN '''' ELSE '' AND sml.location_id IN ('' + @_location_id + '')'' END +
- '' GROUP BY mi.meter_id,prod_date,mdh.hour,mdst.hour
- order by mi.meter_id,prod_date,mdh.hour
+ '' GROUP BY mi.meter_id,prod_date,mdh.hour,mdst.hour,mi.granularity,mdh.period
+ order by mi.meter_id,prod_date,mdh.hour,mi.granularity,mdh.period
  ''
 EXEC (@_sql)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
@@ -227,7 +241,7 @@ EXEC (@_sql)', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Hour'
-			   , reqd_param = 0, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+			   , reqd_param = 0, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -240,7 +254,7 @@ EXEC (@_sql)', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'hour' AS [name], 'Hour' AS ALIAS, 0 AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'hour' AS [name], 'Hour' AS ALIAS, 0 AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Meter Data Detail View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
