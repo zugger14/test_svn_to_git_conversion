@@ -1,4 +1,4 @@
-﻿ BEGIN TRY
+﻿BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'SDETSV'
@@ -67,7 +67,7 @@ SET @_sql = ''
 	, sc.source_counterparty_id [counterparty_id]
 	, sc.counterparty_id [counterparty_code]
 	, sc.counterparty_name 
-	, CAST(ISNULL(sids.value,0) AS NUMERIC(32,17)) [value] 
+	, CAST(ISNULL(sids.value,0) AS NUMERIC(32,17))  [value] 
 	, CAST(ISNULL(sids.volume,0) AS NUMERIC(32,17)) [volume]
 	, suom.source_uom_id [uom_id]
 	, suom.uom_id [uom_code]
@@ -77,21 +77,21 @@ SET @_sql = ''
     , scu.currency_name
 	, CASE WHEN si.invoice_type = ''''i'''' THEN epa_receivable.external_value ELSE epa_payable.external_value END [creditor_debtor]
 	, CASE  
-		  WHEN ISNULL(sids.value,0) > 0 AND si.invoice_type = ''''i''''  THEN  ''''Verkauf''''  
-		  WHEN ISNULL(sids.value,0) < 0 AND si.invoice_type = ''''i''''  THEN  ''''Kauf''''
-		  WHEN ISNULL(sids.value,0) > 0 AND si.invoice_type = ''''r''''  THEN  ''''Verkauf''''
-		  WHEN ISNULL(sids.value,0) < 0 AND si.invoice_type = ''''r''''  THEN  ''''Kauf''''  
+		  WHEN stm_chkout.header_buy_sell_flag = ''''s'''' AND si.invoice_type = ''''i'''' THEN  ''''Verkauf''''  
+		  WHEN stm_chkout.header_buy_sell_flag = ''''b'''' AND si.invoice_type = ''''i''''  THEN  ''''Kauf'''' 
+		  WHEN stm_chkout.header_buy_sell_flag = ''''s'''' AND si.invoice_type = ''''r''''  THEN  ''''Verkauf''''
+		  WHEN stm_chkout.header_buy_sell_flag = ''''b''''  AND si.invoice_type = ''''r''''  THEN  ''''Kauf''''  
 	      ELSE NULL 
 	  END [buy_sell]
-	, CAST(CAST(sids.prod_date_from AS DATE) AS VARCHAR(7)) month_year
+	, CONCAT(MONTH(sids.prod_date_from), ''''/'''', YEAR(sids.prod_date_from)) month_year
 	, CONCAT(CASE WHEN scom.commodity_id = ''''Power'''' THEN ''''Strom'''' WHEN scom.commodity_id = ''''GAS'''' THEN ''''Gas'''' ELSE '''''''' END,CASE  
-		  WHEN ISNULL(sids.value,0) > 0 AND si.invoice_type = ''''i''''  THEN  ''''Verkauf''''  
-		  WHEN ISNULL(sids.value,0) < 0 AND si.invoice_type = ''''i''''  THEN  ''''Kauf''''
-		  WHEN ISNULL(sids.value,0) > 0 AND si.invoice_type = ''''r''''  THEN  ''''Verkauf''''
-		  WHEN ISNULL(sids.value,0) < 0 AND si.invoice_type = ''''r''''  THEN  ''''Kauf''''  
+		  WHEN stm_chkout.header_buy_sell_flag = ''''s'''' AND si.invoice_type = ''''i'''' THEN  ''''Verkauf''''  
+		  WHEN stm_chkout.header_buy_sell_flag = ''''b'''' AND si.invoice_type = ''''i''''  THEN  ''''Kauf'''' 
+		  WHEN stm_chkout.header_buy_sell_flag = ''''s'''' AND si.invoice_type = ''''r''''  THEN  ''''Verkauf''''
+		  WHEN stm_chkout.header_buy_sell_flag = ''''b''''  AND si.invoice_type = ''''r''''  THEN  ''''Kauf''''  
 	      ELSE NULL 
-	  END ,sc.counterparty_id , CAST(CAST(sids.prod_date_from AS DATE) AS VARCHAR(7)))  summary_mapping_to_account
-	, CONCAT(si.stmt_invoice_id,''''VOM'''', CAST(si.invoice_date AS DATE)) creditor_debtor_information
+	  END,'''' '''',sc.counterparty_id , '''' '''', MONTH(si.invoice_date), ''''/'''',  YEAR(si.invoice_date) )  summary_mapping_to_account
+	, CONCAT(''''*'''',si.stmt_invoice_id,'''' VOM '''', MONTH(si.invoice_date) , ''''.'''', DAY(si.invoice_date), ''''.'''', YEAR(si.invoice_date) ) creditor_debtor_information
 	, cg.contract_id 
 	, cg.contract_name 
 	, CAST(null AS VARCHAR(20)) barcode 
@@ -104,6 +104,8 @@ SET @_sql = ''
 	, scom.commodity_name commodity_name
 	, si.invoice_type
 	, ROW_NUMBER() OVER (ORDER BY si.stmt_invoice_id) row_num
+	,  sdv_ct.code
+	, stm_chkout.header_buy_sell_flag
 	 INTO #temp_export_sap
 	FROM stmt_invoice_detail sids
 	INNER JOIN stmt_invoice si ON sids.stmt_invoice_id = si.stmt_invoice_id
@@ -111,7 +113,10 @@ SET @_sql = ''
 	LEFT JOIN contract_group cg ON cg.contract_id = si.contract_id
 	LEFT JOIN static_data_value sdv_ct ON sdv_ct.value_id = sids.invoice_line_item_id
 	OUTER APPLY (
-		SELECT TOP 1 * from stmt_checkout chkout WHERE chkout.stmt_invoice_detail_id = sids.stmt_invoice_detail_id
+		SELECT TOP 1 chkout.*,sdh.header_buy_sell_flag  from stmt_checkout chkout 
+		INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = chkout.source_deal_detail_id
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+		WHERE chkout.stmt_invoice_detail_id = sids.stmt_invoice_detail_id
 	) stm_chkout
 	LEFT JOIN source_uom suom ON suom.source_uom_id = stm_chkout.uom_id
 	LEFT JOIN source_currency scu ON scu.source_currency_id = stm_chkout.currency_id
@@ -143,6 +148,7 @@ SET @_sql = ''
 + CASE WHEN @_prod_date_to IS NOT NULL THEN '' AND  sids.prod_date_to <= ''''''+@_prod_date_to+'''''' '' ELSE '''' END
 
 SET @_sql1 = ''
+
 SELECT  stmt_invoice_id
 	, prod_date_from
 	, prod_date_to
@@ -174,8 +180,9 @@ SELECT  stmt_invoice_id
 	, commodity_name
 	, invoice_type
 	, row_num
+	,header_buy_sell_flag
 INTO #temp_export_sap1
-FROM #temp_export_sap where value > 0
+FROM #temp_export_sap where  (invoice_type = ''''i'''' AND  header_buy_sell_flag=  ''''s'''') OR   (invoice_type =''''r'''' AND  header_buy_sell_flag=  ''''b'''') 
 UNION ALL
 SELECT 
 	 stmt_invoice_id
@@ -209,7 +216,8 @@ SELECT
 	, commodity_name
 	, invoice_type
 	, row_num
-FROM #temp_export_sap where value < 0 
+	, header_buy_sell_flag
+FROM #temp_export_sap where  (invoice_type =''''i'''' AND  header_buy_sell_flag=  ''''b'''') OR   (invoice_type= ''''r'''' AND  header_buy_sell_flag=  ''''s'''')
 UNION ALL
 SELECT 
       stmt_invoice_id
@@ -243,7 +251,8 @@ SELECT
 	, commodity_name
 	, invoice_type
 	, row_num
-FROM #temp_export_sap where value < 0 
+	, header_buy_sell_flag
+FROM #temp_export_sap  where  (invoice_type =''''i'''' AND  header_buy_sell_flag=  ''''b'''') OR   (invoice_type =''''r'''' AND  header_buy_sell_flag=  ''''s'''')
 UNION ALL
 SELECT 
 	  stmt_invoice_id
@@ -277,10 +286,10 @@ SELECT
 	, commodity_name
 	, invoice_type
 	, row_num
-FROM #temp_export_sap where value < 0 
-
+	, header_buy_sell_flag
+FROM #temp_export_sap where  (invoice_type =''''i'''' AND  header_buy_sell_flag=  ''''b'''') OR   (invoice_type =''''r'''' AND  header_buy_sell_flag=  ''''s'''')
 SELECT 
-	 stmt_invoice_id
+	 null stmt_invoice_id
 	, prod_date_from
 	, prod_date_to
 	, counterparty_id
@@ -299,10 +308,9 @@ SELECT
 	, month_year
 	, CASE WHEN product like ''''%neg.EUR%'''' THEN NULL ELSE summary_mapping_to_account END summary_mapping_to_account
 	,  CASE
-		WHEN  invoice_type = ''''i''''  AND value > 0  THEN creditor_debtor_information
-		WHEN invoice_type = ''''r'''' AND  value > 0 AND Product not like ''''%Strom neg.MWh%'''' THEN ''''Re''''
+		WHEN  invoice_type = ''''i''''  AND header_buy_sell_flag = ''''s''''  THEN creditor_debtor_information
+		WHEN invoice_type = ''''r''''  AND Product not like ''''%Strom neg.MWh%'''' THEN CONCAT(''''*'''', ''''Re'''')
 		WHEN  product like ''''%Strom neg.EUR%'''' THEN creditor_debtor_information
-		WHEN (invoice_type = ''''i'''' OR invoice_type = ''''r'''' ) AND value <  0  THEN NULL
 	    ELSE NULL
 	  END creditor_debtor_information
 	, contract_id
