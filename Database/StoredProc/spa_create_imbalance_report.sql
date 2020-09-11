@@ -138,36 +138,19 @@ DECLARE
 	@page_size INT = NULL,
 	@page_no INT = NULL
 
-
---EXEC spa_create_imbalance_report 'm',NULL,NULL,NULL,'2018-06-01','2018-06-30',NULL,NULL,NULL,NULL,NULL,'2769',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'7724',NULL,NULL,NULL,NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'adangol'
+--Drops all temp tables created in this scope.
+EXEC [spa_drop_all_temp_table] 
 
 --report run
-select @summary_option = 'm', @pipeline_counterparty = '7724', @drill_location = '2898', @term_start = '2019-05-01', @term_end = '2019-07-31'
---imb calc
---select @summary_option = 'd',@drill_type='calc', @pipeline_counterparty = '7724', @drill_location = '2898', @term_start = '2019-04-01', @term_end = '2019-04-30'
-
---deal creation
---select @summary_option = 'd', @drill_type = 'calc', @pipeline_counterparty = '7688', @contract_ids = '9225', @drill_location = '2771', @term_start = '2018-05-01', @term_end = '2018-05-31',@batch_process_id='EB12EAC0_549D_438D_AC25_953A5D87AF8C_5b0f9cc0dc2ab',@batch_report_param='spa_create_imbalance_report @summary_option = ''d'', @drill_type = ''calc'', @pipeline_counterparty = ''7688'', @contract_ids = ''9225'', @location = ''2771'', @term_start = ''2018-05-01'', @term_end = ''2018-05-31'''
-
---'d','2900','2901,2902','2906,2903,2908,2904,2910,2905,2909','2018-05-01','2018-05-31',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL
---select @summary_option='d', @term_start='2017-12-01',@term_end='2017-12-31',@pipeline_counterparty='4246', @drill_location='1312', @drill_contract='TR012'
---select @summary_option='m',@term_start='2017-10-01',@term_end='2017-12-31',@drill_pipeline='Williams Co. ',@drill_contract='W123456',@drill_type='MD',@drill_date='2017-11-01'
---'m',NULL,NULL,NULL,'2017-10-01','2017-12-31',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'4224',NULL,NULL,NULL,NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL
---EXEC spa_create_imbalance_report  'd',NULL,NULL,NULL,'2017-10-01','2017-12-31',NULL,NULL,NULL,NULL,NULL,'1358',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'4224',NULL,NULL,NULL,NULL,2, 1, 2,'Williams Co. ','W123456','MD','2017-11-14'
-drop table #deal_list
-drop table #temp_deals
-drop table #books
-drop table #tmp_delivery_path
-drop table #imbalance_template_ids
-drop table #imbalance_deals
-drop table #temp_deals1
-drop table #temp_deals2
-drop table #meg_trapp
-drop table #temp_deals3
-drop table #tmp_header
-drop table #detail_inserted
-drop table #tmp_data_for_deal
-drop table #tmp_new_deals
+select @summary_option='d'
+,@sub_entity_id='18,8,2,15,11,5'
+,@stra_entity_id='19,9,3,16,12,6'
+,@book_entity_id='20,10,4,17,13,14,7'
+,@term_start='2021-05-01'
+,@term_end='2021-05-31'
+,@pipeline_counterparty='7988'
+,@round_by='2'
 
 --*/
 
@@ -408,10 +391,8 @@ BEGIN TRY
 	IF ISNULL(@show_imbalance_amount,'n') = 'n'
 	BEGIN
 		SET @sql_str1='
-			INSERT INTO #temp_deals (meter_id,location_id,counterparty_id ,contract_id ,group_id,group_order_id ,Term ,deal_volume_uom_id ,group_name,
-				receipt_volume ,fuel_loss ,net_receipt_volume ,allocated_delivery ,daily_imbalance'+CASE WHEN @org_summary_option='d' THEN ',source_deal_header_id,template_id' ELSE ''  END +',deal_volume)
-				SELECT 
-			
+			INSERT INTO #temp_deals (meter_id,location_id,counterparty_id ,contract_id ,group_id,group_order_id ,Term ,deal_volume_uom_id ,group_name, receipt_volume ,fuel_loss ,net_receipt_volume ,allocated_delivery ,daily_imbalance'+CASE WHEN @org_summary_option='d' THEN ',source_deal_header_id,template_id' ELSE ''  END +',deal_volume)
+			SELECT 
 				leg_2.meter_id,sdd.location_id,sdh.counterparty_id,ISNULL(id1.reporting_contract_id,sdh.contract_id),idi.group_id,idi.group_order_id,CAST(ISNULL(uddf.udf_value,sdd.term_start) AS DATETIME) Term,
 					MAX(sdd.deal_volume_uom_id) deal_volume_uom_id,MAX(idi.group_name) group_name,
 					[Receip Volume]=SUM(CASE WHEN idi.group_ID <>1 THEN 0 ELSE 1 * ISNULL(sdd.schedule_volume,sdd.deal_volume)  END),
@@ -432,63 +413,86 @@ BEGIN TRY
 					null [Daily Imbalance]'
 					+CASE WHEN @org_summary_option='d'  THEN ',sdh.source_deal_header_id,sdh.template_id' ELSE ''  END +'
 					,sum(sdd.deal_volume * CASE WHEN sdd.buy_sell_flag=''b'' THEN 1 ELSE -1 END)
-				FROM source_deal_header sdh	
-					INNER JOIN #imbalance_template_ids idi ON sdh.template_id=idi.template_id
-					INNER JOIN  #books b ON sdh.source_system_book_id1=b.source_system_book_id1     		                        
-						AND sdh.source_system_book_id2=b.source_system_book_id2                             
-						AND sdh.source_system_book_id3=b.source_system_book_id3                             
-						AND sdh.source_system_book_id4=b.source_system_book_id4   
-					INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id=sdh.source_deal_header_id 
-					--OUTER APPLY (
-					--	SELECT MAX(location_id) location_id FROM source_deal_detail WHERE sdh.source_deal_header_id=source_deal_header_id AND leg=2
-					--	) leg2_loc
-							
-					left JOIN (SELECT DISTINCT counterparty_id ,location_id,contract_id,meter_id  FROM #imbalance_deals) imb ON sdh.contract_id=imb.contract_id
-							AND sdh.counterparty_id=imb.counterparty_id AND  sdd.location_id=imb.location_id	OUTER APPLY (
-						SELECT top(1) * FROM #tmp_delivery_path  
-							WHERE sdd.location_id=location_id AND sdh.counterparty_id=[pipeline_counterparty] AND sdh.contract_id=[contract] 
-							AND sdd.leg=CASE WHEN idi.group_ID =1 THEN leg ELSE sdd.leg END   
-							AND meter_id=CASE WHEN idi.group_ID =1 THEN  sdd.meter_id ELSE meter_id END) dp
-					OUTER APPLY(
-						SELECT f.udf_value FROM  user_defined_deal_fields f
-						INNER JOIN  user_defined_deal_fields_template uddft ON f.udf_template_id=uddft.udf_template_id  AND uddft.field_name=-5613
-						AND f.source_deal_header_id=sdh.source_deal_header_id  AND ISDATE(f.udf_value)=1 AND idi.group_ID in (4,5,6,7)
-					) uddf
-					 OUTER APPLY(
-						SELECT CAST(f.udf_value AS FLOAT) udf_value FROM  user_defined_deal_fields f
-						INNER JOIN  user_defined_deal_fields_template uddft ON f.udf_template_id=uddft.udf_template_id  AND uddft.field_name=-5614
-							AND f.source_deal_header_id=sdh.source_deal_header_id  AND ISNUMERIC(f.udf_value)=1
-					) uddf_fac
-					 OUTER APPLY(
-					 SELECT top(1)  s1.delivered_volume FROM delivery_status s 
-						INNER JOIN source_deal_detail d ON s.source_deal_detail_id=d.source_deal_detail_id AND s.source_deal_detail_id=sdd.source_deal_detail_id
-						INNER JOIN source_deal_detail d1 ON d.source_deal_header_id=d1.source_deal_header_id AND d1.leg=2
-						INNER JOIN  delivery_status s1 ON  s1.source_deal_detail_id=d1.source_deal_detail_id
-					 ORDER BY s1.status_timestamp desc
-					 ) ds
-					OUTER APPLY(
-						SELECT id.meter_id,SUM(ISNULL(mvh.hr1,0)+ISNULL(mvh.hr2,0)+ISNULL(mvh.hr3,0)+ISNULL(mvh.hr4,0)+ISNULL(mvh.hr5,0)+ISNULL(mvh.hr6,0)
-							 +ISNULL(mvh.hr7,0)+ISNULL(mvh.hr8,0)+ISNULL(mvh.hr9,0)+ISNULL(mvh.hr10,0)+ISNULL(mvh.hr11,0)+ISNULL(mvh.hr12,0)
-							 +ISNULL(mvh.hr13,0)+ISNULL(mvh.hr14,0)+ISNULL(mvh.hr15,0)+ISNULL(mvh.hr16,0)+ISNULL(mvh.hr17,0)+ISNULL(mvh.hr18,0)
-							 +ISNULL(mvh.hr19,0)+ISNULL(mvh.hr20,0)+ISNULL(mvh.hr21,0)+ISNULL(mvh.hr22,0)+ISNULL(mvh.hr23,0)+ISNULL(mvh.hr24,0)) vol
-						  FROM #imbalance_deals id
-						INNER JOIN mv90_data mv ON  mv.meter_id = id.meter_id AND  id.counterparty_id = sdh.counterparty_id AND id.contract_id= sdh.contract_id
-							AND mv.from_date = CONVERT(VARCHAR(8),sdd.term_start,120)+''01'' AND sdd.leg=2 AND idi.group_ID =1 AND sdd.location_id=id.location_id
-						INNER JOIN mv90_data_hour mvh ON  mv.meter_data_id = mvh.meter_data_id    AND mvh.prod_date= sdd.term_start   
-						GROUP BY id.meter_id               
-				 )  leg_2  
-				 OUTER APPLY 
-				 ( SELECT top(1) reporting_contract_id FROM #imbalance_deals WHERE counterparty_id = sdh.counterparty_id AND contract_id= sdh.contract_id AND location_id=sdd.location_id) id1        
+			FROM source_deal_header sdh	
+			INNER JOIN #imbalance_template_ids idi ON sdh.template_id=idi.template_id
+			INNER JOIN  #books b ON sdh.source_system_book_id1=b.source_system_book_id1     		                        
+				AND sdh.source_system_book_id2=b.source_system_book_id2                             
+				AND sdh.source_system_book_id3=b.source_system_book_id3                             
+				AND sdh.source_system_book_id4=b.source_system_book_id4   
+			INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id=sdh.source_deal_header_id 
+			LEFT JOIN (SELECT DISTINCT counterparty_id ,location_id,contract_id,meter_id  FROM #imbalance_deals) imb 
+				ON sdh.contract_id=imb.contract_id
+				AND sdh.counterparty_id=imb.counterparty_id 
+				AND sdd.location_id=imb.location_id
+			OUTER APPLY (
+				SELECT top(1) * 
+				FROM #tmp_delivery_path  
+				WHERE sdd.location_id=location_id 
+					AND sdh.counterparty_id=[pipeline_counterparty] 
+					AND sdh.contract_id=[contract] 
+					AND sdd.leg=CASE WHEN idi.group_ID =1 THEN leg ELSE sdd.leg END   
+					AND meter_id=CASE WHEN idi.group_ID =1 THEN  sdd.meter_id ELSE meter_id END
+			) dp
+			OUTER APPLY(
+				SELECT f.udf_value FROM  user_defined_deal_fields f
+				INNER JOIN  user_defined_deal_fields_template uddft 
+					ON f.udf_template_id=uddft.udf_template_id  
+					AND uddft.field_name=-5613
+					AND f.source_deal_header_id=sdh.source_deal_header_id  
+					AND ISDATE(f.udf_value)=1 
+					AND idi.group_ID in (4,5,6,7)
+			) uddf
+			OUTER APPLY(
+				SELECT CAST(f.udf_value AS FLOAT) udf_value FROM  user_defined_deal_fields f
+				INNER JOIN  user_defined_deal_fields_template uddft ON f.udf_template_id=uddft.udf_template_id  AND uddft.field_name=-5614
+					AND f.source_deal_header_id=sdh.source_deal_header_id  AND ISNUMERIC(f.udf_value)=1
+			) uddf_fac
+			OUTER APPLY(
+				SELECT top(1)  s1.delivered_volume FROM delivery_status s 
+				INNER JOIN source_deal_detail d ON s.source_deal_detail_id=d.source_deal_detail_id AND s.source_deal_detail_id=sdd.source_deal_detail_id
+				INNER JOIN source_deal_detail d1 ON d.source_deal_header_id=d1.source_deal_header_id AND d1.leg=2
+				INNER JOIN  delivery_status s1 ON  s1.source_deal_detail_id=d1.source_deal_detail_id
+				ORDER BY s1.status_timestamp desc
+			) ds
+			OUTER APPLY(
+				SELECT id.meter_id, SUM(ISNULL(mvh.hr1,0)+ISNULL(mvh.hr2,0)+ISNULL(mvh.hr3,0)+ISNULL(mvh.hr4,0)+ISNULL(mvh.hr5,0)+ISNULL(mvh.hr6,0)
+						+ISNULL(mvh.hr7,0)+ISNULL(mvh.hr8,0)+ISNULL(mvh.hr9,0)+ISNULL(mvh.hr10,0)+ISNULL(mvh.hr11,0)+ISNULL(mvh.hr12,0)
+						+ISNULL(mvh.hr13,0)+ISNULL(mvh.hr14,0)+ISNULL(mvh.hr15,0)+ISNULL(mvh.hr16,0)+ISNULL(mvh.hr17,0)+ISNULL(mvh.hr18,0)
+						+ISNULL(mvh.hr19,0)+ISNULL(mvh.hr20,0)+ISNULL(mvh.hr21,0)+ISNULL(mvh.hr22,0)+ISNULL(mvh.hr23,0)+ISNULL(mvh.hr24,0)) vol
+				FROM #imbalance_deals id
+				INNER JOIN mv90_data mv 
+					ON mv.meter_id = id.meter_id 
+					AND id.counterparty_id = sdh.counterparty_id 
+					AND id.contract_id= sdh.contract_id
+					AND mv.from_date = CONVERT(VARCHAR(8),sdd.term_start,120)+''01'' 
+					AND idi.group_ID =1 
+					AND sdd.location_id=id.location_id
+				INNER JOIN mv90_data_hour mvh 
+					ON mv.meter_data_id = mvh.meter_data_id
+					AND mvh.prod_date= sdd.term_start   
+				GROUP BY id.meter_id               
+			)  leg_2  
+			OUTER APPLY ( 
+				SELECT top(1) reporting_contract_id 
+				FROM #imbalance_deals 
+				WHERE counterparty_id = sdh.counterparty_id 
+					AND contract_id= sdh.contract_id 
+					AND location_id=sdd.location_id
+			) id1        
 			WHERE CAST(ISNULL(uddf.udf_value,sdd.term_start) AS DATETIME) BETWEEN '''+@term_start+''' AND '''+@term_end+''''
-				  + CASE WHEN ISNULL(@run_mode,0)=0 THEN ' AND idi.group_ID <>1 ' ELSE '' END +' AND ISNULL(id1.reporting_contract_id,sdh.contract_id) IS NOT NULL'
-				  + isnull(' and sdh.counterparty_id in (' + nullif(@pipeline_counterparty,'') + ')', '') +
-				  + isnull(' and sdd.location_id in (' + nullif(@drill_location,'') + ')', '') +
-				  '
-				GROUP BY leg_2.meter_id,sdh.counterparty_id,ISNULL(id1.reporting_contract_id,sdh.contract_id),idi.group_id,idi.group_order_id
-				'+CASE WHEN  @org_summary_option='d' THEN ',sdh.template_id' ELSE '' END +',ISNULL(uddf.udf_value,sdd.term_start)
-				,sdh.source_deal_header_id
-				,sdd.location_id
-				--ORDER BY 1,2,5,4
+				+ CASE WHEN ISNULL(@run_mode,0)=0 THEN ' AND idi.group_ID <>1 ' ELSE '' END +' 
+				AND ISNULL(id1.reporting_contract_id,sdh.contract_id) IS NOT NULL
+				AND sdd.location_id IN (SELECT DISTINCT id2.location_id FROM #imbalance_deals id2)
+				'
+				+ ISNULL(' and sdh.counterparty_id IN (' + NULLIF(@pipeline_counterparty,'') + ')', '') +
+				+ ISNULL(' and sdd.location_id IN (' + NULLIF(@drill_location,'') + ')', '') +
+				'
+
+			GROUP BY leg_2.meter_id,sdh.counterparty_id,ISNULL(id1.reporting_contract_id,sdh.contract_id),idi.group_id,idi.group_order_id
+			'+CASE WHEN  @org_summary_option='d' THEN ',sdh.template_id' ELSE '' END +',ISNULL(uddf.udf_value,sdd.term_start)
+			,sdh.source_deal_header_id
+			,sdd.location_id
+			--ORDER BY 1,2,5,4
 
 		
 			update #temp_deals set daily_imbalance = receipt_volume - allocated_delivery
