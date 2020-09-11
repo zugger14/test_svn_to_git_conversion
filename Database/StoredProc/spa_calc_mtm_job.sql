@@ -193,8 +193,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =98064 ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2021-04-30' , --'2017-02-15',
+	@source_deal_header_id =98447 ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2019-01-31' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -213,7 +213,7 @@ SELECT
 	@run_incremental = 'n',
 	@term_start = '2019-01-01' ,
 	@term_end = '2019-01-31' ,
-	@calc_type = 'm',
+	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
 	@deal_list_table = null,
@@ -2457,6 +2457,7 @@ SELECT * INTO #udft from user_defined_fields_template
 
 --select * from user_defined_deal_fields where source_deal_header_id=98447
 
+
 SELECT uddft.*,udft.udf_category
 INTO #uddft 
 FROM (
@@ -2467,8 +2468,8 @@ FROM (
 			SELECT source_deal_header_id FROM #temp_deals_broker 
 		) sdh 
 		inner join user_defined_deal_fields uddf on uddf.source_deal_header_id=sdh.source_deal_header_id
-			and try_cast(NULLIF(uddf.udf_value,'') as numeric(20,4)) is not null
-		UNION
+			and try_cast(ISNULL(NULLIF(uddf.udf_value,''),0) as numeric(20,4)) is not null
+		UNION ALL
 		select udddf.udf_template_id from
 		(
 			SELECT source_deal_detail_id FROM #temp_deals td 
@@ -2476,10 +2477,13 @@ FROM (
 			SELECT source_deal_detail_id FROM #temp_deals_broker 
 		) sdd 
 		inner join user_defined_deal_detail_fields udddf on udddf.source_deal_detail_id=sdd.source_deal_detail_id
-			and try_cast(NULLIF(udddf.udf_value,'') as numeric(20,4)) is not null
+			and try_cast(ISNULL(NULLIF(udddf.udf_value,''),0) as numeric(20,4)) is not null
 ) udf 
 	inner join user_defined_deal_fields_template uddft on uddft.udf_template_id=udf.udf_template_id
 	inner join #udft udft on udft.field_id=uddft.field_id
+
+
+
 
 select td.source_deal_header_id
 	,try_cast(NULLIF(uddf.udf_value,'') as numeric(20,4)) udf_value
@@ -12685,6 +12689,7 @@ SET @qry8a='
 	exec spa_print @qry8a
 	EXEC(@qry8a)
 
+
 	;WITH CTE AS (
 		SELECT [id],
 			source_deal_detail_id,
@@ -12976,7 +12981,8 @@ set @qry5b='
 	MAX(uddft.sequence) sequence,MAX(td.func_cur_id) fee_currency_id,MAX(td.func_cur_id) currency_id,NULL contract_mkt_flag,
 	MAX(td.source_deal_detail_id) source_deal_detail_id,MAX(ISNUMERIC(COALESCE(udddf.udf_value,uddf.udf_value,udf_formula.formula_eval_value,sfv.value,sddh.vol))) f_value,
 			SUM(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)))  capacity,
-	SUM(CASE WHEN (uddft.internal_field_type IN (18702, 18703,18717)) THEN ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)) ELSE 1 END) filter1,MAX(sfv.minimum_value) minimum_value,MAX(sfv.maximum_value) maximum_value,
+	SUM(CASE WHEN (uddft.internal_field_type IN (18702, 18703,18717)) THEN ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)) ELSE 1 END) filter1,
+	MAX(sfv.minimum_value*udfvalue.sgn) minimum_value,MAX(sfv.maximum_value*udfvalue.sgn) maximum_value,
 	MAX(isnull(udddf.counterparty_id,uddf.counterparty_id)) counterparty_id,
 	MAX(isnull(udddf.contract_id,uddf.contract_id)) contract_id
 	into  #tmp_fees_breakdown_000 --  select * from  #tmp_fees_breakdown 
@@ -13437,8 +13443,8 @@ set @qry8a='
 			(ISNUMERIC(COALESCE(sfv.value, udddf.udf_value,uddf.udf_value,udf_formula.formula_eval_value))) f_value,
 			NULL capacity,
 			1 filter1,
-			(sfv.minimum_value) minimum_value,
-			(sfv.maximum_value) maximum_value
+			(sfv.minimum_value*sgn.sgn) minimum_value,
+			(sfv.maximum_value*sgn.sgn) maximum_value
 			,isnull(udddf.counterparty_id,uddf.counterparty_id) counterparty_id,isnull(udddf.contract_id,uddf.contract_id) contract_id
 
 	into  #tmp_fees_breakdown_002
@@ -13547,16 +13553,16 @@ set @qry9a='
 	SELECT	 as_of_date, source_deal_header_id,leg,term_start, term_end, field_id, field_name
 		,tfb.price price_deal,tfb.price price,tfb.price price_inv, tfb.price total_price_deal
 		, tfb.price total_price,tfb.price total_price_inv ,volume,
-		CASE WHEN tfb1.minimum_value IS NOT NULL AND tfb1.value < tfb1.minimum_value THEN (tfb1.minimum_value/tfb1.total)
-				WHEN tfb1.maximum_value IS NOT NULL AND tfb1.value > tfb1.maximum_value THEN (tfb1.maximum_value/tfb1.total)
+		CASE WHEN tfb1.minimum_value IS NOT NULL AND ABS(tfb1.value) < ABS(tfb1.minimum_value) THEN (tfb1.minimum_value/tfb1.total)
+				WHEN tfb1.maximum_value IS NOT NULL AND ABS(tfb1.value) > ABS(tfb1.maximum_value) THEN (tfb1.maximum_value/tfb1.total)
 				ELSE tfb.value
 		END AS value,
-		CASE WHEN tfb1.minimum_value IS NOT NULL AND tfb1.value < tfb1.minimum_value THEN (tfb1.minimum_value/tfb1.total)
-				WHEN tfb1.maximum_value IS NOT NULL AND tfb1.value > tfb1.maximum_value THEN (tfb1.maximum_value/tfb1.total)
+		CASE WHEN tfb1.minimum_value IS NOT NULL AND ABS(tfb1.value) < ABS(tfb1.minimum_value) THEN (tfb1.minimum_value/tfb1.total)
+				WHEN tfb1.maximum_value IS NOT NULL AND ABS(tfb1.value) > ABS(tfb1.maximum_value) THEN (tfb1.maximum_value/tfb1.total)
 				ELSE tfb.value
 		END AS value_deal,
-		CASE WHEN tfb1.minimum_value IS NOT NULL AND tfb1.value < tfb1.minimum_value THEN (tfb1.minimum_value/tfb1.total)
-				WHEN tfb1.maximum_value IS NOT NULL AND tfb1.value > tfb1.maximum_value THEN (tfb1.maximum_value/tfb1.total)
+		CASE WHEN tfb1.minimum_value IS NOT NULL AND ABS(tfb1.value) < ABS(tfb1.minimum_value) THEN (tfb1.minimum_value/tfb1.total)
+				WHEN tfb1.maximum_value IS NOT NULL AND ABS(tfb1.value) > ABS(tfb1.maximum_value) THEN (tfb1.maximum_value/tfb1.total)
 				ELSE tfb.value
 		END AS value_inv,null deal_cur_id,null inv_cur_id,
 		contract_value,contract_value contract_value_deal,contract_value contract_value_inv,
