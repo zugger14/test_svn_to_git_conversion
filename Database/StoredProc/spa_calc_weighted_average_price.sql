@@ -71,7 +71,7 @@ IF @flag = 'c'
 BEGIN
 	SET @sql = 'IF NOT EXISTS(
  		   SELECT 1
- 		   FROM   adiha_process.sys.columns
+ 		   FROM   adiha_process.sys.columns WITH (NOLOCK)
  		   WHERE  [name] = ''index''
  				  AND [object_id] = OBJECT_ID(''' + @source_process_table + ''')
  		)
@@ -81,7 +81,7 @@ EXEC (@sql)
 
 EXEC ('IF NOT EXISTS(
  		   SELECT 1
- 		   FROM   adiha_process.sys.columns
+ 		   FROM   adiha_process.sys.columns WITH (NOLOCK)
  		   WHERE  [name] = ''price''
  				  AND [object_id] = OBJECT_ID(''' + @source_process_table + ''')
  		)
@@ -105,7 +105,7 @@ CREATE TABLE #mapping_name(mapping_id INT, mapping_name NVARCHAR(200) COLLATE DA
 
 SET @sql = 'IF NOT EXISTS(
  		   SELECT 1
- 		   FROM   adiha_process.sys.columns
+ 		   FROM   adiha_process.sys.columns WITH (NOLOCK)
  		   WHERE  [name] = ''mapping_name''
  				  AND [object_id] = OBJECT_ID(''' + @source_process_table + ''')
  		)
