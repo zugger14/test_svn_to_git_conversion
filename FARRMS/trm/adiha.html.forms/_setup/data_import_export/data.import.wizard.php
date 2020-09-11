@@ -35,7 +35,7 @@
             $xml_file = "EXEC spa_ixp_init @flag=c";
             $report_info = readXMLURL($xml_file);
             $process_id = $report_info[0][5];
-            $end_point_label = "( FTP/(SFTP) Endpoint detail. )";
+            $end_point_label = "FTP/(SFTP) Endpoint detail.";
 
             if ($mode == 'u') {
                 //Step 1
@@ -2270,7 +2270,7 @@
                 },
         		{ "type":"fieldset", "label":"FTP Detail <span title='FTP Detail' style='cursor:pointer' onClick= 'ixp_wizard.open_import_filter(-1)'><font color=#0000ff><u><l><img src='../../../adiha.php.scripts/adiha_pm_html/process_controls/import_icons/Import_Filter_Icon<?php echo $filter_flag_array[-1]; ?>.png' alt='Filter' style='width:20px;height:20px;' ></img><l></u></font></span>", "width":"auto", "list":[
                     { "type":"combo", "name":"cmb_file_transfer_endpoint_id", "label":"File Transfer Endpoint", "validate":"", "value":"", "labelWidth":"auto", "inputWidth":"<?php echo $ui_settings['field_size']-30 ?>", "tooltip":"File Transfer Endpoint", "filtering":"true", "options":[<?php echo $file_transfer_endpoint_id_json; ?>], "offsetLeft":"<?php echo $setting_offset_left; ?>"},
-                    { "type": "label", "labelWidth": "150", "name": "endpoint_label", "label": "<?php echo $end_point_label; ?>","offsetLeft": "10","inputTop": "0", "position":"label-left", "disabled": "false"},                        
+                    { "type": "label", "labelWidth": "200", "name": "endpoint_label", "label": "<?php echo $end_point_label; ?>","offsetLeft": "10","inputTop": "0", "position":"label-left", "disabled": "false"},                        
                     { "type":"newcolumn"},
                     { "type":"input", "name":"txt_ftp_remote_directory", "label":"FTP Folder", "inputWidth":"<?php echo $ui_settings["field_size"] ?>", "required":false, "offsetLeft":"<?php echo $setting_offset_left; ?>"}
                     ], "offsetLeft":"<?php echo $setting_offset_left; ?>"

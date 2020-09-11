@@ -479,7 +479,7 @@ echo $tab_obj->attach_form_new($tab_name, $form_name, 'a1', $form_structure, $la
 //report form
 $local_file_path = addslashes('(Local File Path: E.g. D:\\csv_reports)');
 $network_file_path = addslashes('(Network File Path: E.g. \\\\File Server\\bcp\\)');
-$endpoint_label = '( FTP/(SFTP) Endpoint detail. )';
+$endpoint_label = 'FTP/(SFTP) Endpoint detail.';
 $export_file_path = ($batch_type == 'remit') ? str_replace('\\', '\\\\',$BATCH_FILE_EXPORT_PATH) : $export_file_path;
 $ftp_folder_path_enabled = 'false';
 
