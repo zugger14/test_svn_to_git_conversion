@@ -558,7 +558,7 @@ BEGIN
 		UPDATE sdd
 		SET sdd.term_start					= m.term_start,
 			sdd.term_end					= m.term_end,
-			sdd.contract_expiration_date	= m.term_start,
+			sdd.contract_expiration_date	= m.term_end,
 			sdd.price_adder 				= NULL,	
 			sdd.formula_curve_id			= NULL
 		FROM #min_parent_term_start m
