@@ -2454,18 +2454,18 @@ BEGIN
 End
 
 
-
-
-
-
 if object_id('tempdb..#udf_header') is not null drop table #udf_header
 if object_id('tempdb..#udf_detail') is not null drop table #udf_detail
 if object_id('tempdb..#var_fee_amount') is not null drop table #var_fee_amount
 if object_id('tempdb..#var_fee_amount_001') is not null drop table #var_fee_amount_001
 
 SELECT * INTO #udft from user_defined_fields_template 
+--SELECT distinct field_id  from user_defined_fields_template where udf_template_id=133
+
+--SELECT *  from user_defined_deal_fields_template where udf_template_id=133
 
 
+--select * from user_defined_deal_fields where source_deal_header_id=98447
 
 SELECT uddft.*,udft.udf_category
 INTO #uddft 
@@ -2489,7 +2489,7 @@ FROM (
 			and try_cast(NULLIF(udddf.udf_value,'') as numeric(20,4)) is not null
 ) udf 
 	inner join user_defined_deal_fields_template uddft on uddft.udf_template_id=udf.udf_template_id
-	inner join #udft udft on udft.udf_template_id=abs(udf.udf_template_id)
+	inner join #udft udft on udft.field_id=uddft.field_id
 
 select td.source_deal_header_id
 	,try_cast(NULLIF(uddf.udf_value,'') as numeric(20,4)) udf_value
@@ -6952,12 +6952,7 @@ EXEC spa_print  @qry6
 EXEC spa_print  @sqlstmt
 EXEC spa_print  '##############################################################################################################'
 
-
-
 EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@qry1+@qry4+@qry2+@qry5+@qry3+@qry6+@sqlstmt)
-
-
-
 
 --td.buy_sell_flag=''b''
 set @qry1='update vol set 
@@ -7032,10 +7027,6 @@ where td.buy_sell_flag=''s'' and td.internal_deal_type_value_id=103
 EXEC spa_print  @qry1
 exec(@qry1)
 
-
-
-
-
 --td.buy_sell_flag=''b''
 set @qry1='update t set 
 		hr1 = iif(isnull(t.hr1,0)+isnull(vfa.fee_amt,0)<isnull(t.hr1_c,0),0,isnull(t.hr1,0)-isnull(t.hr1_c,0)),
@@ -7107,11 +7098,6 @@ where td.buy_sell_flag=''s'' and td.internal_deal_type_value_id=103 and td.inter
 
 EXEC spa_print  @qry1
 exec(@qry1)
-
-
-
-
-
 
 
 set @qry1=' update t set 
@@ -12364,10 +12350,6 @@ end
 
 
 
-
-
-
-
 If @print_diagnostic = 1
 BEGIN
 	print  @pr_name+': '+cast(datediff(ss,@log_time,getdate()) as varchar) +'*************************************'
@@ -12718,10 +12700,6 @@ SET @qry8a='
 	exec spa_print @qry8a
 	EXEC(@qry8a)
 
-
-
-	
-
 	;WITH CTE AS (
 		SELECT [id],
 			source_deal_detail_id,
@@ -12904,99 +12882,99 @@ SELECT	'''+ @as_of_date+''' as_of_date, td.source_deal_header_id,td.leg,
 		ELSE 0 END
 		WHEN udft.internal_field_type IN(18739,18741) THEN sfv.value
 	END) price_deal,cast(0 as float) price,cast(0 as float) price_inv,
-	sum(sgn.sgn*abs(CASE udft.internal_field_type 			
+	sum(CASE udft.internal_field_type 			
 		WHEN 18700 THEN --Position based fee  BaseLoad Applies to All
-			round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN  td.deal_volume  ELSE (hv.volume) END * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) 
+			round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN  td.deal_volume  ELSE (hv.volume) END * udfvalue.udfvalue, ISNULL(r.rounding, 100)) 
 				* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
 		WHEN 18731 THEN --Injection based Fee
-			round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN  td.deal_volume  ELSE (hv.volume) END  * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100))* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
-			'
+			round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN  td.deal_volume  ELSE (hv.volume) END  * udfvalue.udfvalue, ISNULL(r.rounding, 100))* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
+'
 
 set @qry2b='
 		WHEN 18705 THEN --Position based fee  18705 OnPeak 
 			CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
-				round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN   td.deal_volume  ELSE (hv.volume) END * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) 
+				round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN   td.deal_volume  ELSE (hv.volume) END * udfvalue.udfvalue, ISNULL(r.rounding, 100)) 
 					* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
 			ELSE 0 END 
 		WHEN 18710 THEN --Position based fee  18710 OffPeak
 			CASE WHEN (td.curve_tou=18901) THEN --OFFPEAK
-	round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN  td.deal_volume  ELSE hv.volume END  * cast(COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100))* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) ELSE 0 END 
+	round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN  td.deal_volume  ELSE hv.volume END  * udfvalue.udfvalue, ISNULL(r.rounding, 100))* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) ELSE 0 END 
 		WHEN 18701 THEN --Deal Volume monthly based fee BaseLoad Applies to All
-			round(ABS(td.contract_volume) * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+			round(ABS(td.contract_volume) * udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 		WHEN 18706 THEN --Deal Volume monthly based fee 18706 OnPeak 
 			CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
-			round(ABS(td.contract_volume) * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+			round(ABS(td.contract_volume) * udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 					ELSE 0 END 
 		WHEN 18711 THEN --Deal Volume monthly based fee 18711 OffPeak
 			CASE WHEN (td.curve_tou=18901) THEN --OFFPEAK
-			round(ABS(td.contract_volume) * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+			round(ABS(td.contract_volume) * udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 			ELSE 0 END 
 		WHEN 18704 THEN --Deal Volume Annual based fee BaseLoad Applies to All
-	round(ABS(td.contract_volume)/12 * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100))* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+	round(ABS(td.contract_volume)/12 * udfvalue.udfvalue, ISNULL(r.rounding, 100))* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 		WHEN 18709 THEN --Deal Volume Annual based fee 18709 OnPeak 
 			CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
-	round(ABS(td.contract_volume)/12 * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+	round(ABS(td.contract_volume)/12 * udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 			ELSE 0 END 
 		WHEN 18714 THEN --Deal Volume Annual based fee 18714 OffPeak
 			CASE WHEN (td.curve_tou=18901) THEN --OFFPEAK
-			round(ABS(td.contract_volume)/12 * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+			round(ABS(td.contract_volume)/12 * udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 					ELSE 0 END 
 		'
 
 set @qry3b='
 		WHEN 18702 THEN --Capacity based Annual fee BaseLoad Applies to All
-		round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))/12 * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+		round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))/12 * udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 		WHEN 18707 THEN --Capacity based Annual fee 18707 OnPeak 
 			CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
-			round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))/12 * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+			round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))/12 * udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 					ELSE 0 END 
 		WHEN 18712 THEN --Capacity based Annual fee 18712 OffPeak
 			CASE WHEN (td.curve_tou=18901) THEN --OFFPEAK
-			round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))/12 * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+			round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))/12 * udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 		ELSE 0 END 
 		WHEN 18703 THEN --Capacity based fee BaseLoad Applies to All
-		round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)) * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100))* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+		round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)) * udfvalue.udfvalue, ISNULL(r.rounding, 100))* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 		WHEN 18708 THEN --Capacity based fee 18708 OnPeak 
 			CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
-		round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)) * cast(COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+		round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)) * udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 			ELSE 0 END 
 		WHEN 18713 THEN --Capacity based fee 18713 OffPeak
 			CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
-			round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)) * cast(COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+			round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)) * udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 					ELSE 0 END 
 		WHEN 18715 THEN -- Lump sum Annual Applies to All
-			round(cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float)/12, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
+			round(udfvalue.udfvalue/12, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/nullif(totalhours,0),1)
 		WHEN 18716 THEN -- Lump sum Monthly Applies to All
-			round(cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
+			round(udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
 				* case when td.term_frequency=''d'' then cast(1.0 as float)/day(eomonth(td.term_start)) else ISNULL(partialhours/nullif(totalhours,0),1) end 
 				WHEN 18717 THEN --Capacity based on Term Fee
 		round((ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))*CAST((DATEDIFF(d,td.term_start,td.term_end)+1) AS FLOAT)/CAST((DATEDIFF(d,td.entire_term_start,td.entire_term_end)+1) AS FLOAT)) * cast (uddf.udf_value as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/totalhours,1) 
 		WHEN 18732 THEN-- Lump Sum Fixed
-			ROUND(CAST(COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) 
-					* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
+			ROUND(udfvalue.udfvalue, ISNULL(r.rounding, 100)) 
+			* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
 		WHEN 18737 THEN --Percentage - Fixed 
-		((COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) * tlm.contract_value)/100) /ISNULL(fx.price_fx_conv_factor,1)
+		((udfvalue.udfvalue * tlm.contract_value)/100) /ISNULL(fx.price_fx_conv_factor,1)
 '
 set @qry4b='
 		WHEN 18719 THEN --Deal Volume based daily fee 
-		round(ABS(td.contract_volume) * cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(24/totalhours,1)
+		round(ABS(td.contract_volume) * udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(24/totalhours,1)
 				WHEN 18720 THEN --Capacity based Daily fee BaseLoad Applies to All
-		round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)) * cast(COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) 
+		round(ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)) * udfvalue.udfvalue, ISNULL(r.rounding, 100)) 
 				* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(24/totalhours,1)
 		WHEN 18721 THEN -- Lump sum Daily Fee
-			round(cast ( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(24/totalhours,1) 
+			round(udfvalue.udfvalue, ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(24/totalhours,1) 
 		WHEN 18725 THEN 
-			CASE WHEN '''+@calc_type+'''= ''s'' AND td.internal_deal_type_value_id = 11 THEN 0 ELSE COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) * fbvc.curve_value * ABS(hv.volume) END
+			CASE WHEN '''+@calc_type+'''= ''s'' AND td.internal_deal_type_value_id = 11 THEN 0 ELSE udfvalue.udfvalue * fbvc.curve_value * ABS(hv.volume) END
 		WHEN 18726 THEN 
-			CASE WHEN '''+@calc_type+'''= ''s'' AND td.internal_deal_type_value_id = 11 THEN 0 ELSE COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value)  * ABS(hv.volume) END
+			CASE WHEN '''+@calc_type+'''= ''s'' AND td.internal_deal_type_value_id = 11 THEN 0 ELSE udfvalue.udfvalue  * ABS(hv.volume) END
 		WHEN 18727 THEN 
-			CASE WHEN td.internal_deal_type_value_id = 13 THEN 0 ELSE COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value)  * ABS(hv.volume) *(CAST(12 AS FLOAT)/cast(365 AS Float)) END 
+			CASE WHEN td.internal_deal_type_value_id = 13 THEN 0 ELSE udfvalue.udfvalue * ABS(hv.volume) *(CAST(12 AS FLOAT)/cast(365 AS Float)) END 
 	'
 set @qry5b='
 		WHEN 18728 THEN 
-			CASE WHEN td.internal_deal_type_value_id = 13 THEN 0 ELSE COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value)  * ABS(hv.volume) END
+			CASE WHEN td.internal_deal_type_value_id = 13 THEN 0 ELSE udfvalue.udfvalue* ABS(hv.volume) END
 		WHEN 18729 THEN 
-			CASE WHEN td.internal_deal_type_value_id = 13 THEN 0 ELSE COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value)* ABS(hv.volume) * (ISNULL(24/partialhours,1)) END
+			CASE WHEN td.internal_deal_type_value_id = 13 THEN 0 ELSE udfvalue.udfvalue* ABS(hv.volume) * (ISNULL(24/partialhours,1)) END
 		WHEN 18739 THEN
 			 td.deal_volume * sfv.value
 		WHEN 18741 THEN
@@ -13005,7 +12983,7 @@ set @qry5b='
 				sddh.positive_vol
 		WHEN 18743 THEN
 				sddh.negative_vol
-	ELSE NULL END)) value_deal,cast(0 as float) value,cast(0 as float) value_inv,MAX(td.fixed_price_currency_id) deal_cur_id,
+	ELSE NULL END) value_deal,cast(0 as float) value,cast(0 as float) value_inv,MAX(td.fixed_price_currency_id) deal_cur_id,
 	MAX(td.settlement_currency) inv_cur_id,NULL contract_value,NULL contract_value_deal,NULL contract_value_inv,
 	MAX(udft.internal_field_type) internal_type,MAX(uddft.udf_tabgroup) tab_group_name, MAX(uddft.udf_group) udf_group_name,
 	MAX(uddft.sequence) sequence,MAX(td.func_cur_id) fee_currency_id,MAX(td.func_cur_id) currency_id,NULL contract_mkt_flag,
@@ -13122,10 +13100,14 @@ set @qry7b='
 		AND ISNULL(shipment_id, -1) = ISNULL(td.shipment_id, -1) AND ISNULL(ticket_detail_id, -1) = ISNULL(td.ticket_detail_id, -1)
 		group by source_deal_header_id,source_deal_detail_id,leg, term_start, term_end
 	) tlm	
-	outer apply ( SELECT 
-					CASE WHEN COALESCE(sfv.rec_pay,udddf.receive_pay,uddf.receive_pay,case when ISNULL(gaivs.st_buy_sell_flag,td.buy_sell_flag)=''b'' then ''p'' else ''r'' end)=''r'' THEN  
-						1  
-					ELSE -1 END * CASE WHEN udft.internal_field_type = 18743 THEN -1 ELSE 1 END sgn) sgn
+	outer apply ( 
+		SELECT try_cast(isnull(abs(COALESCE(udddf.udf_value,uddf.udf_value,sfv.value))*
+			CASE WHEN COALESCE(sfv.rec_pay,udddf.receive_pay,uddf.receive_pay,case when ISNULL(gaivs.st_buy_sell_flag,td.buy_sell_flag)=''b'' then ''p'' else ''r'' end)=''r''
+				THEN 1 ELSE -1 END * CASE WHEN udft.internal_field_type = 18743 THEN -1 ELSE 1 END
+			,udf_formula.formula_eval_value) as float) udfvalue
+			,CASE WHEN COALESCE(sfv.rec_pay,udddf.receive_pay,uddf.receive_pay,case when ISNULL(gaivs.st_buy_sell_flag,td.buy_sell_flag)=''b'' then ''p'' else ''r'' end)=''r''
+				THEN 1 ELSE -1 END * CASE WHEN udft.internal_field_type = 18743 THEN -1 ELSE 1 END sgn
+	) udfvalue
 		 '		
 
 set @qry8b=	' 
