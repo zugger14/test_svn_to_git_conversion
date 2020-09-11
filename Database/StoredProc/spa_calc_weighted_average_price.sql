@@ -832,12 +832,11 @@ BEGIN
 		) gmv'
 END
 
-
 SET @sql += 
 	'
 	LEFT JOIN #source_price_curve max_curve ON max_curve.source_curve_def_id = COALESCE(src.uploaded_curve_id,gmv.clm18_value,org.curve_id)
 			AND CONVERT(date, max_curve.maturity_date) =  org.term_start 
-			AND DATEPART(hour,max_curve.maturity_date) = org.hr -1
+			AND DATEPART(hour,max_curve.maturity_date) = IIF(max_curve.granularity=981,DATEPART(hour,max_curve.maturity_date),org.hr -1)
 			AND DATEPART(minute,max_curve.maturity_date) = IIF(max_curve.granularity=982,DATEPART(minute,max_curve.maturity_date),org.[period])
 			AND max_curve.is_dst = org.is_dst
 	LEFT JOIN source_price_curve spc ON spc.as_of_date = max_curve.as_of_date
