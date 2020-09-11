@@ -47,12 +47,26 @@ drop table #tmp_header_deal_id
 drop table #tmp_position_breakdown
 declare @process_id varchar(50),@insert_type int,@partition_no int,@user_login_id varchar(30),@deal_delete varchar(1)
 drop table #source_deal_detail_hour
-select  @process_id='A53DFDA7_1254_4D9C_89BE_EA5485A4DA5C',@insert_type=0,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
+select  @process_id='aaa',@insert_type=7,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
 --report_position_farrms_admin_49AFBFA8_BC35_404B_8590_78F087008D35
 --TRUNCATE TABLE select * from adiha_process.dbo.report_position_farrms_admin_E5D1C26F_C332_4A0A_8082_F3936706EEA8
 --insert into adiha_process.dbo.report_position_farrms_admin_testing select 4100,'d'
 DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
 SET CONTEXT_INFO @contextinfo
+
+/* debug
+	if OBJECT_ID('adiha_process.dbo.report_position_farrms_admin_aaa') is not null
+		drop table adiha_process.dbo.report_position_farrms_admin_aaa
+
+	select source_deal_header_id,source_deal_detail_id into adiha_process.dbo.report_position_farrms_admin_aaa 
+	from source_deal_detail where source_deal_header_id=95679
+
+--*/
+
+
+
+
+
 
 DROP TABLE #report_hourly_position_profile
 drop table #report_hourly_position_breakdown_main_inserted
@@ -230,7 +244,7 @@ END
 SET @orginal_insert_type = @insert_type
 
 if @insert_type=1 
-set @insert_type=0
+	set @insert_type=0
 
 
 SELECT @maintain_delta = var_value FROM adiha_default_codes_values 
@@ -456,8 +470,9 @@ BEGIN TRY
 
 	SET @st_sql = 'INSERT INTO #tmp_header_deal_id_del (source_deal_detail_id) 
 		select distinct a.source_deal_detail_id from ' + @effected_deals + ' a 
-		inner join source_deal_detail sdd on a.source_deal_detail_id=sdd.source_deal_detail_id 
-		where sdd.position_formula_id is null'
+		left join source_deal_detail sdd on a.source_deal_detail_id=sdd.source_deal_detail_id 
+		where sdd.position_formula_id is null
+		'
 	EXEC spa_print @st_sql
 	EXEC (@st_sql)
 
@@ -516,13 +531,13 @@ BEGIN TRY
 		EXEC (@st_sql)
 
 		SET @st_sql = 'DELETE rhpf ' + CASE WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
-			' output getdate() as_of_date, deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id
+		' output getdate() as_of_date, deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id
 	,-1*deleted.hr1,-1*deleted.hr2,-1*deleted.hr3,-1*deleted.hr4,-1*deleted.hr5,-1*deleted.hr6,-1*deleted.hr7,-1*deleted.hr8,-1*deleted.hr9,-1*deleted.hr10,-1*deleted.hr11,-1*deleted.hr12
-			,-1*deleted.hr13,-1*deleted.hr14,-1*deleted.hr15,-1*deleted.hr16,-1*deleted.hr17,-1*deleted.hr18,-1*deleted.hr19
-			,-1*deleted.hr20,-1*deleted.hr21,-1*deleted.hr22,-1*deleted.hr23
-			,-1*deleted.hr24,-1*deleted.hr25,deleted.create_ts,deleted.create_user,17402 delta_type ,deleted.expiration_date
-			,DELETED.period, DELETED.granularity,deleted.source_deal_detail_id,deleted.rowid
-			into dbo.delta_report_hourly_position_main(as_of_date,source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,delta_type,expiration_date,period,granularity,source_deal_detail_id,rowid)'
+	,-1*deleted.hr13,-1*deleted.hr14,-1*deleted.hr15,-1*deleted.hr16,-1*deleted.hr17,-1*deleted.hr18,-1*deleted.hr19
+	,-1*deleted.hr20,-1*deleted.hr21,-1*deleted.hr22,-1*deleted.hr23
+	,-1*deleted.hr24,-1*deleted.hr25,deleted.create_ts,deleted.create_user,17402 delta_type ,deleted.expiration_date
+	,DELETED.period, DELETED.granularity,deleted.source_deal_detail_id,deleted.rowid
+	into dbo.delta_report_hourly_position_main(as_of_date,source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,delta_type,expiration_date,period,granularity,source_deal_detail_id,rowid)'
 			END +
 			' FROM report_hourly_position_profile_main rhpf INNER JOIN #tmp_header_deal_id_del d ON rhpf.source_deal_detail_id = d.source_deal_detail_id'
 
@@ -530,12 +545,11 @@ BEGIN TRY
 		EXEC (@st_sql)
 
 		SET @st_sql = 'DELETE rhpd ' + CASE WHEN isnull(@maintain_delta, 0) = 0 THEN ''
-		ELSE '	output getdate() as_of_date, deleted.source_deal_header_id,deleted.term_start
-			,deleted.deal_date,deleted.deal_volume_uom_id
+		ELSE '	output getdate() as_of_date, deleted.source_deal_header_id,deleted.curve_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id
 			,deleted.create_ts,deleted.create_user,-1*deleted.calc_volume,17402 delta_type ,deleted.expiration_date,DELETED.term_end
-			,DELETED.formula,deleted.source_deal_detail_id,deleted.rowid,deleted.granularity
-		into dbo.delta_report_hourly_position_breakdown_main(as_of_date,source_deal_header_id,term_start,deal_date,deal_volume_uom_id,create_ts,create_user,calc_volume
-			,delta_type,expiration_date,term_end,formula,source_deal_detail_id,rowid,granularity) '
+			,DELETED.formula,deleted.source_deal_detail_id,deleted.rowid
+		into dbo.delta_report_hourly_position_breakdown_main(as_of_date,source_deal_header_id,curve_id,term_start,deal_date,deal_volume_uom_id,create_ts,create_user,calc_volume
+			,delta_type,expiration_date,term_end,formula,source_deal_detail_id,rowid) '
 		END + 
 		' FROM report_hourly_position_breakdown_main rhpd
 			INNER JOIN #tmp_header_deal_id_del d ON rhpd.source_deal_detail_id = d.source_deal_detail_id '
