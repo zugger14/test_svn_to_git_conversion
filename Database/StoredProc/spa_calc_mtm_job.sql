@@ -188,12 +188,6 @@ select *  from source_deal_pnl_detail   where source_deal_header_id=7876
 */
 
 
-
-
-
-
-
-
 SELECT	
 	@sub_id = null, 
 	@strategy_id =null, 
@@ -227,8 +221,6 @@ SELECT
 	@counterparty_id=null,
 	@ref_id=null,
 	@process_linear_options_delta = NULL
-
-	
 
 
 /*
@@ -396,11 +388,6 @@ BEGIN
 	 select 'y', 1239  
  
 END
-
-
-
-
-
 
 
  -- exec dbo.spa_drop_all_temp_table
@@ -2344,6 +2331,9 @@ begin
 END
 
 
+
+
+
 --Linear Model Option Leg 1
 
 delete #temp_deals where internal_deal_subtype_value_id=155 and leg>=2 
@@ -2620,7 +2610,6 @@ select source_deal_header_id,sum(fee_amt) fee_amt
 	into #var_fee_amount
 from #var_fee_amount_001
 group by source_deal_header_id
-
 
 
 
@@ -6983,8 +6972,8 @@ set @qry1='update vol set
 		hr25 = iif(isnull(t.hr25,0)+isnull(vfa.fee_amt,0)<isnull(t.hr25_c,0),0,vol.hr25)
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
-	left join #var_fee_amount_001 vfa on vfa.source_deal_header_id=vol.source_deal_header_id
-where td.buy_sell_flag=''b'' and td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102 -- Linear model option'
+	left join #var_fee_amount vfa on vfa.source_deal_header_id=vol.source_deal_header_id
+where td.header_buy_sell_flag=''b'' and td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102 -- Linear model option'
 
 EXEC spa_print  @qry1
 exec(@qry1)
@@ -7020,8 +7009,8 @@ set @qry1='update vol set
 		hr25 = iif(isnull(t.hr25,0)>isnull(t.hr25_c,0)+isnull(vfa.fee_amt,0),0,vol.hr25)
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
-		left join #var_fee_amount_001 vfa on vfa.source_deal_header_id=vol.source_deal_header_id
-where td.buy_sell_flag=''s'' and td.internal_deal_type_value_id=103 
+	left join #var_fee_amount vfa on vfa.source_deal_header_id=vol.source_deal_header_id
+where td.header_buy_sell_flag=''s'' and td.internal_deal_type_value_id=103 
 	and td.internal_deal_subtype_value_id=102 -- Linear model option'
 
 EXEC spa_print  @qry1
@@ -7056,13 +7045,11 @@ set @qry1='update t set
 		hr25 = iif(isnull(t.hr25,0)+isnull(vfa.fee_amt,0)<isnull(t.hr25_c,0),0,isnull(t.hr25,0)-isnull(t.hr25_c,0))
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
-		left join #var_fee_amount_001 vfa on vfa.source_deal_header_id=vol.source_deal_header_id
-where td.buy_sell_flag=''b'' and td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102 -- Linear model option'
+	left join #var_fee_amount vfa on vfa.source_deal_header_id=vol.source_deal_header_id
+where td.header_buy_sell_flag=''b'' and td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102 -- Linear model option'
 
 EXEC spa_print  @qry1
 exec(@qry1)
-
-
 
 --td.buy_sell_flag=''s''
 set @qry1='update t set 
@@ -7094,7 +7081,7 @@ set @qry1='update t set
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
 	left join #var_fee_amount_001 vfa on vfa.source_deal_header_id=vol.source_deal_header_id
-where td.buy_sell_flag=''s'' and td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102 -- Linear model option'
+where td.header_buy_sell_flag=''s'' and td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102 -- Linear model option'
 
 EXEC spa_print  @qry1
 exec(@qry1)
@@ -7132,8 +7119,6 @@ where td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=1
 
 EXEC spa_print  @qry1
 exec(@qry1)
-
-
 
 if object_id('tempdb..#block_type_group') is not null
 	drop table #block_type_group
@@ -12856,7 +12841,7 @@ SELECT	'''+ @as_of_date+''' as_of_date, td.source_deal_header_id,td.leg,
 		--volume should be + if sell - if buy as fee cashflow should be opposite
 		MAX(CASE WHEN udft.internal_field_type IN(18705) THEN --Capacity based fee 18713 OffPeak
 			CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
-				CASE WHEN ISNUMERIC( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value))=1 THEN cast( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float) ELSE NULL END * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)				
+				CASE WHEN ISNUMERIC( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value))=1 THEN cast( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float) ELSE NULL END * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
 			ELSE 0 END 
 			WHEN udft.internal_field_type IN(18710) THEN 
 			CASE WHEN (td.curve_tou=18901) THEN --ONPEAK
@@ -12874,7 +12859,7 @@ SELECT	'''+ @as_of_date+''' as_of_date, td.source_deal_header_id,td.leg,
 	END)) volume
 	,sum(CASE WHEN udft.internal_field_type IN(18705) THEN --Capacity based fee 18713 OffPeak
 		CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
-			CASE WHEN ISNUMERIC( COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value))=1 THEN cast( COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float) ELSE NULL END * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)				
+			CASE WHEN ISNUMERIC( COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value))=1 THEN cast( COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float) ELSE NULL END * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)			
 		ELSE 0 END 
 		WHEN udft.internal_field_type IN(18710) THEN 
 		CASE WHEN (td.curve_tou=18901) THEN --ONPEAK
@@ -12884,7 +12869,9 @@ SELECT	'''+ @as_of_date+''' as_of_date, td.source_deal_header_id,td.leg,
 	END) price_deal,cast(0 as float) price,cast(0 as float) price_inv,
 	sum(CASE udft.internal_field_type 			
 		WHEN 18700 THEN --Position based fee  BaseLoad Applies to All
-			round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN  td.deal_volume  ELSE (hv.volume) END * udfvalue.udfvalue, ISNULL(r.rounding, 100)) 
+			round(CASE WHEN isnull(hv.curve_id,-1)=-1 or (uddft.udf_category=101900 and 
+			 td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102
+			) THEN  td.deal_volume  ELSE (hv.volume) END * udfvalue.udfvalue, ISNULL(r.rounding, 100)) 
 				* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
 		WHEN 18731 THEN --Injection based Fee
 			round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN  td.deal_volume  ELSE (hv.volume) END  * udfvalue.udfvalue, ISNULL(r.rounding, 100))* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
@@ -13178,7 +13165,9 @@ SELECT	'''+@as_of_date+''' as_of_date,
 set @qry2a='
 	-1*abs(CASE uddft.internal_field_type 			
 	WHEN 18700 THEN --Position based fee  BaseLoad Applies to All
-		round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN  td.deal_volume  ELSE (hv.volume) END * -1 * cast (uddft.rate_deal as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
+		round(CASE WHEN isnull(hv.curve_id,-1)=-1 or (uddft.udf_category=101900 and 
+			 td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102
+			) THEN  td.deal_volume  ELSE (hv.volume) END * -1 * cast (uddft.rate_deal as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
 	WHEN 18731 THEN --Position based fee  BaseLoad Applies to All
 			round(isnull(CASE WHEN CAST(udddf2.udf_value AS FLOAT)-CAST(udddf3.udf_value AS FLOAT)=0  THEN 0 WHEN CAST(udddf2.udf_value AS FLOAT)-CAST(udddf3.udf_value AS FLOAT)>0 THEN CAST(udddf2.udf_value as float) ELSE CAST(udddf3.udf_value as float) END ,0)  * cast (uddft.rate_deal as float), ISNULL(r.rounding, 100)) 
 			* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
@@ -13326,7 +13315,7 @@ into #tmp_fees_breakdown_001
 		AND udddf3.source_deal_detail_id = td.source_deal_detail_id'
 
 set @qry6a='
-		outer apply
+	outer apply
 		(
 		select uddft_t.*, trs.rate* case when trs.rate_granularity=106202 then cast(1.0 as float)/(datediff(month,trs.begin_date,trs.end_date)+1) else 1 end *isnull(fx_t_deal.price_fx_conv_factor, 1)*ISNULL(conv_t.conversion_factor,1) rate_deal
 		--from (
