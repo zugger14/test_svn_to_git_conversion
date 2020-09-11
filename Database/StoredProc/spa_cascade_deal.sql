@@ -551,6 +551,30 @@ BEGIN
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = r.source_deal_header_id 
 		GROUP BY i.item, r.leg
 	
+
+		DECLARE @report_position VARCHAR(1000)
+		DECLARE @user_login_id VARCHAR(1000) = dbo.FNADBUser()
+		SET @report_position = dbo.FNAProcessTableName('report_position', @user_login_id, @process_id)
+ 
+		-- delete position of all parent leg except leg, also delete all child cascade deals position
+		SET @sql = 'CREATE TABLE ' + @report_position + ' (source_deal_header_id INT, source_deal_detail_id INT)
+				
+					INSERT INTO ' + @report_position + ' 
+					SELECT source_deal_header_id, source_deal_detail_id
+					FROM (SELECT source_deal_header_id, source_deal_detail_id, term_start FROM #detail_collection_reverse_cascade dc
+						EXCEPT 
+						SELECT sdd.source_deal_header_id, sdd.source_deal_detail_id, sdd.term_start 
+						FROM #detail_collection_reverse_cascade sdd
+						INNER JOIN #min_parent_term_start m ON m.source_deal_header_id = sdd.source_deal_header_id
+							AND sdd.Leg = m.leg
+							AND sdd.term_start = m.term_start
+					) z '
+		EXEC spa_print @sql
+		EXEC(@sql)
+		--EXEC('select * from ' + @report_position)
+		--position delete
+		EXEC [dbo].[spa_maintain_transaction_job] @process_id, 7, NULL, @user_login_id
+
 		--/*
 		-- update parent leg 1 detail
 		--SELECT 
@@ -609,29 +633,6 @@ BEGIN
 		--*/
 	
 		--/*
-		DECLARE @report_position VARCHAR(1000)
-		DECLARE @user_login_id VARCHAR(1000) = dbo.FNADBUser()
-		SET @report_position = dbo.FNAProcessTableName('report_position', @user_login_id, @process_id)
- 
-		-- delete position of all parent leg except leg, also delete all child cascade deals position
-		SET @sql = 'CREATE TABLE ' + @report_position + ' (source_deal_header_id INT, source_deal_detail_id INT)
-				
-					INSERT INTO ' + @report_position + ' 
-					SELECT source_deal_header_id, source_deal_detail_id
-					FROM (SELECT source_deal_header_id, source_deal_detail_id, term_start FROM #detail_collection_reverse_cascade dc
-						EXCEPT 
-						SELECT sdd.source_deal_header_id, sdd.source_deal_detail_id, sdd.term_start 
-						FROM #detail_collection_reverse_cascade sdd
-						INNER JOIN #min_parent_term_start m ON m.source_deal_header_id = sdd.source_deal_header_id
-							AND sdd.Leg = m.leg
-							AND sdd.term_start = m.term_start
-					) z '
-		EXEC spa_print @sql
-		EXEC(@sql)
-		--EXEC('select * from ' + @report_position)
-		--position delete
-		EXEC [dbo].[spa_maintain_transaction_job] @process_id, 7, NULL, @user_login_id
-
 		DECLARE @to_delete_deal_ids VARCHAR(MAX)
 
 		--quaterly and monthly cascade deals to delete
