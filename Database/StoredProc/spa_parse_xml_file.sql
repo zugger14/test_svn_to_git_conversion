@@ -151,9 +151,9 @@ IF EXISTS (SELECT TOP 1
     FROM @xml.nodes('/GridXML/GridRow') x (y)
 	CROSS APPLY y.nodes('@*') a(b)
 
-	SELECT @cols = STUFF((SELECT DISTINCT ',' + ColName+' NVARCHAR(MAX) '
+	SELECT @cols = STUFF((SELECT DISTINCT ',' + QUOTENAME(ColName) +' NVARCHAR(MAX) '
     FROM #temp_colname2
-    ORDER BY ',' + ColName + ' NVARCHAR(MAX) '
+    ORDER BY ',' + QUOTENAME(ColName) + ' NVARCHAR(MAX) '
     FOR XML PATH (''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
 	
 	SET @final_query=' 
