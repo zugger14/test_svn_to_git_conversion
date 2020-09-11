@@ -13039,18 +13039,6 @@ set @qry6b='
 		+'
 	) fx_deal
 	LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = td.curve_id	
-	OUTER APPLY(
-		SELECT ISNULL(NULLIF(SUM(CAST(volume_mult AS FLOAT)),0),1) AS totalhours, 
-		ISNULL(NULLIF(SUM(CASE WHEN '''+ @calc_type+''' =''s'' AND term_date <= '''+@as_of_date+''' THEN CAST(volume_mult AS FLOAT)
-					WHEN '''+ @calc_type+''' <>''s'' AND '''+isnull(@calc_explain_type,'')+''' = ''d'' AND term_date > '''+@as_of_date +''' AND term_date<='''+isnull(@next_business_day,'') +''' THEN CAST(volume_mult AS FLOAT)
-			WHEN '''+ @calc_type+'''<>''s'' AND '''+isnull(@calc_explain_type,'') +'''='''' AND term_date >'''+ @as_of_date+''' THEN CAST(volume_mult AS FLOAT)
-		ELSE 0 END),0)
-	,1) partialhours
-		FROM hour_block_term
-		WHERE block_type = case when udft.internal_field_type =18702 then 12000 else ISNULL(spcd.block_type,12000) end
-			AND block_define_id = case when udft.internal_field_type =18702 then '+cast(@baseload_block_definition as varchar) +' else ISNULL(spcd.block_define_id,'+cast(@baseload_block_definition as varchar)+') end 
-			AND term_date BETWEEN td.term_start AND td.term_end	
-	) hbt	
 	outer apply 
 	( 
 		select source_deal_header_id,max(option_premium) option_premium 
@@ -13068,18 +13056,30 @@ set @qry6b='
 set @qry7b='
 	LEFT JOIN '+@calc_result_table5+' udf_formula ON udf_formula.source_deal_detail_id = td.source_deal_detail_id
 		and uddft.udf_template_id=udf_formula.source_id AND udf_formula.is_final_result = ''y'' 	
-	LEFT JOIN user_defined_deal_fields_template_main ud ON ud.template_id = sdh.template_id
-		AND ud.field_id = 305013
-	LEFT JOIN user_defined_deal_fields_template_main ud1 on ud1.template_id = sdh.template_id
-		AND ud1.field_id= 308062
-	LEFT JOIN user_defined_deal_fields uddf1 on uddf1.udf_template_id = ud1.udf_template_id 
-		AND uddf1.source_deal_header_id = td.source_deal_header_id
-	LEFT JOIN user_defined_deal_fields uddf2 on uddf2.udf_template_id = ud.udf_template_id 
-		AND uddf2.source_deal_header_id = td.source_deal_header_id
-	LEFT JOIN delivery_path dp ON dp.path_id = uddf2.udf_value	
+	--LEFT JOIN user_defined_deal_fields_template_main ud ON ud.template_id = sdh.template_id
+	--	AND ud.field_id = 305013
+	--LEFT JOIN user_defined_deal_fields_template_main ud1 on ud1.template_id = sdh.template_id
+	--	AND ud1.field_id= 308062
+	--LEFT JOIN user_defined_deal_fields uddf1 on uddf1.udf_template_id = ud1.udf_template_id 
+	--	AND uddf1.source_deal_header_id = td.source_deal_header_id
+	--LEFT JOIN user_defined_deal_fields uddf2 on uddf2.udf_template_id = ud.udf_template_id 
+	--	AND uddf2.source_deal_header_id = td.source_deal_header_id
+	--LEFT JOIN delivery_path dp ON dp.path_id = uddf2.udf_value	
 	left join #fuel_based_variable_charge fbvc on fbvc.location_id=td.location_id and fbvc.term_start=td.term_start
-	OUTER APPLY(SELECT try_cast(uddf.udf_value as int)	udf_value FROM user_defined_deal_fields uddf INNER JOIN user_defined_deal_fields_template_main udddft ON uddf.udf_template_id=udddft.udf_template_id WHERE uddf.source_deal_header_id=td.source_deal_header_id and udddft.field_id=-5604) uddf_broker
+	--OUTER APPLY(SELECT try_cast(uddf.udf_value as int)	udf_value FROM user_defined_deal_fields uddf INNER JOIN user_defined_deal_fields_template_main udddft ON uddf.udf_template_id=udddft.udf_template_id WHERE uddf.source_deal_header_id=td.source_deal_header_id and udddft.field_id=-5604) uddf_broker
 	LEFT JOIN #tmp_source_fees sfv ON sfv.source_deal_detail_id=td.source_deal_detail_id AND sfv.field_id=uddft.field_name
+	OUTER APPLY(
+		SELECT ISNULL(NULLIF(SUM(CAST(volume_mult AS FLOAT)),0),1) AS totalhours, 
+		ISNULL(NULLIF(SUM(CASE WHEN '''+ @calc_type+''' =''s'' AND term_date <= '''+@as_of_date+''' THEN CAST(volume_mult AS FLOAT)
+					WHEN '''+ @calc_type+''' <>''s'' AND '''+isnull(@calc_explain_type,'')+''' = ''d'' AND term_date > '''+@as_of_date +''' AND term_date<='''+isnull(@next_business_day,'') +''' THEN CAST(volume_mult AS FLOAT)
+			WHEN '''+ @calc_type+'''<>''s'' AND '''+isnull(@calc_explain_type,'') +'''='''' AND term_date >'''+ @as_of_date+''' THEN CAST(volume_mult AS FLOAT)
+		ELSE 0 END),0)
+	,1) partialhours
+		FROM hour_block_term
+		WHERE block_type = case when udft.internal_field_type =18702 then 12000 else ISNULL(spcd.block_type,12000) end
+			AND block_define_id = case when udft.internal_field_type =18702 then '+cast(@baseload_block_definition as varchar) +' else ISNULL(spcd.block_define_id,'+cast(@baseload_block_definition as varchar)+') end 
+			AND term_date BETWEEN td.term_start AND td.term_end
+	) hbt
 	LEFT JOIN contract_group cg ON cg.contract_id = td.contract_id
 	outer apply (select top(1) storage_capacity,CASE WHEN ownership_type=45301 THEN ''s'' ELSE ''b'' END st_buy_sell_flag  from  general_assest_info_virtual_storage
 			where agreement = td.contract_id
