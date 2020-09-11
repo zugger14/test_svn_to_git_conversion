@@ -1,8 +1,8 @@
 <?php
 
-    $file_names = $_POST['file_names'];
-    
-	$user_dir_destination = '../../../adiha.php.scripts/dev/shared_docs/attach_docs/certification_key';
+	$file_names = $_POST['file_names'];
+		
+	$user_dir_destination = '../../../adiha.php.scripts/dev/shared_docs/certificate_keys';
 	$user_dir_source = '../../../adiha.php.scripts/dev/shared_docs/temp_Note/certification_key';
 	$files = scandir($user_dir_source);
 	
