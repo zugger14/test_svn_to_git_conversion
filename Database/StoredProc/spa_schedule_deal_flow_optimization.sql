@@ -90,29 +90,25 @@ SET NOCOUNT ON
 	-- SPA parameter values
 
 
+	--2002-03-01 00:00:00.000	2002-03-01 00:00:00.000	7FEEAC3F_B49C_4AB6_971C_FDD5AACE5ACB	flow_auto	1158	0	982	-1	102282
 
-	select 
-	@flag = 'i'
+	select @flag = 'i'
 	, @box_ids = '1'
-	, @flow_date_from = '2002-02-01'
-	, @flow_date_to = '2002-02-01'
+	, @flow_date_from = '2002-03-01'
+	, @flow_date_to = '2002-03-01'
 	, @sub = NULL
 	, @str = NULL
 	, @book = NULL
 	, @sub_book = NULL
-	, @contract_process_id = 'BCCDACBA_F5F1_4D04_BEA0_97C771CFF55C'
+	, @contract_process_id = '7FEEAC3F_B49C_4AB6_971C_FDD5AACE5ACB'
 	, @from_priority = NULL
 	, @to_priority = NULL
 	, @call_from = 'flow_auto'
 	, @target_uom = 1158
-	, @reschedule = 1
+	, @reschedule = 0
 	, @granularity = 982
 	, @receipt_deals_id  = -1 
-	, @delivery_deals_id  = 100901
-
-
-
-	
+	, @delivery_deals_id  = 102282
 
 
 --transport_deal_id	deal_volume		up_down_stream	source_deal_header_id
@@ -3714,6 +3710,9 @@ BEGIN --Data Prepararion
 		GROUP BY single_path_id,first_dom, contract_id, storage_deal_type
 		HAVING COUNT(1) > 1
 
+
+	
+
 		UPDATE p 
 			SET include_rec = 1
 			, leg1_deal_volume = ISNULL(cp1.leg1_volume, p.leg1_volume) 
@@ -3902,6 +3901,7 @@ BEGIN --Data Prepararion
 			AND sdh.deal_id LIKE 'WTHD[_]%'
 			--AND epg.product_name IS NULL
 
+
 		IF  CHARINDEX(',', @delivery_deals_id) = 0 
 		BEGIN 
 			IF EXISTS(			
@@ -3949,7 +3949,7 @@ BEGIN --Data Prepararion
 			END
 		END
 
-
+	
 	END
 	ELSE 
 	BEGIN
@@ -4003,7 +4003,7 @@ BEGIN --Data Prepararion
 			ON epg.product_name = ISNULL(sdv.code, '-1')
 	
 		WHERE p.storage_deal_type = 'n'		
-			AND sdh.source_deal_type_id = @transportation_deal_type_id --exclude transportation deal
+			AND sdh.source_deal_type_id = @transportation_deal_type_id-- @transportation_deal_type_id --exclude transportation deal
 			AND epg.product_name IS NULL
 		UNION ALL
 		SELECT  DISTINCT sdh.source_deal_header_id ,
@@ -4221,16 +4221,11 @@ BEGIN TRY
 
 
 
-IF @call_from IN('flow_match', 'match', 'main_menu', 'flow_auto') AND @reschedule = 0
+IF @call_from IN('flow_match', 'match', 'main_menu', 'flow_auto', 'flow_auto_non_complex') AND @reschedule = 0
 BEGIN
 	DELETE FROM #existing_deals
 END 
 
-
-
---SELECT * FROM #tmp_vol_split_deal_final_grp p  select * from #existing_deals
-
---return
 
 
 BEGIN -- Insert/Update Deal data 
@@ -4942,18 +4937,66 @@ BEGIN -- Insert/Update Deal data
 
 
 
-
 	IF OBJECT_ID('tempdb..#inserted_deal_detail111') IS NOT NULL DROP TABLE #inserted_deal_detail111 
 	SELECT DISTINCT * 
 	INTO  #inserted_deal_detail111 -- SELECT * FROM #inserted_deal_detail111
 	FROM #inserted_deal_detail
 
-	IF @call_from IN( 'flow_opt', 'flow_auto') AND @is_hourly_calc = 1
+	IF @call_from IN( 'flow_opt', 'flow_auto', 'flow_auto_non_complex') AND @is_hourly_calc = 1
 	BEGIN
+
 
 		--Add hour volume in case of incremental schedule
 		--update hour volume in case of reschedule
-		SET @sql = 'UPDATE sddh
+		/*
+		IF @call_from IN( 'flow_auto','flow_auto_non_complex')
+		BEGIN
+			
+			UPDATE sddh
+				SET sddh.volume = IIF(@reschedule = 1, sddh.volume, NULLIF(ISNULL(sddh.volume, 0) + ISNULL(sddh_m.volume, 0), 0))
+			FROM #inserted_deal_detail idd
+			INNER JOIN source_deal_detail_hour sddh_m
+				ON idd.term_start = sddh_m.term_date
+			INNER JOIN source_Deal_detail sdd_m
+				ON sdd_m.source_deal_detail_id = sddh_m.source_deal_detail_id						
+			INNER JOIN source_deal_detail_hour sddh
+				ON sddh.source_deal_detail_id = idd.source_deal_detail_id
+			INNER JOIN source_deal_header sdh
+				ON sdh.source_deal_header_id = idd.source_deal_header_id
+			LEFT JOIN static_data_value sdv
+				ON sdv.value_id = sdh.internal_portfolio_id
+				AND sdv.type_id = 39800				
+			WHERE sdd_m.source_deal_header_id = ISNULL(NULLIF(@receipt_deals_id, '-1'), @delivery_deals_id)
+				AND  ISNULL(sdv.code, '-1') <> 'Complex-LTO'
+
+			INSERT INTO source_deal_detail_hour(
+				source_deal_detail_id
+				, term_date
+				, hr
+				, is_dst
+				, granularity
+				, volume
+			) 
+			SELECT idd.source_deal_detail_id,
+				idd.term_start,
+				sddh_m.hr,
+				0 is_dst,
+				982 granularity,
+				sddh_m.volume deal_volume
+			FROM #inserted_deal_detail idd
+			INNER JOIN source_deal_detail_hour sddh_m
+				ON idd.term_start = sddh_m.term_date
+			INNER JOIN source_Deal_detail sdd_m
+				ON sdd_m.source_deal_detail_id = sddh_m.source_deal_detail_id						
+			LEFT JOIN source_deal_detail_hour sddh
+				ON sddh.source_deal_detail_id = idd.source_deal_detail_id
+			WHERE sdd_m.source_deal_header_id = ISNULL(NULLIF(@receipt_deals_id, '-1'), @delivery_deals_id)
+				AND sddh.source_deal_detail_id IS NULL
+		END
+		ELSE
+		BEGIN
+*/
+			SET @sql = 'UPDATE sddh
 						SET volume ' + CASE WHEN @reschedule = 1 THEN '=' ELSE '+=' END + ' CASE WHEN idd.leg = 1 THEN cdmh.received ELSE cdmh.delivered END 
 					FROM #inserted_deal_detail idd
 					INNER JOIN ' + @contract_detail_hourly + ' cdmh
@@ -4997,6 +5040,9 @@ BEGIN -- Insert/Update Deal data
 				'
 			--print @sql
 			EXEC(@sql)	
+			
+	--	END
+		
 
 	END 
 	ELSE IF @call_from = 'transmission_opt'
@@ -5281,6 +5327,7 @@ BEGIN -- Insert/Update Deal data
 		ON h.deal_id = @process_id + '____' + CAST(p.rowid AS VARCHAR)
 	
 END   -- Insert/Update Deal data
+
 
 DELETE a FROM #tmp_vol_split_deal  a
 --INNER JOIN source_deal_detail sdd ON 

@@ -11,7 +11,7 @@ GO
 	
 	Parameters
 	@source_deal_header_id : Source Deal Header Id to be scheduled
-	@reschedule: flag for reschedule 1 for reschedule and 0 for schedule
+	@reschedule: flag for reschedule 1 for reschedule AND 0 for schedule
 	@flow_date: Deal term date
 	@transport_deal_id: Transport_deal_id which needed to be adjusted.
 	@process_id: Process ID
@@ -27,7 +27,7 @@ AS
 
 /** Debug
 
---select top 10 * from source_deal_header order by source_deal_header_id desc
+--SELECT top 10 * FROM source_deal_header order by source_deal_header_id desc
 
 DECLARE @source_deal_header_id INT,
 	@reschedule BIT = 0,
@@ -40,10 +40,17 @@ DECLARE @source_deal_header_id INT,
 	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
 	
 	--8407	982	0	2000-11-01 00:00:00.000	8406
-	select @source_deal_header_id = 11553
-			, @reschedule = 0
-			, @flow_date = '2000-09-01'--, @transport_deal_id = 8406
-			, @process_id = 'E1661583_943F_4EF7_99ED_B00B9C96E708'
+
+	--100793	1	2010-01-01 00:00:00.000	NULL	
+		
+				
+
+		SELECT @source_deal_header_id = 102282,
+			@reschedule = 0,
+			@flow_date = '2002-03-01',
+			@transport_deal_id = NULL,
+			@process_id = '859B54C6_D9FD_4206_AD19_CE8D23753850'
+
 	
 --**/
 SET NOCOUNT ON
@@ -59,7 +66,7 @@ DECLARE  @flow_date_from DATETIME
 		, @template_name VARCHAR(500) = 'Transportation NG'
 		, @subbook_id INT
 		, @path_priority INT  = -31400 --Point-Point
-		, @opt_objective INT = 38301 -- Maximum Flow based on Location Ranking
+		, @opt_objective INT = 38301 -- Maximum Flow based ON Location Ranking
 		, @xml_manual_vol NVARCHAR(MAX)
 		, @hourly_pos_info NVARCHAR(500)
 		, @opt_deal_detail_pos NVARCHAR(500)
@@ -210,7 +217,7 @@ BEGIN
 	SET @receipt_deals_id = IIF(@transport_deal_id IS NULL, @source_deal_header_id, NULL)
 	SET @delivery_deals_id = IIF(@transport_deal_id IS NULL, '-1', NULL)
 
-	--select  @flow_date_from
+	--SELECT  @flow_date_from
 	--		,@flow_date_to
 	--		, @from_location
 	--		, @to_location
@@ -223,6 +230,10 @@ BEGIN
 	--		, @call_from
 	--		, @receipt_deals_id
 	--		, @delivery_deals_id
+
+
+
+	--		return;
 
 	EXEC spa_flow_optimization_hourly 
 	@flag = 'c'
@@ -295,6 +306,59 @@ BEGIN
 	IF @transport_deal_id IS NULL
 	BEGIN
 		SET @sql = N'
+			IF NOT EXISTS(
+				SELECT 1 
+				FROM ' + @hourly_pos_info + ' hpi
+				INNER JOIN source_deal_header sdh
+					ON sdh.source_deal_header_id = hpi.source_deal_header_id 
+				INNER JOIN static_data_value sdv
+					ON sdv.value_id = sdh.internal_portfolio_id
+					AND type_id = 39800
+				WHERE sdv.code = ''Complex-LTO''
+					AND hpi.position < 0
+			)
+			BEGIN
+
+				DECLARE @term_date DATETIME
+				DECLARE @term_date_with_value DATETIME
+	
+				SELECT @term_date = MIN(term_start) 
+				FROM ' + @hourly_pos_info + ' hpi
+				INNER JOIN source_deal_header sdh
+					ON sdh.source_deal_header_id = hpi.source_deal_header_id 
+				INNER JOIN static_data_value sdv
+					ON sdv.value_id = sdh.internal_portfolio_id
+					AND type_id = 39800
+				WHERE sdv.code = ''Complex-LTO''
+
+				SELECT @term_date_with_value = sddh.term_date
+				FROM source_deal_detail_hour sddh
+				INNER JOIN source_deal_detail sdd
+					ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+				WHERE sdd.source_deal_header_id = ' + CAST(@source_deal_header_id AS VARCHAR(10)) + ' 
+					AND YEAR(sddh.term_date) = YEAR(@term_date)
+					AND MONTH(sddh.term_date) = MONTH(@term_date)	
+					AND ISNULL(sddh.volume, 0) > 0 
+
+				UPDATE hpi
+					SET position = ISNULL(sddh.volume, 0.00)
+				FROM source_deal_header sdh
+				INNER JOIN ' + @hourly_pos_info + ' hpi
+					ON sdh.source_deal_header_id = hpi.source_deal_header_id
+				INNER JOIN source_deal_detail sdd
+					ON sdd.source_deal_header_id = sdh.source_deal_header_id
+					AND sdh.source_deal_header_id = ' + CAST(@source_deal_header_id AS VARCHAR(10)) + '
+				INNER JOIN source_deal_detail_hour sddh
+					ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+					AND sddh.hr =  RIGHT(''0'' + CAST(hpi.hour AS VARCHAR(5)), 2) + '':00''
+				WHERE sddh.term_date = @term_date_with_value
+
+			END 
+		'
+		EXEC(@sql)
+
+		
+		SET @sql = N'
 		INSERT INTO #hourly_pos_info ( source_deal_header_id,location_id, curve_id, term_start, granularity, hour, position, source_deal_detail_id)
 		SELECT source_deal_header_id
 			, location_id
@@ -310,6 +374,9 @@ BEGIN
 			AND term_start BETWEEN ''' + CONVERT(VARCHAR(10), @flow_date_from, 21) + ''' AND ''' + CONVERT(VARCHAR(10), @flow_date_to, 21) + '''
 		'
 		EXEC(@sql)
+
+		
+
 	END 
 	ELSE 
 	BEGIN
@@ -480,7 +547,8 @@ SET @call_from = IIF(@transport_deal_id IS NULL, 'flow_auto', 'flow_opt');
 --	,  @receipt_deals_id 
 --	,  @delivery_deals_id
 
-	--return;
+----return;
+
 
 EXEC spa_schedule_deal_flow_optimization  
 	@flag = 'i'
@@ -500,6 +568,9 @@ EXEC spa_schedule_deal_flow_optimization
 	, @granularity = @granularity
 	, @receipt_deals_id  = @receipt_deals_id 
 	, @delivery_deals_id  = @delivery_deals_id
+
+
+	
 
 GO
 

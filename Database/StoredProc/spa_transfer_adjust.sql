@@ -43,7 +43,7 @@ EXEC spa_print 'Use spa_print instead of PRINT statement in debug mode.'
 --Drops all temp tables created in this scope.
 EXEC [spa_drop_all_temp_table] 
 
-DECLARE @source_deal_header_id INT = 100901 --s
+DECLARE @source_deal_header_id INT = 102282 --s
 --DECLARE @source_deal_header_id INT = 100903 --b
 --DECLARE @source_deal_header_id INT = 100573 -- 100582 --s(1) -- 100573 --s (22) --100546 -b (1)
  
@@ -189,9 +189,7 @@ CREATE TABLE #temp_volume_capacity (
 	, volume NUMERIC(38,20)
 )
 
---select @product_group return;
-
-
+--select @product_group, @should_auto_path_calc  return;
 
 IF @product_group = 'Complex-EEX'
 BEGIN
@@ -606,17 +604,34 @@ BEGIN
 	SET @flow_date_from = @deal_term_start -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_start, 'f')
 	SET @flow_date_to = @deal_term_end -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_end, 'f')
 
+
+--select @flow_date_from , @flow_date_to, @product_group  return;
 	
 	WHILE (@flow_date_from <= @flow_date_to)
 	BEGIN
 		SET @process_id = dbo.FNAGetNewID()
 		
-		IF EXISTS (SELECT 1
-					FROM optimizer_detail_downstream odd
-					INNER JOIN SplitCommaSeperatedValues(@all_physical_deals) t
-						ON t.item = odd.source_deal_header_id
-						AND flow_date BETWEEN [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'f')
-							AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')
+		IF EXISTS (SELECT  sdh.source_deal_header_id
+					FROM user_defined_deal_fields uddf	
+					INNER JOIN source_deal_header sdh
+						ON sdh.source_deal_header_id = uddf.source_deal_header_id
+					INNER JOIN user_defined_deal_fields_template uddft
+						ON sdh.template_id = uddft.template_id 
+						AND uddf.udf_template_id = uddft.udf_template_id	
+						AND uddft.field_label = 'From Deal'
+					INNER JOIN source_deal_header_template sdht
+						ON sdht.template_id = sdh.template_id 
+					INNER JOIN static_data_value sdv
+						ON sdv.value_id = sdh.internal_portfolio_id
+						AND sdv.type_id = 39800
+					INNER JOIN source_deal_detail sdd
+						ON sdd.source_deal_header_id = sdh.source_deal_header_id
+					WHERE udf_value = @source_deal_header_id
+						AND sdht.template_name = 'Transportation NG'
+						AND sdv.code = 'Complex-LTO'
+					GROUP BY sdh.source_deal_header_id
+					HAVING MIN (sdd.term_start) BETWEEN @flow_date_from AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')
+
 					)
 		BEGIN
 			SET @reschedule = 1
@@ -626,15 +641,14 @@ BEGIN
 			SET @reschedule = 0
 		END
 
+		--set @reschedule = 0
 
-		--select @reschedule,@flow_date_from
+		--select @reschedule,@flow_date_from, @flow_date_to
 
-		--if @flow_date_from = '2002-02-01'
+		--if @flow_date_from = '2002-03-01'
 		--BEGIN
-		--	select @source_deal_header_id, @reschedule,@flow_date_from,@transport_deal_id,@process_id  return;
+		--	select @all_physical_deals, @source_deal_header_id, @reschedule,@flow_date_from,@transport_deal_id,@process_id  return;
 		--END
-
-
 
 		EXEC [dbo].[spa_auto_deal_schedule]
 			@source_deal_header_id = @source_deal_header_id,
@@ -644,9 +658,6 @@ BEGIN
 			@process_id = @process_id
 
 		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
-
-
-
 
 
 		SET @sql = '
@@ -687,7 +698,7 @@ BEGIN
 		END 
 
 
-	
+		--start of should remove this block
 		IF @header_buy_sell_flag = 'b'
 		BEGIN
 
@@ -709,13 +720,29 @@ BEGIN
 			WHERE leg = 1 
 				AND	sdd.buy_sell_flag = 'b'
 		END 
+		--end of should remove this block
 
 		SET @flow_date_from =  [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, 1, @flow_date_from), 'f')
 		
 	END;
 
+	--return;
+
 	IF EXISTS(SELECT 1 FROM #temp_transport_deal WHERE type = 'Transport')	
 	BEGIN
+
+		UPDATE uddf
+			SET uddf.udf_value = @source_deal_header_id	
+		FROM #temp_transport_deal ttd
+		INNER JOIN user_defined_deal_fields uddf
+			ON ttd.source_deal_header_id = uddf.source_deal_header_id
+		INNER JOIN source_deal_header sdh
+			ON sdh.source_deal_header_id = uddf.source_deal_header_id
+		INNER JOIN user_defined_deal_fields_template uddft
+			ON sdh.template_id = uddft.template_id 
+			AND uddf.udf_template_id = uddft.udf_template_id	
+			AND uddft.field_label = 'From Deal' 
+
 		INSERT INTO #temp_volume
 		SELECT term_start
 			, RIGHT( '0' + SUBSTRING(hr, 3, LEN(hr)), 2) + ':00'  hr
@@ -882,7 +909,7 @@ BEGIN
 			FROM [FNAGetPathMDQHourly]( @path_id, @deal_term_start,@deal_term_end, '') pmh
 			INNER JOIN source_deal_detail sdd
 				ON pmh.term_start BETWEEN sdd.term_start  AND sdd.term_end
-				AND sdd.term_start = pmh.term_start
+				--AND sdd.term_start = pmh.term_start
 				AND sdd.source_deal_header_id = @capacity_deal_id --99311 -- 9846 -		
 			INNER JOIN source_deal_detail_hour sddh	
 				ON sddh.term_date = pmh.term_start
@@ -904,7 +931,7 @@ BEGIN
 			FROM [FNAGetPathMDQHourly]( @path_id, @deal_term_start,@deal_term_end, '') pmh
 			INNER JOIN source_deal_detail sdd
 				ON pmh.term_start BETWEEN sdd.term_start  AND sdd.term_end
-				AND sdd.term_start = pmh.term_start
+				--AND sdd.term_start = pmh.term_start
 				AND sdd.source_deal_header_id = @capacity_deal_id -- 9846 -		
 			INNER JOIN source_deal_detail_hour sddh	
 				ON sddh.term_date = pmh.term_start
@@ -979,6 +1006,7 @@ BEGIN
 							, volume
 							, granularity
 						)
+			
 			SELECT  sdd.source_deal_detail_id,
 				sddh_m.term_date,
 				sddh_m.hr,
@@ -989,10 +1017,14 @@ BEGIN
 			INNER JOIN source_deal_detail sdd_m
 				ON sdd_m.source_deal_detail_id = sddh_m.source_deal_detail_id
 			INNER JOIN source_deal_detail sdd 
-				ON sddh_m.term_date = sdd.term_start		
+				ON sdd.term_start BETWEEN sdd_m.term_start  AND sdd_m.term_end
 			WHERE  sdd_m.source_deal_header_id = @source_deal_header_id
 				AND NULLIF(sddh_m.volume, 0) IS NOT NULL
 				AND sdd.source_deal_header_id = @capacity_deal_id
+
+
+				--100890	102283
+				--select @capacity_deal_id, @source_deal_header_id
 
 			INSERT INTO #temp_updated_deals(source_deal_header_id)
 			SELECT @capacity_deal_id
@@ -1277,26 +1309,30 @@ BEGIN
 	SET @flow_date_from = @deal_term_start -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_start, 'f')
 	SET @flow_date_to = @deal_term_end -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_end, 'f')
 
-	
+
 	WHILE (@flow_date_from <= @flow_date_to)
 	BEGIN
 		SET @process_id = dbo.FNAGetNewID()
-		
-		IF EXISTS (SELECT 1
-					FROM optimizer_detail_downstream odd
-					INNER JOIN SplitCommaSeperatedValues(@all_physical_deals) t
-						ON t.item = odd.source_deal_header_id
-						AND flow_date BETWEEN [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'f')
-							AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')
-					)
+
+		IF EXISTS(
+			SELECT source_deal_header_id FROM optimizer_detail WHERE flow_date = @flow_date_from AND source_deal_header_id = @source_deal_header_id
+			UNION ALL
+			SELECT source_deal_header_id FROM optimizer_detail_downstream WHERE flow_date = @flow_date_from AND source_deal_header_id = @source_deal_header_id
+			UNION ALL
+			SELECT source_deal_header_id FROM optimizer_detail_hour WHERE flow_date = @flow_date_from AND source_deal_header_id = @source_deal_header_id
+			UNION ALL
+			SELECT source_deal_header_id FROM optimizer_detail_downstream_hour WHERE flow_date = @flow_date_from AND source_deal_header_id = @source_deal_header_id
+		)
 		BEGIN
 			SET @reschedule = 1
 		END
-		ELSE 
+		ELSE
 		BEGIN
 			SET @reschedule = 0
 		END
 
+		--select @source_deal_header_id, @reschedule, @flow_date_from, @transport_deal_id, @process_id
+		--return;
 
 
 		EXEC [dbo].[spa_auto_deal_schedule]
@@ -1305,10 +1341,7 @@ BEGIN
 			@flow_date = @flow_date_from,
 			@transport_deal_id = @transport_deal_id,
 			@process_id = @process_id
-
-
 			
-
 		SET @flow_date_from =  [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, 1, @flow_date_from), 'f')
 
 
@@ -1317,6 +1350,9 @@ BEGIN
 
 	
 END
+
+
+
 
 --12269
 
