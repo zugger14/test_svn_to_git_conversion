@@ -216,8 +216,8 @@ BEGIN
 		SELECT 168,'type','Type','combo','SELECT 1,''Primary'' UNION ALL SELECT 2,''Secondary''','y','y','3','n',NULL,NULL,NULL,'100',NULL,'NotEmpty','left', NULL,'n',NULL UNION ALL 
 		SELECT 168,'location_id','Location','combo','EXEC spa_source_minor_location @flag=''o''','y','y','4','n',NULL,NULL,NULL,'150',NULL,'NotEmpty','left', NULL,'n',NULL UNION ALL 
 		SELECT 168,'rec_del','Rec/Del','combo','SELECT 1 AS id,''Reciept'' AS label UNION ALL SELECT 2,''Delivery''','y','y','5','n',NULL,NULL,NULL,'100',NULL,'NotEmpty','left', NULL,'n',NULL UNION ALL 
-		SELECT 168,'rank','Rank','combo','EXEC spa_StaticDataValues @flag = ''h'', @type_id = 32100','y','y','8','n',NULL,NULL,NULL,'100',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 168,'fuel_group','Fuel Group','combo','exec spa_route_group ''h''','y','y','11','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 168,'rank','Rank','combo','EXEC spa_StaticDataValues @flag = ''h'', @type_id = 32100','y','n','8','n',NULL,NULL,NULL,'100',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 168,'fuel_group','Fuel Group','combo','exec spa_route_group ''h''','y','n','11','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
 		SELECT 168,'effective_date','Effective Date','dhxCalendarA',NULL,'y','y','6','n',NULL,NULL,NULL,'100','date','NotEmpty','left', NULL,'n',NULL UNION ALL 
 		SELECT 168,'mdq','MDQ','ed',NULL,'y','y','7','n',NULL,NULL,NULL,'150',NULL,'NotEmpty','left', NULL,'n',NULL UNION ALL 
 		SELECT 168,'surcharge','Surcharge','ed',NULL,'y','y','9','n',NULL,NULL,NULL,'100',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
