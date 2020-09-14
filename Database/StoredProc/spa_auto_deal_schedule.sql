@@ -44,12 +44,12 @@ DECLARE @source_deal_header_id INT,
 	--100793	1	2010-01-01 00:00:00.000	NULL	
 		
 				
-
-		SELECT @source_deal_header_id = 102282,
+		select 
+			@source_deal_header_id = 98034,
 			@reschedule = 0,
-			@flow_date = '2002-03-01',
+			@flow_date = '2004-09-01',
 			@transport_deal_id = NULL,
-			@process_id = '859B54C6_D9FD_4206_AD19_CE8D23753850'
+			@process_id = '4AC52FAF_3EFE_48DB_B526_BC3A6E8F72ED'
 
 	
 --**/
@@ -103,6 +103,8 @@ SET @process_id = ISNULL(@process_id, dbo.FNAGetNewID())
 
 SET @flow_date_from = @flow_date
 SET @flow_date_to = @flow_date
+
+
 
 SET @call_from = IIF(@transport_deal_id IS NULL, 'flow_auto', NULL);
 
@@ -314,7 +316,7 @@ BEGIN
 				INNER JOIN static_data_value sdv
 					ON sdv.value_id = sdh.internal_portfolio_id
 					AND type_id = 39800
-				WHERE sdv.code = ''Complex-LTO''
+				WHERE sdv.code IN (''Complex-LTO'', ''Complex-ROD'')
 					AND hpi.position < 0
 			)
 			BEGIN
@@ -329,7 +331,7 @@ BEGIN
 				INNER JOIN static_data_value sdv
 					ON sdv.value_id = sdh.internal_portfolio_id
 					AND type_id = 39800
-				WHERE sdv.code = ''Complex-LTO''
+				WHERE sdv.code IN (''Complex-LTO'', ''Complex-ROD'')
 
 				SELECT @term_date_with_value = sddh.term_date
 				FROM source_deal_detail_hour sddh
