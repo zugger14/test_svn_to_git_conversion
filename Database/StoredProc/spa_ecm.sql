@@ -330,7 +330,7 @@ BEGIN
 				WHEN MAX(tsu.uom_name)='mw' THEN 'MWh'
 				ELSE NULL
 		   END [price_unit_capacity_unit],
-		   SUM(tdd.total_volume * ISNULL(conv.conversion_factor, 1) * (tdd.fixed_price + ISNULL(ABS(CAST(uddf.udf_value AS FLOAT)), 0)) ) * CASE WHEN MAX(sdht.template_name) LIKE '%Zeebrugge%' THEN 100 ELSE 1 END [total_contract_value],
+		   ABS(SUM(tdd.total_volume * ISNULL(conv.conversion_factor, 1) * (tdd.fixed_price + ISNULL(ABS(CAST(uddf.udf_value AS FLOAT)), 0)) )) * CASE WHEN MAX(sdht.template_name) LIKE '%Zeebrugge%' THEN 100 ELSE 1 END [total_contract_value],
 		   CASE 
 				WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, 6, MAX(td.entire_term_start)), 126)
 				ELSE CONVERT(VARCHAR(19), CAST(MAX(td.entire_term_start) AS DATETIME), 126)
@@ -339,31 +339,16 @@ BEGIN
 		   MAX(tdd.deal_volume) [contract_capacity],
 		   (AVG(tdd.fixed_price) + ISNULL(MAX(ABS(CAST(uddf.udf_value AS FLOAT))), 0)) * CASE WHEN MAX(sdht.template_name) LIKE '%Zeebrugge%' THEN 100 ELSE 1 END [price],
 		   CASE WHEN MAX(scom.commodity_id) IN ('ELectricity', 'Power') THEN NULL
-			    WHEN MAX(scom.commodity_id) = 'Gas' THEN CASE WHEN MAX(sdht.template_name) LIKE '%ztph%' OR MAX(sdht.template_name) LIKE '%ztpl%' THEN CASE WHEN MAX(td.header_buy_sell_flag) = 'b' THEN 'ZHESSENTNL'
-																																							WHEN MAX(td.header_buy_sell_flag) = 's' THEN 'ZHRWE'
-																																					   END
-															  ELSE CASE WHEN MAX(sdv_cntry.code) IN ('NL','Netherlands') AND MAX(td.header_buy_sell_flag) = 'b' THEN 'GSESSENTNL'
-																		WHEN MAX(sdv_cntry.code) IN ('NL','Netherlands') AND MAX(td.header_buy_sell_flag) = 's' THEN 'GSRWE'  
-																		WHEN MAX(sdv_cntry.code) IN ('BE', 'BELGIUM') AND MAX(sml.grid_value_id) = 292045 AND MAX(td.header_buy_sell_flag) = 'b' THEN 'ZHESSENTNL'
-																		WHEN MAX(sdv_cntry.code) IN ('BE', 'BELGIUM') AND MAX(sml.grid_value_id) = 292045 AND MAX(td.header_buy_sell_flag) = 's' THEN 'ZHRWE'
-																		WHEN MAX(sdv_cntry.code) IN ('BE', 'BELGIUM') AND MAX(sml.grid_value_id) = 292081 AND MAX(td.header_buy_sell_flag) = 'b' THEN 'ZHESSENTNL'
-																		WHEN MAX(sdv_cntry.code) IN ('BE', 'BELGIUM') AND MAX(sml.grid_value_id) = 292081 AND MAX(td.header_buy_sell_flag) = 's' THEN 'ZHRWE'
-																   END
-														 END
+			    WHEN MAX(scom.commodity_id) = 'Gas' THEN CASE 
+														WHEN MAX(td.header_buy_sell_flag) = 'b' THEN MAX(tbl_ecm_hub.[Hub])
+														ELSE MAX(tbl_ecm_hub_counterparty.[hub])
+													END
 		   END [buyer_hubcode],
 		   CASE WHEN MAX(scom.commodity_id) IN ('ELectricity', 'Power') THEN NULL
-			    WHEN MAX(scom.commodity_id) = 'Gas' THEN CASE WHEN MAX(sdht.template_name) LIKE '%ztph%' OR MAX(sdht.template_name) LIKE '%ztpl%' THEN CASE WHEN MAX(td.header_buy_sell_flag) = 'b' THEN 'ZHRWE'
-																																							WHEN MAX(td.header_buy_sell_flag) = 's' THEN 'ZHESSENTNL'
-																																					   END
-															  ELSE CASE
-																		WHEN MAX(sdv_cntry.code) IN ('NL','Netherlands') AND MAX(td.header_buy_sell_flag) = 'b' THEN 'GSRWE'
-																		WHEN MAX(sdv_cntry.code) IN ('NL','Netherlands') AND MAX(td.header_buy_sell_flag) = 's' THEN 'GSESSENTNL'  
-																		WHEN MAX(sdv_cntry.code) IN ('BE', 'BELGIUM') AND MAX(sml.grid_value_id) = 292045 AND MAX(td.header_buy_sell_flag) = 'b' THEN 'ZHRWE'
-																		WHEN MAX(sdv_cntry.code) IN ('BE', 'BELGIUM') AND MAX(sml.grid_value_id) = 292045 AND MAX(td.header_buy_sell_flag) = 's' THEN 'ZHESSENTNL'
-																		WHEN MAX(sdv_cntry.code) IN ('BE', 'BELGIUM') AND MAX(sml.grid_value_id) = 292081 AND MAX(td.header_buy_sell_flag) = 'b' THEN 'ZHRWE'
-																		WHEN MAX(sdv_cntry.code) IN ('BE', 'BELGIUM') AND MAX(sml.grid_value_id) = 292081 AND MAX(td.header_buy_sell_flag) = 's' THEN 'ZHESSENTNL'
-																   END
-														 END
+			    WHEN MAX(scom.commodity_id) = 'Gas' THEN CASE 
+														WHEN MAX(td.header_buy_sell_flag) = 's' THEN MAX(tbl_ecm_hub.[Hub])
+														ELSE MAX(tbl_ecm_hub_counterparty.[hub])
+													END
 		   END [seller_hubcode],
 		   ISNULL(MAX(st.trader_name), '') [trader_name],
 		   'CNF' ecm_document_type,
@@ -429,7 +414,15 @@ BEGIN
 	LEFT JOIN static_data_value sdv_r
 			ON sdv_r.value_id = sdh.reporting_group1
 			AND sdv_r.type_id = 113000
-	OUTER APPLY( SELECT gmv.clm4_value delivery_point_area
+	OUTER APPLY( SELECT gmv.clm3_value delivery_point_area
+				 FROM generic_mapping_header gmh
+				 INNER JOIN generic_mapping_values gmv
+					ON gmv.mapping_table_id = gmh.mapping_table_id
+				 WHERE gmh.mapping_name = 'ECM /Remit Delivery Point'
+				 AND gmv.clm1_value = CAST(tdd.location_id AS VARCHAR(20))
+				 AND gmv.clm2_value = CAST(scom.source_commodity_id AS VARCHAR(20))
+	) tbl_delivery_point_area
+	OUTER APPLY( SELECT gmv.clm4_value [hub]
 				 FROM generic_mapping_header gmh
 				 INNER JOIN generic_mapping_values gmv
 					ON gmv.mapping_table_id = gmh.mapping_table_id
@@ -437,7 +430,16 @@ BEGIN
 				 AND ISNULL(gmv.clm1_value,'-1') = CASE WHEN scom.commodity_id = 'Power' THEN ISNULL(gmv.clm1_value,'-1') ELSE tcuv.[Deal EIC] END
 				 AND gmv.clm2_value = CAST(tdd.location_id AS VARCHAR(20))
 				 AND gmv.clm3_value = CAST(scom.source_commodity_id AS VARCHAR(20))
-	) tbl_delivery_point_area
+	) tbl_ecm_hub 
+	OUTER APPLY( SELECT gmv.clm4_value [hub]
+				 FROM generic_mapping_header gmh
+				 INNER JOIN generic_mapping_values gmv
+					ON gmv.mapping_table_id = gmh.mapping_table_id
+				 WHERE gmh.mapping_name = 'ECM HUB Mapping'
+				 AND gmv.clm1_value = tcuv.[Sub EIC] 
+				 AND gmv.clm2_value = CAST(tdd.location_id AS VARCHAR(20))
+				 AND gmv.clm3_value = CAST(scom.source_commodity_id AS VARCHAR(20))
+	) tbl_ecm_hub_counterparty 
 	WHERE td.deal_status <> 5607
 		AND ISNULL(cs.[type], 17200) <> 17202
 	GROUP BY  td.source_deal_header_id, td.deal_id
@@ -981,7 +983,7 @@ BEGIN
 			GROUP BY vt.source_deal_header_id
 		) s
 
-		EXEC spa_ErrorHandler 0, 'Regulatory Submission', 'spa_ecm', 'Success', 'Data saved successfully.', ''
+		EXEC spa_ErrorHandler 0, 'Regulatory Submission', 'spa_ecm', 'Success', 'Data saved successfully.', @process_id
 		COMMIT
 	END TRY
     BEGIN CATCH
@@ -1090,7 +1092,7 @@ BEGIN
 					FROM ( SELECT  CAST(@xml_file_content AS xml) RawXml) b
 					CROSS APPLY b.RawXml.nodes('/Envelope') x(xml_col)
 
-					IF EXISTS(SELECT 1 FROM #temp_ecm_payload_xml_data  WHERE (ISNULL([state],'-1') IN ('MATCHED') OR ISNULL([broker_state],'-1') IN ('MATCHED')) AND download_file_name = @dir_file)
+					IF EXISTS(SELECT 1 FROM #temp_ecm_payload_xml_data  WHERE (ISNULL([state],'-1') IN ('MATCHED', 'PENDING') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING')) AND download_file_name = @dir_file)
 					BEGIN
 						SELECT @success_files += IIF(NULLIF(@success_files,'') IS NULL, @dir_file, ',' + @dir_file)
 		
@@ -1107,7 +1109,7 @@ BEGIN
 			DEALLOCATE db_cursor
 
 			IF EXISTS(SELECT 1 FROM #temp_ecm_payload_xml_data temp
-					WHERE (ISNULL([state],'-1') IN ('MATCHED') OR ISNULL([broker_state],'-1') IN ('MATCHED')) 
+					WHERE (ISNULL([state],'-1') IN ('MATCHED', 'PENDING') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING')) 
 					OR (ISNULL([state],'-1') IN ('FAILED') OR ISNULL([broker_state],'-1') IN ('FAILED'))
 			)
 			BEGIN
@@ -1128,7 +1130,7 @@ BEGIN
 					 , document_type
 					 , document_version
 					 , ebXML_message_id
-					 , [state]
+					 , ISNULL([state],[broker_state])
 					 , time_stamp
 					 , transfer_id
 					 , transmission_timestamp
@@ -1138,7 +1140,7 @@ BEGIN
 					 , reason_code
 					 , reason_text
 				FROM #temp_ecm_payload_xml_data
-				WHERE (ISNULL([state],'-1') IN ('MATCHED') OR ISNULL([broker_state],'-1') IN ('MATCHED')) 
+				WHERE (ISNULL([state],'-1') IN ('MATCHED', 'PENDING') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING')) 
 				OR (ISNULL([state],'-1') IN ('FAILED') OR ISNULL([broker_state],'-1') IN ('FAILED'))
 
 				SELECT @process_id = dbo.FNAGETNEWID()
@@ -1155,7 +1157,7 @@ BEGIN
 					  ,[broker_state] ,[transfer_id] ,[transmission_timestamp] ,[conversation_id] ,[sender_organisation] ,[receiver_organisation] ,[download_file_name]
 					  INTO ' + @process_table + ' FROM #temp_ecm_payload_xml_data
 					  WHERE (ISNULL([state],''-1'') IN (''FAILED'') OR ISNULL([broker_state],''-1'') IN (''FAILED''))
-					  OR (ISNULL([state],''-1'') IN (''MATCHED'') OR ISNULL([broker_state],''-1'') IN (''MATCHED''))
+					  OR (ISNULL([state],''-1'') IN (''MATCHED'', ''PENDING'') OR ISNULL([broker_state],''-1'') IN (''MATCHED'', ''PENDING''))
 					  ')
 
 
@@ -1168,7 +1170,7 @@ BEGIN
 					SELECT @process_id, temp.[state], 'ECM Feedback', 'ECM Feedback', ISNULL([state],[broker_state]), temp.[reason_code]
 					FROM #temp_ecm_payload_xml_data temp
 					WHERE (ISNULL([state],'-1') IN ('FAILED') OR ISNULL([broker_state],'-1') IN ('FAILED'))
-					  OR (ISNULL([state],'-1') IN ('MATCHED') OR ISNULL([broker_state],'-1') IN ('MATCHED'))
+					  OR (ISNULL([state],'-1') IN ('MATCHED', 'PENDING') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING'))
 					SELECT @url = '../../adiha.php.scripts/dev/spa_html.php?__user_name__=' + @user_name + '&spa=exec spa_get_import_process_status ''' + @process_id + ''','''+@user_name+''''
 					SELECT @desc_success = 'ECM Feedback captured with error. <a target="_blank" href="' + @url + '">Click here.</a>'
 				END
@@ -1211,17 +1213,19 @@ BEGIN
 				INNER JOIN dbo.application_users au ON aru.user_login_id = au.user_login_id
 				WHERE (au.user_active = 'y') AND (asr.role_type_value_id = 22) AND au.user_emal_add IS NOT NULL
 				GROUP BY au.user_login_id, au.user_emal_add
+
+				SET @result = '1'
 			END
 		END
 		
-		DECLARE @response_deal_id INT
+		DECLARE @response_deal_id INT, @response_status NVARCHAR(100)
 		
 		IF ISNULL(NULLIF(@result, ''), '0') <> '0'
 		BEGIN
 			DECLARE c CURSOR FOR		
-				SELECT DISTINCT se.source_deal_header_id
+				SELECT DISTINCT se.source_deal_header_id, r.state
 				FROM source_ecm se		   
-				INNER JOIN dbo.FNASplit(@result, ',') doc ON doc.item = se.document_id
+				INNER JOIN #temp_ecm_payload_xml_data doc ON doc.document_id = se.document_id
 				CROSS APPLY (
 					SELECT TOP 1 *
 					FROM ecm_response_log erl
@@ -1229,9 +1233,9 @@ BEGIN
 						AND erl.document_version = se.document_version
 					ORDER BY erl.create_ts DESC
 				) r
-			   WHERE r.state = 'Matched'
+			   WHERE r.state IN ('Matched', 'PENDING')
 	   		OPEN c
-			FETCH NEXT FROM c INTO @response_deal_id
+			FETCH NEXT FROM c INTO @response_deal_id, @response_status
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
 				IF OBJECT_ID('tempdb..#temp_update_confirm_status') IS NOT NULL
@@ -1248,7 +1252,7 @@ BEGIN
 				)
 
 				INSERT INTO #temp_update_confirm_status (id, deal_id, as_of_date, confirm_status, comment1, comment2, confirm_id)
-				SELECT '', CAST(@response_deal_id AS VARCHAR(10)), CONVERT(VARCHAR(10), @create_ts, 120), 17202, '', '', ''
+				SELECT '', CAST(@response_deal_id AS VARCHAR(10)), CONVERT(VARCHAR(10), @create_ts, 120), IIF(@response_status = 'Matched',17202,17215), '', '', ''
 				
 				INSERT INTO confirm_status (source_deal_header_id, type, as_of_date)
 				SELECT t.deal_id, t.confirm_status, t.as_of_date
@@ -1278,7 +1282,7 @@ BEGIN
 				
 				EXEC spa_insert_update_audit 'u', @response_deal_id				
 				
-				FETCH NEXT FROM c INTO @response_deal_id
+				FETCH NEXT FROM c INTO @response_deal_id, @response_status
 			END
 			CLOSE c
 			DEALLOCATE c			

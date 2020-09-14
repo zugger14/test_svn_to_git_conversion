@@ -1503,15 +1503,17 @@ BEGIN
 
 	 		SELECT @source = @xml_inner
 			SELECT @xml_string = @addxml + CAST(@xml_inner AS VARCHAR(MAX))
-			SET @file_name = @file_path + 'remit_non_standard_' + @process_id + '_' + CONVERT(VARCHAR(7), GETDATE(), 112) + '.xml'
-			EXEC [spa_write_to_file] @xml_string, 'n',  @file_name, @result OUTPUT
+			SET @file_name = 'remit_non_standard_' + @process_id + '_' + CONVERT(VARCHAR(7), GETDATE(), 112) + '.xml'
+			SET @full_file_path = @file_path + @file_name
+			EXEC [spa_write_to_file] @xml_string, 'n',  @full_file_path, @result OUTPUT
 			IF @result = '1'
 			BEGIN
 				UPDATE source_remit_non_standard
 				SET file_export_name = @file_name
+				    ,acer_submission_status =39501
 				WHERE process_id = @process_id
 
-				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @file_name, @result OUTPUT
+				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @full_file_path, @result OUTPUT
 			END
             RETURN
         END
@@ -1576,7 +1578,7 @@ BEGIN
 					   [quantity_volume] AS [quantity/value],
 					   CASE WHEN [quantity_volume] IS NOT NULL THEN ISNULL(NULLIF(SUBSTRING(quantity_unit_field_40_and_41, 0, CHARINDEX(' /', quantity_unit_field_40_and_41, 0)), ''), quantity_unit_field_40_and_41) ELSE NULL END AS [quantity/unit],
 					   [total_notional_contract_quantity] AS [totalNotionalContractQuantity/value],
-					   [quantity_unit_field_40_and_41] AS [totalNotionalContractQuantity/unit],
+					   CASE WHEN [quantity_unit_field_40_and_41] = 'MW / MWh' THEN 'MWh' ELSE [quantity_unit_field_40_and_41] END AS [totalNotionalContractQuantity/unit],
 					   [termination_date] AS [terminationDate],
 					   [action_type] AS [actionType],
 					   NULL AS [Extra]
@@ -1661,14 +1663,16 @@ BEGIN
 			SELECT @xml = CONVERT(XML, REPLACE(CONVERT(VARCHAR(MAX), @xml), 'xmlns:ns1', 'xmlns'))
 	 		SELECT @source = @xml
 			SELECT @xml_string = @addxml + CAST(@xml AS VARCHAR(MAX))
-			SET @file_name = @file_path + 'remit_standard_' + @process_id + '_' + CONVERT(VARCHAR(7), GETDATE(), 112) + '.xml'
-			EXEC [spa_write_to_file] @xml_string, 'n',  @file_name, @result OUTPUT
+			SET @file_name = 'remit_standard_' + @process_id + '_' + CONVERT(VARCHAR(7), GETDATE(), 112) + '.xml'
+			SET @full_file_path = @file_path + @file_name
+			EXEC [spa_write_to_file] @xml_string, 'n',  @full_file_path, @result OUTPUT
 			IF @result = '1'
 			BEGIN
 				UPDATE source_remit_standard
 				SET file_export_name = @file_name
+					,acer_submission_status =39501
 				WHERE process_id = @process_id
-				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @file_name, @result OUTPUT
+				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @full_file_path, @result OUTPUT
 			END
 			RETURN
 		END
@@ -1781,7 +1785,7 @@ BEGIN
 					   [quantity_volume] AS [quantity/value],
 					   CASE WHEN [quantity_volume] IS NOT NULL THEN SUBSTRING(quantity_unit_field_40_and_41, 0, CHARINDEX(' /', quantity_unit_field_40_and_41, 0)) ELSE NULL END AS [quantity/unit],
 					   [total_notional_contract_quantity] AS [totalNotionalContractQuantity/value],
-					   [quantity_unit_field_40_and_41] AS [totalNotionalContractQuantity/unit],
+					   CASE WHEN [quantity_unit_field_40_and_41] = 'MW / MWh' THEN 'MWh' ELSE [quantity_unit_field_40_and_41] END AS [totalNotionalContractQuantity/unit],
 					   [termination_date] AS [terminationDate],
 					   [action_type] AS [actionType],
 					   NULL AS [Extra]
@@ -1866,14 +1870,16 @@ BEGIN
 			SELECT @xml = CONVERT(XML, REPLACE(CONVERT(VARCHAR(MAX), @xml), 'xmlns:ns1', 'xmlns'))
 	 		SELECT @source = @xml
 			SELECT @xml_string = @addxml + CAST(@xml AS VARCHAR(MAX))
-			SET @file_name = @file_path + 'remit_execution_' + @process_id + '_' + CONVERT(VARCHAR(7), GETDATE(), 112) + '.xml'
-			EXEC [spa_write_to_file] @xml_string, 'n',  @file_name, @result OUTPUT
+			SET @file_name = 'remit_execution_' + @process_id + '_' + CONVERT(VARCHAR(7), GETDATE(), 112) + '.xml'
+			SET @full_file_path = @file_path + @file_name
+			EXEC [spa_write_to_file] @xml_string, 'n',  @full_file_path, @result OUTPUT
 			IF @result = '1'
 			BEGIN
 				UPDATE source_remit_standard
 				SET file_export_name = @file_name
+					,acer_submission_status =39501
 				WHERE process_id = @process_id
-				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @file_name, @result OUTPUT
+				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @full_file_path, @result OUTPUT
 			END
 			RETURN
 		END
@@ -4458,7 +4464,7 @@ BEGIN
 		END
        			
 		COMMIT
-		EXEC spa_ErrorHandler 0, 'Regulatory Submission', 'spa_source_remit', 'Success', 'Data Saved Successfully.', ''
+		EXEC spa_ErrorHandler 0, 'Regulatory Submission', 'spa_source_remit', 'Success', 'Data Saved Successfully.', @process_id
 	END TRY
     BEGIN CATCH
     	DECLARE @err_no INT
@@ -4587,6 +4593,7 @@ BEGIN
 			error_details  NVARCHAR(4000) COLLATE DATABASE_DEFAULT,
 			comment  NVARCHAR(1000) COLLATE DATABASE_DEFAULT,
 			logical_record_timestamp  NVARCHAR(100) COLLATE DATABASE_DEFAULT,
+			[receipt_type] NVARCHAR(300) COLLATE DATABASE_DEFAULT,
 			download_file_name  NVARCHAR(100) COLLATE DATABASE_DEFAULT	
 		)
 
@@ -4605,8 +4612,7 @@ BEGIN
 			IF @xml_file_content IS NOT NULL
 			BEGIN
 				;WITH XMLNAMESPACES ('http://www.acer.europa.eu/REMIT/REMITReceiptSchema_V1.xsd' AS ns)	
-				INSERT INTO #temp_remit_xml_data(receipt_timestamp,acer,data_type,reported_filename,error_count,logical_record_identifier,logical_record_type,[status],error_code,error_description,error_details,comment
-									  ,logical_record_timestamp, download_file_name)
+				INSERT INTO #temp_remit_xml_data(receipt_timestamp,acer,data_type,reported_filename,error_count,logical_record_identifier,logical_record_type,[status],error_code,error_description,error_details,comment,logical_record_timestamp,[receipt_type], download_file_name)
 				SELECT x.xml_col.value('(ns:receiptTimestamp)[1]','VARCHAR(100)') as [receipt_timestamp]
 						, x.xml_col.value('(ns:rrmId/ns:acer)[1]','VARCHAR(100)') as [acer]
 						, x.xml_col.value('(ns:dataType)[1]','VARCHAR(100)') [data_type]
@@ -4620,10 +4626,54 @@ BEGIN
 						, child.xml_col.value('(ns:errorDetails)[1]','VARCHAR(4000)') [error_details]
 						, child.xml_col.value('(ns:comment)[1]','VARCHAR(1000)') [comment]
 						, child.xml_col.value('(ns:logicalRecordTimestamp)[1]','VARCHAR(100)') [logical_record_timestamp]
+						, x.xml_col.value('(ns:receiptType)[1]','VARCHAR(100)') [receipt_type]
 						, @dir_file
 				FROM ( SELECT  CAST(@xml_file_content AS xml) RawXml) b
 				CROSS APPLY b.RawXml.nodes('/ns:REMITReceipt') x(xml_col)
 				CROSS APPLY b.RawXml.nodes('/ns:REMITReceipt/ns:validationReceipt/ns:globalReceiptItem') child(xml_col);
+
+				;WITH XMLNAMESPACES ('http://www.acer.europa.eu/REMIT/REMITReceiptSchema_V1.xsd' AS ns)
+				INSERT INTO #temp_remit_xml_data(receipt_timestamp,acer,data_type,reported_filename,error_count,logical_record_identifier,logical_record_type,[status],error_code,error_description,error_details,comment,logical_record_timestamp,[receipt_type], download_file_name)
+				SELECT x.xml_col.value('(ns:receiptTimestamp)[1]','VARCHAR(100)') as [receipt_timestamp]
+					  , x.xml_col.value('(ns:rrmId/ns:acer)[1]','VARCHAR(100)') as [acer]
+					  , x.xml_col.value('(ns:dataType)[1]','VARCHAR(100)') [data_type]
+					  , x.xml_col.value('(ns:technicalReceipt/ns:reportedFilename)[1]','VARCHAR(100)') [reported_filename]
+					  , NULL [error_count]
+					  , NULL [logical_record_identifier]
+					  , NULL [logical_record_type]
+					  , x.xml_col.value('(ns:technicalReceipt/ns:status)[1]','VARCHAR(100)') [status]
+					  , NULL [error_code]
+					  , NULL [error_description]
+					  , NULL [error_details]
+					  , x.xml_col.value('(ns:technicalReceipt/ns:comment)[1]','VARCHAR(100)') [comment]
+					  , x.xml_col.value('(/Envelope/TransmissionInformation/TransmissionCharacteristics/TransmissionTimeStamp)[1]','VARCHAR(100)') [logical_record_timestamp]
+					  , x.xml_col.value('(ns:receiptType)[1]','VARCHAR(100)') [receipt_type]
+					  , @dir_file
+				FROM ( SELECT  CAST(@xml_file_content AS xml) RawXml) b
+				CROSS APPLY b.RawXml.nodes('/Envelope/Payload/Message/ns:REMITReceipt') x(xml_col)
+				WHERE x.xml_col.value('(ns:receiptType)[1]','VARCHAR(100)') = 'technical'
+
+				;WITH XMLNAMESPACES ('http://www.acer.europa.eu/REMIT/REMITReceiptSchema_V1.xsd' AS ns)
+				INSERT INTO #temp_remit_xml_data(receipt_timestamp,acer,data_type,reported_filename,error_count,logical_record_identifier,logical_record_type,[status],error_code,error_description,error_details,comment,logical_record_timestamp,[receipt_type], download_file_name)
+				SELECT x.xml_col.value('(ns:receiptTimestamp)[1]','VARCHAR(100)') as [receipt_timestamp]
+						, x.xml_col.value('(ns:rrmId/ns:acer)[1]','VARCHAR(100)') as [acer]
+						, x.xml_col.value('(ns:dataType)[1]','VARCHAR(100)') [data_type]
+						, x.xml_col.value('(ns:validationReceipt/ns:reportedFilename)[1]','VARCHAR(100)') [reported_filename]
+						, x.xml_col.value('(ns:validationReceipt/ns:errorCount)[1]','VARCHAR(100)') [error_count]
+						, child.xml_col.value('(ns:logicalRecordIdentifier)[1]','VARCHAR(100)') [logical_record_identifier]
+						, child.xml_col.value('(ns:logicalRecordType)[1]','VARCHAR(100)') [logical_record_type]
+						, child.xml_col.value('(ns:status)[1]','VARCHAR(100)') [status]
+						, child.xml_col.value('(ns:errorCode)[1]','VARCHAR(100)') [error_code]
+						, child.xml_col.value('(ns:errorDescription)[1]','VARCHAR(100)') [error_description]
+						, child.xml_col.value('(ns:errorDetails)[1]','VARCHAR(100)') [error_details]
+						, child.xml_col.value('(ns:comment)[1]','VARCHAR(100)') [comment]
+						, child.xml_col.value('(ns:logicalRecordTimestamp)[1]','VARCHAR(100)') [logical_record_timestamp]
+						, x.xml_col.value('(ns:receiptType)[1]','VARCHAR(100)') [receipt_type] 
+						, @dir_file
+				FROM ( SELECT  CAST(@xml_file_content AS xml) RawXml) b
+				CROSS APPLY b.RawXml.nodes('/Envelope/Payload/Message/ns:REMITReceipt') x(xml_col)
+				CROSS APPLY b.RawXml.nodes('/Envelope/Payload/Message/ns:REMITReceipt/ns:validationReceipt/ns:globalReceiptItem') child(xml_col)
+				WHERE x.xml_col.value('(ns:receiptType)[1]','VARCHAR(100)') = 'validation'
 
 				IF EXISTS(SELECT 1 FROM #temp_remit_xml_data WHERE [status] IN ('Accepted') AND download_file_name = @dir_file)
 				BEGIN
@@ -4656,11 +4706,6 @@ BEGIN
 			END
 
 
-			INSERT INTO source_remit_audit(message_received_timestamp, [status],  error_code, error_description, [type], [source_file_name])
-			SELECT receipt_timestamp, [status], error_code, error_description + ' ' + ISNULL(error_details,'') + ' ' + ISNULL(comment,'')
-				  , NULL
-				  , reported_filename
-			FROM #temp_remit_xml_data
 
 			SELECT @process_id = dbo.FNAGETNEWID()
 					SELECT @user_name  = dbo.FNAdbuser()
@@ -4676,7 +4721,7 @@ BEGIN
 							   ,logical_record_timestamp
 						  INTO ' + @process_table + ' FROM #temp_remit_xml_data
 						  WHERE [status] IN (''Accepted'',''Rejected_Content'')
-						  ')
+					')
 
 
 					IF EXISTS(SELECT 1 FROM #temp_remit_xml_data temp
@@ -4729,7 +4774,100 @@ BEGIN
 					INNER JOIN dbo.application_security_role asr ON aru.role_id = asr.role_id 
 					INNER JOIN dbo.application_users au ON aru.user_login_id = au.user_login_id
 					WHERE (au.user_active = 'y') AND (asr.role_type_value_id = 22) AND au.user_emal_add IS NOT NULL
-					GROUP BY au.user_login_id, au.user_emal_add
+					GROUP BY au.user_login_id, au.user_emal_add 
+
+			IF OBJECT_ID('tempdb..#temp_source_remit_data') IS NOT NULL
+				DROP TABLE #temp_source_remit_data
+
+			CREATE TABLE #temp_source_remit_data(
+				id INT,
+				record_identifier INT,
+				source_deal_header_id INT,
+				deal_id VARCHAR(200) COLLATE DATABASE_DEFAULT,
+				report_id VARCHAR(200) COLLATE DATABASE_DEFAULT,
+				process_id VARCHAR(100) COLLATE DATABASE_DEFAULT,
+				report_type INT
+			)
+
+			INSERT INTO #temp_source_remit_data(id,record_identifier,source_deal_header_id,deal_id,process_id,report_type,report_id)
+			SELECT srns.id, ROW_NUMBER() OVER(PARTITION BY srns.[process_id] ORDER BY srns.[Action_type]),  srns.source_deal_header_id, srns.deal_id, srns.process_id, 39400, tbl.reported_filename
+			FROM  ( SELECT reported_filename
+						 FROM #temp_remit_xml_data
+						 GROUP BY reported_filename
+			) tbl
+			INNER JOIN source_remit_non_standard srns
+			ON srns.file_export_name = tbl.reported_filename
+			UNION
+			SELECT srns.id, ROW_NUMBER() OVER(PARTITION BY srns.[process_id] ORDER BY srns.[Action_type]),  srns.source_deal_header_id, srns.deal_id, srns.process_id, 39401, tbl.reported_filename
+			FROM  ( SELECT reported_filename
+						 FROM #temp_remit_xml_data
+						 GROUP BY reported_filename
+			) tbl
+			INNER JOIN source_remit_standard srns
+			ON srns.file_export_name = tbl.reported_filename
+			
+			IF OBJECT_ID('tempdb..#temp_source_remit') IS NOT NULL
+				DROP TABLE #temp_source_remit
+
+			CREATE TABLE #temp_source_remit(
+				id INT,
+				record_identifier INT,
+				source_deal_header_id INT,
+				deal_id VARCHAR(200) COLLATE DATABASE_DEFAULT,
+				report_id VARCHAR(200) COLLATE DATABASE_DEFAULT,
+				process_id VARCHAR(100) COLLATE DATABASE_DEFAULT,
+				report_type INT,
+				[status] VARCHAR(200) COLLATE DATABASE_DEFAULT,
+				[receipt_type] VARCHAR(200) COLLATE DATABASE_DEFAULT
+			)
+
+
+			INSERT INTO #temp_source_remit(id,record_identifier,source_deal_header_id,deal_id,process_id,report_type,report_id, [status], [receipt_type])
+			SELECT srns.id, srns.record_identifier,  srns.source_deal_header_id, srns.deal_id, srns.process_id, srns.report_type, trxd.reported_filename, trxd.[status], trxd.[receipt_type]
+			FROM #temp_remit_xml_data trxd
+			INNER JOIN ( SELECT MAX(receipt_timestamp) receipt_timestamp, reported_filename
+						 FROM #temp_remit_xml_data
+						 GROUP BY reported_filename
+			) tbl ON tbl.reported_filename = trxd.reported_filename
+			AND tbl.receipt_timestamp = trxd.receipt_timestamp
+			INNER JOIN #temp_source_remit_data srns
+				ON srns.report_id = trxd.reported_filename
+				AND srns.record_identifier = ISNULL(trxd.logical_record_identifier,srns.record_identifier)
+			
+			INSERT INTO source_remit_audit(message_received_timestamp, [status],  error_code, error_description, [type], [source_file_name], [action], [uti_id], [trade_id])
+			SELECT DISTINCT receipt_timestamp, trxd.[status], error_code, ISNULL(error_description,'') + ' ' + ISNULL(error_details,'') + ' ' + ISNULL(comment,'')
+				  , tsr.report_type
+				  , reported_filename
+				  , trxd.[receipt_type]
+				  , tsr.id
+				  , tsr.deal_id
+			FROM #temp_remit_xml_data trxd
+			INNER JOIN #temp_source_remit tsr
+				ON tsr.report_id = trxd.reported_filename
+				AND tsr.record_identifier = ISNULL(trxd.logical_record_identifier,tsr.record_identifier)
+
+			UPDATE srns
+				SET srns.acer_submission_status = CASE WHEN tsr.[receipt_type] = 'validation' 
+													      THEN CASE WHEN tsr.[status] IN ('Accepted') THEN 39501 ELSE 39503 END
+													   WHEN tsr.[receipt_type] = 'technical' 
+													      THEN CASE WHEN tsr.[status] IN ('Accepted') THEN 39502 ELSE 39503 END
+												  END
+			FROM #temp_source_remit tsr
+			INNER JOIN source_remit_non_standard srns
+				ON CAST(srns.id AS VARCHAR(20)) = tsr.id
+			WHERE tsr.report_type = 39400
+
+			UPDATE srns
+				SET srns.acer_submission_status = CASE WHEN tsr.[receipt_type] = 'validation' 
+													      THEN CASE WHEN tsr.[status] IN ('Accepted') THEN 39501 ELSE 39503 END
+													   WHEN tsr.[receipt_type] = 'technical' 
+													      THEN CASE WHEN tsr.[status] IN ('Accepted') THEN 39502 ELSE 39503 END
+												  END
+			FROM #temp_source_remit tsr
+			INNER JOIN source_remit_standard srns
+				ON CAST(srns.id AS VARCHAR(20)) = tsr.id
+			WHERE tsr.report_type <> 39400
+			
 		END
 	END
 END
