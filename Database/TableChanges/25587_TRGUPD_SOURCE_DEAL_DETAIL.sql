@@ -28,7 +28,7 @@ begin
 	UPDATE sdh SET sdh.update_ts = @dt
 	FROM source_deal_header sdh 
 		inner join (select max(source_deal_header_id) source_deal_header_id from inserted ) i 
-		ON i.source_deal_header_id = i.source_deal_header_id 
+		ON sdh.source_deal_header_id = i.source_deal_header_id 
 		and ISNULL(sdh.internal_desk_id,17300)=17302 
 end
 
