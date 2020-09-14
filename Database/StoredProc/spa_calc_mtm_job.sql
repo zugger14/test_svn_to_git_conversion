@@ -183,18 +183,17 @@ delete index_fees_breakdown_settlement   where source_deal_header_id=1600
 select *  from source_deal_pnl_breakdown   where source_deal_header_id=7876
 select *  from source_deal_pnl_detail   where source_deal_header_id=7876
 
-
+update source_deal_detail set deal_volume_uom_id=1158  where source_deal_header_id=97409
 
 */
-
 
 SELECT	
 	@sub_id = null, 
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =98447 ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2019-01-31' , --'2017-02-15',
+	@source_deal_header_id =97409 ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2021-01-31' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -211,8 +210,8 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2019-01-01' ,
-	@term_end = '2019-01-31' ,
+	@term_start = '2021-01-01' ,
+	@term_end = '2021-01-31' ,
 	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
@@ -294,7 +293,7 @@ select original_formula_currency, formula_Currency, contract_id, formula_id, *
 		-- select curve_value,curve_value_deal,curve_value_inv,*  from  #temp_leg_mtm 
 		-- select *  from  #fees_breakdown
 		-- select *  from  source_deal_pnl_detail where source_deal_header_id=263
-		-- select *  from  #temp_leg_mtm
+		-- select *  from  #temp_deals
 
 	
 	 --select * from source_deal_pnl where source_deal_header_id=263
@@ -403,9 +402,6 @@ END
 
 
 --*/
-
-
-
 
 
 
@@ -641,6 +637,14 @@ select @storage_inventory_template_id=isnull(@storage_inventory_template_id+',',
 from source_deal_header_template where template_name in ('Actual Storage Inventory','Forward Storage Inventory')
 
 set @storage_inventory_template_id=isnull(nullif(@storage_inventory_template_id,''),'-99999')
+
+Declare @mw_id int,@kw_id int
+
+select @mw_id=source_uom_id from source_uom where uom_id in ('MW')
+select @kw_id=source_uom_id from source_uom where uom_id in ('KW')
+
+set @mw_id=ISNULL(NULLIF(@mw_id,''),'-1')
+set @kw_id=ISNULL(NULLIF(@kw_id,''),'-1')
 
 
 DECLARE @cpt_type CHAR(1)='x'
@@ -5850,64 +5854,77 @@ WHERE @calc_type = 's' AND ISNULL(mvh.prod_date,mvh.term_start) BETWEEN @term_st
 --SELECT distinct td.source_deal_header_id into #deal_id_missing_15min FROM #temp_deals td left join #meter_data_15min  m 
 --	ON td.source_deal_header_id=m.source_deal_header_id WHERE m.source_deal_header_id IS NULL 
 
+IF OBJECT_ID('tempdb..#minute_break') IS NULL
+begin
+	CREATE TABLE #minute_break (granularity int, factor numeric(12,10))  
+
+	-- inserting factor for hourly value to break down into lower granularity.
+	insert into #minute_break (granularity , factor ) 
+	values
+	(995,1.0/12.0000), --5min
+	(994,1.0/6.0000), --10Min 
+	(987,0.25), --15Min
+	(989,0.5) --30Min
+end
+
 
 SELECT		
-	DISTINCT 0 period,982 pos_granularity,
+	DISTINCT  mvh.[period],mv.granularity pos_granularity,
 		ISNULL(td.location_id,-1) location_id,
 		td.leg,
 		td.meter_deal_id source_deal_header_id,
 		ISNULL(mvh.prod_date,hbt.term_date) term_start,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.HR7 ELSE mvh.HR1 END,(CASE WHEN dst.[Hour] = 1 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR7 ELSE hbt.Hr1 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=1 THEN 2 ELSE 1 END mhr1,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr8 ELSE mvh.HR2 END,(CASE WHEN dst.[Hour] = 2 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR8 ELSE hbt.Hr2 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=2 THEN 2 ELSE 1 END mhr2,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.HR9 ELSE mvh.HR3 END,(CASE WHEN dst.[Hour] = 3 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR9 ELSE hbt.Hr3 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=3 THEN 2 ELSE 1 END mhr3,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.HR10 ELSE mvh.HR4 END,(CASE WHEN dst.[Hour] = 4 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR10 ELSE hbt.Hr4 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=4 THEN 2 ELSE 1 END mhr4,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr11 ELSE mvh.HR5 END,(CASE WHEN dst.[Hour] = 5 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR11 ELSE hbt.Hr5 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=5 THEN 2 ELSE 1 END mhr5,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.HR12 ELSE mvh.HR6 END,(CASE WHEN dst.[Hour] = 6 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR12 ELSE hbt.Hr6 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=6 THEN 2 ELSE 1 END mhr6,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr13 ELSE mvh.HR7 END,(CASE WHEN dst.[Hour] = 7 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR13 ELSE hbt.Hr7 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=7 THEN 2 ELSE 1 END mhr7,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr14 ELSE mvh.HR8 END,(CASE WHEN dst.[Hour] = 8 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR14 ELSE hbt.Hr8 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=8 THEN 2 ELSE 1 END mhr8,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr15 ELSE mvh.HR9 END,(CASE WHEN dst.[Hour] = 9 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR15 ELSE hbt.Hr9 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=9 THEN 2 ELSE 1 END mhr9,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr16 ELSE mvh.HR10 END,(CASE WHEN dst.[Hour] = 10 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR16 ELSE hbt.Hr10 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=10 THEN 2 ELSE 1 END mhr10,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr17 ELSE mvh.HR11 END,(CASE WHEN dst.[Hour] = 11 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR17 ELSE hbt.Hr11 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=11 THEN 2 ELSE 1 END mhr11,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr18 ELSE mvh.HR12 END,(CASE WHEN dst.[Hour] = 12 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR18 ELSE hbt.Hr12 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=12 THEN 2 ELSE 1 END mhr12,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr19 ELSE mvh.HR13 END,(CASE WHEN dst.[Hour] = 13 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR19 ELSE hbt.Hr13 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=13 THEN 2 ELSE 1 END mhr13,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr20 ELSE mvh.HR14 END,(CASE WHEN dst.[Hour] = 14 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR20 ELSE hbt.Hr14 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=14 THEN 2 ELSE 1 END mhr14,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr21 ELSE mvh.HR15 END,(CASE WHEN dst.[Hour] = 15 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR21 ELSE hbt.Hr15 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=15 THEN 2 ELSE 1 END mhr15,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr22 ELSE mvh.HR16 END,(CASE WHEN dst.[Hour] = 16 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR22 ELSE hbt.Hr16 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=16 THEN 2 ELSE 1 END mhr16,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr23 ELSE mvh.HR17 END,(CASE WHEN dst.[Hour] = 17 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR23 ELSE hbt.Hr17 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=17 THEN 2 ELSE 1 END mhr17,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh.Hr24 ELSE mvh.HR18 END,(CASE WHEN dst.[Hour] = 18 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt.HR24 ELSE hbt.Hr18 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=18 THEN 2 ELSE 1 END mhr18,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN ISNULL(mvh2.Hr1,mvh1.Hr1) ELSE mvh.HR19 END,(CASE WHEN dst.[Hour] = 19 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt1.HR1 ELSE hbt.Hr19 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=19 THEN 2 ELSE 1 END mhr19,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN ISNULL(mvh2.Hr2,mvh1.Hr2) ELSE mvh.HR20 END,(CASE WHEN dst.[Hour] = 20 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt1.HR2 ELSE hbt.Hr20 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=20 THEN 2 ELSE 1 END mhr20,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN ISNULL(mvh2.Hr3,mvh1.Hr3) ELSE mvh.HR21 END,(CASE WHEN dst.[Hour] = 21 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt1.HR3 ELSE hbt.Hr21 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=21 THEN 2 ELSE 1 END mhr21,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN ISNULL(mvh2.Hr4,mvh1.Hr4) ELSE mvh.HR22 END,(CASE WHEN dst.[Hour] = 22 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt1.HR4 ELSE hbt.Hr22 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=22 THEN 2 ELSE 1 END mhr22,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN ISNULL(mvh2.Hr5,mvh1.Hr5) ELSE mvh.HR23 END,(CASE WHEN dst.[Hour] = 23 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt1.HR5 ELSE hbt.Hr23 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=23 THEN 2 ELSE 1 END mhr23,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN ISNULL(mvh2.Hr6,mvh1.Hr6) ELSE mvh.HR24 END,(CASE WHEN dst.[Hour] = 24 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt1.Hr6 ELSE hbt.Hr24 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=24 THEN 2 ELSE 1 END mhr24,
-		volume_multiplier * volume_multiplier2*
+		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 	CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh2.HR25 ELSE mvh.HR25 END,(CASE WHEN dst1.[Hour] IS NOT NULL THEN mv.volume ELSE 0 END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 AND ISNULL(mvh2.prod_date,mvh1.prod_date) IS NOT NULL THEN hbt1.add_dst_hour ELSE hbt.add_dst_hour END,0)<=0 THEN 0 else 1 end mhr25,td.source_deal_header_id org_deal_id
-INTO #meter_data --   select * from #meter_data
+INTO #meter_data --   select * from #meter_data where leg=1
 FROM
 	#temp_deals td --INNER JOIN #deal_id_missing_15min fil ON td.source_deal_header_id=fil.source_deal_header_id
 	inner join dbo.vwDealTimezoneContract tz on  td.source_deal_header_id=tz.source_deal_header_id	
@@ -5918,6 +5935,7 @@ FROM
 	LEFT JOIN source_minor_location_meter smlm ON smlm.source_minor_location_id=meter_location.location_id
 	LEFT JOIN mv90_data mv ON mv.meter_id=isnull(td.meter_id, smlm.meter_id)
 		AND td.term_start = mv.from_date
+	left join meter_id mi on mi.meter_id=mv.meter_id
 	LEFT JOIN recorder_properties rp ON rp.meter_id=mv.meter_id and rp.channel=mv.channel
 	LEFT JOIN  mv90_data_hour mvh ON mv.meter_data_id=mvh.meter_data_id
 	LEFT JOIN rec_volume_unit_conversion conv ON rp.uom_id=conv.FROM_source_uom_id AND conv.to_source_uom_id=td.deal_volume_uom_id  
@@ -5949,12 +5967,13 @@ FROM
 		SELECT SUM(volume_mult) no_hrs from hour_block_term WHERE dst_group_value_id=tz.dst_group_value_id and block_define_id=@baseload_block_definition 
 			AND term_date BETWEEN mv.from_date AND mv.to_date
 	) hbt_term
-	left join source_deal_header sdh on sdh.source_deal_header_id=td.source_deal_header_id				
+	left join source_deal_header sdh on sdh.source_deal_header_id=td.source_deal_header_id		
+	left join #minute_break mw on mw.granularity=mv.granularity		
 WHERE @calc_type = 's' and ISNULL(mvh.prod_date,mv.from_date) BETWEEN  @term_start and @term_end 
 	AND (isnull(td.volume_type, -1) =17301 OR isnull(td.meter_id, smlm.meter_id) IS NOT NULL or (isnull(td.volume_type, -1)=17302 
 	and isnull(sdh.internal_portfolio_id,251)=251) )--only forecasted/meter and shaped (short term forecast)
 AND ISNULL(td.variable_swap, 'n') = 'n' --  Do not take the variable fixation deals	
-and td.hourly_position_breakdown not in (987,989)
+--and td.hourly_position_breakdown not in (987,989)
 
 INSERT into #meter_data SELECT * FROM  #meter_data_15min
 
@@ -6949,31 +6968,31 @@ EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@qry1+@qry4+@qry2+@qry5
 
 --td.buy_sell_flag=''b''
 set @qry1='update vol set 
-		hr1 = iif(isnull(t.hr1,0)+isnull(vfa.fee_amt,0)<isnull(t.hr1_c,0),0,vol.hr1),
-		hr2 = iif(isnull(t.hr2,0)+isnull(vfa.fee_amt,0)<isnull(t.hr2_c,0),0,vol.hr2),
-		hr3 = iif(isnull(t.hr3,0)+isnull(vfa.fee_amt,0)<isnull(t.hr3_c,0),0,vol.hr3),
-		hr4 = iif(isnull(t.hr4,0)+isnull(vfa.fee_amt,0)<isnull(t.hr4_c,0),0,vol.hr4),
-		hr5 = iif(isnull(t.hr5,0)+isnull(vfa.fee_amt,0)<isnull(t.hr5_c,0),0,vol.hr5),
-		hr6 = iif(isnull(t.hr6,0)+isnull(vfa.fee_amt,0)<isnull(t.hr6_c,0),0,vol.hr6),
-		hr7 = iif(isnull(t.hr7,0)+isnull(vfa.fee_amt,0)<isnull(t.hr7_c,0),0,vol.hr7),
-		hr8 = iif(isnull(t.hr8,0)+isnull(vfa.fee_amt,0)<isnull(t.hr8_c,0),0,vol.hr8),
-		hr9 = iif(isnull(t.hr9,0)+isnull(vfa.fee_amt,0)<isnull(t.hr9_c,0),0,vol.hr9),
-		hr10 = iif(isnull(t.hr10,0)+isnull(vfa.fee_amt,0)<isnull(t.hr10_c,0),0,vol.hr10),
-		hr11 = iif(isnull(t.hr11,0)+isnull(vfa.fee_amt,0)<isnull(t.hr11_c,0),0,vol.hr11),
-		hr12 = iif(isnull(t.hr12,0)+isnull(vfa.fee_amt,0)<isnull(t.hr12_c,0),0,vol.hr12),
-		hr13 = iif(isnull(t.hr13,0)+isnull(vfa.fee_amt,0)<isnull(t.hr13_c,0),0,vol.hr13),
-		hr14 = iif(isnull(t.hr14,0)+isnull(vfa.fee_amt,0)<isnull(t.hr14_c,0),0,vol.hr14),
-		hr15 = iif(isnull(t.hr15,0)+isnull(vfa.fee_amt,0)<isnull(t.hr15_c,0),0,vol.hr15),
-		hr16 = iif(isnull(t.hr16,0)+isnull(vfa.fee_amt,0)<isnull(t.hr16_c,0),0,vol.hr16),
-		hr17 = iif(isnull(t.hr17,0)+isnull(vfa.fee_amt,0)<isnull(t.hr17_c,0),0,vol.hr17),
-		hr18 = iif(isnull(t.hr18,0)+isnull(vfa.fee_amt,0)<isnull(t.hr18_c,0),0,vol.hr18),
-		hr19 = iif(isnull(t.hr19,0)+isnull(vfa.fee_amt,0)<isnull(t.hr19_c,0),0,vol.hr19),
-		hr20 = iif(isnull(t.hr20,0)+isnull(vfa.fee_amt,0)<isnull(t.hr20_c,0),0,vol.hr20),
-		hr21 = iif(isnull(t.hr21,0)+isnull(vfa.fee_amt,0)<isnull(t.hr21_c,0),0,vol.hr21),
-		hr22 = iif(isnull(t.hr22,0)+isnull(vfa.fee_amt,0)<isnull(t.hr22_c,0),0,vol.hr22),
-		hr23 = iif(isnull(t.hr23,0)+isnull(vfa.fee_amt,0)<isnull(t.hr23_c,0),0,vol.hr23),
-		hr24 = iif(isnull(t.hr24,0)+isnull(vfa.fee_amt,0)<isnull(t.hr24_c,0),0,vol.hr24),
-		hr25 = iif(isnull(t.hr25,0)+isnull(vfa.fee_amt,0)<isnull(t.hr25_c,0),0,vol.hr25)
+		hr1 = iif(isnull(t.hr1,0)+isnull(vfa.fee_amt,0)<isnull(t.hr1_c,0),vol.hr1,0),
+		hr2 = iif(isnull(t.hr2,0)+isnull(vfa.fee_amt,0)<isnull(t.hr2_c,0),vol.hr2,0),
+		hr3 = iif(isnull(t.hr3,0)+isnull(vfa.fee_amt,0)<isnull(t.hr3_c,0),vol.hr3,0),
+		hr4 = iif(isnull(t.hr4,0)+isnull(vfa.fee_amt,0)<isnull(t.hr4_c,0),vol.hr4,0),
+		hr5 = iif(isnull(t.hr5,0)+isnull(vfa.fee_amt,0)<isnull(t.hr5_c,0),vol.hr5,0),
+		hr6 = iif(isnull(t.hr6,0)+isnull(vfa.fee_amt,0)<isnull(t.hr6_c,0),vol.hr6,0),
+		hr7 = iif(isnull(t.hr7,0)+isnull(vfa.fee_amt,0)<isnull(t.hr7_c,0),vol.hr7,0),
+		hr8 = iif(isnull(t.hr8,0)+isnull(vfa.fee_amt,0)<isnull(t.hr8_c,0),vol.hr8,0),
+		hr9 = iif(isnull(t.hr9,0)+isnull(vfa.fee_amt,0)<isnull(t.hr9_c,0),vol.hr9,0),
+		hr10 = iif(isnull(t.hr10,0)+isnull(vfa.fee_amt,0)<isnull(t.hr10_c,0),vol.hr10,0),
+		hr11 = iif(isnull(t.hr11,0)+isnull(vfa.fee_amt,0)<isnull(t.hr11_c,0),vol.hr11,0),
+		hr12 = iif(isnull(t.hr12,0)+isnull(vfa.fee_amt,0)<isnull(t.hr12_c,0),vol.hr12,0),
+		hr13 = iif(isnull(t.hr13,0)+isnull(vfa.fee_amt,0)<isnull(t.hr13_c,0),vol.hr13,0),
+		hr14 = iif(isnull(t.hr14,0)+isnull(vfa.fee_amt,0)<isnull(t.hr14_c,0),vol.hr14,0),
+		hr15 = iif(isnull(t.hr15,0)+isnull(vfa.fee_amt,0)<isnull(t.hr15_c,0),vol.hr15,0),
+		hr16 = iif(isnull(t.hr16,0)+isnull(vfa.fee_amt,0)<isnull(t.hr16_c,0),vol.hr16,0),
+		hr17 = iif(isnull(t.hr17,0)+isnull(vfa.fee_amt,0)<isnull(t.hr17_c,0),vol.hr17,0),
+		hr18 = iif(isnull(t.hr18,0)+isnull(vfa.fee_amt,0)<isnull(t.hr18_c,0),vol.hr18,0),
+		hr19 = iif(isnull(t.hr19,0)+isnull(vfa.fee_amt,0)<isnull(t.hr19_c,0),vol.hr19,0),
+		hr20 = iif(isnull(t.hr20,0)+isnull(vfa.fee_amt,0)<isnull(t.hr20_c,0),vol.hr20,0),
+		hr21 = iif(isnull(t.hr21,0)+isnull(vfa.fee_amt,0)<isnull(t.hr21_c,0),vol.hr21,0),
+		hr22 = iif(isnull(t.hr22,0)+isnull(vfa.fee_amt,0)<isnull(t.hr22_c,0),vol.hr22,0),
+		hr23 = iif(isnull(t.hr23,0)+isnull(vfa.fee_amt,0)<isnull(t.hr23_c,0),vol.hr23,0),
+		hr24 = iif(isnull(t.hr24,0)+isnull(vfa.fee_amt,0)<isnull(t.hr24_c,0),vol.hr24,0),
+		hr25 = iif(isnull(t.hr25,0)+isnull(vfa.fee_amt,0)<isnull(t.hr25_c,0),vol.hr25,0)
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
 	left join #var_fee_amount vfa on vfa.source_deal_header_id=vol.source_deal_header_id
@@ -7020,33 +7039,34 @@ where td.header_buy_sell_flag=''s'' and td.internal_deal_type_value_id=103
 EXEC spa_print  @qry1
 exec(@qry1)
 
+
 --td.buy_sell_flag=''b''
 set @qry1='update t set 
-		hr1 = iif(isnull(t.hr1,0)+isnull(vfa.fee_amt,0)<isnull(t.hr1_c,0),0,isnull(t.hr1,0)-isnull(t.hr1_c,0)),
-		hr2 = iif(isnull(t.hr2,0)+isnull(vfa.fee_amt,0)<isnull(t.hr2_c,0),0,isnull(t.hr2,0)-isnull(t.hr2_c,0)),
-		hr3 = iif(isnull(t.hr3,0)+isnull(vfa.fee_amt,0)<isnull(t.hr3_c,0),0,isnull(t.hr3,0)-isnull(t.hr3_c,0)),
-		hr4 = iif(isnull(t.hr4,0)+isnull(vfa.fee_amt,0)<isnull(t.hr4_c,0),0,isnull(t.hr4,0)-isnull(t.hr4_c,0)),
-		hr5 = iif(isnull(t.hr5,0)+isnull(vfa.fee_amt,0)<isnull(t.hr5_c,0),0,isnull(t.hr5,0)-isnull(t.hr5_c,0)),
-		hr6 = iif(isnull(t.hr6,0)+isnull(vfa.fee_amt,0)<isnull(t.hr6_c,0),0,isnull(t.hr6,0)-isnull(t.hr6_c,0)),
-		hr7 = iif(isnull(t.hr7,0)+isnull(vfa.fee_amt,0)<isnull(t.hr7_c,0),0,isnull(t.hr7,0)-isnull(t.hr7_c,0)),
-		hr8 = iif(isnull(t.hr8,0)+isnull(vfa.fee_amt,0)<isnull(t.hr8_c,0),0,isnull(t.hr8,0)-isnull(t.hr8_c,0)),
-		hr9 = iif(isnull(t.hr9,0)+isnull(vfa.fee_amt,0)<isnull(t.hr9_c,0),0,isnull(t.hr9,0)-isnull(t.hr9_c,0)),
-		hr10 = iif(isnull(t.hr10,0)+isnull(vfa.fee_amt,0)<isnull(t.hr10_c,0),0,isnull(t.hr10,0)-isnull(t.hr10_c,0)),
-		hr11 = iif(isnull(t.hr11,0)+isnull(vfa.fee_amt,0)<isnull(t.hr11_c,0),0,isnull(t.hr11,0)-isnull(t.hr11_c,0)),
-		hr12 = iif(isnull(t.hr12,0)+isnull(vfa.fee_amt,0)<isnull(t.hr12_c,0),0,isnull(t.hr12,0)-isnull(t.hr12_c,0)),
-		hr13 = iif(isnull(t.hr13,0)+isnull(vfa.fee_amt,0)<isnull(t.hr13_c,0),0,isnull(t.hr13,0)-isnull(t.hr13_c,0)),
-		hr14 = iif(isnull(t.hr14,0)+isnull(vfa.fee_amt,0)<isnull(t.hr14_c,0),0,isnull(t.hr14,0)-isnull(t.hr14_c,0)),
-		hr15 = iif(isnull(t.hr15,0)+isnull(vfa.fee_amt,0)<isnull(t.hr15_c,0),0,isnull(t.hr15,0)-isnull(t.hr15_c,0)),
-		hr16 = iif(isnull(t.hr16,0)+isnull(vfa.fee_amt,0)<isnull(t.hr16_c,0),0,isnull(t.hr16,0)-isnull(t.hr16_c,0)),
-		hr17 = iif(isnull(t.hr17,0)+isnull(vfa.fee_amt,0)<isnull(t.hr17_c,0),0,isnull(t.hr17,0)-isnull(t.hr17_c,0)),
-		hr18 = iif(isnull(t.hr18,0)+isnull(vfa.fee_amt,0)<isnull(t.hr18_c,0),0,isnull(t.hr18,0)-isnull(t.hr18_c,0)),
-		hr19 = iif(isnull(t.hr19,0)+isnull(vfa.fee_amt,0)<isnull(t.hr19_c,0),0,isnull(t.hr19,0)-isnull(t.hr19_c,0)),
-		hr20 = iif(isnull(t.hr20,0)+isnull(vfa.fee_amt,0)<isnull(t.hr20_c,0),0,isnull(t.hr20,0)-isnull(t.hr20_c,0)),
-		hr21 = iif(isnull(t.hr21,0)+isnull(vfa.fee_amt,0)<isnull(t.hr21_c,0),0,isnull(t.hr21,0)-isnull(t.hr21_c,0)),
-		hr22 = iif(isnull(t.hr22,0)+isnull(vfa.fee_amt,0)<isnull(t.hr22_c,0),0,isnull(t.hr22,0)-isnull(t.hr22_c,0)),
-		hr23 = iif(isnull(t.hr23,0)+isnull(vfa.fee_amt,0)<isnull(t.hr23_c,0),0,isnull(t.hr23,0)-isnull(t.hr23_c,0)),
-		hr24 = iif(isnull(t.hr24,0)+isnull(vfa.fee_amt,0)<isnull(t.hr24_c,0),0,isnull(t.hr24,0)-isnull(t.hr24_c,0)),
-		hr25 = iif(isnull(t.hr25,0)+isnull(vfa.fee_amt,0)<isnull(t.hr25_c,0),0,isnull(t.hr25,0)-isnull(t.hr25_c,0))
+		hr1 = iif(isnull(t.hr1,0)+isnull(vfa.fee_amt,0)<isnull(t.hr1_c,0),-1*(isnull(t.hr1,0)-isnull(t.hr1_c,0)),0),
+		hr2 = iif(isnull(t.hr2,0)+isnull(vfa.fee_amt,0)<isnull(t.hr2_c,0),-1*(isnull(t.hr2,0)-isnull(t.hr2_c,0)),0),
+		hr3 = iif(isnull(t.hr3,0)+isnull(vfa.fee_amt,0)<isnull(t.hr3_c,0),-1*(isnull(t.hr3,0)-isnull(t.hr3_c,0)),0),
+		hr4 = iif(isnull(t.hr4,0)+isnull(vfa.fee_amt,0)<isnull(t.hr4_c,0),-1*(isnull(t.hr4,0)-isnull(t.hr4_c,0)),0),
+		hr5 = iif(isnull(t.hr5,0)+isnull(vfa.fee_amt,0)<isnull(t.hr5_c,0),-1*(isnull(t.hr5,0)-isnull(t.hr5_c,0)),0),
+		hr6 = iif(isnull(t.hr6,0)+isnull(vfa.fee_amt,0)<isnull(t.hr6_c,0),-1*(isnull(t.hr6,0)-isnull(t.hr6_c,0)),0),
+		hr7 = iif(isnull(t.hr7,0)+isnull(vfa.fee_amt,0)<isnull(t.hr7_c,0),-1*(isnull(t.hr7,0)-isnull(t.hr7_c,0)),0),
+		hr8 = iif(isnull(t.hr8,0)+isnull(vfa.fee_amt,0)<isnull(t.hr8_c,0),-1*(isnull(t.hr8,0)-isnull(t.hr8_c,0)),0),
+		hr9 = iif(isnull(t.hr9,0)+isnull(vfa.fee_amt,0)<isnull(t.hr9_c,0),-1*(isnull(t.hr9,0)-isnull(t.hr9_c,0)),0),
+		hr10 = iif(isnull(t.hr10,0)+isnull(vfa.fee_amt,0)<isnull(t.hr10_c,0),-1*(isnull(t.hr10,0)-isnull(t.hr10_c,0)),0),
+		hr11 = iif(isnull(t.hr11,0)+isnull(vfa.fee_amt,0)<isnull(t.hr11_c,0),-1*(isnull(t.hr11,0)-isnull(t.hr11_c,0)),0),
+		hr12 = iif(isnull(t.hr12,0)+isnull(vfa.fee_amt,0)<isnull(t.hr12_c,0),-1*(isnull(t.hr12,0)-isnull(t.hr12_c,0)),0),
+		hr13 = iif(isnull(t.hr13,0)+isnull(vfa.fee_amt,0)<isnull(t.hr13_c,0),-1*(isnull(t.hr13,0)-isnull(t.hr13_c,0)),0),
+		hr14 = iif(isnull(t.hr14,0)+isnull(vfa.fee_amt,0)<isnull(t.hr14_c,0),-1*(isnull(t.hr14,0)-isnull(t.hr14_c,0)),0),
+		hr15 = iif(isnull(t.hr15,0)+isnull(vfa.fee_amt,0)<isnull(t.hr15_c,0),-1*(isnull(t.hr15,0)-isnull(t.hr15_c,0)),0),
+		hr16 = iif(isnull(t.hr16,0)+isnull(vfa.fee_amt,0)<isnull(t.hr16_c,0),-1*(isnull(t.hr16,0)-isnull(t.hr16_c,0)),0),
+		hr17 = iif(isnull(t.hr17,0)+isnull(vfa.fee_amt,0)<isnull(t.hr17_c,0),-1*(isnull(t.hr17,0)-isnull(t.hr17_c,0)),0),
+		hr18 = iif(isnull(t.hr18,0)+isnull(vfa.fee_amt,0)<isnull(t.hr18_c,0),-1*(isnull(t.hr18,0)-isnull(t.hr18_c,0)),0),
+		hr19 = iif(isnull(t.hr19,0)+isnull(vfa.fee_amt,0)<isnull(t.hr19_c,0),-1*(isnull(t.hr19,0)-isnull(t.hr19_c,0)),0),
+		hr20 = iif(isnull(t.hr20,0)+isnull(vfa.fee_amt,0)<isnull(t.hr20_c,0),-1*(isnull(t.hr20,0)-isnull(t.hr20_c,0)),0),
+		hr21 = iif(isnull(t.hr21,0)+isnull(vfa.fee_amt,0)<isnull(t.hr21_c,0),-1*(isnull(t.hr21,0)-isnull(t.hr21_c,0)),0),
+		hr22 = iif(isnull(t.hr22,0)+isnull(vfa.fee_amt,0)<isnull(t.hr22_c,0),-1*(isnull(t.hr22,0)-isnull(t.hr22_c,0)),0),
+		hr23 = iif(isnull(t.hr23,0)+isnull(vfa.fee_amt,0)<isnull(t.hr23_c,0),-1*(isnull(t.hr23,0)-isnull(t.hr23_c,0)),0),
+		hr24 = iif(isnull(t.hr24,0)+isnull(vfa.fee_amt,0)<isnull(t.hr24_c,0),-1*(isnull(t.hr24,0)-isnull(t.hr24_c,0)),0),
+		hr25 = iif(isnull(t.hr25,0)+isnull(vfa.fee_amt,0)<isnull(t.hr25_c,0),-1*(isnull(t.hr25,0)-isnull(t.hr25_c,0)),0)
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
 	left join #var_fee_amount vfa on vfa.source_deal_header_id=vol.source_deal_header_id
@@ -7055,33 +7075,35 @@ where td.header_buy_sell_flag=''b'' and td.internal_deal_type_value_id=103 and t
 EXEC spa_print  @qry1
 exec(@qry1)
 
+
+
 --td.buy_sell_flag=''s''
 set @qry1='update t set 
-		hr1 = iif(isnull(t.hr1,0)>isnull(t.hr1_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr1,0)-isnull(t.hr1_c,0))),
-		hr2 = iif(isnull(t.hr2,0)>isnull(t.hr2_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr2,0)-isnull(t.hr2_c,0))),
-		hr3 = iif(isnull(t.hr3,0)>isnull(t.hr3_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr3,0)-isnull(t.hr3_c,0))),
-		hr4 = iif(isnull(t.hr4,0)>isnull(t.hr4_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr4,0)-isnull(t.hr4_c,0))),
-		hr5 = iif(isnull(t.hr5,0)>isnull(t.hr5_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr5,0)-isnull(t.hr5_c,0))),
-		hr6 = iif(isnull(t.hr6,0)>isnull(t.hr6_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr6,0)-isnull(t.hr6_c,0))),
-		hr7 = iif(isnull(t.hr7,0)>isnull(t.hr7_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr7,0)-isnull(t.hr7_c,0))),
-		hr8 = iif(isnull(t.hr8,0)>isnull(t.hr8_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr8,0)-isnull(t.hr8_c,0))),
-		hr9 = iif(isnull(t.hr9,0)>isnull(t.hr9_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr9,0)-isnull(t.hr9_c,0))),
-		hr10 = iif(isnull(t.hr10,0)>isnull(t.hr10_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr10,0)-isnull(t.hr10_c,0))),
-		hr11 = iif(isnull(t.hr11,0)>isnull(t.hr11_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr11,0)-isnull(t.hr11_c,0))),
-		hr12 = iif(isnull(t.hr12,0)>isnull(t.hr12_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr12,0)-isnull(t.hr12_c,0))),
-		hr13 = iif(isnull(t.hr13,0)>isnull(t.hr13_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr13,0)-isnull(t.hr13_c,0))),
-		hr14 = iif(isnull(t.hr14,0)>isnull(t.hr14_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr14,0)-isnull(t.hr14_c,0))),
-		hr15 = iif(isnull(t.hr15,0)>isnull(t.hr15_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr15,0)-isnull(t.hr15_c,0))),
-		hr16 = iif(isnull(t.hr16,0)>isnull(t.hr16_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr16,0)-isnull(t.hr16_c,0))),
-		hr17 = iif(isnull(t.hr17,0)>isnull(t.hr17_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr17,0)-isnull(t.hr17_c,0))),
-		hr18 = iif(isnull(t.hr18,0)>isnull(t.hr18_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr18,0)-isnull(t.hr18_c,0))),
-		hr19 = iif(isnull(t.hr19,0)>isnull(t.hr19_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr19,0)-isnull(t.hr19_c,0))),
-		hr20 = iif(isnull(t.hr20,0)>isnull(t.hr20_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr20,0)-isnull(t.hr20_c,0))),
-		hr21 = iif(isnull(t.hr21,0)>isnull(t.hr21_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr21,0)-isnull(t.hr21_c,0))),
-		hr22 = iif(isnull(t.hr22,0)>isnull(t.hr22_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr22,0)-isnull(t.hr22_c,0))),
-		hr23 = iif(isnull(t.hr23,0)>isnull(t.hr23_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr23,0)-isnull(t.hr23_c,0))),
-		hr24 = iif(isnull(t.hr24,0)>isnull(t.hr24_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr24,0)-isnull(t.hr24_c,0))),
-		hr25 = iif(isnull(t.hr25,0)>isnull(t.hr25_c,0)+isnull(vfa.fee_amt,0),0,-1*(isnull(t.hr25,0)-isnull(t.hr25_c,0)))
+		hr1 = iif(isnull(t.hr1,0)+isnull(vfa.fee_amt,0)>isnull(t.hr1_c,0),0,(isnull(t.hr1,0)-isnull(t.hr1_c,0))),
+		hr2 = iif(isnull(t.hr2,0)+isnull(vfa.fee_amt,0)>isnull(t.hr2_c,0),0,(isnull(t.hr2,0)-isnull(t.hr2_c,0))),
+		hr3 = iif(isnull(t.hr3,0)+isnull(vfa.fee_amt,0)>isnull(t.hr3_c,0),0,(isnull(t.hr3,0)-isnull(t.hr3_c,0))),
+		hr4 = iif(isnull(t.hr4,0)+isnull(vfa.fee_amt,0)>isnull(t.hr4_c,0),0,(isnull(t.hr4,0)-isnull(t.hr4_c,0))),
+		hr5 = iif(isnull(t.hr5,0)+isnull(vfa.fee_amt,0)>isnull(t.hr5_c,0),0,(isnull(t.hr5,0)-isnull(t.hr5_c,0))),
+		hr6 = iif(isnull(t.hr6,0)+isnull(vfa.fee_amt,0)>isnull(t.hr6_c,0),0,(isnull(t.hr6,0)-isnull(t.hr6_c,0))),
+		hr7 = iif(isnull(t.hr7,0)+isnull(vfa.fee_amt,0)>isnull(t.hr7_c,0),0,(isnull(t.hr7,0)-isnull(t.hr7_c,0))),
+		hr8 = iif(isnull(t.hr8,0)+isnull(vfa.fee_amt,0)>isnull(t.hr8_c,0),0,(isnull(t.hr8,0)-isnull(t.hr8_c,0))),
+		hr9 = iif(isnull(t.hr9,0)+isnull(vfa.fee_amt,0)>isnull(t.hr9_c,0),0,(isnull(t.hr9,0)-isnull(t.hr9_c,0))),
+		hr10 = iif(isnull(t.hr10,0)+isnull(vfa.fee_amt,0)>isnull(t.hr10_c,0),0,(isnull(t.hr10,0)-isnull(t.hr10_c,0))),
+		hr11 = iif(isnull(t.hr11,0)+isnull(vfa.fee_amt,0)>isnull(t.hr11_c,0),0,(isnull(t.hr11,0)-isnull(t.hr11_c,0))),
+		hr12 = iif(isnull(t.hr12,0)+isnull(vfa.fee_amt,0)>isnull(t.hr12_c,0),0,(isnull(t.hr12,0)-isnull(t.hr12_c,0))),
+		hr13 = iif(isnull(t.hr13,0)+isnull(vfa.fee_amt,0)>isnull(t.hr13_c,0),0,(isnull(t.hr13,0)-isnull(t.hr13_c,0))),
+		hr14 = iif(isnull(t.hr14,0)+isnull(vfa.fee_amt,0)>isnull(t.hr14_c,0),0,(isnull(t.hr14,0)-isnull(t.hr14_c,0))),
+		hr15 = iif(isnull(t.hr15,0)+isnull(vfa.fee_amt,0)>isnull(t.hr15_c,0),0,(isnull(t.hr15,0)-isnull(t.hr15_c,0))),
+		hr16 = iif(isnull(t.hr16,0)+isnull(vfa.fee_amt,0)>isnull(t.hr16_c,0),0,(isnull(t.hr16,0)-isnull(t.hr16_c,0))),
+		hr17 = iif(isnull(t.hr17,0)+isnull(vfa.fee_amt,0)>isnull(t.hr17_c,0),0,(isnull(t.hr17,0)-isnull(t.hr17_c,0))),
+		hr18 = iif(isnull(t.hr18,0)+isnull(vfa.fee_amt,0)>isnull(t.hr18_c,0),0,(isnull(t.hr18,0)-isnull(t.hr18_c,0))),
+		hr19 = iif(isnull(t.hr19,0)+isnull(vfa.fee_amt,0)>isnull(t.hr19_c,0),0,(isnull(t.hr19,0)-isnull(t.hr19_c,0))),
+		hr20 = iif(isnull(t.hr20,0)+isnull(vfa.fee_amt,0)>isnull(t.hr20_c,0),0,(isnull(t.hr20,0)-isnull(t.hr20_c,0))),
+		hr21 = iif(isnull(t.hr21,0)+isnull(vfa.fee_amt,0)>isnull(t.hr21_c,0),0,(isnull(t.hr21,0)-isnull(t.hr21_c,0))),
+		hr22 = iif(isnull(t.hr22,0)+isnull(vfa.fee_amt,0)>isnull(t.hr22_c,0),0,(isnull(t.hr22,0)-isnull(t.hr22_c,0))),
+		hr23 = iif(isnull(t.hr23,0)+isnull(vfa.fee_amt,0)>isnull(t.hr23_c,0),0,(isnull(t.hr23,0)-isnull(t.hr23_c,0))),
+		hr24 = iif(isnull(t.hr24,0)+isnull(vfa.fee_amt,0)>isnull(t.hr24_c,0),0,(isnull(t.hr24,0)-isnull(t.hr24_c,0))),
+		hr25 = iif(isnull(t.hr25,0)+isnull(vfa.fee_amt,0)>isnull(t.hr25_c,0),0,(isnull(t.hr25,0)-isnull(t.hr25_c,0)))
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
 	left join #var_fee_amount_001 vfa on vfa.source_deal_header_id=vol.source_deal_header_id
