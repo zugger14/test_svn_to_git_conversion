@@ -500,7 +500,7 @@ BEGIN
 		)	
 				
 		INSERT INTO #temp_old_template_group(group_name, group_description, active_flag, default_flag, sequence, inputWidth, field_layout, old_application_grid_id)
-		SELECT 'General',NULL,'y','y','1',NULL,'1C',NULL UNION ALL SELECT 'Additional',NULL,'y','n','2',NULL,'1C',NULL UNION ALL SELECT 'Meter/Wellhead',NULL,'y','n','3',NULL,'2E',NULL UNION ALL SELECT 'Nom Group/Route',NULL,'n','n','4',NULL,'2E',NULL UNION ALL SELECT 'Optimizer Rank',NULL,'n','n','5',NULL,'1C',NULL UNION ALL SELECT 'Del Rank','Del Rank','n','n','6',NULL,'1C',NULL UNION ALL SELECT 'Attributes',NULL,'y','n','7',NULL,'1C',NULL UNION ALL SELECT 'Valuation Index',NULL,'y','n','8',NULL,'1C',NULL
+		SELECT 'General',NULL,'y','y','1',NULL,'1C',NULL UNION ALL SELECT 'Additional',NULL,'y','n','2',NULL,'1C',NULL UNION ALL SELECT 'Meter/Wellhead',NULL,'y','n','3',NULL,'2E',NULL UNION ALL SELECT 'Nom Group/Route',NULL,'n','n','4',NULL,'2E',NULL UNION ALL SELECT 'Optimizer Rank',NULL,'y','n','5',NULL,'1C',NULL UNION ALL SELECT 'Del Rank','Del Rank','n','n','6',NULL,'1C',NULL UNION ALL SELECT 'Attributes',NULL,'y','n','7',NULL,'1C',NULL UNION ALL SELECT 'Valuation Index',NULL,'y','n','8',NULL,'1C',NULL
 				
 		UPDATE totg
 		SET totg.new_application_grid_id = tag.new_grid_id
