@@ -115,8 +115,8 @@ SET ROWCOUNT 0
 
 --select * from source_deal_pnl 
 --DBCC DROPCLEANBUFFERS
-----DBCC FREEPROCCACHE
-----dbcc stackdump(1)
+--DBCC FREEPROCCACHE
+--dbcc stackdump(1)
 
 
 SET nocount off	
@@ -192,8 +192,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =97409 ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2021-01-31' , --'2017-02-15',
+	@source_deal_header_id =98447 ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2019-01-31' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -210,8 +210,8 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2021-01-01' ,
-	@term_end = '2021-01-31' ,
+	@term_start = '2019-01-01' ,
+	@term_end = '2019-01-31' ,
 	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
@@ -12612,8 +12612,8 @@ SET @qry8a='
 			COALESCE(spc.curve_value, sfv2.value, sfv.value) price,
 			abs(td.total_volume) volume,
 			COALESCE(spc.curve_value,sfv2.value, sfv.value) value,		
-			sfv.minimum_value minimum_value,
-			sfv.maximum_value maximum_value,
+			ISNULL(sfv2.minimum_value,sfv.minimum_value) minimum_value,
+			ISNULL(sfv2.maximum_value,sfv.maximum_value) maximum_value,
 			ISNULL(sfv.from_volume,0),
 			ISNULL(sfv.to_volume,999999999),
 			CASE WHEN sfv.type=3 then sfv.to_volume - sfv.from_volume+1 ELSE abs(td.total_volume) END vol_slot
@@ -12683,8 +12683,8 @@ SET @qry8a='
 		AND effective_date <= CASE WHEN udft.internal_field_type IN (18739,18741) THEN td.term_start ELSE sdh.deal_date END
 		'+case when @calc_type='s' then 
 	' AND COALESCE(sdh.reporting_jurisdiction_id,sdh.state_value_id,-1)=COALESCE(jurisdiction,sdh.reporting_jurisdiction_id,sdh.state_value_id,-1) and COALESCE(sdh.reporting_tier_id,sdh.tier_value_id,-1)=COALESCE(tier,sdh.reporting_tier_id,sdh.tier_value_id,-1) '
-	else '' end	+' ) sfv1
-		LEFT JOIN source_fee_volume sfv ON 	sfv.source_fee_id = sf.source_fee_id AND ISNULL(sfv.effective_date,''1900-01-01'') = sfv1.effective_date AND ISNULL(sfv.subsidiary,td.fas_sub_id) = td.fas_sub_id AND	ISNULL(sfv.deal_type,td.source_deal_type_id) = td.source_deal_type_id AND	ISNULL(sfv.buy_sell,td.buy_sell_flag) = td.buy_sell_flag
+	else '' end	+'  AND ISNULL(aggressor_initiator,'''') = CASE  uddfsa.udf_value WHEN 1 THEN ''i'' WHEN 0 THEN ''a'' ELSE '''' END) sfv1
+			LEFT JOIN source_fee_volume sfv ON 	sfv.source_fee_id = sf.source_fee_id AND ISNULL(sfv.effective_date,''1900-01-01'') = sfv1.effective_date AND ISNULL(sfv.subsidiary,td.fas_sub_id) = td.fas_sub_id AND	ISNULL(sfv.deal_type,td.source_deal_type_id) = td.source_deal_type_id AND	ISNULL(sfv.buy_sell,td.buy_sell_flag) = td.buy_sell_flag
 			AND	COALESCE(sfv.commodity,sdh.commodity_id,-1) = ISNULL(sdh.commodity_id,-1) AND	COALESCE(sfv.location,td.location_id,-1) = ISNULL(td.location_id,-1)
 			AND ISNULL(sfv.aggressor_initiator,'''') = CASE  uddfsa.udf_value WHEN 1 THEN ''i'' WHEN 0 THEN ''a'' ELSE '''' END
 	'+case when @calc_type='s' then 
@@ -12703,13 +12703,20 @@ SET @qry8a='
 	LEFT JOIN user_defined_deal_fields uddfs1 on uddfs1.udf_template_id = uds1.udf_template_id 
 		AND uddfs1.source_deal_header_id = td.source_deal_header_id
 	OUTER APPLY(SELECT sfv.[value]  * 
-				CASE WHEN uddfs.udf_value = ''y'' THEN 0 WHEN uddfs1.udf_value = ''y'' THEN 0.5 ELSE 1 END [value]
+				CASE WHEN uddfs.udf_value = ''y'' THEN 0 WHEN uddfs1.udf_value = ''y'' THEN 0.5 ELSE 1 END [value],
+				sfv.[minimum_value]  * 
+				CASE WHEN uddfs.udf_value = ''y'' THEN 0 WHEN uddfs1.udf_value = ''y'' THEN 0.5 ELSE 1 END [minimum_value],
+				sfv.[maximum_value]  * 
+				CASE WHEN uddfs.udf_value = ''y'' THEN 0 WHEN uddfs1.udf_value = ''y'' THEN 0.5 ELSE 1 END [maximum_value]
 				WHERE udft.internal_field_type IN (18723,18739,18740,18741)) sfv2
 	WHERE 1 = 1 --	udft.internal_field_type IN(18723,18724,18733,18737)			
 	AND ISNUMERIC(ISNULL(sfv2.value, sfv.value)) = 1
 	ORDER BY sfv.from_volume'
 	exec spa_print @qry8a
 	EXEC(@qry8a)
+
+
+
 
 
 	;WITH CTE AS (
@@ -12785,8 +12792,6 @@ SET @qry8a='
 
 --####################################
 -- End Tiered based logic
-
-
 
 
 set @sqlstmt='
