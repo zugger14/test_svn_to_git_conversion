@@ -2473,7 +2473,7 @@ FROM (
 		) sdh 
 		inner join user_defined_deal_fields uddf on uddf.source_deal_header_id=sdh.source_deal_header_id
 			and try_cast(ISNULL(NULLIF(uddf.udf_value,''),0) as numeric(20,4)) is not null
-		UNION ALL
+		UNION 
 		select udddf.udf_template_id from
 		(
 			SELECT source_deal_detail_id FROM #temp_deals td 
