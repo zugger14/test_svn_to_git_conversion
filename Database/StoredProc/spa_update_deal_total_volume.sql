@@ -54,7 +54,7 @@ SET nocount on
 
 
 
---SELECT * FROM report_hourly_position_fixed WHERE source_deal_header_id=39859
+--SELECT * FROM report_hourly_position_deal WHERE source_deal_header_id=39859
 --SELECT * FROM source_deal_detail WHERE source_deal_header_id=39859
 
 --DELETE  report_hourly_position_fixed WHERE source_deal_header_id=39859
@@ -69,8 +69,8 @@ declare @source_deal_header_ids VARCHAR(MAX),
 	
 
 /*
-select * from report_hourly_position_deal where source_deal_header_id=8664
-select * from report_hourly_position_profile where source_deal_header_id=17912
+select * from report_hourly_position_deal where source_deal_header_id=100856
+select * from report_hourly_position_profile where source_deal_header_id=100856
 
 select * from source_deal_breakdown where source_deal_header_id=17912
 
@@ -94,7 +94,7 @@ SET CONTEXT_INFO @contextinfo
 -- select * from update process_deal_position_breakdown set process_status=0
 -- delete process_deal_position_breakdown
 
-select @source_deal_header_ids=99786 , 
+select @source_deal_header_ids=100856 , 
 	@process_id = null, --'52C2B537_BDBA_41DB_BE8D_B657F070A041',
 	@insert_type =1,
 	@partition_no =1,
@@ -723,8 +723,8 @@ BEGIN TRY
 			inner join #source_deal_detail_position ed ON ed.source_deal_detail_id = sddp.source_deal_detail_id;
 
 		insert into source_deal_detail_position(source_deal_detail_id,total_volume,hourly_position,position_report_group_map_rowid)
-		select source_deal_detail_id,total_volume,hourly_position,position_report_group_map_rowid from #source_deal_detail_position
-
+		select sddp.source_deal_detail_id,sddp.total_volume,sddp.hourly_position,sddp.position_report_group_map_rowid 
+		from #source_deal_detail_position sddp inner join source_deal_detail sdd on sddp.source_deal_detail_id=sdd.source_deal_detail_id
 
 	'
 	
