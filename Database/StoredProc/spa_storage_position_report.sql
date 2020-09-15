@@ -431,7 +431,7 @@ BEGIN
 		END
 		+ CASE WHEN ISNULL(@drill_location,'') <>'' THEN ' AND sdh.contract_id' 
 		+ CASE WHEN ISNULL(@drill_contract_id, '') = '' THEN ' IS NULL ' ELSE '=' + CAST(@drill_contract_id AS VARCHAR(30)) END ELSE '' END		
-		+ ' AND isnull(sdh.source_deal_type_id, -1) = iif(gaivs.include_non_standard_deals = ''n'',' + @deal_type_storage + ', isnull(sdh.source_deal_type_id, -1))'
+		+ ' AND isnull(sdh.source_deal_type_id, -1) = iif(isnull(nullif(gaivs.include_non_standard_deals, ''''), ''n'') = ''n'',' + @deal_type_storage + ', isnull(sdh.source_deal_type_id, -1))'
 
 		+ ' GROUP BY ml.location_name,ISNULL(cg.contract_name,'''') ,sdd.location_id' 
 		+ CASE WHEN @drill_location IS NULL THEN '' ELSE ', sdh.source_deal_header_id' END
@@ -590,7 +590,7 @@ BEGIN
 		END
 		+ CASE WHEN ISNULL(@drill_location,'') <>'' THEN ' AND sdh.contract_id' 
 		+ CASE WHEN ISNULL(@drill_contract_id, '') = '' THEN ' IS NULL ' ELSE '=' + CAST(@drill_contract_id AS VARCHAR(30)) END ELSE '' END
-		+ ' AND isnull(sdh.source_deal_type_id, -1) = iif(gaivs.include_non_standard_deals = ''n'',' + @deal_type_storage + ', isnull(sdh.source_deal_type_id, -1))'
+		+ ' AND isnull(sdh.source_deal_type_id, -1) = iif(isnull(nullif(gaivs.include_non_standard_deals, ''''), ''n'') = ''n'',' + @deal_type_storage + ', isnull(sdh.source_deal_type_id, -1))'
 
 		+ ' 
 		GROUP BY ml.location_name, ISNULL(cg.contract_name, ''''), isnull(term_bk.term_start,sdd.term_start), sdd.location_id' 
