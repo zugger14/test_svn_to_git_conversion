@@ -38,7 +38,8 @@ GO
 CREATE PROC [dbo].[spa_storage_position_report]
 	@sub_entity_id VARCHAR(MAX) = NULL, 
 	@strategy_entity_id VARCHAR(MAX) = NULL, 
-	@book_entity_id VARCHAR(MAX) = NULL, 
+	@book_entity_id VARCHAR(MAX) = NULL,
+	@sub_book_id VARCHAR(MAX) = NULL,
 	@commodity_id INT = NULL,
 	@curve_id INT = NULL,
 	@contract_id INT = NULL,
@@ -59,8 +60,7 @@ CREATE PROC [dbo].[spa_storage_position_report]
 	@page_no INT = NULL,
 	@is_pivot char = NULL,
 	@volume_conversion INT = NULL,
-	@counterparty_id VARCHAR(5000) = NULL,
-	@sub_book_id VARCHAR(MAX) = NULL
+	@counterparty_id VARCHAR(5000) = NULL
 	
 AS
 SET NOCOUNT ON
@@ -258,15 +258,20 @@ BEGIN
 
 	
 	--####### create temporary tables for SELECTed hierarchy
-	CREATE TABLE #books (fas_book_id INT) 
+	CREATE TABLE #books (fas_book_id INT, sub_book_id INT, source_system_book_id1 INT, source_system_book_id2 INT, source_system_book_id3 INT, source_system_book_id4 INT)
 
 	SET @Sql_SELECT =        
 		'INSERT INTO  #books
 		 SELECT distinct 
-					book.entity_id fas_book_id 
+					book.entity_id fas_book_id,
+					ssbm.book_deal_type_map_id [sub_book_id],
+					ssbm.source_system_book_id1,
+					ssbm.source_system_book_id2,
+					ssbm.source_system_book_id3,
+					ssbm.source_system_book_id4
 		 FROM portfolio_hierarchy book (nolock)
 		INNER JOIN Portfolio_hierarchy stra (nolock) ON book.parent_entity_id = stra.entity_id           
-		LEFT OUTER JOIN source_system_book_map ssbm ON ssbm.fas_book_id = book.entity_id
+		INNER JOIN source_system_book_map ssbm ON ssbm.fas_book_id = book.entity_id
 		 WHERE (fas_deal_type_value_id IS NULL OR fas_deal_type_value_id BETWEEN 400 AND 401) 
 		'   
 		+ CASE WHEN @sub_entity_id IS NOT NULL THEN ' AND stra.parent_entity_id IN  ( ' + @sub_entity_id + ') ' ELSE '' END
@@ -357,13 +362,11 @@ BEGIN
 			SUM(CASE WHEN sdd.buy_sell_flag = ''b'' THEN sds.SETtlement_amount ELSE 0 END) [Withdrawal_amt]
 			,' + IIF(@volume_conversion IS NULL,'1','max(ISNULL(rvuc.conversion_factor, 1))') + ' conversion_factor
 	FROM #books b 
-	INNER JOIN source_system_book_map ssbm 
-		ON ssbm.fas_book_id = b.fas_book_id
 	INNER JOIN source_deal_header sdh 
-		ON sdh.source_system_book_id1 = ssbm.source_system_book_id1 
-		AND sdh.source_system_book_id2 = ssbm.source_system_book_id2
-		AND sdh.source_system_book_id3 = ssbm.source_system_book_id3
-		AND sdh.source_system_book_id4 = ssbm.source_system_book_id4
+		ON sdh.source_system_book_id1 = b.source_system_book_id1 
+		AND sdh.source_system_book_id2 = b.source_system_book_id2
+		AND sdh.source_system_book_id3 = b.source_system_book_id3
+		AND sdh.source_system_book_id4 = b.source_system_book_id4
 	INNER JOIN source_deal_detail sdd 
 		ON sdd.source_deal_header_id=sdh.source_deal_header_id
 	INNER JOIN source_counterparty sc 
@@ -510,14 +513,12 @@ BEGIN
 		MAX(sdd.fixed_price) deal_price	
 		--,MAX(sdh.internal_deal_subtype_value_id)
 		,' + IIF(@volume_conversion IS NULL,'1','max(ISNULL(rvuc.conversion_factor, 1))') + ' conversion_factor
-	FROM #books b 
-	INNER JOIN source_system_book_map ssbm 
-		ON ssbm.fas_book_id = b.fas_book_id
+	FROM #books b
 	INNER JOIN source_deal_header sdh 
-		ON sdh.source_system_book_id1 = ssbm.source_system_book_id1 
-		AND sdh.source_system_book_id2 = ssbm.source_system_book_id2
-		AND sdh.source_system_book_id3 = ssbm.source_system_book_id3
-		AND sdh.source_system_book_id4 = ssbm.source_system_book_id4
+		ON sdh.source_system_book_id1 = b.source_system_book_id1 
+		AND sdh.source_system_book_id2 = b.source_system_book_id2
+		AND sdh.source_system_book_id3 = b.source_system_book_id3
+		AND sdh.source_system_book_id4 = b.source_system_book_id4
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
 	INNER JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.counterparty_id
 	INNER JOIN source_minor_location ml ON ml.source_minor_location_id = sdd.location_id
