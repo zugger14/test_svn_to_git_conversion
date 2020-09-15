@@ -732,6 +732,11 @@ BEGIN
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('10105800','ecm_reportable','ecm_reportable','ECM Reportable','combo','varchar','h','n','SELECT ''Y'' id, ''Yes'' code UNION ALL SELECT ''N'', ''No''',NULL,'n','n',NULL,'n','n','n','n','y','n','y','n',NULL,NULL,NULL,NULL)
+
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
+			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
+			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
+			VALUES('10105800','reporting_on_behalf','reporting_on_behalf','Reporting On Behalf','combo','varchar','h','n','SELECT ''Y'' id, ''Yes'' code UNION ALL SELECT ''N'', ''No''',NULL,'n','n',NULL,'n','n','n','n','y','n','y','n',NULL,NULL,NULL,NULL)
 						
 		END 
 	
@@ -947,7 +952,9 @@ BEGIN
 		SELECT 116463,20234,115254,NULL,'Submission','collateral_portfolio_code',NULL,NULL,NULL,NULL,'n',NULL,'input',NULL,'16',NULL,'3140','-10000052',NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 116464,20232,115255,NULL,'Additional','broker_relevant',NULL,NULL,NULL,NULL,'n',NULL,'combo',NULL,'14',NULL,'3357','-10000341',NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 116465,20231,115256,NULL,'Address','netting',NULL,NULL,NULL,NULL,'n',NULL,'browser',NULL,'5',NULL,NULL,NULL,NULL,NULL,NULL,'272',NULL,NULL UNION ALL 
-		SELECT 116466,20234,115257,NULL,'Submission','ecm_reportable',NULL,NULL,NULL,NULL,'n',NULL,'combo',NULL,'17',NULL,'3417','-10000344',NULL,NULL,NULL,NULL,NULL,NULL
+		SELECT 116466,20234,115257,NULL,'Submission','ecm_reportable',NULL,NULL,NULL,NULL,'n',NULL,'combo',NULL,'17',NULL,'3417','-10000344',NULL,NULL,NULL,NULL,NULL,NULL UNION ALL
+		SELECT 116467,20234,115258,NULL,'Submission','reporting_on_behalf',NULL,NULL,NULL,NULL,'n',NULL,'combo',NULL,'18',NULL,'2008','-10000355',NULL,NULL,NULL,NULL,NULL,NULL
+
 				
 		UPDATE otf
 		SET otf.new_group_id = ntg.new_id

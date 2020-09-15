@@ -524,7 +524,6 @@ echo $layout_obj->close_layout();
         var level_emir_view = view_tab_form.getItemValue('level_view');
         var submission_type =  view_tab_form.getItemValue('view_submission_type');
         var level_mifid_view = view_tab_form.getItemValue('level_mifid_view');
-        var mirror_reporting = (view_tab_form.isItemChecked('mirror_reporting') === true) ? 1 : 0;
 
         if (submission_type == 44701) {
             var exec_call = "EXEC spa_ice_trade_vault @flag='g', @process_id='" + process_id + "'";
@@ -544,7 +543,7 @@ echo $layout_obj->close_layout();
             var report_type =  view_tab_form.getItemValue('view_report_type');
             report_type = (submission_type == 44705) ? 'NULL' : report_type;
 
-            var exec_call = "EXEC spa_convert_xml NULL, NULL, NULL, NULL, NULL, NULL,'" + process_id + "'," + report_type + ",'" + mirror_reporting + "'";
+            var exec_call = "EXEC spa_convert_xml NULL, NULL, NULL, NULL, NULL, NULL,'" + process_id + "'," + report_type;
             var param = 'gen_as_of_date=0&batch_type=remit';
             var title = (submission_type == 44702) ? 'Submit REMIT Report' : 'Submit ECM Report';
         }
@@ -710,7 +709,6 @@ echo $layout_obj->close_layout();
         var process_id = SourceRemitSummary.cells(selected_row_id,idx_process_id).getValue();
         var idx_report_type = SourceRemitSummary.getColIndexById('report_type_id')
         var report_type = SourceRemitSummary.cells(selected_row_id,idx_report_type).getValue();
-        var mirror_reporting = (view_tab_form.isItemChecked('mirror_reporting') === true) ? 1 : 0;
         var title = '';
 
         if (submission_type == 44703) {
@@ -783,8 +781,7 @@ echo $layout_obj->close_layout();
                 "filename": file_name,
                 "worksheet_title": title,
                 "process_id": process_id,
-                "report_type": report_type,
-                "mirror_reporting": mirror_reporting
+                "report_type": report_type
             };
         }
 
@@ -799,7 +796,6 @@ echo $layout_obj->close_layout();
         var process_id = SourceRemitSummary.cells(selected_row_id,idx_process_id).getValue();
         var idx_report_type = SourceRemitSummary.getColIndexById('report_type_id')
         var report_type = SourceRemitSummary.cells(selected_row_id,idx_report_type).getValue();
-        var mirror_reporting = (view_tab_form.isItemChecked('mirror_reporting') === true) ? 1 : 0;
         var intra_group = (view_tab_form.isItemChecked('intra_group') == 'y') ? 1 : 0;
         var submission_type =  view_tab_form.getItemValue('view_submission_type');
         var mifid_level = view_tab_form.getItemValue('level_mifid_view');
@@ -809,7 +805,6 @@ echo $layout_obj->close_layout();
             "flag": "XML",
             "submission_type": submission_type,
             "report_type" : report_type,
-            "mirror_reporting": mirror_reporting,
             "intragroup": intra_group,
             "process_id": process_id,
             "mifid_level": mifid_level,

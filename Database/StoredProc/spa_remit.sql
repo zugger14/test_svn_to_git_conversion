@@ -363,22 +363,43 @@ IF @process_id IS NOT NULL AND ISNULL(@force_process, 0) = 0
 
 IF @show_data = 1 AND ISNULL(@flag, 'n') NOT IN ('x', 'c')
 BEGIN
-	IF @mirror_reporting = 1 AND @report_type IN (39400,39401,39405)
+	IF @report_type IN (39400,39401,39405)
 	BEGIN
+		
+		/*Logic for mirror reporting*/
+		IF OBJECT_ID('tempdb..#mirror_source_remit') IS NOT NULL
+			DROP TABLE #mirror_source_remit
+
+		CREATE TABLE #mirror_source_remit(
+			id INT
+		)
 		
 		IF @report_type = 39400
 		BEGIN
-			IF NOT EXISTS(SELECT 1 FROM [source_remit_non_standard]
-							WHERE process_id = @process_id
-							GROUP BY source_deal_header_id
-							HAVING count(*) > 1
-						)
-			BEGIN
-				INSERT INTO [source_remit_non_standard] (
+			INSERT INTO #mirror_source_remit
+			SELECT MAX(srns.id) id
+			FROM source_remit_non_standard srns
+			INNER JOIN source_deal_header sdh
+				ON sdh.source_deal_header_id = srns.source_deal_header_id
+			INNER JOIN maintain_udf_static_data_detail_values musddv
+				ON musddv.primary_field_object_id = sdh.counterparty_id
+			INNER JOIN application_ui_template_fields autf
+				ON autf.application_field_id = musddv.application_field_id
+			INNER JOIN user_defined_fields_template udft
+				ON udft.udf_template_id = autf.udf_template_id
+			WHERE srns.process_id = @process_id
+			AND udft.Field_label = 'Reporting On Behalf'
+			AND ISNULL(musddv.static_data_udf_values, 'n') = 'y'
+			GROUP BY srns.source_deal_header_id
+			HAVING COUNT(srns.source_deal_header_id) = 1
+
+			INSERT INTO [source_remit_non_standard] (
         		[source_deal_header_id],[deal_id],[sub_book_id],[id_of_the_market_participant_or_counterparty],[type_of_code_used_in_field_1],[id_of_the_other_market_participant_or_counterparty],[type_of_code_used_in_field_3],[reporting_entity_id],[type_of_code_used_in_field_5],[beneficiary_id],[type_of_code_used_in_field_7],[trading_capacity_of_the_market_participant_or_counterparty_in_field_1],[buy_sell_indicator],[contract_id],[contract_date],[contract_type],[energy_commodity],[price],[price_formula],[estimated_notional_amount],[notional_currency],[total_notional_contract_quantity],[volume_optionality_capacity],[notional_quantity_unit],[volume_optionality],[volume_optionality_frequency],[volume_optionality_intervals],[type_of_index_price],[fixing_index],[fixing_index_types],[fixing_index_sources],[first_fixing_date],[last_fixing_date],[fixing_frequency],[settlement_method],[option_style],[option_type],[option_first_exercise_date],[option_last_exercise_date],[option_exercise_frequency],[option_strike_index],[option_strike_index_type],[option_strike_index_source],[option_strike_price],[delivery_point_or_zone],[delivery_start_date],[delivery_end_date],[load_type],[action_type],[report_type],[create_date_from],[create_date_to],[acer_submission_status],[acer_submission_date],[acer_confirmation_date],[process_id],[error_validation_message],[file_export_name],[hash_of_concatenated_values],[progressive_number]
 				)
 				SELECT [source_deal_header_id],[deal_id],[sub_book_id],[id_of_the_other_market_participant_or_counterparty],[type_of_code_used_in_field_1],[id_of_the_market_participant_or_counterparty],[type_of_code_used_in_field_3],[reporting_entity_id],[type_of_code_used_in_field_5],[beneficiary_id],[type_of_code_used_in_field_7],[trading_capacity_of_the_market_participant_or_counterparty_in_field_1],CASE WHEN [buy_sell_indicator] = 'B' THEN 'S' ELSE 'B' END,[contract_id],[contract_date],[contract_type],[energy_commodity],[price],[price_formula],[estimated_notional_amount],[notional_currency],[total_notional_contract_quantity],[volume_optionality_capacity],[notional_quantity_unit],[volume_optionality],[volume_optionality_frequency],[volume_optionality_intervals],[type_of_index_price],[fixing_index],[fixing_index_types],[fixing_index_sources],[first_fixing_date],[last_fixing_date],[fixing_frequency],[settlement_method],[option_style],[option_type],[option_first_exercise_date],[option_last_exercise_date],[option_exercise_frequency],[option_strike_index],[option_strike_index_type],[option_strike_index_source],[option_strike_price],[delivery_point_or_zone],[delivery_start_date],[delivery_end_date],[load_type],[action_type],[report_type],[create_date_from],[create_date_to],[acer_submission_status],[acer_submission_date],[acer_confirmation_date],[process_id],[error_validation_message],[file_export_name],[hash_of_concatenated_values],[progressive_number]
-				FROM source_remit_non_standard
+				FROM source_remit_non_standard srns
+				INNER JOIN #mirror_source_remit msr
+					ON msr.id = srns.id
 				WHERE process_id = @process_id
 
 				--IF different create_ts, data appears in different row
@@ -391,22 +412,34 @@ BEGIN
 					ORDER BY create_ts ASC
 				) tbl
 				WHERE process_id = @process_id
-			END
 		END
-		ELSE IF @report_type = 39405
+		ELSE IF @report_type IN (39401,39405)
 		BEGIN
-			IF NOT EXISTS(SELECT 1 FROM [source_remit_standard]
-							WHERE process_id = @process_id
-							GROUP BY source_deal_header_id
-							HAVING count(*) > 1
-						)
-			BEGIN
+			INSERT INTO #mirror_source_remit
+			SELECT MAX(srns.id) id
+			FROM source_remit_standard srns
+			INNER JOIN source_deal_header sdh
+				ON sdh.source_deal_header_id = srns.source_deal_header_id
+			INNER JOIN maintain_udf_static_data_detail_values musddv
+				ON musddv.primary_field_object_id = sdh.counterparty_id
+			INNER JOIN application_ui_template_fields autf
+				ON autf.application_field_id = musddv.application_field_id
+			INNER JOIN user_defined_fields_template udft
+				ON udft.udf_template_id = autf.udf_template_id
+			WHERE srns.process_id = @process_id
+			AND udft.Field_label = 'Reporting On Behalf'
+			AND ISNULL(musddv.static_data_udf_values, 'n') = 'y'
+			GROUP BY srns.source_deal_header_id
+			HAVING COUNT(srns.source_deal_header_id) = 1
+
 			INSERT INTO [source_remit_standard] (
         	[source_deal_header_id],[deal_id],[sub_book_id],[market_id_participant_counterparty],[type_of_code_field_1],[trader_id_market_participant],[other_id_market_participant_counterparty],[type_of_code_field_4],[reporting_entity_id],[type_of_code_field_6],[beneficiary_id],[type_of_code_field_8],[trading_capacity_market_participant],[buy_sell_indicator],[initiator_aggressor],[order_id],[order_type],[order_condition],[order_status],[minimum_execution_volume],[price_limit],[undisclosed_volume],[order_duration],[contract_id],[contract_name],[contract_type],[energy_commodity],[fixing_index_or_reference_price],[settlement_method],[organised_market_place_id_otc],[contract_trading_hours],[last_trading_date_and_time],[transaction_timestamp],[unique_transaction_id],[linked_transaction_id],[linked_order_id],[voice_brokered],[price],[index_value],[price_currency],[notional_amount],[notional_currency],[quantity_volume],[total_notional_contract_quantity],[quantity_unit_field_40_and_41],[termination_date],[option_style],[option_type],[option_exercise_date],[option_strike_price],[delivery_point_or_zone],[delivery_start_date],[delivery_end_date],[duration],[load_type],[days_of_the_week],[load_delivery_intervals],[delivery_capacity],[quantity_unit_used_in_field_55],[price_time_interval_quantity],[action_type],[report_type],[create_date_from],[create_date_to],[acer_submission_status],[acer_submission_date],[acer_confirmation_date],[process_id],[error_validation_message],[file_export_name],[hash_of_concatenated_values],[progressive_number]
 				)
 				SELECT [source_deal_header_id],[deal_id],[sub_book_id],[other_id_market_participant_counterparty],[type_of_code_field_1],[trader_id_market_participant],[market_id_participant_counterparty],[type_of_code_field_4],[reporting_entity_id],[type_of_code_field_6],[beneficiary_id],[type_of_code_field_8],[trading_capacity_market_participant],CASE WHEN [buy_sell_indicator] = 'B' THEN 'S' ELSE 'B' END,[initiator_aggressor],[order_id],[order_type],[order_condition],[order_status],[minimum_execution_volume],[price_limit],[undisclosed_volume],[order_duration],[contract_id],[contract_name],[contract_type],[energy_commodity],[fixing_index_or_reference_price],[settlement_method],[organised_market_place_id_otc],[contract_trading_hours],[last_trading_date_and_time],[transaction_timestamp],[unique_transaction_id],[linked_transaction_id],[linked_order_id],[voice_brokered],[price],[index_value],[price_currency],[notional_amount],[notional_currency],[quantity_volume],[total_notional_contract_quantity],[quantity_unit_field_40_and_41],[termination_date],[option_style],[option_type],[option_exercise_date],[option_strike_price],[delivery_point_or_zone],[delivery_start_date],[delivery_end_date],[duration],[load_type],[days_of_the_week],[load_delivery_intervals],[delivery_capacity],[quantity_unit_used_in_field_55],[price_time_interval_quantity],[action_type],[report_type],[create_date_from],[create_date_to],[acer_submission_status],[acer_submission_date],[acer_confirmation_date],[process_id],[error_validation_message],[file_export_name],[hash_of_concatenated_values],[progressive_number]
-				FROM source_remit_standard
-				WHERE process_id = @process_id
+				FROM source_remit_standard srs
+				INNER JOIN #mirror_source_remit msr
+					ON msr.id = srs.id
+				WHERE srs.process_id = @process_id
 
 				--IF different create_ts, data appears in different row
 				UPDATE srns
@@ -418,9 +451,6 @@ BEGIN
 					ORDER BY create_ts ASC
 				) tbl
 				WHERE process_id = @process_id
-
-
-			END
 		END
 	END
 
@@ -2191,11 +2221,12 @@ BEGIN
 		[API2 Base Value] VARCHAR(100) COLLATE DATABASE_DEFAULT,
 		[D35 Weight] VARCHAR(100) COLLATE DATABASE_DEFAULT,
 		[D35 Base Value] VARCHAR(100) COLLATE DATABASE_DEFAULT,
-		[Price Formula] VARCHAR(500) COLLATE DATABASE_DEFAULT
+		[Price Formula] VARCHAR(500) COLLATE DATABASE_DEFAULT,
+		[Trayport Date Time] VARCHAR(500) COLLATE DATABASE_DEFAULT
 	)
 
-	INSERT INTO #temp_deal_udf_values (source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value],[Price Formula])
-	SELECT source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value], [Price Formula]
+	INSERT INTO #temp_deal_udf_values (source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value],[Price Formula], [Trayport Date Time])
+	SELECT source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value], [Price Formula], [Trayport Date Time]
 	FROM (
 		SELECT sdh.source_deal_header_id, udft.field_label, uddf.udf_value
 		FROM #temp_deals sdh
@@ -2209,7 +2240,7 @@ BEGIN
 		INNER JOIN user_defined_fields_template udft
 			ON udft.field_id = uddft.field_id
 		) AS a
-	PIVOT (MAX(a.udf_value) FOR a.Field_label IN ([Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value], [Price Formula])) AS p
+	PIVOT (MAX(a.udf_value) FOR a.Field_label IN ([Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value], [Price Formula], [Trayport Date Time])) AS p
 		
 	/*************************************Counterparty UDF Values END********************************************************/
         		
@@ -3287,7 +3318,7 @@ BEGIN
 																									END END,
 			[last_trading_date_and_time] = NULL,
 			----------Transaction details
-			[transaction_timestamp] = CONVERT(char(10), MAX(td.deal_date),120) + 'T' + MAX(gm_ts.[timestamp]) + '.00Z' ,
+			[transaction_timestamp] = MAX(tduv.[Trayport Date Time]) ,--CONVERT(char(10), MAX(td.deal_date),120) + 'T' + MAX(gm_ts.[timestamp]) + '.00Z' ,
 			[unique_transaction_id] = NULL,-- MAX(td.deal_id), --will be filled with UTI code later if @generate_uti=1
 			[linked_transaction_id] = NULL,
 			[linked_order_id] = NULL,
@@ -3393,6 +3424,7 @@ BEGIN
 				FROM #temp_deals td
 				LEFT JOIN #temp_settlement ts ON td.source_deal_header_id=ts.source_deal_header_id	
 				INNER JOIN #temp_deal_details tdd ON td.source_deal_header_id=tdd.source_deal_header_id
+				LEFT JOIN #temp_deal_udf_values tduv ON tduv.source_deal_header_id = td.source_deal_header_id
 				LEFT JOIN #temp_cpty_udf_values tcuv ON tcuv.source_deal_header_id = td.source_deal_header_id
 				LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = tdd.curve_id
 				LEFT JOIN source_uom spc_uom ON spcd.uom_id = spc_uom.source_uom_id
@@ -3674,6 +3706,12 @@ BEGIN
 				SELECT source_deal_header_id, 'price_currency', 'price_currency Must not be NULL'
 				FROM source_remit_standard
 				WHERE price_currency IS NULL
+					AND process_id = @process_id
+
+				INSERT INTO #temp_messages (source_deal_header_id, [column], [messages])
+				SELECT source_deal_header_id, 'transaction_timestamp', 'transaction_timestamp must not be NULL'
+				FROM source_remit_standard
+				WHERE transaction_timestamp IS NULL
 					AND process_id = @process_id
 
 				UPDATE srns
