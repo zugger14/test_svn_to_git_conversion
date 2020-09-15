@@ -209,10 +209,10 @@ BEGIN
 		SELECT 13,'effective_date','Effective Date','dhxCalendarA',NULL,'y','y','5','n',NULL,NULL,NULL,'200','date','NotEmpty','left', NULL,'n',NULL UNION ALL 
 		SELECT 13,'location_meter_id','ID','ro_int',NULL,'n','y','1','y',NULL,NULL,'y','100','int',NULL,'left', NULL,'n',NULL UNION ALL 
 		SELECT 13,'source_minor_location_id','Location ID','ro_int',NULL,'n','y','2','y','source_minor_location','source_minor_location_id','n','100','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 73,'rank_id','Rank','combo','EXEC spa_StaticDataValues @flag = ''h'', @type_id =32100','n','y',NULL,NULL,NULL,NULL,NULL,'200','str','NotEmpty','left', NULL,'n',NULL UNION ALL 
-		SELECT 73,'effective_date','Effective Date','dhxCalendarA',NULL,'n','y',NULL,NULL,NULL,NULL,NULL,'200','date','NotEmpty','left', NULL,'n',NULL UNION ALL 
-		SELECT 73,'location_ranking_id','ID','ro_int',NULL,'n','y',NULL,'y',NULL,NULL,'y','100','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 73,'location_id','Location ID','ro_int',NULL,'n','y',NULL,'y',NULL,'source_minor_location_id',NULL,'100','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 73,'rank_id','Rank','combo','EXEC spa_StaticDataValues @flag = ''h'', @type_id =32100','n','y','4',NULL,NULL,NULL,NULL,'200','str','NotEmpty','left', NULL,'n',NULL UNION ALL 
+		SELECT 73,'effective_date','Effective Date','dhxCalendarA',NULL,'n','y','3',NULL,NULL,NULL,NULL,'200','date','NotEmpty','left', NULL,'n',NULL UNION ALL 
+		SELECT 73,'location_ranking_id','ID','ro_int',NULL,'n','y','1','y',NULL,NULL,'y','100','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 73,'location_id','Location ID','ro_int',NULL,'n','y','2','y',NULL,'source_minor_location_id',NULL,'100','int',NULL,'left', NULL,'n',NULL UNION ALL 
 		SELECT 74,'group_id','Nomination Group','combo','EXEC spa_StaticDataValues @flag = ''h'', @type_id =31800','y','y',NULL,NULL,NULL,NULL,NULL,'200',NULL,'NotEmpty','left', NULL,'n',NULL UNION ALL 
 		SELECT 74,'effective_date','Effective Date','dhxCalendarA',NULL,'y','y',NULL,NULL,NULL,NULL,NULL,'200','date','NotEmpty','left', NULL,'n',NULL UNION ALL 
 		SELECT 74,'info_type','Info Type','ro',NULL,'n','y',NULL,'y',NULL,NULL,NULL,'100',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
