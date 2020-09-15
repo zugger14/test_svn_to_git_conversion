@@ -194,9 +194,9 @@ BEGIN
 		FROM source_deal_header
 		WHERE source_deal_header_id = @copy_deal_id
 
-		UPDATE #temp_copy_sdh 
-		SET close_reference_id = @copy_deal_id 
-		WHERE source_deal_header_id = @copy_deal_id
+		--UPDATE #temp_copy_sdh 
+		--SET close_reference_id = @copy_deal_id 
+		--WHERE source_deal_header_id = @copy_deal_id
 		
 		IF OBJECT_ID('tempdb..#temp_header_columns') IS NOT NULL
 			DROP TABLE #temp_header_columns

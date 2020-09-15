@@ -1364,20 +1364,6 @@ $formula_form_data = '[
             // Expand all columns otherwise filtered data will be in collapsed state
             dealDetail.grid.expandAll();
         });
-
-        if (copy_deal_id !== 'NULL') {
-            var cell_a_object = dealDetail.deal_detail.cells('a').getAttachedObject();
-            
-            var attribute_tab_cell = cell_a_object.getAllTabs()
-                .map(function(tab_id) {
-                    return cell_a_object.tabs(tab_id)
-                })
-                .filter(function(e) {
-                    return e.getText() == 'Attribute'
-                })[0]
-            
-            attribute_tab_cell.getAttachedObject().setItemValue('close_reference_id', copy_deal_id);
-        }
     });
 
     dealDetail.prepay_menu_click = function(name) {
