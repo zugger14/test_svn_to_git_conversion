@@ -109,8 +109,8 @@ SET STATISTICS IO off
 SET NOCOUNT ON
 SET ROWCOUNT 0
 
-----BEGIN OF TESTING -------------------------
------------------------------------------------------
+--BEGIN OF TESTING -------------------------
+---------------------------------------------------
 /*
 
 --select * from source_deal_pnl 
@@ -2633,11 +2633,9 @@ group by td.source_deal_header_id
 
 
 select source_deal_header_id,sum(fee_amt) fee_amt
-	into #var_fee_amount
+	into #var_fee_amount -- select * from #var_fee_amount
 from #var_fee_amount_001
 group by source_deal_header_id
-
-
 
 
 If @print_diagnostic = 1
@@ -7127,7 +7125,7 @@ set @qry1='update t set
 
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
-	left join #var_fee_amount_001 vfa on vfa.source_deal_header_id=vol.source_deal_header_id
+	left join #var_fee_amount vfa on vfa.source_deal_header_id=vol.source_deal_header_id
 where td.header_buy_sell_flag=''s'' and td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102 -- Linear model option'
 
 EXEC spa_print  @qry1
