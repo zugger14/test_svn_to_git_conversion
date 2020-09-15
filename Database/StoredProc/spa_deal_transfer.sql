@@ -683,7 +683,7 @@ BEGIN
 					IF EXISTS(SELECT 1 FROM #temp_offset_deal_headers)
 					BEGIN
 						UPDATE sdh
-						SET ext_deal_id = t2.deal_id,
+						SET ext_deal_id = t3.deal_id + '_Offset_' + CAST(t1.source_deal_header_id AS NVARCHAR(16)), --t2.deal_id,
 							close_reference_id = t2.source_deal_header_id
 						FROM source_deal_header sdh
 						INNER JOIN #temp_transfer_deal_headers t1 ON t1.source_deal_header_id = sdh.source_deal_header_id
@@ -692,6 +692,10 @@ BEGIN
 							FROM #temp_offset_deal_headers t2 
 							WHERE t2.deal_id = REPLACE(t1.deal_id, '_Xferred_', '_Offset_')
 						) t2
+						CROSS APPLY ( SELECT deal_id
+									  FROM #temp_original_deal_header
+									  WHERE t1.original_deal_id = source_deal_header_id	
+						) t3
 					END
 					ELSE
 					BEGIN
