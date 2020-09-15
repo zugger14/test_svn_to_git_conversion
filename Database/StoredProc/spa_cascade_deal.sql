@@ -32,7 +32,7 @@ DECLARE @parent_deal_ids VARCHAR(1000)
 DECLARE @max_as_of_date DATETIME = NULL--'2019-12-27'
 DECLARE @flag VARCHAR(1000)
 
-SELECT @parent_deal_ids = '94125'
+SELECT @parent_deal_ids = '95666,95665'
 set @flag = 'rewind_cascade'
 --select *from static_data_value where type_id = 5600
 --select deal_status, * from source_deal_header where source_deal_header_id=359
@@ -528,7 +528,7 @@ BEGIN
 		FROM source_deal_header  e
 		INNER JOIN REVERSE_CASCADE_CTE ecte ON CAST(ecte.source_deal_header_id AS VARCHAR(100)) = e.ext_deal_id
 		)
-		SELECT *, CASE WHEN source_deal_header_id IN(@parent_deal_ids) THEN 1 ELSE CASE WHEN ext_deal_id IN(@parent_deal_ids) THEN 2 ELSE 3 END END [level]
+		SELECT *, CASE WHEN source_deal_header_id IN(SELECT item FROM dbo.FNASplit(@parent_deal_ids, ',')) THEN 1 ELSE CASE WHEN ext_deal_id IN(@parent_deal_ids) THEN 2 ELSE 3 END END [level]
 			INTO #data_collection_reverse_cascade
 		FROM REVERSE_CASCADE_CTE
 
