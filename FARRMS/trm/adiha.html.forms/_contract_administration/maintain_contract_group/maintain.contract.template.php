@@ -2499,11 +2499,7 @@
                                             return false;
                                         }
                                     }
-                                    if (grid_label == 'Storage Asset' && layout_obj.getColumnId(cellIndex) == 'location_id' ){
-										grid_xml += " " + attached_obj.getColumnId(cellIndex) + '="' + contract_group["contract_component_grid_" + object_id].getUserData("", "storage_asset_id");+ '"';
-									} else {
-                                        grid_xml += " " + attached_obj.getColumnId(cellIndex) + '="' + attached_obj.cells(value, cellIndex).getValue() + '"';
-									}
+                                    grid_xml += " " + attached_obj.getColumnId(cellIndex) + '="' + attached_obj.cells(value, cellIndex).getValue() + '"';
                                 }
                                 grid_xml += " ></GridRow> ";
                             });
@@ -2513,7 +2509,7 @@
                         }                        
                     }
                 });
-                console.log(grid_xml);
+                
                 form_xml += "></FormXML>";
                 grid_xml += "</GridGroup>";
                 var xml = "<Root function_id=\"" + function_id + "\">";
