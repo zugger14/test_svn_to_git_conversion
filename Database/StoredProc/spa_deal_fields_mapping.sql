@@ -1108,7 +1108,7 @@ BEGIN
 			ELSE
 			BEGIN
 				DELETE FROM #temp_collect_shipper_code WHERE shipper_code_id NOT IN 
-				(SELECT MAX(shipper_code_id) FROM #temp_collect_shipper_code WHERE shipper_code = @dup_shipper_code )
+				(SELECT MIN(shipper_code_id) FROM #temp_collect_shipper_code WHERE shipper_code = @dup_shipper_code )
 				AND shipper_code = @dup_shipper_code
 			END
 			FETCH NEXT FROM remove_duplicate INTO @dup_shipper_code, @effective_date
@@ -1145,30 +1145,6 @@ BEGIN
 					AND tcsc.shipper_code_id = a.shipper_code_id 
 			) 
 			ORDER BY shipper_code ASC 
-
-			--IF NULLIF(@default_value, '') IS NULL			
-			--BEGIN
-			--	SELECT TOP 1 @latest_start_eff_dt = effective_date 
-			--	FROM #temp_collect_shipper_code 			
-			--	ORDER BY effective_date DESC
-
-			--	SELECT TOP 1 @default_value = shipper_code_id
-			--	FROM #temp_collect_shipper_code tcsc
-			--	INNER JOIN #temp_combo tc ON tc.value = tcsc.shipper_code_id
-			--	OUTER APPLY ( SELECT TOP 1 effective_date 
-			--		FROM #temp_collect_shipper_code WHERE YEAR(effective_date) = YEAR(@latest_start_eff_dt) 
-			--		AND MONTH(@latest_start_eff_dt) = MONTH(effective_date)
-			--		ORDER BY shipper_code ASC
-			--	) a
-			--	WHERE tcsc.effective_date = CASE WHEN (MONTH(tcsc.effective_date) = MONTH(@term_start) AND YEAR(tcsc.effective_date) = YEAR(@term_start) )
-			--							THEN tcsc.effective_date 
-			--							WHEN (
-			--								MONTH(tcsc.effective_date) < MONTH(@term_start) AND YEAR(tcsc.effective_date) = YEAR(@term_start) 
-			--								OR (YEAR(tcsc.effective_date) < YEAR(@term_start) AND tcsc.effective_date < @term_start) 
-			--								) THEN a.effective_date
-			--							END
-			--	ORDER BY shipper_code ASC
-			--END
 		END
 	END
 	IF @deal_fields <> 'counterparty_trader' AND @deal_fields <> 'counterparty2_trader' AND @deal_fields <> 'contract_id' AND @deal_fields <> 'tier_value_id' AND @deal_fields <> 'reporting_tier_id' AND @deal_fields <> 'shipper_code2' AND @deal_fields <> 'shipper_code1'
