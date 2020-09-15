@@ -8,7 +8,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
  
-/**
+/**	
 	Deal Creation Logic when the deal is copied. Called when deal is copied.
 
 	Parameters:
@@ -193,6 +193,10 @@ BEGIN
 		INTO #temp_copy_sdh
 		FROM source_deal_header
 		WHERE source_deal_header_id = @copy_deal_id
+
+		UPDATE #temp_copy_sdh 
+		SET close_reference_id = @copy_deal_id 
+		WHERE source_deal_header_id = @copy_deal_id
 		
 		IF OBJECT_ID('tempdb..#temp_header_columns') IS NOT NULL
 			DROP TABLE #temp_header_columns
@@ -228,12 +232,12 @@ BEGIN
 		SELECT @update_string = COALESCE(@update_string + ',', '') + tsdh.columns_name + ISNULL(' = N''' + CASE WHEN tsdh.data_type = 'datetime' THEN dbo.FNAGetSQLStandardDate(thc.columns_value) ELSE CAST(thc.columns_value AS NVARCHAR(MAX)) END + '''', '= NULL')
 		FROM #temp_header_columns thc
 		INNER JOIN #temp_sdh tsdh ON tsdh.columns_name = thc.columns_name
-		WHERE tsdh.columns_name NOT IN ('source_deal_header_id', 'update_ts', 'update_user', 'create_ts', 'create_user', 'template_id')
+		WHERE tsdh.columns_name NOT IN ('source_deal_header_id', 'update_ts', 'update_user', 'create_ts', 'create_user', 'template_id', 'close_reference_id')
 		AND thc.columns_name NOT LIKE '%UDF___%'
 		
 		SELECT @insert_string = COALESCE(@insert_string + ',', '') + tsdh.columns_name
 		FROM #temp_sdh tsdh
-		WHERE tsdh.columns_name NOT IN ('source_deal_header_id', 'update_ts', 'update_user', 'create_ts', 'create_user', 'close_reference_id', 'reference_detail_id')
+		WHERE tsdh.columns_name NOT IN ('source_deal_header_id', 'update_ts', 'update_user', 'create_ts', 'create_user', 'reference_detail_id')
 		
 		SET @sql = ' 
 			UPDATE sdh
