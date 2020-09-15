@@ -20703,8 +20703,8 @@ BEGIN
 			sdd.no_of_strikes = a.no_of_strikes,
 			sdd.payment_date = a.payment_date,
 			sdd.delivery_date = a.delivery_date,
-			sdd.shipper_code1 = scmd1.shipper_code_mapping_detail_id,
-			sdd.shipper_code2 = scmd2.shipper_code_mapping_detail_id
+			sdd.shipper_code1 = ISNULL(scmd1_default.shipper_code_mapping_detail_id, scmd1_multi.shipper_code_mapping_detail_id),
+			sdd.shipper_code2 = ISNULL(scmd2_default.shipper_code_mapping_detail_id, scmd2_multi.shipper_code_mapping_detail_id)
 		'
  		SET @sql1 += ' FROM 
  		#temp_inserting_deal t
@@ -20758,21 +20758,91 @@ BEGIN
 		SET @sql1 += '
 		LEFT JOIN shipper_code_mapping scm
 			ON scm.counterparty_id = cpty.source_counterparty_id
-		LEFT JOIN shipper_code_mapping_detail scmd1 
-			ON scmd1.shipper_code1 = a.shipper_code1 
-				AND scmd1.location_id = sml.source_minor_location_id 
-				AND scmd1.effective_date <= a.term_start
-				AND scmd1.shipper_code_id = scm.shipper_code_id
-		LEFT JOIN shipper_code_mapping_detail scmd2 
-			ON scmd2.shipper_code = a.shipper_code2 
-				AND scmd2.location_id = sml.source_minor_location_id 
-				AND scmd2.effective_date <= a.term_start
-				AND scmd2.shipper_code_id = scm.shipper_code_id
+		OUTER APPLY -- get default value for latest effective date lower than term start
+		(
+			SELECT scmd1_fil.shipper_code_mapping_detail_id, scmd1_fil.shipper_code1 FROM
+			(SELECT * FROM
+				(SELECT scmd1_def.shipper_code_mapping_detail_id , 
+					scmd1_def.shipper_code1, 
+					scmd1_def.effective_date,
+					ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY scmd1_def.effective_date DESC) rn
+						FROM shipper_code_mapping_detail scmd1_def
+						WHERE scmd1_def.shipper_code1 = a.shipper_code1 
+							AND scmd1_def.location_id = sml.source_minor_location_id 
+							AND scmd1_def.effective_date <= CAST(a.term_start AS DATE)
+							AND scmd1_def.shipper_code_id = scm.shipper_code_id
+							AND scmd1_def.is_active = ''y''	
+				) a WHERE rn =1
+			) b 
+			INNER JOIN shipper_code_mapping_detail scmd1_fil ON scmd1_fil.shipper_code1 = b.shipper_code1 
+				AND b.effective_date = scmd1_fil.effective_date  AND scmd1_fil.location_id = sml.source_minor_location_id 
+				AND scmd1_fil.is_active = ''y'' AND scmd1_fil.shipper_code_id = scm.shipper_code_id
+			AND ISNULL(NULLIF(scmd1_fil.shipper_code1_is_default, ''''), ''n'') = ''y''
+		) scmd1_default
+		OUTER APPLY -- get min shipper detail for latest effective date lower than term start
+		( SELECT c.shipper_code_mapping_detail_id FROM 
+			(SELECT * FROM
+				(SELECT shipper_code_mapping_detail_id, effective_date, shipper_code1,ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY effective_date DESC) rn
+					FROM shipper_code_mapping_detail scmd1_inn_m
+				WHERE scmd1_inn_m.shipper_code1 = a.shipper_code1 
+					AND scmd1_inn_m.location_id = sml.source_minor_location_id 
+					AND scmd1_inn_m.effective_date <= CAST(a.term_start AS DATE)
+					AND scmd1_inn_m.shipper_code_id = scm.shipper_code_id
+					AND ISNULL(NULLIF(scmd1_inn_m.shipper_code1_is_default, ''''), ''n'') = ''n''	
+					AND scmd1_inn_m.is_active = ''y''	
+				) a WHERE rn = 1 
+			) b 
+			CROSS APPLY (SELECT TOP 1 shipper_code_mapping_detail_id FROM shipper_code_mapping_detail scmd1_fil WHERE scmd1_fil.shipper_code1 = b.shipper_code1 
+				AND b.effective_date = scmd1_fil.effective_date AND scmd1_fil.location_id = sml.source_minor_location_id
+				AND scmd1_fil.shipper_code_id = scm.shipper_code_id AND scmd1_fil.is_active = ''y''	
+				AND ISNULL(NULLIF(scmd1_fil.shipper_code1_is_default, ''''), ''n'') = ''n''	
+				ORDER BY shipper_code_mapping_detail_id ASC
+			) c
+		) scmd1_multi  	'	
+		SET @sql1 += '
+		OUTER APPLY 
+		( SELECT scmd2_fil.shipper_code_mapping_detail_id, scmd2_fil.shipper_code FROM
+			(SELECT * FROM
+				(SELECT scmd2_def.shipper_code_mapping_detail_id , 
+					scmd2_def.shipper_code, 
+					scmd2_def.effective_date,
+					ROW_NUMBER() OVER (PARTITION BY scmd2_def.shipper_code ORDER BY scmd2_def.effective_date DESC) rn
+				FROM shipper_code_mapping_detail scmd2_def
+				WHERE scmd2_def.shipper_code = a.shipper_code2 
+					AND scmd2_def.location_id = sml.source_minor_location_id 
+					AND scmd2_def.effective_date <= CAST(a.term_start AS DATE)
+					AND scmd2_def.shipper_code_id = scm.shipper_code_id
+					AND scmd2_def.is_active = ''y''	
+				) a WHERE rn =1
+			) b 
+			INNER JOIN shipper_code_mapping_detail scmd2_fil ON scmd2_fil.shipper_code = b.shipper_code
+				AND b.effective_date = scmd2_fil.effective_date AND scmd2_fil.location_id = sml.source_minor_location_id 
+				AND scmd2_fil.is_active = ''y'' AND scmd2_fil.shipper_code_id = scm.shipper_code_id
+			AND ISNULL(NULLIF(scmd2_fil.is_default, ''''), ''n'') = ''y''	
+		) scmd2_default
+		OUTER APPLY
+		(SELECT c.shipper_code_mapping_detail_id FROM 
+			(SELECT * FROM
+				(SELECT shipper_code_mapping_detail_id, effective_date, scmd2_inn_m.shipper_code,ROW_NUMBER() OVER (PARTITION BY scmd2_inn_m.shipper_code ORDER BY scmd2_inn_m.effective_date DESC) rn
+					FROM shipper_code_mapping_detail scmd2_inn_m
+				WHERE scmd2_inn_m.shipper_code = a.shipper_code2 
+					AND scmd2_inn_m.location_id = sml.source_minor_location_id 
+					AND scmd2_inn_m.effective_date <= CAST(a.term_start AS DATE)
+					AND scmd2_inn_m.shipper_code_id = scm.shipper_code_id
+					AND ISNULL(NULLIF(scmd2_inn_m.is_default, ''''), ''n'') = ''n''	
+					AND scmd2_inn_m.is_active = ''y''	
+				) a WHERE rn = 1 
+			) b 
+			CROSS APPLY (SELECT TOP 1 shipper_code_mapping_detail_id FROM shipper_code_mapping_detail scmd2_fil WHERE scmd2_fil.shipper_code = b.shipper_code
+				AND b.effective_date = scmd2_fil.effective_date AND scmd2_fil.location_id = sml.source_minor_location_id
+				AND scmd2_fil.shipper_code_id = scm.shipper_code_id AND scmd2_fil.is_active = ''y''	AND ISNULL(NULLIF(scmd2_fil.is_default, ''''), ''n'') = ''n''
+				ORDER BY shipper_code_mapping_detail_id ASC
+			) c		
+		) scmd2_multi
 		LEFT JOIN static_data_value sdv_sg 
 			ON sdv_sg.code = a.strike_granularity 
 			AND sdv_sg.type_id = 978
- 	'	
-	
+ 	'		
 	IF @dest_columns_to_exclude IS NOT NULL
 	BEGIN
 		--DECLARE @rebuild_updt_stmt NVARCHAR(MAX), @rebuild_status NVARCHAR(MAX)
@@ -20931,8 +21001,8 @@ BEGIN
 							a.no_of_strikes,
 							a.payment_date,
 							a.delivery_date,
-							scmd1.shipper_code_mapping_detail_id,
-							scmd2.shipper_code_mapping_detail_id
+							ISNULL(scmd1_default.shipper_code_mapping_detail_id, scmd1_multi.shipper_code_mapping_detail_id),
+							ISNULL(scmd2_default.shipper_code_mapping_detail_id, scmd2_multi.shipper_code_mapping_detail_id)
 							'
  				SET @sql1 += '	FROM #temp_inserting_deal t
  					INNER JOIN ' + @import_temp_table_name + ' a ON a.temp_id = t.temp_id
@@ -20979,24 +21049,95 @@ BEGIN
 			SET @sql1 += '
 					LEFT JOIN shipper_code_mapping scm
 						ON scm.counterparty_id = cpty.source_counterparty_id
-					OUTER APPLY (
-						SELECT TOP 1 shipper_code_mapping_detail_id shipper_code_mapping_detail_id
-						FROM shipper_code_mapping_detail  scmd
-						WHERE   scmd.shipper_code_id = scm.shipper_code_id
-							AND scmd.shipper_code1 = a.shipper_code1 
-							AND scmd.location_id = sml.source_minor_location_id 
-							AND scmd.effective_date <= CAST(a.term_start AS DATE)
-						ORDER BY scmd.effective_date, scmd.shipper_code1
-					) scmd1
-					OUTER APPLY (
-						SELECT top 1 shipper_code_mapping_detail_id shipper_code_mapping_detail_id
-						FROM shipper_code_mapping_detail  scmd
-						WHERE scmd.shipper_code_id = scm.shipper_code_id
-							AND scmd.shipper_code = a.shipper_code2
-							AND scmd.location_id = sml.source_minor_location_id 
-							AND scmd.effective_date <= CAST(a.term_start AS DATE)
-						ORDER BY scmd.effective_date, scmd.shipper_code
-					) scmd2
+					OUTER APPLY -- get default value for latest effective date lower than term start
+					(
+						SELECT scmd1_fil.shipper_code_mapping_detail_id, scmd1_fil.shipper_code1 FROM
+						(SELECT * FROM
+							(SELECT scmd1_def.shipper_code_mapping_detail_id , 
+								scmd1_def.shipper_code1, 
+								scmd1_def.effective_date,
+								ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY scmd1_def.effective_date DESC) rn
+									FROM shipper_code_mapping_detail scmd1_def
+									WHERE (
+											(NULLIF(a.shipper_code1, '''') IS NOT NULL AND scmd1_def.shipper_code1 = a.shipper_code1 )
+											OR
+											(NULLIF(a.shipper_code1, '''') IS NULL)
+										)
+										AND scmd1_def.location_id = sml.source_minor_location_id 
+										AND scmd1_def.effective_date <= CAST(a.term_start AS DATE)
+										AND scmd1_def.shipper_code_id = scm.shipper_code_id
+										AND scmd1_def.is_active = ''y''	
+							) a WHERE rn =1
+						) b 
+						INNER JOIN shipper_code_mapping_detail scmd1_fil ON scmd1_fil.shipper_code1 = b.shipper_code1 
+							AND b.effective_date = scmd1_fil.effective_date  AND scmd1_fil.location_id = sml.source_minor_location_id 
+							AND scmd1_fil.is_active = ''y'' AND scmd1_fil.shipper_code_id = scm.shipper_code_id
+						AND ISNULL(NULLIF(scmd1_fil.shipper_code1_is_default, ''''), ''n'') = ''y''
+					) scmd1_default
+					OUTER APPLY -- get min shipper detail for latest effective date lower than term start
+					( SELECT c.shipper_code_mapping_detail_id FROM 
+						(SELECT * FROM
+							(SELECT shipper_code_mapping_detail_id, effective_date, shipper_code1,ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY effective_date DESC) rn
+								FROM shipper_code_mapping_detail scmd1_inn_m
+							WHERE scmd1_inn_m.shipper_code1 = a.shipper_code1 
+								AND scmd1_inn_m.location_id = sml.source_minor_location_id 
+								AND scmd1_inn_m.effective_date <= CAST(a.term_start AS DATE)
+								AND scmd1_inn_m.shipper_code_id = scm.shipper_code_id
+								AND ISNULL(NULLIF(scmd1_inn_m.shipper_code1_is_default, ''''), ''n'') = ''n''	
+								AND scmd1_inn_m.is_active = ''y''	
+							) a WHERE rn = 1 
+						) b 
+						CROSS APPLY (SELECT TOP 1 shipper_code_mapping_detail_id FROM shipper_code_mapping_detail scmd1_fil WHERE scmd1_fil.shipper_code1 = b.shipper_code1 
+							AND b.effective_date = scmd1_fil.effective_date AND scmd1_fil.location_id = sml.source_minor_location_id
+							AND scmd1_fil.shipper_code_id = scm.shipper_code_id AND scmd1_fil.is_active = ''y''	
+							AND ISNULL(NULLIF(scmd1_fil.shipper_code1_is_default, ''''), ''n'') = ''n''	
+							ORDER BY shipper_code_mapping_detail_id ASC
+						) c
+					) scmd1_multi  	'	
+				SET @sql1 += ' OUTER APPLY 
+					( SELECT scmd2_fil.shipper_code_mapping_detail_id, scmd2_fil.shipper_code FROM
+						(SELECT * FROM
+							(SELECT scmd2_def.shipper_code_mapping_detail_id , 
+								scmd2_def.shipper_code, 
+								scmd2_def.effective_date,
+								ROW_NUMBER() OVER (PARTITION BY scmd2_def.shipper_code ORDER BY scmd2_def.effective_date DESC) rn
+							FROM shipper_code_mapping_detail scmd2_def
+							WHERE 
+								(
+									(NULLIF(a.shipper_code2, '''') IS NOT NULL AND scmd2_def.shipper_code = a.shipper_code2 )
+									OR
+									(NULLIF(a.shipper_code2, '''') IS NULL)
+								)
+								AND scmd2_def.location_id = sml.source_minor_location_id 
+								AND scmd2_def.effective_date <= CAST(a.term_start AS DATE)
+								AND scmd2_def.shipper_code_id = scm.shipper_code_id
+								AND scmd2_def.is_active = ''y''	
+							) a WHERE rn =1
+						) b 
+						INNER JOIN shipper_code_mapping_detail scmd2_fil ON scmd2_fil.shipper_code = b.shipper_code
+							AND b.effective_date = scmd2_fil.effective_date AND scmd2_fil.location_id = sml.source_minor_location_id 
+							AND scmd2_fil.is_active = ''y'' AND scmd2_fil.shipper_code_id = scm.shipper_code_id
+						AND ISNULL(NULLIF(scmd2_fil.is_default, ''''), ''n'') = ''y''	
+					) scmd2_default
+					OUTER APPLY
+					(SELECT c.shipper_code_mapping_detail_id FROM 
+						(SELECT * FROM
+							(SELECT shipper_code_mapping_detail_id, effective_date, scmd2_inn_m.shipper_code,ROW_NUMBER() OVER (PARTITION BY scmd2_inn_m.shipper_code ORDER BY scmd2_inn_m.effective_date DESC) rn
+								FROM shipper_code_mapping_detail scmd2_inn_m
+							WHERE scmd2_inn_m.shipper_code = a.shipper_code2 
+								AND scmd2_inn_m.location_id = sml.source_minor_location_id 
+								AND scmd2_inn_m.effective_date <= CAST(a.term_start AS DATE)
+								AND scmd2_inn_m.shipper_code_id = scm.shipper_code_id
+								AND ISNULL(NULLIF(scmd2_inn_m.is_default, ''''), ''n'') = ''n''	
+								AND scmd2_inn_m.is_active = ''y''	
+							) a WHERE rn = 1 
+						) b 
+						CROSS APPLY (SELECT TOP 1 shipper_code_mapping_detail_id FROM shipper_code_mapping_detail scmd2_fil WHERE scmd2_fil.shipper_code = b.shipper_code
+							AND b.effective_date = scmd2_fil.effective_date AND scmd2_fil.location_id = sml.source_minor_location_id
+							AND scmd2_fil.shipper_code_id = scm.shipper_code_id AND scmd2_fil.is_active = ''y''	AND ISNULL(NULLIF(scmd2_fil.is_default, ''''), ''n'') = ''n''
+							ORDER BY shipper_code_mapping_detail_id ASC
+						) c		
+					) scmd2_multi
 					LEFT JOIN static_data_value sdv_sg 
 						ON sdv_sg.code = a.strike_granularity 
 						AND sdv_sg.type_id = 978
