@@ -1,9 +1,9 @@
-﻿BEGIN TRY
+﻿ BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'SDETSV'
 	/** IF DATA SOURCE ALIAS ALREADY EXISTS ON DESTINATION, RAISE ERROR **/
-	if exists(select top 1 1 from data_source where alias = 'SDETSV' and name <> 'Settlement Data Export to SAP View')
+	if exists(select top 1 1 from data_source where alias = 'SDETSV' and name <> 'Settlement Data Export to SAP view')
 	begin
 		select top 1 @new_ds_alias = 'SDETSV' + cast(s.n as varchar(5))
 		from seq s
@@ -192,7 +192,7 @@ SELECT
 	, counterparty_code
 	, counterparty_name
 	, value
-	, CAST(0.00 AS NUMERIC(38,20)) volume
+	, CAST(0.00 AS NUMERIC(32,17)) volume
 	, uom_id
 	, uom_code
 	, uom_name
@@ -226,7 +226,7 @@ SELECT
 	, counterparty_id
 	, counterparty_code
 	, counterparty_name
-	, CAST(0.01 AS NUMERIC(38,20)) value
+	, CAST(0.01 AS NUMERIC(32,17)) value
 	,  volume
 	, uom_id
 	, uom_code
@@ -261,8 +261,8 @@ SELECT
 	, counterparty_id
 	, counterparty_code
 	, counterparty_name
-	, CAST(-0.01 AS NUMERIC(38,20)) value
-	, CAST(0.00 AS NUMERIC(38,20)) volume
+	, CAST(-0.01 AS NUMERIC(32,17)) value
+	, CAST(0.00 AS NUMERIC(32,17)) volume
 	, uom_id
 	, uom_code
 	, uom_name
