@@ -13190,7 +13190,7 @@ SELECT	'''+@as_of_date+''' as_of_date,
 	uddft.field_name field_id, 
 	uddft.field_label field_name, 
 	--volume should be + if sell - if buy as fee cashflow should be opposite
-	-1*abs(CASE WHEN uddft.internal_field_type IN(18705) THEN --Capacity based fee 18713 OffPeak
+	sgn.sgn*abs(CASE WHEN uddft.internal_field_type IN(18705) THEN --Capacity based fee 18713 OffPeak
 				CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
 		CASE WHEN ISNUMERIC(uddft.rate_deal)=1 THEN cast(uddft.rate_deal as float) ELSE NULL END * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)	ELSE 0 END 
 			 WHEN uddft.internal_field_type IN(18710) THEN 
@@ -13199,7 +13199,7 @@ SELECT	'''+@as_of_date+''' as_of_date,
 				ELSE 0 END 
 	END) total_price_deal,
 	cast(0 as float) total_price,cast(0 as float) total_price_inv,
-		-1*abs(CASE WHEN (uddft.internal_field_type IN (18702, 18703)) THEN ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))
+		sgn.sgn*abs(CASE WHEN (uddft.internal_field_type IN (18702, 18703)) THEN ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))
 			 WHEN (uddft.internal_field_type IN (18701, 18704)) THEN ABS(td.contract_volume)
 			 when uddft.internal_field_type IN (18731) THEN isnull(CASE WHEN CAST(udddf2.udf_value AS FLOAT)-CAST(udddf3.udf_value AS FLOAT)=0  THEN 0 WHEN CAST(udddf2.udf_value AS FLOAT)-CAST(udddf3.udf_value AS FLOAT)>0 THEN CAST(udddf2.udf_value AS FLOAT) ELSE CAST(udddf3.udf_value AS FLOAT) END ,0)
 		ELSE			
@@ -13215,7 +13215,7 @@ SELECT	'''+@as_of_date+''' as_of_date,
 	END price_deal,cast(0 as float) price,cast(0 as float) price_inv,
 		'
 set @qry2a='
-	-1*abs(CASE uddft.internal_field_type 			
+	sgn.sgn*abs(CASE uddft.internal_field_type 			
 	WHEN 18700 THEN --Position based fee  BaseLoad Applies to All
 		round(CASE WHEN isnull(hv.curve_id,-1)=-1 or (uddft.udf_category=101900 and 
 			 td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102
@@ -13369,13 +13369,13 @@ into #tmp_fees_breakdown_001
 set @qry6a='
 	outer apply
 		(
-		select uddft_t.*, trs.rate* case when trs.rate_granularity=106202 then cast(1.0 as float)/(datediff(month,trs.begin_date,trs.end_date)+1) else 1 end *isnull(fx_t_deal.price_fx_conv_factor, 1)*ISNULL(conv_t.conversion_factor,1) rate_deal
+		select uddft_t.*,trs.rec_pay, trs.rate* case when trs.rate_granularity=106202 then cast(1.0 as float)/(datediff(month,trs.begin_date,trs.end_date)+1) else 1 end *isnull(fx_t_deal.price_fx_conv_factor, 1)*ISNULL(conv_t.conversion_factor,1) rate_deal
 		--from (
 		--	SELECT rate_schedule_id,rate_type_id,MAX(effective_date) effective_date FROM transportation_rate_schedule trs2 
 		--		WHERE rate_schedule_id = COALESCE(uddf1.udf_value,ccrs.rate_schedule_id,dp.rateSchedule,cg.maintain_rate_schedule)
 		--	GROUP BY rate_schedule_id,rate_type_id
 		--) trs1
-		from transportation_rate_schedule trs 
+	from transportation_rate_schedule trs 
 		inner join user_defined_fields_template uddft_t 
 				on uddft_t.field_id = trs.rate_type_id AND  td.leg= isnull(uddft_t.leg,td.leg)
 			and trs.rate_schedule_id = COALESCE(uddf1.udf_value,ccrs.rate_schedule_id,dp.rateSchedule,cg.maintain_rate_schedule)
@@ -13395,7 +13395,7 @@ set @qry6a='
 		+'
 		) fx_t_deal		
 		union all
-		select uddft_v.*
+		select uddft_v.*,vc.rec_pay
 			, vc.rate *isnull(fx_v_deal.price_fx_conv_factor, 1)*ISNULL(conv_v.conversion_factor,1) rate_deal
 		from variable_charge vc 
 			inner join user_defined_fields_template uddft_v on uddft_v.field_id = vc.rate_type_id AND  td.leg= isnull(uddft_v.leg,td.leg) and vc.rate_schedule_id = COALESCE(uddf1.udf_value,ccrs.rate_schedule_id,dp.rateSchedule,cg.maintain_rate_schedule)
@@ -13436,22 +13436,24 @@ set @qry7a='
 		OUTER APPLY(
 			SELECT ISNULL(NULLIF(SUM(CAST(volume_mult AS FLOAT)),0),1) AS totalhours, 
 			ISNULL(NULLIF(SUM(CASE WHEN '''+@calc_type+''' =''s'' AND term_date <= '''+@as_of_date+''' THEN CAST(volume_mult AS FLOAT)
-								   WHEN '''+@calc_type+''' <> ''s'' AND '''+isnull(@calc_explain_type,'')+''' = ''d'' AND term_date >  '''+@as_of_date+''' AND term_date<='''+isnull(@next_business_day,'')+''' THEN CAST(volume_mult AS FLOAT)
-								   WHEN '''+@calc_type+''' <> ''s'' AND '''+isnull(@calc_explain_type,'')+''' ='''' AND term_date > '''+@as_of_date+''' THEN CAST(volume_mult AS FLOAT)
-								ELSE 0 END),0),1) partialhours
+					WHEN '''+@calc_type+''' <> ''s'' AND '''+isnull(@calc_explain_type,'')+''' = ''d'' AND term_date >  '''+@as_of_date+''' AND term_date<='''+isnull(@next_business_day,'')+''' THEN CAST(volume_mult AS FLOAT)
+					WHEN '''+@calc_type+''' <> ''s'' AND '''+isnull(@calc_explain_type,'')+''' ='''' AND term_date > '''+@as_of_date+''' THEN CAST(volume_mult AS FLOAT)
+				ELSE 0 END),0),1) partialhours
 			FROM hour_block_term
 			WHERE block_type = case when uddft.internal_field_type =18702 then 12000 else ISNULL(spcd.block_type,12000) end
 				AND block_define_id = case when uddft.internal_field_type =18702 then '+cast(@baseload_block_definition as varchar)+' else ISNULL(spcd.block_define_id,'+cast(@baseload_block_definition as varchar)+') end 
 				AND term_date BETWEEN td.term_start AND td.term_end	
 		) hbt	
 		LEFT JOIN #tmp_fees_breakdown fb ON fb.source_deal_header_id = td.source_deal_header_id AND fb.leg = td.leg AND fb.term_start = td.term_start AND fb.field_id = uddft.field_name
-		--outer apply ( select case when COALESCE(udddf.receive_pay,uddf.receive_pay,case when ISNULL(gaivs.st_buy_sell_flag,td.buy_sell_flag)=''b'' then ''p'' else ''r'' end)=''r'' then 1 else -1 end sgn ) sgn
+		outer apply ( select case when COALESCE(uddft.rec_pay,case when ISNULL(gaivs.st_buy_sell_flag,td.buy_sell_flag)=''b'' then ''p'' else ''r'' end)=''r'' then 1 else -1 end sgn ) sgn
 	WHERE	isnull(udft.internal_field_type,-1) not IN(18722,18723,18724,18733) and fb.source_deal_header_id IS NULL
 			AND uddft.internal_field_type IS NOT NULL AND
 		ISNUMERIC(uddft.rate_deal) = 1 AND	uddft.internal_field_type<>18718 and 
 			CASE WHEN (uddft.internal_field_type IN (18702, 18703,18717)) THEN ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))
 				ELSE 1 END <> 0	;
 '
+
+
 
 
 set @qry8a='
