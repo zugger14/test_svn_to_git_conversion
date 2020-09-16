@@ -38225,109 +38225,6 @@ BEGIN
 	  
  	EXEC sp_validate_data_type @process_id, @field_compare_table, @import_temp_table_name, @table_name, @rules_id, 'a'
 
-	DROP TABLE IF EXISTS #temp_data
-	CREATE TABLE #temp_data (
-		source_deal_detail_id INT
-		, counterparty_id INT
-		, location_id INT
-		, shipper_code_id INT
-		, temp_id INT
-		, import_file_name NVARCHAR(200) COLLATE DATABASE_DEFAULT
-		, counterparty NVARCHAR(200) COLLATE DATABASE_DEFAULT
-		, contract NVARCHAR(200) COLLATE DATABASE_DEFAULT
-		, location NVARCHAR(200) COLLATE DATABASE_DEFAULT
-		, deal_id NVARCHAR(200) COLLATE DATABASE_DEFAULT
-		, ext_deal_id NVARCHAR(200) COLLATE DATABASE_DEFAULT
-		, term_start DATE
-		, term_end DATE
-		, shipper_code1 NVARCHAR(200) COLLATE DATABASE_DEFAULT
-		, shipper_code2 NVARCHAR(200) COLLATE DATABASE_DEFAULT
-		, shipper1 NVARCHAR(200) COLLATE DATABASE_DEFAULT
-		, shipper2 NVARCHAR(200) COLLATE DATABASE_DEFAULT
-		, leg NVARCHAR(100) COLLATE DATABASE_DEFAULT
-		, buy_sell NVARCHAR(100) COLLATE DATABASE_DEFAULT
-	)
-
-	EXEC('
-		INSERT INTO #temp_data (
-			source_deal_detail_id
-			, location_id
-			, counterparty_id
-			, shipper_code_id
-			, temp_id
-			, import_file_name
-			, counterparty
-			, contract
-			, location
-			, deal_id
-			, ext_deal_id
-			, term_start
-			, term_end
-			, shipper_code1
-			, shipper_code2
-			, shipper1
-			, shipper2
-			, leg
-			, buy_sell
-		)
-		SELECT sdd.source_deal_detail_id
-			, IIF(sdht.template_name = ''Transportation NG'', tcl.location_id, sdd.location_id)
-			, sc.source_counterparty_id
-			, scm.shipper_code_id
-			, a.temp_id temp_id
-			, a.import_file_name import_file_name
-			, a.counterparty counterparty
-			, a.contract contract
-			, a.location location
-			, a.deal_id  deal_id 
-			, a.ext_deal_id ext_deal_id
-			, a.term_start  term_start 
-			, a.term_end term_end
-			, shipper_codes.shipper_code1 shipper_code1
-			, shipper_codes.shipper_code2 shipper_code2
-			, a.shipper_code1 shipper1
-			, a.shipper_code2 shipper2
-			, a.Leg Leg
-			, a.buy_sell buy_sell
-		FROM ' + @import_temp_table_name + ' a
-		LEFT JOIN source_deal_header sdh
-			ON sdh.deal_id = a.deal_id
-		LEFT JOIN source_deal_header_template sdht
-			ON sdht.template_id = sdh.template_id
-		LEFT JOIN source_deal_detail sdd
-			ON sdd.source_deal_header_id = sdh.source_deal_header_id
-				AND DATEPART(YEAR, sdd.term_start) = DATEPART(YEAR, a.term_start) AND DATEPART(MONTH, sdd.term_start) = DATEPART(MONTH, a.term_start)
-				AND DATEPART(YEAR, sdd.term_end) = DATEPART(YEAR, a.term_end) AND DATEPART(MONTH, sdd.term_end) = DATEPART(MONTH, a.term_end)
-				AND IIF(a.buy_sell IS NOT NULL, sdd.buy_sell_flag, ''1'') = ISNULL(a.buy_sell, ''1'')
-		LEFT JOIN source_counterparty sc
-			ON sc.counterparty_id = a.counterparty
-		LEFT JOIN contract_group cg
-			ON a.contract = cg.source_contract_id
-		LEFT JOIN transportation_contract_location tcl
-			ON tcl.contract_id = sdh.contract_id
-				AND tcl.rec_del = IIF(sdd.buy_sell_flag = ''s'', 1, 2) 
-		LEFT JOIN source_minor_location sml
-			ON sml.location_id = a.location
-		LEFT JOIN shipper_code_mapping scm
-			ON scm.counterparty_id = sc.source_counterparty_id
-		OUTER APPLY (
-			SELECT sdd.source_deal_detail_id
-				, MIN(a.shipper_code1) shipper_code1
-				, MIN(a.shipper_code2) shipper_code2 
-			FROM ' + @import_temp_table_name + ' a
-			LEFT JOIN source_deal_header sdh
-				ON sdh.deal_id = a.deal_id
-			LEFT JOIN source_deal_detail sdd
-				ON sdd.source_deal_header_id = sdh.source_deal_header_id
-					AND DATEPART(YEAR, sdd.term_start) = DATEPART(YEAR, a.term_start) AND DATEPART(MONTH, sdd.term_start) = DATEPART(MONTH, a.term_start)
-					AND DATEPART(YEAR, sdd.term_end) = DATEPART(YEAR, a.term_end) AND DATEPART(MONTH, sdd.term_end) = DATEPART(MONTH, a.term_end)
-					AND IIF(a.buy_sell IS NOT NULL, sdd.buy_sell_flag, ''1'') = ISNULL(a.buy_sell, ''1'')
-			GROUP BY sdd.source_deal_detail_id
-		) shipper_codes
-		WHERE sdd.source_deal_detail_id = shipper_codes.source_deal_detail_id
-			AND a.shipper_code1 = shipper_codes.shipper_code1
-	')
-
 	EXEC('INSERT INTO #import_status (temp_id, process_id, error_code, [module], [source], [type], [description], [next_step], [import_file_name])
 		SELECT DISTINCT b.temp_id,
 			'''+ @process_id+''',
@@ -38335,21 +38232,27 @@ BEGIN
  			''Import Data'',
  			'''+ @table_name+''',
  			''Invalid Data'',
- 			CONCAT('' '', scm.source_column_name, '': '', b.shipper_code1, '' is not defined for ('', b.location_id, '', '', b.counterparty, '', '', dbo.FNADateFormat(b.term_start), '')''),
+ 			CONCAT('' '', scm.source_column_name, '': '', b.shipper_code1, '' is not defined for ('', b.location, '', '', b.counterparty, '', '', dbo.FNADateFormat(b.term_start), '')''),
  			''Check mapping.'',
  			b.import_file_name
-		FROM #temp_data b
+		FROM ' + @import_temp_table_name + ' b
 		CROSS APPLY (
 			SELECT source_column_name
 			FROM #source_file_column_table
 			WHERE ixp_columns_name = ''shipper_code1''
 		) scm
+		INNER JOIN source_counterparty sc
+			ON sc.counterparty_id = b.counterparty
+		INNER JOIN shipper_code_mapping scmm
+			ON scmm.counterparty_id = sc.source_counterparty_id
+		INNER JOIN source_minor_location sml
+			ON sml.location_id = b.location	
 		LEFT JOIN shipper_code_mapping_detail scmd
-		ON scmd.shipper_code_id = b.shipper_code_id
-			AND scmd.location_id = b.location_id
+			ON scmd.shipper_code_id = scmm.shipper_code_id
+			AND scmd.location_id = sml.source_minor_location_id
 			AND scmd.effective_date <= b.term_start
-			AND scmd.shipper_code1 = b.shipper1
-		WHERE scmd.shipper_code_id IS NULL
+			AND scmd.shipper_code1 = b.shipper_code1
+		WHERE scmd.shipper_code_mapping_detail_id IS NULL AND NULLIF(b.shipper_code1,'''') IS NOT NULL
 	')
 
 	-- Shipper code 2 mapping validation
@@ -38360,21 +38263,27 @@ BEGIN
  			''Import Data'',
  			'''+ @table_name+''',
  			''Invalid Data'',
- 			CONCAT('' '', scm.source_column_name, '': '', b.shipper_code2, '' is not defined for ('', b.location_id, '', '', b.counterparty, '', '', dbo.FNADateFormat(b.term_start), '')''),
+ 			CONCAT('' '', scm.source_column_name, '': '', b.shipper_code2, '' is not defined for ('', b.location, '', '', b.counterparty, '', '', dbo.FNADateFormat(b.term_start), '')''),
  			''Check mapping.'',
  			b.import_file_name
-		FROM #temp_data b
+		FROM ' + @import_temp_table_name + ' b
 		CROSS APPLY (
 			SELECT source_column_name
 			FROM #source_file_column_table
 			WHERE ixp_columns_name = ''shipper_code2''
 		) scm
+		INNER JOIN source_counterparty sc
+			ON sc.counterparty_id = b.counterparty
+		INNER JOIN shipper_code_mapping scmm
+			ON scmm.counterparty_id = sc.source_counterparty_id
+		INNER JOIN source_minor_location sml
+			ON sml.location_id = b.location	
 		LEFT JOIN shipper_code_mapping_detail scmd
-		ON scmd.shipper_code_id = b.shipper_code_id
-			AND scmd.location_id = b.location_id
+			ON scmd.shipper_code_id = scmm.shipper_code_id
+			AND scmd.location_id = sml.source_minor_location_id
 			AND scmd.effective_date <= b.term_start
-			AND scmd.shipper_code = b.shipper2
-		WHERE scmd.shipper_code_id IS NULL
+			AND scmd.shipper_code = b.shipper_code2
+		WHERE scmd.shipper_code_mapping_detail_id IS NULL AND NULLIF(b.shipper_code2,'''') IS NOT NULL
 	')
 
 	EXEC('
@@ -38385,61 +38294,111 @@ BEGIN
         WHERE ims.error_code = ''Error''
 	')
 
-	EXEC('  
-        DELETE a
-        FROM #error_status es
-        INNER JOIN ' + @import_temp_table_name + ' a 
-			ON  es.temp_id = a.temp_id
-        LEFT JOIN message_log_template mlt 
-			ON mlt.message_number = es.error_number
-        WHERE ISNULL(mlt.message_status, es.message_status) = ''Error''
-	') 
-
-	
-	DECLARE @deal_detail_id INT
-		, @location_id INT
-		, @shipper_code_id INT
-		, @shipper_code1 VARCHAR(100)
-		, @shipper_code2 VARCHAR(100)
-
-	DECLARE cur_status CURSOR LOCAL FAST_FORWARD FOR 
-	SELECT source_deal_detail_id
-		, location_id
-		, shipper_code_id
-		, shipper_code1
-		, shipper_code2 
-	FROM #temp_data
-	OPEN cur_status ; 
-	FETCH NEXT FROM cur_status INTO @deal_detail_id, @location_id, @shipper_code_id, @shipper_code1, @shipper_code2
-	WHILE @@FETCH_STATUS = 0 
-	BEGIN 
-		SELECT @source_deal_detail_id, @location_id, @shipper_code_id, @shipper_code1, @shipper_code2
-		DECLARE @shipper_code_mapping_detail_id_1 INT
-			,  @shipper_code_mapping_detail_id_2 INT
-            
-		SELECT TOP 1 @shipper_code_mapping_detail_id_1 = shipper_code_mapping_detail_id  
-		FROM shipper_code_mapping_detail  
-		WHERE shipper_code_id = @shipper_code_id 
-			AND shipper_code1 = @shipper_code1 
-			AND location_id = @location_id
-		ORDER BY shipper_code1
-            
-		SELECT TOP 1 @shipper_code_mapping_detail_id_2 = shipper_code_mapping_detail_id  
-		FROM shipper_code_mapping_detail  
-		WHERE shipper_code_id = @shipper_code_id 
-			AND shipper_code = @shipper_code2  
-			AND location_id = @location_id
-		ORDER BY shipper_code
-
-		UPDATE source_deal_detail 
-		SET shipper_code1=@shipper_code_mapping_detail_id_1
-			, shipper_code2=@shipper_code_mapping_detail_id_2
-		WHERE source_deal_detail_id = @deal_detail_id
-
-		FETCH NEXT FROM cur_status INTO @deal_detail_id, @location_id, @shipper_code_id, @shipper_code1, @shipper_code2
-	END; 
-	CLOSE cur_status ; 
-	DEALLOCATE cur_status ; 
+	EXEC('
+		UPDATE sdd  
+		SET 
+		shipper_code1 = ISNULL(scmd1_default.shipper_code_mapping_detail_id, scmd1_multi.shipper_code_mapping_detail_id),
+		shipper_code2 = ISNULL(scmd2_default.shipper_code_mapping_detail_id, scmd2_multi.shipper_code_mapping_detail_id)
+		FROM ' + @import_temp_table_name + ' a
+		INNER JOIN source_deal_header sdh
+			ON sdh.deal_id = a.deal_id
+		INNER JOIN source_deal_header_template sdht
+			ON sdht.template_id = sdh.template_id
+		INNER JOIN source_deal_detail sdd
+			ON sdd.source_deal_header_id = sdh.source_deal_header_id
+				AND DATEPART(YEAR, sdd.term_start) BETWEEN DATEPART(YEAR, a.term_start) AND DATEPART(YEAR, a.term_end)
+				AND DATEPART(MONTH, sdd.term_start) BETWEEN DATEPART(MONTH, a.term_start) AND DATEPART(MONTH, a.term_end)				
+				AND DATEPART(YEAR, sdd.term_end) BETWEEN DATEPART(YEAR, a.term_start) AND DATEPART(YEAR, a.term_end)
+				AND DATEPART(MONTH, sdd.term_end) BETWEEN DATEPART(MONTH, a.term_start) AND DATEPART(MONTH, a.term_end)		
+				AND IIF(a.buy_sell IS NOT NULL, sdd.buy_sell_flag, ''1'') = ISNULL(a.buy_sell, ''1'')
+		INNER JOIN source_counterparty sc
+			ON sc.counterparty_id = a.counterparty		
+		LEFT JOIN transportation_contract_location tcl
+			ON tcl.contract_id = sdh.contract_id
+				AND tcl.rec_del = IIF(sdd.buy_sell_flag = ''s'', 1, 2) 
+		INNER JOIN shipper_code_mapping scm
+			ON scm.counterparty_id = sc.source_counterparty_id
+		OUTER APPLY -- get default value for latest effective date lower than term start
+		(
+			SELECT scmd1_fil.shipper_code_mapping_detail_id, scmd1_fil.shipper_code1 FROM
+			(SELECT * FROM
+				(SELECT scmd1_def.shipper_code_mapping_detail_id , 
+					scmd1_def.shipper_code1, 
+					scmd1_def.effective_date,
+					ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY scmd1_def.effective_date DESC) rn
+						FROM shipper_code_mapping_detail scmd1_def
+						WHERE scmd1_def.shipper_code1 = a.shipper_code1 
+							AND scmd1_def.location_id = IIF(sdht.template_name = ''Transportation NG'', tcl.location_id, sdd.location_id)
+							AND scmd1_def.effective_date <= CAST(a.term_start AS DATE)
+							AND scmd1_def.shipper_code_id = scm.shipper_code_id
+							AND scmd1_def.is_active = ''y''	
+				) a WHERE rn =1
+			) b 
+			INNER JOIN shipper_code_mapping_detail scmd1_fil ON scmd1_fil.shipper_code1 = b.shipper_code1 
+				AND b.effective_date = scmd1_fil.effective_date  AND scmd1_fil.location_id = IIF(sdht.template_name = ''Transportation NG'', tcl.location_id, sdd.location_id) 
+				AND scmd1_fil.is_active = ''y'' AND scmd1_fil.shipper_code_id = scm.shipper_code_id
+			AND ISNULL(NULLIF(scmd1_fil.shipper_code1_is_default, ''''), ''n'') = ''y''
+		) scmd1_default
+		OUTER APPLY -- get min shipper detail for latest effective date lower than term start
+		( SELECT c.shipper_code_mapping_detail_id FROM 
+			(SELECT * FROM
+				(SELECT shipper_code_mapping_detail_id, effective_date, shipper_code1,ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY effective_date DESC) rn
+					FROM shipper_code_mapping_detail scmd1_inn_m
+				WHERE scmd1_inn_m.shipper_code1 = a.shipper_code1 
+					AND scmd1_inn_m.location_id = IIF(sdht.template_name = ''Transportation NG'', tcl.location_id, sdd.location_id) 
+					AND scmd1_inn_m.effective_date <= CAST(a.term_start AS DATE)
+					AND scmd1_inn_m.shipper_code_id = scm.shipper_code_id
+					AND ISNULL(NULLIF(scmd1_inn_m.shipper_code1_is_default, ''''), ''n'') = ''n''	
+					AND scmd1_inn_m.is_active = ''y''	
+				) a WHERE rn = 1 
+			) b 
+			CROSS APPLY (SELECT TOP 1 shipper_code_mapping_detail_id FROM shipper_code_mapping_detail scmd1_fil WHERE scmd1_fil.shipper_code1 = b.shipper_code1 
+				AND b.effective_date = scmd1_fil.effective_date AND scmd1_fil.location_id = IIF(sdht.template_name = ''Transportation NG'', tcl.location_id, sdd.location_id)
+				AND scmd1_fil.shipper_code_id = scm.shipper_code_id AND scmd1_fil.is_active = ''y''	
+				AND ISNULL(NULLIF(scmd1_fil.shipper_code1_is_default, ''''), ''n'') = ''n''	
+				ORDER BY shipper_code_mapping_detail_id ASC
+			) c
+		) scmd1_multi  
+		OUTER APPLY 
+		( SELECT scmd2_fil.shipper_code_mapping_detail_id, scmd2_fil.shipper_code FROM
+			(SELECT * FROM
+				(SELECT scmd2_def.shipper_code_mapping_detail_id , 
+					scmd2_def.shipper_code, 
+					scmd2_def.effective_date,
+					ROW_NUMBER() OVER (PARTITION BY scmd2_def.shipper_code ORDER BY scmd2_def.effective_date DESC) rn
+				FROM shipper_code_mapping_detail scmd2_def
+				WHERE scmd2_def.shipper_code = a.shipper_code2 
+					AND scmd2_def.location_id = IIF(sdht.template_name = ''Transportation NG'', tcl.location_id, sdd.location_id)
+					AND scmd2_def.effective_date <= CAST(a.term_start AS DATE)
+					AND scmd2_def.shipper_code_id = scm.shipper_code_id
+					AND scmd2_def.is_active = ''y''	
+				) a WHERE rn =1
+			) b 
+			INNER JOIN shipper_code_mapping_detail scmd2_fil ON scmd2_fil.shipper_code = b.shipper_code
+				AND b.effective_date = scmd2_fil.effective_date AND scmd2_fil.location_id = IIF(sdht.template_name = ''Transportation NG'', tcl.location_id, sdd.location_id)
+				AND scmd2_fil.is_active = ''y'' AND scmd2_fil.shipper_code_id = scm.shipper_code_id
+			AND ISNULL(NULLIF(scmd2_fil.is_default, ''''), ''n'') = ''y''	
+		) scmd2_default
+		OUTER APPLY
+		(SELECT c.shipper_code_mapping_detail_id FROM 
+			(SELECT * FROM
+				(SELECT shipper_code_mapping_detail_id, effective_date, scmd2_inn_m.shipper_code,ROW_NUMBER() OVER (PARTITION BY scmd2_inn_m.shipper_code ORDER BY scmd2_inn_m.effective_date DESC) rn
+					FROM shipper_code_mapping_detail scmd2_inn_m
+				WHERE scmd2_inn_m.shipper_code = a.shipper_code2 
+					AND scmd2_inn_m.location_id = IIF(sdht.template_name = ''Transportation NG'', tcl.location_id, sdd.location_id)
+					AND scmd2_inn_m.effective_date <= CAST(a.term_start AS DATE)
+					AND scmd2_inn_m.shipper_code_id = scm.shipper_code_id
+					AND ISNULL(NULLIF(scmd2_inn_m.is_default, ''''), ''n'') = ''n''	
+					AND scmd2_inn_m.is_active = ''y''	
+				) a WHERE rn = 1 
+			) b 
+			CROSS APPLY (SELECT TOP 1 shipper_code_mapping_detail_id FROM shipper_code_mapping_detail scmd2_fil WHERE scmd2_fil.shipper_code = b.shipper_code
+				AND b.effective_date = scmd2_fil.effective_date AND scmd2_fil.location_id = IIF(sdht.template_name = ''Transportation NG'', tcl.location_id, sdd.location_id)
+				AND scmd2_fil.shipper_code_id = scm.shipper_code_id AND scmd2_fil.is_active = ''y''	AND ISNULL(NULLIF(scmd2_fil.is_default, ''''), ''n'') = ''n''
+				ORDER BY shipper_code_mapping_detail_id ASC
+			) c		
+		) scmd2_multi
+	')
 
 END
 
