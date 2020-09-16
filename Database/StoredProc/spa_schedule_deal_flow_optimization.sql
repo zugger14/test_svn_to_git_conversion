@@ -220,7 +220,8 @@ FROM static_data_value sdv
 WHERE sdv.value_id = @to_priority
 
 SELECT CAST(clm1_value AS INT) pipeline
-	, CAST(clm2_value AS INT) sub_book_id	   
+	, CAST(clm2_value AS INT) sub_book_id
+	, CAST(clm3_value AS INT) path_id	   
 INTO #gen_nomination_mapping
 FROM generic_mapping_header h 
 INNER JOIN generic_mapping_values v 
@@ -1016,7 +1017,7 @@ BEGIN --Data Prepararion
 		BEGIN
 			IF EXISTS(
 				SELECT	1  FROM (
-					SELECT DISTINCT dp.counterParty pipeline 
+					SELECT DISTINCT dp.counterParty pipeline, dp.path_id
 					FROM #collect_deals cd
 					INNER JOIN delivery_path dp 
 						ON dp.path_id = ISNULL(cd.single_path_id, cd.path_id)
@@ -1024,6 +1025,7 @@ BEGIN --Data Prepararion
 				 ) s 
 				 LEFT JOIN #gen_nomination_mapping sbm 
 					ON  s.pipeline = sbm.pipeline
+					AND s.path_id = sbm.path_id
 				  WHERE sbm.sub_book_id IS NULL
 				)
 			BEGIN
