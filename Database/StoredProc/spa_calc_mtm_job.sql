@@ -662,6 +662,9 @@ BEGIN
 	SET @calc_type = 's'
 END
 
+if @as_of_date>@term_end and @calc_type = 's'
+	set  @as_of_date=@term_end
+
 --Storing default dst to use below while returning null from vwDealTimezoneContract for REC deals
 DECLARE @default_dst_group VARCHAR(50)
        ,@exclude_zero_position BIT = 0
