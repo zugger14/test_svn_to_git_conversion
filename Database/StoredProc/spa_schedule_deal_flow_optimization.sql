@@ -3395,6 +3395,7 @@ BEGIN --Data Prepararion
 				ON dp.path_id = cd.single_path_id
 			LEFT JOIN #gen_nomination_mapping  gnm 
 				ON gnm.pipeline = ISNULL(@counterparty_id, dp.counterparty) 
+				AND gnm.path_id = p.path_id
 				AND p.storage_deal_type = 'n' 
 			LEFT JOIN #storage_book_mapping  sbm 
 				ON sbm.pipeline = ISNULL(@counterparty_id, dp.counterparty)
@@ -3552,6 +3553,7 @@ BEGIN --Data Prepararion
 			ON dp.path_id = p.path_id 
 		LEFT JOIN #gen_nomination_mapping  gnm 
 			ON gnm.pipeline = ISNULL(@counterparty_id, dp.counterparty) 
+			AND gnm.path_id = p.path_id
 			AND p.storage_deal_type = 'n' 
 		LEFT JOIN #storage_book_mapping  sbm 
 			ON sbm.pipeline = ISNULL(@counterparty_id,dp.counterparty)
@@ -3667,7 +3669,9 @@ BEGIN --Data Prepararion
 			AND ISNULL(p.storage_deal_type, 'n') = 'w' 
 			AND first_dom = p.first_dom
 	) gpv
-	left join #gen_nomination_mapping gnm ON gnm.pipeline = ISNULL(gpv.counterParty, p.[counterparty_id])
+	left join #gen_nomination_mapping gnm 
+		ON gnm.pipeline = ISNULL(gpv.counterParty, p.[counterparty_id])
+		AND gnm.path_id = p.path_id
 	LEFT JOIN source_system_book_map ssbm ON ssbm.book_deal_type_map_id = gnm.sub_book_id
 
 	-- SELECT * FROM optimizer_detail
@@ -4620,6 +4624,7 @@ BEGIN -- Insert/Update Deal data
 		ON h.source_deal_header_id = p.templete_deal_id	 
 	LEFT JOIN #gen_nomination_mapping gnm 
 		ON gnm.pipeline = COALESCE(@counterparty_id, p.counterparty_id,h.[counterparty_id] )
+		AND gnm.path_id = p.path_id
 	LEFT JOIN source_system_book_map ssbm 
 		ON ssbm.book_deal_type_map_id = gnm.sub_book_id
 	LEFT JOIN #existing_deals ed 
