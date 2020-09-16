@@ -96,6 +96,7 @@ BEGIN
 			,@filter_commodity_id = commodity_id
 			,@filter_sub_book_id = subbook_id
 			,@report_type = report_type
+			,@submission_type = ISNULL(@submission_type, submission_type)
 	FROM #form_data
 
 	IF OBJECT_ID('tempdb..#temp_submission_rule') IS NOT NULL
@@ -336,6 +337,23 @@ BEGIN
 		+ IIF(@create_date_to IS NOT NULL ,' AND ' + CASE WHEN @report_type = 39405 THEN 'CAST(COALESCE(tbl_index_fees.term_start,tbl_settlement.term_start,sdh.create_ts) AS DATE)' ELSE 'CAST(sdh.create_ts AS DATE)' END  + ' <= ''' + @create_date_to + '''', '')
 
 		EXEC(@exec_call)
+
+		IF @submission_type = 44702 --REMIT
+		BEGIN
+			DELETE td
+			FROM #source_deal_header td
+			INNER JOIN source_deal_header sdh
+				ON sdh.source_deal_header_id = td.source_deal_header_id
+			LEFT JOIN maintain_udf_static_data_detail_values musddv
+				ON musddv.primary_field_object_id = sdh.broker_id
+			LEFT JOIN application_ui_template_fields autf
+				ON autf.application_field_id = musddv.application_field_id
+			LEFT JOIN user_defined_fields_template udft
+				ON udft.udf_template_id = autf.udf_template_id
+			WHERE udft.Field_label = 'Delegation Reporting'
+			AND ISNULL(musddv.static_data_udf_values, 'n') = 'y'
+		END
+
 		FETCH NEXT
 		FROM @insert_deal INTO @rule_id, @submission_type_id, @confirmation_type, @legal_entity_id, @sub_book_id, @contract_id, @counterparty_id2, @deal_type_id, 
 							   @deal_sub_type_id, @deal_template_id, @commodity_id, @location_group_id, @location_id, @counterparty_id, @counterpaty_type, @index_group,
@@ -406,9 +424,6 @@ BEGIN
 		EXEC spa_ErrorHandler -1, 'Source Remit table', 'spa_remit', 'Error', 'No deals to generate report.', 'Error' 
 		RETURN
 	END
-
-	SELECT @submission_type = ISNULL(@submission_type, submission_type)
-	FROM #form_data
 
 	IF @submission_type = 44702 --REMIT
 	BEGIN

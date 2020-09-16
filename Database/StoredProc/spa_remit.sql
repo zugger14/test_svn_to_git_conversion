@@ -4836,7 +4836,7 @@ BEGIN
 			INNER JOIN source_remit_non_standard srns
 			ON srns.file_export_name = tbl.reported_filename
 			UNION
-			SELECT srns.id, ROW_NUMBER() OVER(PARTITION BY srns.[process_id] ORDER BY srns.[Action_type]),  srns.source_deal_header_id, srns.deal_id, srns.process_id, 39401, tbl.reported_filename
+			SELECT srns.id, ROW_NUMBER() OVER(PARTITION BY srns.[process_id] ORDER BY srns.[Action_type]),  srns.source_deal_header_id, srns.deal_id, srns.process_id, srns.report_type, tbl.reported_filename
 			FROM  ( SELECT reported_filename
 						 FROM #temp_remit_xml_data
 						 GROUP BY reported_filename
