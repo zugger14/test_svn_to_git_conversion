@@ -144,7 +144,7 @@ BEGIN
 			@_term_start_from_to DATETIME, -- for as_of_date_to
 			@_term_start_to_from DATETIME, -- for as_of_date_from
 			@_term_start_to_to DATETIME, -- for as_of_date_to
-			@insert_query VARCHAR(1000),@insert_query1 VARCHAR(MAX)
+			@insert_query VARCHAR(MAX),@insert_query1 VARCHAR(MAX)
 	DECLARE @_added_term VARCHAR(250),
 			@_deleted_term VARCHAR(250),
 			@period_from			 INT = NULL	,
@@ -315,8 +315,10 @@ price_from	numeric(38,20)          ,
 pnl_currency_id	int        ,
 charge_type	int            ,
 create_ts	varchar(20) COLLATE DATABASE_DEFAULT        ,
-unexplained_vol	numeric(38,20)    ,
-unexplained_mtm	numeric(38,20)    )
+unexplained_vol	numeric(38,20),
+unexplained_mtm	numeric(38,20),
+change_price_to numeric(38,20),
+change_price_from numeric(38,20))
 
 SET @_st1 = 
     'INSERT INTO #book (
@@ -757,8 +759,10 @@ SET @insert_query = 'INSERT INTO #temp_explain_mtm(source_deal_header_id
 		,charge_type
 		,create_ts
 		,unexplained_vol
-		,unexplained_mtm)'     
-SET @insert_query1 =  ' SELECT sdp.source_deal_header_id,
+		,unexplained_mtm
+		,change_price_to
+		,change_price_from)    
+ SELECT sdp.source_deal_header_id,
        sdp.term_start,
        sdp.term_end,
        sdp.curve_id,
@@ -772,8 +776,7 @@ SET @insert_query1 =  ' SELECT sdp.source_deal_header_id,
        )                                begin_mtm,
        SUM(
            CASE 
-                WHEN CONVERT(VARCHAR(10), sdh.create_ts, 120) = Convert(datetime, '+''''+ CAST(@as_of_date_to AS VARCHAR) +''''+',103)
-           AND sdp.pnl_as_of_date = Convert(datetime, '+''''+ CAST(@as_of_date_to AS VARCHAR) +''''+',103) THEN sdp.und_pnl ELSE 0 END
+                WHEN sdp.pnl_as_of_date = Convert(datetime, '+''''+ CAST(@as_of_date_to AS VARCHAR) +''''+',103) AND sdpd.und_pnl IS NULL THEN sdp.und_pnl ELSE 0 END
        )                                new_mtm,
        CAST(0.00 AS NUMERIC(28, 8))     modify_MTM,
        SUM(
@@ -803,7 +806,8 @@ SET @insert_query1 =  ' SELECT sdp.source_deal_header_id,
 			   * CASE WHEN sdd.buy_sell_flag = ''s'' THEN -1 ELSE 1 END
 			   ELSE 0 
        END
-       )                                new_vol,
+       )                                new_vol, '
+SET @insert_query1 =  '
        CAST(0.00 AS NUMERIC(28, 8))     modify_vol,
        SUM(
            -1 * CASE 
@@ -860,7 +864,36 @@ SET @insert_query1 =  ' SELECT sdp.source_deal_header_id,
        291905                           charge_type,
        MAX(CONVERT(VARCHAR(10), sdh.create_ts, 120)) create_ts,
        CAST(0.00 AS NUMERIC(28, 8))     unexplained_vol,
-       CAST(0.00 AS NUMERIC(28, 8)) unexplained_mtm
+       CAST(0.00 AS NUMERIC(28, 8)) unexplained_mtm,
+	   	sum(
+           CASE WHEN sdh.option_flag = ''y'' THEN 
+                CASE WHEN sdp.pnl_as_of_date = Convert(datetime, '+''''+ CAST(@as_of_date_to AS VARCHAR) +''''+',103) THEN CAST(ISNULL(sdp.curve_value,0) AS NUMERIC(28, 8)) ELSE 0 END
+			ELSE	
+				CASE WHEN sdp.pnl_as_of_date = Convert(datetime, '+''''+ CAST(@as_of_date_to AS VARCHAR) +''''+',103) AND ISNULL(sdp.price_multiplier,0) NOT IN (0, 1) THEN 
+						CASE WHEN sdd.buy_sell_flag = ''b'' THEN 
+							(CAST(ISNULL(sdp.curve_value,0) AS NUMERIC(28, 8))-CAST((ISNULL(sdp.formula_value,0) / ISNULL(sdp.price_multiplier,0)) AS NUMERIC(28, 8)))
+						ELSE
+							(CAST((ISNULL(sdp.formula_value,0) / ISNULL(sdp.price_multiplier,0)) AS NUMERIC(28, 8))-CAST(ISNULL(sdp.curve_value,0) AS NUMERIC(28, 8)))
+						END
+					ELSE NULL
+				END
+			END
+       ) change_price_to,
+       sum(
+			CASE WHEN sdh.option_flag = ''y'' THEN 
+                CASE WHEN sdp.pnl_as_of_date = Convert(datetime, '+''''+ CAST(@as_of_date_from AS VARCHAR) +''''+',103) THEN CAST(ISNULL(sdp.curve_value,0) AS NUMERIC(28, 8)) ELSE 0 END
+			ELSE
+				CASE 
+					WHEN sdp.pnl_as_of_date = Convert(datetime, '+''''+ CAST(@as_of_date_from AS VARCHAR) +''''+',103) AND ISNULL(sdp.price_multiplier,0) NOT IN (0, 1) THEN 
+						CASE WHEN sdd.buy_sell_flag = ''b'' THEN 
+							(CAST(ISNULL(sdp.curve_value,0) AS NUMERIC(28, 8))-CAST((ISNULL(sdp.formula_value,0) / ISNULL(sdp.price_multiplier,0)) AS NUMERIC(28, 8)))
+						ELSE
+							(CAST((ISNULL(sdp.formula_value,0) / ISNULL(sdp.price_multiplier,0)) AS NUMERIC(28, 8))-CAST(ISNULL(sdp.curve_value,0) AS NUMERIC(28, 8)))
+						END
+					ELSE NULL
+				END
+			END
+       ) change_price_from
 
 FROM   source_deal_pnl_detail sdp
        INNER JOIN #source_deal_header sdh
@@ -871,6 +904,12 @@ FROM   source_deal_pnl_detail sdp
                     sdp.pnl_as_of_date = Convert(datetime, '+''''+ CAST(@as_of_date_from AS VARCHAR) +''''+',103)
                     OR sdp.pnl_as_of_date = Convert(datetime, '+''''+ CAST(@as_of_date_to AS VARCHAR) +''''+',103)
                 )
+		OUTER APPLY(SELECT sdpd.und_pnl
+					FROM source_deal_pnl_detail sdpd
+					WHERE sdpd.source_deal_header_id = sdp.source_deal_header_id
+						AND sdpd.term_start = sdp.term_start
+						AND sdpd.term_end = sdp.term_end
+						AND sdpd.pnl_as_of_date = Convert(datetime, '+''''+ CAST(@as_of_date_from AS VARCHAR) +''''+',103)) sdpd
 WHERE 1 =1  ' + CASE WHEN @period_from IS NULL AND @period_to IS NULL THEN ' ' ELSE 'AND (' END 
 				 + CASE WHEN @period_from IS NOT NULL THEN 'sdp.term_start >= CONVERT(datetime,'+''''+ CAST(@_term_start_from_from AS VARCHAR)+''''+ ',103) AND' ELSE '' END
 				 + CASE WHEN @period_to IS NOT NULL THEN ' sdp.term_end <= CONVERT(datetime,'+''''+ CAST(@_term_start_from_to AS VARCHAR)+''''+ ',103) AND' ELSE '' END
@@ -978,21 +1017,29 @@ FROM #temp_explain_mtm tem
 --Select * FROM #temp_explain_mtm
 
 
-Select as_of_date,i.source_Deal_header_id,i.term_start,i.term_end,field_id,i.leg,CASE WHEN as_of_date = @as_of_date_to THEN 1 ELSE -1 END * price price,tem.end_vol
+Select as_of_date,
+	tem.source_Deal_header_id,
+	tem.term_start,
+	tem.term_end,
+	i.field_id,
+	tem.leg,
+	CASE WHEN as_of_date = @as_of_date_to THEN 1 ELSE -1 END * CASE WHEN COALESCE(tem.change_price_to, tem.change_price_from) IS NULL THEN  i.price ELSE (ISNULL(tem.change_price_to,0)-ISNULL(tem.change_price_from,0)) END price,
+	tem.end_vol
  INTO #index_temp_table 
-
-FROM index_fees_breakdown i 
-INNER JOIN #source_deal_header sdh ON sdh.source_deal_header_id = i.source_deal_header_id 
-INNER JOIN #temp_explain_mtm tem ON tem.source_deal_header_id = sdh.source_deal_header_id 
-	AND tem.term_start = i.term_start  AND tem.term_end =i.term_end
- where (as_of_date = @as_of_date_from or as_of_date = @as_of_date_to) and field_id <>-1 
+FROM #temp_explain_mtm tem 
+INNER JOIN #source_deal_header sdh ON sdh.source_deal_header_id = tem.source_deal_header_id 
+LEFT JOIN index_fees_breakdown i ON i.source_deal_header_id = sdh.source_deal_header_id 
+	AND tem.term_start = i.term_start  
+	AND tem.term_end =i.term_end
+	AND (i.as_of_date = @as_of_date_from or i.as_of_date = @as_of_date_to) and i.field_id <>-1 
+ WHERE COALESCE(tem.change_price_to, tem.change_price_from, i.price) IS NOT NULL
 
 
 
  SELECT source_deal_header_id,term_start,term_end,field_id,leg,SUM(price)  * MAX(ABS(end_vol)) value
  INTO #index_temp_result1 
    FROM #index_temp_table   group by source_deal_header_id,term_start,term_end,field_id,leg
-    HAVING   count(field_id) > 1 
+    HAVING   count(field_id) > 1 OR MIN(field_id) IS NULL 
 
 	 SELECT source_deal_header_id,term_start,term_end,leg,SUM(value) value
  INTO #index_temp_result 
@@ -1110,7 +1157,34 @@ INSERT INTO pnl_explain_view
 ,sub_book_id
 ,deal_sub_type
 ,current_included,total_change_mtm,total_change_vol)
-SELECT a.*,b.source_curve_def_id ,su.source_uom_id, sc.source_currency_id ,
+SELECT a.source_deal_header_id
+	, a.term_start
+	, a.term_end
+	, a.curve_id
+	, a.leg
+	, a.deal_status_id
+	, a.begin_mtm
+	, a.new_mtm
+	, a.modify_MTM
+	, a.deleted_mtm
+	, a.delivered_mtm
+	, a.price_changed_mtm
+	, a.end_mtm
+	, a.begin_vol
+	, a.new_vol
+	, a.modify_vol
+	, a.deleted_vol
+	, a.end_vol
+	, a.delta_price
+	, a.delivered_vol
+	, a.price_to
+	, a.price_from
+	, a.pnl_currency_id
+	, a.charge_type
+	, CONVERT(VARCHAR, GETDATE(), 120)
+	, a.unexplained_vol
+	, a.unexplained_mtm,
+	b.source_curve_def_id ,su.source_uom_id, sc.source_currency_id,
        @as_of_date_from as_of_date_from,
        @as_of_date_to as_of_date_to,
        --@sub filter_sub_id,
@@ -1129,7 +1203,6 @@ SELECT a.*,b.source_curve_def_id ,su.source_uom_id, sc.source_currency_id ,
 	  ,@current_included
 	  ,(new_mtm+modify_mtm+deleted_mtm + delivered_mtm+price_changed_mtm) total_change_mtm  
 	  ,(new_vol+modify_vol+deleted_vol + delivered_vol) total_change_vol
-
 FROM   #temp_explain_mtm a
        INNER JOIN #source_deal_header sdh
             ON  sdh.source_deal_header_id = a.source_deal_header_id

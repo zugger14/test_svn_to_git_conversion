@@ -135,14 +135,14 @@ EXEC('INSERT INTO #attribute_type(method,attribute_type)
 
 	IF  @include_option = 0 OR @include_option = 1 AND (NULLIF(@method,0) IS  NULL OR NULLIF(@attribute_type,'') IS NULL)
 	BEGIN 
-			EXEC spa_pnl_explain_view @as_of_date_from=@_as_of_date_from,@as_of_date_to=@_as_of_date_to,@sub=@_sub,@str=@_str,@term_start = @_term_start,@term_end = @_term_end,@book=@_book,@source_deal_header_ids  = @source_deal_without_option,@index = @_index,@round = @_round,@current_included= @include_option
+			EXEC spa_pnl_explain_view @as_of_date_from=@_as_of_date_from,@as_of_date_to=@_as_of_date_to,@sub=@_sub,@str=@_str,@term_start = @_term_start,@term_end = @_term_end,@book=@_book,@source_deal_header_ids  = @_source_deal_header_ids,@index = @_index,@round = @_round,@current_included= @include_option
 		END
 		ELSE
 		BEGIN 
 			IF (NULLIF(@method,0) IS  NULL OR NULLIF(@attribute_type,'') IS NULL)
 			BEGIN
-				EXEC spa_pnl_explain_view @as_of_date_from=@_as_of_date_from,@as_of_date_to=@_as_of_date_to,@sub=@_sub,@str=@_str,@term_start = @_term_start,@term_end = @_term_end,@book=@_book,@source_deal_header_ids  = @source_deal_without_option,@index = @_index,@round = @_round,@current_included= 0
-				EXEC spa_pnl_explain_view @as_of_date_from=@_as_of_date_from,@as_of_date_to=@_as_of_date_to,@sub=@_sub,@str=@_str,@term_start = @_term_start,@term_end = @_term_end,@book=@_book,@source_deal_header_ids  = @source_deal_without_option,@index = @_index,@round = @_round,@current_included= 1
+				EXEC spa_pnl_explain_view @as_of_date_from=@_as_of_date_from,@as_of_date_to=@_as_of_date_to,@sub=@_sub,@str=@_str,@term_start = @_term_start,@term_end = @_term_end,@book=@_book,@source_deal_header_ids  = @_source_deal_header_ids,@index = @_index,@round = @_round,@current_included= 0
+				EXEC spa_pnl_explain_view @as_of_date_from=@_as_of_date_from,@as_of_date_to=@_as_of_date_to,@sub=@_sub,@str=@_str,@term_start = @_term_start,@term_end = @_term_end,@book=@_book,@source_deal_header_ids  = @_source_deal_header_ids,@index = @_index,@round = @_round,@current_included= 1
 			END
 	END
 
@@ -311,8 +311,8 @@ EXEC('INSERT INTO #attribute_type(method,attribute_type)
 			WHERE c.as_of_date = '''+@as_of_date_to  +'''')
 	
 
-	EXEC spa_calculate_pnl_using_R @input_process_table,@output_process_table
-	EXEC spa_calculate_pnl_using_R_Spread @input_process_table,@output_process_table
+	--EXEC spa_calculate_pnl_using_R @input_process_table,@output_process_table
+	--EXEC spa_calculate_pnl_using_R_Spread @input_process_table,@output_process_table
 
 
 
@@ -408,7 +408,7 @@ EXEC('DELETE pnl FROM '+@output_process_table+' a
 		,0 price_from
 		,sc.source_currency_id
 		,291905 charge_type
-		,CAST(GETDATE() AS DATE)
+		,CONVERT(VARCHAR, GETDATE(), 120)
 		,0 unexplained_vol
 		,unexplained_mtm
 		,a.curve_id
