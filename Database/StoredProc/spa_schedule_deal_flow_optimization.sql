@@ -89,26 +89,28 @@ SET NOCOUNT ON
 	
 	-- SPA parameter values
 
+	
+	--100984	1	2010-01-01 00:00:00.000	NULL	44A9118E_FBF1_49B2_AB65_7DC26BC03AB3
 
-	--2002-03-01 00:00:00.000	2002-03-01 00:00:00.000	7FEEAC3F_B49C_4AB6_971C_FDD5AACE5ACB	flow_auto	1158	0	982	-1	102282
-
-	select @flag = 'i'
+	select 
+	@flag = 'i'
 	, @box_ids = '1'
-	, @flow_date_from = '2002-03-01'
-	, @flow_date_to = '2002-03-01'
+	, @flow_date_from = '2010-01-01'
+	, @flow_date_to = '2010-01-01'
 	, @sub = NULL
 	, @str = NULL
 	, @book = NULL
 	, @sub_book = NULL
-	, @contract_process_id = '7FEEAC3F_B49C_4AB6_971C_FDD5AACE5ACB'
+	, @contract_process_id = '445BA32C_FA9C_4DAC_9740_A24735C69552'
 	, @from_priority = NULL
 	, @to_priority = NULL
 	, @call_from = 'flow_auto'
 	, @target_uom = 1158
-	, @reschedule = 0
+	, @reschedule = 1
 	, @granularity = 982
 	, @receipt_deals_id  = -1 
-	, @delivery_deals_id  = 102282
+	, @delivery_deals_id  = 100984
+
 
 
 --transport_deal_id	deal_volume		up_down_stream	source_deal_header_id
@@ -3753,10 +3755,10 @@ BEGIN --Data Prepararion
 
 	CREATE TABLE #exclude_product_group(product_name NVARCHAR(500) COLLATE DATABASE_DEFAULT)
 
-	INSERT INTO #exclude_product_group
-	SELECT 'Complex-EEX' UNION ALL
-	SELECT 'Complex-LTO' UNION ALL
-	SELECT 'Complex-ROD'
+	--INSERT INTO #exclude_product_group
+	--SELECT 'Complex-EEX' UNION ALL
+	--SELECT 'Complex-LTO' UNION ALL
+	--SELECT 'Complex-ROD'
 	
 	IF @call_from = 'flow_auto'
 	BEGIN
@@ -3901,7 +3903,7 @@ BEGIN --Data Prepararion
 			AND sdh.deal_id LIKE 'WTHD[_]%'
 			--AND epg.product_name IS NULL
 
-
+		--Remove sell lto deal in case of 'b' deal and vice versa
 		IF  CHARINDEX(',', @delivery_deals_id) = 0 
 		BEGIN 
 			IF EXISTS(			
@@ -4225,7 +4227,6 @@ IF @call_from IN('flow_match', 'match', 'main_menu', 'flow_auto', 'flow_auto_non
 BEGIN
 	DELETE FROM #existing_deals
 END 
-
 
 
 BEGIN -- Insert/Update Deal data 
@@ -4942,7 +4943,7 @@ BEGIN -- Insert/Update Deal data
 	INTO  #inserted_deal_detail111 -- SELECT * FROM #inserted_deal_detail111
 	FROM #inserted_deal_detail
 
-	IF @call_from IN( 'flow_opt', 'flow_auto', 'flow_auto_non_complex') AND @is_hourly_calc = 1
+	IF @call_from IN( 'flow_opt', 'flow_auto') AND @is_hourly_calc = 1
 	BEGIN
 
 
@@ -5010,7 +5011,7 @@ BEGIN -- Insert/Update Deal data
 					LEFT JOIN static_data_value sdv
 						ON sdv.value_id = sdh.internal_portfolio_id
 						AND sdv.type_id = 39800
-					WHERE ISNULL(sdv.code, ''-1'') <> ''Complex-LTO''
+					WHERE ISNULL(sdv.code, ''-1'') NOT IN (''Complex-LTO'', ''Autopath Only'')
 					'
 		EXEC(@sql)
 
