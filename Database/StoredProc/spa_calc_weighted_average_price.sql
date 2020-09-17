@@ -554,6 +554,7 @@ SELECT source_deal_header_id
 	, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
 	, val volume
 	, granularity
+	, deal_volume_frequency
 INTO #temp_position
 FROM (
 SELECT rhpd.source_deal_header_id
@@ -562,6 +563,7 @@ SELECT rhpd.source_deal_header_id
 		, hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
 		, rhpd.[period]
 		, rhpd.granularity	
+		, d.deal_volume_frequency	
 	FROM #collect_deals d
 	INNER JOIN report_hourly_position_deal	rhpd ON rhpd.source_deal_header_id = d.source_deal_header_id
 		AND rhpd.term_start BETWEEN d.term_start AND d.term_end
@@ -586,6 +588,7 @@ SELECT source_deal_header_id
 	, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
 	, val volume
 	, granularity
+	, deal_volume_frequency	
 FROM (
 	SELECT rhpd.source_deal_header_id
 		, d.source_deal_detail_id
@@ -593,6 +596,7 @@ FROM (
 		, hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
 		, rhpd.[period]
 		, rhpd.granularity	
+		, d.deal_volume_frequency	
 	FROM #collect_deals d
 	INNER JOIN report_hourly_position_profile rhpd ON rhpd.source_deal_header_id = d.source_deal_header_id
 		AND rhpd.term_start BETWEEN d.term_start AND d.term_end
@@ -699,6 +703,7 @@ IF OBJECT_ID(N'tempdb..#original_deal') IS NOT NULL
 		, cd.contract_id
 		, cd.template_id
 		, cd.structured_deal_id
+		, tp.deal_volume_frequency
 	INTO #original_deal
 	--select top 1 * from #collect_deals
 	FROM #src_term_breakdown src
@@ -891,7 +896,7 @@ SET @sql = '
 		, ' + CASE WHEN @aggregation_level = 980 THEN '0'
 				ELSE 'pv.is_dst'
 			END + ' is_dst
-		, AVG(pv.total_volume) volume
+		, CASE WHEN MAX(pv.deal_volume_frequency) = ''m'' then SUM(pv.total_volume) ELSE AVG(pv.total_volume) END volume
 		, AVG(pv.wap) price
 		, MAX(pv.internal_desk_id) internal_desk_id
 		, AVG(pv.pfc_wap) pfc_price
