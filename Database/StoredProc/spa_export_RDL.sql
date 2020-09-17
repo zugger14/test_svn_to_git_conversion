@@ -23,7 +23,7 @@ GO
 -- ===============================================================================================================
 CREATE PROCEDURE [dbo].[spa_export_RDL]
     @report_RDL_name NVARCHAR(1000),
-	@parameters NVARCHAR(1000),
+	@parameters NVARCHAR(MAX),
 	@OutputFileFormat NVARCHAR(25),
 	@output_filename NVARCHAR(1000),
 	@process_id nvarchar(1024) = NULL,

@@ -42,7 +42,7 @@ GO
 */
 
 CREATE PROCEDURE [dbo].[spa_rfx_export_report_job] 
-	  @report_param				VARCHAR(8000)		
+	  @report_param				VARCHAR(MAX)		
 	, @proc_desc				VARCHAR (100)		
 	, @user_login_id			VARCHAR(50)			
 	, @report_RDL_name			VARCHAR(5000)		
@@ -166,8 +166,8 @@ DECLARE @db_name                 	VARCHAR(50)
 DECLARE @error_found             	INT -- 1 means true 0 means false
 DECLARE @source                  	VARCHAR(20),
         @source_system_name      	VARCHAR(100)
-DECLARE @report_param_success       	VARCHAR(8000) = '',
-        @report_param_failed        	VARCHAR(8000),        
+DECLARE @report_param_success       	VARCHAR(MAX) = '',
+        @report_param_failed        	VARCHAR(MAX),        
         @ftp_export_cmd_success   	VARCHAR(8000),
         @ftp_export_cmd_failed    	VARCHAR(8000),
         @ftp_desc_success         	VARCHAR(5000),
