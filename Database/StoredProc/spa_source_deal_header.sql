@@ -2104,9 +2104,13 @@ BEGIN
 
 		EXEC spa_register_event 20601, 10000322, @alert_process_table, 0, @deal_lock_process_id
 
-		--EXEC spa_insert_update_audit 'u', @audit_ids	
+		EXEC spa_insert_update_audit 'u', @audit_ids
 		
-		SET @after_update_process_table = dbo.FNAProcessTableName('after_insert_process_table', @user_name, @job_process_id)
+		/*
+			Commented below part because, locking/unlocking deal expects the deal to get locked/unlocked and the audit part needs to be done.
+			Re-enable if needed for new case.
+		*/
+		/* SET @after_update_process_table = dbo.FNAProcessTableName('after_insert_process_table', @user_name, @job_process_id)
 		
 		IF OBJECT_ID(@after_update_process_table) IS NOT NULL
 		BEGIN
@@ -2123,7 +2127,7 @@ BEGIN
 		SET @sql = 'spa_deal_insert_update_jobs ''u'', ''' + @after_update_process_table + ''''
 		SET @job_name = 'spa_deal_insert_update_jobs_' + @job_process_id
  		
-		EXEC spa_run_sp_as_job @job_name, @sql, 'spa_deal_insert_update_jobs', @user_name
+		EXEC spa_run_sp_as_job @job_name, @sql, 'spa_deal_insert_update_jobs', @user_name */
 
 		SET @desc = 'Deal(s) successfully ' + CASE WHEN @lock_unlock = 'y' THEN ' locked. ' ELSE ' unlocked.' END		
 		EXEC spa_ErrorHandler 0
