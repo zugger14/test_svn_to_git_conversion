@@ -3,6 +3,7 @@ DECLARE @job_db_name NVARCHAR(250) = DB_NAME()
 DECLARE @job_owner NVARCHAR(100) = dbo.FNAAppAdminID()
 DECLARE @job_category NVARCHAR(150) = N'Import'
 DECLARE @job_name NVARCHAR(500) = @job_db_name + N' - ' + @job_category + N' - Storage ST'
+DECLARE @db_single_user NVARCHAR(100) = SYSTEM_USER
 
 DECLARE @command1 NVARCHAR(MAX) = CAST('' AS NVARCHAR(MAX)) +  ' DECLARE @contextinfo VARBINARY(128)
 					  SELECT @contextinfo = CONVERT(VARBINARY(128), '''+ CAST(@job_owner AS NVARCHAR(MAX)) +''')
@@ -245,6 +246,7 @@ SET @command1 +=
 							FROM #temp_position tp
 							INNER JOIN #process_deals pd ON pd.deal_id = tp.deal_id_to_process
 							LEFT JOIN #source_deal_detail_hour sddh ON sddh.source_deal_detail_id = tp.source_deal_detail_id
+								AND sddh.term_date = tp.term_start
 								AND sddh.hr = tp.hr
 								AND sddh.period = tp.period
 								AND sddh.is_dst = tp.is_dst
@@ -313,7 +315,7 @@ EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=@job_name,
 		@delete_level=0, 
 		@description=N'Pick position of deals with subbook and template defined in mapping table.', 
 		@category_name=@job_category, 
-		@owner_login_name= N'trm_enercity_db_user', 
+		@owner_login_name= @db_single_user,	--N'trm_enercity_db_user', 
 		@job_id = @jobId OUTPUT
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 /****** Object:  Step [Step1]    Script Date: 9/10/2020 2:15:46 PM ******/
