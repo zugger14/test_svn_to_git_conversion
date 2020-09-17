@@ -777,9 +777,12 @@ SET @sql = CAST('' AS NVARCHAR(MAX)) + N'
 		, IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, NULL, spc.curve_value) pfc_price
 		, IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, NULL,(IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume)*spc.curve_value)
 			) delta_pfc_price
-		, IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) + org.original_volume total_volume
+		, IIF(gmv.clm1_value = 112707,src.uploaded_volume
+			, IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) + org.original_volume
+		)
+		total_volume
 		, IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, src.uploaded_fixed_price,
-			IIF( org.template_id = ' + CAST(@stg_withdrawal_template_id AS NVARCHAR(20)) + ', ISNULL(csw.wacog,0),
+			IIF( org.template_id = ' + CAST(@stg_withdrawal_template_id AS NVARCHAR(20)) + ' AND gmv.clm1_value <> 112707, ISNULL(csw.wacog,0),
 			(org.original_volume*org.original_price 
 				+ IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) * spc.curve_value
 				)/CASE WHEN IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) 
@@ -808,7 +811,7 @@ SET @sql = CAST('' AS NVARCHAR(MAX)) + N'
 
 IF @mapping_id = 112704	--Storage case check template and delivery path if defined in generic mapping.
 BEGIN
-	SET @sql += ' OUTER APPLY(SELECT DISTINCT gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
+	SET @sql += ' OUTER APPLY(SELECT DISTINCT gmv.clm1_value, gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
 			FROM #generic_mapping_values gmv
 			LEFT JOIN source_deal_header sdh ON ISNULL(gmv.clm13_value,sdh.template_id) = sdh.template_id
 				AND sdh.source_deal_header_id = ISNULL(org.structured_deal_id,org.source_deal_header_id)
@@ -825,14 +828,17 @@ BEGIN
 END
 ELSE  IF @mapping_id = 112707	--Storage ST case check offset deal defined in generic mapping.
 BEGIN
-	SET @sql += ' OUTER APPLY(SELECT DISTINCT gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
+	SET @sql += ' 
+	OUTER APPLY(SELECT DISTINCT gmv.clm1_value, gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
 			FROM #generic_mapping_values gmv
-			INNER JOIN source_deal_header sdh ON sdh.deal_id = gmv.clm15_value		
+			INNER JOIN source_deal_header sdh ON sdh.deal_id = gmv.clm15_value	
+			WHERE sdh.deal_id = org.deal_id
 		) gmv'
 END
 ELSE
 BEGIN
-	SET @sql += ' OUTER APPLY(SELECT DISTINCT gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
+	SET @sql += ' 
+	OUTER APPLY(SELECT DISTINCT gmv.clm1_value, gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
 			FROM #generic_mapping_values gmv		
 		) gmv'
 END
@@ -916,4 +922,3 @@ SET @sql = '
 	IF @debug_mode = 1
 	EXEC('select ''final data'', * from ' + @calc_process_table + ' order by deal_id,term_start,term_end,hr,period,is_dst' )
 END
-
