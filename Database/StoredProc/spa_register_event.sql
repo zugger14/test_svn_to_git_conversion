@@ -411,7 +411,7 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			SET @job_name = ''Alert_Job_'' + CAST(@alert_id AS NVARCHAR) + ''_' + CAST(CAST(RAND()*100 AS INT) AS NVARCHAR) + '_'' + CAST(@workflow_group_id AS NVARCHAR) + ''_'' + ''' + @process_id + '''' + '
+			SET @job_name = ''Alert_Job_'' + CAST(@alert_id AS NVARCHAR) + ''_'' + CAST(CAST(RAND()*100 AS INT) AS NVARCHAR)+ ''_'' + CAST(@workflow_group_id AS NVARCHAR) + ''_'' + ''' + @process_id + '''' + '
 			EXEC spa_run_sp_as_job @job_name, @sql_statement, @job_name, ''' + @user_login_id + ''',' + 'NULL, NULL, NULL
 		END
 	END		
