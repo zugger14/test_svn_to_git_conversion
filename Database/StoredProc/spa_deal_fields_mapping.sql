@@ -78,7 +78,7 @@ SELECT @flag='s',@deal_id='11110',@counterparty_id='8904',@deal_fields='tier_val
 -------------------------------------------------*/
 SET NOCOUNT ON
 
-DECLARE @sql NVARCHAR(MAX)
+DECLARE @sql NVARCHAR(MAX), @shipper_default_value INT
 SET @location_id = NULLIF(@location_id, 0)
 SET @default_value = NULLIF(@default_value, 0)
 SET @counterparty_id = NULLIF(@counterparty_id, 0)
@@ -1145,6 +1145,31 @@ BEGIN
 					AND tcsc.shipper_code_id = a.shipper_code_id 
 			) 
 			ORDER BY shipper_code ASC 
+
+			IF NULLIF(@default_value, '') IS NULL			
+			BEGIN
+				SELECT TOP 1 @latest_start_eff_dt = effective_date 
+				FROM #temp_collect_shipper_code 			
+				ORDER BY effective_date DESC
+
+				SELECT TOP 1 @shipper_default_value = shipper_code_id
+				FROM #temp_collect_shipper_code tcsc
+				INNER JOIN #temp_combo tc ON tc.value = tcsc.shipper_code_id
+				OUTER APPLY ( SELECT TOP 1 effective_date 
+					FROM #temp_collect_shipper_code WHERE YEAR(effective_date) = YEAR(@latest_start_eff_dt) 
+					AND MONTH(@latest_start_eff_dt) = MONTH(effective_date)
+					ORDER BY shipper_code ASC
+				) a
+				WHERE tcsc.effective_date = CASE WHEN (MONTH(tcsc.effective_date) = MONTH(@term_start) AND YEAR(tcsc.effective_date) = YEAR(@term_start) )
+										THEN tcsc.effective_date 
+										WHEN (
+											MONTH(tcsc.effective_date) < MONTH(@term_start) AND YEAR(tcsc.effective_date) = YEAR(@term_start) 
+											OR (YEAR(tcsc.effective_date) < YEAR(@term_start) AND tcsc.effective_date < @term_start) 
+											) THEN a.effective_date
+										END
+				ORDER BY shipper_code ASC
+			END
+
 		END
 	END
 	IF @deal_fields <> 'counterparty_trader' AND @deal_fields <> 'counterparty2_trader' AND @deal_fields <> 'contract_id' AND @deal_fields <> 'tier_value_id' AND @deal_fields <> 'reporting_tier_id' AND @deal_fields <> 'shipper_code2' AND @deal_fields <> 'shipper_code1'
@@ -1172,6 +1197,11 @@ BEGIN
 
 	IF @flag = 'v'
 	BEGIN
+		IF @deal_fields IN ('shipper_code1', 'shipper_code2') 
+		BEGIN 
+			SET @default_value = @shipper_default_value 
+		END
+
 		SET @json_string = @default_value
 		RETURN
 	END
