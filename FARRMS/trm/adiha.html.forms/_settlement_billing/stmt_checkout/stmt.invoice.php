@@ -153,7 +153,7 @@
         if(invoice_id) {
             SettlementInvoice.filter_form.setItemValue("invoice_number",invoice_id);
             SettlementInvoice.refresh_grid(); 
-            SettlementInvoice.create_tab('tab_' + invoice_id, '','','','','',true);
+          SettlementInvoice.create_tab('tab_' + invoice_id, '','','','','',true);  
         }
     }); 
 
@@ -244,7 +244,7 @@
         var is_voided  = SettlementInvoice.filter_form.getItemValue('is_voided',true); 
         var accounting_month = SettlementInvoice.filter_form.getItemValue('accounting_month',true);
         var pay_status  = SettlementInvoice.filter_form.getItemValue('payment_status',true);  
-        var invoice_number  = SettlementInvoice.filter_form.getItemValue('invoice_number',true);
+        var invoice_number  = SettlementInvoice.filter_form.getItemValue('invoice_number',true); 
         
         var counterparty_combo_obj = SettlementInvoice.filter_form.getCombo('counterparty_id');
         counterparty_id = counterparty_combo_obj.getChecked().toString();
@@ -297,19 +297,23 @@
             "grouping_column"       :"counterparty,contract,invoice_number"
         };
 
+        var active_detail_tab = SettlementInvoice.tabbar.getActiveTab();
+        var ids = SettlementInvoice.tabbar.getAllTabs();
+        ids.forEach(function(tab_id) {
+            SettlementInvoice.create_tab(tab_id, '','','','','',true); 
+
+        });
+  
+
         var data = $.param(sql);
         var data_url = js_data_collector_url + "&" + data;        
         SettlementInvoice.grid.clearAndLoad(data_url, function() { 
             SettlementInvoice.grid.expandAll();
             SettlementInvoice.layout.cells('c').progressOff();
         });
-
-        var active_detail_tab = SettlementInvoice.tabbar.getActiveTab();
-        var ids = SettlementInvoice.tabbar.getAllTabs();
-        ids.forEach(function(tab_id) {
-            SettlementInvoice.create_tab(tab_id, '','','','','',true);
-
-        });
+      
+        
+      
     }
 
     SettlementInvoice.form_load_complete_function = function (win, full_id) {
@@ -947,6 +951,14 @@
                         win.attachURL("stmt.update.invoice.status.php", null, xml_json);
                         win.attachEvent("onClose", function(win){
                             SettlementInvoice.refresh_grid();
+                            var active_tab = SettlementInvoice.tabbar.getActiveTab()
+                            var ids = SettlementInvoice.tabbar.getAllTabs();
+                                if(active_tab) {
+                                    ids.forEach(function(active_tab){
+                                        delete SettlementInvoice.pages[active_tab];
+                                        SettlementInvoice.tabbar.tabs(active_tab).close();
+                                    })
+                                }
                             return true;
                         });
                     }          
