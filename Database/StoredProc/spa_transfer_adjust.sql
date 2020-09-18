@@ -17,7 +17,7 @@ GO
 */
 
 
---exec spa_transfer_adjust 100766
+--exec spa_transfer_adjust 101014
 
 CREATE PROCEDURE spa_transfer_adjust
 	@source_deal_header_id INT
@@ -43,7 +43,7 @@ EXEC spa_print 'Use spa_print instead of PRINT statement in debug mode.'
 --Drops all temp tables created in this scope.
 EXEC [spa_drop_all_temp_table] 
 
-DECLARE @source_deal_header_id INT = 98034 --s
+DECLARE @source_deal_header_id INT = 101014 --s
 --DECLARE @source_deal_header_id INT = 100903 --b
 --DECLARE @source_deal_header_id INT = 100573 -- 100582 --s(1) -- 100573 --s (22) --100546 -b (1)
  
@@ -54,6 +54,7 @@ DECLARE @source_deal_header_id INT = 98034 --s
 --*/
 
 --select top 10 * from  source_deal_header order by 1 desc
+
 
 SET NOCOUNT ON
 
@@ -97,7 +98,7 @@ IF EXISTS (
 			SELECT 1 FROM source_deal_header sdh
 			INNER JOIN source_deal_type sdt
 				ON sdt.source_deal_Type_id = sdh.source_deal_Type_id
-			WHERE deal_type_id in ( 'physical', 'storage')
+			WHERE deal_type_id IN ( 'physical', 'storage')
 )
 BEGIN
 	SET @should_auto_path_calc = 1
@@ -189,7 +190,6 @@ CREATE TABLE #temp_volume_capacity (
 	, volume NUMERIC(38,20)
 )
   
-
 
 IF @product_group = 'Complex-EEX'
 BEGIN
@@ -626,7 +626,7 @@ BEGIN
 						AND sdv.type_id = 39800
 					INNER JOIN source_deal_detail sdd
 						ON sdd.source_deal_header_id = sdh.source_deal_header_id
-					WHERE udf_value = @source_deal_header_id
+					WHERE udf_value = CAST(@source_deal_header_id AS NVARCHAR(10))
 						AND sdht.template_name = 'Transportation NG'
 						AND sdv.code = 'Complex-LTO'
 					GROUP BY sdh.source_deal_header_id
@@ -1104,7 +1104,7 @@ BEGIN
 							AND sdv.type_id = 39800
 						INNER JOIN source_deal_detail sdd
 							ON sdd.source_deal_header_id = sdh.source_deal_header_id
-						WHERE udf_value = @source_deal_header_id
+						WHERE udf_value = CAST(@source_deal_header_id AS NVARCHAR(10))
 							AND sdht.template_name = 'Transportation NG'
 							AND sdv.code = 'Complex-ROD'
 						GROUP BY sdh.source_deal_header_id
@@ -1342,7 +1342,7 @@ BEGIN
 	END
 
 END 
-ELSE IF  @product_group IS NULL AND @should_auto_path_calc = 1
+ELSE IF @product_group = 'Autopath Only' AND @should_auto_path_calc = 1
 BEGIN
 	SELECT @path_id = uddf.udf_value
 	FROM source_deal_header sdh
@@ -1370,20 +1370,31 @@ BEGIN
 	SET @flow_date_from = @deal_term_start -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_start, 'f')
 	SET @flow_date_to = @deal_term_end -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_end, 'f')
 
-
 	WHILE (@flow_date_from <= @flow_date_to)
 	BEGIN
 		SET @process_id = dbo.FNAGetNewID()
 
 		IF EXISTS(
-			SELECT source_deal_header_id FROM optimizer_detail WHERE flow_date = @flow_date_from AND source_deal_header_id = @source_deal_header_id
-			UNION ALL
-			SELECT source_deal_header_id FROM optimizer_detail_downstream WHERE flow_date = @flow_date_from AND source_deal_header_id = @source_deal_header_id
-			UNION ALL
-			SELECT source_deal_header_id FROM optimizer_detail_hour WHERE flow_date = @flow_date_from AND source_deal_header_id = @source_deal_header_id
-			UNION ALL
-			SELECT source_deal_header_id FROM optimizer_detail_downstream_hour WHERE flow_date = @flow_date_from AND source_deal_header_id = @source_deal_header_id
-		)
+			SELECT  sdh.source_deal_header_id
+						FROM user_defined_deal_fields uddf	
+						INNER JOIN source_deal_header sdh
+							ON sdh.source_deal_header_id = uddf.source_deal_header_id
+						INNER JOIN user_defined_deal_fields_template uddft
+							ON sdh.template_id = uddft.template_id 
+							AND uddf.udf_template_id = uddft.udf_template_id	
+							AND uddft.field_label = 'From Deal'
+						INNER JOIN source_deal_header_template sdht
+							ON sdht.template_id = sdh.template_id 
+						INNER JOIN static_data_value sdv
+							ON sdv.value_id = sdh.internal_portfolio_id
+							AND sdv.type_id = 39800
+						INNER JOIN source_deal_detail sdd
+							ON sdd.source_deal_header_id = sdh.source_deal_header_id
+						WHERE udf_value = CAST(@source_deal_header_id AS NVARCHAR(10))
+							AND sdht.template_name = 'Transportation NG'
+							AND sdv.code = @product_group
+						GROUP BY sdh.source_deal_header_id
+						HAVING MIN (sdd.term_start) BETWEEN @flow_date_from AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')		)
 		BEGIN
 			SET @reschedule = 1
 		END
@@ -1392,9 +1403,7 @@ BEGIN
 			SET @reschedule = 0
 		END
 
-		--select @source_deal_header_id, @reschedule, @flow_date_from, @transport_deal_id, @process_id
-		--return;
-
+		--select @source_deal_header_id, @reschedule, @flow_date_from, @transport_deal_id, @process_id return;
 
 		EXEC [dbo].[spa_auto_deal_schedule]
 			@source_deal_header_id = @source_deal_header_id,
@@ -1403,9 +1412,161 @@ BEGIN
 			@transport_deal_id = @transport_deal_id,
 			@process_id = @process_id
 			
+		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
+
+		SET @sql = '
+			INSERT INTO #temp_transport_deal
+			SELECT sdh.source_deal_header_id 
+					, CASE LEFT(deal_id, 4) 
+						WHEN ''schd'' THEN ''Transport''
+							WHEN ''WTHD'' THEN ''Withdrawal''
+							WHEN ''INJC'' THEN ''Injection''
+					END,
+					''' + CAST(@flow_date_from AS VARCHAR(50)) + '''
+			FROM '+ @inserted_updated_deals + ' iud
+			INNER JOIN source_deal_header sdh
+				ON iud.source_deal_header_id = sdh.source_deal_header_id
+			WHERE is_inserted = 1 
+				OR  (	is_inserted = 0  
+						AND internal_portfolio_id = ' + CAST(@product_group_id AS VARCHAR(10)) + 
+					')'
+		EXEC(@sql)
+			
 		SET @flow_date_from =  [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, 1, @flow_date_from), 'f')
 
+	END
 
+	INSERT INTO #temp_updated_deals(source_deal_header_id)
+	SELECT source_deal_header_id
+	FROM #temp_transport_deal
+	--WHERE type IN ('Transport', 'Withdrawal')
+
+	DELETE FROM #temp_transport_deal 
+	WHERE type = 'Withdrawal' 
+		AND @header_buy_sell_flag = 'b'
+
+	IF EXISTS(SELECT 1 FROM #temp_transport_deal WHERE type = 'Transport')
+	BEGIN
+
+		UPDATE uddf
+			SET uddf.udf_value = @source_deal_header_id	
+		FROM #temp_transport_deal ttd
+		INNER JOIN user_defined_deal_fields uddf
+			ON ttd.source_deal_header_id = uddf.source_deal_header_id
+		INNER JOIN source_deal_header sdh
+			ON sdh.source_deal_header_id = uddf.source_deal_header_id
+		INNER JOIN user_defined_deal_fields_template uddft
+			ON sdh.template_id = uddft.template_id 
+			AND uddf.udf_template_id = uddft.udf_template_id	
+			AND uddft.field_label = 'From Deal' 
+
+		INSERT INTO #temp_volume
+		SELECT term_start
+			, RIGHT( '0' + SUBSTRING(hr, 3, LEN(hr)), 2) + ':00'  hr
+			, 0 AS is_dst 
+			, MIN(granularity) granularity			
+			, NULLIF(SUM(volume),0) volume
+		FROM 
+		(
+		SELECT d.source_deal_header_id, term_start, granularity
+			, hr1, hr2, hr3, hr4, hr5, hr6, hr7
+			, hr8, hr9, hr10, hr11, hr12, hr13
+			, hr14, hr15, hr16, hr17, hr18, hr19
+			, hr20, hr21, hr22, hr23, hr24
+		FROM report_hourly_position_deal d
+		INNER JOIN SplitCommaSeperatedValues (@all_physical_deals) t
+			ON d.source_deal_header_id = t.item
+		UNION ALL
+		SELECT p.source_deal_header_id, term_start, granularity
+			, hr1, hr2, hr3, hr4, hr5, hr6, hr7
+			, hr8, hr9, hr10, hr11, hr12, hr13
+			, hr14, hr15, hr16, hr17, hr18, hr19
+			, hr20, hr21, hr22, hr23, hr24
+		FROM report_hourly_position_profile p
+		INNER JOIN SplitCommaSeperatedValues (@all_physical_deals) t
+			ON p.source_deal_header_id = t.item
+		) p
+		UNPIVOT
+		(
+			volume FOR hr IN (
+				hr1, hr2, hr3, hr4, hr5, hr6, hr7
+				, hr8, hr9, hr10, hr11, hr12, hr13
+				, hr14, hr15, hr16, hr17, hr18, hr19
+				, hr20, hr21, hr22, hr23, hr24
+			)
+		) unpvt
+		GROUP BY term_start, hr
+		
+		UPDATE sddh
+		SET volume = ABS(tv.volume)
+		FROM #temp_transport_deal ttd
+		INNER JOIN source_deal_detail sdd
+			ON ttd.source_deal_header_id = sdd.source_deal_header_id 
+			AND sdd.term_start BETWEEN ttd.flow_date AND EOMONTH(ttd.flow_date)
+		INNER JOIN 	#temp_volume tv
+			ON tv.term_date = sdd.term_start 
+			AND sdd.source_deal_header_id = ttd.source_deal_header_id
+		INNER JOIN source_deal_detail_hour sddh 
+			ON tv.term_date = sddh.term_date
+			AND tv.hr = sddh.hr
+			AND tv.is_dst = sddh.is_dst
+			AND tv.granularity = sddh.granularity
+			AND sddh.source_deal_detail_id = sdd.source_deal_detail_id
+
+		INSERT INTO source_deal_detail_hour (
+										source_deal_detail_id
+										, term_date
+										, hr
+										, is_dst
+										, volume
+										, granularity
+									)
+		SELECT sdd.source_deal_detail_id
+			, tv.term_date
+			, tv.hr
+			, tv.is_dst
+			, ABS(tv.volume)
+			, tv.granularity		
+		FROM #temp_transport_deal ttd
+		INNER JOIN source_deal_detail sdd
+			ON ttd.source_deal_header_id = sdd.source_deal_header_id 
+			AND sdd.term_start BETWEEN ttd.flow_date AND EOMONTH(ttd.flow_date)
+		INNER JOIN 	#temp_volume tv
+			ON tv.term_date = sdd.term_start 
+			AND sdd.source_deal_header_id = ttd.source_deal_header_id
+		LEFT JOIN source_deal_detail_hour sddh 
+			ON tv.term_date = sddh.term_date
+			AND tv.hr = sddh.hr
+			AND tv.is_dst = sddh.is_dst
+			AND tv.granularity = sddh.granularity
+			AND sddh.source_deal_detail_id = sdd.source_deal_detail_id
+		WHERE sddh.source_deal_detail_id IS NULL
+
+		UPDATE sdh 
+			SET internal_portfolio_id = @product_group_id
+		FROM source_deal_header sdh
+		INNER JOIN #temp_transport_deal ttd
+			ON sdh.source_deal_header_id = ttd.source_deal_header_id	
+	END 
+	
+	IF EXISTS(SELECT 1 FROM #temp_updated_deals)
+	BEGIN
+
+		SET @after_insert_process_table = dbo.FNAProcessTableName('after_insert_process_table', @user_name, @job_process_id)
+			
+		IF OBJECT_ID(@after_insert_process_table) IS NOT NULL
+		BEGIN
+			EXEC('DROP TABLE ' + @after_insert_process_table)
+		END
+	
+		EXEC ('CREATE TABLE ' + @after_insert_process_table + '(source_deal_header_id INT)')
+
+		SET @sql = 'INSERT INTO ' + @after_insert_process_table + '(source_deal_header_id) 
+					SELECT source_deal_header_id FROM #temp_updated_deals
+					'
+		EXEC(@sql)
+
+		EXEC spa_deal_insert_update_jobs 'i', @after_insert_process_table
 
 	END
 

@@ -5818,7 +5818,7 @@ BEGIN TRY
 
 	--AUTO DEAL SCHEDULE BLOCK
 	BEGIN
-		IF EXISTS( SELECT  uddf.udf_value
+		IF EXISTS( SELECT   1-- uddf.udf_value
                FROM source_deal_header sdh
                INNER JOIN user_defined_deal_fields_template_main uddft
                    ON uddft.template_id = sdh.template_id
@@ -5829,7 +5829,17 @@ BEGIN TRY
                    ON udft.field_id = uddft.field_id
 				INNER JOIN source_Deal_type sdt
 					ON sdt.source_Deal_type_id = sdh.source_Deal_type_id
-               WHERE sdh.source_deal_header_id =  @source_deal_header_id --7385 --
+				INNER JOIN static_data_value sdv
+					ON sdv.value_id = sdh.internal_portfolio_id
+					AND sdv.type_id = 39800
+					AND sdv.code IN (						
+						'Complex-EEX'
+						,'Complex-LTO'
+						,'Complex-ROD'
+						,'Autopath Only'
+					)
+               WHERE sdh.source_deal_header_id = @source_deal_header_id --7385 --
+
                    AND udft.Field_label = 'Delivery Path'
                    AND NULLIF(uddf.udf_value, '') IS NOT NULL
 				     AND sdt.deal_type_id <> 'Transportation'

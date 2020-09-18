@@ -92,24 +92,23 @@ SET NOCOUNT ON
 	
 	--100984	1	2010-01-01 00:00:00.000	NULL	44A9118E_FBF1_49B2_AB65_7DC26BC03AB3
 
-	select 
-	@flag = 'i'
+select 	@flag = 'i'
 	, @box_ids = '1'
-	, @flow_date_from = '2010-01-01'
-	, @flow_date_to = '2010-01-01'
+	, @flow_date_from = '2012-01-01'
+	, @flow_date_to =  '2012-01-01'
 	, @sub = NULL
 	, @str = NULL
 	, @book = NULL
 	, @sub_book = NULL
-	, @contract_process_id = '445BA32C_FA9C_4DAC_9740_A24735C69552'
+	, @contract_process_id = '99356353_1C24_4780_B640_DBC1DE6F9234'
 	, @from_priority = NULL
 	, @to_priority = NULL
 	, @call_from = 'flow_auto'
 	, @target_uom = 1158
-	, @reschedule = 1
+	, @reschedule = 0
 	, @granularity = 982
 	, @receipt_deals_id  = -1 
-	, @delivery_deals_id  = 100984
+	, @delivery_deals_id  = 101014
 
 
 
@@ -220,7 +219,7 @@ FROM static_data_value sdv
 WHERE sdv.value_id = @to_priority
 
 SELECT CAST(clm1_value AS INT) pipeline
-	, CAST(clm2_value AS INT) sub_book_id
+	, CAST(clm2_value AS INT) sub_book_id	   
 	, CAST(clm3_value AS INT) path_id	   
 INTO #gen_nomination_mapping
 FROM generic_mapping_header h 
@@ -4234,7 +4233,6 @@ BEGIN
 	DELETE FROM #existing_deals
 END 
 
-
 BEGIN -- Insert/Update Deal data 
 --begin transaction t1;
 	INSERT INTO [dbo].[source_deal_header]
@@ -4956,70 +4954,25 @@ BEGIN -- Insert/Update Deal data
 
 		--Add hour volume in case of incremental schedule
 		--update hour volume in case of reschedule
-		/*
-		IF @call_from IN( 'flow_auto','flow_auto_non_complex')
+	
+		IF @call_from <> 'flow_auto'
 		BEGIN
-			
-			UPDATE sddh
-				SET sddh.volume = IIF(@reschedule = 1, sddh.volume, NULLIF(ISNULL(sddh.volume, 0) + ISNULL(sddh_m.volume, 0), 0))
-			FROM #inserted_deal_detail idd
-			INNER JOIN source_deal_detail_hour sddh_m
-				ON idd.term_start = sddh_m.term_date
-			INNER JOIN source_Deal_detail sdd_m
-				ON sdd_m.source_deal_detail_id = sddh_m.source_deal_detail_id						
-			INNER JOIN source_deal_detail_hour sddh
-				ON sddh.source_deal_detail_id = idd.source_deal_detail_id
-			INNER JOIN source_deal_header sdh
-				ON sdh.source_deal_header_id = idd.source_deal_header_id
-			LEFT JOIN static_data_value sdv
-				ON sdv.value_id = sdh.internal_portfolio_id
-				AND sdv.type_id = 39800				
-			WHERE sdd_m.source_deal_header_id = ISNULL(NULLIF(@receipt_deals_id, '-1'), @delivery_deals_id)
-				AND  ISNULL(sdv.code, '-1') <> 'Complex-LTO'
-
-			INSERT INTO source_deal_detail_hour(
-				source_deal_detail_id
-				, term_date
-				, hr
-				, is_dst
-				, granularity
-				, volume
-			) 
-			SELECT idd.source_deal_detail_id,
-				idd.term_start,
-				sddh_m.hr,
-				0 is_dst,
-				982 granularity,
-				sddh_m.volume deal_volume
-			FROM #inserted_deal_detail idd
-			INNER JOIN source_deal_detail_hour sddh_m
-				ON idd.term_start = sddh_m.term_date
-			INNER JOIN source_Deal_detail sdd_m
-				ON sdd_m.source_deal_detail_id = sddh_m.source_deal_detail_id						
-			LEFT JOIN source_deal_detail_hour sddh
-				ON sddh.source_deal_detail_id = idd.source_deal_detail_id
-			WHERE sdd_m.source_deal_header_id = ISNULL(NULLIF(@receipt_deals_id, '-1'), @delivery_deals_id)
-				AND sddh.source_deal_detail_id IS NULL
-		END
-		ELSE
-		BEGIN
-*/
-			SET @sql = 'UPDATE sddh
-						SET volume ' + CASE WHEN @reschedule = 1 THEN '=' ELSE '+=' END + ' CASE WHEN idd.leg = 1 THEN cdmh.received ELSE cdmh.delivered END 
-					FROM #inserted_deal_detail idd
-					INNER JOIN ' + @contract_detail_hourly + ' cdmh
-						ON idd.term_start = cdmh.term_start
-						AND idd.single_path_id = cdmh.path_id
-					INNER JOIN source_deal_detail_hour sddh
-						ON sddh.source_deal_detail_id = idd.source_deal_detail_id
-						AND sddh.hr =  RIGHT(''0'' + CAST(cdmh.hour AS VARCHAR(10)), 2) + '':00''
-					INNER JOIN source_deal_header sdh
-						ON sdh.source_deal_header_id = idd.source_deal_header_id
-					LEFT JOIN static_data_value sdv
-						ON sdv.value_id = sdh.internal_portfolio_id
-						AND sdv.type_id = 39800
-					WHERE ISNULL(sdv.code, ''-1'') NOT IN (''Complex-LTO'', ''Autopath Only'')
-					'
+		SET @sql = 'UPDATE sddh
+					SET volume ' + CASE WHEN @reschedule = 1 THEN '=' ELSE '+=' END + ' CASE WHEN idd.leg = 1 THEN cdmh.received ELSE cdmh.delivered END 
+				FROM #inserted_deal_detail idd
+				INNER JOIN ' + @contract_detail_hourly + ' cdmh
+					ON idd.term_start = cdmh.term_start
+					AND idd.single_path_id = cdmh.path_id
+				INNER JOIN source_deal_detail_hour sddh
+					ON sddh.source_deal_detail_id = idd.source_deal_detail_id
+					AND sddh.hr =  RIGHT(''0'' + CAST(cdmh.hour AS VARCHAR(10)), 2) + '':00''
+				INNER JOIN source_deal_header sdh
+					ON sdh.source_deal_header_id = idd.source_deal_header_id
+				--LEFT JOIN static_data_value sdv
+				--	ON sdv.value_id = sdh.internal_portfolio_id
+				--	AND sdv.type_id = 39800
+				--WHERE ISNULL(sdv.code, ''-1'') NOT IN (''Complex-LTO'', ''Autopath Only'')
+				'
 		EXEC(@sql)
 
 		
@@ -5049,7 +5002,7 @@ BEGIN -- Insert/Update Deal data
 			--print @sql
 			EXEC(@sql)	
 			
-	--	END
+		END
 		
 
 	END 
