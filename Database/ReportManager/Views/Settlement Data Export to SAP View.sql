@@ -1,9 +1,9 @@
-﻿ BEGIN TRY
+﻿BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'SDETSV'
 	/** IF DATA SOURCE ALIAS ALREADY EXISTS ON DESTINATION, RAISE ERROR **/
-	if exists(select top 1 1 from data_source where alias = 'SDETSV' and name <> 'Settlement Data Export to SAP view')
+	if exists(select top 1 1 from data_source where alias = 'SDETSV' and name <> 'Settlement Data Export to SAP View')
 	begin
 		select top 1 @new_ds_alias = 'SDETSV' + cast(s.n as varchar(5))
 		from seq s
@@ -39,19 +39,17 @@
     , @_prod_date_to  NVARCHAR(10)
 	, @_sql NVARCHAR(MAX)
 	, @_sql1 NVARCHAR(MAX)
+	, @_sql2 NVARCHAR(MAX)
+	, @_sql3 NVARCHAR(MAX)
 
 IF ''@counterparty_id'' <> ''NULL''
 	SET @_counterparty_id = ''@counterparty_id''
-
 IF ''@contract_id'' <> ''NULL''
 	SET @_contract_id = ''@contract_id''
-
 IF ''@stmt_invoice_id'' <> ''NULL''
 	SET @_stmt_invoice_id = ''@stmt_invoice_id''
-
 IF ''@prod_date_from'' <> ''NULL''
 	SET @_prod_date_from = ''@prod_date_from''
-
 IF ''@prod_date_to'' <> ''NULL''
 	SET @_prod_date_to = ''@prod_date_to''
 
@@ -60,7 +58,7 @@ IF ''@prod_date_to'' <> ''NULL''
 --SET @_prod_date_to = ''2020-07-31''
 --SET @_counterparty_id = 7713
 
-SET @_sql = ''
+SET @_sql = N''
 	SELECT si.stmt_invoice_id
 	, sids.prod_date_from
 	, sids.prod_date_to
@@ -111,8 +109,10 @@ SET @_sql = ''
 	INNER JOIN stmt_invoice si ON sids.stmt_invoice_id = si.stmt_invoice_id
 	INNER JOIN source_counterparty sc ON sc.source_counterparty_id = si.counterparty_id
 	LEFT JOIN contract_group cg ON cg.contract_id = si.contract_id
-	LEFT JOIN static_data_value sdv_ct ON sdv_ct.value_id = sids.invoice_line_item_id
-	OUTER APPLY (
+	LEFT JOIN static_data_value sdv_ct ON sdv_ct.value_id = sids.invoice_line_item_id ''
+
+SET @_sql1 = N''
+   OUTER APPLY (
 		SELECT TOP 1 chkout.*,sdh.header_buy_sell_flag  from stmt_checkout chkout 
 		INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = chkout.source_deal_detail_id
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
@@ -147,8 +147,7 @@ SET @_sql = ''
 + CASE WHEN @_prod_date_from IS NOT NULL THEN '' AND  sids.prod_date_from >= ''''''+@_prod_date_from+'''''' '' ELSE '''' END
 + CASE WHEN @_prod_date_to IS NOT NULL THEN '' AND  sids.prod_date_to <= ''''''+@_prod_date_to+'''''' '' ELSE '''' END
 
-SET @_sql1 = ''
-
+SET @_sql2 = N''
 SELECT  stmt_invoice_id
 	, prod_date_from
 	, prod_date_to
@@ -287,7 +286,10 @@ SELECT
 	, invoice_type
 	, row_num
 	, header_buy_sell_flag
-FROM #temp_export_sap where  (invoice_type =''''i'''' AND  header_buy_sell_flag=  ''''b'''') OR   (invoice_type =''''r'''' AND  header_buy_sell_flag=  ''''s'''')
+FROM #temp_export_sap where  (invoice_type =''''i'''' AND  header_buy_sell_flag=  ''''b'''') OR   (invoice_type =''''r'''' AND  header_buy_sell_flag=  ''''s'''') ''
+
+SET @_sql3 = N''
+
 SELECT 
 	 null stmt_invoice_id
 	, prod_date_from
@@ -328,7 +330,7 @@ SELECT
 --[__batch_report__]
 FROM #temp_export_sap1 ORDER BY invoice_type,row_num, product, value, volume ASC
 ''
-EXEC(@_sql + @_sql1)', report_id = @report_id_data_source_dest,
+EXEC(@_sql + @_sql1 + @_sql2 + @_sql3)', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106500' 
 	WHERE [name] = 'Settlement Data Export to SAP View'
