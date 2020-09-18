@@ -662,7 +662,7 @@
             if (select_id != null) {
                 var xml = "<Root function_id=\"20012200\" object_id=\"" + invoice_ids[0] + "\">";
                 invoice_ids.forEach(function(val) {
-                    xml += "<GridDelete grid_id=\""+ val + "\">";
+                    xml += "<GridDelete invoice_id=\""+ val + "\">";
                     xml += val;
                     xml += "</GridDelete>";
                 });
@@ -678,7 +678,7 @@
                         if (result) {
                             
                             data = {
-                                    "action": "spa_process_form_data",
+                                    "action": "spa_stmt_invoice",
                                     "flag": "d",
                                     "xml":xml
                                 };

@@ -898,6 +898,61 @@ BEGIN
 	END CATCH
 END
 
+ELSE IF @flag = 'd' -- DELETE INVOICE
+BEGIN
+    EXEC sp_xml_preparedocument @idoc OUTPUT, @xml
+        IF OBJECT_ID('tempdb..#temp_invoice_delete') IS NOT NULL
+		    DROP TABLE #temp_invoice_delete
+
+        IF OBJECT_ID('tempdb..#temp_parent_detail') IS NOT NULL
+		    DROP TABLE #temp_parent_detail
+
+		SELECT	invoice_id
+		INTO #temp_invoice_delete
+		FROM OPENXML(@idoc, '/Root/GridDelete', 1)
+		WITH (
+			invoice_id INT
+		)
+        SELECT
+            si.original_id_for_void
+        INTO #temp_parent_detail
+        FROM stmt_invoice si
+        INNER JOIN #temp_invoice_delete tid ON tid.invoice_id = si.stmt_invoice_id
+
+    BEGIN TRY
+        BEGIN TRAN
+        UPDATE  si
+		SET si.is_voided ='n'
+		FROM stmt_invoice si
+        INNER JOIN #temp_parent_detail tid ON tid.original_id_for_void = si.stmt_invoice_id
+
+        DELETE si
+        FROM stmt_invoice si
+        INNER JOIN #temp_invoice_delete tid ON tid.invoice_id = si.stmt_invoice_id
+
+        COMMIT
+
+        	EXEC spa_ErrorHandler 0,
+			'stmt_invoice',
+			'spa_stmt_invoice',
+			'Success',
+			'Invoice delete successfully.',
+			''
+
+	END TRY
+	BEGIN CATCH
+		IF @@TRANCOUNT > 0
+		   ROLLBACK
+		   
+		EXEC spa_ErrorHandler -1,
+            'stmt_invoice',
+			'spa_stmt_invoice',
+			'Error',
+			'Failed to delete.',
+			''
+	END CATCH 
+END
+
 ELSE IF @flag='v'
 BEGIN
 	EXEC sp_xml_preparedocument @idoc OUTPUT, @xml
