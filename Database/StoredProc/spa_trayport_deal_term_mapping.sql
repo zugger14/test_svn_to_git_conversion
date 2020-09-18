@@ -53,7 +53,7 @@ SET @sql = 'IF OBJECT_ID(''tempdb..#temp_import_data'') IS NOT NULL
 						ELSE temp.curve_id
 						END
 			,leg = CASE WHEN  CHARINDEX(''/'',temp.curve_id) <> 0 THEN temp.row_num ELSE temp.leg END
-			,buy_sell_flag = CASE WHEN CHARINDEX(''/'',temp.curve_id) <> 0 AND  temp.date_sep = 2 THEN CASE WHEN mod_buy_sell_flag = ''Buy'' THEN ''Sell'' ELSE ''Buy'' END ELSE mod_buy_sell_flag END
+			,buy_sell_flag = CASE WHEN CHARINDEX(''/'',temp.curve_id) <> 0 AND  temp.date_sep = 2 AND temp.term_end IS NOT NULL THEN CASE WHEN mod_buy_sell_flag = ''Buy'' THEN ''Sell'' ELSE ''Buy'' END ELSE mod_buy_sell_flag END
 			,fixed_price = CASE WHEN  CHARINDEX(''/'',temp.curve_id) <> 0 THEN ''0'' ELSE temp.fixed_price END
 			, @counter = ixp_source_unique_id = @counter + 1
 		FROM #temp_import_data temp
@@ -153,7 +153,7 @@ CREATE TABLE #temp_term(
 			AND hol_group_value_id=t.holiday_calendar_id  
 		WHERE CASE WHEN t.date_or_block=''b'' THEN  DATEADD(d, CASE WHEN weekday-dbo.FNARWeekDay(DATEADD(wk,ISNULL(t.relative_days,0),ts.deal_date))<0 THEN  
 			(weekday-dbo.FNARWeekDay(DATEADD(wk,ISNULL(t.relative_days,0),ts.deal_date)))  
-			ELSE weekday-dbo.FNARWeekDay(DATEADD(wk,ISNULL(t.relative_days,0),ts.deal_date)) END,DATEADD(wk,ISNULL(t.relative_days,0),ts.deal_date))  
+			ELSE weekday-dbo.FNARWeekDay(DATEADD(wk,ISNULL(t.relative_days,0),CAST(DATEADD(HOUR,2,ts.deal_date) AS DATE))) END,DATEADD(wk,ISNULL(t.relative_days,0),CAST(DATEADD(HOUR,2,ts.deal_date) AS DATE)))  
 			ELSE DATEADD(d,1,ts.deal_date)  END > ts.deal_date 
 		ORDER BY terms  
 	'  
