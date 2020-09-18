@@ -299,10 +299,10 @@
 
         var active_detail_tab = SettlementInvoice.tabbar.getActiveTab();
         var ids = SettlementInvoice.tabbar.getAllTabs();
-        ids.forEach(function(tab_id) {
-            SettlementInvoice.create_tab(tab_id, '','','','','',true); 
+        // ids.forEach(function(tab_id) {
+        //     SettlementInvoice.create_tab(tab_id, '','','','','',true); 
 
-        });
+        // });
   
 
         var data = $.param(sql);
