@@ -100,7 +100,6 @@ BEGIN
 			, sfv.source_fee_id
 			, sfv.effective_date
 			, sfv.[value]
-			, sfv.minimum_amount_agressor
 			, sfv.subsidiary
 			, sfv.deal_type
 			, sfv.buy_sell
@@ -117,8 +116,7 @@ BEGIN
 			, sfv.maximum_value
 			, sfv.uom
 			, sfv.currency
-			, sfv.fee_for_agressor
-			, sfv.fee_for_initiator
+            , sfv.aggressor_initiator
 			, sfv.rec_pay
 		FROM source_fee_volume AS sfv WHERE sfv.source_fee_id = @source_fee_id
 	END
