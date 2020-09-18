@@ -225,6 +225,10 @@
                     book_item_on_check();
                 }
             }
+
+            if (grid_name == 'browse_counterparty') {
+                generic_browse.generic_browse_layout.cells('a').getAttachedObject().enableMultiselect(true);
+            }
         });
         /**
          * [Set Ok button disabled/enabled onCheck book structure nodes]
