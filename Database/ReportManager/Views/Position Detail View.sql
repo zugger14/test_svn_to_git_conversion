@@ -1,4 +1,4 @@
- BEGIN TRY
+BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'SPDV019'
@@ -42,7 +42,7 @@ DECLARE @_summary_option CHAR(6) =null --''x'' --''y'' -- ''m'' --''d'' ------- 
 	,@_book_id VARCHAR(MAX) = null
 	,@_subbook_id VARCHAR(MAX) = NULL
 	,@_as_of_date VARCHAR(20) =null --''2020-09-07'' --''2020-06-30''
-	,@_source_deal_header_id VARCHAR(1000) =NULL -- 45871 --540 -- --223683,
+	,@_source_deal_header_id VARCHAR(1000) =null -- 45871 --540 -- --223683,
 	,@_period_from VARCHAR(6) = NULL
 	,@_period_to VARCHAR(6) = NULL
 	,@_tenor_option VARCHAR(6) = NULL
@@ -58,8 +58,8 @@ DECLARE @_summary_option CHAR(6) =null --''x'' --''y'' -- ''m'' --''d'' ------- 
 	,@_deal_status VARCHAR(8) = NULL
 	,@_confirm_status VARCHAR(8) = NULL
 	,@_profile VARCHAR(8) = NULL
-	,@_term_start VARCHAR(20) =null --''2021-03-12'' -- ''2021-10-30''
-	,@_term_end VARCHAR(20) =null --''2021-03-12'' -- ''2021-12-01''
+	,@_term_start VARCHAR(20) =null -- ''2021-10-30''
+	,@_term_end VARCHAR(20) =null -- ''2021-12-01''
 	,@_deal_type VARCHAR(MAX) = NULL
 	,@_deal_sub_type VARCHAR(MAX) = NULL
 	,@_buy_sell_flag VARCHAR(6)
@@ -211,6 +211,8 @@ IF OBJECT_ID(''tempdb..#density_multiplier'') IS NOT NULL
 	DROP TABLE #density_multiplier
 IF OBJECT_ID(''tempdb..#period_display_format'') IS NOT NULL
 	DROP TABLE #period_display_format
+IF OBJECT_ID(''tempdb..#tmp_delta_0'') IS NOT NULL
+	DROP TABLE #tmp_delta_0
 --SELECT * FROM REPORT_hourly_position_deal where source_deal_header_id=46750
 --SELECT * FROM REPORT_hourly_position_financial where source_deal_header_id=46750
 ---START Batch initilization--------------------------------------------------------
@@ -314,7 +316,9 @@ IF NULLIF(@_format_option, '''') IS NULL
 	SET @_format_option = ''c''
 DECLARE @_term_start_temp DATETIME
 	,@_term_END_temp DATETIME
-CREATE TABLE #temp_deals (term_start date,term_end date, source_deal_detail_id int,source_deal_header_id int,physical_financial CHAR(1) COLLATE DATABASE_DEFAULT, pricing_type INT, internal_portfolio_id INT,template_id int)
+CREATE TABLE #temp_deals (term_start date,term_end date, source_deal_detail_id int,source_deal_header_id int,physical_financial CHAR(1) COLLATE DATABASE_DEFAULT, pricing_type INT, internal_portfolio_id INT,template_id int, internal_deal_type_value_id int, internal_deal_subtype_value_id int
+
+)
 --print @_term_start
 --print @_as_of_date
 IF @_period_from IS NOT NULL
@@ -388,10 +392,11 @@ EXEC (@_Sql_Select)
 CREATE INDEX [IX_Book] ON [#books] ([fas_book_id])     
 set @_as_of_date=isnull(@_as_of_date,''9999-01-01'')
 SET @_Sql_Select = ''
-	INSERT INTO #temp_deals (term_start,term_end, source_deal_detail_id,source_deal_header_id,physical_financial, pricing_type, internal_portfolio_id,template_id)
+	INSERT INTO #temp_deals (term_start,term_end, source_deal_detail_id,source_deal_header_id,physical_financial, pricing_type, internal_portfolio_id,template_id,internal_deal_type_value_id,internal_deal_subtype_value_id)
 SELECT 
 sdd.term_start,sdd.term_end, sdd.source_deal_detail_id,
 sdh.source_deal_header_id,sdh.physical_financial_flag, sdh.pricing_type, sdh.internal_portfolio_id,sdh.template_id
+,sdh.internal_deal_type_value_id,sdh.internal_deal_subtype_value_id
 FROM dbo.source_deal_header sdh
 INNER JOIN #books b ON sdh.source_system_book_id1 = b.source_system_book_id1
 	AND sdh.source_system_book_id2 = b.source_system_book_id2
@@ -1133,6 +1138,70 @@ exec(''CREATE INDEX indx_tmp_subqry1''+@_temp_process_id+'' ON ''+@_position_dea
 	CREATE INDEX indx_tmp_subqry2''+@_temp_process_id+'' ON ''+@_position_deal +''(location_id);
 	CREATE INDEX indx_tmp_subqry3''+@_temp_process_id+'' ON ''+@_position_deal +''(counterparty_id)''
 )
+
+
+select distinct sdd.source_deal_header_id,s.term_date, 
+case when is_dst=1 then 25 else s.hours end [hours], isnull(s.period,0) period, 1 non_money
+into #tmp_delta_0 -- select * from  #tmp_delta_0
+ from source_deal_pnl_breakdown s
+inner join #temp_deals td on td.source_deal_header_id=s.source_deal_header_id
+	and  td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=102
+ inner JOIN source_deal_detail sdd WITH (NOLOCK) ON sdd.source_deal_header_id = s.source_deal_header_id
+	and sdd.leg =s.leg and s.term_date between sdd.term_start and sdd.term_end
+where leg_mtm_deal<0  and as_of_date=@_as_of_date 
+	and @_summary_option IN (''h'',''x'',''y'') 
+
+create index indx_90909 on #tmp_delta_0 (source_deal_header_id,term_date,[hours], [period])
+
+
+if object_id(''tempdb..#tmp_delta_pvt'') is not null drop table #tmp_delta_pvt
+select * 
+into #tmp_delta_pvt -- select * from #tmp_delta_pvt
+from #tmp_delta_0  SourceTable
+Pivot 
+(
+max(non_money) for [hours]
+	in ( [1], [2], [3], [4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24],[25])
+) pr
+
+if @@rowcount>0
+begin
+	set @_sqry=''update t set
+		[hr1]=[hr1]*isnull([1],0.0000),
+		[hr2]=[hr2]*isnull([2],0.0000),
+		[hr3]=[hr3]*isnull([3],0.0000),
+		[hr4]=[hr4]*isnull([4],0.0000),
+		[hr5]=[hr5]*isnull([5],0.0000),
+		[hr6]=[hr6]*isnull([6],0.0000),
+		[hr7]=[hr7]*isnull([7],0.0000),
+		[hr8]=[hr8]*isnull([8],0.0000),
+		[hr9]=[hr9]*isnull([9],0.0000),
+		[hr10]=[hr10]*isnull([10],0.0000),
+		[hr11]=[hr11]*isnull([11],0.0000),
+		[hr12]=[hr12]*isnull([12],0.0000),
+		[hr13]=[hr13]*isnull([13],0.0000),
+		[hr14]=[hr14]*isnull([14],0.0000),
+		[hr15]=[hr15]*isnull([15],0.0000),
+		[hr16]=[hr16]*isnull([16],0.0000),
+		[hr17]=[hr17]*isnull([17],0.0000),
+		[hr18]=[hr18]*isnull([18],0.0000),
+		[hr19]=[hr19]*isnull([19],0.0000),
+		[hr20]=[hr20]*isnull([20],0.0000),
+		[hr21]=[hr21]*isnull([21],0.0000),
+		[hr22]=[hr22]*isnull([22],0.0000),
+		[hr23]=[hr23]*isnull([23],0.0000),
+		[hr24]=[hr24]*isnull([24],0.0000),
+		[hr25]=[hr25]*isnull([25],0.0000)
+	from ''+@_position_deal+ '' t 
+		inner join #tmp_delta_pvt d on d.source_deal_header_id=t.source_deal_header_id
+			and d.term_date=t.term_start and d.period=t.period
+	''
+	EXEC spa_print  @_sqry
+	exec(@_sqry)
+end
+
+
+
 set @_sqry=CASE WHEN @_convert_to_uom_id IS NULL then '''' else ''
 	select distinct sdd.source_deal_detail_id,vw.term_start,cf_p.factor physical_density_mult,cf_f.factor financial_density_mult
 	into #density_multiplier
@@ -1320,6 +1389,9 @@ set @_commodity_str1='' INTO #tmp_pos_detail_gas FROM ''+@_hour_pivot_table+'' s
 	LEFT JOIN static_data_value sdv_block_group WITH (NOLOCK) ON sdv_block_group.value_id = hb1.block_type_group_id
 ''
 else '''' end
+
+
+
 SET @_rhpb1= ''
 SELECT 
 	id = IDENTITY(INT, 1, 1),
@@ -1415,9 +1487,9 @@ SELECT
 	,DATEPART(d,coalesce(''+CASE WHEN  @_summary_option IN (''m'',''q'',''a'')  THEN ''sdd.term_start'' ELSE ''vw.term_date'' END+'', sdd.term_start)) [term_day],
 	sdd.term_start,
 	CONVERT(VARCHAR(10),vw.term_date, 101) AS term_start_disp,
-   ''+CASE WHEN @_convert_to_uom_id IS NOT NULL THEN '' vw.volume'' else ''vw.volume'' end +'' Position,
+   vw.volume Position,
    --from demo4
-   (''+CASE WHEN @_convert_to_uom_id IS NOT NULL THEN '' vw.volume'' else ''vw.volume'' end +'')/
+   vw.volume/
    NULLIF(( (DAY(EOMONTH(sdd.term_start))*24) +
 		CASE WHEN mvd.id IS NULL AND mvi.id IS NULL THEN 0 ELSE
 			CASE WHEN mvd.id IS NOT NULL THEN -1 WHEN mvi.id IS NOT NULL THEN 1 ELSE 0 END
@@ -1639,14 +1711,17 @@ set @_rhpb4=''
 		LEFT JOIN mv90_DST mv2 (nolock) ON YEAR(vw.[term_date])=(mv2.[YEAR])
 			AND mv2.insert_delete=''''d'''' AND tz.dst_group_value_id= mv2.dst_group_value_id
 		LEFT JOIN mv90_DST mv3 (nolock) ON YEAR(vw.[term_date])=(mv3.[YEAR])
-			AND mv3.insert_delete=''''i'''' AND tz.dst_group_value_id= mv3.dst_group_value_id
+			AND mv3.insert_delete=''''i'''' AND tz.dst_group_value_id= mv3.dst_group_value_id''
+		else '''' end
+		+case when  @_summary_option IN (''h'',''x'',''y'') then
+		''
 		WHERE  (((vw.[Hours]=25 AND mv.[date] IS NOT NULL) OR (vw.[Hours]<>25)) AND (mv1.[date] IS NULL))''
 		+ CASE WHEN @_hour_from IS NOT NULL THEN '' and cast(CASE WHEN mv.[date] IS NOT NULL THEN mv.Hour ELSE vw.[Hours] END as int) between ''+CAST(@_hour_from AS VARCHAR) +'' and '' +CAST(@_hour_to AS VARCHAR) ELSE '''' END 
 		--+ CASE WHEN @_physical_financial_flag IS NOT NULL THEN '' AND vw.physical_financial_flag = '''''' + @_physical_financial_flag + '''''''' ELSE '''' END
-	else '''' END
+	  else '''' END
 --CASE WHEN @_physical_financial_flag IS NOT NULL THEN '' WHERE vw.physical_financial_flag = '''''' + @_physical_financial_flag + '''''''' ELSE '''' END end
 	+CASE WHEN @_leg IS NOT NULL THEN '' AND sdd.leg =''+@_leg ELSE '''' END
-	--from demo4
+	
 IF @_show_delta_volume = ''y''
 SET @_rhpb5 = ''
 	select row_number() over(partition by t.source_deal_header_id,t.leg order by t.term_start) row_no,t.source_deal_header_id,t.Leg ,t.term_start,sdpdo.DELTA,sdpdo.DELTA2 
@@ -7299,4 +7374,3 @@ exec(
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
-	
