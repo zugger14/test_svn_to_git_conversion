@@ -192,8 +192,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =98064 ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2021-04-30' , --'2017-02-15',
+	@source_deal_header_id =98453  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2020-01-31' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -210,9 +210,9 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2019-01-01' ,
-	@term_end = '2019-01-31' ,
-	@calc_type = 'm',
+	@term_start = '2020-01-01' ,
+	@term_end = '2020-01-31' ,
+	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
 	@deal_list_table = null,
@@ -12427,7 +12427,9 @@ SET @sql='
 		meter_id INT,
 		curve_source_value_id INT,
 		[mins] INT,is_dst int,
-		calc_aggregation INT
+		calc_aggregation INT,
+		internal_field_type INT,
+		sequence_order INT
 	)
 '
 	
@@ -12480,10 +12482,10 @@ EXEC(@sql)
 
 SET @sql=' 
 	INSERT INTO '+@formula_table5+'
-		(rowid,formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation)
+		(rowid,formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation,internal_field_type,sequence_order)
 	SELECT 	
 		uddft.udf_template_id [ID],ISNULL(uddf.udf_value,udft.default_value) formula_id, ' + cast(@curve_source_value_id as varchar) + ', td.term_start, '''+@as_of_date+'''
-		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002
+		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002,uddft.internal_field_type,CASE uddft.internal_field_type WHEN 18744 THEN 9999 ELSE 1 END
 	FROM	
 		#temp_deals td 
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
@@ -12504,10 +12506,10 @@ EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@sql )
 
 SET @sql=' 
 	INSERT INTO '+@formula_table5+'
-		(rowid,formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation)
+		(rowid,formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation,internal_field_type,sequence_order)
 	SELECT 	
 		uddft.udf_template_id [ID],try_cast(ISNULL(udddf.udf_value,uddft.default_value) as int) formula_id, ' + cast(@curve_source_value_id as varchar) + ', td.term_start, '''+@as_of_date+'''
-		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002
+		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002,uddft.internal_field_type,CASE uddft.internal_field_type WHEN 18744 THEN 9999 ELSE 1 END
 	FROM #temp_deals td 
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
 		INNER JOIN user_defined_deal_fields_template_main uddft ON uddft.template_id=sdh.template_id	and isnull(uddft.leg,td.leg)=td.leg	
@@ -12526,8 +12528,17 @@ EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@sql)
 --EXEC('select 1 temp into #check_existance_record_mtm from '+@formula_table5)
 --IF @@ROWCOUNT>0
 --BEGIN
+
+
+--- Tax should be calculated seperately
+SET @sql  = 'SELECT * INTO '+REPLACE(@formula_table5,'udf_formula','udf_formula_tax')+' FROM '+@formula_table5+' WHERE internal_field_type IN(18744,18745)'
+EXEC(@sql)
 	
+SET @sql  = 'DELETE FROM '+@formula_table5+' WHERE internal_field_type IN(18744,18745)'
+EXEC(@sql)
+
 EXEC spa_calculate_formula	@as_of_date, @formula_table5,@process_id,@calc_result_table5 output, @calc_result_table_breakdown5 output,'n','n',@calc_type,@criteria_id,NULL,@calc_type,'y'
+
 
 
 
@@ -13021,9 +13032,9 @@ set @qry5b='
 		WHEN 18741 THEN
 			 td.deal_volume * sfv.value
 		WHEN 18742 THEN
-				sddh.positive_vol
+				udfvalue.sgn*sddh.positive_vol
 		WHEN 18743 THEN
-				sddh.negative_vol
+				udfvalue.sgn*sddh.negative_vol
 	ELSE NULL END) value_deal,cast(0 as float) value,cast(0 as float) value_inv,MAX(td.fixed_price_currency_id) deal_cur_id,
 	MAX(td.settlement_currency) inv_cur_id,NULL contract_value,NULL contract_value_deal,NULL contract_value_inv,
 	MAX(udft.internal_field_type) internal_type,MAX(uddft.udf_tabgroup) tab_group_name, MAX(uddft.udf_group) udf_group_name,

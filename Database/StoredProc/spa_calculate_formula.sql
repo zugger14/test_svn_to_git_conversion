@@ -502,7 +502,13 @@ IF ISNULL(@call_from, '') <> 'd'
 			END'
 	EXEC(@sql1)	
 
-	
+	SET @sql1='IF COL_LENGTH('''+@calc_process_table+''', ''sequence_order'') IS NULL
+			BEGIN
+				ALTER TABLE ' + @calc_process_table + ' ADD sequence_order INT
+			END'
+	EXEC(@sql1)	
+
+
 	CREATE TABLE  #formula_breakdown (
 		[rowid] [INT] IDENTITY(1,1) NOT NULL,
 		source_id int,
@@ -1058,7 +1064,7 @@ SET @sql2='
 		t.input_char8,
 		t.input_char9,
 			t.input_char10,
-			COALESCE(cgd.sequence_order,cctd1.sequence_order,cctd.sequence_order,1) invoice_line_item_seq,
+		COALESCE(cgd.sequence_order,cctd1.sequence_order,cctd.sequence_order,t.sequence_order,1) invoice_line_item_seq,
 		t.is_true_up,
 		f.data_source_id,t.curve_id
 	FROM 
@@ -1152,10 +1158,6 @@ EXEC spa_print @sql2
 
 EXEC(@sql1+@arg1+@arg2+@arg3+@arg4+@arg5+@arg6+@arg7+@arg8+@arg9+@arg10+@arg11+@arg12+@arg13+@arg14+@arg15+@arg16+@arg17+@arg18+@sql2)	
 	
-
-
-
-
 
 
 CREATE INDEX [IX_PT_formula_breakdown_func_name] ON [#formula_breakdown] ([func_name]) INCLUDE ([formula_id], [nested_id], [prod_date], [source_deal_detail_id], [source_deal_header_id], [deal_type], [counterparty_id], [contract_id], [invoice_line_item_id], [calc_aggregation], [generator_id])
@@ -1396,11 +1398,12 @@ CREATE INDEX indx_formula_breakdown_11 ON #formula_breakdown(final_offset_date)
 			value NUMERIC(28,10)
 		)
 
-	SELECT MIN(Prod_date) prod_date,MAX(Prod_date) prod_date_to,func_name,alias,ds.data_source_id,fb.formula_id,fb.nested_id,fb.level_func_sno, fb.source_deal_header_id, MAX(source_id) source_id
+	SELECT MIN(Prod_date) prod_date,MAX(Prod_date) prod_date_to,func_name,alias,ds.data_source_id,fb.formula_id,fb.nested_id,fb.level_func_sno, fb.source_deal_header_id, MAX(source_id) source_id,MAX(invoice_line_item_seq) seq
 	INTO #UD_function_name 
 	FROM #formula_breakdown fb 
 		INNER JOIN data_source ds ON ds.data_source_id = fb.data_source_id AND ds.category = 106501
 	GROUP BY func_name,alias,ds.data_source_id,fb.formula_id,fb.nested_id,fb.level_func_sno, fb.source_deal_header_id
+
 
 	SELECT data_source_id,CAST(REPLACE(seqence,'arg','') AS INT) seqence,argument,formula_id,nested_id,level_func_sno
 		INTO #ud_function_param_value
@@ -1425,19 +1428,21 @@ CREATE INDEX indx_formula_breakdown_11 ON #formula_breakdown(final_offset_date)
 	GROUP BY dsc.name,ds.data_source_id,dsc.data_source_column_id
 
 
-
+	DECLARE @seq INT
 	IF EXISTS(SELECT 'X' FROM  #UD_function_name)
 	BEGIN
 
 		DECLARE cur_func CURSOR FOR 
-			SELECT  DISTINCT ufm.data_source_id,ufm.alias,CONVERT(VARCHAR(10),ufm.prod_date,120),convert(varchar(10),ufm.prod_date_to,120),ufm.formula_id,ufm.nested_id,ufm.level_func_sno,ufm.source_deal_header_id, ufm.source_id
+			SELECT  DISTINCT ufm.data_source_id,ufm.alias,CONVERT(VARCHAR(10),ufm.prod_date,120),convert(varchar(10),ufm.prod_date_to,120),ufm.formula_id,ufm.nested_id,ufm.level_func_sno,ufm.source_deal_header_id, ufm.source_id,ufm.seq
 			FROM	
 				#UD_function_name ufm 
 				LEFT JOIN #ud_function_param_value ufpv ON ufpv.data_source_id =  ufm.data_source_id
 					AND ufpv.formula_id = ufm.formula_id
 					AND ufpv.nested_id =  ufm.nested_id
+			ORDER BY seq
+
 		OPEN cur_func
-		FETCH NEXT FROM cur_func INTO @data_source_id,@alias,@prod_date,@prod_date_to,@formula_id,@nested_id,@level_func_sno,@source_deal_header_id, @source_id
+		FETCH NEXT FROM cur_func INTO @data_source_id,@alias,@prod_date,@prod_date_to,@formula_id,@nested_id,@level_func_sno,@source_deal_header_id, @source_id,@seq
 		WHILE @@FETCH_STATUS = 0
 		BEGIN
 			SET @criteria =  ''
@@ -1465,7 +1470,7 @@ CREATE INDEX indx_formula_breakdown_11 ON #formula_breakdown(final_offset_date)
 		SELECT '+CAST(@data_source_id AS VARCHAR)+','+CAST(@formula_id AS VARCHAR)+','+CAST(@nested_id AS VARCHAR)+','+CAST(ISNULL(@level_func_sno,1) AS VARCHAR) +','+CAST(@source_id AS VARCHAR)+',counterparty_id,contract_id,source_deal_header_id,source_deal_detail_id,prod_date,hour,mins,value FROM '+@data_source_table
 		EXEC(@sqlstmt)
 		
-		FETCH NEXT FROM cur_func INTO @data_source_id,@alias,@prod_date,@prod_date_to,@formula_id,@nested_id,@level_func_sno,@source_deal_header_id,@source_id
+		FETCH NEXT FROM cur_func INTO @data_source_id,@alias,@prod_date,@prod_date_to,@formula_id,@nested_id,@level_func_sno,@source_deal_header_id,@source_id,@seq
 		END
 		CLOSE cur_func
 		DEALLOCATE cur_func
