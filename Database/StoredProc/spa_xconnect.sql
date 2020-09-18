@@ -131,9 +131,9 @@ BEGIN
 				
 		SET @sql = ' spa_ixp_rules @flag = ''t'',@process_id = ''' + @process_id + ''',@ixp_rules_id =' + ISNULL(CAST(@ixp_rules_id AS VARCHAR), '0') + ',@run_table = ''' + @process_table_name + ''',@source = ''21400'',@run_with_custom_enable = ''n'',@run_in_debug_mode=''y'''
 		--print @sql
-		SET @job_name = db_name() + '_Import_' + @exchange_name + '_' +ISNULL(CAST(@ixp_rules_id AS VARCHAR), '0') + '_' + @process_id;
-
-		EXEC spa_run_sp_as_job  @job_name, @sql, @job_name,NULL,NULL,NULL,'i'
+		SET @job_name = 'Import_' + REPLACE(@exchange_name, ' ', '_') + '_' +ISNULL(CAST(@ixp_rules_id AS VARCHAR), '0') + '_' + @process_id;
+		DECLARE @user_login_id VARCHAR(255) = dbo.FNAAppAdminID()
+		EXEC spa_run_sp_as_job  @job_name, @sql, @job_name,@user_login_id,NULL,NULL,'i'
 	END
 	ELSE IF @flag = 'l'
 	BEGIN
