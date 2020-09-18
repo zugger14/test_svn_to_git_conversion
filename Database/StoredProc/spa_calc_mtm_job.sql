@@ -192,7 +192,7 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =98453  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@source_deal_header_id =98474  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
 	@as_of_date = '2020-01-31' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
@@ -13159,7 +13159,7 @@ set @qry7b='
 				THEN 1 ELSE -1 END * CASE WHEN udft.internal_field_type = 18743 THEN -1 ELSE 1 END
 			,udf_formula.formula_eval_value) as float) udfvalue
 			,CASE WHEN COALESCE(sfv.rec_pay,udddf.receive_pay,uddf.receive_pay,case when ISNULL(gaivs.st_buy_sell_flag,td.buy_sell_flag)=''b'' then ''p'' else ''r'' end)=''r''
-				THEN 1 ELSE -1 END * CASE WHEN udft.internal_field_type = 18743 THEN -1 ELSE 1 END sgn
+				THEN 1 ELSE -1 END  sgn
 	) udfvalue
 		 '		
 
