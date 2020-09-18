@@ -652,17 +652,56 @@ BEGIN
 		BEGIN
 			SELECT TOP(1) @id = item FROM #invoice_collection
 
-			EXEC spa_generate_document @document_category = 10000283, @document_sub_category = '', @filter_object_id = @id, @temp_generate = 0, @get_generated = 1, @show_output = 0
+			DECLARE @netting_id INT 
+			SELECT @netting_id = 
+				CASE 
+					WHEN si.stmt_invoice_id > si1.stmt_invoice_id 
+						THEN si.stmt_invoice_id 
+					ELSE si1.stmt_invoice_id
+				END * -1
+			FROM stmt_invoice si
+			INNER JOIN contract_group cg
+				ON cg.contract_id = si.contract_id
+			INNER JOIN counterparty_contract_address cca 
+				ON cca.counterparty_id = si.counterparty_id 
+				AND cca.contract_id = cg.contract_id
+			OUTER APPLY (
+				SELECT stmt_invoice_id FROM stmt_invoice si1
+				WHERE si1.counterparty_id = si.counterparty_id
+				AND si1.contract_id = si.contract_id
+				AND si1.prod_date_from = si.prod_date_from
+				AND si1.prod_date_to = si.prod_date_to
+				AND si1.invoice_type <> si.invoice_type
+			) si1
+			WHERE COALESCE(cca.netting_statement,cg.netting_statement,'n') = 'y'
+			AND ISNULL(si.is_voided,'n') <> 'v'
+			AND si.stmt_invoice_id = @id
+			AND si1.stmt_invoice_id IS NOT NULL
 
-			IF EXISTS (SELECT 1 FROM application_notes an WHERE ISNULL(parent_object_id, notes_object_id) = @id AND internal_type_value_id = 10000283)
+			IF @netting_id IS NOT NULL
 			BEGIN
-				UPDATE stmt_invoice
-					SET is_finalized = 'f',
-						finalized_date = GETDATE()
-				WHERE stmt_invoice_id = @id
+				EXEC spa_generate_document @document_category = 10000283, @document_sub_category = 20637, @filter_object_id = @id, @temp_generate = 0, @get_generated = 1, @show_output = 0
 
-				INSERT INTO process_settlement_invoice_log (process_id, counterparty_id, prod_date, code, module, [description], invoice_id)
-				SELECT @process_id, counterparty_id, getdate(), 'Success', 'Settlement invoice', 'Successfully finalize invoice : ' + CAST(stmt_invoice_id AS VARCHAR), stmt_invoice_id FROM stmt_invoice WHERE stmt_invoice_id = @id
+				IF NOT EXISTS (SELECT 1 FROM application_notes an WHERE ISNULL(parent_object_id, notes_object_id) = @id AND internal_type_value_id = 10000283 AND category_value_id = 20637)
+				BEGIN
+					SET @status = 0;
+				END
+			END
+
+			IF @status <> 0
+			BEGIN
+				EXEC spa_generate_document @document_category = 10000283, @document_sub_category = '', @filter_object_id = @id, @temp_generate = 0, @get_generated = 1, @show_output = 0
+
+				IF EXISTS (SELECT 1 FROM application_notes an WHERE ISNULL(parent_object_id, notes_object_id) = @id AND internal_type_value_id = 10000283)
+				BEGIN
+					UPDATE stmt_invoice
+						SET is_finalized = 'f',
+							finalized_date = GETDATE()
+					WHERE stmt_invoice_id = @id
+
+					INSERT INTO process_settlement_invoice_log (process_id, counterparty_id, prod_date, code, module, [description], invoice_id)
+					SELECT @process_id, counterparty_id, getdate(), 'Success', 'Settlement invoice', 'Successfully finalize invoice : ' + CAST(stmt_invoice_id AS VARCHAR), stmt_invoice_id FROM stmt_invoice WHERE stmt_invoice_id = @id
+				END
 			END
 			ELSE 
 			BEGIN
