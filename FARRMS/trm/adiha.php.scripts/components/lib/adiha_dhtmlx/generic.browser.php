@@ -226,7 +226,7 @@
                 }
             }
 
-            if (grid_name == 'browse_counterparty') {
+            if (form_name.indexOf('report_ui') != -1) {
                 generic_browse.generic_browse_layout.cells('a').getAttachedObject().enableMultiselect(true);
             }
         });
