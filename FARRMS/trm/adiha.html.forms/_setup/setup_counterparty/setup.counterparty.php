@@ -1518,7 +1518,7 @@
                     var object_id = counterparty_id;
                     toolbar_obj = setup_counterparty.tabbar.cells("tab_" + object_id).getAttachedToolbar();
                     toolbar_obj.addButton('credit_file', 2, 'Credit File', 'doc.gif', 'doc_dis.gif');
-                    add_manage_document_button(object_id, toolbar_obj, has_rights_counterparty_document);
+                    add_manage_document_button(object_id, toolbar_obj, 1);// changed to 1 to enable documents button in default
                     toolbar_obj.addButton('cpty_reminder_alert', 3, 'Alerts', 'export.gif', 'export_dis.gif');
                 }
             });

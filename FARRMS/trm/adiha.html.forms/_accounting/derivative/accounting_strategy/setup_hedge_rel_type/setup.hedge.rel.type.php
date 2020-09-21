@@ -384,7 +384,7 @@
                     }
                 });
             if (tab_id.indexOf("tab_") != -1) { 
-                add_manage_document_button(link_id, setup_hedge_rel_type.details_toolbar[link_id], has_document_rights);
+                add_manage_document_button(link_id, setup_hedge_rel_type.details_toolbar[link_id], 1); // changed to 1 to enable documents button in default
             }
             // get id from the tab object
             var eff_test_profile_id = (tab_id.indexOf("tab_") != -1) ? tab_id.replace("tab_", "") : tab_id;

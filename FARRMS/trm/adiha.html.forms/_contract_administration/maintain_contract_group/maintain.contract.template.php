@@ -938,7 +938,7 @@
             
             if (contract_group.tabbar.cells(active_tab_id) != null) {
                 toolbar_obj = contract_group.tabbar.cells(active_tab_id).getAttachedToolbar();
-                add_manage_document_button(object_id, toolbar_obj, has_rights_contract_document);
+                add_manage_document_button(object_id, toolbar_obj, 1); // changed to 1 to enable documents button in default
                 
                 var call_from = '<?php echo $call_from; ?>';
                 if (call_from == 'storage') {

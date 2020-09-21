@@ -333,7 +333,7 @@
         var certification_form_obj;
         var meter_grid;
 
-        add_manage_document_button(object_id, toolbar_obj, has_rights_setup_renewable_source_iu);
+        add_manage_document_button(object_id, toolbar_obj, 1); // changed to 1 to enable documents button in default
 
         toolbar_obj.attachEvent('onClick', function(id) {
             if (id == 'documents') {
