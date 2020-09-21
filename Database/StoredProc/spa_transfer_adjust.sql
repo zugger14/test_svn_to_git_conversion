@@ -25,8 +25,6 @@ AS
 
 /* DEBUG
 
-
-
 IF OBJECT_ID('tempdb..#temp_mdq_avail') IS NOT NULL
 DROP TABLE #temp_mdq_avail
 go
@@ -43,7 +41,7 @@ EXEC spa_print 'Use spa_print instead of PRINT statement in debug mode.'
 --Drops all temp tables created in this scope.
 EXEC [spa_drop_all_temp_table] 
 
-DECLARE @source_deal_header_id INT = 101014 --s
+DECLARE @source_deal_header_id INT = 100984 --s
 --DECLARE @source_deal_header_id INT = 100903 --b
 --DECLARE @source_deal_header_id INT = 100573 -- 100582 --s(1) -- 100573 --s (22) --100546 -b (1)
  
@@ -95,10 +93,10 @@ INNER JOIN static_data_value sdv
 WHERE source_deal_header_id =  @source_deal_header_id --  8774
 
 IF EXISTS (
-			SELECT 1 FROM source_deal_header sdh
-			INNER JOIN source_deal_type sdt
-				ON sdt.source_deal_Type_id = sdh.source_deal_Type_id
-			WHERE deal_type_id IN ( 'physical', 'storage')
+	SELECT 1 FROM source_deal_header sdh
+	INNER JOIN source_deal_type sdt
+		ON sdt.source_deal_Type_id = sdh.source_deal_Type_id
+	WHERE deal_type_id IN ( 'physical', 'storage')
 )
 BEGIN
 	SET @should_auto_path_calc = 1
@@ -131,16 +129,7 @@ FROM(
 		AND sdt.deal_type_id = 'Physical' 
 ) a
 
-
 SET @all_physical_deals = @source_deal_header_id
-
-
-
---select @all_physical_deals return;
-
---select header_bh * from source_deal_header where source_deal_header_id in (
---	100573,100582 
---)
 
 SELECT  @all_physical_deals_capacity = ISNULL(@all_physical_deals_capacity + ',', '') + CAST(a.source_deal_header_id AS VARCHAR(10))
 FROM(
@@ -190,6 +179,7 @@ CREATE TABLE #temp_volume_capacity (
 	, volume NUMERIC(38,20)
 )
   
+  --select @product_group return;
 
 IF @product_group = 'Complex-EEX'
 BEGIN
@@ -216,46 +206,27 @@ BEGIN
 	SET @flow_date_from = @deal_term_start -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_start, 'f')
 	SET @flow_date_to = @deal_term_end -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_end, 'f')
 
-	
-
 	DECLARE @has_deal_scheduled BIT = 0
 
 	WHILE (@flow_date_from <= @flow_date_to)
 	BEGIN
 
 
-	IF EXISTS(
-		SELECT source_deal_header_id FROM optimizer_detail WHERE flow_date = @flow_date_from AND source_deal_header_id = @source_deal_header_id
-		UNION ALL
-		SELECT source_deal_header_id FROM optimizer_detail_downstream WHERE flow_date = @flow_date_from  AND source_deal_header_id = @source_deal_header_id
-		UNION ALL
-		SELECT source_deal_header_id FROM optimizer_detail_hour WHERE flow_date = @flow_date_from  AND source_deal_header_id = @source_deal_header_id
-		UNION ALL
-		SELECT source_deal_header_id FROM optimizer_detail_downstream_hour WHERE flow_date = @flow_date_from  AND source_deal_header_id = @source_deal_header_id
-	)
-	BEGIN
-		EXEC spa_print 'Deal has aleady been scheduled';
-		--SET @flow_date_from =  [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, 1, @flow_date_from), 'f')
-		RETURN;
-	END
+		IF EXISTS(
+			SELECT source_deal_header_id FROM optimizer_detail WHERE flow_date = @flow_date_from AND source_deal_header_id = @source_deal_header_id
+			UNION ALL
+			SELECT source_deal_header_id FROM optimizer_detail_downstream WHERE flow_date = @flow_date_from  AND source_deal_header_id = @source_deal_header_id
+			UNION ALL
+			SELECT source_deal_header_id FROM optimizer_detail_hour WHERE flow_date = @flow_date_from  AND source_deal_header_id = @source_deal_header_id
+			UNION ALL
+			SELECT source_deal_header_id FROM optimizer_detail_downstream_hour WHERE flow_date = @flow_date_from  AND source_deal_header_id = @source_deal_header_id
+		)
+		BEGIN
+			EXEC spa_print 'Deal has aleady been scheduled';
+			RETURN;
+		END
 
 		SET @process_id = dbo.FNAGetNewID()
-		
-		--IF EXISTS (SELECT 1
-		--			FROM optimizer_detail_downstream odd
-		--			INNER JOIN SplitCommaSeperatedValues(@all_physical_deals) t
-		--				ON t.item = odd.source_deal_header_id
-		--				AND flow_date BETWEEN [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'f')
-		--					AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')
-						
-		--			)
-		--BEGIN
-		--	SET @reschedule = 1
-		--END
-		--ELSE 
-		--BEGIN
-		--	SET @reschedule = 0
-		--END	
 		
 		SET @reschedule = 0
 
@@ -265,7 +236,8 @@ BEGIN
 		--	 @transport_deal_id,
 		--	 @process_id
 
-			 --return;
+		--return;
+
 		EXEC [dbo].[spa_auto_deal_schedule]
 			@source_deal_header_id = @source_deal_header_id,
 			@reschedule = @reschedule,
@@ -1157,24 +1129,24 @@ BEGIN
 		SET @flow_date_from =  [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, 1, @flow_date_from), 'f')
 	END;
 
+	UPDATE uddf
+		SET uddf.udf_value = @source_deal_header_id	
+	FROM #temp_transport_deal ttd
+	INNER JOIN user_defined_deal_fields uddf
+		ON ttd.source_deal_header_id = uddf.source_deal_header_id
+	INNER JOIN source_deal_header sdh
+		ON sdh.source_deal_header_id = uddf.source_deal_header_id
+	INNER JOIN user_defined_deal_fields_template uddft
+		ON sdh.template_id = uddft.template_id 
+		AND uddf.udf_template_id = uddft.udf_template_id	
+		AND uddft.field_label = 'From Deal' 
+
 	DELETE FROM #temp_transport_deal 
 	WHERE type = 'Withdrawal' 
 		AND @header_buy_sell_flag = 'b'
 
 	IF EXISTS(SELECT 1 FROM #temp_transport_deal WHERE type = 'Transport')
 	BEGIN
-
-		UPDATE uddf
-			SET uddf.udf_value = @source_deal_header_id	
-		FROM #temp_transport_deal ttd
-		INNER JOIN user_defined_deal_fields uddf
-			ON ttd.source_deal_header_id = uddf.source_deal_header_id
-		INNER JOIN source_deal_header sdh
-			ON sdh.source_deal_header_id = uddf.source_deal_header_id
-		INNER JOIN user_defined_deal_fields_template uddft
-			ON sdh.template_id = uddft.template_id 
-			AND uddf.udf_template_id = uddft.udf_template_id	
-			AND uddft.field_label = 'From Deal' 
 
 		INSERT INTO #temp_volume
 		SELECT term_start
@@ -1403,7 +1375,8 @@ BEGIN
 			SET @reschedule = 0
 		END
 
-		--select @source_deal_header_id, @reschedule, @flow_date_from, @transport_deal_id, @process_id return;
+		--select @source_deal_header_id, @reschedule, @flow_date_from, @transport_deal_id, @process_id --return;
+
 
 		EXEC [dbo].[spa_auto_deal_schedule]
 			@source_deal_header_id = @source_deal_header_id,
@@ -1441,24 +1414,26 @@ BEGIN
 	FROM #temp_transport_deal
 	--WHERE type IN ('Transport', 'Withdrawal')
 
+	
+	UPDATE uddf
+		SET uddf.udf_value = @source_deal_header_id	
+	FROM #temp_transport_deal ttd
+	INNER JOIN user_defined_deal_fields uddf
+		ON ttd.source_deal_header_id = uddf.source_deal_header_id
+	INNER JOIN source_deal_header sdh
+		ON sdh.source_deal_header_id = uddf.source_deal_header_id
+	INNER JOIN user_defined_deal_fields_template uddft
+		ON sdh.template_id = uddft.template_id 
+		AND uddf.udf_template_id = uddft.udf_template_id	
+		AND uddft.field_label = 'From Deal' 
+
+
 	DELETE FROM #temp_transport_deal 
-	WHERE type = 'Withdrawal' 
-		AND @header_buy_sell_flag = 'b'
+	WHERE type IN( 'Withdrawal' , 'Injection')
+		--AND @header_buy_sell_flag = 'b'
 
 	IF EXISTS(SELECT 1 FROM #temp_transport_deal WHERE type = 'Transport')
 	BEGIN
-
-		UPDATE uddf
-			SET uddf.udf_value = @source_deal_header_id	
-		FROM #temp_transport_deal ttd
-		INNER JOIN user_defined_deal_fields uddf
-			ON ttd.source_deal_header_id = uddf.source_deal_header_id
-		INNER JOIN source_deal_header sdh
-			ON sdh.source_deal_header_id = uddf.source_deal_header_id
-		INNER JOIN user_defined_deal_fields_template uddft
-			ON sdh.template_id = uddft.template_id 
-			AND uddf.udf_template_id = uddft.udf_template_id	
-			AND uddft.field_label = 'From Deal' 
 
 		INSERT INTO #temp_volume
 		SELECT term_start
@@ -1573,9 +1548,3 @@ BEGIN
 	
 END
 
-
-
-
---12269
-
---select * from  source_Deal_header order by source_Deal_header_id desc

@@ -39,32 +39,14 @@ DECLARE @source_deal_header_id INT,
 	EXEC [spa_drop_all_temp_table] 
 	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
 	
-	--8407	982	0	2000-11-01 00:00:00.000	8406
-
-	--100793	1	2010-01-01 00:00:00.000	NULL	
-		
-		
-
-		--EXEC [dbo].[spa_auto_deal_schedule]
-		--	@source_deal_header_id = 101012,
-		--	@reschedule = 0,
-		--	@flow_date = '2011-01-01',
-		--	@transport_deal_id = NULL,
-		--	@process_id = '6FAC4C0A_E0F0_4820_89CE_21CCB1F2475E'
-
-				--101014	0	2012-01-01 00:00:00.000	NULL	
-
-
-				--101014	0	2012-01-01 00:00:00.000	NULL	A155F3CF_45A3_4F61_BD93_B296D7D0A40C
-
-				--101014	0	2012-01-01 00:00:00.000	NULL	
-		select 
-			@source_deal_header_id = 101014,
+		SELECT
+			@source_deal_header_id = 101012,
 			@reschedule = 0,
-			@flow_date = '2012-01-01',
+			@flow_date = '2011-01-01',
 			@transport_deal_id = NULL,
-			@process_id = '92457C24_4398_449D_A1CD_0EDF4A0FAA1D'
-
+			@process_id = 'D1C85BE3_853B_4838_A9AD_5624AACF4910'
+			
+	
 	
 --**/
 SET NOCOUNT ON
@@ -332,7 +314,7 @@ BEGIN
 					ON sdv.value_id = sdh.internal_portfolio_id
 					AND type_id = 39800
 				WHERE sdv.code IN (''Complex-LTO'', ''Complex-ROD'', ''Autopath Only'')
-					
+					AND position >0	
 			)
 			BEGIN
 
@@ -373,7 +355,7 @@ BEGIN
 
 			END 
 		'
-
+			
 		--print @sql
 		EXEC(@sql)
 
@@ -394,8 +376,6 @@ BEGIN
 			AND MONTH(term_start) = MONTH(''' + CAST(@flow_date AS VARCHAR(50)) + ''' )	'
 		--print @sql
 		EXEC(@sql)
-
-
 
 	END 
 	ELSE 
@@ -568,6 +548,8 @@ SET @call_from = IIF(@transport_deal_id IS NULL, 'flow_auto', 'flow_opt');
 --	,  @delivery_deals_id
 
 --return;
+
+
 
 EXEC spa_schedule_deal_flow_optimization  
 	@flag = 'i'
