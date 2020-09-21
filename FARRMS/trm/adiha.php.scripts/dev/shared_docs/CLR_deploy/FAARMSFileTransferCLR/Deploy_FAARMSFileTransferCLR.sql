@@ -44,6 +44,22 @@ IF OBJECT_ID('spa_move_ftp_file_to_folder_using_clr') IS NOT NULL
 IF OBJECT_ID('spa_ftp_delete_file_using_clr') IS NOT NULL
     DROP PROC spa_ftp_delete_file_using_clr
 
+IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'FARRMSUtilities')
+BEGIN
+	CREATE ASSEMBLY [FARRMSUtilities]
+	FROM @library_path + 'FARRMSUtilities.dll'
+	WITH PERMISSION_SET = UNSAFE	
+END
+ELSE
+BEGIN
+	BEGIN TRY  
+		ALTER ASSEMBLY FARRMSUtilities FROM @library_path + 'FARRMSUtilities.dll' WITH PERMISSION_SET = UNSAFE  
+	END TRY  
+	BEGIN CATCH  
+		--	Suppressing Error, according to MVID, identical to an assembly that is already registered under the name "FARRMSUtilities".
+		PRINT 'FARRMSUtilities is already registered according to MVID.'
+	END CATCH
+END
 
 IF EXISTS(SELECT 1 FROM sys.assemblies a WHERE [name] LIKE 'FAARMSFileTransferCLR')
 	DROP ASSEMBLY [FAARMSFileTransferCLR]

@@ -4,8 +4,8 @@
 --select getdate()
 
 DECLARE @drop_existing_system_assembly BIT = 1	--	If set to true it will drop existing .net assemblies that were used
-DECLARE @folder_path VARCHAR(300)
-SELECT @folder_path = document_path FROM connection_string
+DECLARE @folder_path VARCHAR(300), @common_dlls_path VARCHAR(500)
+SELECT @folder_path = document_path, @common_dlls_path = document_path + '\CLR_deploy\' FROM connection_string
 DECLARE @library_path VARCHAR(MAX) = @folder_path + '\CLR_deploy\FARRMSGenericCLR\' -- Assembly DLL File path
 
 DECLARE @command NVARCHAR(1024) = N'ALTER AUTHORIZATION ON DATABASE::[<<DatabaseName>>] TO [<<LoginName>>]' 
@@ -131,6 +131,57 @@ ELSE
 IF EXISTS(SELECT 1 FROM sys.assemblies a WHERE [name] LIKE 'FARRMSGenericCLR')
 	DROP ASSEMBLY FARRMSGenericCLR
 
+IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'Accessibility')
+BEGIN
+	CREATE ASSEMBLY [Accessibility]
+	FROM @library_path + 'Accessibility.dll'
+	WITH PERMISSION_SET = UNSAFE	
+END
+ELSE
+BEGIN
+	BEGIN TRY  
+		ALTER ASSEMBLY Accessibility FROM @library_path + 'Accessibility.dll' WITH PERMISSION_SET = UNSAFE  
+	END TRY  
+	BEGIN CATCH  
+		--	Suppressing Error, according to MVID, identical to an assembly that is already registered under the name "Accessibility".
+		PRINT 'Accessibility is already registered according to MVID.'
+	END CATCH
+END
+
+IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'System.Xaml')
+BEGIN
+	CREATE ASSEMBLY [System.Xaml]
+	FROM @library_path + 'System.Xaml.dll'
+	WITH PERMISSION_SET = UNSAFE	
+END
+ELSE
+BEGIN
+	BEGIN TRY  
+		ALTER ASSEMBLY [System.Xaml] FROM @library_path + 'System.Xaml.dll' WITH PERMISSION_SET = UNSAFE  
+	END TRY  
+	BEGIN CATCH  
+		--	Suppressing Error, according to MVID, identical to an assembly that is already registered under the name "System.Xaml".
+		PRINT 'System.Xaml is already registered according to MVID.'
+	END CATCH
+END
+
+IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'WindowsBase')
+BEGIN
+	CREATE ASSEMBLY [WindowsBase]
+	FROM @common_dlls_path + 'WindowsBase.dll'
+	WITH PERMISSION_SET = UNSAFE	
+END
+ELSE
+BEGIN
+	BEGIN TRY  
+		ALTER ASSEMBLY WindowsBase FROM @common_dlls_path + 'WindowsBase.dll' WITH PERMISSION_SET = UNSAFE  
+	END TRY  
+	BEGIN CATCH  
+		--	Suppressing Error, according to MVID, identical to an assembly that is already registered under the name "WindowsBase".
+		PRINT 'WindowsBase is already registered according to MVID.'
+	END CATCH
+END
+
 IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'WordDocumentGenerator.Library')
 BEGIN
 	CREATE ASSEMBLY [WordDocumentGenerator.Library]
@@ -144,7 +195,6 @@ BEGIN
 	FROM @library_path + 'DocumentFormat.OpenXml.dll'
 	WITH PERMISSION_SET = UNSAFE	
 END    
-
 
 
 IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'System.Xaml')
@@ -186,6 +236,22 @@ END
 ------------------------------------------
 /* ADDED DLL FOR MAIL SYSTEM (END) */
 
+IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'FARRMSUtilities')
+BEGIN
+	CREATE ASSEMBLY [FARRMSUtilities]
+	FROM @library_path + 'FARRMSUtilities.dll'
+	WITH PERMISSION_SET = UNSAFE	
+END
+ELSE
+BEGIN
+	BEGIN TRY  
+		ALTER ASSEMBLY FARRMSUtilities FROM @library_path + 'FARRMSUtilities.dll' WITH PERMISSION_SET = UNSAFE  
+	END TRY  
+	BEGIN CATCH  
+		--	Suppressing Error, according to MVID, identical to an assembly that is already registered under the name "FARRMSUtilities".
+		PRINT 'FARRMSUtilities is already registered according to MVID.'
+	END CATCH
+END
 
 
 -- FARRMSWebServices Class Library

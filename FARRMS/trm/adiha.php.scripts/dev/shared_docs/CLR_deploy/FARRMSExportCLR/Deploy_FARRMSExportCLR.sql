@@ -35,6 +35,23 @@ IF OBJECT_ID('spa_post_data_to_web_service') IS NOT NULL
 IF EXISTS(SELECT 1 FROM sys.assemblies a WHERE [name] LIKE 'FARRMSExportCLR')
 	DROP ASSEMBLY FARRMSExportCLR
 
+IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'FARRMSUtilities')
+BEGIN
+	CREATE ASSEMBLY [FARRMSUtilities]
+	FROM @library_path + 'FARRMSUtilities.dll'
+	WITH PERMISSION_SET = UNSAFE	
+END
+ELSE
+BEGIN
+	BEGIN TRY  
+		ALTER ASSEMBLY FARRMSUtilities FROM @library_path + 'FARRMSUtilities.dll' WITH PERMISSION_SET = UNSAFE  
+	END TRY  
+	BEGIN CATCH  
+		--	Suppressing Error, according to MVID, identical to an assembly that is already registered under the name "FARRMSUtilities".
+		PRINT 'FARRMSUtilities is already registered according to MVID.'
+	END CATCH
+END
+
 IF NOT EXISTS(SELECT 1 FROM sys.assemblies a WHERE [name] LIKE 'FARRMSExportCLR')
 BEGIN
 	CREATE ASSEMBLY FARRMSExportCLR
