@@ -231,10 +231,20 @@ IF @flag = 's'
 BEGIN
  --BEGIN TRY
 
-	Declare @effective_date date
-	IF EXISTS (select 1 from source_price_curve_def where source_curve_def_id = @source_price_curve AND effective_date = 'y')
+	DECLARE @effective_date DATE
+	IF EXISTS (
+		SELECT 1 FROM source_price_curve_def spcd
+		INNER JOIN dbo.SplitCommaSeperatedValues(@source_price_curve) sv
+			ON sv.item = spcd.source_curve_def_id
+		WHERE  spcd.effective_date = 'y')
 	BEGIN
-		SET @effective_date = (select top 1 as_of_date from source_price_curve where source_curve_def_id = @source_price_curve and as_of_date <= @as_of_date_from)
+		SET @effective_date = (
+				SELECT TOP 1 as_of_date
+				FROM source_price_curve spc
+				INNER JOIN dbo.SplitCommaSeperatedValues(@source_price_curve) sv
+					ON sv.item = spc.source_curve_def_id
+				WHERE as_of_date <= @as_of_date_from
+				)
 	END
 
 	IF (@effective_date is NOT NULL)
