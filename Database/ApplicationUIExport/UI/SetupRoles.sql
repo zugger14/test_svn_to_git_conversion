@@ -126,7 +126,7 @@ BEGIN
 	
 				
 		INSERT INTO #temp_all_grids(old_grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at)
-		SELECT 18,'role_users',NULL,NULL,'exec spa_application_security_role  @flag = f, @role_id = <ID>','Users',NULL,NULL,'10111016','10111018',NULL UNION ALL SELECT 19,'application_privilege',NULL,NULL,'exec spa_AccessRights @flag = m, @product_id = 13000000, @role_id = <ID>','Privileges','t','function_name2,function_name3,function_name4,function_name5,function_name6','10111113','10111114','0'
+		SELECT 18,'role_users',NULL,NULL,'exec spa_application_security_role  @flag = f, @role_id = <ID>','Users',NULL,NULL,'10111016','10111018',NULL UNION ALL SELECT 19,'application_privilege',NULL,NULL,'exec spa_AccessRights @flag = m, @product_id = 13000000, @role_id = <ID>','Privileges','t','function_name2,function_name3,function_name4,function_name5,function_name6,function_name7','10111113','10111114','0'
 				
 		UPDATE tag
 		SET tag.new_grid_id = agd.grid_id

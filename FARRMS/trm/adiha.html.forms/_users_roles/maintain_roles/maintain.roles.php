@@ -450,7 +450,7 @@
                                     var sql_param = {
                                         "sql":"Exec spa_AccessRights @flag = m, @product_id = " + <?php echo $farrms_product_id; ?>  + ", @role_id =" + default_role_id,
                                         "grid_type":"tg",
-                                        "grouping_column": "function_name2,function_name3,function_name4,function_name5,function_name6"
+                                        "grouping_column": "function_name2,function_name3,function_name4,function_name5,function_name6,function_name7"
                                     };
                                     sql_param = $.param(sql_param);
                                     var sql_url = js_data_collector_url + "&" + sql_param;
@@ -561,7 +561,7 @@
                             var sql_param = {
                                 "sql":"Exec spa_AccessRights @flag = m, @product_id = " + <?php echo $farrms_product_id; ?>  + ", @role_id =" + default_role_id,
                                 "grid_type":"tg",
-                                "grouping_column": "function_name2,function_name3,function_name4,function_name5,function_name6"
+                                "grouping_column": "function_name2,function_name3,function_name4,function_name5,function_name6,function_name7"
                             };
                             sql_param = $.param(sql_param);
                             var sql_url = js_data_collector_url + "&" + sql_param;

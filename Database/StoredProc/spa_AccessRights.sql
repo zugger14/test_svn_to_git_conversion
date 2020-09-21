@@ -622,6 +622,7 @@ BEGIN
 			ELSE priv.function_name5 
 		 END [function_name5]
 		,priv.function_name6
+		,priv.function_name7
 		--, main_rs.function_name
 		, main_rs.functional_user_id_temp functional_user_id
 		--s, main_rs.parent_id
