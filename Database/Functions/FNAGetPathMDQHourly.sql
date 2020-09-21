@@ -34,7 +34,10 @@ RETURNS @return_table TABLE (
 	[used_mdq] NUMERIC(10,4) NULL,
 	[rmdq] NUMERIC(10,4) NULL,
 	[is_complex] VARCHAR(10) NULL,
-	[only_path_mdq] CHAR(1) NULL
+	[only_path_mdq] CHAR(1) NULL,
+	[stg_affected_path_id] INT NULL,
+	[stg_net_flow] NUMERIC(10,4) NULL,
+	[stg_net_type] VARCHAR(50) NULL
 )
 AS
 /*
@@ -52,12 +55,19 @@ DECLARE @return_table TABLE (
 	[used_mdq] NUMERIC(10,4) NULL,
 	[rmdq] NUMERIC(10,4) NULL,
 	[is_complex] VARCHAR(10) NULL,
-	[only_path_mdq] CHAR(1) NULL
+	[only_path_mdq] CHAR(1) NULL,
+	[stg_affected_path_id] INT NULL,
+	[stg_net_flow] NUMERIC(10,4) NULL,
+	[stg_net_type] VARCHAR(50) NULL
 )
 
-SELECT @path_id = '130', @term_start = '2027-08-01', @term_end = '2027-08-01', @data_level = ''
+SELECT @path_id = '310', @term_start = '2033-07-02', @term_end = '2033-07-02', @data_level = ''
+
+	
+EXEC dbo.spa_drop_all_temp_table
 
 --*/
+
 BEGIN
 	SET @data_level = ISNULL(NULLIF(@data_level, ''), 'path_term_hour')
 	
@@ -65,6 +75,12 @@ BEGIN
 	BEGIN
 		DECLARE @location_ids TABLE (location_id INT NULL)
 		DECLARE @contract_ids TABLE (contract_id INT NULL)
+		DECLARE @storage_type CHAR(1)
+		DECLARE @reverse_path_id VARCHAR(10)
+		DECLARE @storage_loc_id INT
+		DECLARE @inj_path_id VARCHAR(10)
+		DECLARE @with_path_id VARCHAR(10)
+
 		
 		INSERT INTO @location_ids
 		SELECT dp.from_location
@@ -93,7 +109,38 @@ BEGIN
 		FROM counterparty_contract_rate_schedule ccrs
 		WHERE ccrs.path_id = @path_id
 
+		--storage case: get storage type on basis of from and to location of path
+		SELECT @storage_type = CASE WHEN smj_from.location_name = 'storage' THEN 'w' WHEN smj_to.location_name = 'storage' THEN 'i' ELSE NULL END
+			, @storage_loc_id = CASE WHEN smj_from.location_name = 'storage' THEN dp.from_location WHEN smj_to.location_name = 'storage' THEN dp.to_location ELSE NULL END
+		FROM delivery_path dp
+		INNER JOIN source_minor_location sml_from
+			ON sml_from.source_minor_location_id = dp.from_location
+		INNER JOIN source_major_location smj_from
+			ON smj_from.source_major_location_id = sml_from.source_major_location_id
+		INNER JOIN source_minor_location sml_to
+			ON sml_to.source_minor_location_id = dp.to_location
+		INNER JOIN source_major_location smj_to
+			ON smj_to.source_major_location_id = sml_to.source_major_location_id
+		WHERE dp.path_id = @path_id
+
+		--SET @storage_type = null
+
+		--storage case: get reverse path id used on storage case
+		IF @storage_type IS NOT NULL
+		BEGIN
+			SELECT @reverse_path_id = dp_reverse.path_id
+			FROM delivery_path dp
+			LEFT JOIN delivery_path dp_reverse
+				ON dp_reverse.from_location = dp.to_location
+				AND dp_reverse.to_location = dp.from_location
+			WHERE dp.path_id = @path_id
+
+			SET @inj_path_id = IIF(@storage_type = 'i', @path_id, @reverse_path_id)
+			SET @with_path_id = IIF(@storage_type = 'w', @path_id, @reverse_path_id)
+
+		END
 	END
+	
 
 	--store location capacity hourly volume
 	BEGIN
@@ -161,9 +208,13 @@ BEGIN
 			source_deal_header_id INT NULL,
 			[contract_id] INT NULL,
 			[term_start] DATETIME NULL,
-			[hour] INT NULL,
+			[location_id] INT NULL,
+			[leg] TINYINT NULL,
+			[hour] TINYINT NULL,
 			[hourly_mdq] NUMERIC(10,4) NULL,
-			[is_complex] VARCHAR(10) NULL
+			[is_complex] VARCHAR(10) NULL,
+			[storage_type] CHAR(1) NULL,
+			[buy_sell_flag] CHAR(1)
 		)
 
 		INSERT INTO @sch_deal_info (
@@ -171,17 +222,25 @@ BEGIN
 			source_deal_header_id,
 			[contract_id],
 			[term_start],
+			[location_id],
+			[leg],
 			[hour],
 			[hourly_mdq],
-			[is_complex]
+			[is_complex],
+			[storage_type],
+			[buy_sell_flag]
 		)
 		SELECT uddf.udf_value [path_id]
 			, sdh.source_deal_header_id
 			, sdh.contract_id
 			, sddh.term_date [term_start]
+			, sdd.location_id
+			, sdd.leg
 			, CAST(LEFT(sddh.hr,2) AS INT) [hour]
 			, IIF(sdd.buy_sell_flag = 's', -1, 1) * sddh.volume [hourly_mdq]
 			, CASE WHEN sdv_pg.code IN ('Complex-EEX', 'Complex-LTO', 'Complex-ROD') AND sddh.volume > 0 THEN 'y' ELSE 'n' END [is_complex]
+			, @storage_type
+			, sdd.buy_sell_flag
 		FROM source_deal_detail_hour sddh
 		INNER JOIN source_deal_detail sdd 
 			ON sdd.source_deal_detail_id = sddh.source_deal_detail_id 
@@ -196,19 +255,48 @@ BEGIN
 		INNER JOIN user_defined_deal_fields uddf (NOLOCK) 
 			ON uddf.source_deal_header_id = sdh.source_deal_header_id
 			AND uddft.udf_template_id = uddf.udf_template_id
-			AND uddf.udf_value = @path_id
-		INNER JOIN @contract_ids cn ON cn.contract_id = sdh.contract_id
+			AND uddf.udf_value IN (@path_id, @reverse_path_id)
+		LEFT JOIN @contract_ids cn ON cn.contract_id = sdh.contract_id
 		LEFT JOIN static_data_value sdv_pg 
 			ON sdv_pg.value_id = sdh.internal_portfolio_id
 		where sdht.template_name = 'Transportation NG'
 			AND sddh.term_date BETWEEN @term_start AND ISNULL(@term_end, @term_start)
-			AND sdd.leg = 2
+			--AND (sdd.leg = 2 OR @storage_type IS NOT NULL)
+			and sdd.leg = 2
 			AND sddh.volume IS NOT NULL
+			AND (cn.contract_id IS NOT NULL OR @storage_type IS NOT NULL)
 
 	END
+
 	--select * from @sch_deal_info
 	--return
+			
+	--storage case: get affected storage path and storage new flow
+	BEGIN
+		DECLARE @stg_net_flow TABLE	(
+			[stg_affected_path_id] INT NULL,
+			[hour] INT NULL,
+			[stg_net_flow] NUMERIC(10,4) NULL,
+			[stg_net_type] VARCHAR(50) NULL
+		)
 
+		INSERT INTO @stg_net_flow (
+			[stg_affected_path_id],
+			[hour],
+			[stg_net_flow],
+			[stg_net_type]
+		)
+		SELECT NULL [stg_affected_path_id], t.[hour], SUM(IIF(t.path_id = @inj_path_id, 1, -1) * t.hourly_mdq) [stg_net_flow], CAST(NULL AS VARCHAR(50)) [stg_net_type]
+		FROM @sch_deal_info t
+		WHERE @storage_type IS NOT NULL --only on storage case
+		GROUP BY [hour]
+	
+		UPDATE @stg_net_flow SET [stg_affected_path_id] = IIF([stg_net_flow] >= 0, @inj_path_id, @with_path_id)
+			, [stg_net_type] = CASE WHEN [stg_net_flow] > 0 THEN 'net_inj' WHEN [stg_net_flow] < 0 THEN 'net_with' ELSE NULL END
+
+		--select * from @stg_net_flow
+	END
+	
 	--store path mdq hourly information
 	BEGIN
 		DECLARE @path_mdq_info TABLE	(
@@ -222,7 +310,10 @@ BEGIN
 			[rmdq] NUMERIC(10,4) NULL,
 			[self_mdq] NUMERIC(10,4) NULL,
 			[is_complex] VARCHAR(10) NULL,
-			[only_path_mdq] CHAR(1) NULL
+			[only_path_mdq] CHAR(1) NULL,
+			[stg_affected_path_id] INT NULL,
+			[stg_net_flow] NUMERIC(10,4) NULL,
+			[stg_net_type] VARCHAR(50) NULL
 		)
 	
 		INSERT INTO @path_mdq_info (
@@ -232,10 +323,14 @@ BEGIN
 			[hour],
 			[mdq],
 			[mdq1],
+			[rmdq],
 			[used_mdq],
 			[self_mdq],
 			[is_complex],
-			[only_path_mdq]
+			[only_path_mdq],
+			[stg_affected_path_id],
+			[stg_net_flow],
+			[stg_net_type]
 		)
 		SELECT dp.path_id
 			, ccrs.contract_id
@@ -257,12 +352,15 @@ BEGIN
 			  , 0)
 			  + COALESCE(self_mdq.mdq, dp.mdq, 0)
 			  [mdq1]
+			, 0 [rmdq]
 			, ISNULL(sch_info.[hourly_mdq], 0) [used_mdq]
 			, COALESCE(self_mdq.mdq, dp.mdq) [self_mdq]
 			, ISNULL(sch_info.[is_complex], 'n') [is_complex] 
 			, IIF(COALESCE(lwchm_from.hourly_mdq, lwchm_to.hourly_mdq) IS NOT NULL, 'n', 'y') [only_path_mdq]
-
-			--,[dbo].[FNAGetGasSupplyDemandVol](lwchm_from.hourly_mdq, lwchm_to.hourly_mdq, IIF(smj_to.location_name = 'storage', 'storage_injection', ''))
+			, stn.stg_affected_path_id
+			, stn.stg_net_flow
+			, stn.stg_net_type
+			
 		FROM delivery_path dp
 		LEFT JOIN counterparty_contract_rate_schedule ccrs 
 			ON ccrs.path_id = dp.path_id
@@ -309,15 +407,26 @@ BEGIN
 				AND dpm.effective_date <= tm.term_start
 			ORDER BY dpm.effective_date DESC
 		) self_mdq
+		LEFT JOIN @stg_net_flow stn
+			ON stn.[hour] = hr_values.[hour]
 		WHERE dp.path_id = @path_id
-		
-		--while deriving rmdq, use non-excluded mdq1
-		UPDATE @path_mdq_info SET [rmdq] = [mdq1] - [used_mdq]
-	END
 
-	--select * from @path_mdq_info
-	--return
-	
+		
+		
+		IF @storage_type IS NULL
+		BEGIN
+			--while deriving rmdq, use non-excluded mdq1
+			UPDATE @path_mdq_info SET [rmdq] = [mdq1] - [used_mdq]
+		END
+		ELSE
+		BEGIN
+			UPDATE @path_mdq_info 
+			SET [rmdq] = [mdq1] - IIF(path_id = stg_affected_path_id AND stg_net_flow <> 0, ABS(stg_net_flow), 0)
+			--WHERE (stg_net_flow = 0 OR path_id <> stg_affected_path_id OR stg_affected_path_id IS NULL)
+		END
+				
+	END
+		
 	--select final data on basis of parameter data_level
 	BEGIN
 		IF @data_level = 'path_term_hour'
@@ -332,6 +441,9 @@ BEGIN
 				, [rmdq]
 				, [is_complex]
 				, [only_path_mdq]
+				, [stg_affected_path_id]
+				, [stg_net_flow]
+				, [stg_net_type]
 			FROM @path_mdq_info
 			--ORDER BY term_start
 			--	,[hour]
@@ -348,6 +460,9 @@ BEGIN
 				, SUM([rmdq]) [rmdq]
 				, MAX([is_complex]) [is_complex]
 				, MAX([only_path_mdq]) [only_path_mdq]
+				, MAX([stg_affected_path_id]) [stg_affected_path_id]
+				, MAX([stg_net_flow]) [stg_net_flow]
+				, MAX([stg_net_type]) [stg_net_type]
 			FROM @path_mdq_info
 			GROUP BY [path_id]
 				,[contract_id]
@@ -366,6 +481,9 @@ BEGIN
 				, SUM([rmdq]) [rmdq]
 				, MAX([is_complex]) [is_complex]
 				, MAX([only_path_mdq]) [only_path_mdq]
+				, MAX([stg_affected_path_id]) [stg_affected_path_id]
+				, MAX([stg_net_flow]) [stg_net_flow]
+				, MAX([stg_net_type]) [stg_net_type]
 			FROM @path_mdq_info
 			GROUP BY [path_id]
 				,[contract_id]

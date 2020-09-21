@@ -4069,7 +4069,7 @@ BEGIN
 									-
 									COALESCE (
 										cd.received
-										, [dbo].[FNAGetGasSupplyDemandVol](supply_pos.position, demand_pos.position, IIF(to_loc_grp_name = ''storage'', ''storage_injection'', ''''))
+										, IIF(to_loc_grp_name = ''storage'', 0, [dbo].[FNAGetGasSupplyDemandVol](supply_pos.position, demand_pos.position,''''))
 										, 0
 									)
 								)
