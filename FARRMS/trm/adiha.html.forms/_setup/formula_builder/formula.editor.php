@@ -1212,7 +1212,7 @@
                 var default_value_array = [];
                 if (callfrom == 'reopen') {
                     var result_text= $(obj).parent().prev('span').text();
-                    var result_array = result_text.split(",");
+                    var result_array = result_text.split(formula_parameter_seperator);
                     var count = 0;
                     param_form.forEachItem(function(name){
                         var item_type = param_form.getItemType(name);
