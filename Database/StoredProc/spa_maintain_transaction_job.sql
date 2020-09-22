@@ -557,6 +557,24 @@ BEGIN TRY
 		EXEC spa_print @st_sql
 		EXEC (@st_sql)
 
+		SET @st_sql = 'DELETE rhpd ' + CASE WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
+		' output getdate() as_of_date, deleted.source_deal_header_id,deleted.term_start
+			,deleted.deal_date,deleted.deal_volume_uom_id,-1*deleted.hr1,-1*deleted.hr2
+			,-1*deleted.hr3,-1*deleted.hr4,-1*deleted.hr5,-1*deleted.hr6,-1*deleted.hr7,-1*deleted.hr8,-1*deleted.hr9
+			,-1*deleted.hr10,-1*deleted.hr11,-1*deleted.hr12,-1*deleted.hr13,-1*deleted.hr14,-1*deleted.hr15
+			,-1*deleted.hr16,-1*deleted.hr17,-1*deleted.hr18,-1*deleted.hr19,-1*deleted.hr20,-1*deleted.hr21
+			,-1*deleted.hr22,-1*deleted.hr23,-1*deleted.hr24,-1*deleted.hr25,deleted.create_ts,deleted.create_user,17402 delta_type 
+			,deleted.expiration_date,DELETED.period,DELETED.granularity,deleted.source_deal_detail_id,deleted.rowid
+		into dbo.delta_report_hourly_position_financial_main(as_of_date,source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12
+			,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts
+			,create_user,delta_type,expiration_date,period,granularity,source_deal_detail_id,rowid)'
+		END 
+	+ ' FROM report_hourly_position_financial_main rhpd
+			INNER JOIN #tmp_header_deal_id_del d ON  rhpd.source_deal_detail_id = d.source_deal_detail_id ' 
+
+		EXEC spa_print @st_sql
+		EXEC (@st_sql)
+
 		RETURN
 	END
 
