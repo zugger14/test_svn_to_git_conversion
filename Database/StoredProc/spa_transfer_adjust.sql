@@ -41,7 +41,13 @@ EXEC spa_print 'Use spa_print instead of PRINT statement in debug mode.'
 --Drops all temp tables created in this scope.
 EXEC [spa_drop_all_temp_table] 
 
-DECLARE @source_deal_header_id INT = 100984 --s
+
+--select top 10 * from source_deal_header order by 1 desc
+--103488
+
+DECLARE @source_deal_header_id INT = 103278 --102282  --b -- 103278
+
+--DECLARE @source_deal_header_id INT = 103165 --102283 --s -- 103165 --
 --DECLARE @source_deal_header_id INT = 100903 --b
 --DECLARE @source_deal_header_id INT = 100573 -- 100582 --s(1) -- 100573 --s (22) --100546 -b (1)
  
@@ -84,6 +90,7 @@ DECLARE
 		, @all_physical_deals VARCHAR(2000)
 		, @should_auto_path_calc BIT = 0
 		, @all_physical_deals_capacity VARCHAR(2000)
+		, @capacity_lto VARCHAR(2000)
 
 SELECT @product_group = sdv.code 
 	, @product_group_id = internal_portfolio_id
@@ -129,6 +136,10 @@ FROM(
 		AND sdt.deal_type_id = 'Physical' 
 ) a
 
+
+SET @capacity_lto = @all_physical_deals 
+
+
 SET @all_physical_deals = @source_deal_header_id
 
 SELECT  @all_physical_deals_capacity = ISNULL(@all_physical_deals_capacity + ',', '') + CAST(a.source_deal_header_id AS VARCHAR(10))
@@ -146,7 +157,6 @@ FROM(
 		--AND sdh.header_buy_sell_flag = @header_buy_sell_flag
 		AND sdt.deal_type_id = 'Physical' 
 ) a
-
 
 --select @all_physical_deals return;
 
@@ -179,7 +189,7 @@ CREATE TABLE #temp_volume_capacity (
 	, volume NUMERIC(38,20)
 )
   
-  --select @product_group return;
+
 
 IF @product_group = 'Complex-EEX'
 BEGIN
@@ -577,7 +587,7 @@ BEGIN
 	SET @flow_date_to = @deal_term_end -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_end, 'f')
 
 
---select @flow_date_from , @flow_date_to, @product_group  return;
+--select @flow_date_from , @flow_date_to, @product_group, @header_buy_sell_flag return;
 	
 	WHILE (@flow_date_from <= @flow_date_to)
 	BEGIN
@@ -617,10 +627,11 @@ BEGIN
 
 		--select @reschedule,@flow_date_from, @flow_date_to
 
-		--if @flow_date_from = '2002-03-01'
+		--if @flow_date_from = '2002-01-01'
 		--BEGIN
-		--	select @all_physical_deals, @source_deal_header_id, @reschedule,@flow_date_from,@transport_deal_id,@process_id  return;
+		--	select  @source_deal_header_id, @reschedule,@flow_date_from,@transport_deal_id,@process_id  return;
 		--END
+
 
 		EXEC [dbo].[spa_auto_deal_schedule]
 			@source_deal_header_id = @source_deal_header_id,
@@ -628,6 +639,7 @@ BEGIN
 			@flow_date = @flow_date_from,
 			@transport_deal_id = @transport_deal_id,
 			@process_id = @process_id
+
 
 		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
 
@@ -649,6 +661,23 @@ BEGIN
 						AND internal_portfolio_id = ' + CAST(@product_group_id AS VARCHAR(10)) + 
 					')'
 		EXEC(@sql)
+
+
+	
+
+		--SELECT *
+		--FROM user_defined_deal_fields uddf    
+		--INNER JOIN source_deal_header sdh
+		--	ON sdh.source_deal_header_id = uddf.source_deal_header_id
+		--INNER JOIN  #temp_transport_deal ttd
+		--	ON ttd.source_deal_header_id = sdh.source_deal_header_id
+
+		--INNER JOIN user_defined_deal_fields_template uddft
+		--	ON sdh.template_id = uddft.template_id 
+		--	AND uddf.udf_template_id = uddft.udf_template_id    
+		--	AND uddft.field_label = 'From Deal'    
+		--WHERE udf_value = 103165
+
 
 		--	print @sql
 
@@ -697,6 +726,19 @@ BEGIN
 		SET @flow_date_from =  [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, 1, @flow_date_from), 'f')
 		
 	END;
+
+
+	DELETE ttd
+	FROM user_defined_deal_fields uddf    
+	INNER JOIN source_deal_header sdh
+		ON sdh.source_deal_header_id = uddf.source_deal_header_id
+	INNER JOIN user_defined_deal_fields_template uddft
+		ON sdh.template_id = uddft.template_id 
+		AND uddf.udf_template_id = uddft.udf_template_id    
+		AND uddft.field_label = 'From Deal'   
+	INNER JOIN  #temp_transport_deal ttd
+		ON ttd.source_deal_header_id = uddf.source_deal_header_id
+	WHERE udf_value <>  @source_deal_header_id
 
 	--return;
 
@@ -751,7 +793,8 @@ BEGIN
 			)
 		) unpvt
 		GROUP BY term_start, hr
-			
+
+
 		UPDATE sddh
 		SET volume = ABS(tv.volume)
 		FROM #temp_transport_deal ttd
@@ -853,6 +896,7 @@ BEGIN
 			AND @deal_term_start BETWEEN sdd.term_start AND sdd.term_end
 			AND sdh.description1 = 'LTO Buy'
 
+
 		IF @capacity_deal_id IS NOT NULL
 		BEGIN
 
@@ -862,6 +906,11 @@ BEGIN
 				ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 			WHERE sdd.source_deal_header_id = @capacity_deal_id
 			AND sddh.term_date BETWEEN @deal_term_start and @deal_term_end
+
+
+
+			
+
 
 			INSERT INTO source_deal_detail_hour 
 			(
@@ -876,7 +925,7 @@ BEGIN
 				, pmh.term_start
 				, RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00' 
 				, 0
-				, pmh.rmdq
+				, SUM(pmh.rmdq) rmdq
 				, 982 								
 			FROM [FNAGetPathMDQHourly]( @path_id, @deal_term_start,@deal_term_end, '') pmh
 			INNER JOIN source_deal_detail sdd
@@ -888,17 +937,21 @@ BEGIN
 				AND RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00'  = sddh.hr
 			INNER JOIN source_deal_detail sdd_m
 				ON sddh.source_deal_detail_id = sdd_m.source_deal_detail_id
-				AND sdd_m.source_deal_header_id = @source_deal_header_id --100766 -- 9846 -	
+				--AND sdd_m.source_deal_header_id = @source_deal_header_id --100766 -- 9846 -	
+			INNER JOIN SplitCommaSeperatedValues(@capacity_lto) t
+				ON sdd_m.source_deal_header_id = t.item
 			WHERE pmh.is_complex = 'y' 
 				 AND sdd.leg = 1
 				 AND NULLIF(sddh.volume, 0) IS NOT NULL
-
+			GROUP BY  sdd.source_deal_detail_id
+				, pmh.term_start
+				, pmh.hour
 			UNION ALL
 			SELECT sdd.source_deal_detail_id
 				, pmh.term_start
 				, RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00' 
 				, 0
-				, pmh.rmdq
+				, SUM(pmh.rmdq) rmdq
 				, 982 								
 			FROM [FNAGetPathMDQHourly]( @path_id, @deal_term_start,@deal_term_end, '') pmh
 			INNER JOIN source_deal_detail sdd
@@ -910,11 +963,16 @@ BEGIN
 				AND RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00'  = sddh.hr
 			INNER JOIN source_deal_detail sdd_m
 				ON sddh.source_deal_detail_id = sdd_m.source_deal_detail_id
-				AND sdd_m.source_deal_header_id = @source_deal_header_id -- 9846 -	
+				--AND sdd_m.source_deal_header_id = @source_deal_header_id -- 9846 -	
+			INNER JOIN SplitCommaSeperatedValues(@capacity_lto) t
+				ON sdd_m.source_deal_header_id = t.item
 			WHERE pmh.is_complex = 'y' 
 				 AND sdd.leg = 2
 				 AND NULLIF(sddh.volume, 0) IS NOT NULL
-
+			GROUP BY  sdd.source_deal_detail_id
+				, pmh.term_start
+				, pmh.hour
+				
 				--select @path_id, @deal_term_start,@deal_term_end, @capacity_deal_id
 
 			INSERT INTO #temp_updated_deals(source_deal_header_id)
@@ -978,21 +1036,26 @@ BEGIN
 							, volume
 							, granularity
 						)
-			
-			SELECT  sdd.source_deal_detail_id,
+
+			SELECT sdd.source_deal_detail_id,
 				sddh_m.term_date,
 				sddh_m.hr,
-				sddh_m.is_dst,
-				sddh_m.volume,
-				sddh_m.granularity
+				MAX(cast(sddh_m.is_dst as int)) is_dst,
+				SUM(sddh_m.volume) volume,
+				MAX(sddh_m.granularity) granularity
 			FROM source_deal_detail_hour sddh_m
 			INNER JOIN source_deal_detail sdd_m
 				ON sdd_m.source_deal_detail_id = sddh_m.source_deal_detail_id
 			INNER JOIN source_deal_detail sdd 
 				ON sdd.term_start BETWEEN sdd_m.term_start  AND sdd_m.term_end
-			WHERE  sdd_m.source_deal_header_id = @source_deal_header_id
-				AND NULLIF(sddh_m.volume, 0) IS NOT NULL
-				AND sdd.source_deal_header_id = @capacity_deal_id
+			INNER JOIN SplitCommaSeperatedValues(@capacity_lto) t
+				ON sdd_m.source_deal_header_id = t.item
+			WHERE  --sdd_m.source_deal_header_id = 102283 AND --@source_deal_header_id
+				 NULLIF(sddh_m.volume, 0) IS NOT NULL
+				AND sdd.source_deal_header_id =  @capacity_deal_id
+			GROUP BY sdd.source_deal_detail_id,
+				sddh_m.term_date,
+				sddh_m.hr
 
 
 				--100890	102283
