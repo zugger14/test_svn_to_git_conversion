@@ -1424,7 +1424,7 @@ BEGIN
 					FOR XML PATH ('fixingIndexDetails'), TYPE
 					) AS tbl(xml_detail)
 				OUTER APPLY (
-					SELECT  spcd.[curve_id] [fixingIndex]
+					SELECT  spcd.[curve_des] [fixingIndex]
 					   ,'FW' [fixingIndexType]
 					   ,ISNULL(sdv.code,'') [fixingIndexSource]
 					   ,CONVERT(VARCHAR(10),DATEADD(month, -ISNULL(tfd.[Strip Month To],0), tfd.term_start),120) [firstFixingDate]
@@ -1440,7 +1440,7 @@ BEGIN
 					FOR XML PATH ('fixingIndexDetails'), TYPE
 				) AS tbl_f(xml_detail)
 				OUTER APPLY (
-					SELECT  MAX(spcd.curve_id) [fixingIndex]
+					SELECT  MAX(spcd.curve_des) [fixingIndex]
 							,'FW' [fixingIndexType]
 							,ISNULL(MAX(sdv.code),'') [fixingIndexSource]
 							,CONVERT(VARCHAR(10),MIN(sdd.term_start),120) [firstFixingDate]
@@ -2381,13 +2381,13 @@ BEGIN
         	SUM(total_notional_contract_quantity * (fixed_price + ISNULL(uoopv.udf_value,0))) AS estimated_notional_amount,
 			SUM(total_notional_contract_quantity * deal_wa.weighted_average_price) AS estimated_notional_amount_wa_average,
 			MAX(notional_currency) notional_currency,
-			(CASE WHEN SUM(total_notional_contract_quantity) <> 0 THEN SUM(total_notional_contract_quantity * fixed_price) / SUM(total_notional_contract_quantity)ELSE 0 END)+ MAX(ISNULL(uoopv.udf_value,0)) price
+			(CASE WHEN SUM(total_notional_contract_quantity) <> 0 THEN SUM(total_notional_contract_quantity * fixed_price) /  NULLIF(SUM(total_notional_contract_quantity),0) ELSE 0 END)+ MAX(ISNULL(uoopv.udf_value,0)) price
     INTO #temp_vol_final2
 	FROM #temp_vol_final1 tvf1
 	LEFT JOIN #udf_on_off_peak_value uoopv ON uoopv.source_deal_header_id = tvf1.source_deal_header_id
 		AND uoopv.On_off IS NULL
 	OUTER APPLY (
-		SELECT CASE WHEN SUM(ISNULL(a.Volume, 0)) <> 0 THEN SUM(CASE WHEN sdd.buy_sell_flag = 'b' THEN ISNULL(a.volume, 0) ELSE  - ISNULL(a.volume, 0) END * (ISNULL(a.price, 0) + ISNULL(sdd.price_Adder, 0))) / SUM(ISNULL(CASE WHEN sdd.buy_sell_flag = 'b' THEN ISNULL(a.volume, 0) ELSE - ISNULL(a.volume, 0) END, 0))
+		SELECT CASE WHEN SUM(ISNULL(a.Volume, 0)) <> 0 THEN SUM(CASE WHEN sdd.buy_sell_flag = 'b' THEN ISNULL(a.volume, 0) ELSE  - ISNULL(a.volume, 0) END * (ISNULL(a.price, 0) + ISNULL(sdd.price_Adder, 0))) / NULLIF(SUM(ISNULL(CASE WHEN sdd.buy_sell_flag = 'b' THEN ISNULL(a.volume, 0) ELSE - ISNULL(a.volume, 0) END, 0)), 0)
 					ELSE 0 
 				END weighted_average_price
 		FROM source_deal_detail_hour a
@@ -3013,7 +3013,7 @@ BEGIN
         		[Option strike index type] = NULL,
         		[Option strike index source] = NULL,
         		[Option strike price] = NULL,
-				[Delivery point or zone] = MAX(sml.Location_Description),
+				[Delivery point or zone] = MAX(tbl_delivery_point_area.delivery_point_area),--MAX(sml.Location_Description),
 				[Delivery start date] = MAX(td.entire_term_start),
 				[Delivery end date] = MAX(td.entire_term_end),
 				[Load type] = CASE WHEN MAX(ISNULL(internal_desk_id,17300))=17302 THEN 'SH'
@@ -3069,6 +3069,14 @@ BEGIN
 			) rs_contract_type
         	LEFT JOIN #cancelled_deals c ON c.source_deal_header_id = td.source_deal_header_id
 			LEFT JOIN #temp_deal_udf_values tduv ON tduv.source_deal_header_id = td.source_deal_header_id
+			OUTER APPLY( SELECT gmv.clm3_value delivery_point_area
+				 FROM generic_mapping_header gmh
+				 INNER JOIN generic_mapping_values gmv
+					ON gmv.mapping_table_id = gmh.mapping_table_id
+				 WHERE gmh.mapping_name = 'ECM /Remit Delivery Point'
+				 AND gmv.clm1_value = CAST(tdd.location_id AS VARCHAR(20))
+				 AND gmv.clm2_value = CAST(scom.source_commodity_id AS VARCHAR(20))
+			) tbl_delivery_point_area
 			WHERE c.id IS NULL
 			GROUP BY  td.source_deal_header_id
 
@@ -3380,7 +3388,7 @@ BEGIN
 			[undisclosed_volume] = NULL,
 			[order_duration] = CASE WHEN MAX(td.deal_group_id) = 1 THEN 'GTC' ELSE NULL END,
 			---------Delivery Profile
-			[Delivery point or zone]= MAX(sml.location_description), --CASE WHEN MAX(sdv_cntry.code) = 'NL' THEN '10YCB-NL-------V' WHEN MAX(sdv_cntry.code) IN ('BE', 'BELGIUM') THEN '10YDOM--BE-NL--8' END,
+			[Delivery point or zone]= MAX(tbl_delivery_point_area.delivery_point_area),--MAX(sml.location_description), --CASE WHEN MAX(sdv_cntry.code) = 'NL' THEN '10YCB-NL-------V' WHEN MAX(sdv_cntry.code) IN ('BE', 'BELGIUM') THEN '10YDOM--BE-NL--8' END,
 			[Delivery start date]= MAX(td.entire_term_start),
 			[Delivery end date]= CASE WHEN MAX(td.deal_group_id) = 3 THEN DATEADD(DAY, 1, MAX(td.entire_term_end)) ELSE MAX(td.entire_term_end) END, -- for gas add 1 day
 			[Delivery Duration] =  CASE WHEN DATEDIFF(dd,MAX(td.entire_term_start),MAX(td.entire_term_end)) = 0 AND MAX(td.commodity_id) = -1  THEN 'D'
@@ -3538,6 +3546,14 @@ BEGIN
 						--AND CAST(gmv.clm5_value AS VARCHAR(25)) = CAST(td.deal_group_id  AS VARCHAR(25))
 						AND CAST(gmv.clm3_value AS VARCHAR(25)) = CAST(td.internal_desk_id  AS VARCHAR(25))
 				) gm_ts
+				OUTER APPLY( SELECT gmv.clm3_value delivery_point_area
+					 FROM generic_mapping_header gmh
+					 INNER JOIN generic_mapping_values gmv
+						ON gmv.mapping_table_id = gmh.mapping_table_id
+					 WHERE gmh.mapping_name = 'ECM /Remit Delivery Point'
+					 AND gmv.clm1_value = CAST(tdd.location_id AS VARCHAR(20))
+					 AND gmv.clm2_value = CAST(scom.source_commodity_id AS VARCHAR(20))
+				) tbl_delivery_point_area
 			GROUP BY  td.source_deal_header_id
 		
 			IF NOT EXISTS (SELECT 1 FROM #source_remit_standard)
@@ -3827,7 +3843,7 @@ BEGIN
 				   [price_limit] = NULL,
 				   [undisclosed_volume] = NULL,
 				   [order_duration] = NULL,
-				   [Delivery point or zone] = MAX(sml.Location_Description),
+				   [Delivery point or zone] = MAX(tbl_delivery_point_area.delivery_point_area),--MAX(sml.Location_Description),
 				   [Delivery start date] = MAX(ts.term_start),
 				   [Delivery end date] = MAX(ts.term_end),
 				   [Delivery Duration] = NULL,
@@ -3894,6 +3910,14 @@ BEGIN
 							ELSE 'OT'
 						END [Contract Type]
 			) rs_contract_type
+			OUTER APPLY( SELECT gmv.clm3_value delivery_point_area
+					 FROM generic_mapping_header gmh
+					 INNER JOIN generic_mapping_values gmv
+						ON gmv.mapping_table_id = gmh.mapping_table_id
+					 WHERE gmh.mapping_name = 'ECM /Remit Delivery Point'
+					 AND gmv.clm1_value = CAST(tdd.location_id AS VARCHAR(20))
+					 AND gmv.clm2_value = CAST(scom.source_commodity_id AS VARCHAR(20))
+				) tbl_delivery_point_area
 			GROUP BY td.source_deal_header_id
         	
 			IF EXISTS (SELECT 1 FROM source_remit_standard WHERE process_id = @process_id AND action_type IS NULL)
