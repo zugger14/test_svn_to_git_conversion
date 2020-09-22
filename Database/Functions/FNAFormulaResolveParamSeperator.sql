@@ -36,6 +36,7 @@ BEGIN
 		SET @formula = REPLACE(@formula, '.','#####');
 		SET @formula = REPLACE(@formula, ',', @formula_parameter_seperator);
 		SET @formula = REPLACE(@formula, '#####', ',');
+		SET @formula = REPLACE(@formula, '$$$$', '.');
 	END 
 
 	RETURN @formula

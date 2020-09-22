@@ -354,7 +354,7 @@ OPEN cursor_formula_editor
 							END
 					CLOSE cursor_tbl
 					DEALLOCATE cursor_tbl
-					SELECT  @mapped_value = STUFF((SELECT ',' + CAST(ISNULL(parameter_data,parameter) AS VARCHAR(200)) 
+					SELECT  @mapped_value = STUFF((SELECT ',' + REPLACE(CAST(ISNULL(parameter_data,parameter) AS VARCHAR(200)),'.','$$$$') 
 						FROM #temp_formula_data 
 						ORDER BY sequence		                       
 					FOR XML PATH('')), 1, 1, '')
