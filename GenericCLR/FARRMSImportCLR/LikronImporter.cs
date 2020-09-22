@@ -26,14 +26,16 @@ namespace FARRMSImportCLR
             string processTable = "adiha_process.dbo.likron_import_" + clrImportInfo.ProcessID;
             var responseString = "";
             ImportStatus importStatus = new ImportStatus();
+            string executedSinceDate = (clrImportInfo.Params[0].paramValue != "null") ? Convert.ToDateTime(clrImportInfo.Params[0].paramValue).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + "Z" : "";
+            clrImportInfo.WebServiceInfo.WebServiceURL = (executedSinceDate != "") ? clrImportInfo.WebServiceInfo.WebServiceURL + "?executedSince=" + executedSinceDate : clrImportInfo.WebServiceInfo.WebServiceURL;
             try
             {
                 //Basis authentication header generator
                 string credentialsValue = Convert.ToBase64String(Encoding.Default.GetBytes(clrImportInfo.WebServiceInfo.UserName + ":" + clrImportInfo.WebServiceInfo.Password));
-               
+
                 //Proper Secure Sockets Layer (SSL) or Transport Layer Security (TLS) protocol to use for new connections 
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | (SecurityProtocolType)(0xc0 | 0x300 | 0xc00);
-                
+
                 var request = (HttpWebRequest)WebRequest.Create(clrImportInfo.WebServiceInfo.WebServiceURL);
                 request.Timeout = -1;
                 request.UseDefaultCredentials = true;
@@ -58,7 +60,7 @@ namespace FARRMSImportCLR
                     }
                 }
 
-               //using (SqlConnection cn = new SqlConnection("Data Source=SG-D-SQL01.FARRMS.US,2033;Initial Catalog=TRMTracker_Release;Persist Security Info=True;User ID=farrms_admin;password=Admin2929"))
+                //using (SqlConnection cn = new SqlConnection("Data Source=SG-D-SQL02.farrms.us,2034;Initial Catalog=TRMTracker_Release;Persist Security Info=True;User ID=Dev_Admin;password=Admin2929"))
                 using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                 {
                     using (SqlCommand cmd = new SqlCommand("spa_import_epex_web_service", cn))
