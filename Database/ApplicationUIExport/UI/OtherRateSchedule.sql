@@ -22,7 +22,7 @@ BEGIN
 		CREATE TABLE #temp_old_application_ui_filter_details (
 			application_ui_filter_id	INT,
 			application_field_id		INT,
-			field_value					VARCHAR(1000) COLLATE DATABASE_DEFAULT ,
+			field_value					VARCHAR(MAX) COLLATE DATABASE_DEFAULT ,
 			field_id					VARCHAR(100) COLLATE DATABASE_DEFAULT ,
 			layout_grid_id				INT,
 			book_level					VARCHAR(20) COLLATE DATABASE_DEFAULT ,
@@ -101,51 +101,7 @@ BEGIN
 				
 			-- DELETE SCRIPT STARTS HERE
 				
-			DELETE autf2 FROM application_ui_template_fieldsets AS autf2
-			INNER JOIN application_ui_template_group AS autg ON autf2.application_group_id = autg.application_group_id
-			INNER JOIN application_ui_template AS aut ON aut.application_ui_template_id = autg.application_ui_template_id
-			WHERE aut.application_function_id = '20009000'
-				
-			DELETE aufd FROM application_ui_filter_details aufd
-			INNER JOIN application_ui_filter auf ON auf.application_ui_filter_id = aufd.application_ui_filter_id
-			WHERE auf.application_function_id = '20009000'	
-
-			DELETE FROM application_ui_filter WHERE application_function_id = '20009000'
-				
-			--- START OF NEED TO DISCUSS IF WE NEED THIS SECTION 
-			DELETE from application_ui_filter_details where application_ui_filter_id IN (
-				SELECT  auf.application_ui_filter_id FROM application_ui_filter auf
-				INNER JOIN application_ui_template_group AS autg ON auf.application_group_id = autg.application_group_id
-				INNER JOIN application_ui_template AS aut ON aut.application_ui_template_id = autg.application_ui_template_id
-				WHERE aut.application_function_id = '20009000'
-			)				
-			
-			DELETE auf FROM application_ui_filter auf
-			INNER JOIN application_ui_template_group AS autg ON auf.application_group_id = autg.application_group_id
-			INNER JOIN application_ui_template AS aut ON aut.application_ui_template_id = autg.application_ui_template_id
-			WHERE aut.application_function_id = '20009000'
-			--- END OF NEED TO DISCUSS IF WE NEED THIS SECTION 	
-
-			DELETE autf FROM application_ui_template_fields AS autf
-			INNER JOIN application_ui_template_group AS autg ON autf.application_group_id = autg.application_group_id
-			INNER JOIN application_ui_template AS aut ON aut.application_ui_template_id = autg.application_ui_template_id
-			WHERE aut.application_function_id = '20009000'
-				
-			DELETE aulg FROM application_ui_layout_grid AS aulg
-			INNER JOIN application_ui_template_group AS autg ON aulg.group_id = autg.application_group_id
-			INNER JOIN application_ui_template AS aut ON aut.application_ui_template_id = autg.application_ui_template_id
-			WHERE aut.application_function_id = '20009000'
-				
-			DELETE autg FROM application_ui_template_group AS autg 
-			INNER JOIN application_ui_template AS aut ON aut.application_ui_template_id = autg.application_ui_template_id
-			WHERE aut.application_function_id = '20009000'
-				
-			DELETE autd FROM application_ui_template_definition AS autd
-			INNER JOIN application_ui_template AS aut ON aut.application_function_id = autd.application_function_id
-			WHERE aut.application_function_id = '20009000'
-				
-			DELETE FROM application_ui_template
-			WHERE application_function_id = '20009000'
+			EXEC spa_application_ui_template 'd', 20009000
 				
 		END 
 
@@ -170,8 +126,7 @@ BEGIN
 	
 				
 		INSERT INTO #temp_all_grids(old_grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at)
-		SELECT 76,'transportation_rate_schedule',NULL,NULL,'EXEC spa_transportation_rate_schedule @flag=''s'',@rate_schedule_id =<ID>','Demand/Fixed Charge','g',NULL,'20009004','20009005',NULL UNION ALL 
-		SELECT 271,'variable_charge',NULL,NULL,'EXEC spa_transportation_rate_schedule @flag=''v'',@rate_schedule_id =<ID>','Variable Charge','g',NULL,'20009004','20009005',NULL
+		SELECT 76,'transportation_rate_schedule',NULL,NULL,'EXEC spa_transportation_rate_schedule @flag=''s'', @for=''s'', @rate_schedule_id =<ID>','Demand/Fixed Charge','g',NULL,'20008900','20008900',NULL UNION ALL SELECT 271,'variable_charge',NULL,NULL,'EXEC spa_transportation_rate_schedule @flag=''v'', @for=''s'',@rate_schedule_id =<ID>','Variable Charge','g',NULL,'20008900','20008900',NULL
 				
 		UPDATE tag
 		SET tag.new_grid_id = agd.grid_id
@@ -241,60 +196,73 @@ BEGIN
 			column_width	VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 			sorting_preference VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 			validation_rule	VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-			column_alignment VARCHAR(200) COLLATE DATABASE_DEFAULT 
-		)	
-				
-		INSERT INTO #temp_all_grids_columns(old_grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment)
+			column_alignment VARCHAR(200) COLLATE DATABASE_DEFAULT,
+			browser_grid_id VARCHAR(200) COLLATE DATABASE_DEFAULT,
+			allow_multi_select VARCHAR(200) COLLATE DATABASE_DEFAULT,
+			rounding VARCHAR(10) COLLATE DATABASE_DEFAULT
+		)
+
+		INSERT INTO #temp_all_grids_columns(old_grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
 		
-		SELECT 76,'id','Rate ID','ro',NULL,'n','y','1','y',NULL,NULL,'y','100','str',NULL,'left' UNION ALL 
-		SELECT 76,'rate_schedule_id','Rate Schedule ID','ro',NULL,'n','y','2','y','transportation_rate_category','value_id',NULL,'100','str',NULL,'left' UNION ALL 
-		SELECT 76,'rate_type_id','Charge Type','combo','SELECT value_id,code FROM static_data_value sdv INNER JOIN user_defined_fields_template udft on sdv.value_id = udft.field_name WHERE type_id=5500 and udft.udf_category = 101900','y','y','3','n',NULL,NULL,NULL,'175','str','NotEmpty','left' UNION ALL 
-		SELECT 76,'zone_from','Zone From','combo','SELECT value_id, code FROM static_data_value WHERE type_id=18000','y','y','4','y',NULL,NULL,NULL,'150',NULL,NULL,'left' UNION ALL 
-		SELECT 76,'zone_to','Zone To','combo','SELECT value_id, code FROM static_data_value WHERE type_id=18000','y','y','5','y',NULL,NULL,NULL,'150',NULL,NULL,'left' UNION ALL 
-		SELECT 76,'begin_date','Begin Date','dhxCalendarA',NULL,'y','y','6','n',NULL,NULL,NULL,'125','date',NULL,'left' UNION ALL 
-		SELECT 76,'end_date','End Date','dhxCalendarA',NULL,'y','y','7','n',NULL,NULL,NULL,'125','date',NULL,'left' UNION ALL 
-		SELECT 76,'effective_date','Effective Date','dhxCalendarA',NULL,'y','n','8','y',NULL,NULL,NULL,'125','date',NULL,'left' UNION ALL 
-		SELECT 76,'rate','Rate','ed',NULL,'y','y','9','n',NULL,NULL,NULL,'150','str','ValidNumeric','left' UNION ALL 
-		SELECT 76,'formula_id','Formula ID','ro',null,'y','y','10','y',null,null,NULL,'200',NULL,NULL,'left' UNION ALL
-		SELECT 76,'formula_name','Formula','ro',null,'y','y','11','n',NULL,NULL,NULL,'200',NULL,NULL,'left' UNION ALL 
-		SELECT 76,'currency_id','Currency','combo','SELECT source_currency_id, currency_name  FROM source_currency','y','y','12','n',NULL,NULL,NULL,'150','str',NULL,'left' UNION ALL 
-		SELECT 76,'uom_id','UOM','combo','SELECT source_uom_id, uom_id uom_name  FROM source_uom','y','y','13','n',NULL,NULL,NULL,'175','str','NotEmpty','left' UNION ALL 
-		SELECT 76,'payment_date','Payment Date','dhxCalendarA',NULL,'y','y','14','n',NULL,NULL,NULL,'125','date',NULL,'left' UNION ALL 
-		SELECT 76,'payment_calendar','Payment Calendar','combo','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017','y','y','15','n',NULL,NULL,NULL,'150','int',NULL,'left' UNION ALL 
-		SELECT 76,'settlement_date','Settlement Date','dhxCalendarA',NULL,'y','y','16','n',NULL,NULL,NULL,'125','date',NULL,'left' UNION ALL 
-		SELECT 76,'settlement_calendar','Settlement Calendar','combo','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017','y','y','17','n',NULL,NULL,NULL,'150','int',NULL,'left' UNION ALL 
-		SELECT 76,'rate_schedule_type','Rate Schedule Type','ro',NULL,'n','n','18','y',NULL,NULL,NULL,'150','str',NULL,'left' UNION ALL
-		SELECT 271,'id','Rate ID','ro',NULL,'y','y','1','y',NULL,NULL,'y','175',NULL,NULL,'left' UNION ALL 
-		SELECT 271,'rate_schedule_id','Rate Schedule ID','ro',NULL,'y','y','2','y','transportation_rate_category','value_id',NULL,'175',NULL,NULL,'left' UNION ALL 
-		SELECT 271,'rate_type_id','Charge Type','combo','SELECT value_id,code FROM static_data_value sdv INNER JOIN user_defined_fields_template udft on sdv.value_id = udft.field_name WHERE type_id=5500 and udft.udf_category = 101900','y','y','3','n',NULL,NULL,NULL,'175',NULL,NULL,'left' UNION ALL 
-		SELECT 271,'zone_from','Zone From','combo','SELECT value_id, code FROM static_data_value WHERE type_id=18000','y','y','4','y',NULL,NULL,NULL,'150',NULL,NULL,'left' UNION ALL 
-		SELECT 271,'zone_to','Zone To','combo','SELECT value_id, code FROM static_data_value WHERE type_id=18000','y','y','5','y',NULL,NULL,NULL,'150',NULL,NULL,'left' UNION ALL 
-		SELECT 271,'begin_date','Begin Date','dhxCalendarA',NULL,'y','y','6','n',NULL,NULL,NULL,'125','date',NULL,'left' UNION ALL 
-		SELECT 271,'end_date','End Date','dhxCalendarA',NULL,'y','y','7','n',NULL,NULL,NULL,'125','date',NULL,'left' UNION ALL 
-		SELECT 271,'effective_date','Effective Date','dhxCalendarA',NULL,'y','n','8','y',NULL,NULL,NULL,'125',NULL,NULL,'left' UNION ALL 
-		SELECT 271,'rate','Rate','ed',NULL,'y','y','9','n',NULL,NULL,NULL,'150','str','ValidNumeric','left' UNION ALL 
-		SELECT 271,'formula_id','Formula ID','ro',null,'y','y','10','y',null,null,NULL,'200',NULL,NULL,'left' UNION ALL
-		SELECT 271,'formula_name','Formula','ro',null,'y','y','11','n',NULL,NULL,NULL,'200',NULL,NULL,'left' UNION ALL 
-		SELECT 271,'currency_id','Currency','combo','SELECT source_currency_id, currency_name  FROM source_currency','y','y','12','n',NULL,NULL,NULL,'150','str',NULL,'left' UNION ALL 
-		SELECT 271,'uom_id','UOM','combo','SELECT source_uom_id, uom_id uom_name  FROM source_uom','y','y','13','n',NULL,NULL,NULL,'175',NULL,NULL,'left' UNION ALL 
-		SELECT 271,'payment_date','Payment Date','dhxCalendarA',NULL,'y','y','14','n',NULL,NULL,NULL,'125','date',NULL,'left' UNION ALL 
-		SELECT 271,'payment_calendar','Payment Calendar','combo','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017','y','y','15','n',NULL,NULL,NULL,'150','int',NULL,'left' UNION ALL 
-		SELECT 271,'settlement_date','Settlement Date','dhxCalendarA',NULL,'y','y','16','n',NULL,NULL,NULL,'125','date',NULL,'left' UNION ALL 
-		SELECT 271,'settlement_calendar','Settlement Calendar','combo','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017','y','y','17','n',NULL,NULL,NULL,'150','int',NULL,'left' UNION ALL
-		SELECT 271,'rate_schedule_type','Rate Schedule Type','ro',NULL,'n','n','18','y',NULL,NULL,NULL,'150','str',NULL,'left'
-						
+		SELECT 271,'rate_schedule_type','Rate Schedule Type','ro',NULL,'n','n','20','y',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'formula_name','Formula','ro',NULL,'y','y','12','n',NULL,NULL,NULL,'200',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'formula_id','ID','ro',NULL,'y','y','11','y',NULL,NULL,NULL,'200',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'rate_schedule_id','Rate Schedule ID','ro',NULL,'y','y','2','y','transportation_rate_category','value_id',NULL,'175',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'id','Rate ID','ro',NULL,'y','y','1','y',NULL,NULL,'y','175',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'rate','Rate','ed_no',NULL,'y','n','9','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'settlement_date','Settlement Date','dhxCalendarA',NULL,'y','y','18','n',NULL,NULL,NULL,'125','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'payment_date','Payment Date','dhxCalendarA',NULL,'y','y','16','n',NULL,NULL,NULL,'125','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'effective_date','Effective Date','dhxCalendarA',NULL,'y','n','8','y',NULL,NULL,NULL,'125',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'end_date','End Date','dhxCalendarA',NULL,'y','y','7','n',NULL,NULL,NULL,'125','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'begin_date','Begin Date','dhxCalendarA',NULL,'y','y','6','n',NULL,NULL,NULL,'125','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'rec_pay','Rec/Pay','combo','SELECT ''r'' [value], ''Receive'' [name] UNION ALL SELECT ''p'', ''Pay''','y','n','24','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'contract_id','Contract','combo','EXEC spa_contract_group ''r''','y','n','22','n',NULL,NULL,NULL,'150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'counterparty_id','Counterparty','combo','EXEC spa_source_counterparty_maintain ''c''','y','n','21','n',NULL,NULL,NULL,'150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'settlement_calendar','Settlement Calendar','combo','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017','y','n','19','n',NULL,NULL,NULL,'150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'payment_calendar','Payment Calendar','combo','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017','y','n','17','n',NULL,NULL,NULL,'150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'billing_frequency','Billing Frequency','combo','EXEC spa_StaticDataValues @flag = ''h'', @type_id = 106300','y','n','15','n',NULL,NULL,NULL,'175','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'uom_id','UOM','combo','SELECT source_uom_id, uom_id uom_name  FROM source_uom','y','n','14','n',NULL,NULL,NULL,'175',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'currency_id','Currency','combo','SELECT source_currency_id, currency_name  FROM source_currency','y','y','13','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'rate_granularity','Rate Granularity','combo','EXEC spa_StaticDataValues @flag = ''h'', @type_id = 106200','y','n','10','n',NULL,NULL,NULL,'175','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'zone_to','Zone To','combo','SELECT value_id, code FROM static_data_value WHERE type_id=18000','y','n','5','y',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'zone_from','Zone From','combo','SELECT value_id, code FROM static_data_value WHERE type_id=18000','y','n','4','y',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 271,'rate_type_id','Charge Type','combo','SELECT sdv.value_id, sdv.code FROM   static_data_value sdv INNER JOIN user_defined_fields_template udft ON  sdv.value_id = udft.field_name INNER JOIN static_data_value AS sdv2 ON udft.udf_category = sdv2.value_id WHERE  sdv.TYPE_ID = 5500 AND sdv2.value_id=101901','y','y','3','n',NULL,NULL,NULL,'175',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'rate_schedule_type','Rate Schedule Type','ro',NULL,'n','n','20','y',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'formula_name','Formula','ro',NULL,'y','y','12','n',NULL,NULL,NULL,'200',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'formula_id','Formula ID','ro',NULL,'y','y','11','y',NULL,NULL,NULL,'200',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'rate_schedule_id','Rate Schedule ID','ro',NULL,'n','y','2','y','transportation_rate_category','value_id',NULL,'100','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'id','Rate ID','ro',NULL,'n','y','1','y',NULL,NULL,'y','100','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'rate','Rate','ed_no',NULL,'y','n','9','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'settlement_date','Settlement Date','dhxCalendarA',NULL,'y','y','18','n',NULL,NULL,NULL,'125','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'payment_date','Payment Date','dhxCalendarA',NULL,'y','y','16','n',NULL,NULL,NULL,'125','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'effective_date','Effective Date','dhxCalendarA',NULL,'y','n','8','y',NULL,NULL,NULL,'125','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'end_date','End Date','dhxCalendarA',NULL,'y','y','7','n',NULL,NULL,NULL,'125','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'begin_date','Begin Date','dhxCalendarA',NULL,'y','y','6','n',NULL,NULL,NULL,'125','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'rec_pay','Rec/Pay','combo','SELECT ''r'' [value], ''Receive'' [name] UNION ALL SELECT ''p'', ''Pay''','y','n','24','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'contract_id','Contract','combo','EXEC spa_contract_group ''r''','y','n','22','n',NULL,NULL,NULL,'150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'counterparty_id','Counterparty','combo','EXEC spa_source_counterparty_maintain ''c''','y','n','21','n',NULL,NULL,NULL,'150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'settlement_calendar','Settlement Calendar','combo','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017','y','n','19','n',NULL,NULL,NULL,'150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'payment_calendar','Payment Calendar','combo','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017','y','n','17','n',NULL,NULL,NULL,'150','int',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'billing_frequency','Billing Frequency','combo','EXEC spa_StaticDataValues @flag = ''h'', @type_id = 106300','y','n','15','n',NULL,NULL,NULL,'175','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'uom_id','UOM','combo','SELECT source_uom_id, uom_id uom_name  FROM source_uom','y','n','14','n',NULL,NULL,NULL,'175','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'currency_id','Currency','combo','SELECT source_currency_id, currency_name  FROM source_currency','y','y','13','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'rate_granularity','Rate Granularity','combo','EXEC spa_StaticDataValues @flag = ''h'', @type_id = 106200','y','n','10','n',NULL,NULL,NULL,'175','str',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'zone_to','Zone To','combo','SELECT value_id, code FROM static_data_value WHERE type_id=18000','y','n','5','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'zone_from','Zone From','combo','SELECT value_id, code FROM static_data_value WHERE type_id=18000','y','n','4','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 76,'rate_type_id','Charge Type','combo','SELECT sdv.value_id, sdv.code FROM   static_data_value sdv INNER JOIN user_defined_fields_template udft ON  sdv.value_id = udft.field_name INNER JOIN static_data_value AS sdv2 ON udft.udf_category = sdv2.value_id WHERE  sdv.TYPE_ID = 5500 AND sdv2.value_id=101900','y','y','3','n',NULL,NULL,NULL,'175','str','NotEmpty','left', NULL,'n',NULL
+
 		UPDATE tagc
 		SET tagc.new_grid_id = tag.new_grid_id
 		FROM #temp_all_grids_columns tagc
 		INNER JOIN #temp_all_grids tag
 		ON tag.old_grid_id = tagc.old_grid_id
 		--WHERE tag.is_new LIKE 'y']
-							
+
 		DELETE agcd FROM adiha_grid_columns_definition agcd
 		INNER JOIN #temp_all_grids tag
 		ON agcd.grid_id = tag.new_grid_id
-								
-		INSERT INTO adiha_grid_columns_definition(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment)
+
+		INSERT INTO adiha_grid_columns_definition(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
 		SELECT	tagc.new_grid_id,
 				tagc.column_name,
 				tagc.column_label,
@@ -310,13 +278,17 @@ BEGIN
 				tagc.column_width,
 				tagc.sorting_preference,
 				tagc.validation_rule,
-				tagc.column_alignment										
+				tagc.column_alignment,
+				tagc.browser_grid_id,
+				tagc.allow_multi_select,
+				tagc.rounding
+										
 		FROM #temp_all_grids_columns tagc
 		INNER JOIN #temp_all_grids tag
 		ON tag.old_grid_id = tagc.old_grid_id
 		--WHERE tag.is_new LIKE 'y'
 		
-		INSERT INTO application_ui_template (application_function_id, template_name, template_description, active_flag, default_flag, table_name, is_report, edit_permission, delete_permission) 
+		INSERT INTO application_ui_template (application_function_id, template_name, template_description, active_flag, default_flag, table_name, is_report, edit_permission, delete_permission, template_type) 
 		
 		VALUES('20009000',
 		'OtherRateSchedule',
@@ -326,7 +298,8 @@ BEGIN
 		'transportation_rate_category',
 		NULL,
 		'20009001',
-		'20009002')
+		'20009002',
+		NULL)
 
 		DECLARE @application_ui_template_id_new INT
 		SET @application_ui_template_id_new = SCOPE_IDENTITY() 
@@ -337,35 +310,35 @@ BEGIN
 				DROP TABLE #temp_new_template_definition 
 					
 			CREATE TABLE #temp_new_template_definition (new_definition_id INT, field_id VARCHAR(200) COLLATE DATABASE_DEFAULT , field_type VARCHAR(200) COLLATE DATABASE_DEFAULT )
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20009000','','','','settings','',' ',' ','','250','n','n','','n','n','n','n','y','n','n','n',NULL,NULL,NULL)
+			VALUES('20009000','','','','settings','',' ',' ','','250','n','n','','n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20009000','value_id','value_id','ID','input','int','h','n',NULL,'250','n','y',NULL,'n','n','n','n','n','y','n','y',NULL,NULL,NULL)
+			VALUES('20009000','value_id','value_id','ID','input','int','h','n',NULL,'250','n','y',NULL,'n','n','n','n','n','y','n','y',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20009000','code','code','Name','input','varchar','h','y',NULL,'250','n','n',NULL,'y','n','n','n','y','n','n','n',NULL,NULL,'500')
+			VALUES('20009000','code','code','Name','input','varchar','h','y',NULL,'250','n','n',NULL,'y','n','n','n','y','n','n','n',NULL,NULL,'500',NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20009000','description','description','Description','input','varchar','h','n',NULL,'250','n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,'500')
+			VALUES('20009000','description','description','Description','input','varchar','h','n',NULL,'250','n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,'500',NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20009000','type_id','type_id','type_id','input','int','h','n',NULL,'250','n','y','1800','n','n','n','n','n','n','n','n',NULL,NULL,NULL)
+			VALUES('20009000','type_id','type_id','type_id','input','int','h','n',NULL,'250','n','y','1800','n','n','n','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20009000','contract_type','contract_type','Contract Type','input','char','h','n',NULL,'250','n','y','o','n','n','n','n','n','n','n','n',NULL,NULL,NULL)
+			VALUES('20009000','contract_type','contract_type','Contract Type','input','char','h','n',NULL,'250','n','y','o','n','n','n','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
 		END 
 	
@@ -448,7 +421,7 @@ BEGIN
 				
 		INSERT INTO #temp_old_template_fieldsets(old_fieldset_id, old_group_id, group_name, fieldset_name, className, is_disable, is_hidden, inputLeft, inputTop, label, offsetLeft, offsetTop, position, width, sequence, num_column)
 		
-								SELECT 3615,10534,'Rate Schedule','fieldset','','n','n','500','500','fieldset',NULL,NULL,NULL,'100',NULL,'1'
+								SELECT 8133,16684,'Rate Schedule','fieldset','','n','n','500','500','fieldset',NULL,NULL,NULL,'100',NULL,'1'
 				
 		UPDATE otfs
 		SET otfs.new_group_id = ntg.new_id
@@ -513,7 +486,8 @@ BEGIN
 			dependent_query					VARCHAR(MAX) COLLATE DATABASE_DEFAULT ,
 			old_grid_id						VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 			new_grid_id						VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-			validation_message				VARCHAR(200) COLLATE DATABASE_DEFAULT 
+			validation_message				VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+			load_child_without_parent		BIT
 		)	
 					
 		IF OBJECT_ID('tempdb..#temp_new_template_fields') IS NOT NULL
@@ -521,14 +495,14 @@ BEGIN
 					
 		CREATE TABLE #temp_new_template_fields (new_field_id INT, new_definition_id INT, sdv_code varchar(200) COLLATE DATABASE_DEFAULT )	
 					
-		INSERT INTO #temp_old_template_fields(old_field_id, old_group_id, old_application_ui_field_id, old_fieldset_id, group_name, ui_field_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, udf_field_name, position, dependent_field, dependent_query, old_grid_id, validation_message)
+		INSERT INTO #temp_old_template_fields(old_field_id, old_group_id, old_application_ui_field_id, old_fieldset_id, group_name, ui_field_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, udf_field_name, position, dependent_field, dependent_query, old_grid_id, validation_message, load_child_without_parent)
 		
-		SELECT 65357,10534,65047,NULL,'Rate Schedule','',NULL,NULL,NULL,NULL,NULL,NULL,'settings',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 65358,10534,65048,NULL,'Rate Schedule','value_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 65359,10534,65049,NULL,'Rate Schedule','code',NULL,NULL,NULL,'y',NULL,NULL,'input',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 65360,10534,65050,NULL,'Rate Schedule','description',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 65361,10534,65051,NULL,'Rate Schedule','type_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 65362,10534,65052,NULL,'Rate Schedule','contract_type',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+		SELECT 99076,16684,97868,NULL,'Rate Schedule','',NULL,NULL,NULL,NULL,NULL,NULL,'settings',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 99077,16684,97869,NULL,'Rate Schedule','value_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 99078,16684,97870,NULL,'Rate Schedule','code',NULL,NULL,NULL,'y',NULL,NULL,'input',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 99079,16684,97871,NULL,'Rate Schedule','description',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 99080,16684,97872,NULL,'Rate Schedule','type_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 99081,16684,97873,NULL,'Rate Schedule','contract_type',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
 				
 		UPDATE otf
 		SET otf.new_group_id = ntg.new_id
@@ -558,7 +532,7 @@ BEGIN
 		--	WHERE otf.udf_field_name IS NOT NULL AND otf.udf_field_name > 0
 		--END
 				
-		INSERT INTO application_ui_template_fields (application_group_id, application_ui_field_id, application_fieldset_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, position, dependent_field, dependent_query, grid_id, validation_message) 
+		INSERT INTO application_ui_template_fields (application_group_id, application_ui_field_id, application_fieldset_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, position, dependent_field, dependent_query, grid_id, validation_message, load_child_without_parent) 
 		OUTPUT INSERTED.application_field_id, INSERTED.application_ui_field_id
 		INTO #temp_new_template_fields (new_field_id, new_definition_id)
 		SELECT  otf.new_group_id,
@@ -579,7 +553,8 @@ BEGIN
 				otf.dependent_field,
 				otf.dependent_query,
 				ISNULL(otf.new_grid_id, otf.old_grid_id),
-				otf.validation_message
+				otf.validation_message,
+				otf.load_child_without_parent
 					    
 		FROM #temp_old_template_fields otf
 		LEFT JOIN #temp_old_template_fieldsets otfs ON otfs.old_fieldset_id = otf.old_fieldset_id
@@ -629,7 +604,7 @@ BEGIN
 		)	
 					
 		INSERT INTO #temp_old_ui_layout(old_layout_grid_id, old_group_id, group_name, layout_cell, old_grid_id, grid_name, sequence, num_column, cell_height,grid_object_name,grid_object_unique_column)
-		SELECT 8963,10534,'Rate Schedule','a','FORM',NULL,1,NULL,NULL,NULL,NULL UNION ALL SELECT 8964,10534,'Rate Schedule','b','76','transportation_rate_schedule',1,NULL,NULL,NULL,NULL UNION ALL SELECT 8965,10534,'Rate Schedule','c','271','variable_charge',1,NULL,NULL,NULL,NULL
+		SELECT 18670,16684,'Rate Schedule','a','FORM',NULL,1,NULL,NULL,NULL,NULL UNION ALL SELECT 18671,16684,'Rate Schedule','b','76','transportation_rate_schedule',1,NULL,NULL,NULL,NULL UNION ALL SELECT 18672,16684,'Rate Schedule','c','271','variable_charge',1,NULL,NULL,NULL,NULL
 				
 		UPDATE oul
 		SET oul.new_group_id = ntg.new_id
@@ -693,6 +668,8 @@ BEGIN
 			LEFT JOIN #temp_new_layout_grid tlg ON tolg.new_group_id = tlg.group_id AND tlg.layout_cell = tolg.layout_cell
 		END
 
+		-- To cleanup template audit logs
+		EXEC spa_application_ui_template_audit @flag='d', @application_function_id='20009000'
 	COMMIT 
 	END TRY
 	BEGIN CATCH
@@ -762,4 +739,18 @@ BEGIN
 	IF OBJECT_ID('tempdb..#temp_new_filter') IS NOT NULL
 		DROP TABLE #temp_new_filter
 			
+	DECLARE @memcache_key			NVARCHAR(1000)
+		, @db					NVARCHAR(200) = db_name()
+	SELECT @memcache_key = CASE WHEN aut.is_report = 'y' 
+							THEN @db + '_RptList' + ',' + @db + '_RptStd_' + '20009000'  
+							ELSE @db + '_UI_' + '20009000'
+						END 
+	FROM application_ui_template AS aut
+	WHERE aut.application_function_id = 20009000
+		 	
+	IF  EXISTS (SELECT 1 FROM sys.objects WHERE OBJECT_ID = OBJECT_ID(N'[dbo].[spa_manage_memcache]') AND TYPE IN (N'P', N'PC'))
+	BEGIN
+		EXEC [spa_manage_memcache] @flag = 'd', @key_prefix = @memcache_key, @cmbobj_key_source = NULL, @other_key_source=NULL, @source_object = 'spa_application_ui_export'
+	END
+	
 END

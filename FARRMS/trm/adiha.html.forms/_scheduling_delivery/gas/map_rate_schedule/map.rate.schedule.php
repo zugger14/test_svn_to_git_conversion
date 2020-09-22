@@ -118,7 +118,7 @@
         map_rate_schedules["grid_" + active_object_id] = map_rate_schedules["inner_tab_layout_" + active_object_id].cells('b').attachGrid();
         map_rate_schedules["grid_" + active_object_id].setHeader(get_locale_value('System ID, Location Loss, Effective Date, Fuel Loss, Fuel Loss Group',true)); 
         map_rate_schedules["grid_" + active_object_id].setColumnIds("map_rate_schedule_id, location_loss_factor_id, effective_date, fuel_loss, fuel_loss_group");
-        map_rate_schedules["grid_" + active_object_id].setColTypes("ro,ro,dhxCalendarA,ed,combo"); 
+        map_rate_schedules["grid_" + active_object_id].setColTypes("ro,ro,dhxCalendarA,ed_no,combo"); 
         map_rate_schedules["grid_" + active_object_id].setColumnMinWidth("0,0,200,150,150");
         map_rate_schedules["grid_" + active_object_id].setInitWidths('0,0,250,150,150');
         map_rate_schedules["grid_" + active_object_id].setColSorting('int,str,date,int,str'); 

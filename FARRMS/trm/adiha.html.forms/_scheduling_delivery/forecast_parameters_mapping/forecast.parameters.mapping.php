@@ -452,7 +452,7 @@
             forecast_parameters_mapping["date_range_grid_" + tab_id].setHeader(get_locale_value("ID,Data Type,Value,Granularity",true));
             forecast_parameters_mapping["date_range_grid_" + tab_id].attachHeader('#text_filter,#text_filter,#text_filter,#text_filter'); 
             forecast_parameters_mapping["date_range_grid_" + tab_id].setColumnIds("id,data_type,value,granularity");
-            forecast_parameters_mapping["date_range_grid_" + tab_id].setColTypes("ro,combo,ed,combo");
+            forecast_parameters_mapping["date_range_grid_" + tab_id].setColTypes("ro,combo,ed_no,combo");
             forecast_parameters_mapping["date_range_grid_" + tab_id].setColumnsVisibility("true,false,false,false");
             forecast_parameters_mapping["date_range_grid_" + tab_id].setInitWidths('100,200,200,200');
             forecast_parameters_mapping["date_range_grid_" + tab_id].enableValidation(true);

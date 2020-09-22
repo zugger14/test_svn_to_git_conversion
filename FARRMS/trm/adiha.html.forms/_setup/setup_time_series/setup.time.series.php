@@ -490,7 +490,7 @@
             return;
         }
 
-        var field_type = 'ed';
+        var field_type = 'ed_no';
         if (result[0][0] != '') {
             var static_data_type_id = result[0][0];
             field_type = 'combo';
@@ -500,6 +500,11 @@
         time_series.series_values_grid.setColumnsVisibility("true,false,true,true,false,true");
         time_series.series_values_grid.setColAlign("right,left,left,left,right,left");
         time_series.series_values_grid.enableEditEvents(true,false,true);
+
+        if( round_value && round_value != '' && field_type == 'ed_no'){
+            var round_string = ',,,,'+round_value+',';
+            time_series.series_values_grid.enableRounding(round_string);
+        }
         
         if (effective_date_applicable == 'n')
             time_series.series_values_grid.setColumnHidden(1, true);
@@ -590,7 +595,7 @@
 						"curve_source":curve_source,
 						"show_effective_data":show_effective_data,
 						"time_series_definition_id":time_series_definition_id,
-						"round_value":round_value,
+                        // "round_value":round_value,
 						"effective_date_applicable":effective_date_applicable,
 						"maturity_applicable":maturity_applicable
 					};

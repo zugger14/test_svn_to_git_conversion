@@ -57,7 +57,7 @@
         {type:'newcolumn'},
         {type:'numeric', label:'Max Limit Value', name:'limit_value', width:" . $ui_settings['field_size'] . ", position: 'label-top', labelWidth: 'auto', required: true, userdata:{'validation_message':'Invalid Number'}, validate: 'ValidNumeric', offsetLeft:" . $ui_settings['offset_left'] . "},
         {type:'newcolumn'},
-        {type:'input', label:'Limit Percentage', name:'limit_percentage', hidden : true, width:" . $ui_settings['field_size'] . ", position: 'label-top', labelWidth: 'auto', required: false, userdata:{'validation_message':'Invalid Number'}, validate: 'ValidNumeric', offsetLeft:" . $ui_settings['offset_left'] . "},
+        {type:'numeric', label:'Limit Percentage', name:'limit_percentage', hidden : true, width:" . $ui_settings['field_size'] . ", position: 'label-top', labelWidth: 'auto', required: false, userdata:{'validation_message':'Invalid Number'}, validate: 'ValidNumeric', offsetLeft:" . $ui_settings['offset_left'] . "},
         {type:'newcolumn'},
         {type:'combo', label:'Limit UOM', name:'limit_uom', width:" . $ui_settings['field_size'] . ", position: 'label-top', labelWidth: 'auto', offsetLeft: " . $ui_settings['offset_left'] . ", userdata:{'validation_message':'Invalid Selection'}},
         {type:'newcolumn'},

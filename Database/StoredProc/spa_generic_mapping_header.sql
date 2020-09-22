@@ -787,7 +787,7 @@ BEGIN
 		INNER JOIN user_defined_fields_template udft 
 		ON udft.udf_template_id = ts.id
 		
-	SELECT @column_name_list = 'Generic Mapping Values ID', @column_id = 'generic_mapping_values_id', @column_type_list = 'ron', @validation_rule = ''
+	SELECT @column_name_list = 'Generic Mapping Values ID', @column_id = 'generic_mapping_values_id', @column_type_list = 'ro_int', @validation_rule = ''
 
 	SELECT @column_name_list =  COALESCE(@column_name_list + ',', '') + ts.udf,
 		   @column_id = COALESCE(@column_id + ',', '') + replace(lower(ts.udf), ' ', '_' ), 

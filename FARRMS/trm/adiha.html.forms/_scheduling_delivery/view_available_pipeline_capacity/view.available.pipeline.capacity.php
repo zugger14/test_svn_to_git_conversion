@@ -177,7 +177,7 @@
 			
 			col_header1 += ',' + c_date + ',#cspan';
 			col_header2 += ',MDQ Vol, MDQ Avail';
-			col_type += ',ro_v,ro_no';
+			col_type += ',ro_v,ro_v';
 			col_sorting += ',str,str';
 			col_visibility += ',false,false';
 			init_width += ',80,80';
@@ -190,7 +190,7 @@
 					col_header1 += ',#cspan,#cspan';
 					col_header2 += ',MDQ Vol, MDQ Avail';
 					col_header3 += ',' + ('0' + (j + (j < 18 ? hr_start : -17)) + ':00').slice(-5) + ',#cspan';
-					col_type += ',ro_v,ro_no';
+					col_type += ',ro_v,ro_v';
 					col_sorting += ',str,str';
 					col_visibility += ',false,false';
 					init_width += ',80,80';

@@ -1,4 +1,4 @@
- BEGIN
+BEGIN
 			BEGIN TRY
 			BEGIN TRAN
 			
@@ -107,18 +107,19 @@
 
 							INSERT INTO #temp_all_grids_columns(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
 							
-												SELECT 42,'code','GL Group','ro',NULL,'n','y',NULL,NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 42,'estimated_actual','GL Type','ro',NULL,'n','y',NULL,NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 42,'drglnopos','Dr. GL Number ( + ve)','ro',NULL,'n','y',NULL,NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 42,'crglnopos','Cr. GL Number ( + ve)','ro',NULL,'n','y',NULL,NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 42,'netdrglnopos','Dr. Netting GL Number (+ve)','ro',NULL,'n','y',NULL,NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 42,'netcrglnopos','Cr. Netting GL Number (+ve)','ro',NULL,'n','y',NULL,NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 42,'drglnoneg','Dr. GL Number ( - ve)','ro',NULL,'n','y',NULL,NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 42,'crglnoneg','Cr. GL Number ( - ve)','ro',NULL,'n','y',NULL,NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 42,'netdrglnoneg','Dr. Netting GL Number (-ve)','ro',NULL,'n','y',NULL,NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 42,'netcrglnoneg','Cr. Netting GL Number (-ve)','ro',NULL,'n','y',NULL,NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 42,'uom_name','UOM','ro',NULL,'n','y',NULL,'u',NULL,NULL,NULL,'150','str',NULL,'right', NULL,'n',NULL UNION ALL 
-												SELECT 42,'default_gl_id','System ID','ro_int',NULL,'n','y',NULL,'y',NULL,NULL,NULL,'150','int',NULL,'left', NULL,'n',NULL
+												SELECT 42,'default_gl_id','System ID','ro_int',NULL,'n','y','1','y',NULL,NULL,NULL,'150','int',NULL,'left', NULL,'n',NULL UNION ALL
+												SELECT 42,'code','GL Group','ro',NULL,'n','y','2',NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 42,'estimated_actual','GL Type','ro',NULL,'n','y','3',NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 42,'drglnopos','Dr. GL Number ( + ve)','ro',NULL,'n','y','4',NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 42,'crglnopos','Cr. GL Number ( + ve)','ro',NULL,'n','y','5',NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 42,'netdrglnopos','Dr. Netting GL Number (+ve)','ro',NULL,'n','y','6',NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 42,'netcrglnopos','Cr. Netting GL Number (+ve)','ro',NULL,'n','y','7',NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 42,'drglnoneg','Dr. GL Number ( - ve)','ro',NULL,'n','y','8',NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 42,'crglnoneg','Cr. GL Number ( - ve)','ro',NULL,'n','y','9',NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 42,'netdrglnoneg','Dr. Netting GL Number (-ve)','ro',NULL,'n','y','10',NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 42,'netcrglnoneg','Cr. Netting GL Number (-ve)','ro',NULL,'n','y','11',NULL,NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 42,'uom_name','UOM','ro',NULL,'n','y','12','u',NULL,NULL,NULL,'150','str',NULL,'right', NULL,'n',NULL
+												
 
 							UPDATE tagc
 							SET tagc.grid_id = @grid_id
@@ -162,4 +163,4 @@ COMMIT
 			IF OBJECT_ID('tempdb..#temp_all_grids_columns') IS NOT NULL
 				DROP TABLE #temp_all_grids_columns
 				
-		END 
+		END

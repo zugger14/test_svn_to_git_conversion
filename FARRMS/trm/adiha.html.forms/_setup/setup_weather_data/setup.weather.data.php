@@ -403,6 +403,7 @@ get_sanitized_valueYPE html>
      */
     weather_data.refresh_series_values_grid_ajax_callback = function(result) { 
         var json_obj = $.parseJSON(result); 
+
         grid_properties_gbl = json_obj;        
         var header = json_obj[0].name_list;
         var column_align = json_obj[0].column_align;
@@ -484,6 +485,13 @@ get_sanitized_valueYPE html>
         weather_data.series_values_grid.setColumnHidden(0, true);// to hide id column 
         weather_data.series_values_grid.enableHeaderMenu();
         
+        if( round_value && '' != round_value ){
+            var rounding_array = field_type.split(",");
+            rounding_array.forEach(function(type,i) {
+                ( type == 'ed_no' ) ? rounding_array[i] = round_value : rounding_array[i] = '';
+            });
+           weather_data.series_values_grid.enableRounding(rounding_array.toString());
+        }
         /***************start************/
         if (effective_date_applicable == 'n')
             weather_data.series_values_grid.setColumnHidden(1, true);

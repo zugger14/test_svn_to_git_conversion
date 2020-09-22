@@ -119,7 +119,7 @@ BEGIN
 	FROM seq WHERE n <= (SELECT DATEDIFF(DAY, @term_start, @term_end) + 1)
 
 	SET @column_type = 'ro,ro,ch'
-	SELECT @column_type = ISNULL(@column_type + ',', '' )  + 'ed'
+	SELECT @column_type = ISNULL(@column_type + ',', '' )  + 'ed_v'
 	FROM seq WHERE n <= (SELECT DATEDIFF(DAY, @term_start, @term_end) + 1)
 
 	SET @column_width = '100,200,100'

@@ -18,7 +18,7 @@ CREATE PROCEDURE [dbo].[spa_time_series]
 	@tenor_to VARCHAR(20) = NULL,
 	@curve_source VARCHAR(100) = NULL,
 	@show_effective_data CHAR(1) = NULL,
-	@round_value INT = 4,
+	@round_value INT = NULL,
 	@series_type INT = NULL,
 	@effective_date_applicable CHAR(1) = NULL,
 	@maturity_applicable CHAR(1) = NULL,
@@ -254,7 +254,7 @@ BEGIN
 						CASE WHEN dbo.FNADateFormat(tsd.maturity) IS NOT NULL THEN
 							RIGHT(''0'' + CONVERT(VARCHAR(2), DATEPART(HOUR, tsd.maturity)), 2) + '':'' + RIGHT(''0'' + CONVERT(VARCHAR(2), DATEPART(MI, tsd.maturity)), 2)
 						ELSE '''' END AS [hour],
-						ROUND(tsd.value,'+CAST(@round_value AS VARCHAR)+') AS [value],
+						CASE WHEN '+ CAST(ISNULL(@round_value,-1) AS VARCHAR) +' <> -1 THEN ROUND(tsd.value,'+CAST(ISNULL(@round_value,0) AS VARCHAR)+') ELSE tsd.value END [value],
 						tsd.is_dst AS [is_dst] 
 				FROM time_series_data tsd
 				WHERE tsd.time_series_definition_id = ' + @time_series_definition_id
@@ -265,6 +265,8 @@ BEGIN
 					ELSE ' AND tsd.effective_date = ''' + @effective_date + '''' END
 				+ ' ORDER BY tsd.effective_date, tsd.maturity'
 	EXEC(@sql)
+	--PRINT(@sql)
+
 	
 	IF @for_batch IS NULL
 		SELECT	time_series_data_id,

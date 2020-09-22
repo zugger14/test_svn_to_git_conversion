@@ -1,4 +1,4 @@
- BEGIN
+BEGIN
 			BEGIN TRY
 			BEGIN TRAN
 			
@@ -106,17 +106,16 @@
 							)
 
 							INSERT INTO #temp_all_grids_columns(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
-							
-												SELECT 186,'name','Name','ro',NULL,'n','n',NULL,'n',NULL,NULL,NULL,'200','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 186,'measure','Measure','ro',NULL,'n','n',NULL,'n',NULL,NULL,NULL,NULL,'str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 186,'approach','Approach','ro',NULL,'n','n',NULL,'n',NULL,NULL,NULL,NULL,'str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 186,'category','Category','ro',NULL,'n','n',NULL,'n',NULL,NULL,NULL,NULL,'str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 186,'confidence_interval','Confidence Interval','ro',NULL,'n','n',NULL,'n',NULL,NULL,NULL,NULL,'int',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 186,'data_series','Data Series','ro',NULL,'n','n',NULL,'n',NULL,NULL,NULL,NULL,'str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 186,'risk_measure_id','ID','ro_int',NULL,'n','n',NULL,'y',NULL,NULL,NULL,NULL,'int',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 186,'holding_period','Holding Period','ro_int',NULL,'n','n',NULL,'n',NULL,NULL,NULL,NULL,'int',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 186,'simulation_days','Simulation Days','ro_int',NULL,'n','n',NULL,'n',NULL,NULL,NULL,'100','int',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 186,'price_curve_source','Price Curve Source','ro_p',NULL,'n','n',NULL,'n',NULL,NULL,NULL,NULL,'str',NULL,'left', NULL,'n',NULL
+												SELECT	186,'risk_measure_id','ID','ro_int',NULL,'n','n','1','n',NULL,NULL,NULL,NULL,'int',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 186,'name','Name','ro',NULL,'n','n','2','n',NULL,NULL,NULL,'200','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 186,'measure','Measure','ro',NULL,'n','n','3','n',NULL,NULL,NULL,NULL,'str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 186,'approach','Approach','ro',NULL,'n','n','4','n',NULL,NULL,NULL,NULL,'str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 186,'category','Category','ro',NULL,'n','n','5','n',NULL,NULL,NULL,NULL,'str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 186,'confidence_interval','Confidence Interval','ro',NULL,'n','n','6','n',NULL,NULL,NULL,NULL,'int',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 186,'holding_period','Holding Period','ro_int',NULL,'n','n','7','n',NULL,NULL,NULL,NULL,'int',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 186,'simulation_days','Simulation Days','ro_int',NULL,'n','n','8','n',NULL,NULL,NULL,'100','int',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 186,'price_curve_source','Price Curve Source','ro',NULL,'n','n','9','n',NULL,NULL,NULL,NULL,'str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 186,'data_series','Data Series','ro',NULL,'n','n','10','n',NULL,NULL,NULL,NULL,'str',NULL,'left', NULL,'n',NULL
 
 							UPDATE tagc
 							SET tagc.grid_id = @grid_id
@@ -160,4 +159,4 @@ COMMIT
 			IF OBJECT_ID('tempdb..#temp_all_grids_columns') IS NOT NULL
 				DROP TABLE #temp_all_grids_columns
 				
-		END 
+		END

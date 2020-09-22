@@ -1,4 +1,4 @@
- BEGIN
+BEGIN
 			BEGIN TRY
 			BEGIN TRAN
 			
@@ -112,7 +112,7 @@
 												SELECT 398,'Flow End','Flow End','ro',NULL,'n','n','4','n',NULL,NULL,NULL,'160',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 398,'UOM','UOM','ro',NULL,'n','n','6','n',NULL,NULL,NULL,'200',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 398,'deal_id','Deal Id','ro',NULL,'n','n','7','y',NULL,NULL,NULL,'160','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 398,'Volume','Volume','ro_v',NULL,'n','n','5','n',NULL,NULL,NULL,'200',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 398,'Volume','Volume','ro',NULL,'n','n','5','n',NULL,NULL,NULL,'200',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 398,'Location Type','Location Type/Location','tree',NULL,'n','n','1','n',NULL,NULL,NULL,'200',NULL,NULL,'left', NULL,'n',NULL
 
 							UPDATE tagc
@@ -157,4 +157,4 @@ COMMIT
 			IF OBJECT_ID('tempdb..#temp_all_grids_columns') IS NOT NULL
 				DROP TABLE #temp_all_grids_columns
 				
-		END 
+		END

@@ -4203,7 +4203,7 @@ BEGIN
 				COALESCE(sml_proxy.source_minor_location_id, tbl.[location_id]) [location_id],
 				MAX(tbl.[Term Start]) [Term Start],
 				MAX(tbl.[Term End]) [Term End],
-				''<span style="cursor: pointer;" onclick="open_spa_html_window(''''Optimizer Position Detail'''', &quot;'' + REPLACE('''+ Replace(@spa,'''','''''')+''',''#location_id#'',MAX(tbl.[location_id])) + ''&quot;, 600, 1200)"><font color="#0000ff"><u>''+[dbo].[FNAAddThousandSeparator](CAST(SUM(tbl.[Total Position]) AS NUMERIC(20,2))) + ''.00''+''</u></font></span>'' 
+				''<span style="cursor: pointer;" onclick="open_spa_html_window(''''Optimizer Position Detail'''', &quot;'' + REPLACE('''+ Replace(@spa,'''','''''')+''',''#location_id#'',MAX(tbl.[location_id])) + ''&quot;, 600, 1200)"><font color="#0000ff"><u>''+[dbo].[FNANumberFormat](CAST(SUM(tbl.[Total Position]) AS NUMERIC(20,2)),''v'')+''</u></font></span>'' 
 				[Total Position],
 				MAX(tbl.[UOM]) [UOM],
 				STUFF((SELECT DISTINCT '', '' + CAST(IIF(t1.header_buy_sell_flag= ''b'', t1.source_deal_header_id, 1*t1.source_deal_header_id) AS VARCHAR(20))

@@ -204,20 +204,20 @@ BEGIN
 
 		INSERT INTO #temp_all_grids_columns(old_grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
 		
+		SELECT 476,'fees','Fees','combo','EXEC spa_staticDataValues @flag=''h'', @type_id=''18700'', @value_ids = ''18724 ,18736''','n','y','3','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 476,'settlement_rule','Settlement Rule','combo','EXEC [spa_StaticDataValues] h, 20000','y','n','8','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 476,'payment_rule','Payment Rule','combo','EXEC [spa_StaticDataValues] h, 20000','y','n','11','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 476,'deal_level','Deal Level','combo','SELECT ''y'' [value], ''Yes'' [code] UNION ALL SELECT ''n'' , ''No''','y','n','13','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 476,'prepay','Prepay','combo','SELECT ''y'' [value], ''Yes'' [code] UNION ALL SELECT ''n'' , ''No''','y','n','13','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 476,'settlement_date','Settlement Date','dhxCalendarA',NULL,'y','y','7','n',NULL,NULL,NULL,'150','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 476,'payment_date','Payment Date','dhxCalendarA',NULL,'y','y','10','n',NULL,NULL,NULL,'150','date',NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 476,'percentage','Percentage','ed_no',NULL,'y','y','6','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 476,'settlement_days','Settlement Days','ed',NULL,'y','y','9','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
+		SELECT 476,'payment_days','Payment Days','ed',NULL,'y','y','12','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
 		SELECT 476,'payment_details_id','Details ID','ro',NULL,'n','n','1','y',NULL,NULL,'y','200','int',NULL,'left', NULL,'n',NULL UNION ALL 
 		SELECT 476,'payment_terms_id','Payment Terms ID','ro',NULL,'n','n','2','y','setup_paying_terms','payment_terms_id',NULL,'200','int',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 476,'percentage','Percentage','ed',NULL,'y','y','6','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
 		SELECT 476,'formula_id','Formula ID','ro',NULL,'y','y','4','y',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 476,'formula_name','Formula','ro',NULL,'y','y','5','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 476,'fees','Fees','combo','EXEC spa_staticDataValues @flag=''h'', @type_id=''18700'', @value_ids = ''18724 ,18736''','n','y','3','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 476,'settlement_date','Settlement Date','dhxCalendarA',NULL,'y','y','7','n',NULL,NULL,NULL,'150','date',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 476,'settlement_rule','Settlement Rule','combo','EXEC [spa_StaticDataValues] h, 20000','y','n','8','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 476,'settlement_days','Settlement Days','ed',NULL,'y','y','9','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 476,'payment_date','Payment Date','dhxCalendarA',NULL,'y','y','10','n',NULL,NULL,NULL,'150','date',NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 476,'payment_rule','Payment Rule','combo','EXEC [spa_StaticDataValues] h, 20000','y','n','11','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 476,'payment_days','Payment Days','ed',NULL,'y','y','12','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 476,'deal_level','Deal Level','combo','SELECT ''y'' [value], ''Yes'' [code] UNION ALL SELECT ''n'' , ''No''','y','n','13','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL UNION ALL 
-		SELECT 476,'prepay','Prepay','combo','SELECT ''y'' [value], ''Yes'' [code] UNION ALL SELECT ''n'' , ''No''','y','n','13','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL
+		SELECT 476,'formula_name','Formula','ro',NULL,'y','y','5','n',NULL,NULL,NULL,'150',NULL,NULL,'left', NULL,'n',NULL
 
 		UPDATE tagc
 		SET tagc.new_grid_id = tag.new_grid_id
@@ -291,8 +291,7 @@ BEGIN
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20017000','payment_name','payment_name',
-			'Payment Name','input','varchar','h','n',NULL,NULL,'n','n',NULL,'y','n','y','n','n','n','n','n',NULL,NULL,NULL,NULL)
+			VALUES('20017000','payment_name','payment_name','Payment Name','input','varchar','h','n',NULL,NULL,'n','n',NULL,'y','n','y','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
 		END 
 	
@@ -413,9 +412,9 @@ BEGIN
 					
 		INSERT INTO #temp_old_template_fields(old_field_id, old_group_id, old_application_ui_field_id, old_fieldset_id, group_name, ui_field_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, udf_field_name, position, dependent_field, dependent_query, old_grid_id, validation_message, load_child_without_parent)
 		
-		SELECT 111869,19603,110652,NULL,'General','',NULL,'','',' ',' ','0','settings',NULL,'0','0',NULL,NULL,'',NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 111870,19603,110653,NULL,'General','payment_terms_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 111871,19603,110654,NULL,'General','payment_name',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+		SELECT 115829,20103,114609,NULL,'General','',NULL,'','',' ',' ','0','settings',NULL,'0','0',NULL,NULL,'',NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 115830,20103,114610,NULL,'General','payment_terms_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 115831,20103,114611,NULL,'General','payment_name',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
 				
 		UPDATE otf
 		SET otf.new_group_id = ntg.new_id
@@ -517,7 +516,7 @@ BEGIN
 		)	
 					
 		INSERT INTO #temp_old_ui_layout(old_layout_grid_id, old_group_id, group_name, layout_cell, old_grid_id, grid_name, sequence, num_column, cell_height,grid_object_name,grid_object_unique_column)
-		SELECT 21677,19603,'General','a','FORM',NULL,1,NULL,'150',NULL,NULL UNION ALL SELECT 21678,19603,'General','b','476','payment_details',2,NULL,NULL,NULL,NULL
+		SELECT 22201,20103,'General','a','FORM',NULL,1,NULL,'150',NULL,NULL UNION ALL SELECT 22202,20103,'General','b','476','payment_details',2,NULL,NULL,NULL,NULL
 				
 		UPDATE oul
 		SET oul.new_group_id = ntg.new_id

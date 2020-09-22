@@ -1,4 +1,4 @@
- BEGIN
+BEGIN
 			BEGIN TRY
 			BEGIN TRAN
 			
@@ -125,8 +125,8 @@
 												SELECT 289,'enable_trigger','Enable Trigger','ro',NULL,'n','n','20','y',NULL,NULL,'y','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 289,'commodity_id','Commodity','ro',NULL,'n','y','3','n',NULL,NULL,'n','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 289,'deal_type_pricing_maping_id','ID','ro_int',NULL,'n','y','1','n',NULL,NULL,'n','80','int',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 289,'fixed_price','Fixed Price','ro_p',NULL,'n','n','6','y',NULL,NULL,'y','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 289,'price_adder','Price Adder','ro_p',NULL,'n','n','8','y',NULL,NULL,'y','150','str',NULL,'left', NULL,'n',NULL
+												SELECT 289,'fixed_price','Fixed Price','ro',NULL,'n','n','6','y',NULL,NULL,'y','150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 289,'price_adder','Price Adder','ro',NULL,'n','n','8','y',NULL,NULL,'y','150','str',NULL,'left', NULL,'n',NULL
 
 							UPDATE tagc
 							SET tagc.grid_id = @grid_id
@@ -170,4 +170,4 @@ COMMIT
 			IF OBJECT_ID('tempdb..#temp_all_grids_columns') IS NOT NULL
 				DROP TABLE #temp_all_grids_columns
 				
-		END 
+		END

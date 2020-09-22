@@ -182,7 +182,7 @@
         var active_object_id = get_active_object_id();
         var data_type_int = ['104302','104303'];  // column_type = INT, FLOAT
         var data_type_char = ['104302','104303'];
-
+        
         // Change tab name
         var selected_id = view_user_defined_table.grid.getSelectedRowId();
         var col_desc = view_user_defined_table.grid.getColIndexById('udt_descriptions');
@@ -202,9 +202,12 @@
         var combo_data = new Array();
         var filter_combo_data = new Array();
         var filter_form_json = new Array();
+        var grid_col_rounding = new Array();
+        var float_round_value = '';
 
         for (cnt = 0; cnt < result.length; cnt++) {
             var validation = [];
+            float_round_value = result[cnt][14]; 
             grid_header.push(result[cnt][3]);
             grid_col_ids.push(result[cnt][2]);
             newcolumn_string = '{"type":"newcolumn"}';
@@ -212,6 +215,7 @@
             if (result[cnt][12] == null && result[cnt][19] == null) {
                 if (result[cnt][4] == '104304') {  // column_type = DATETIME
                     grid_col_types.push('dhxCalendarA');
+                    grid_col_rounding.push('');
                     
                     if (result[cnt][11] == '1') { // filters
                         input_string = '{"type": "calendar", "name": "' + result[cnt][2] + '_from", "value": "", "label": "' + result[cnt][3] + ' From", "disabled": "false","dateFormat":"' + date_format + '", "inputWidth": '+ field_size + ', "position": "label-top", "offsetLeft":' + offset_left + ', "required":' + result[cnt][18] + '}';
@@ -221,14 +225,17 @@
                         filter_form_json.push(JSON.parse(input_string1));
                         filter_form_json.push(JSON.parse(newcolumn_string));
                     }
-
+                    grid_col_rounding.push('');
                 } else {
                     if ( result[cnt][4] == '104302' ) {
-                        grid_col_types.push('ed_no');
+                        grid_col_types.push('ed_int');
+                        grid_col_rounding.push('');
                     } else if ( result[cnt][4] == '104303' ) {
                         grid_col_types.push('ed_no');
+                        grid_col_rounding.push(float_round_value);
                     } else {
                         grid_col_types.push('ed');
+                        grid_col_rounding.push('');
                     }
                     if (result[cnt][11] == '1') { // filters
                         input_string = '{"type": "input", "name": "' + result[cnt][2] + '", "value": "", "label": "' + result[cnt][3] + '", "disabled": "false", "inputWidth": '+ field_size + ', "position": "label-top", "offsetLeft":' + offset_left + ', "required":' + result[cnt][18] + '}';
@@ -243,6 +250,7 @@
                     combo_data.push([result[cnt][2],result[cnt][12], "static"]);
                 }
                 grid_col_types.push('combo');
+                grid_col_rounding.push('');
 
                 if (result[cnt][11] == '1') { // filters
                     if(result[cnt][12] == null) {
@@ -337,6 +345,7 @@
             return true;
         });
 
+        view_user_defined_table["grid_" + active_object_id].enableRounding(grid_col_rounding.toString());
         var udt_param = {
             "flag": "s",
             "action": "spa_user_defined_tables",
