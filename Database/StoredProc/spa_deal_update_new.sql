@@ -214,12 +214,15 @@ END
 IF @copy_deal_id IS NOT NULL
 	SET @source_deal_header_id = @copy_deal_id
 
+DECLARE @deal_internal_desk_id INT
+
 IF @source_deal_header_id IS NOT NULL
 BEGIN
 	IF @view_deleted = 'n'
 	BEGIN
 		SELECT @deal_type_id = sdh.source_deal_type_id,
-			   @pricing_type = sdh.pricing_type
+			   @pricing_type = sdh.pricing_type,
+			   @deal_internal_desk_id = internal_desk_id
 		FROM source_deal_header sdh 
 		WHERE sdh.source_deal_header_id = @source_deal_header_id
 	END
@@ -4255,7 +4258,7 @@ BEGIN TRY
  		END
  		--PRINT(@sql)
  		EXEC(@sql)
- 				
+
  		SET @sql = ' UPDATE sdd 
  						SET ' + @update_list + ',
  							source_deal_group_id = sdg.source_deal_groups_id		
@@ -4269,6 +4272,21 @@ BEGIN TRY
  					'
  		--PRINT(@sql)
 		EXEC(@sql)
+
+		DECLARE @deal_internal_desk_id_new INT
+		SELECT @deal_internal_desk_id_new = internal_desk_id 
+		FROM source_deal_header 
+		WHERE source_deal_header_id = @source_deal_header_id
+				
+		IF @deal_internal_desk_id <> @deal_internal_desk_id_new
+		BEGIN
+			DELETE sdp
+			FROM source_deal_detail_position sdp
+			INNER JOIN source_deal_detail sdd
+				ON sdp.source_deal_detail_id = sdd.source_deal_detail_id
+			WHERE sdd.source_deal_header_id = @source_deal_header_id
+		END
+
 		
 		--Updated deal_volume with best available volume	
 		UPDATE sdd 
