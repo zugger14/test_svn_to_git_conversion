@@ -1,5 +1,4 @@
 
-
 /****** Object:  StoredProcedure [dbo].[spa_update_deal_total_volume]    Script Date: 01/30/2012 02:20:26 ******/
 IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[spa_update_deal_total_volume]') AND type in (N'P', N'PC'))
 DROP PROCEDURE [dbo].[spa_update_deal_total_volume]
@@ -91,10 +90,10 @@ SET nocount off
 DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
 SET CONTEXT_INFO @contextinfo
 
--- select * from update process_deal_position_breakdown set process_status=0
+-- select * from  process_deal_position_breakdown set process_status=0
 -- delete process_deal_position_breakdown
 
-select @source_deal_header_ids=100856 , 
+select @source_deal_header_ids=88563 , 
 	@process_id = null, --'52C2B537_BDBA_41DB_BE8D_B657F070A041',
 	@insert_type =1,
 	@partition_no =1,
@@ -166,6 +165,10 @@ BEGIN
 	SET @source_deal_detail = dbo.FNAProcessTableName('deal_detail', @user_login_id, @process_id)
 END
 
+IF object_id('tempdb..#total_process_deals') IS NOT null
+	DROP TABLE  #total_process_deals
+
+create table #total_process_deals(source_deal_header_id int)
 
 begin_update:
 
@@ -210,7 +213,6 @@ begin
 			inner join source_deal_detail sdd on sdh.source_deal_header_id=sdd.source_deal_header_id
 			left join source_price_curve_def spcd on sdd.curve_id=spcd.source_curve_def_id and sdd.curve_id is not null
 		group by sdd.source_deal_detail_id 
-		
 
 		-- Taking fixation deal of orginal deal.
 
@@ -231,8 +233,6 @@ begin
 				and sdd.source_deal_detail_id=isnull(m.source_deal_detail_id,sdd.source_deal_detail_id)
 			left join source_price_curve_def spcd on sdd.curve_id=spcd.source_curve_def_id and sdd.curve_id is not null
 		WHERE  m.source_deal_detail_id IS null	
-
-
 
 		--Taking orginal deal of fixation deal
 
@@ -367,8 +367,7 @@ BEGIN
 				and sdh.internal_deal_type_value_id IN(20,21)
 			inner join source_deal_header sdh1  on sdh1.source_deal_header_id=sdh.close_reference_id
 			inner join source_deal_detail sdd on sdd.source_deal_header_id=sdh1.source_deal_header_id
-
-			'
+		'
 		EXEC spa_print @sql
 		EXEC(@sql)			
 			
@@ -491,6 +490,9 @@ BEGIN
 
 		IF @@ROWCOUNT<1 and @exit=1
 			RETURN
+
+		exec('insert into #total_process_deals (source_deal_header_id) select distinct source_deal_header_id from '+@effected_deals ) 
+			
 			
 	END --else isnull(@call_from,0)IN (0,2)
 	
@@ -500,6 +502,7 @@ BEGIN
 		
 	EXEC spa_print @sql
 	EXEC(@sql)		
+		
 
 	EXEC('CREATE INDEX indx_tmp_header_deal_id_1_qqq ON #tmp_header_deal_id_1(source_deal_detail_id,source_deal_header_id)')
 END	
@@ -770,36 +773,42 @@ END
 DECLARE @alert_process_table VARCHAR(300)
 SET @alert_process_table = 'adiha_process.dbo.alert_deal_' + @process_id + '_ad'
 
-EXEC ('CREATE TABLE ' + @alert_process_table + ' (
-       	source_deal_header_id  VARCHAR(500),
-       	deal_date              DATETIME,
-       	term_start             DATETIME,
-       	counterparty_id        VARCHAR(100),
-       	hyperlink1             VARCHAR(5000),
-       	hyperlink2             VARCHAR(5000),
-       	hyperlink3             VARCHAR(5000),
-       	hyperlink4             VARCHAR(5000),
-       	hyperlink5             VARCHAR(5000)
-       )')
-SET @sql = 'INSERT INTO ' + @alert_process_table + '
-(
-	source_deal_header_id,
-	deal_date,
-	term_start,
-	counterparty_id
-)
-SELECT sdh.source_deal_header_id,
-	sdh.deal_date,
-	sdh.entire_term_start,
-	sdh.counterparty_id
-FROM   source_deal_header sdh WHERE sdh.source_deal_header_id IN (SELECT source_deal_header_id from ' + @effected_deals + ')'
-IF ISNULL(@call_from_2, '') <> 'alert'
-BEGIN
-	EXEC(@sql)
-	EXEC spa_print @sql
-	EXEC spa_register_event 20601, 20509, @alert_process_table, 1, @process_id
-END
+if 	exists(select top(1) 1 from  #total_process_deals ) 
+begin
 
+	EXEC ('CREATE TABLE ' + @alert_process_table + ' (
+       		source_deal_header_id  VARCHAR(500),
+       		deal_date              DATETIME,
+       		term_start             DATETIME,
+       		counterparty_id        VARCHAR(100),
+       		hyperlink1             VARCHAR(5000),
+       		hyperlink2             VARCHAR(5000),
+       		hyperlink3             VARCHAR(5000),
+       		hyperlink4             VARCHAR(5000),
+       		hyperlink5             VARCHAR(5000)
+		   )')
+	SET @sql = 'INSERT INTO ' + @alert_process_table + '
+	(
+		source_deal_header_id,
+		deal_date,
+		term_start,
+		counterparty_id
+	)
+	SELECT distinct sdh.source_deal_header_id,
+		sdh.deal_date,
+		sdh.entire_term_start,
+		sdh.counterparty_id
+	FROM   source_deal_header sdh 
+		inner join #total_process_deals tpd on sdh.source_deal_header_id=tpd.source_deal_header_id
+	'
+
+	IF ISNULL(@call_from_2, '') <> 'alert'
+	BEGIN
+		EXEC(@sql)
+		EXEC spa_print @sql
+		EXEC spa_register_event 20601, 20509, @alert_process_table, 1, @process_id
+	END
+end
 END TRY
 BEGIN CATCH
 	EXEC spa_print 'ERROR found '
