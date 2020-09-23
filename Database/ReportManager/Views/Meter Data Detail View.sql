@@ -35,123 +35,241 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Meter Data Detail View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sql VARCHAR(MAX)
+
 DECLARE @_meter_id VARCHAR(MAX)=NULL,
+
   @_granularity_id VARCHAR(MAX),
+
   @_channel varchar(max)= NULL,
+
   @_term_start varchar(20)=NULL, 
+
   @_term_end varchar(20) =NULL    
+
  
+
  select 
+
  @_meter_id= nullif( isnull(@_meter_id,nullif(''@meter_id'', replace(''@_meter_id'',''@_'',''@''))),''null'')        
+
  --,@_location_id= nullif( isnull(@_location_id,nullif(''@location_id'', replace(''@_location_id'',''@_'',''@''))),''null'')                 
+
  ,@_granularity_id = nullif( isnull(@_granularity_id,nullif(''@granularity_id'', replace(''@_granularity_id'',''@_'',''@''))),''null'') 
+
  ,@_channel = nullif( isnull(@_channel,nullif(''@channel'', replace(''@_channel'',''@_'',''@''))),''null'')         
+
  ,@_term_start = nullif( isnull(@_term_start,nullif(''@term_start'', replace(''@_term_start'',''@_'',''@''))),''null'')         
+
  ,@_term_end= nullif( isnull(@_term_end,nullif(''@term_end'', replace(''@_term_end'',''@_'',''@''))),''null'')         
+
 if OBJECT_ID(''tempdb..#mv90_data'') is not null
+
 drop table #mv90_data
+
 if OBJECT_ID(''tempdb..#mv90_data_hour'') is not null
+
 drop table #mv90_data_hour
+
 SELECT mi.meter_id, mi.granularity, md.channel, mdh.meter_data_id, mdh.prod_date, mdh.hr1, case when mdst.hour = 2 then iif(mdst.id is not null, mdh.hr2 - ISNULL(mdh.hr25,0), mdh.hr2)  else hr2 end hr2, case when mdst.hour = 3 then iif(mdst.id is not null, mdh.hr3 - ISNULL(mdh.hr25,0), mdh.hr3)  else Hr3 end hr3, 
+
 mdh.hr4, mdh.hr5, mdh.hr6, mdh.hr7, mdh.hr8, mdh.hr9, mdh.hr10, mdh.hr11, mdh.hr12, mdh.hr13, mdh.hr14, mdh.hr15, mdh.hr16, mdh.hr17,
+
 mdh.hr18, mdh.hr19, mdh.hr20, mdh.hr21, mdh.hr22, mdh.hr23, mdh.hr24, mdh.hr25, mdh.recid, mdh.uom_id, mdh.data_missing, mdh.proxy_date, 
+
 mdh.source_deal_header_id, mdh.period, md.create_ts, tz.dst_group_value_id
+
 INTO #mv90_data
+
 FROM meter_id mi 
+
 INNER JOIN mv90_data md ON md.meter_id = mi.meter_id 
+
 INNER JOIN mv90_data_hour mdh ON mdh.meter_data_id = md.meter_data_id
+
 LEFT JOIN dbo.SplitCommaSeperatedValues(@_meter_id) i ON i.item = mi.meter_id
+
 --OUTER APPLY (select var_value [default_timezone_id] from dbo.adiha_default_codes_values (nolock) WHERE instance_no = 1 AND default_code_id = 36 AND seq_no = 1) a
+
 outer apply (
+
 	select top 1 * from vwDealTimezone vw where vw.source_deal_header_id = mdh.source_deal_header_id
+
 ) tz
+
 LEFT JOIN mv90_dst mdst on mdst.date = mdh.prod_date
+
 	AND mdst.dst_group_value_id = tz.dst_group_value_id
+
 WHERE 1 = 1 
+
 	AND md.channel = ISNULL(@_channel, md.channel)
+
 	AND mdh.prod_date between ISNULL(@_term_start, mdh.prod_date) and ISNULL(@_term_end, mdh.prod_date)
+
 	AND mi.meter_id = CASE WHEN @_meter_id IS NULL THEN  mi.meter_id ELSE i.item END 
+
 SELECT dst_group_value_id
+
  , meter_id
+
  , channel
+
  , prod_date, CAST(REPLACE(hour, ''Hr'','''') AS varchar) [hour]
+
  ,  granularity
+
  , value
+
  , meter_data_id
+
  ,[period] 
+
  ,create_ts
+
 INTO #mv90_data_hour
+
 FROM #mv90_data md
+
 UNPIVOT
+
       (value FOR [Hour] IN 
+
       ([Hr1],[Hr2],[Hr3],[Hr4],[Hr5],[Hr6],[Hr7],[Hr8],[Hr9],[Hr10],[Hr11],[Hr12],[Hr13],[Hr14],[Hr15],[Hr16],[Hr17],[Hr18],[Hr19],[Hr20],[Hr21],[Hr22],[Hr23],[Hr24],[Hr25])
+
    )AS unpvt
+
 where 1 = 1 
+
 SET @_sql = ''
+
 SELECT 
+
   mi.meter_id [meter_id]
+
   , MAX(mdh.channel) [channel]
+
  , MAX(mi.recorderid) [meter_name]
+
  , MAX(mi.granularity) [granularity_id]
+
  , MAX(sdv.code) [Granularity]
+
  , MAX(mi.source_uom_id) [uom_id]
+
  , MAX(su.uom_name) [UOM] 
+
  , mdh.prod_date [term_start]
+
  , mdh.prod_date [term_end]
+
  --, iif(mdh.hour = 25, concat(mdst.hour,''''DST''''), right(''''0''''+cast(mdh.hour as varchar),2)) [hour] 
-  , CASE 
-		WHEN mi.granularity = 987 AND mdh.period <> 45 THEN  (mdh.hour - 1) 
-		WHEN mi.granularity = 994 AND mdh.period <> 50 THEN  (mdh.hour - 1)
-		WHEN mi.granularity = 989 AND mdh.period <> 30 THEN  (mdh.hour - 1)
-		WHEN mi.granularity = 995 AND mdh.period <> 55 THEN  (mdh.hour - 1)
-		ELSE mdh.hour
-	END [hour]
+
+  , CASE WHEN mi.granularity IN (987,994,989,995,982) THEN
+
+		CASE WHEN mi.granularity = 987 AND mdh.period <> 45 THEN (mdh.hour - 1)
+
+			WHEN mi.granularity = 994 AND mdh.period <> 50 THEN (mdh.hour - 1)
+
+			WHEN mi.granularity = 989 AND mdh.period <> 30 THEN (mdh.hour - 1)
+
+			WHEN mi.granularity = 995 AND mdh.period <> 55 THEN (mdh.hour - 1)
+
+			ELSE mdh.hour 
+		END
+	ELSE NULL END [hour]
+
  , SUM(mdh.value) [value]
+
  --, MAX(mdh.period) [Period]
- , CASE 
-		WHEN mi.granularity = 987 AND mdh.period <> 45 THEN  (mdh.period + 15) 
-		WHEN mi.granularity = 994 AND mdh.period <> 50 THEN  (mdh.period + 10)
-		WHEN mi.granularity = 989 AND mdh.period <> 30 THEN  (mdh.period + 30)
-		WHEN mi.granularity = 995 AND mdh.period <> 55 THEN  (mdh.period + 5)
-		ELSE 0
-	END [Period]
+
+ , CASE WHEN mi.granularity IN (987,994,989,995) THEN 
+
+		CASE WHEN mi.granularity = 987 AND mdh.period <> 45 THEN  (mdh.period + 15) 
+
+			WHEN mi.granularity = 994 AND mdh.period <> 50 THEN  (mdh.period + 10)
+
+			WHEN mi.granularity = 989 AND mdh.period <> 30 THEN  (mdh.period + 30)
+
+			WHEN mi.granularity = 995 AND mdh.period <> 55 THEN  (mdh.period + 5)
+
+			ELSE 0
+		END
+	ELSE NULL END [Period]
+
  , MAX(sml.location_id) [location_id]
+
  , MAX(sml.location_name) [location_name]
+
  , MAX(sml.source_minor_location_id) [source_minor_location_id]
+
  , MAX(sc.counterparty_id) [counterparty_id]
+
  , MAX(sdv1.code) [Country]
+
  , MAX(YEAR(mdh.prod_date)) [term_year]
+
  , MAX(MONTH(mdh.prod_date)) [term_month]
+
  , MAX(DAY(mdh.prod_date)) [term_day]
+
  , max(mdh.create_ts) [create_ts_from]
+
  , max(mdh.create_ts) [create_ts_to]
+
  --[__batch_report__]
+
 FROM meter_id mi
+
 INNER JOIN #mv90_data_hour mdh
+
     ON  mdh.meter_id = mi.meter_id
+
 LEFT JOIN static_data_value sdv 
+
  ON sdv.value_id = mi.granularity
+
 LEFT JOIN source_uom su 
+
  ON su.source_uom_id = mi.source_uom_id
+
 LEFT JOIN source_minor_location_meter smlm
+
  ON smlm.meter_id = mi.meter_id  
+
 LEFT JOIN source_minor_location sml 
+
  ON sml.source_minor_location_id = smlm.source_minor_location_id  
+
 LEFT JOIN source_counterparty sc 
+
  ON sc.source_counterparty_id = mi.counterparty_id 
+
 LEFT JOIN static_data_value sdv1 
+
  ON sdv1.value_id = mi.country_id
+
 LEFT JOIN mv90_dst mdst 
+
  ON mdst.date = mdh.prod_date
+
 		AND mdst.dst_group_value_id = mdh.dst_group_value_id
+
 WHERE 1=1 '' +
+
 CASE WHEN @_meter_id IS NULL THEN '''' ELSE '' AND mi.meter_id IN ('' + @_meter_id + '')'' END + 
+
 CASE WHEN @_granularity_id IS NULL THEN '''' ELSE '' AND mi.granularity IN ('' + @_granularity_id + '')'' END + 
+
 --CASE WHEN @_prod_date IS NULL THEN '''' ELSE '' AND mdh.prod_date IN ('' + @_prod_date + '')'' END +
+
 --CASE WHEN @_location_id IS NULL THEN '''' ELSE '' AND sml.location_id IN ('' + @_location_id + '')'' END +
+
  '' GROUP BY mi.meter_id,prod_date,mdh.hour,mdst.hour,mi.granularity,mdh.period
+
  order by mi.meter_id,prod_date,mdh.hour,mi.granularity,mdh.period
+
  ''
+
 EXEC (@_sql)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
