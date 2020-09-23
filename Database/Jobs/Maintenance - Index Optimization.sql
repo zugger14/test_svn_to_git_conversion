@@ -34,7 +34,7 @@ EXECUTE dbo.spa_indexoptimize @Databases = @db_name,
 @FragmentationLevel2 = 30,
 @UpdateStatistics = ''ALL'',
 @OnlyModifiedStatistics = ''Y'',
-@log_to_table = ''Y'',
+@LogToTable = ''Y'',
 @MinNumberOfPages = 100
 
 /************************************* StopAndNotifyDDL Enable START *************************************/
