@@ -190,6 +190,8 @@ CREATE TABLE #temp_volume_capacity (
 )
   
 
+  --select @product_group, @should_auto_path_calc reut
+
 
 IF @product_group = 'Complex-EEX'
 BEGIN
@@ -925,7 +927,7 @@ BEGIN
 				, pmh.term_start
 				, RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00' 
 				, 0
-				, SUM(pmh.rmdq) rmdq
+				, MAX(pmh.rmdq) rmdq
 				, 982 								
 			FROM [FNAGetPathMDQHourly]( @path_id, @deal_term_start,@deal_term_end, '') pmh
 			INNER JOIN source_deal_detail sdd
@@ -951,7 +953,7 @@ BEGIN
 				, pmh.term_start
 				, RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00' 
 				, 0
-				, SUM(pmh.rmdq) rmdq
+				, MAX(pmh.rmdq) rmdq
 				, 982 								
 			FROM [FNAGetPathMDQHourly]( @path_id, @deal_term_start,@deal_term_end, '') pmh
 			INNER JOIN source_deal_detail sdd
@@ -963,7 +965,7 @@ BEGIN
 				AND RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00'  = sddh.hr
 			INNER JOIN source_deal_detail sdd_m
 				ON sddh.source_deal_detail_id = sdd_m.source_deal_detail_id
-				--AND sdd_m.source_deal_header_id = @source_deal_header_id -- 9846 -	
+			--	AND sdd_m.source_deal_header_id = @source_deal_header_id -- 9846 -	
 			INNER JOIN SplitCommaSeperatedValues(@capacity_lto) t
 				ON sdd_m.source_deal_header_id = t.item
 			WHERE pmh.is_complex = 'y' 
