@@ -763,7 +763,8 @@
         
         reload_document_category = function() {
             var document_type = doc_form.getItemValue('document_type');
-            
+            document_type = (document_type == 10000283) ? 38 : document_type;
+
             var doc_cat_cmb = doc_form.getCombo('document_category');
             var cm_param = {
                                 "action": "('SELECT DISTINCT value_id, code FROM static_data_value  INNER JOIN Contract_report_template ON value_id = template_category  WHERE type_id = 42000 AND category_id = " + document_type + "')", 
@@ -928,7 +929,7 @@
 
             var doc_cat_cmb = doc_form.getCombo('document_category');
             var cm_param = {
-                                "action": "('SELECT DISTINCT value_id, code FROM static_data_value  INNER JOIN Contract_report_template ON value_id = template_category  WHERE type_id = 42000 AND category_id = " + document_type + "')",
+                                "action": "('SELECT DISTINCT value_id, code FROM static_data_value  INNER JOIN Contract_report_template ON value_id = template_category  WHERE type_id = 42000 AND category_id = " + (document_type == 10000283) ? 38 : document_type + "')",
                                 "call_from": "form",
                                 "has_blank_option": false
                             };
