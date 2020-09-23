@@ -3052,13 +3052,12 @@ dhtmlXLayoutCell.prototype.collapse = function() {
  *  Override to show child nodes while searching parent node in tree grid inline filter
  */
 dhtmlXGridObject.prototype._filterTreeA = function(g, q) {
-
-    // added to fix issue caused by '&'
-    q = escapeXML(q);
-
     if (q == "") {
         return
     }
+    // added to fix issue caused by '&'
+    q = escapeXML(q);
+    
     var n = true;
     if (typeof(q) == "function") {
         n = false
