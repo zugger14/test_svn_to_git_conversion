@@ -579,7 +579,7 @@
                         grd_inner_obj.getForm().getCombo('file_name').unSelectOption();
                         grd_inner_obj.getForm().setItemValue('template_name', '');
                         
-                        if (template_type_val == 38 || template_type_val == 10000238) {
+                        if (template_type_val == 38 || template_type_val == 10000283) {
                             grd_inner_obj.getForm().getCombo('file_name').addOption(<?php echo $json_invoice_filenames;?>);    
                         } 
 
@@ -1011,7 +1011,7 @@
         var document_type = form_custom_report_template['frm_' + selected_item].getItemValue('template_type');
 
         var doc_cat_cmb = form_custom_report_template['frm_' + selected_item].getCombo('template_category');
-        document_type = (document_type == 10000238) ? 38 : document_type;
+        document_type = (document_type == 10000283) ? 38 : document_type;
         var cm_param = {
                             "action": "spa_StaticDataValues", 
                             "flag":"h", 
