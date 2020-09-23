@@ -1334,22 +1334,27 @@ BEGIN
 						, is_dst
 						, volume
 						, granularity
-					)
-			
+					)			
 		SELECT  sdd.source_deal_detail_id,
 			sddh_m.term_date,
 			sddh_m.hr,
-			sddh_m.is_dst,
-			sddh_m.volume,
-			sddh_m.granularity
+			MAX(CAST(sddh_m.is_dst AS INT)) is_dst,
+			SUM(sddh_m.volume) volume,
+			MAX(sddh_m.granularity) granularity
 		FROM source_deal_detail_hour sddh_m
 		INNER JOIN source_deal_detail sdd_m
 			ON sdd_m.source_deal_detail_id = sddh_m.source_deal_detail_id
 		INNER JOIN source_deal_detail sdd 
 			ON sdd.term_start BETWEEN sdd_m.term_start  AND sdd_m.term_end
-		WHERE  sdd_m.source_deal_header_id = @source_deal_header_id
-			AND NULLIF(sddh_m.volume, 0) IS NOT NULL
-			AND sdd.source_deal_header_id = @capacity_deal_id
+		INNER JOIN SplitCommaSeperatedValues(@capacity_lto) t
+			ON sdd_m.source_deal_header_id = t.item
+		WHERE --sdd_m.source_deal_header_id = 102283 AND --@source_deal_header_id
+			NULLIF(sddh_m.volume, 0) IS NOT NULL
+			AND sdd.source_deal_header_id =  @capacity_deal_id
+		GROUP BY sdd.source_deal_detail_id,
+			sddh_m.term_date,
+			sddh_m.hr
+
 	END
 
 	INSERT INTO #temp_updated_deals(source_deal_header_id)
