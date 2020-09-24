@@ -79,200 +79,395 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sql NVARCHAR(MAX)
+
 DECLARE @_source_subbook_id VARCHAR(1000)
+
 DECLARE @_destination_subbook_id VARCHAR(1000)  
+
 DECLARE @_location_id VARCHAR(1000)
 
+
+
 IF ''@source_subbook_id'' <> ''NULL''
+
     SET @_source_subbook_id = ''@source_subbook_id''
 
+
+
 IF ''@destination_subbook_id'' <> ''NULL''
+
     SET @_destination_subbook_id = ''@destination_subbook_id''
 
+
+
 IF ''@location_id'' <> ''NULL''
+
     SET @_location_id = ''@location_id''
 
+
+
 SELECT item location_id
+
 INTO #temp_location
+
 FROM SplitCommaSeperatedValues(@_location_id)
 
-SELECT sdh.source_deal_header_id
-	, MAX(header_buy_sell_flag) header_buy_sell_flag 
-	, MAX(sdd.location_id) location_id
-	, MIN(sdd.term_start) term_start
-	, MAX(sdd.term_end) term_end
-INTO #temp_source
-FROM source_deal_header sdh
-INNER JOIN source_system_book_map ssbm 
-	ON sdh.source_system_book_id1 = ssbm.source_system_book_id1 
-	AND sdh.source_system_book_id2 = ssbm.source_system_book_id2  
-	AND sdh.source_system_book_id3 = ssbm.source_system_book_id3  
-	AND sdh.source_system_book_id4 = ssbm.source_system_book_id4	
-INNER JOIN source_deal_detail sdd
-	ON sdh.source_deal_header_id = sdd.source_deal_header_id
-INNER JOIN #temp_location tl
-	ON tl.location_id = sdd.location_id
-INNER JOIN SplitCommaSeperatedValues(@_source_subbook_id) sb
-	ON sb.item = ssbm.book_deal_type_map_id
-GROUP BY sdh.source_deal_header_id
+
 
 SELECT sdh.source_deal_header_id
+
 	, MAX(header_buy_sell_flag) header_buy_sell_flag 
+
 	, MAX(sdd.location_id) location_id
+
 	, MIN(sdd.term_start) term_start
+
 	, MAX(sdd.term_end) term_end
-INTO #temp_destination
+
+INTO #temp_source
+
 FROM source_deal_header sdh
+
 INNER JOIN source_system_book_map ssbm 
+
 	ON sdh.source_system_book_id1 = ssbm.source_system_book_id1 
+
 	AND sdh.source_system_book_id2 = ssbm.source_system_book_id2  
+
 	AND sdh.source_system_book_id3 = ssbm.source_system_book_id3  
+
 	AND sdh.source_system_book_id4 = ssbm.source_system_book_id4	
+
 INNER JOIN source_deal_detail sdd
+
 	ON sdh.source_deal_header_id = sdd.source_deal_header_id
-INNER JOIN SplitCommaSeperatedValues(@_destination_subbook_id) sb
-	ON sb.item = ssbm.book_deal_type_map_id
+
 INNER JOIN #temp_location tl
+
 	ON tl.location_id = sdd.location_id
+
+INNER JOIN SplitCommaSeperatedValues(@_source_subbook_id) sb
+
+	ON sb.item = ssbm.book_deal_type_map_id
+
 GROUP BY sdh.source_deal_header_id
+
+
+
+SELECT sdh.source_deal_header_id
+
+	, MAX(header_buy_sell_flag) header_buy_sell_flag 
+
+	, MAX(sdd.location_id) location_id
+
+	, MIN(sdd.term_start) term_start
+
+	, MAX(sdd.term_end) term_end
+
+INTO #temp_destination
+
+FROM source_deal_header sdh
+
+INNER JOIN source_system_book_map ssbm 
+
+	ON sdh.source_system_book_id1 = ssbm.source_system_book_id1 
+
+	AND sdh.source_system_book_id2 = ssbm.source_system_book_id2  
+
+	AND sdh.source_system_book_id3 = ssbm.source_system_book_id3  
+
+	AND sdh.source_system_book_id4 = ssbm.source_system_book_id4	
+
+INNER JOIN source_deal_detail sdd
+
+	ON sdh.source_deal_header_id = sdd.source_deal_header_id
+
+INNER JOIN SplitCommaSeperatedValues(@_destination_subbook_id) sb
+
+	ON sb.item = ssbm.book_deal_type_map_id
+
+INNER JOIN #temp_location tl
+
+	ON tl.location_id = sdd.location_id
+
+GROUP BY sdh.source_deal_header_id
+
+
 
 SELECT sub.term_start, s.location_id,
+
 	SUM(ISNULL(sub.hr1, 0)) [01:00],
+
 	SUM(ISNULL(sub.hr2, 0)) [02:00],
+
 	SUM(ISNULL(sub.hr3, 0)) [03:00],
+
 	SUM(ISNULL(sub.hr4, 0)) [04:00],
+
 	SUM(ISNULL(sub.hr5, 0)) [05:00],
+
 	SUM(ISNULL(sub.hr6, 0)) [06:00],
+
 	SUM(ISNULL(sub.hr7, 0)) [07:00],
+
 	SUM(ISNULL(sub.hr8, 0)) [08:00],
+
 	SUM(ISNULL(sub.hr9, 0)) [09:00],
+
 	SUM(ISNULL(sub.hr10, 0)) [10:00],
+
 	SUM(ISNULL(sub.hr11, 0)) [11:00],
+
 	SUM(ISNULL(sub.hr12, 0)) [12:00],
+
 	SUM(ISNULL(sub.hr13, 0)) [13:00],
+
 	SUM(ISNULL(sub.hr14, 0)) [14:00],
+
 	SUM(ISNULL(sub.hr15, 0)) [15:00],
+
 	SUM(ISNULL(sub.hr16, 0)) [16:00],
+
 	SUM(ISNULL(sub.hr17, 0)) [17:00],
+
 	SUM(ISNULL(sub.hr18, 0)) [18:00],
+
 	SUM(ISNULL(sub.hr19, 0)) [19:00],
+
 	SUM(ISNULL(sub.hr20, 0)) [20:00],
+
 	SUM(ISNULL(sub.hr21, 0)) [21:00],
+
 	SUM(ISNULL(sub.hr22, 0)) [22:00],
+
 	SUM(ISNULL(sub.hr23, 0)) [23:00],
+
 	SUM(ISNULL(sub.hr24, 0)) [24:00]
+
 INTO #temp_unpivot
+
 FROM #temp_source s
+
 CROSS APPLY(
+
 		SELECT rhpd.source_deal_header_id, term_start, granularity
+
 			, hr1, hr2, hr3, hr4, hr5, hr6, hr7
+
 			, hr8, hr9, hr10, hr11, hr12, hr13
+
 			, hr14, hr15, hr16, hr17, hr18, hr19
+
 			, hr20, hr21, hr22, hr23, hr24		
+
 		FROM report_hourly_position_deal rhpd
+
 		WHERE rhpd.source_deal_header_id = s.source_deal_header_id
+
 			AND rhpd.term_start BETWEEN s.term_start AND s.term_end		
+
 		UNION ALL
+
 		SELECT rhpp.source_deal_header_id, term_start, granularity
+
 			, hr1, hr2, hr3, hr4, hr5, hr6, hr7
+
 			, hr8, hr9, hr10, hr11, hr12, hr13
+
 			, hr14, hr15, hr16, hr17, hr18, hr19
+
 			, hr20, hr21, hr22, hr23, hr24
+
 		FROM report_hourly_position_profile rhpp
+
 		WHERE s.source_deal_header_id = rhpp.source_deal_header_id
+
 			AND rhpp.term_start BETWEEN s.term_start AND s.term_end
+
 		
+
 ) sub
+
 GROUP BY sub.term_start,s.location_id
 
+
+
 SELECT unpvt.location_id
+
 	, unpvt.term_start term_date
+
 	, unpvt.hr 
+
 	, 0 is_dst
+
 	, unpvt.volume
+
 	, 982 granularity 
+
 INTO #temp_hourly_data_pre
+
 FROM (	SELECT * 
+
 		FROM #temp_unpivot
+
 ) a
+
 UNPIVOT
+
 	(
+
 		volume FOR hr IN (
+
 			[01:00],[02:00],[03:00],[04:00],[05:00],[06:00],
+
 			[07:00],[08:00],[09:00], [10:00],[11:00],[12:00],[13:00],				 
+
 			[14:00],[15:00],[16:00],[17:00], [18:00], [19:00], [20:00],
+
 			[21:00], [22:00],[23:00], [24:00]
+
 		)
+
 	) unpvt
 
+
+
 SELECT sdd.source_deal_header_id,
+
 	sdd.source_deal_detail_id,
+
 	thd.term_date,
+
 	thd.hr,
+
 	thd.is_dst,
+
 	thd.volume,
+
 	thd.granularity 
+
 INTO #temp_hourly_data
+
 FROM #temp_hourly_data_pre thd
+
 INNER JOIN #temp_destination td
+
 	ON thd.location_id = td.location_id
+
 	AND td.header_buy_sell_flag = IIF(thd.volume > 0, ''s'', ''b'')
+
 	AND thd.term_date BETWEEN td.term_start AND td.term_end
+
 INNER JOIN source_deal_detail sdd
+
 	ON sdd.source_deal_header_id = td.source_deal_header_id
+
 	AND thd.term_date BETWEEN sdd.term_start AND sdd.term_end
+
 	
+
 DELETE sddh 
+
 FROM #temp_destination td
+
 INNER JOIN source_deal_detail sdd
+
 	ON td.source_deal_header_id = sdd.source_deal_header_id
+
 INNER JOIN source_deal_detail_hour sddh
+
 	ON sdd.source_deal_detail_id = sddh.source_deal_detail_id
+
 	
+
 INSERT INTO source_deal_detail_hour (
+
 	source_deal_detail_id,
+
 	term_date,
+
 	hr,
+
 	is_dst,
+
 	volume,
+
 	granularity
+
 )
+
 SELECT 	source_deal_detail_id,
+
 	term_date,
+
 	hr,
+
 	is_dst,
-	volume,
+
+	ABS(volume),
+
 	granularity
+
 FROM #temp_hourly_data
 
+
+
 DECLARE @_job_process_id VARCHAR(200)
+
 DECLARE @_user_name NVARCHAR(200) = dbo.FNADBUser()
+
 DECLARE @_after_insert_process_table NVARCHAR(500)
+
+
 
 SET @_job_process_id = dbo.FNAGETNEWID()
 
+
+
 SET @_after_insert_process_table = dbo.FNAProcessTableName(''after_insert_process_table'', @_user_name, @_job_process_id)
+
 			
+
 IF OBJECT_ID(@_after_insert_process_table) IS NOT NULL
+
 BEGIN
+
 	EXEC(''DROP TABLE '' + @_after_insert_process_table)
+
 END
+
 	
+
 EXEC (''CREATE TABLE '' + @_after_insert_process_table + ''(source_deal_header_id INT)'')
 
+
+
 SET @_sql = ''INSERT INTO '' + @_after_insert_process_table + ''(source_deal_header_id) 
+
 			SELECT DISTINCT source_deal_header_id FROM #temp_hourly_data
+
 			''
+
 EXEC(@_sql)
+
+
 
 EXEC spa_deal_insert_update_jobs ''i'', @_after_insert_process_table	
 
+
+
 SELECT @_source_subbook_id source_subbook_id,
+
 	   @_destination_subbook_id destination_subbook_id,  
+
 	   @_location_id location_id
+
 --[__batch_report__] 
+
 FROM seq 
+
 WHERE n = 1
+
 ', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
