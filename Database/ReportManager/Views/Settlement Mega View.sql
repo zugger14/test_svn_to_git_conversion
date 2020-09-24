@@ -32,224 +32,111 @@ BEGIN TRY
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Standard Settlement Mega View'
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + '
-
---settlement mega view
-
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + '--settlement mega view
 DECLARE @_sql_select1 VARCHAR(max)
-
 DECLARE @_sql_select2 VARCHAR(max)
-
 DECLARE @_sql_from1 VARCHAR(max)
-
 DECLARE @_sql_from2 VARCHAR(max)
-
 DECLARE @_sql_from3 VARCHAR(max)
-
 DECLARE @_sql_from4 VARCHAR(max)
-
 DECLARE @_sql_whr VARCHAR(max)
-
-DECLARE @_from_as_of_date VARCHAR(50) --=''2020-04-30''
-
-DECLARE @_to_as_of_date VARCHAR(50) --=''2020-02-27''
-
+DECLARE @_from_as_of_date VARCHAR(50) --=''2020-09-30''
+DECLARE @_to_as_of_date VARCHAR(50) --=''2020-09-30''
 DECLARE @_term_start VARCHAR(50) --=''2016-01-01''
-
 DECLARE @_term_end VARCHAR(50) --=''2017-12-31''
-
 DECLARE @_deal_status_group CHAR(1) --= ''o''
-
 DECLARE @_deal_date_from VARCHAR(50), @_deal_date_to VARCHAR(50), @_source_counterparty_id VARCHAR(max), 
-
 @_source_deal_type_id VARCHAR(max), @_deal_sub_type_type_id VARCHAR(max), @_physical_financial_flag VARCHAR(20),
-
  @_contract_id VARCHAR(max), @_trader_id VARCHAR(max), @_block_definition_id VARCHAR(MAX), @_location_id VARCHAR(max), 
-
  @_index_id VARCHAR(max), 
-
-@_source_deal_header_id VARCHAR(50) --=266085  
-
+@_source_deal_header_id VARCHAR(50) --=101894  
 	,@_currency_id VARCHAR(MAX),
-
 	@_broker_id VARCHAR(MAX),
-
 	@_country_id VARCHAR(MAX),
-
 	@_internal_counterparty_id VARCHAR(MAX),
-
 	@_product_id VARCHAR(MAX),
-
 	@_region_id VARCHAR(MAX),
-
 	@_template_id VARCHAR(MAX),
-
 	@_commodity_id VARCHAR(max), @_period_from VARCHAR(50), @_period_to VARCHAR(50), @_buy_sell_flag VARCHAR(20), @_deal_ref_id VARCHAR(50), @_deal_status_id VARCHAR(MAX), @_confirm_status_id VARCHAR(MAX), @_pnl_source_value_id VARCHAR(MAX), @_pricing_type_id VARCHAR(MAX),
-
 	@_cur_type CHAR(1),
-
 	@_col_sdpd_pnl VARCHAR(100),
-
 	@_col_sdpd_cur VARCHAR(100)
-
-
 SET @_from_as_of_date = nullif(isnull(@_from_as_of_date, nullif(''@from_as_of_date'', replace(''@_from_as_of_date'', ''@_'', ''@''))), ''null'')
-
 SET @_to_as_of_date = nullif(isnull(@_to_as_of_date, nullif(''@to_as_of_date'', replace(''@_to_as_of_date'', ''@_'', ''@''))), ''null'')
-
 SET @_term_start = nullif(isnull(@_term_start, nullif(''@term_start'', replace(''@_term_start'', ''@_'', ''@''))), ''null'')
-
 SET @_term_end = nullif(isnull(@_term_end, nullif(''@term_end'', replace(''@_term_end'', ''@_'', ''@''))), ''null'')
-
 SET @_deal_date_from = nullif(isnull(@_deal_date_from, nullif(''@deal_date_from'', replace(''@_deal_date_from'', ''@_'', ''@''))), ''null'')
-
 SET @_deal_date_to = nullif(isnull(@_deal_date_to, nullif(''@deal_date_to'', replace(''@_deal_date_to'', ''@_'', ''@''))), ''null'')
-
 SET @_source_counterparty_id = nullif(isnull(@_source_counterparty_id, nullif(''@source_counterparty_id'', replace(''@_source_counterparty_id'', ''@_'', ''@''))), ''null'')
-
 SET @_source_deal_type_id = nullif(isnull(@_source_deal_type_id, nullif(''@source_deal_type_id'', replace(''@_source_deal_type_id'', ''@_'', ''@''))), ''null'')
-
 SET @_deal_sub_type_type_id = nullif(isnull(@_deal_sub_type_type_id, nullif(''@deal_sub_type_type_id'', replace(''@_deal_sub_type_type_id'', ''@_'', ''@''))), ''null'')
-
 SET @_physical_financial_flag = nullif(isnull(@_physical_financial_flag, nullif(''@physical_financial_flag'', replace(''@_physical_financial_flag'', ''@_'', ''@''))), ''null'')
-
 SET @_contract_id = nullif(isnull(@_contract_id, nullif(''@contract_id'', replace(''@_contract_id'', ''@_'', ''@''))), ''null'')
-
 SET @_trader_id = nullif(isnull(@_trader_id, nullif(''@trader_id'', replace(''@_trader_id'', ''@_'', ''@''))), ''null'')
-
 SET @_location_id = nullif(isnull(@_location_id, nullif(''@location_id'', replace(''@_location_id'', ''@_'', ''@''))), ''null'')
-
 SET @_block_definition_id = nullif(isnull(@_block_definition_id, nullif(''@block_definition_id'', replace(''@_block_definition_id'', ''@_'', ''@''))), ''null'')
-
 SET @_pnl_source_value_id = nullif(isnull(@_pnl_source_value_id, nullif(''@pnl_source_value_id'', replace(''@_pnl_source_value_id'', ''@_'', ''@''))), ''null'')
-
 SET @_confirm_status_id = nullif(isnull(@_confirm_status_id, nullif(''@confirm_status_id'', replace(''@_confirm_status_id'', ''@_'', ''@''))), ''null'')
-
 SET @_deal_status_id = nullif(isnull(@_deal_status_id, nullif(''@deal_status_id'', replace(''@_deal_status_id'', ''@_'', ''@''))), ''null'')
-
 SET @_deal_ref_id = nullif(isnull(@_deal_ref_id, nullif(''@deal_ref_id'', replace(''@_deal_ref_id'', ''@_'', ''@''))), ''null'')
-
 SET @_buy_sell_flag = nullif(isnull(@_buy_sell_flag, nullif(''@buy_sell_flag'', replace(''@_buy_sell_flag'', ''@_'', ''@''))), ''null'')
-
 SET @_period_to = nullif(isnull(@_period_to, nullif(''@period_to'', replace(''@_period_to'', ''@_'', ''@''))), ''null'')
-
 SET @_period_from = nullif(isnull(@_period_from, nullif(''@period_from'', replace(''@_period_from'', ''@_'', ''@''))), ''null'')
-
 SET @_commodity_id = nullif(isnull(@_commodity_id, nullif(''@commodity_id'', replace(''@_commodity_id'', ''@_'', ''@''))), ''null'')
-
 SET @_source_deal_header_id = nullif(isnull(@_source_deal_header_id, nullif(''@source_deal_header_id'', replace(''@_source_deal_header_id'', ''@_'', ''@''))), ''null'')
-
 SET @_deal_status_group = nullif(isnull(@_deal_status_group, nullif(''@deal_status_group'', replace(''@_deal_status_group'', ''@_'', ''@''))), ''null'')
-
 SET @_index_id = nullif(isnull(@_index_id, nullif(''@index_id'', replace(''@_index_id'', ''@_'', ''@''))), ''null'')
-
 SET @_from_as_of_date = isnull(@_from_as_of_date, ''1900-01-01'')
-
 SET @_currency_id = nullif(isnull(@_currency_id, nullif(''@currency_id'', replace(''@_currency_id'', ''@_'', ''@''))), ''null'')
-
 SET @_broker_id = nullif(isnull(@_broker_id, nullif(''@broker_id'', replace(''@_broker_id'', ''@_'', ''@''))), ''null'')
-
 SET @_country_id = nullif(isnull(@_country_id, nullif(''@country_id'', replace(''@_country_id'', ''@_'', ''@''))), ''null'')
-
 SET @_internal_counterparty_id = nullif(isnull(@_internal_counterparty_id, nullif(''@internal_counterparty_id'', replace(''@_internal_counterparty_id'', ''@_'', ''@''))), ''null'')
-
 SET @_product_id = nullif(isnull(@_product_id, nullif(''@product_id'', replace(''@_product_id'', ''@_'', ''@''))), ''null'')
-
 SET @_region_id = nullif(isnull(@_region_id, nullif(''@region_id'', replace(''@_region_id'', ''@_'', ''@''))), ''null'')
-
 SET @_template_id = nullif(isnull(@_template_id, nullif(''@template_id'', replace(''@_template_id'', ''@_'', ''@''))), ''null'')
-
 SET @_pricing_type_id  = nullif(isnull(@_pricing_type_id, nullif(''@pricing_type_id'', replace(''@_pricing_type_id'', ''@_'', ''@''))), ''null'')
-
 SET @_cur_type = nullif(isnull(@_cur_type, nullif(''@cur_type'', replace(''@_cur_type'', ''@_'', ''@''))), ''null'')
-
 --set @_term_end==isnull(@_term_start,''9999-01-01'')
 
 IF Object_id(N''tempdb..#books'') IS NOT NULL
-
 	DROP TABLE #books
-
-
 IF Object_id(N''tempdb..#contract_fees'') IS NOT NULL
-
 	DROP TABLE #contract_fees
-
-
 IF Object_id(N''tempdb..#deal_fees'') IS NOT NULL
-
 	DROP TABLE #deal_fees
-
-
 IF Object_id(N''tempdb..#settlement_value'') IS NOT NULL
-
 	DROP TABLE #settlement_value
-
-
 IF Object_id(N''tempdb..#deal_fees_set'') IS NOT NULL
-
 	DROP TABLE #deal_fees_set
-
-
 IF Object_id(N''tempdb..#deal_fees_set_onetime'') IS NOT NULL
-
 	DROP TABLE #deal_fees_set_onetime
-
-
 SELECT @_col_sdpd_pnl = CASE @_cur_type WHEN ''d'' THEN ''und_pnl_deal'' WHEN ''i'' THEN ''und_pnl_inv'' ELSE ''und_pnl'' END
-
 SELECT @_col_sdpd_cur = CASE @_cur_type WHEN ''d'' THEN ''deal_cur_id'' WHEN ''i'' THEN ''inv_cur_id'' ELSE ''pnl_currency_id'' END
-
 SELECT sub.entity_id sub_id, stra.entity_id stra_id, book.entity_id book_id, sub.entity_name AS sub_name, stra.entity_name AS stra_name, book.entity_name AS book_name, ssbm.source_system_book_id1, ssbm.source_system_book_id2, ssbm.source_system_book_id3, ssbm.source_system_book_id4, ssbm.logical_name, ssbm.book_deal_type_map_id [sub_book_id], ssbm.fas_deal_type_value_id [transaction_type], sdv.code [transaction_type_name], ssbm.sub_book_group1, ssbm.sub_book_group2, ssbm.sub_book_group3, ssbm.sub_book_group4, fs.counterparty_id
-
 INTO #books
-
 FROM portfolio_hierarchy book(NOLOCK)
-
 	INNER JOIN portfolio_hierarchy stra(NOLOCK) ON book.parent_entity_id = stra.entity_id
-
 	INNER JOIN portfolio_hierarchy sub(NOLOCK) ON stra.parent_entity_id = sub.entity_id
-
 	INNER JOIN source_system_book_map ssbm ON ssbm.fas_book_id = book.entity_id
-
 	INNER JOIN fas_subsidiaries fs ON fs.fas_subsidiary_id = sub.entity_id
-
 	LEFT JOIN static_data_value sdv ON sdv.[type_id] = 400 AND ssbm.fas_deal_type_value_id = sdv.value_id
+--WHERE 1 = 1 AND (''@sub_id'' = ''NULL'' OR sub.entity_id IN (@sub_id)) AND (''@stra_id'' = ''NULL'' OR stra.entity_id IN (@stra_id)) AND (''@book_id'' = ''NULL'' OR book.entity_id IN (@book_id)) AND (''@sub_book_id'' = ''NULL'' OR ssbm.book_deal_type_map_id IN (@sub_book_id))
 
-WHERE 1 = 1 AND (''@sub_id'' = ''NULL'' OR sub.entity_id IN (@sub_id)) AND (''@stra_id'' = ''NULL'' OR stra.entity_id IN (@stra_id)) AND (''@book_id'' = ''NULL'' OR book.entity_id IN (@book_id)) AND (''@sub_book_id'' = ''NULL'' OR ssbm.book_deal_type_map_id IN (@sub_book_id))
 
 IF ''@from_as_of_date'' = ''NULL'' AND ''@to_as_of_date'' <> ''NULL''
-
 	SELECT @_from_as_of_date = Max(CONVERT(CHAR(10), sdp.pnl_as_of_date, 126))
-
 	FROM dbo.source_deal_pnl sdp
-
 	WHERE sdp.pnl_as_of_date <= ''@to_as_of_date''
-
-
 IF ''@from_as_of_date'' = ''NULL'' AND ''@to_as_of_date'' = ''NULL''
-
 	SELECT @_from_as_of_date = Max(CONVERT(CHAR(10), sdp.pnl_as_of_date, 126))
-
 	FROM dbo.source_deal_pnl sdp
-
-
 DECLARE @_temp_date AS VARCHAR(25) = @_from_as_of_date
-
 IF @_to_as_of_date IS NOT NULL
-
 	SET @_temp_date = @_to_as_of_date
-
-
 IF @_period_from IS NOT NULL
-
 	SET @_term_start = dbo.Fnagettermstartdate(''m'', @_temp_date, Isnull(@_period_from, 0))
-
-
 IF @_period_to IS NOT NULL
-
 	SET @_term_end = dbo.Fnagettermenddate(''m'', @_temp_date, @_period_to)
-
-
 IF Object_id(N''tempdb..#cs_group_info'') IS NOT NULL
 	DROP TABLE #cs_group_info
 IF Object_id(N''tempdb..#final_values'') IS NOT NULL
@@ -277,7 +164,6 @@ CREATE TABLE #final_values (
 	[reporting_group4_name] VARCHAR(1000),
 	[reporting_group5_name] VARCHAR(1000)
 	)
-
 SET @_sql_select1 = 
 	''INSERT INTO #final_values
 	SELECT books.sub_id sub_id,
@@ -551,23 +437,23 @@ SET @_sql_from1 = ''
 	)
 	) dp
 	OUTER APPLY (
-	SELECT rate FROM default_recovery_rate
-	WHERE id IN (SELECT MAX(id) FROM default_recovery_rate
-	WHERE effective_date <= '''''' + Cast(@_from_as_of_date AS VARCHAR(100)) + '''''' AND debt_rating = cci.Risk_rating
+		SELECT rate FROM default_recovery_rate
+		WHERE id IN (SELECT MAX(id) FROM default_recovery_rate
+		WHERE effective_date <= '''''' + Cast(@_from_as_of_date AS VARCHAR(100)) + '''''' AND debt_rating = cci.Risk_rating
 	)
 	) drr
 	OUTER APPLY (
-	SELECT cva CVA, dva DVA FROM source_deal_cva sdc
-	WHERE sdc.Source_Counterparty_ID = sdh.counterparty_id
-	AND sdc.source_deal_header_id = sdpd.source_deal_header_id
-	AND sdc.as_of_date = sdpd.pnl_as_of_date
-	AND sdc.term_start = sdd.term_start
+		SELECT cva CVA, dva DVA FROM source_deal_cva sdc
+		WHERE sdc.Source_Counterparty_ID = sdh.counterparty_id
+			AND sdc.source_deal_header_id = sdpd.source_deal_header_id
+			AND sdc.as_of_date = sdpd.pnl_as_of_date
+			AND sdc.term_start = sdd.term_start
 	) sdc
 	LEFT JOIN formula_editor fe ON fe.formula_id = sdd.formula_id
 	OUTER APPLY (
-	SELECT TOP(1) * FROM confirm_status cs
-	WHERE cs.source_deal_header_id = sdh.source_deal_header_id
-	ORDER BY cs.confirm_status_id
+		SELECT TOP(1) * FROM confirm_status cs
+		WHERE cs.source_deal_header_id = sdh.source_deal_header_id
+		ORDER BY cs.confirm_status_id
 ) cs ''
 SET @_sql_from3 = ''
 	LEFT JOIN source_deal_header sdh_close_ref_id ON sdh_close_ref_id.source_deal_header_id = sdh.close_reference_id
@@ -708,7 +594,6 @@ CROSS APPLY (
 	LEFT JOIN contract_charge_type_detail cctd1 ON cctd1.[id] = cgd.contract_component_template AND cctd1.include_cash_flow = ''y''
 	WHERE civvt.as_of_date = civv.as_of_date AND civvt.counterparty_id = fv.source_counterparty_id AND civvt.contract_id = fv.contract_id AND civvt.prod_date = fv.term_start AND COALESCE(cctd1.include_cash_flow, cctd.include_cash_flow, cgd.include_cash_flow) = ''y''
 ) civv1
-
 SELECT sv.source_deal_header_id, sv.term_start, sv.term_end, sv.leg, COALESCE(ifbs.fees, sv.amount, 0) amount, COALESCE(ifbs.fees, sv.amount, 0) contract_value, ifbs.price net_price, ifbs.actual_forward, COALESCE(sv.amount, fv.und_pnl_set, 0) und_pnl_set, ifbs.price deal_price, COALESCE(ifbs.volume, sv.volume) Volume, COALESCE(ifbs.field_id, sv.charge_type_id) charge_type_id, COALESCE(ifbs.field_name, sv.charge_type) charge_type, COALESCE(ifbs.currency_id, sv.currency_id) currency_id, scur.currency_name currency,ifbs.internal_type
 	, ifbs.invoice_currency, ifbs.deal_currency, ifbs.amount_inv, ifbs.amount_deal, ifbs.counterparty_id, ifbs.contract_id
 INTO #deal_fees_set -- select * from #deal_fees_set
@@ -719,7 +604,7 @@ FROM #settlement_value sv
 		SELECT Max(as_of_date) as_of_date FROM index_fees_breakdown_settlement WHERE source_deal_header_id = sv.source_deal_header_id 
 			and term_start = sv.term_start AND Isnull(leg, 1) = Isnull(sv.leg, 1)
 			AND as_of_date <= Isnull(fv.from_as_of_date, @_from_as_of_date) 
-			AND field_id > 0 and internal_type not in (18722,18723,18733,18742,18743, 18716)
+			AND field_id > 0 and internal_type not in (18722,18723,18733,18742,18743)
 	) ifbs_mx
 	CROSS APPLY (
 		SELECT volume, 
@@ -744,10 +629,11 @@ FROM #settlement_value sv
 		AND term_start = sv.term_start 		
 		AND (Isnull(leg, 1) = Isnull(sv.leg, 1) or field_id in (307014,307075))
 		AND (as_of_date = ifbs_mx.as_of_date or field_id in (307014,307075)) AND field_id > 0
-		  and internal_type not in (18722,18723,18733,18742,18743,18716)
+		  and internal_type not in (18722,18723,18733,18742,18743)
 	) ifbs
 	LEFT JOIN source_currency scur ON scur.source_currency_id = isnull(ifbs.currency_id, sv.currency_id)
 WHERE ifbs.field_id IS NOT NULL
+
 select sv.source_deal_header_id, ifbs.term_start, ifbs.term_end, ifbs.leg, COALESCE(ifbs.value, 0) amount
 	, COALESCE(ifbs.value, 0) contract_value, ifbs.price net_price, ''a'' actual_forward, null und_pnl_set, ifbs.price deal_price
 	, ifbs.volume Volume, ifbs.field_id charge_type_id, ifbs.field_name charge_type, ifbs.currency_id
@@ -772,9 +658,9 @@ from
 	CROSS APPLY (
 		SELECT Max(as_of_date) as_of_date FROM index_fees_breakdown_settlement WHERE source_deal_header_id = sv.source_deal_header_id 
 			AND as_of_date <= Isnull(sv.from_as_of_date, @_from_as_of_date) 
-			and internal_type  in (18722,18723,18733,18742,18743 , 18716)
+			and internal_type in (18722,18723,18733,18742,18743)
 	) ifbs_mx
-	cross join ( VALUES (18722),(18723),(18733) , (18742),(18743), (18716)) fee (internal_type)
+	cross join ( VALUES (18722),(18723),(18733) , (18742),(18743) ) fee (internal_type)
 	outer apply
 	( select top(1) * from index_fees_breakdown_settlement  where source_deal_header_id = sv.source_deal_header_id 
 		and internal_type =fee.internal_type ---and as_of_date=ifbs_mx.as_of_date
@@ -782,6 +668,7 @@ from
 	)ifbs
 	LEFT JOIN source_currency scur ON scur.source_currency_id = ifbs.currency_id
 WHERE ifbs.field_id IS NOT NULL
+
 SELECT fv.source_deal_header_id, 
 	fv.term_start, 
 	fv.term_end, 
@@ -804,19 +691,21 @@ SELECT fv.source_deal_header_id,
 	value_deal amount_deal,
 	ifb.counterparty_id,
 	ifb.contract_id
-INTO #deal_fees
+INTO #deal_fees -- select * from #deal_fees
 FROM #final_values fv
-INNER JOIN index_fees_breakdown ifb ON ifb.source_deal_header_id = fv.source_deal_header_id AND ifb.term_start = fv.term_start AND Isnull(ifb.leg, 1) = Isnull(fv.leg, 1) AND ifb.as_of_date = Isnull(fv.from_as_of_date, @_from_as_of_date) AND ifb.field_id > 0 AND internal_type > 0 AND fv.actual_forward = ''f''
-LEFT JOIN source_currency scur ON scur.source_currency_id = 
-	CASE @_cur_type WHEN ''d'' THEN ifb.deal_cur_id WHEN ''i'' THEN ifb.inv_cur_id ELSE COALESCE(ifb.fee_currency_id, fv.currency_id) END
-LEFT JOIN source_currency scur_ic ON scur_ic.source_currency_id = ifb.inv_cur_id
+	INNER JOIN index_fees_breakdown ifb ON ifb.source_deal_header_id = fv.source_deal_header_id AND ifb.term_start = fv.term_start AND Isnull(ifb.leg, 1) = Isnull(fv.leg, 1) AND ifb.as_of_date = Isnull(fv.from_as_of_date, @_from_as_of_date) AND ifb.field_id > 0 AND internal_type > 0 AND fv.actual_forward = ''f''
+	LEFT JOIN source_currency scur ON scur.source_currency_id = 
+		CASE @_cur_type WHEN ''d'' THEN ifb.deal_cur_id WHEN ''i'' THEN ifb.inv_cur_id ELSE COALESCE(ifb.fee_currency_id, fv.currency_id) END
+	LEFT JOIN source_currency scur_ic ON scur_ic.source_currency_id = ifb.inv_cur_id
 	LEFT JOIN source_currency scur_dc ON scur_dc.source_currency_id = ifb.deal_cur_id 
-WHERE ifb.field_id IS NOT NULL and ifb.internal_type not in (18722,18723,18733,18742,18743,18716)
+WHERE ifb.field_id IS NOT NULL and ifb.internal_type not in (18722,18723,18733,18742,18743)
 --and fv.term_start>Isnull(fv.from_as_of_date, @_from_as_of_date)
+
 INSERT INTO #final_values (sub_id, stra_id, book_id, subsidiary, strategy, book, sub_book, charge_type_id, charge_type, counterparty_name, parent_counterparty_name, contract_id, [contract_name], commodity_id, term_start, term_end, from_as_of_date, amount, commodity, total_volume, source_counterparty_id, counterparty_id, term_start_day, term_start_month, term_start_month_name, term_start_year, term_start_year_month, term_quarter, to_as_of_date, sub_book_id, actual_forward, Volume, agg_term, currency_id, entire_term_start, entire_term_end, payment_date, currency, pnl_date, reference)
 SELECT fv.sub_id, fv.stra_id, fv.book_id, fv.subsidiary, fv.strategy, fv.book, fv.sub_book, cf.charge_type_id, cf.charge_type, fv.counterparty_name, fv.parent_counterparty_name, fv.contract_id, fv.[contract_name], fv.commodity_id, fv.term_start, fv.term_end, fv.from_as_of_date, cf.amount, fv.commodity, cf.volume total_volume, fv.source_counterparty_id, fv.counterparty_id, fv.term_start_day, fv.term_start_month, fv.term_start_month_name, fv.term_start_year, fv.term_start_year_month, fv.term_quarter, fv.to_as_of_date, fv.sub_book_id, ''a'' AS actual_forward, cf.volume Volume, cf.agg_term, cf.curreny_id currency_id, term_start entire_term_start, term_end entire_term_end, cf.payment_date, cf.currency, fv.pnl_date, cf.reference
 FROM #final_values fv
 INNER JOIN #contract_fees cf ON cf.source_counterparty_id = fv.source_counterparty_id AND cf.contract_id = fv.contract_id AND cf.entire_term_start = fv.entire_term_start AND cf.entire_term_end = fv.entire_term_end AND cf.commodity_id = cf.commodity_id
+
 INSERT INTO #final_values (
 	sub_id, stra_id, book_id, subsidiary, strategy, book, sub_book, source_deal_header_id, deal_ref_id, deal_date_from, deal_date_to, trader_id, trader_name, counterparty_name, parent_counterparty_name, contract_id, [contract_name], source_deal_type_id, deal_type_name, deal_sub_type_type_id, deal_sub_type_name, product_id, commodity_id, product_desc, block_definition, buy_sell_flag, term_start, term_end, country_id, country, grid, region_id, region, source_major_location_id, location_group, location_id, location_name, location_description, from_as_of_date, Amount, und_intrinsic_pnl, und_extrinsic_pnl, dis_pnl, dis_intrinsic_pnl, dis_extrinisic_pnl, market_value, contract_value, dis_market_value, dis_contract_value, discount_factor, discount_amount, commodity, deal_volume, volume_uom, template_name, curve_name, index_tou, currency, formula, total_volume, position_uom, cva, dva, market_price, formula_price, net_price, physical_financial_flag, block_definition_id, leg, source_counterparty_id, counterparty_id, index_id, credit_adjusted_mtm, 
 	discounted_credit_adjusted_mtm, term_start_day, term_start_month, term_start_month_name, term_start_year, term_start_year_month, term_quarter, to_as_of_date, sub_book_id, transaction_type, transaction_type_name, period_from, period_to, probability, credit_reserve, dis_credit_reserve, fair_value, dis_fair_value, model_reserve, actual_forward, pnl_conversion_factor, pnl_adjustment_value, internal_deal_type_id, internal_deal_type, internal_deal_sub_type_id, internal_deal_sub_type, fixed_cost, fixed_price, formula_value, price_adder, price_multiplier, strike_price, und_pnl_set, formula_curve_id, formula_curve_name, internal_desk_id, internal_desk, internal_portfolio_id, internal_portfolio, broker_id, broker_name, type_of_entity_id, type_of_entity, int_ext_flag_id, int_ext_flag, deal_status_id, deal_status, confirm_status_id, confirm_status, pnl_source_value_id, pnl_source_name, description1, description2, description3, description4, counterparty_id2, counterparty_name2, ext_deal_id, reference, create_by, create_ts, update_by, update_ts, 
@@ -849,19 +738,20 @@ SELECT fv.sub_id, fv.stra_id, fv.book_id, fv.subsidiary, fv.strategy, fv.book, f
 	fv.[reporting_group4_name],
 	fv.[reporting_group5_name]
 FROM #final_values fv  --    select * from #final_values
-cross apply (
-	SELECT * FROM #deal_fees_set where source_deal_header_id = fv.source_deal_header_id 
-		AND term_start = fv.term_start  AND leg = fv.leg
-	UNION ALL	
-	--SELECT * FROM #deal_fees_set_onetime where source_deal_header_id = fv.source_deal_header_id 
-	--	AND term_start = fv.term_start  AND leg = fv.leg
-	--UNION ALL	
-	SELECT * FROM #deal_fees where source_deal_header_id = fv.source_deal_header_id 
-		AND term_start = fv.term_start  AND leg = fv.leg
-) df  
-LEFT JOIN source_counterparty AS sc ON sc.source_counterparty_id = df.counterparty_id
-LEFT JOIN contract_group cg ON cg.contract_id = df.contract_id
+	cross apply (
+		SELECT * FROM #deal_fees_set where source_deal_header_id = fv.source_deal_header_id 
+			AND term_start = fv.term_start  AND leg = fv.leg
+		UNION ALL	
+		--SELECT * FROM #deal_fees_set_onetime where source_deal_header_id = fv.source_deal_header_id 
+		--	AND term_start = fv.term_start  AND leg = fv.leg
+		--UNION ALL	
+		SELECT * FROM #deal_fees where source_deal_header_id = fv.source_deal_header_id 
+			AND term_start = fv.term_start  AND leg = fv.leg
+	) df  
+	LEFT JOIN source_counterparty AS sc ON sc.source_counterparty_id = df.counterparty_id
+	LEFT JOIN contract_group cg ON cg.contract_id = df.contract_id
 where df.source_deal_header_id is not null
+
 INSERT INTO #final_values (
 	sub_id, stra_id, book_id, subsidiary, strategy, book, sub_book, source_deal_header_id, deal_ref_id, deal_date_from, deal_date_to, trader_id, trader_name, counterparty_name, parent_counterparty_name, contract_id, [contract_name], source_deal_type_id, deal_type_name, deal_sub_type_type_id, deal_sub_type_name, product_id, commodity_id, product_desc, block_definition, buy_sell_flag, term_start, term_end, country_id, country, grid, region_id, region, source_major_location_id, location_group, location_id, location_name, location_description, from_as_of_date, Amount, und_intrinsic_pnl, und_extrinsic_pnl, dis_pnl, dis_intrinsic_pnl, dis_extrinisic_pnl, market_value, contract_value, dis_market_value, dis_contract_value, discount_factor, discount_amount, commodity, deal_volume, volume_uom, template_name, curve_name, index_tou, currency, formula, total_volume, position_uom, cva, dva, market_price, formula_price, net_price, physical_financial_flag, block_definition_id, leg, source_counterparty_id, counterparty_id, index_id, credit_adjusted_mtm, 
 	discounted_credit_adjusted_mtm, term_start_day, term_start_month, term_start_month_name, term_start_year, term_start_year_month, term_quarter, to_as_of_date, sub_book_id, transaction_type, transaction_type_name, period_from, period_to, probability, credit_reserve, dis_credit_reserve, fair_value, dis_fair_value, model_reserve, actual_forward, pnl_conversion_factor, pnl_adjustment_value, internal_deal_type_id, internal_deal_type, internal_deal_sub_type_id, internal_deal_sub_type, fixed_cost, fixed_price, formula_value, price_adder, price_multiplier, strike_price, und_pnl_set, formula_curve_id, formula_curve_name, internal_desk_id, internal_desk, internal_portfolio_id, internal_portfolio, broker_id, broker_name, type_of_entity_id, type_of_entity, int_ext_flag_id, int_ext_flag, deal_status_id, deal_status, confirm_status_id, confirm_status, pnl_source_value_id, pnl_source_name, description1, description2, description3, description4, counterparty_id2, counterparty_name2, ext_deal_id, reference, create_by, create_ts, update_by, update_ts, 
@@ -911,6 +801,8 @@ OUTER APPLY(
 	ELSE CAST(YEAR(df.term_start) AS VARCHAR) END agg_term
 	FROM portfolio_mapping_tenor
 ) ag_t
+
+
 INSERT INTO #final_values (
 	sub_id, stra_id, book_id, subsidiary, strategy, book, sub_book, source_deal_header_id, deal_ref_id, deal_date_from, deal_date_to, trader_id, trader_name, counterparty_name, parent_counterparty_name, contract_id, contract_name, source_deal_type_id, deal_type_name, deal_sub_type_type_id, deal_sub_type_name, product_id, commodity_id, product_desc, block_definition, buy_sell_flag, country_id, country, grid, region_id, region, source_major_location_id, location_group, location_id, location_name, location_description, from_as_of_date, und_intrinsic_pnl, und_extrinsic_pnl, dis_pnl, dis_intrinsic_pnl, dis_extrinisic_pnl, dis_market_value, dis_contract_value, discount_factor, discount_amount, commodity, deal_volume, volume_uom, template_name, curve_name, index_tou, formula, total_volume, position_uom, cva, dva, market_price, formula_price, net_price, physical_financial_flag, block_definition_id, leg, source_counterparty_id, counterparty_id, index_id, credit_adjusted_mtm, discounted_credit_adjusted_mtm, term_start_day, term_start_month, term_start_month_name, 
 	term_start_year, term_start_year_month, term_quarter, to_as_of_date, sub_book_id, transaction_type, transaction_type_name, period_from, period_to, probability, credit_reserve, dis_credit_reserve, fair_value, dis_fair_value, model_reserve, pnl_conversion_factor, pnl_adjustment_value, internal_deal_type_id, internal_deal_type, internal_deal_sub_type_id, internal_deal_sub_type, fixed_cost, fixed_price, formula_value, price_adder, price_multiplier, strike_price, formula_curve_id, formula_curve_name, internal_desk_id, internal_desk, internal_portfolio_id, internal_portfolio, broker_id, broker_name, type_of_entity_id, type_of_entity, int_ext_flag_id, int_ext_flag, deal_status_id, deal_status, confirm_status_id, confirm_status, pnl_source_value_id, pnl_source_name, description1, description2, description3, description4, counterparty_id2, counterparty_name2, ext_deal_id, reference, create_by, create_ts, update_by, update_ts, broker_fixed_cost, confirm_date, sub_book_group1_id, sub_book_group2_id, sub_book_group3_id, sub_book_group4_id, 
@@ -960,8 +852,10 @@ WHERE fv.charge_type = ''Commodity'' AND COALESCE(fv.cash_flow, sv.amount, fv.am
 --cash_flow,* from #final_values where charge_type=''Commodity''
 DELETE #final_values
 WHERE charge_type = ''Commodity'' AND COALESCE(cash_flow, amount) IS NULL AND actual_forward = ''a''
+
 IF Object_id(N''tempdb..#tmp_settlement_detail'') IS NOT NULL
 	DROP TABLE #tmp_settlement_detail
+
 SELECT fv.sub_id, fv.stra_id, fv.book_id, fv.subsidiary, fv.strategy, fv.book, fv.sub_book, fv.source_deal_header_id, ISNULL(fv.deal_ref_id, fv.reference) deal_ref_id, fv.deal_date_from, fv.deal_date_to, fv.trader_id, fv.trader_name, fv.counterparty_name, fv.parent_counterparty_name, fv.contract_id, fv.contract_name, fv.source_deal_type_id, fv.deal_type_name, fv.deal_sub_type_type_id, fv.deal_sub_type_name, fv.product_id, fv.commodity_id, fv.product_desc, fv.block_definition, fv.buy_sell_flag, fv.country_id, fv.country, fv.grid, fv.region_id, fv.region, fv.source_major_location_id, fv.location_group, fv.location_id, fv.location_name, fv.location_description, fv.from_as_of_date, fv.und_intrinsic_pnl, fv.und_extrinsic_pnl, fv.dis_pnl, fv.dis_intrinsic_pnl, fv.dis_extrinisic_pnl
 	--isnull(sv.market_value ,fv.market_value) market_value,
 	--isnull(sv.contract_value,fv.contract_value) contract_value,
@@ -982,6 +876,7 @@ SELECT fv.sub_id, fv.stra_id, fv.book_id, fv.subsidiary, fv.strategy, fv.book, f
 	fv.[reporting_group5_name]
 INTO #tmp_settlement_detail
 FROM #final_values fv
+
 IF Object_id(N''tempdb..#tmp_matched_ratio'') IS NOT NULL
 	DROP TABLE #tmp_matched_ratio
 SELECT tsd.source_deal_detail_id, (ISNULL(mdv.match_vol, mdv1.match_vol) / (ISNULL(mdv.match_vol, mdv1.match_vol) + ISNULL(mdv.buy_outstanding_vol, mdv1.sell_outstanding_vol))) match_ratio, (ISNULL(mdv.buy_outstanding_vol, mdv1.sell_outstanding_vol) / (ISNULL(mdv.match_vol, mdv1.match_vol) + ISNULL(mdv.buy_outstanding_vol, mdv1.sell_outstanding_vol))) AS outstanding_ratio, buy.buy_outstanding_vol, sell.sell_outstanding_vol
