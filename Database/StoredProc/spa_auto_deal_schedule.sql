@@ -39,14 +39,13 @@ DECLARE @source_deal_header_id INT,
 	EXEC [spa_drop_all_temp_table] 
 	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
 	
-		SELECT
-			@source_deal_header_id = 101012,
-			@reschedule = 0,
-			@flow_date = '2011-01-01',
-			@transport_deal_id = NULL,
-			@process_id = 'D1C85BE3_853B_4838_A9AD_5624AACF4910'
-			
 	
+		select 
+			@source_deal_header_id = 104617,
+			@reschedule = 0,
+			@flow_date = '2020-02-01',
+			@transport_deal_id = NULL,
+			@process_id = '8B614E8F_AEE4_41C4_86E0_DC7211A8B42C112'
 	
 --**/
 SET NOCOUNT ON
@@ -86,7 +85,7 @@ CREATE TABLE #hourly_pos_info (
 	, term_start DATETIME
 	, granularity INT
 	, hour INT
-	, position INT
+	, position NUMERIC(38,20)
 	, source_deal_detail_id INT
 )
 
@@ -154,6 +153,7 @@ SELECT @from_location = from_location,
 	@contract = contract
 FROM delivery_path 
 WHERE path_id = @path_id --161 --
+
 
 SELECT @mdq = mdq
 FROM [delivery_path_mdq] dpm
@@ -354,10 +354,10 @@ BEGIN
 				END
 
 			END 
-		'
-			
+		'	
 		--print @sql
 		EXEC(@sql)
+
 
 		SET @sql = N'
 		INSERT INTO #hourly_pos_info ( source_deal_header_id,location_id, curve_id, term_start, granularity, hour, position, source_deal_detail_id)
@@ -376,6 +376,7 @@ BEGIN
 			AND MONTH(term_start) = MONTH(''' + CAST(@flow_date AS VARCHAR(50)) + ''' )	'
 		--print @sql
 		EXEC(@sql)
+
 
 	END 
 	ELSE 
@@ -502,11 +503,35 @@ BEGIN
 				, ROOT('Root')
 	)
 
+
+
+
+
+
+			--select storage_asset_id,* from adiha_process.dbo.contractwise_detail_mdq_dmanandhar_8B614E8F_AEE4_41C4_86E0_DC7211A8B42C112
+
+			--select storage_asset_id,* from adiha_process.dbo.contractwise_detail_mdq_hourly_dmanandhar_8B614E8F_AEE4_41C4_86E0_DC7211A8B42C112
+
+			--select @process_id,@xml_manual_vol,@call_from return;
+			
 	EXEC spa_flow_optimization_hourly 
 		@flag = 's2'
 		, @process_id = @process_id
 		, @xml_manual_vol = @xml_manual_vol
 		, @call_from = @call_from
+
+		
+
+
+
+	--		select storage_asset_id,* from adiha_process.dbo.contractwise_detail_mdq_dmanandhar_8B614E8F_AEE4_41C4_86E0_DC7211A8B42C112
+
+	--		select storage_asset_id,* from adiha_process.dbo.contractwise_detail_mdq_hourly_dmanandhar_8B614E8F_AEE4_41C4_86E0_DC7211A8B42C112
+
+
+	--return;
+
+	
 END 
 
 IF @transport_deal_id IS NULL
@@ -535,7 +560,7 @@ END
 
 SET @call_from = IIF(@transport_deal_id IS NULL, 'flow_auto', 'flow_opt');
 
---SELECT
+--SELECT 
 --	@flow_date_from
 --	, @flow_date_to
 --	,  @process_id
@@ -546,10 +571,7 @@ SET @call_from = IIF(@transport_deal_id IS NULL, 'flow_auto', 'flow_opt');
 --	, @granularity
 --	,  @receipt_deals_id 
 --	,  @delivery_deals_id
-
 --return;
-
-
 
 EXEC spa_schedule_deal_flow_optimization  
 	@flag = 'i'

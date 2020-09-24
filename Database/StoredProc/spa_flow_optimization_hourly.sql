@@ -161,24 +161,12 @@ declare @flag CHAR(50),
 	
 EXEC dbo.spa_drop_all_temp_table
 
-EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar';
 
-select @flag='l'
-,@receipt_delivery='FROM'
-,@flow_date_from='2025-07-01'
-,@flow_date_to='2025-07-01'
-,@major_location='-10'
-,@minor_location='2853'
-,@from_location='2853'
-,@to_location='2854'
-,@path_priority='303954'
-,@opt_objective='38301'
-,@process_id='09541BB4_82D4_492B_AC36_300BE9C29DC0'
-,@uom='1158'
-,@hide_pos_zero='n'
-,@reschedule='0'
-,@granularity='982'
-,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24'
+	select	@flag = 's2'
+		, @process_id = '8B614E8F_AEE4_41C4_86E0_DC7211A8B42C112'
+		, @xml_manual_vol = '<Root><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="18" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="19" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="20" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="21" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="22" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="23" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="24" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/></Root>'
+		, @call_from = 'flow_auto'
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -4174,6 +4162,7 @@ BEGIN
 		--print(@sql)
 		EXEC(@sql)
 		
+		
 		--update daily contractwise table
 		SET @sql = '
 		UPDATE cd
@@ -4186,7 +4175,7 @@ BEGIN
 			SELECT  SUM(cdh.received) [received]
 				, SUM(cdh.delivered) [delivered]
 				, SUM(cdh.path_rmdq) [path_rmdq]
-				, MAX(cdh.storage_asset_id) [storage_asset_id]
+				, NULLIF(MIN(ISNULL(cdh.storage_asset_id, -1)), -1) [storage_asset_id]
 			FROM ' + @contractwise_detail_mdq_hourly + ' cdh
 			WHERE cdh.from_loc_id = cd.from_loc_id
 				AND cdh.to_loc_id = cd.to_loc_id
@@ -4195,6 +4184,8 @@ BEGIN
 			GROUP BY cdh.from_loc_id, cdh.to_loc_id, cdh.path_id, cdh.contract_id
 		) cd_hrly
 		'
+
+		--print @sql
 		EXEC(@sql)
 
 		DECLARE @return_data_json NVARCHAR(2000) = ''
