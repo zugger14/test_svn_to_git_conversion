@@ -8049,10 +8049,34 @@ select sddh.source_deal_detail_id,
 		and sddh.term_date between a.term_start and a.term_end
 	group by sddh.source_deal_detail_id,sddh.term_date,case when is_dst=1 then 25 else cast(left(sddh.hr,2) as int) end, price
 	) sddh
-where sddh.price is not null
+where sddh.price is not null AND @calc_type = 's'
 group by sddh.source_deal_detail_id,sddh.term_date
 
-SET @sql= ' SELECT source_deal_header_id,source_deal_detail_id,term_start, hr, NULLIF(price, 0) AS price, volume
+IF OBJECT_ID('tempdb..#tmp_deal_info') IS NOT NULL DROP TABLE #tmp_deal_info
+
+SELECT DISTINCT td.source_deal_header_id --, td.source_deal_detail_id
+INTO #tmp_deal_info
+FROM #temp_deals td
+INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
+INNER JOIN #uddft uddft ON uddft.template_id=sdh.template_id 
+	and td.leg= ISNULL(uddft.leg,td.leg)	
+INNER JOIN #udft udft ON udft.udf_template_id = uddft.udf_user_field_id 
+	and td.leg= ISNULL(udft.leg,td.leg)
+	AND udft.internal_field_type IN (18742,18743)
+INNER JOIN user_defined_deal_fields uddf1 ON uddf1.source_deal_header_id = sdh.source_deal_header_id
+	AND uddf1.udf_template_id = uddft.udf_template_id 
+	AND uddft.field_type<>'w'
+WHERE @calc_type = 's'
+
+SET @sql= ' SELECT 
+	source_deal_header_id,
+	source_deal_detail_id,
+	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) < 0 THEN (volume*ISNULL(NULLIF(price, 0), fixed_price)) ELSE 0 END) negative_vol,
+	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) >= 0 THEN (volume*ISNULL(NULLIF(price, 0), fixed_price)) ELSE 0 END) positive_vol,
+	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) < 0 THEN volume ELSE 0 END) negative_volume,
+	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) >= 0 THEN volume ELSE 0 END) positive_volume,
+	SUM(volume*ISNULL(NULLIF(price, 0), fixed_price)) vol
+
 INTO ' + @tmp_pos_neg_price_vol + '
 FROM(
 	SELECT vol.source_deal_header_id,
@@ -8107,32 +8131,30 @@ FROM(
 		vol.hr22  vol22,
 		vol.hr23  vol23,
 		vol.hr24  vol24,
-		vol.hr25  vol25
-	FROM #temp_deals td
+		vol.hr25  vol25,
+		td.fixed_price
+	FROM #tmp_deal_info tdi
+	INNER JOIN #temp_deals td ON td.source_deal_header_id = tdi.source_deal_header_id
 	INNER JOIN '+@position_table_name+' vol ON vol.source_deal_detail_id = td.source_deal_detail_id
 	inner join #vwDealTimezone tz on  vol.source_deal_header_id=tz.source_deal_header_id
 		and tz.curve_id=vol.curve_id  and tz.location_id=vol.location_id 
 	left join #sddh1 sddh on sddh.source_deal_detail_id=vol.source_deal_detail_id and sddh.term_date=vol.term_start
-	left join source_price_curve_def spcd on spcd.source_curve_def_id=vol.curve_id  and vol.calc_mtm_at_tou_level=''y''
-	left join #tou_hour hb  ON hb.dst_group_value_id=tz.dst_group_value_id and spcd.udf_block_group_id=hb.block_type_group_id  
-		and vol.term_start=hb.term_date	 and vol.calc_mtm_at_tou_level=''y''
 	LEFT JOIN #tmp_hourly_price_only t on t.rowid=vol.rowid
 	OUTER APPLY(SELECT CASE WHEN td.physical_financial_flag = ''p'' THEN t.hr1_c ELSE t.hr1 END price
 				WHERE 1 = 1
 				AND ((td.physical_financial_flag = ''p'' AND t.granularity_c IN (980,981)) OR
-					 (td.physical_financial_flag <> ''p'' AND t.granularity IN (980,981)))
+						(td.physical_financial_flag <> ''p'' AND t.granularity IN (980,981)))
 				) pr
-	LEFT JOIN #mv90_dst dst on dst.date = vol.term_start and dst.insert_delete = ''i'' 
-		and dst.source_commodity_id = vol.commodity_id and dst.dst_group_value_id=tz.dst_group_value_id
-	LEFT JOIN #mv90_dst dst1 on dst1.date = vol.term_start and dst1.insert_delete = ''d'' 
-		and dst1.source_commodity_id = vol.commodity_id and dst1.dst_group_value_id=tz.dst_group_value_id) v
+		) v
 UNPIVOT(
 	price for hr in (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25)
 ) u 
 UNPIVOT(
 	volume for vol in (vol1,vol2,vol3,vol4,vol5,vol6,vol7,vol8,vol9,vol10,vol11,vol12,vol13,vol14,vol15,vol16,vol17,vol18,vol19,vol20,vol21,vol22,vol23,vol24,vol25)
 ) t
-WHERE RIGHT(hr, CASE WHEN len(hr) = 3 THEN 1 ELSE 2 END) = RIGHT(vol, CASE WHEN len(vol) = 4 THEN 1 ELSE 2 END)'
+WHERE RIGHT(hr, CASE WHEN len(hr) = 3 THEN 1 ELSE 2 END) = RIGHT(vol, CASE WHEN len(vol) = 4 THEN 1 ELSE 2 END)
+AND ''' + @calc_type + ''' = ''s''
+GROUP BY source_deal_header_id, source_deal_detail_id'
 
 EXEC spa_print @sql
 EXEC(@sql)
@@ -13047,26 +13069,15 @@ set @qry5b='
 	MAX(isnull(udddf.contract_id,uddf.contract_id)) contract_id
 	into  #tmp_fees_breakdown_000 --  select * from  #tmp_fees_breakdown 
 	FROM	#temp_deals td 
-		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-		INNER JOIN #uddft uddft ON uddft.template_id=sdh.template_id	and td.leg= ISNULL(uddft.leg,td.leg)	
-		INNER JOIN #udft udft ON udft.udf_template_id = uddft.udf_user_field_id and td.leg= ISNULL(udft.leg,td.leg)
-		LEFT JOIN #uddf uddf ON uddf.source_deal_header_id = td.source_deal_header_id 
-				AND uddf.udf_template_id = uddft.udf_template_id AND uddft.field_type<>''w''
-		LEFT JOIN #udddf udddf ON udddf.udf_template_id = uddft.udf_template_id
-				AND udddf.source_deal_detail_id = td.source_deal_detail_id AND uddft.field_type<>''w''
-		OUTER APPLY (SELECT 
-					SUM(CASE WHEN pri.price < 0 THEN (sddh.volume*pri.price) ELSE 0 END) negative_vol,
-					SUM(CASE WHEN pri.price >= 0 THEN (sddh.volume*pri.price) ELSE 0 END) positive_vol,
-					SUM(CASE WHEN pri.price < 0 THEN sddh.volume ELSE 0 END) negative_volume,
-					SUM(CASE WHEN pri.price >= 0 THEN sddh.volume ELSE 0 END) positive_volume,
-					SUM(sddh.volume*pri.price) vol
-				FROM ' + @tmp_pos_neg_price_vol + ' sddh
-				INNER JOIN user_defined_deal_fields uddf1 ON uddf1.source_deal_header_id = sddh.source_deal_header_id
-					AND uddf1.udf_template_id = uddft.udf_template_id AND uddft.field_type<>''w''
-				OUTER APPLY(SELECT ISNULL(sddh.price, td.fixed_price) AS price) pri
-				WHERE sddh.source_deal_detail_id = td.source_deal_detail_id
-				AND sddh.term_start between td.term_start and td.term_end
-				AND udft.internal_field_type IN (18742,18743)) sddh
+	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
+	INNER JOIN #uddft uddft ON uddft.template_id=sdh.template_id	and td.leg= ISNULL(uddft.leg,td.leg)	
+	INNER JOIN #udft udft ON udft.udf_template_id = uddft.udf_user_field_id and td.leg= ISNULL(udft.leg,td.leg)
+	LEFT JOIN #uddf uddf ON uddf.source_deal_header_id = td.source_deal_header_id 
+			AND uddf.udf_template_id = uddft.udf_template_id AND uddft.field_type<>''w''
+	LEFT JOIN #udddf udddf ON udddf.udf_template_id = uddft.udf_template_id
+			AND udddf.source_deal_detail_id = td.source_deal_detail_id AND uddft.field_type<>''w''
+	LEFT JOIN ' + @tmp_pos_neg_price_vol + ' sddh ON sddh.source_deal_detail_id = td.source_deal_detail_id
+		AND udft.internal_field_type IN (18742,18743)
 		outer apply
 		( 
 			select max(curve_id) curve_id, sum(volume) volume from '+@tmp_hourly_price_vol+' 
@@ -13109,17 +13120,7 @@ set @qry6b='
 set @qry7b='
 	LEFT JOIN '+@calc_result_table5+' udf_formula ON udf_formula.source_deal_detail_id = td.source_deal_detail_id
 		and uddft.udf_template_id=udf_formula.source_id AND udf_formula.is_final_result = ''y'' 	
-	--LEFT JOIN user_defined_deal_fields_template_main ud ON ud.template_id = sdh.template_id
-	--	AND ud.field_id = 305013
-	--LEFT JOIN user_defined_deal_fields_template_main ud1 on ud1.template_id = sdh.template_id
-	--	AND ud1.field_id= 308062
-	--LEFT JOIN user_defined_deal_fields uddf1 on uddf1.udf_template_id = ud1.udf_template_id 
-	--	AND uddf1.source_deal_header_id = td.source_deal_header_id
-	--LEFT JOIN user_defined_deal_fields uddf2 on uddf2.udf_template_id = ud.udf_template_id 
-	--	AND uddf2.source_deal_header_id = td.source_deal_header_id
-	--LEFT JOIN delivery_path dp ON dp.path_id = uddf2.udf_value	
 	left join #fuel_based_variable_charge fbvc on fbvc.location_id=td.location_id and fbvc.term_start=td.term_start
-	--OUTER APPLY(SELECT try_cast(uddf.udf_value as int)	udf_value FROM user_defined_deal_fields uddf INNER JOIN user_defined_deal_fields_template_main udddft ON uddf.udf_template_id=udddft.udf_template_id WHERE uddf.source_deal_header_id=td.source_deal_header_id and udddft.field_id=-5604) uddf_broker
 	LEFT JOIN #tmp_source_fees sfv ON sfv.source_deal_detail_id=td.source_deal_detail_id AND sfv.field_id=uddft.field_name
 	OUTER APPLY(
 		SELECT ISNULL(NULLIF(SUM(CAST(volume_mult AS FLOAT)),0),1) AS totalhours, 
