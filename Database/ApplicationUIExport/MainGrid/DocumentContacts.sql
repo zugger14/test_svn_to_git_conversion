@@ -127,7 +127,8 @@
 												SELECT 223,'email_group_bcc','Email Group BCC','ro',NULL,'n','n','17','y',NULL,NULL,NULL,'140','int',NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 223,'message_template_id','Message Template','ro_int',NULL,'n','n','18','y',NULL,NULL,NULL,'140','int',NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 223,'message','Message','txttxt',NULL,'n','n','10','y',NULL,NULL,NULL,'140','int',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 223,'subject','Subject','txttxt',NULL,'n','n','14','y',NULL,NULL,NULL,'140','int',NULL,'left', NULL,'n',NULL
+												SELECT 223,'subject','Subject','txttxt',NULL,'n','n','14','y',NULL,NULL,NULL,'140','int',NULL,'left', NULL,'n',NULL UNION ALL
+												SELECT 223,'use_generated_document','Use Generated Document','ro',NULL,'n','n','19','y',NULL,NULL,NULL,'250','str',NULL,'left', NULL,'n',NULL
 
 							UPDATE tagc
 							SET tagc.grid_id = @grid_id

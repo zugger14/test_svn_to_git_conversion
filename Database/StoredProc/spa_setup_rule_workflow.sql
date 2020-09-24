@@ -1553,7 +1553,8 @@ ELSE IF @flag = 'd'
 				IIF(tbl.email_group IS NULL OR tbl.email_group = '',tbl.email_group,left(tbl.email_group, len(tbl.email_group) - 1)) email_group,
 				IIF(tbl1.email_group_cc IS NULL OR tbl1.email_group_cc = '',tbl1.email_group_cc,left(tbl1.email_group_cc, len(tbl1.email_group_cc) - 1)) email_group_cc,
 				IIF(tbl2.email_group_bcc IS NULL OR tbl2.email_group_bcc = '',tbl2.email_group_bcc,left(tbl2.email_group_bcc, len(tbl2.email_group_bcc) - 1)) email_group_bcc,
-				wa.message_template_id [message_template_id]
+				wa.message_template_id [message_template_id],
+				ISNULL(wb.use_generated_document, 'n') [use_generated_document]
 		FROM workflow_event_message_documents wb
 		LEFT JOIN workflow_event_message_details wa ON wb.message_document_id = wa.event_message_document_id
 		LEFT JOIN static_data_value sdv ON sdv.value_id = wb.document_template_id
@@ -1640,7 +1641,8 @@ ELSE IF @flag = 'd'
 				email_bcc			NVARCHAR(300),
 				internal_contact_type	INT,
 				[subject]			NVARCHAR(1000),
-				message_template_id   INT
+				message_template_id   INT,
+				use_generated_document NCHAR(1)
 			)
 
 			SELECT * INTO #tmp_document_contact_email
@@ -1655,8 +1657,8 @@ ELSE IF @flag = 'd'
 			DECLARE @new_message_document_id INT
 			IF EXISTS (SELECT 1 FROM #tmp_document_contact WHERE message_document_id = 0)
 			BEGIN
-				INSERT INTO workflow_event_message_documents(event_message_id, document_template_id, effective_date, document_category, document_template)
-				SELECT event_message_id, document_type, effective_date, document_category, NULLIF(document_template,0)
+				INSERT INTO workflow_event_message_documents(event_message_id, document_template_id, effective_date, document_category, document_template, use_generated_document)
+				SELECT event_message_id, document_type, effective_date, document_category, NULLIF(document_template,0), use_generated_document
 				FROM #tmp_document_contact
 
 				SET @new_message_document_id = SCOPE_IDENTITY()
@@ -1667,7 +1669,8 @@ ELSE IF @flag = 'd'
 					SET wemd.document_template_id = tmp.document_type,
 						wemd.effective_date =  tmp.effective_date,
 						wemd.document_category = tmp.document_category,
-						wemd.document_template = tmp.document_template
+						wemd.document_template = tmp.document_template,
+						wemd.use_generated_document = tmp.use_generated_document
 				FROM workflow_event_message_documents wemd
 				INNER JOIN #tmp_document_contact tmp ON tmp.message_document_id = wemd.message_document_id
 

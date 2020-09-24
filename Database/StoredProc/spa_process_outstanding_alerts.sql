@@ -555,7 +555,13 @@ BEGIN
 							INNER JOIN dbo.SplitCommaSeperatedValues(@event_message_id) a ON a.item = wemd.event_message_id
 							)
 					BEGIN
-						EXEC spa_generate_document @event_msg_id, @sp_table_name, @new_workflow_process_id
+						DECLARE @get_generated INT
+						SELECT @get_generated = CASE WHEN use_generated_document = 'y' THEN 1 ELSE 0 END FROM workflow_event_message_documents wemd
+						INNER JOIN static_data_value sdv ON wemd.document_template_id = sdv.value_id
+						LEFT JOIN static_data_value sdv1 ON wemd.document_category = sdv1.value_id
+						INNER JOIN dbo.SplitCommaSeperatedValues(@event_message_id) a ON a.item = wemd.event_message_id	
+
+						EXEC spa_generate_document @event_message_id = @event_msg_id, @process_table = @sp_table_name, @workflow_process_id = @new_workflow_process_id, @get_generated =  @get_generated
 					END
 							
 				DELETE FROM #temp_attachments

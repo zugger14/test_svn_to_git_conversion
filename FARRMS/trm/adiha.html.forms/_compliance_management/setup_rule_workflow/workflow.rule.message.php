@@ -826,6 +826,7 @@
                 var email_group_cc = '';
                 var email_group_bcc = '';
                 var message_template_id = '';
+                var use_generated_document = false;
             } else {
                 var selected_row = workflow_rule_message.workflow_rule_message_grid.getSelectedRowId();
                 var message_document_id = workflow_rule_message.workflow_rule_message_grid.cells(selected_row,workflow_rule_message.workflow_rule_message_grid.getColIndexById("message_document_id")).getValue();
@@ -852,6 +853,8 @@
                 var email_group_cc = workflow_rule_message.workflow_rule_message_grid.cells(selected_row,workflow_rule_message.workflow_rule_message_grid.getColIndexById("email_group_cc")).getValue();;
                 var email_group_bcc = workflow_rule_message.workflow_rule_message_grid.cells(selected_row,workflow_rule_message.workflow_rule_message_grid.getColIndexById("email_group_bcc")).getValue();;
                 var message_template_id = workflow_rule_message.workflow_rule_message_grid.cells(selected_row,workflow_rule_message.workflow_rule_message_grid.getColIndexById("message_template_id")).getValue();
+                var use_generated_document =  workflow_rule_message.workflow_rule_message_grid.cells(selected_row,workflow_rule_message.workflow_rule_message_grid.getColIndexById("use_generated_document")).getValue() == 'y' ? true  : false;
+
             }
             var doc_form_data = [
                                     {type: "settings", labelWidth: ui_settings['field_size'], inputWidth: ui_settings['field_size'], position: "label-top"},
@@ -863,6 +866,8 @@
                                         {type: "combo", name: "document_category", label: "Document Category", offsetLeft:ui_settings['offset_left'], "options": "", filtering:"true", filtering_mode:'between'},
 										{type: 'newcolumn'},
                                         {type: "combo", name: "document_template", label: "Document Template", offsetLeft:ui_settings['offset_left'], "options": "", filtering:"true", filtering_mode:'between'},
+                                        {type: 'newcolumn'},
+                                        {type: "checkbox", name: "use_generated_document", label: "Use Generated Document", "checked": use_generated_document, offsetTop:ui_settings['checkbox_offset_top'], offsetLeft:ui_settings['offset_left']}        
                                     ]},
                                     {type: 'newcolumn'},
                                     {'type':'fieldset',name:'contact','label':'Contacts','offsetLeft':'15','offsetTop':'0','inputLeft ':'500','inputTop':'500','width':'530','list': [
@@ -1008,6 +1013,7 @@
 
                     var as_defined_in_contact = doc_form.isItemChecked('as_defined_in_contact');
                     if (as_defined_in_contact == true)  as_defined_in_contact = 'y'; else as_defined_in_contact = 'n';
+                    var use_generated_document =  doc_form.getItemValue('use_generated_document') ? 'y' : 'n';
 
                     var save_xml = '<Root><FormData ';
                     save_xml += ' message_document_id="' + message_document_id + '"';
@@ -1032,6 +1038,7 @@
                     save_xml += ' internal_contact_type="' + doc_form.getItemValue('internal_contact_type') + '"';
                     save_xml += ' subject="' + doc_form.getItemValue('subject') + '"';
                     save_xml += ' message_template_id="' + doc_form.getItemValue('message_template_id') + '"';
+                    save_xml += ' use_generated_document="' +  use_generated_document + '"';
                     save_xml += ' />';
 
                     save_xml += '<EmailData> ';
