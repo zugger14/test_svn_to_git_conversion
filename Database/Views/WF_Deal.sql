@@ -130,6 +130,7 @@ AS
 				, sdh.source_system_book_id3
 				, sdh.source_system_book_id4
 				, cca.is_prepay_deal [is_prepay_deal]
+				, DATEDIFF(DAY, sdh.entire_term_start, sdh.entire_term_end) +1 [tenor_days]
 			FROM source_deal_header sdh  
 			LEFT JOIN cte_previous cp ON sdh.source_deal_header_id = cp.source_deal_header_id
 			LEFT JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
