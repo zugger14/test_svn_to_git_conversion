@@ -409,6 +409,10 @@ FETCH NEXT FROM cursor_formula_editor INTO @formula_id1, @formula_name
 CLOSE cursor_formula_editor
 DEALLOCATE cursor_formula_editor
 --SELECT * from #temp_formula_editor_data
+
+UPDATE #temp_formula_editor_data
+SET formula_name = dbo.FNAFormulaResolveParamSeperator(formula_name, 'v')
+
 EXEC('SELECT * 
      INTO ' + @process_table + ' 
 	 FROM #temp_formula_editor_data'

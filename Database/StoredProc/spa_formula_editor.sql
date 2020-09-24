@@ -118,8 +118,8 @@ BEGIN
 		EXEC spa_resolve_function_parameter @flag = 's',@process_id = @process_id, @formula_id = @formula_id, @formula_name = @formula_name, @formula_type = @formula_type
 		SET @sql = '
 					SELECT DISTINCT fe.formula_id [formula_id], fe.formula_name [formula_name],
-					dbo.FNAFormulaResolveParamSeperator(REPLACE(REPLACE(REPLACE((CASE WHEN fe.formula_type = ''n'' THEN dbo.FNAHyperLink(10211015,''Nested Formula'',fe.formula_id, -1)
-					 +''</a>''  ELSE temp.formula_name END ),'''''''',''<>''),''><'',''''),''<>'',''''''''),''v'') [formula],
+					REPLACE(REPLACE(REPLACE((CASE WHEN fe.formula_type = ''n'' THEN dbo.FNAHyperLink(10211015,''Nested Formula'',fe.formula_id, -1)
+					 +''</a>''  ELSE temp.formula_name END ),'''''''',''<>''),''><'',''''),''<>'','''''''') [formula],
 					REPLACE(REPLACE(REPLACE(dbo.FNAFormulaFormatMaxString(fe.formula, ''c''),'''''''',''<>''),''><'',''''),''<>'','''''''') AS [formula_c], fe.formula_type [formula_type] 
 					FROM   formula_editor fe
 					INNER JOIN '+ @process_table + ' temp
