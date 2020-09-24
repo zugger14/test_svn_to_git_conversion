@@ -147,7 +147,8 @@ BEGIN
 			   NULLIF(receivables, '') receivables ,
 			   NULLIF(payables, '') payables ,
 			   NULLIF(counterparty_id, '') counterparty_id ,
-			   NULLIF(offset_method, '') offset_method 
+			   NULLIF(offset_method, '') offset_method,
+               create_backing_sheet
 			   INTO  #temp_invoice_data
 		FROM   OPENXML(@idoc1, '/FormXML', 1)
 			   WITH (
@@ -174,10 +175,10 @@ BEGIN
 						receivables INT ,
 						payables INT ,
 						counterparty_id INT ,
-						offset_method INT
+						offset_method INT,
+                        create_backing_sheet NCHAR(1)
 					)   
-					
-
+			
 		IF OBJECT_ID('tempdb..#temp_duplicate_nettng_contract') IS NOT NULL
 		  DROP TABLE #temp_duplicate_nettng_contract 
 
@@ -244,8 +245,8 @@ BEGIN
  				@error_msg,
  				''
 			RETURN
-		END		 			 
-				
+		END	
+	 			 
 		INSERT INTO contract_group (contract_name,source_contract_id, contract_desc, contract_type_def_id, source_system_id, is_active)
 		SELECT	netting_contract, 
 				netting_contract,
@@ -286,8 +287,14 @@ BEGIN
 			netting_type =	t.netting_type,
 			netting_group_name = t.netting_contract
 		FROM  stmt_netting_group sng
-		INNER JOIN #temp_contract_netting t ON sng.netting_group_id = t.netting_group_id 
+		INNER JOIN #temp_contract_netting t ON sng.netting_group_id = t.netting_group_id
 
+        UPDATE sng  
+        SET
+            create_backing_sheet = ti.create_backing_sheet
+        FROM stmt_netting_group sng
+        INNER JOIN #temp_invoice_data ti ON sng.counterparty_id = ti.counterparty_id    
+    
 		UPDATE cg
 		SET 
 			billing_cycle = t.billing_cycle ,
@@ -324,8 +331,8 @@ BEGIN
 				AND cca.counterparty_id = t.counterparty_id
 		WHERE cca.counterparty_contract_address_id IS NULL
 
-		--SELECT * FROM #temp_contract_netting
-		--SELECT * FROM #temp_invoice_data
+--		SELECT * FROM #temp_contract_netting
+--		SELECT * FROM #temp_invoice_data
 		UPDATE cca	
 			SET payables = t.payables,
 				receivables = t.receivables,
@@ -520,7 +527,8 @@ BEGIN
 			c_c.name [credit_name],
 			c_p.name [payables_name],
 			c_r.name [receivables_name],
-			cca.offset_method [offset_method]
+			cca.offset_method [offset_method],
+            IIF(sng.create_backing_sheet = 'y',1,0) [create_backing_sheet]
 	FROM contract_group cg 
 	LEFT JOIN counterparty_contract_address cca
 		ON cca.contract_id = cg.contract_id
@@ -531,6 +539,8 @@ BEGIN
 		ON c_p.counterparty_contact_id = cca.payables
 	LEFT JOIN counterparty_contacts c_r
 		ON c_r.counterparty_contact_id = cca.receivables
+    LEFT JOIN stmt_netting_group sng 
+        ON sng.counterparty_id =cca.counterparty_id
 	WHERE cg.contract_id = @netting_contract_id
 END
 

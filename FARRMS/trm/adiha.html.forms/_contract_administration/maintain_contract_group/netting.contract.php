@@ -300,7 +300,8 @@
             var payables_name = result[0].payables_name
             var receivables_name = result[0].receivables_name
             var offset_method = result[0].offset_method
-             
+            var create_backing_sheet =result[0].create_backing_sheet 
+            
             form_obj.setItemValue('invoice_due_date',invoice_due_date);
             form_obj.setItemValue('payment_days',payment_days);
             form_obj.setItemValue('settlement_date',settlement_date);
@@ -316,6 +317,7 @@
             form_obj.setItemValue('label_credit',credit_name);
             form_obj.setItemValue('label_payables',payables_name);
             form_obj.setItemValue('label_receivables',receivables_name);
+            form_obj.setItemValue('create_backing_sheet',create_backing_sheet);
 
             var selected_row = netting_contract.NettingContractGrid.getSelectedRowId(); 
             var netting_type = netting_contract.NettingContractGrid.cells(selected_row,netting_contract.NettingContractGrid.getColIndexById('netting_type')).getValue(); 

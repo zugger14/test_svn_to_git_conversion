@@ -336,8 +336,12 @@ WHERE sdv.type_id= 17800 AND sdv.code = ''Invoice Mail''',NULL,'n','n',NULL,'y',
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('10105898','offset_method','offset_method','Offset Method','combo','int','h','n','EXEC spa_StaticDataValues ''h'', 43500',NULL,'n','n','43501','n','n','n','n','n','n','n','n',NULL,NULL,NULL)				
-			 
+			VALUES('10105898','offset_method','offset_method','Offset Method','combo','int','h','n','EXEC spa_StaticDataValues ''h'', 43500',NULL,'n','n','43501','n','n','n','n','n','n','n','n',NULL,NULL,NULL)	
+
+            INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
+			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
+			VALUES('10105898','create_backing_sheet','create_backing_sheet','Create Backing Sheet','checkbox','char','h','n',NULL,NULL,'n','n',NULL,'n','y','n','n','n','n','n','n',NULL,NULL,NULL) 
 		END 
 	
 		IF OBJECT_ID('tempdb..#temp_old_template_group') IS NOT NULL
@@ -480,8 +484,9 @@ WHERE sdv.type_id= 17800 AND sdv.code = ''Invoice Mail''',NULL,'n','n',NULL,'y',
 		SELECT 73261,13218,72464,NULL,'Invoice','contract_email_template',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL
 		SELECT 78762,13218,78372,NULL,'Invoice','credit',NULL,NULL,NULL,NULL,'n',NULL,'browser',NULL,'21',NULL,NULL,NULL,NULL,NULL,NULL,'272',NULL UNION ALL
 		SELECT 78765,13218,78364,NULL,'Invoice','receivables',NULL,NULL,NULL,NULL,'n',NULL,'browser',NULL,'22',NULL,NULL,NULL,NULL,NULL,NULL,'272',NULL UNION ALL 
-		SELECT 78766,13218,78363,NULL,'Invoice','payables',NULL,NULL,NULL,NULL,'n',NULL,'browser',NULL,'23',NULL,NULL,NULL,NULL,NULL,NULL,'272',NULL  
-				
+		SELECT 78766,13218,78363,NULL,'Invoice','payables',NULL,NULL,NULL,NULL,'n',NULL,'browser',NULL,'23',NULL,NULL,NULL,NULL,NULL,NULL,'272',NULL  UNION ALL
+        SELECT 78766,13218,78363,NULL,'Invoice','create_backing_sheet',NULL,NULL,NULL,NULL,'n',NULL,'checkbox',NULL,'24',NULL,NULL,NULL,NULL,NULL,NULL,'272',NULL
+	
 		UPDATE otf
 		SET otf.new_group_id = ntg.new_id
 		FROM #temp_old_template_fields otf

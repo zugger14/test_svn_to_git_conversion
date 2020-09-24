@@ -269,6 +269,11 @@ BEGIN
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20011200','invoicing_charge_type_id','invoicing_charge_type_id','Invoice Line Item','combo','char','h','y','EXEC spa_staticdatavalues @flag=''h'', @type_id=10019',NULL,'y','y','','n','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL)
+
+            INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length)  
+			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
+			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
+			VALUES('20011200','is_backing_sheet','is_backing_sheet','Show Backing Sheets','checkbox','VARCHAR','h','n',NULL,NULL,'n','n',NULL,'n','n',NULL,NULL,'n','n','n','n',NULL,NULL,NULL)
             
          
 		END 
@@ -413,7 +418,8 @@ BEGIN
 		SELECT 91173,18800,90578,NULL,'General','prior_period',NULL,NULL,NULL,NULL,NULL,NULL,'checkbox',NULL,'20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 91174,18800,90579,NULL,'General','counterparty_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL
         SELECT 91174,18800,90579,NULL,'General','deal_charge_type_id',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'18',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL
-        SELECT 91174,18800,90579,NULL,'General','invoicing_charge_type_id',NULL,NULL,'m',NULL,'y',NULL,'combo',NULL,'19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+        SELECT 91174,18800,90579,NULL,'General','invoicing_charge_type_id',NULL,NULL,'m',NULL,'y',NULL,'combo',NULL,'19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL
+        SELECT 91173,18800,90578,NULL,'General','is_backing_sheet',NULL,NULL,NULL,NULL,NULL,NULL,'checkbox',NULL,'21',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
        
 		UPDATE otf
 		SET otf.new_group_id = ntg.new_id
