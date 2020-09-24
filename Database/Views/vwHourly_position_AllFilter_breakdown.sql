@@ -26,7 +26,7 @@ SELECT
 		,ssbm.source_system_book_id3
 		,ssbm.source_system_book_id4
 		,ssbm.fas_book_id
-FROM dbo.vwPosition_breakdown pos 
+FROM dbo.vwPosition_breakdown pos WITH(NOEXPAND)
 	left join dbo.position_report_group_map map on pos.rowid=map.rowid
 	left join source_system_book_map ssbm on ssbm.book_deal_type_map_id=map.subbook_id
 
