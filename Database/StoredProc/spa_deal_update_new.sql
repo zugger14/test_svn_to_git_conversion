@@ -5240,16 +5240,29 @@ BEGIN TRY
 		END
 
  		--*/
+		/**Update curve_id from location only when the field is hidden in Grid*/
+		DECLARE @take_index_from_location NCHAR(2) = 'y'
+		SELECT @take_index_from_location = IIF(ISNULL(mftd.update_required,'n') = 'n', 'y', 'n')
+		FROM maintain_field_template_detail mftd
+        INNER JOIN maintain_field_deal mfd ON mftd.field_id = mfd.field_id
+        WHERE mftd.field_template_id = @field_template_id
+        AND mfd.farrms_field_id = 'curve_id'
+        AND mfd.header_detail = 'd'
+
+		IF @take_index_from_location = 'n'
+		BEGIN
+			SELECT @take_index_from_location = IIF(ISNULL(curve_id,0) = 0, 'y', 'n')
+			FROM   deal_type_pricing_maping
+			WHERE template_id             = @template_id
+			AND   source_deal_type_id     = @deal_type_id
+			AND   ((@pricing_type IS NULL AND pricing_type IS NULL) OR pricing_type = @pricing_type)
+			AND	( ([commodity_id] IS NULL AND @commodity_id IS NULL) OR ISNULL([commodity_id],@commodity_id) = @commodity_id)
+		END
 
  		IF EXISTS (	SELECT 1
  					FROM   adiha_default_codes_values
  					WHERE  default_code_id = 56
- 							AND var_value = 1) AND EXISTS (SELECT 1 from maintain_field_template_detail mftd
-                                            INNER JOIN maintain_field_deal mfd ON mftd.field_id = mfd.field_id
-                                            WHERE mftd.field_template_id = @field_template_id
-                                            AND mfd.farrms_field_id = 'curve_id'
-                                            AND mfd.header_detail = 'd'
-                                            AND mftd.update_required = 'n')
+ 							AND var_value = 1) AND @take_index_from_location = 'y'
  		BEGIN
  			UPDATE sdd
  			SET curve_id = COALESCE(gm_index.[index], sml.term_pricing_index, sdd.curve_id)
