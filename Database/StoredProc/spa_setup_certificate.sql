@@ -19,16 +19,17 @@ GO
 CREATE PROCEDURE [dbo].[spa_setup_certificate]
 		@flag CHAR(1),
 		@xml_value NVARCHAR(MAX) = NULL,
-		@ids INT = NULL
+		@ids VARCHAR(MAX) = NULL 
 AS
 
 /*
 Declare
 	@flag CHAR(1) = NULL,	
-	@xml_value NVARCHAR(max) = NULL
+	@xml_value NVARCHAR(max) = NULL,
+	@ids VARCHAR(max) = NULL 
 	
-	select @flag ='u',
-	@xml_value ='<Root><FormXML  auth_certificate_keys_id="12" name="test1" file_name="" passphrase="" description="test" certificate_key=""></FormXML></Root>'
+	select @flag ='d', @ids = '43,44'
+	--@xml_value ='<Root><FormXML  auth_certificate_keys_id="12" name="test1" file_name="" passphrase="" description="test" certificate_key=""></FormXML></Root>'
 --*/ 
 
 SET NOCOUNT ON
@@ -156,11 +157,28 @@ END
 
 ELSE IF @flag = 'd'
 BEGIN
-	DECLARE @file_name VARCHAR(512)
+	DECLARE @file_name NVARCHAR(512)
 
-	SELECT @file_name = file_name FROM auth_certificate_keys  WHERE  auth_certificate_keys_id = @ids
-	SELECT @file_name = document_path + '\certificate_keys\' + @file_name FROM connection_string
-	EXEC spa_delete_file @filename = @file_name, @result = NULL
+	DECLARE cur_delete_file CURSOR FOR
+	SELECT file_name FROM auth_certificate_keys ack 
+					INNER JOIN dbo.FNASplit(@ids, ',') di ON di.item = ack.auth_certificate_keys_id
+					where nullif(file_name, '') is not null
+
+	OPEN cur_delete_file
+	FETCH NEXT FROM cur_delete_file INTO @file_name
+	while @@FETCH_STATUS = 0
+	BEGIN
+		
+		DECLARE @file_path VARCHAR(512)
+
+		SELECT @file_path = document_path + '\certificate_keys\' + @file_name FROM connection_string
+		EXEC spa_delete_file @filename = @file_path, @result = NULL
+
+		FETCH NEXT FROM cur_delete_file INTO @file_name
+	END
+	
+	CLOSE cur_delete_file
+	DEALLOCATE cur_delete_file
 
 	DELETE ack
 			FROM auth_certificate_keys ack

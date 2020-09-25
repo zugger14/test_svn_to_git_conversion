@@ -168,7 +168,7 @@ BEGIN
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20017200','file_name','file_name','File Name(Open SSH Format)','input','varchar','h','n',NULL,NULL,'n','n',NULL,'n','n','n','n','n','n','n','n',NULL,NULL,NULL,NULL)
+			VALUES('20017200','file_name','file_name','File Name','input','varchar','h','n',NULL,NULL,'n','n',NULL,'n','n','n','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
@@ -178,7 +178,7 @@ BEGIN
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20017200','certificate_key','certificate_key','Certificate Key(Open SSH Format)','input','varchar','h','n',NULL,'550','n','n',NULL,'n','n','n','n','n','n','n','n','20',NULL,NULL,NULL)
+			VALUES('20017200','certificate_key','certificate_key','Certificate Key' ,'input','varchar','h','n',NULL,'550','n','n',NULL,'n','n','n','n','n','n','n','n','20',NULL,NULL,NULL)
 						
 		END 
 	
