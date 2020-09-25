@@ -5244,7 +5244,12 @@ BEGIN TRY
  		IF EXISTS (	SELECT 1
  					FROM   adiha_default_codes_values
  					WHERE  default_code_id = 56
- 							AND var_value = 1)
+ 							AND var_value = 1) AND EXISTS (SELECT 1 from maintain_field_template_detail mftd
+                                            INNER JOIN maintain_field_deal mfd ON mftd.field_id = mfd.field_id
+                                            WHERE mftd.field_template_id = @field_template_id
+                                            AND mfd.farrms_field_id = 'curve_id'
+                                            AND mfd.header_detail = 'd'
+                                            AND mftd.update_required = 'n')
  		BEGIN
  			UPDATE sdd
  			SET curve_id = COALESCE(gm_index.[index], sml.term_pricing_index, sdd.curve_id)
