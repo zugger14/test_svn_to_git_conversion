@@ -1,4 +1,4 @@
-IF OBJECT_ID(N'[dbo].[spa_resolve_function_parameter]', N'P') IS NOT NULL
+﻿IF OBJECT_ID(N'[dbo].[spa_resolve_function_parameter]', N'P') IS NOT NULL
     DROP PROCEDURE [dbo].[spa_resolve_function_parameter]
 GO
    
@@ -354,7 +354,11 @@ OPEN cursor_formula_editor
 							END
 					CLOSE cursor_tbl
 					DEALLOCATE cursor_tbl
-					SELECT  @mapped_value = STUFF((SELECT ',' + REPLACE(CAST(ISNULL(parameter_data,parameter) AS VARCHAR(200)),'.','$$$$') 
+					SELECT  @mapped_value = STUFF((SELECT ',' + 
+						CASE 
+							WHEN ISNUMERIC(RTRIM(LTRIM(ISNULL(parameter_data,parameter)))) = 1 THEN CAST(ISNULL(parameter_data,parameter) AS VARCHAR(200))
+							ELSE REPLACE(CAST(ISNULL(parameter_data,parameter) AS VARCHAR(200)),'.','$$$$')
+						END
 						FROM #temp_formula_data 
 						ORDER BY sequence		                       
 					FOR XML PATH('')), 1, 1, '')
