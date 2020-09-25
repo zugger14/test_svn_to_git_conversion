@@ -1649,10 +1649,20 @@
                 var stmt = sql_stmt;
             }
             // load grid data
-            var sql_param = {
+            if(sql_stmt.indexOf('spa_counterparty_contract_address') !== -1) { //For contracts tab grid
+                var sql_param = {
                 "sql": stmt,
-                "grid_type": grid_type
+                "grid_type": 'tg',
+                "grouping_type":5,
+                "grouping_column":'internal_counterparty,contract_name'
             };
+            }
+            else{
+	            var sql_param = {
+	                "sql": stmt,
+	                "grid_type": grid_type
+	            };
+            }
 
             sql_param = $.param(sql_param);
             var sql_url = js_data_collector_url + "&" + sql_param;
