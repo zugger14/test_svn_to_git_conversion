@@ -939,7 +939,8 @@ END
 
 ELSE IF @flag = 'd' -- DELETE INVOICE
 BEGIN
-    EXEC sp_xml_preparedocument @idoc OUTPUT, @xml
+     BEGIN TRY
+		EXEC sp_xml_preparedocument @idoc OUTPUT, @xml
         IF OBJECT_ID('tempdb..#temp_invoice_delete') IS NOT NULL
 		    DROP TABLE #temp_invoice_delete
 
@@ -958,18 +959,25 @@ BEGIN
         FROM stmt_invoice si
         INNER JOIN #temp_invoice_delete tid ON tid.invoice_id = si.stmt_invoice_id
 
-    BEGIN TRY
         BEGIN TRAN
-        UPDATE  si
-		SET si.is_voided ='n'
-		FROM stmt_invoice si
-        INNER JOIN #temp_parent_detail tid ON tid.original_id_for_void = si.stmt_invoice_id
+			UPDATE  si
+			SET si.is_voided ='n'
+			FROM stmt_invoice si
+			INNER JOIN #temp_parent_detail tid ON tid.original_id_for_void = si.stmt_invoice_id
 
-        DELETE si
-        FROM stmt_invoice si
-        INNER JOIN #temp_invoice_delete tid ON tid.invoice_id = si.stmt_invoice_id
+			DELETE si_b
+			FROM stmt_invoice si
+			INNER JOIN #temp_invoice_delete tid ON tid.invoice_id = si.stmt_invoice_id
+			INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
+			OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a 
+			INNER JOIN stmt_invoice_detail stid_b ON stid_b.description1 = a.[stmt_checkout_id]
+			INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = stid_b.stmt_invoice_id
 
-        COMMIT
+			DELETE si
+			FROM stmt_invoice si
+			INNER JOIN #temp_invoice_delete tid ON tid.invoice_id = si.stmt_invoice_id
+
+		COMMIT
 
         	EXEC spa_ErrorHandler 0,
 			'stmt_invoice',
