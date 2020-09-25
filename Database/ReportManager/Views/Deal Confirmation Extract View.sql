@@ -83,6 +83,7 @@ BEGIN
 END
 
 IF OBJECT_ID(''tempdb..#temp_final_data'') IS NOT NULL
+
 Drop table #temp_final_data	
 
 CREATE TABLE #signature_temp_table (
@@ -236,8 +237,11 @@ IF @_flag = ''v''
 BEGIN
 
 	SET @_sql1 = ''
+
 		 SELECT 
+
 		 
+
 		 dbo.FNAConvertTZAwareDateFormat(GETDATE(),1) [Date], '''''' + isnull(@_company,'''') +'''''' company_name,
 
 		 CASE 
@@ -342,9 +346,9 @@ BEGIN
 
 				CASE WHEN MAX(sdh.internal_desk_id) = 17302
 
-					THEN dbo.FNARemoveTrailingZeroes(CAST(SUM(ISNULL(sddh.volume,0)) AS DECIMAL(36,10)))
+					THEN dbo.FNARemoveTrailingZeroes(CAST(SUM(ISNULL(sddh.volume,0)) AS Numeric(28,10)))
 
-					ELSE dbo.FNARemoveTrailingZeroes(CAST(SUM(sdd.total_volume) AS Decimal(36,10)))
+					ELSE dbo.FNARemoveTrailingZeroes(CAST(SUM(sdd.total_volume) AS Numeric(28,10)))
 
 				END [Total Quantity],			
 
@@ -352,7 +356,7 @@ BEGIN
 
 				''''1st day of the month'''' [Pricing Date],
 
-				CAST('' + CAST(ISNULL(@_pricing,'''') AS VARCHAR(40)) + '' AS DECIMAL(36,10)) [Fixed Price],
+				CAST('' + CAST(ISNULL(@_pricing,'''') AS VARCHAR(40)) + '' AS Numeric(28,10)) [Fixed Price],
 
 				''''firm'''' [Service Type],
 
@@ -686,7 +690,7 @@ BEGIN
 
 					, MAX(su.uom_name) deal_volume_uom
 
-					, MAX(sdd.deal_volume) deal_volume
+					, CAST(MAX(sdd.deal_volume) as Numeric(28,10)) deal_volume
 
 					, MAX(sdd.price_adder) price_adder
 
@@ -746,9 +750,9 @@ BEGIN
 
 					   END [To Shipper Code]
 
-					   , CAST(sddh_shp.volume AS FLOAT)	[Shaped Deal Volume] 
+					   , CAST(sddh_shp.volume AS Numeric(28,10))	[Shaped Deal Volume] 
 
-					   , CAST(sddh_shp.price AS FLOAT) [Shaped Deal Price]
+					   , CAST(sddh_shp.price AS Numeric(28,10)) [Shaped Deal Price]
 
 					   , CAST(sddh_shp.term_date AS DATE) [Shaped Deal Term Date]
 
@@ -885,6 +889,7 @@ BEGIN
 						ELSE REPLACE(sddh_shp.hr_from, '''':'''', ''''.'''')
 
 					END sort_col,
+
 					IDENTITY(INT,1,1) AS Shaped_deal_hour_sorting
 
 					INTO #temp_final_data	''
@@ -1212,10 +1217,15 @@ BEGIN
 			LEFT JOIN source_commodity scom ON scom.source_commodity_id = sdh.commodity_id
 
 			OUTER APPLY( SELECT volume, price, term_date, 
+
 								
+
 								CASE WHEN sdh.profile_granularity = 987 
+
 								
+
 									THEN RIGHT(''''0'''' + CAST(LEFT(hr,2) - 1 AS VARCHAR(2))  + '''':'''' + RIGHT( ''''0'''' + CAST(RIGHT(hr,2) AS VARCHAR(2)), 2), 5) 
+
 								WHEN sdh.profile_granularity = 982	
 
 									THEN RIGHT(''''0'''' + CAST(LEFT(hr,2) - 1 as varchar(2)) + RIGHT(hr,3), 5)	
@@ -1253,6 +1263,7 @@ BEGIN
 						 WHERE sdd.source_deal_header_id = sdh.source_deal_header_id
 
 							 AND sdh.internal_desk_id = 17302
+							 AND sddh.term_date between sdh.entire_term_start and sdh.entire_term_end
 
 			) sddh_shp			
 
@@ -1301,11 +1312,17 @@ BEGIN
 				,a.is_confirm, sdh.source_deal_header_id,sdd.price_multiplier, sddh_shp.volume, sddh_shp.price, sddh_shp.term_date, sddh_shp.hr,sddh_shp.hr_from	
 
 				order by sddh_shp.term_date, sort_col
+
 				
+
 			
+
 			select * 
+
 			 --[__batch_report__]
+
 			from #temp_final_data	
+
 			''
 
 END
