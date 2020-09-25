@@ -86,8 +86,8 @@
                     } else if (date_or_block == 'm') {
                         term_mapping.manipulate_form_field('disable', 'term_start');
                         term_mapping.manipulate_form_field('disable', 'term_end');
-                        term_mapping.manipulate_form_field('disable', 'working_day_id');
-                        term_mapping.manipulate_form_field('disable', 'holiday_calendar_id');
+                        term_mapping.manipulate_form_field('enable', 'working_day_id');
+                        term_mapping.manipulate_form_field('enable', 'holiday_calendar_id');
                         term_mapping.manipulate_form_field('enable', 'relative_days');
                         term_mapping.manipulate_form_field('disable', 'no_of_days');
                         term_mapping.manipulate_form_field('enable_radio', 'holiday_include_exclude', 'i');
@@ -129,8 +129,8 @@
                     } else if (value == 'm') {
                         term_mapping.manipulate_form_field('disable', 'term_start');
                         term_mapping.manipulate_form_field('disable', 'term_end');
-                        term_mapping.manipulate_form_field('disable', 'working_day_id');
-                        term_mapping.manipulate_form_field('disable', 'holiday_calendar_id');
+                        term_mapping.manipulate_form_field('enable', 'working_day_id');
+                        term_mapping.manipulate_form_field('enable', 'holiday_calendar_id');
                         term_mapping.manipulate_form_field('enable', 'relative_days');
                         term_mapping.manipulate_form_field('disable', 'no_of_days');
                         term_mapping.manipulate_form_field('enable_radio', 'holiday_include_exclude', 'i');
