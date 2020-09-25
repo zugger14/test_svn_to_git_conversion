@@ -34,11 +34,12 @@ if (@$_REQUEST["mode"] == "html5" || @$_REQUEST["mode"] == "flash") {
 
 function validate_file_extension($filetype)
 {
-    if (
-        $filetype == 'application/octet-stream'
-    ) {
-        return true;
-    } else {
-        return false;
-    }
+    return true;
+    // if (
+    //     $filetype == 'application/octet-stream'
+    // ) {
+    //     return true;
+    // } else {
+    //     return false;
+    // }
 }

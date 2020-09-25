@@ -18,7 +18,8 @@ GO
 **/
 CREATE PROCEDURE [dbo].[spa_setup_certificate]
 		@flag CHAR(1),
-		@xml_value NVARCHAR(MAX) = NULL
+		@xml_value NVARCHAR(MAX) = NULL,
+		@ids INT = NULL
 AS
 
 /*
@@ -47,9 +48,9 @@ BEGIN TRY
 			auth_certificate_keys_id AS auth_certificate_keys_id,
 			[name] AS name, 
 			[description] AS description,
-			file_name AS file_name, 
-			passphrase AS passphrase,
-			certificate_key AS certificate_key
+			NULLIF(file_name,'') AS file_name, 
+			NULLIF(passphrase,'') AS passphrase,
+			NULLIF(certificate_key,'') AS certificate_key
 		INTO #auth_certificate_keys
 		FROM OPENXML(@idoc, '/Root/FormXML', 1)
 		WITH (
@@ -97,8 +98,22 @@ BEGIN TRY
 
 		ELSE
 		BEGIN
-			IF NOT EXISTS (SELECT 1 FROM auth_certificate_keys auc INNER JOIN #auth_certificate_keys temp ON auc.name = temp.name)
+			IF NOT EXISTS (SELECT 1 FROM auth_certificate_keys auc INNER JOIN #auth_certificate_keys temp ON auc.name = temp.name 
+			AND auc.auth_certificate_keys_id <> temp.auth_certificate_keys_id)
 			BEGIN
+				
+				SELECT @auth_certificate_keys_id = auth_certificate_keys_id FROM #auth_certificate_keys
+
+				DECLARE @old_file nvarchar(512), @new_file nvarchar(512)
+				SELECT @old_file = file_name FROM auth_certificate_keys  WHERE  auth_certificate_keys_id = @auth_certificate_keys_id
+				SELECT @new_file = file_name FROM #auth_certificate_keys 
+
+				IF (ISNULL(@old_file,'') <> ISNULL(@new_file,'') AND @old_file IS NOT NULL)
+				BEGIN
+					SELECT @old_file = document_path + '\certificate_keys\' + @old_file FROM connection_string
+					EXEC spa_delete_file @filename = @old_file, @result = NULL
+				END
+
 				UPDATE acu 
 				SET
 					acu.name = ac.name,
@@ -109,8 +124,6 @@ BEGIN TRY
 				FROM auth_certificate_keys as acu
 				inner join #auth_certificate_keys ac
 				on acu.auth_certificate_keys_id = ac.auth_certificate_keys_id
-
-				SELECT @auth_certificate_keys_id = auth_certificate_keys_id FROM #auth_certificate_keys
 
 				EXEC spa_ErrorHandler 0, 
 						'Setup Certification',   
@@ -141,3 +154,22 @@ BEGIN TRY
 	END CATCH
 END
 
+ELSE IF @flag = 'd'
+BEGIN
+	DECLARE @file_name VARCHAR(512)
+
+	SELECT @file_name = file_name FROM auth_certificate_keys  WHERE  auth_certificate_keys_id = @ids
+	SELECT @file_name = document_path + '\certificate_keys\' + @file_name FROM connection_string
+	EXEC spa_delete_file @filename = @file_name, @result = NULL
+
+	DELETE ack
+			FROM auth_certificate_keys ack
+			INNER JOIN dbo.FNASplit(@ids, ',') di ON di.item = ack.auth_certificate_keys_id
+
+	EXEC spa_ErrorHandler 0,
+			'Setup Certification',
+			'spa_setup_certificate',
+			'Success',
+			'Data deleted successfully.',
+			@ids
+END 

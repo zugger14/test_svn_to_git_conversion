@@ -50,7 +50,7 @@
     $form_obj = new AdihaStandardForm($form_namespace, $function_id);
     $form_obj->define_grid("SetupCertificate");
     $form_obj->define_layout_width(300);
-    $form_obj->define_custom_functions('save_function', '', '', 'form_load_complete');
+    $form_obj->define_custom_functions('save_function', '', 'delete_function', 'form_load_complete');
     echo $form_obj->init_form('Certificate Detail', '', '');
     echo $form_obj->close_form();
 
@@ -95,6 +95,36 @@
                 'xml_value': form_xml
             }
             result = adiha_post_data("alert", data, "", "", "setup_certificate.post_callback");
+        }
+
+        setup_certificate.delete_function = function(){
+            var selected_row = setup_certificate.grid.getSelectedRowId();
+            var auth_certificate_keys_id_index = setup_certificate.grid.getColIndexById('auth_certificate_keys_id');
+            selected_row = selected_row.split(',');
+            var ids = [];
+            selected_row.forEach(function(rid) {
+                var auth_certificate_keys_id = setup_certificate.grid.cells(rid, auth_certificate_keys_id_index).getValue();
+                ids.push(auth_certificate_keys_id);
+            });
+            ids = ids.toString();
+            var sql = {
+                'action': 'spa_setup_certificate',
+                'flag': 'd',
+                'ids': ids
+            }
+
+            if (ids != '') {
+                dhtmlx.message({
+                    type: "confirm",
+                    title: "Confirmation",
+                    text: "Are you sure you want to delete?",
+                    callback: function(result) {
+                        if (result) {
+                            result = adiha_post_data("return_array", sql, "", "", "setup_certificate.post_delete_callback");
+                        }
+                    }
+                });
+            }
         }
 
         setup_certificate.form_load_complete = function() {
