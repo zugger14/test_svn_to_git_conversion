@@ -72,7 +72,7 @@ BEGIN
 			LEFT JOIN application_ui_layout_grid aulg ON aulg.application_ui_layout_grid_id = aufd.layout_grid_id
 			LEFT JOIN application_ui_template_group AS autg ON aulg.group_id = autg.application_group_id
 			WHERE aut.application_function_id = '10211300' AND auf.application_function_id IS NOT NULL
-	
+
 		/*
 		RESOLVE UDF values
 		It is assumed that sdv.code for UDF once created does not get changed. The same code is used 
@@ -516,7 +516,7 @@ FROM adiha_grid_columns_definition
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('10211300','payment_calendar','payment_calendar','Payment Calendar','combo','int','h','n','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017',NULL,'n','n',NULL,'y','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL,NULL)
+			VALUES('10211300','payment_calendar','payment_calendar','Payment Calendar','combo','int','h','n','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017',NULL,'n','n',NULL,'n','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL,NULL)
 						
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
@@ -526,7 +526,7 @@ FROM adiha_grid_columns_definition
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('10211300','settlement_calendar','settlement_calendar','Settlement Calendar','combo','int','h','n','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017',NULL,'n','n',NULL,'y','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL,NULL)
+			VALUES('10211300','settlement_calendar','settlement_calendar','Settlement Calendar','combo','int','h','n','EXEC spa_StaticDataValues @flag = ''b'', @type_id = 10017',NULL,'n','n',NULL,'n','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL,NULL)
 						
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
