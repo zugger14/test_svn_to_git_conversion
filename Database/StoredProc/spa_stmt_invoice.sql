@@ -72,7 +72,7 @@ CREATE PROCEDURE [dbo].[spa_stmt_invoice]
 	@contract_id VARCHAR(500) = NULL,
 	@invoice_type CHAR(1) = NULL,
 	@invoice_id VARCHAR(100) = NULL, 
-	@show_backing_sheets CHAR(1) = 'n', -- To show individual invoice for netting counterparty
+	@show_backing_sheets CHAR(1) = NULL,
 	@commodity_id INT = NULL,
 	@invoice_status INT = NULL,
 	@acc_status CHAR(1) = NULL,
@@ -240,9 +240,6 @@ BEGIN
             IF @invoice_number IS NOT NULL AND @invoice_number != ''  
 				SET @sql += ' AND CAST(si.invoice_number AS VARCHAR) = ''' + CAST(@invoice_number AS VARCHAR(100))+'''' + char(10)
 
-			IF @show_backing_sheets = 'n'
-				SET @sql += ' AND si.netting_invoice_id IS NULL' + char(10)
-			
 			IF @commodity_id IS NOT NULL AND @commodity_id != ''
 				SET @sql += ' AND cg.commodity = ''' + CAST(@commodity_id AS VARCHAR(20)) + '''' + char(10)
 
@@ -263,6 +260,9 @@ BEGIN
 
 			IF NULLIF(@accounting_month, '') IS NOT NULL
 				SET @sql += 'AND CAST(MONTH(si.as_of_date) AS VARCHAR(10))= ' + CAST(MONTH(@accounting_month) AS VARCHAR(10))
+			
+			IF ISNULL(@show_backing_sheets,'n') = 'n'
+				SET @sql += ' AND ISNULL(si.is_backing_sheet,''n'') = ''n''' 
 
 
 			SET @sql += ' ORDER BY sc.source_counterparty_id, cg.contract_id, dbo.FNADateFormat(si.as_of_date), dbo.FNADateFormat(si.prod_date_from)'

@@ -237,7 +237,8 @@
         var invoice_type  = SettlementInvoice.filter_form.getItemValue('invoice_type',true);
         var invoice_id  = SettlementInvoice.filter_form.getItemValue('invoice_id',true);
         var show_backing_sheets  = SettlementInvoice.filter_form.isItemChecked('individual_invoice');
-        var commodity_id  = SettlementInvoice.filter_form.getItemValue('commodity',true);
+		if (show_backing_sheets == true) { show_backing_sheets = 'y'} else {show_backing_sheets = 'n'}
+		var commodity_id  = SettlementInvoice.filter_form.getItemValue('commodity',true);
         var invoice_status  = SettlementInvoice.filter_form.getItemValue('invoice_status',true);
         var acc_status  = SettlementInvoice.filter_form.getItemValue('is_finalized',true);
         var loc_status  = SettlementInvoice.filter_form.getItemValue('is_locked',true);
