@@ -45,7 +45,12 @@ EXEC [spa_drop_all_temp_table]
 --select top 10 * from source_deal_header order by 1 desc
 --103488
 
-DECLARE @source_deal_header_id INT = 103278 --102282  --b -- 103278
+DECLARE @source_deal_header_id INT = 104610 
+--DECLARE @source_deal_header_id INT = 104614 
+
+--DECLARE @source_deal_header_id INT = 104615 
+
+
 
 --DECLARE @source_deal_header_id INT = 103165 --102283 --s -- 103165 --
 --DECLARE @source_deal_header_id INT = 100903 --b
@@ -1208,6 +1213,20 @@ BEGIN
 		SET @flow_date_from =  [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, 1, @flow_date_from), 'f')
 	END;
 
+
+	DELETE ttd
+	FROM user_defined_deal_fields uddf    
+	INNER JOIN source_deal_header sdh
+		ON sdh.source_deal_header_id = uddf.source_deal_header_id
+	INNER JOIN user_defined_deal_fields_template uddft
+		ON sdh.template_id = uddft.template_id 
+		AND uddf.udf_template_id = uddft.udf_template_id    
+		AND uddft.field_label = 'From Deal'   
+	INNER JOIN  #temp_transport_deal ttd
+		ON ttd.source_deal_header_id = uddf.source_deal_header_id
+	WHERE udf_value <>  @source_deal_header_id
+
+
 	UPDATE uddf
 		SET uddf.udf_value = @source_deal_header_id	
 	FROM #temp_transport_deal ttd
@@ -1467,16 +1486,13 @@ BEGIN
 			SET @reschedule = 0
 		END
 
-		
-		--select @source_deal_header_id, @reschedule, @flow_date_from, @transport_deal_id, @process_id; return;
-
-
 		EXEC [dbo].[spa_auto_deal_schedule]
 			@source_deal_header_id = @source_deal_header_id,
 			@reschedule = @reschedule,
 			@flow_date = @flow_date_from,
 			@transport_deal_id = @transport_deal_id,
 			@process_id = @process_id
+		
 			
 		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
 
@@ -1507,6 +1523,17 @@ BEGIN
 	FROM #temp_transport_deal
 	--WHERE type IN ('Transport', 'Withdrawal')
 
+	DELETE ttd
+	FROM user_defined_deal_fields uddf    
+	INNER JOIN source_deal_header sdh
+		ON sdh.source_deal_header_id = uddf.source_deal_header_id
+	INNER JOIN user_defined_deal_fields_template uddft
+		ON sdh.template_id = uddft.template_id 
+		AND uddf.udf_template_id = uddft.udf_template_id    
+		AND uddft.field_label = 'From Deal'   
+	INNER JOIN  #temp_transport_deal ttd
+		ON ttd.source_deal_header_id = uddf.source_deal_header_id
+	WHERE udf_value <>  @source_deal_header_id
 	
 	UPDATE uddf
 		SET uddf.udf_value = @source_deal_header_id	
@@ -1531,6 +1558,9 @@ BEGIN
 	DELETE FROM #temp_transport_deal 
 	WHERE type IN( 'Withdrawal' , 'Injection')
 		--AND @header_buy_sell_flag = 'b'
+
+
+
 
 	IF EXISTS(SELECT 1 FROM #temp_transport_deal WHERE type = 'Transport')
 	BEGIN
