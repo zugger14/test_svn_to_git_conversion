@@ -284,9 +284,9 @@ SELECT	@_sub_id [sub_id],
 
 	field,
 
-	dbo.FNANumberFormat(CAST ([prior value] AS NUMERIC(38,2)),''v'') [prior value],
+	[prior value],
 
-	dbo.FNANumberFormat(CAST ([current value] AS NUMERIC(38,2)),''v'') [current value]
+	[current value]
 
 --[__batch_report__]
 
