@@ -40,7 +40,8 @@ CREATE PROC [dbo].[spa_update_deal_total_volume]
 	@user_login_id VARCHAR(50) = NULL,
 	@insert_process_table VARCHAR(1) = 'n',
 	@call_from TINYINT = 0, --0=call from application and adding deals in process table ; 1=call from job to process position breakdown of process table deal (without inserting process table) and job will not be created
-	@call_from_2 VARCHAR(20) = NULL 
+	@call_from_2 VARCHAR(20) = NULL,
+	@trigger_workflow NCHAR(1) = 'y'
 AS 
 SET nocount on
 /*
@@ -802,7 +803,7 @@ begin
 		inner join #total_process_deals tpd on sdh.source_deal_header_id=tpd.source_deal_header_id
 	'
 
-	IF ISNULL(@call_from_2, '') <> 'alert'
+	IF ISNULL(@call_from_2, '') <> 'alert' AND @trigger_workflow = 'y'
 	BEGIN
 		EXEC(@sql)
 		EXEC spa_print @sql

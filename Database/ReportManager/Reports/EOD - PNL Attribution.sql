@@ -172,7 +172,7 @@ BEGIN
 
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ''n'', @_as_of_date, @_as_of_date, ''m'', NULL, 
 
-	NULL, NULL, NULL, NULL, NULL, NULL, ''400,401'', 1, 0, 0, NULL, @_process_id
+	NULL, NULL, NULL, NULL, NULL, NULL, ''400,401'', 1, 0, 0,''n'', NULL, @_process_id
 
 
 

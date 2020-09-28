@@ -33,6 +33,7 @@ CREATE PROCEDURE [dbo].[spa_calc_mtm_whatif]
 	@user_name				VARCHAR(50) = NULL,
 	@process_id				VARCHAR(50) = NULL,
 	@show_output            BIT = 0,
+	@trigger_workflow		NCHAR(1) = 'y',
 	@batch_process_id		VARCHAR(50) = NULL,
 	@batch_report_param		VARCHAR(5000) = NULL
 AS
@@ -1118,7 +1119,8 @@ BEGIN TRY
 						@batch_process_id = ''' + @mtm_process_id + ''',
 						@purge_all = ''n'',
 						@calc_type = ''m'',
-						@criteria_id = ' + @criteria_id
+						@criteria_id = ' + @criteria_id + ',
+						@trigger_workflow =  ''' + @trigger_workflow + ''''
 					
 					exec spa_print @sql_stmt
 					EXEC(@sql_stmt)
@@ -1220,7 +1222,7 @@ BEGIN TRY
 							@hold_period = ' + CAST(@holding_period AS VARCHAR) + ',
 							@process_id = ''' + @mtm_process_id + ''',
 							@measure = 17355'
-							
+
 					exec spa_print @sql_stmt
 					EXEC(@sql_stmt)	
 				END

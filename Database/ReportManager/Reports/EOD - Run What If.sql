@@ -112,7 +112,7 @@ BEGIN
 END
 ELSE 
 BEGIN
-    EXEC spa_calc_mtm_whatif ''c'', @_as_of_date,  @_whatif_criteria_id, NULL, NULL, @_process_id,1, @_process_id
+    EXEC spa_calc_mtm_whatif ''c'', @_as_of_date,  @_whatif_criteria_id, NULL, NULL, @_process_id,1,''n'', @_process_id
 END
 
 SELECT TOP 1 ''@as_of_date'' [as_of_date], ''@process_id'' [process_id],*

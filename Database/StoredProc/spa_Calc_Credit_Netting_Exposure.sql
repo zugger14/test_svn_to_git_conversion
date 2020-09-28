@@ -49,7 +49,8 @@ CREATE PROC [dbo].[spa_Calc_Credit_Netting_Exposure]
 				@batch_report_param VARCHAR(1000)=NULL,
 				@show_message_in_message_board CHAR(1)='y',
 				@calc_type CHAR(1) = 'r',
-				@criteria_id INT = NULL --it comes from whatif
+				@criteria_id INT = NULL, --it comes from whatif
+				@trigger_workflow NCHAR(1) = 'y'
 				--,@mtm_table_name  VARCHAR(200) = NULL,  --MTM process table for PFE - spa_calc_VAR_Simulation_job
 				--@pfe_table_name  VARCHAR(200) = NULL   --Used to return value for PFE -spa_calc_VAR_Simulation_job
 
@@ -4716,7 +4717,7 @@ BEGIN
 	
 	EXEC ('INSERT INTO #count_counterparty select distinct source_counterparty_id as count_cpt from '+ @NettingProcessTableCounterparty)
 END
-IF ISNULL(@simulation, 'n') = 'n' --If not from PFE
+IF ISNULL(@simulation, 'n') = 'n' AND @trigger_workflow = 'y'--If not from PFE
 BEGIN
     DECLARE @process_table VARCHAR(500)
 	DECLARE @sql_st VARCHAR(MAX)
@@ -5062,7 +5063,7 @@ set @e_time_text = cast(cast(@e_time/60 as int) as varchar) + ' Mins ' + cast(@e
 		PRINT  @pr_name+': '+cast(datediff(ss,@log_time,getdate()) as varchar) +'*************************************'
 		PRINT '********************END &&&&&&&&&[spa_Calc_Netting_Measurement]**********'
 	END
-	IF ISNULL(@simulation, 'n') = 'n' AND @count_total > (@count_fail+@count_warning) --If not from PFE
+	IF ISNULL(@simulation, 'n') = 'n' AND @count_total > (@count_fail+@count_warning) AND @trigger_workflow = 'y' --If not from PFE
 		EXEC spa_register_event 20623, 20508, @process_table, 0, @alert_process_id
 	
 	SET @e_time = datediff(ss,@begin_time,getdate())

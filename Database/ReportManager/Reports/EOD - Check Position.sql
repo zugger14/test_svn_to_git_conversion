@@ -114,7 +114,7 @@ BEGIN TRY
         WHERE rhpd.source_deal_header_id IS NULL and sdh.internal_desk_id<>17301
     ''
     EXEC(@_sql)
-    SET @_sql = ''spa_calc_deal_position_breakdown NULL,'''''' + @_process_id + ''''''''
+    SET @_sql = ''spa_calc_deal_position_breakdown NULL,'''''' + @_process_id + '''''',NULL,''''n'''',''''n''''''
     EXEC (@_sql)
     INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation)
     SELECT

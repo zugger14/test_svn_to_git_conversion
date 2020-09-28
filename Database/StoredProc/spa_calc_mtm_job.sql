@@ -101,6 +101,7 @@ CREATE procedure [dbo].[spa_calc_mtm_job]
 	@ignore_deal_date BIT = 0,
 	@calc_settlement_adjustment BIT = 0,
 	@process_linear_options_delta CHAR(1) = NULL,
+	@trigger_workflow NCHAR(1) =  'y',
 	@batch_process_id	VARCHAR(120) = NULL,
 	@batch_report_param	varchar(5000) = NULL
 as 
@@ -18153,7 +18154,7 @@ Begin
 
 
 	-- Calling Post MTM Calculation event for deal module in workflow
-	IF EXISTS(SELECT 1 FROM workflow_module_event_mapping WHERE module_id = 20601 AND event_id = 20581 AND is_active = 1) AND EXISTS(SELECT 1 FROM #ok_deals)
+	IF EXISTS(SELECT 1 FROM workflow_module_event_mapping WHERE module_id = 20601 AND event_id = 20581 AND is_active = 1) AND EXISTS(SELECT 1 FROM #ok_deals) AND @trigger_workflow = 'y'
 	BEGIN
 		DECLARE @alert_process_table NVARCHAR(200)
 		DECLARE @alert_process_id NVARCHAR(100)
