@@ -397,20 +397,16 @@ SELECT
 	CAST(cesw.prepay_provided AS NUMERIC) prepay_provided,
 
 
-	CAST(ISNULL(ccm.credit_limit,cesw.limit_provided) AS NUMERIC) limit_provided,
+	ISNULL(CAST(ccm.credit_limit AS NUMERIC),CAST(cesw.limit_provided AS NUMERIC)) limit_provided,
 
 
-	CAST(ISNULL(ccm.credit_limit_to_us,cesw.limit_received) as NUMERIC)limit_received,
+	ISNULL(CAST(ccm.credit_limit_to_us AS NUMERIC),CAST(cesw.limit_received AS NUMERIC)) limit_received,
 
 
-	CAST(((ISNULL(ccm.credit_limit,cesw.limit_provided) + cesw.collateral_received + cesw.cash_collateral_received) -
+	((ISNULL(CAST(ccm.credit_limit AS NUMERIC),cast(cesw.limit_provided AS NUMERIC)) + CAST(cesw.collateral_received AS NUMERIC) + CAST(cesw.cash_collateral_received AS NUMERIC)) -
+	 (CAST(cesw.d_mtm_exposure_to_us AS NUMERIC) + CAST(cesw.d_bom_exposure_to_us AS NUMERIC) +CAST(cesw.ar_current AS NUMERIC) + CAST(cesw.ar_prior AS NUMERIC))) limit_available_to_them,
 
-
-		(cesw.d_mtm_exposure_to_us + cesw.d_bom_exposure_to_us +cesw.ar_current + cesw.ar_prior)) as Numeric) limit_available_to_them,
-
-
-	Cast(((ISNULL(ccm.credit_limit_to_us,cesw.limit_received) + cesw.collateral_provided + cesw.cash_collateral_provided) + (cesw.d_mtm_exposure_to_them + cesw.d_bom_exposure_to_them +cesw.ap_current + cesw.ap_prior)) as Numeric)  limit_available_to_us,
-
+	((ISNULL(CAST(ccm.credit_limit_to_us AS NUMERIC), CAST(cesw.limit_received AS NUMERIC)) + CAST(cesw.collateral_provided AS NUMERIC) + CAST(cesw.cash_collateral_provided AS NUMERIC)) + (CAST(cesw.d_mtm_exposure_to_them AS NUMERIC) + CAST(cesw.d_bom_exposure_to_them AS NUMERIC) +CAST(cesw.ap_current AS NUMERIC) + CAST(cesw.ap_prior AS NUMERIC)))  limit_available_to_us,
 
 	cesw.rounding,
 
@@ -2644,4 +2640,4 @@ FROm #temp_data', report_id = @report_id_data_source_dest,
 	END CATCH
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
-		DROP TABLE #data_source_column	
+		DROP TABLE #data_source_column
