@@ -8071,8 +8071,12 @@ WHERE @calc_type = 's'
 SET @sql= ' SELECT 
 	source_deal_header_id,
 	source_deal_detail_id,
-	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) < 0 THEN (volume*ISNULL(NULLIF(price, 0), fixed_price)) ELSE 0 END) negative_vol,
-	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) >= 0 THEN (volume*ISNULL(NULLIF(price, 0), fixed_price)) ELSE 0 END) positive_vol,
+	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) < 0 THEN 
+		(CASE WHEN buy_sell_flag = ''s'' THEN ABS(volume) ELSE volume END*ISNULL(NULLIF(price, 0), fixed_price)) 
+	ELSE 0 END*CASE WHEN buy_sell_flag = ''b'' THEN -1 ELSE 1 END) negative_vol,
+	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) >= 0 THEN 
+		(CASE WHEN buy_sell_flag = ''s'' THEN ABS(volume) ELSE volume END*ISNULL(NULLIF(price, 0), fixed_price)) 
+	ELSE 0 END*CASE WHEN buy_sell_flag = ''b'' THEN -1 ELSE 1 END) positive_vol,
 	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) < 0 THEN volume ELSE 0 END) negative_volume,
 	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) >= 0 THEN volume ELSE 0 END) positive_volume,
 	SUM(volume*ISNULL(NULLIF(price, 0), fixed_price)) vol
@@ -8082,6 +8086,7 @@ FROM(
 	SELECT vol.source_deal_header_id,
 		vol.source_deal_detail_id,
 		vol.term_start,
+		td.buy_sell_flag,
 		ISNULL(CASE WHEN sddh.hr1 <> 0 THEN sddh.hr1 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN t.hr1_c ELSE t.hr1 END END, 0) hr1,
 		ISNULL(CASE WHEN sddh.hr2 <> 0 THEN sddh.hr2 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr2_c) ELSE ISNULL(pr.price, t.hr2) END END, 0) hr2,
 		ISNULL(CASE WHEN sddh.hr3 <> 0 THEN sddh.hr3 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr3_c) ELSE ISNULL(pr.price, t.hr3) END END, 0) hr3,
@@ -12936,14 +12941,14 @@ SELECT	'''+ @as_of_date+''' as_of_date, td.source_deal_header_id,td.leg,
 			ELSE 0 END 
 			WHEN udft.internal_field_type IN(18739,18741) THEN sfv.value
 		END) total_price_deal,cast(0 as float) total_price,cast(0 as float) total_price_inv,
-		abs(SUM( 
+		SUM( 
 		CASE WHEN (udft.internal_field_type IN (18702, 18703)) THEN ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))
 				WHEN (udft.internal_field_type IN (18701, 18704)) THEN ABS(td.contract_volume)
 				WHEN udft.internal_field_type = 18742 THEN sddh.positive_volume 
 				WHEN udft.internal_field_type = 18743 THEN sddh.negative_volume
 		ELSE			
 			CASE WHEN isnull(hv.curve_id,-1)=-1 THEN td.deal_volume  ELSE ABS(hv.volume) END 
-	END)) volume
+	END) volume
 	,sum(CASE WHEN udft.internal_field_type IN(18705) THEN --Capacity based fee 18713 OffPeak
 		CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
 			CASE WHEN ISNUMERIC( COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value))=1 THEN cast( COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float) ELSE NULL END * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)			
@@ -13054,9 +13059,9 @@ set @qry5b='
 		WHEN 18741 THEN
 			 td.deal_volume * sfv.value
 		WHEN 18742 THEN
-				udfvalue.sgn*sddh.positive_vol
+			sddh.positive_vol
 		WHEN 18743 THEN
-				udfvalue.sgn*sddh.negative_vol
+			sddh.negative_vol
 	ELSE NULL END) value_deal,cast(0 as float) value,cast(0 as float) value_inv,MAX(td.fixed_price_currency_id) deal_cur_id,
 	MAX(td.settlement_currency) inv_cur_id,NULL contract_value,NULL contract_value_deal,NULL contract_value_inv,
 	MAX(udft.internal_field_type) internal_type,MAX(uddft.udf_tabgroup) tab_group_name, MAX(uddft.udf_group) udf_group_name,
