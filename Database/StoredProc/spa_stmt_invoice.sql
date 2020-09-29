@@ -970,8 +970,13 @@ BEGIN
 			INNER JOIN #temp_invoice_delete tid ON tid.invoice_id = si.stmt_invoice_id
 			INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
 			OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a 
-			INNER JOIN stmt_invoice_detail stid_b ON stid_b.description1 = a.[stmt_checkout_id]
-			INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = stid_b.stmt_invoice_id
+			OUTER APPLY (
+				SELECT DISTINCT stid_b.stmt_invoice_id
+				FROM stmt_invoice_detail stid_b
+				CROSS APPLY dbo.SplitCommaSeperatedValues(stid_b.description1) de
+				WHERE de.item = a.stmt_checkout_id AND stid_b.stmt_invoice_id <> tid.invoice_id
+			) inv
+			INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = inv.stmt_invoice_id
 
 			DELETE si
 			FROM stmt_invoice si
