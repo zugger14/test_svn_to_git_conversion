@@ -89,18 +89,16 @@ SET NOCOUNT ON
 	
 	-- SPA parameter values
 
-	
-	--100984	1	2010-01-01 00:00:00.000	NULL	44A9118E_FBF1_49B2_AB65_7DC26BC03AB3
-
-select 	@flag = 'i'
+select 
+	@flag = 'i'
 	, @box_ids = '1'
-	, @flow_date_from = '2012-01-01'
-	, @flow_date_to =  '2012-01-01'
+	, @flow_date_from = '2025-07-01'
+	, @flow_date_to = '2025-07-01'
 	, @sub = NULL
 	, @str = NULL
 	, @book = NULL
 	, @sub_book = NULL
-	, @contract_process_id = '99356353_1C24_4780_B640_DBC1DE6F9234'
+	, @contract_process_id = '5B7C2DEF_3FE7_4E83_BCBB_D9147A9FFE36'
 	, @from_priority = NULL
 	, @to_priority = NULL
 	, @call_from = 'flow_auto'
@@ -108,9 +106,7 @@ select 	@flag = 'i'
 	, @reschedule = 0
 	, @granularity = 982
 	, @receipt_deals_id  = -1 
-	, @delivery_deals_id  = 101014
-
-
+	, @delivery_deals_id  = 103042
 
 --transport_deal_id	deal_volume		up_down_stream	source_deal_header_id
 --219590				6014.00000000	U				219589
@@ -877,8 +873,9 @@ BEGIN --Data Prepararion
 		'
 		--ORDER BY t.box_id
 	'
-	--print @sql
 	EXEC(@sql)
+
+
 
 	--SELECT 'collect_deals1',* FROM #collect_deals
 
@@ -3760,10 +3757,6 @@ BEGIN --Data Prepararion
 
 	CREATE TABLE #exclude_product_group(product_name NVARCHAR(500) COLLATE DATABASE_DEFAULT)
 
-	--INSERT INTO #exclude_product_group
-	--SELECT 'Complex-EEX' UNION ALL
-	--SELECT 'Complex-LTO' UNION ALL
-	--SELECT 'Complex-ROD'
 	
 	IF @call_from = 'flow_auto'
 	BEGIN
@@ -3960,6 +3953,13 @@ BEGIN --Data Prepararion
 	END
 	ELSE 
 	BEGIN
+		INSERT INTO #exclude_product_group
+		SELECT 'Complex-EEX' UNION ALL
+		SELECT 'Complex-LTO' UNION ALL
+		SELECT 'Complex-ROD' UNION ALL
+		SELECT 'Autopath Only'
+
+
 		INSERT INTO #existing_deals (
 			source_deal_header_id 
 			, single_path_id 
@@ -4232,6 +4232,7 @@ IF @call_from IN('flow_match', 'match', 'main_menu', 'flow_auto', 'flow_auto_non
 BEGIN
 	DELETE FROM #existing_deals
 END 
+
 
 BEGIN -- Insert/Update Deal data 
 --begin transaction t1;

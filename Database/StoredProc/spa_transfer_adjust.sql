@@ -45,7 +45,7 @@ EXEC [spa_drop_all_temp_table]
 --select top 10 * from source_deal_header order by 1 desc
 --103488
 
-DECLARE @source_deal_header_id INT = 104610 
+DECLARE @source_deal_header_id INT = 103042 
 --DECLARE @source_deal_header_id INT = 104614 
 
 --DECLARE @source_deal_header_id INT = 104615 
@@ -193,7 +193,6 @@ CREATE TABLE #temp_volume_capacity (
 	, granularity INT
 	, volume NUMERIC(38,20)
 )
-
 
 
 
@@ -1247,9 +1246,9 @@ BEGIN
 	CROSS JOIN source_deal_header sdh_m
 	WHERE sdh_m.source_deal_header_id = @source_deal_header_id
 
-	DELETE FROM #temp_transport_deal 
-	WHERE type = 'Withdrawal' 
-		AND @header_buy_sell_flag = 'b'
+	--DELETE FROM #temp_transport_deal 
+	--WHERE type = 'Withdrawal' 
+	--	AND @header_buy_sell_flag = 'b'
 
 	IF EXISTS(SELECT 1 FROM #temp_transport_deal WHERE type = 'Transport')
 	BEGIN
@@ -1453,6 +1452,7 @@ BEGIN
 	SET @flow_date_from = @deal_term_start -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_start, 'f')
 	SET @flow_date_to = @deal_term_end -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_end, 'f')
 
+	
 	WHILE (@flow_date_from <= @flow_date_to)
 	BEGIN
 		SET @process_id = dbo.FNAGetNewID()
@@ -1485,6 +1485,7 @@ BEGIN
 		BEGIN
 			SET @reschedule = 0
 		END
+
 
 		EXEC [dbo].[spa_auto_deal_schedule]
 			@source_deal_header_id = @source_deal_header_id,
@@ -1555,12 +1556,16 @@ BEGIN
 	--CROSS JOIN source_deal_header sdh_m
 	--WHERE sdh_m.source_deal_header_id = @source_deal_header_id
 
-	DELETE FROM #temp_transport_deal 
-	WHERE type IN( 'Withdrawal' , 'Injection')
-		--AND @header_buy_sell_flag = 'b'
+	--UPDATE sdh 
+	--	SET internal_portfolio_id = @product_group_id
+	--FROM source_deal_header sdh
+	--INNER JOIN #temp_transport_deal ttd
+	--	ON sdh.source_deal_header_id = ttd.source_deal_header_id	
 
-
-
+	--DELETE FROM #temp_transport_deal 
+	--WHERE type IN( 'Withdrawal' , 'Injection')
+	--	AND @header_buy_sell_flag = 'b'
+		
 
 	IF EXISTS(SELECT 1 FROM #temp_transport_deal WHERE type = 'Transport')
 	BEGIN
