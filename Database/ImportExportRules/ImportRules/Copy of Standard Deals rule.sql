@@ -45,9 +45,14 @@ BEGIN
 					'N' ,
 					NULL ,
 					'UPDATE [temp_process_table]
-SET [Deal Status] = ''New''	
-, [Confirm Status] = ''Confirmed''',
-					NULL,
+SET [Deal Status] = ISNULL([Deal Status], ''New'')
+	, [Confirm Status] = ISNULL([Confirm Status], ''Not Confirmed'')',
+					'UPDATE sdh
+SET  sdh.deal_status = 5603
+    ,sdh.confirm_status_type = 17200
+FROM [final_process_table] a
+INNER JOIN source_deal_header sdh
+    ON sdh.deal_id = a.deal_id',
 					'i' ,
 					'n' ,
 					@admin_user ,
@@ -78,9 +83,14 @@ SET [Deal Status] = ''New''
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
 				, before_insert_trigger = 'UPDATE [temp_process_table]
-SET [Deal Status] = ''New''	
-, [Confirm Status] = ''Confirmed'''
-				, after_insert_trigger = NULL
+SET [Deal Status] = ISNULL([Deal Status], ''New'')
+	, [Confirm Status] = ISNULL([Confirm Status], ''Not Confirmed'')'
+				, after_insert_trigger = 'UPDATE sdh
+SET  sdh.deal_status = 5603
+    ,sdh.confirm_status_type = 17200
+FROM [final_process_table] a
+INNER JOIN source_deal_header sdh
+    ON sdh.deal_id = a.deal_id'
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
 				, ixp_category = 23502
