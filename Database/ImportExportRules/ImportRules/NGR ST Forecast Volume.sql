@@ -364,7 +364,7 @@ OUTER APPLY (
 ) hb 
 
 UPDATE a
-SET [Volume] = ISNULL(a.Volume,0) - ISNULL(tp.position, 0)
+SET [Volume] =  ISNULL(tp.position, 0) - ISNULL(a.Volume,0)
 FROM [temp_process_table]_calc a
 INNER JOIN #temp_position tp
 	ON a.[profile Name] = tp.profile_name
@@ -808,7 +808,7 @@ OUTER APPLY (
 ) hb 
 
 UPDATE a
-SET [Volume] = ISNULL(a.Volume,0) - ISNULL(tp.position, 0)
+SET [Volume] =  ISNULL(tp.position, 0) - ISNULL(a.Volume,0)
 FROM [temp_process_table]_calc a
 INNER JOIN #temp_position tp
 	ON a.[profile Name] = tp.profile_name
@@ -949,7 +949,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   '', 
 						   '0',
 						   '0',
-						   NULL,
+						   '2',
 						   NULL
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
