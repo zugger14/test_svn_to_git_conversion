@@ -81,6 +81,7 @@ BEGIN
 	DECLARE	@data_source_tsql				VARCHAR(MAX)
 	DECLARE @data_source_alias				VARCHAR(50)
 	DECLARE @hidden_criteria_not_appended	VARCHAR(5000)	
+	DECLARE @view_result_identifier varchar(100) = '<#PROCESS_TABLE#>'
 	
 	SET @is_html = 'y' --forcing for a while to make sure that data is not lost otherwise done by dbo.FNAStripHTML()
 	SET @view_identifier = '{'
@@ -693,7 +694,7 @@ SELECT  @query_level_grouping_reqd = is_grouping FROM #query_level_grouping_reqd
 				AND SUBSTRING(@relational_sql, pos_alias_name.n, LEN('[' + cdh.alias + ']'))  = '[' + rd.alias + ']'
 
 			SELECT @relational_sql =  
-				CASE WHEN  IIF(CHARINDEX(@batch_identifier, MAX(ds.[tsql])) = 0,1, CHARINDEX(@batch_identifier, MAX(ds.[tsql]))) > 0 THEN
+				CASE WHEN  IIF(CHARINDEX(@batch_identifier, MAX(ds.[tsql])) = 0,1, CHARINDEX(@batch_identifier, MAX(ds.[tsql]))) > 0 OR CHARINDEX(@view_result_identifier, MAX(ds.[tsql])) > 0 THEN
 					STUFF(@relational_sql, MAX(tm.start_index), 0, dbo.FNAProcessTableName('report_dataset_' + MAX(ds.[alias]), dbo.FNADBUser(), @data_source_process_id))
 				ELSE
 					STUFF(@relational_sql, MAX(tm.start_index), 0, '('+ MAX(ds.[tsql]) + ')')
@@ -765,7 +766,7 @@ SELECT  @query_level_grouping_reqd = is_grouping FROM #query_level_grouping_reqd
 					SELECT CHAR(10) + (CASE WHEN MAX(relationship_level) = 0 THEN ' FROM ' ELSE 
 						MAX(djo.[description]) 
 																												 END) 
-					+  CASE WHEN IIF(CHARINDEX(@batch_identifier, MAX(ds.[tsql])) = 0 , 1,  CHARINDEX(@batch_identifier, MAX(ds.[tsql]))) > 0 
+					+  CASE WHEN IIF(CHARINDEX(@batch_identifier, MAX(ds.[tsql])) = 0 , 1,  CHARINDEX(@batch_identifier, MAX(ds.[tsql]))) > 0 OR CHARINDEX(@view_result_identifier, MAX(ds.[tsql])) > 0
 						THEN dbo.FNAProcessTableName('report_dataset_' + MAX(ds.[alias]), dbo.FNADBUser(), @data_source_process_id)
 								--WHEN CHARINDEX(@view_identifier, MAX(ds.[tsql])) > 0  AND CHARINDEX(@batch_identifier, dbo.FNAGetViewTsql(MAX(ds.[tsql]))) > 0 
 								--	THEN  dbo.FNAProcessTableName('report_dataset_' + MAX(ds.[alias]), dbo.FNADBUser(), @data_source_process_id)--'('+ dbo.FNAGetViewTsql(MAX(ds.[tsql])) + ')'	

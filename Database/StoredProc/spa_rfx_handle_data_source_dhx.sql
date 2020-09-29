@@ -56,6 +56,8 @@ DECLARE @sql_batch_table		VARCHAR(5000)
 DECLARE @error_msg				VARCHAR(1000)
 DECLARE @sql NVARCHAR(MAX)
 DECLARE @required_cols			VARCHAR(MAX)  
+DECLARE @view_result_identifier varchar(100) = '<#PROCESS_TABLE#>'
+DECLARE @view_result_identifier_index int = CHARINDEX(@view_result_identifier, @data_source_tsql)
 
 SET @batch_identifier = '--[__batch_report__]'	
 SET @view_identifier = '{'
@@ -151,129 +153,135 @@ BEGIN
 	
 	SET @sql_batch_table = dbo.FNAProcessTableName('report_dataset_' + @data_source_alias, dbo.FNADBUser(), @data_source_process_id)
 	
-	
-	--drop if the table already exists
-	EXEC('IF (OBJECT_ID(N''' + @sql_batch_table + ''', N''U'') IS NOT NULL) DROP TABLE ' + @sql_batch_table)
-
-
-
-	/** SELECT TOP 20 ROWS INCASE OF CSV GENERATION START **/
-	-- replace multispaces by single space
-	declare @spaced_tsql varchar(max)= RTRIM(LTRIM(replace(replace(replace(@data_source_tsql,' ','~^'),'^~',''),'~^',' ')))
-
-	-- replace enter character with a space
-	SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(10) +'top',' top')
-	SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(10) +' top',' top')
-	SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(10)+'distinct',' distinct')
-	SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(10)+' distinct',' distinct')
-
-	SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(13) +'top',' top')
-	SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(13) +' top',' top')
-	SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(13)+'distinct',' distinct')
-	SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(13)+' distinct',' distinct')
-
-	declare @reversed_tsql varchar(max) = reverse(@spaced_tsql)
-		,@batch_identifier_reversed varchar(20)=reverse(@batch_identifier)
-		,@to_find varchar(50)=''
-		,@top_20_select_clause varchar(max)
-		
-	-- get sub string before batch identifier
-	declare @sub_str varchar(max) = reverse(substring(@spaced_tsql, 0,CHARINDEX(@batch_identifier,@spaced_tsql)))
-
-	-----------------Replace condition start----------------------
-	DECLARE @comment1 VARCHAR(100), @comment2 VARCHAR(100), @startPosition INT, @top_to_find varchar(200), @sub_str1 varchar(max)
-	DECLARE @batch_index_csv int  = CHARINDEX(@batch_identifier_reversed, @reversed_tsql)
-	
-	WHILE Patindex('% tceles%',@sub_str) <> 0
+	IF @view_result_identifier_index > 0
 	BEGIN
-		SET @startPosition = Patindex('% tceles%',@sub_str)
-        SET @Comment1 = Substring(@sub_str,@startPosition,8)
-		SET @Comment2 = Substring(@sub_str,@startPosition,9)				
-
-		if @Comment1 <> reverse('(select ') AND @Comment2 <> reverse('( select ')
-		begin
-			select @sub_str1 = reverse(substring(@sub_str, 0,@startPosition))
-			-- get three words after final select word
-			select @top_to_find = SUBSTRING(@sub_str1, 0,CHARINDEX(' ', @sub_str1, CHARINDEX(' ',@sub_str1, CHARINDEX(' ', @sub_str1, 0)+1)+1))
-						
-			set @top_to_find = ' ' +  RTRIM(LTRIM(@top_to_find))
-	
-			IF CHARINDEX(' top ',@top_to_find) > 0
-			begin
-				if CHARINDEX(' distinct ',@top_to_find) > 0
-				begin			
-					SET @to_find = @top_to_find
-				end
-				else
-				begin			
-					SET @to_find = SUBSTRING(@top_to_find, 0,CHARINDEX(' ', @top_to_find, CHARINDEX(' ',@top_to_find, CHARINDEX(' ', @top_to_find, 0)+1)+1))				
-				end
-			end
-			else if CHARINDEX(' top(',@top_to_find) > 0
-			begin	
-				if CHARINDEX(' distinct ',@top_to_find) > 0
-				begin			
-					SET @to_find = SUBSTRING(@top_to_find, 0,CHARINDEX(' ', @top_to_find, CHARINDEX(' ',@top_to_find, CHARINDEX(' ', @top_to_find, 0)+1)+1))
-				end
-				else
-				begin
-					SET @to_find = SUBSTRING(@top_to_find, 0, CHARINDEX(' ',@top_to_find, CHARINDEX(' ', @top_to_find, 0)+1))				
-				end
-			end
-			else if CHARINDEX(' distinct ',@top_to_find) > 0
-			begin
-				SET @to_find = 'DISTINCT'
-			end
-
-			SET @to_find = reverse('SELECT' + @to_find)
-		
-			EXEC spa_print '@top_to_find:', @top_to_find
-			EXEC spa_print '@to_find:', @to_find
-	
-			SELECT @top_20_select_clause = reverse(stuff(@reversed_tsql, charindex(@to_find, @reversed_tsql, CHARINDEX(@top_to_find,@sub_str,0) + @batch_index_csv + 1 - len(@top_to_find)),len(@to_find), reverse('SELECT TOP 20 ')))
-			SET @sub_str = REPLACE(@sub_str,' tceles','>tcele_s<')
-		end
-
-		SET @sub_str = REPLACE(REPLACE(@sub_str,@Comment1,'>tcele_s(<'),@comment2,'>tcele_s(<')
-		SET @reversed_tsql = REPLACE(REPLACE(@reversed_tsql,@Comment1,'>tcele_s(<'),@comment2,'>tcele_s(<')
+		SET @data_source_tsql = REPLACE(@data_source_tsql, @view_result_identifier, @sql_batch_table) --+ char(10) + ' select top 20 * from ' + @sql_batch_table
 	END
+	ELSE
+	BEGIN
+	
+		--drop if the table already exists
+		EXEC('IF (OBJECT_ID(N''' + @sql_batch_table + ''', N''U'') IS NOT NULL) DROP TABLE ' + @sql_batch_table)
 
-	SET @top_20_select_clause =REPLACE(@top_20_select_clause,'<(s_elect>','(select ')
-	------------------Replace condition end------------
+
+
+		/** SELECT TOP 20 ROWS INCASE OF CSV GENERATION START **/
+		-- replace multispaces by single space
+		declare @spaced_tsql varchar(max)= RTRIM(LTRIM(replace(replace(replace(@data_source_tsql,' ','~^'),'^~',''),'~^',' ')))
+
+		-- replace enter character with a space
+		SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(10) +'top',' top')
+		SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(10) +' top',' top')
+		SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(10)+'distinct',' distinct')
+		SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(10)+' distinct',' distinct')
+
+		SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(13) +'top',' top')
+		SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(13) +' top',' top')
+		SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(13)+'distinct',' distinct')
+		SET @spaced_tsql = REPLACE(@spaced_tsql,CHAR(13)+' distinct',' distinct')
+
+		declare @reversed_tsql varchar(max) = reverse(@spaced_tsql)
+			,@batch_identifier_reversed varchar(20)=reverse(@batch_identifier)
+			,@to_find varchar(50)=''
+			,@top_20_select_clause varchar(max)
+		
+		-- get sub string before batch identifier
+		declare @sub_str varchar(max) = reverse(substring(@spaced_tsql, 0,CHARINDEX(@batch_identifier,@spaced_tsql)))
+
+		-----------------Replace condition start----------------------
+		DECLARE @comment1 VARCHAR(100), @comment2 VARCHAR(100), @startPosition INT, @top_to_find varchar(200), @sub_str1 varchar(max)
+		DECLARE @batch_index_csv int  = CHARINDEX(@batch_identifier_reversed, @reversed_tsql)
+	
+		WHILE Patindex('% tceles%',@sub_str) <> 0
+		BEGIN
+			SET @startPosition = Patindex('% tceles%',@sub_str)
+			SET @Comment1 = Substring(@sub_str,@startPosition,8)
+			SET @Comment2 = Substring(@sub_str,@startPosition,9)				
+
+			if @Comment1 <> reverse('(select ') AND @Comment2 <> reverse('( select ')
+			begin
+				select @sub_str1 = reverse(substring(@sub_str, 0,@startPosition))
+				-- get three words after final select word
+				select @top_to_find = SUBSTRING(@sub_str1, 0,CHARINDEX(' ', @sub_str1, CHARINDEX(' ',@sub_str1, CHARINDEX(' ', @sub_str1, 0)+1)+1))
+						
+				set @top_to_find = ' ' +  RTRIM(LTRIM(@top_to_find))
+	
+				IF CHARINDEX(' top ',@top_to_find) > 0
+				begin
+					if CHARINDEX(' distinct ',@top_to_find) > 0
+					begin			
+						SET @to_find = @top_to_find
+					end
+					else
+					begin			
+						SET @to_find = SUBSTRING(@top_to_find, 0,CHARINDEX(' ', @top_to_find, CHARINDEX(' ',@top_to_find, CHARINDEX(' ', @top_to_find, 0)+1)+1))				
+					end
+				end
+				else if CHARINDEX(' top(',@top_to_find) > 0
+				begin	
+					if CHARINDEX(' distinct ',@top_to_find) > 0
+					begin			
+						SET @to_find = SUBSTRING(@top_to_find, 0,CHARINDEX(' ', @top_to_find, CHARINDEX(' ',@top_to_find, CHARINDEX(' ', @top_to_find, 0)+1)+1))
+					end
+					else
+					begin
+						SET @to_find = SUBSTRING(@top_to_find, 0, CHARINDEX(' ',@top_to_find, CHARINDEX(' ', @top_to_find, 0)+1))				
+					end
+				end
+				else if CHARINDEX(' distinct ',@top_to_find) > 0
+				begin
+					SET @to_find = 'DISTINCT'
+				end
+
+				SET @to_find = reverse('SELECT' + @to_find)
+		
+				EXEC spa_print '@top_to_find:', @top_to_find
+				EXEC spa_print '@to_find:', @to_find
+	
+				SELECT @top_20_select_clause = reverse(stuff(@reversed_tsql, charindex(@to_find, @reversed_tsql, CHARINDEX(@top_to_find,@sub_str,0) + @batch_index_csv + 1 - len(@top_to_find)),len(@to_find), reverse('SELECT TOP 20 ')))
+				SET @sub_str = REPLACE(@sub_str,' tceles','>tcele_s<')
+			end
+
+			SET @sub_str = REPLACE(REPLACE(@sub_str,@Comment1,'>tcele_s(<'),@comment2,'>tcele_s(<')
+			SET @reversed_tsql = REPLACE(REPLACE(@reversed_tsql,@Comment1,'>tcele_s(<'),@comment2,'>tcele_s(<')
+		END
+
+		SET @top_20_select_clause =REPLACE(@top_20_select_clause,'<(s_elect>','(select ')
+		------------------Replace condition end------------
 	
 		
-	--process_id 99_csv_99 is used for process tables to identify the case of csv generation
-	--print isnull(@data_source_process_id,'null')
-	if(@data_source_process_id = '99_csv_99')
-	begin
-        SET @data_source_tsql = @top_20_select_clause
-		SET @batch_index = CHARINDEX(@batch_identifier, @data_source_tsql)
-		SET @data_source_tsql = REPLACE(@data_source_tsql,@batch_identifier,' ')
+		--process_id 99_csv_99 is used for process tables to identify the case of csv generation
+		--print isnull(@data_source_process_id,'null')
+		if(@data_source_process_id = '99_csv_99')
+		begin
+			SET @data_source_tsql = @top_20_select_clause
+			SET @batch_index = CHARINDEX(@batch_identifier, @data_source_tsql)
+			SET @data_source_tsql = REPLACE(@data_source_tsql,@batch_identifier,' ')
 		
-        IF @batch_index > 0
-        BEGIN
-			set @from_index = dbo.FNACharIndexMatchWholeWord('FROM', @data_source_tsql, ISNULL(@batch_index, 0))
-			EXEC spa_print '@from_index: ', @from_index
+			IF @batch_index > 0
+			BEGIN
+				set @from_index = dbo.FNACharIndexMatchWholeWord('FROM', @data_source_tsql, ISNULL(@batch_index, 0))
+				EXEC spa_print '@from_index: ', @from_index
 	
-        END
-        ELSE IF @batch_index = 0 AND @view_index > 0
-        BEGIN
-            SET @from_index = dbo.FNACharIndexMatchWholeWord('FROM', @data_source_tsql, 1)
-        END
-        ELSE IF @handle_single_line_sql = 1
-        BEGIN
-            --if no @batch_identifier found, the only best option is trying to find FROM from the end
-            SET @from_index = dbo.FNACharIndexReverseMatchWholeWord('FROM', @data_source_tsql, 0)
-        END
+			END
+			ELSE IF @batch_index = 0 AND @view_index > 0
+			BEGIN
+				SET @from_index = dbo.FNACharIndexMatchWholeWord('FROM', @data_source_tsql, 1)
+			END
+			ELSE IF @handle_single_line_sql = 1
+			BEGIN
+				--if no @batch_identifier found, the only best option is trying to find FROM from the end
+				SET @from_index = dbo.FNACharIndexReverseMatchWholeWord('FROM', @data_source_tsql, 0)
+			END
              
-    end
+		end
 	
-	/** SELECT TOP 20 ROWS INCASE OF CSV GENERATION END **/
+		/** SELECT TOP 20 ROWS INCASE OF CSV GENERATION END **/
 	
-	EXEC spa_print 'Result temp table: ', @sql_batch_table
-	SET @data_source_tsql = SUBSTRING(@data_source_tsql, 0, @from_index) + ' INTO ' + @sql_batch_table + ' ' +  SUBSTRING(@data_source_tsql, @from_index, LEN(@data_source_tsql))
+		EXEC spa_print 'Result temp table: ', @sql_batch_table
+		SET @data_source_tsql = SUBSTRING(@data_source_tsql, 0, @from_index) + ' INTO ' + @sql_batch_table + ' ' +  SUBSTRING(@data_source_tsql, @from_index, LEN(@data_source_tsql))
 	
-
+	END
 	--Replace Params in datasource tsql if it is multiline statement
 	--otherwise it will be done later after replacing view name with view definition
 	SET @data_source_tsql = dbo.FNARFXReplaceReportParams(@data_source_tsql, @criteria,null)

@@ -87,8 +87,8 @@ BEGIN
 	DECLARE @rfx_report_dataset					VARCHAR(200) = dbo.FNAProcessTableName('report_dataset', @user_name, @process_id)
 	DECLARE @rfx_report_dataset_relationship	VARCHAR(200) = dbo.FNAProcessTableName('report_dataset_relationship', @user_name, @process_id)
 	
-
-	
+	DECLARE @view_result_identifier varchar(100) = '<#PROCESS_TABLE#>'
+		
 	SET @is_html = 'y' --forcing for a while to make sure that data is not lost otherwise done by dbo.FNAStripHTML()
 	SET @view_identifier = '{'
 	SET @batch_identifier = '--[__batch_report__]'	
@@ -712,7 +712,7 @@ SELECT  @query_level_grouping_reqd = is_grouping FROM #query_level_grouping_reqd
 			EXEC(@sql)
 			
 			SELECT @relational_sql =  
-				CASE WHEN CHARINDEX(@batch_identifier, MAX(ds.[tsql])) > 0 THEN
+				CASE WHEN CHARINDEX(@batch_identifier, MAX(ds.[tsql])) > 0 OR CHARINDEX(@view_result_identifier, MAX(ds.[tsql])) > 0 THEN
 					STUFF(@relational_sql, MAX(tm.start_index), 0, dbo.FNAProcessTableName('report_dataset_' + MAX(ds.[alias]), dbo.FNADBUser(), @data_source_process_id))
 				ELSE
 					STUFF(@relational_sql, MAX(tm.start_index), 0, '('+ MAX(ds.[tsql]) + ')')
@@ -804,7 +804,7 @@ SELECT  @query_level_grouping_reqd = is_grouping FROM #query_level_grouping_reqd
 					SELECT CHAR(10) + (CASE WHEN MAX(relationship_level) = 0 THEN ' FROM ' ELSE 
 						MAX(djo.[description]) 
 																												 END) 
-					+  CASE WHEN CHARINDEX(@batch_identifier, MAX(ds.[tsql])) > 0 
+					+  CASE WHEN CHARINDEX(@batch_identifier, MAX(ds.[tsql])) > 0 OR CHARINDEX(@view_result_identifier, MAX(ds.[tsql])) > 0
 						THEN dbo.FNAProcessTableName('report_dataset_' + MAX(ds.[alias]), dbo.FNADBUser(), @data_source_process_id)
 								--WHEN CHARINDEX(@view_identifier, MAX(ds.[tsql])) > 0  AND CHARINDEX(@batch_identifier, dbo.FNAGetViewTsql(MAX(ds.[tsql]))) > 0 
 								--	THEN  dbo.FNAProcessTableName('report_dataset_' + MAX(ds.[alias]), dbo.FNADBUser(), @data_source_process_id)--'('+ dbo.FNAGetViewTsql(MAX(ds.[tsql])) + ')'	

@@ -40,7 +40,7 @@ DECLARE @csv_export_table_name VARCHAR(1000) = dbo.FNAProcessTableName('csv_expo
 
 declare @batch_identifier varchar(25) = '--[__batch_report__]'
 DECLARE @view_identifier CHAR(1) = '{'
-
+declare @view_result_identifier varchar(100) = '<#PROCESS_TABLE#>'
 
 declare @success_file_count int = 0
 declare @total_file_count int = 0
@@ -323,7 +323,7 @@ begin try
 			EXEC(@sql)
 			
 			SELECT @relational_sql =  
-				CASE WHEN CHARINDEX(@batch_identifier, MAX(ds.[tsql])) > 0 THEN
+				CASE WHEN CHARINDEX(@batch_identifier, MAX(ds.[tsql])) > 0 OR CHARINDEX(@view_result_identifier, MAX(ds.[tsql])) > 0 THEN
 					STUFF(@relational_sql, MAX(tm.start_index), 0, dbo.FNAProcessTableName('report_dataset_' + MAX(tm.[alias]), dbo.FNADBUser(), @data_source_process_id_c1))
 				ELSE
 					STUFF(@relational_sql, MAX(tm.start_index), 0, '('+ MAX(ds.[tsql]) + ')')
@@ -401,7 +401,7 @@ begin try
 					SELECT CHAR(10) + (CASE WHEN MAX(relationship_level) = 0 THEN ' FROM ' ELSE 
 						MAX(djo.[description]) 
 																												 END) 
-					+  CASE WHEN CHARINDEX(@batch_identifier, MAX(ds.[tsql])) > 0 
+					+  CASE WHEN CHARINDEX(@batch_identifier, MAX(ds.[tsql])) > 0 OR CHARINDEX(@view_result_identifier, MAX(ds.[tsql])) > 0
 						THEN dbo.FNAProcessTableName('report_dataset_' + MAX(cte.[alias]), dbo.FNADBUser(), @data_source_process_id_c1)
 								--WHEN CHARINDEX(@view_identifier, MAX(ds.[tsql])) > 0  AND CHARINDEX(@batch_identifier, dbo.FNAGetViewTsql(MAX(ds.[tsql]))) > 0 
 								--	THEN  dbo.FNAProcessTableName('report_dataset_' + MAX(ds.[alias]), dbo.FNADBUser(), @data_source_process_id)--'('+ dbo.FNAGetViewTsql(MAX(ds.[tsql])) + ')'	

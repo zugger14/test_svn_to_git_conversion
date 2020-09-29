@@ -73,6 +73,8 @@ DECLARE @sql_batch_table		VARCHAR(5000)
 DECLARE @error_msg				VARCHAR(1000)
 DECLARE @sql NVARCHAR(MAX)
 DECLARE @required_cols			VARCHAR(MAX)  
+DECLARE @view_result_identifier varchar(100) = '<#PROCESS_TABLE#>'
+DECLARE @view_result_identifier_index int = CHARINDEX(@view_result_identifier, @data_source_tsql)
 
 
 SET @data_source_tsql = dbo.FNARemoveComment(@data_source_tsql)	
@@ -147,111 +149,138 @@ BEGIN TRY
 	EXEC spa_print 'Result temp table: ', @sql_batch_table
 	SET @sql_batch_table = dbo.FNAProcessTableName('report_dataset_' + @data_source_alias, dbo.FNADBUser(), @data_source_process_id)
 	
-	EXEC('IF (OBJECT_ID(N''' + @sql_batch_table + ''', N''U'') IS NOT NULL) DROP TABLE ' + @sql_batch_table)	
-	
-	IF OBJECT_ID (N'tempdb..#from_index') IS NOT NULL  
-	DROP TABLE 	#from_index
-
-	CREATE TABLE #from_index(
-		from_loc INT
-	)
-
-	DECLARE @from_index1 INT = 1
-	IF @batch_index = -1 -- IF THERE IS NO "--[__batch_report__]" GET ALL POSITION OF "FROM"
-BEGIN
-		WHILE @from_index1 <> 0
-BEGIN
-			SET @from_index1 = dbo.FNACharIndexMatchWholeWord ('from', @data_source_tsql, @from_index1)
-						
-			INSERT INTO #from_index		
-			SELECT @from_index1
-				
-END
-END
-	ELSE 
-	BEGIN -- IF THERE IS "--[__batch_report__]" TAKE POSITION OF FIRST "from" AFTER "--[__batch_report__]"
-		SET @from_index1 = dbo.FNACharIndexMatchWholeWord ('from', @data_source_tsql, @batch_index)
-
-		INSERT INTO #from_index		
-		SELECT @from_index1		
-	END
-
-	DELETE FROM #from_index WHERE from_loc IN (0)
-
-	DECLARE @continue_loop BIT =1
-	DECLARE @data_source_tsql1 VARCHAR(MAX)
-
-	DECLARE db_cursor CURSOR FOR 
-
-		SELECT from_loc 
-		FROM #from_index 
-		ORDER BY  from_loc DESC
-
-	OPEN db_cursor  
-	FETCH NEXT FROM db_cursor INTO @from_index  
-		
-	WHILE @@FETCH_STATUS = 0  AND @continue_loop = 1
-	BEGIN  
-		BEGIN TRY
-
-			SET @data_source_tsql1 = @data_source_tsql
-	
-			SET @data_source_tsql1 = CAST('' AS VARCHAR(MAX)) 
-									+  SUBSTRING(@data_source_tsql1, 0, @from_index) + ' INTO ' + @sql_batch_table + ' ' 
-									+  SUBSTRING(@data_source_tsql1, @from_index, LEN(@data_source_tsql1))
-
-	--Replace Params in datasource tsql if it is multiline statement
-	--otherwise it will be done later after replacing view name with view definition
-			SET @data_source_tsql1 = dbo.FNARFXReplaceReportParams(@data_source_tsql1, @criteria, null)
-
-			
-	IF @validate = 1 
+	IF @view_result_identifier_index > 0 -- case when view result identifier used on view code, where sp will dump data to batch table directly (for performance optmization)
 	BEGIN
-				SET @data_source_tsql1 = REPLACE(@data_source_tsql1, 'WHERE', 'WHERE 1 = 2 AND ')	
-	END
+		SET @data_source_tsql = REPLACE(@data_source_tsql, @view_result_identifier, @sql_batch_table)
+
+		IF @validate = 1 
+		BEGIN
+			SET @data_source_tsql = REPLACE(@data_source_tsql, 'WHERE', 'WHERE 1 = 2 AND ')	
+			SET @data_source_tsql += ' ;TRUNCATE TABLE ' + @sql_batch_table
+		END
+
+		--Replace Params in datasource tsql if it is multiline statement
+		--otherwise it will be done later after replacing view name with view definition
+		SET @data_source_tsql = dbo.FNARFXReplaceReportParams(@data_source_tsql, @criteria, NULL)
 
 		--SET Value to ON to fix incorrect setting 'QUOTED_IDENTIFIER'
-			SET @data_source_tsql1 = CAST('' AS VARCHAR(MAX)) + 'SET QUOTED_IDENTIFIER ON;' + CHAR(10) + @data_source_tsql1
+		SET @data_source_tsql = CAST('' AS VARCHAR(MAX)) + 'SET QUOTED_IDENTIFIER ON;' + CHAR(10) + @data_source_tsql
 		
-	EXEC spa_print '****************************************Datasource SQL Started****************************************:' 
-				, @data_source_tsql1, '****************************************Datasource SQL Ended******************************************:'
-			EXEC spa_print @data_source_tsql1
+		EXEC spa_print '****************************************Datasource SQL Started****************************************:' 
+			, @data_source_tsql, '****************************************Datasource SQL Ended******************************************:'
+		EXEC spa_print @data_source_tsql
 
-			EXEC(@data_source_tsql1)
+		EXEC(@data_source_tsql)
+
+	END
+	ELSE
+	BEGIN
+
+		EXEC('IF (OBJECT_ID(N''' + @sql_batch_table + ''', N''U'') IS NOT NULL) DROP TABLE ' + @sql_batch_table)	
 	
-			IF OBJECT_ID(@sql_batch_table) IS NOT NULL
+		IF OBJECT_ID (N'tempdb..#from_index') IS NOT NULL  
+		DROP TABLE 	#from_index
+
+		CREATE TABLE #from_index(
+			from_loc INT
+		)
+
+		DECLARE @from_index1 INT = 1
+		IF @batch_index = -1 -- IF THERE IS NO "--[__batch_report__]" GET ALL POSITION OF "FROM"
+		BEGIN
+			WHILE @from_index1 <> 0
 			BEGIN
-				SET @continue_loop = 0
-			END
-		END TRY
-		BEGIN CATCH
-			SET @continue_loop = 1
-			SET @err_msg = ERROR_MESSAGE()
-			SET @err_line = ERROR_LINE()
-			
-			IF ERROR_NUMBER() = 156 AND @err_msg = 'Incorrect syntax near the keyword ''INTO''.'
-			BEGIN
-				SET @continue_loop = 1
-			END
-			ELSE 
-			BEGIN
-				SET @continue_loop = 0
+				SET @from_index1 = dbo.FNACharIndexMatchWholeWord ('from', @data_source_tsql, @from_index1)
+						
+				INSERT INTO #from_index		
+				SELECT @from_index1
 				
-				EXEC('IF (OBJECT_ID(N''' + @sql_batch_table + ''', N''U'') IS NOT NULL) DROP TABLE ' + @sql_batch_table)
-
-				SET @catch_sql = 'SELECT ''Error'' [error_status], ''' + REPLACE(@err_msg,'''','''''') + ''' [error_msg], ' + CAST(@err_line AS VARCHAR(10)) +  ' [error_line] INTO ' + @sql_batch_table
-				EXEC(@catch_sql)
-			
 			END
+		END
+		ELSE 
+		BEGIN -- IF THERE IS "--[__batch_report__]" TAKE POSITION OF FIRST "from" AFTER "--[__batch_report__]"
+			SET @from_index1 = dbo.FNACharIndexMatchWholeWord ('from', @data_source_tsql, @batch_index)
+
+			INSERT INTO #from_index		
+			SELECT @from_index1		
+		END
+
+		DELETE FROM #from_index WHERE from_loc IN (0)
+
+		DECLARE @continue_loop BIT =1
+		DECLARE @data_source_tsql1 VARCHAR(MAX)
+
+		DECLARE db_cursor CURSOR FOR 
+
+			SELECT from_loc 
+			FROM #from_index 
+			ORDER BY  from_loc DESC
+
+		OPEN db_cursor  
+		FETCH NEXT FROM db_cursor INTO @from_index  
+		
+		WHILE @@FETCH_STATUS = 0  AND @continue_loop = 1
+		BEGIN  
+			BEGIN TRY
+
+				SET @data_source_tsql1 = @data_source_tsql
+	
+				SET @data_source_tsql1 = CAST('' AS VARCHAR(MAX)) 
+										+  SUBSTRING(@data_source_tsql1, 0, @from_index) + ' INTO ' + @sql_batch_table + ' ' 
+										+  SUBSTRING(@data_source_tsql1, @from_index, LEN(@data_source_tsql1))
+
+				--Replace Params in datasource tsql if it is multiline statement
+				--otherwise it will be done later after replacing view name with view definition
+						SET @data_source_tsql1 = dbo.FNARFXReplaceReportParams(@data_source_tsql1, @criteria, null)
+
 			
-		END CATCH
+				IF @validate = 1 
+				BEGIN
+					SET @data_source_tsql1 = REPLACE(@data_source_tsql1, 'WHERE', 'WHERE 1 = 2 AND ')	
+				END
 
-    FETCH NEXT FROM db_cursor INTO @from_index 
-	END 
+				--SET Value to ON to fix incorrect setting 'QUOTED_IDENTIFIER'
+				SET @data_source_tsql1 = CAST('' AS VARCHAR(MAX)) + 'SET QUOTED_IDENTIFIER ON;' + CHAR(10) + @data_source_tsql1
+		
+				EXEC spa_print '****************************************Datasource SQL Started****************************************:' 
+							, @data_source_tsql1, '****************************************Datasource SQL Ended******************************************:'
+				EXEC spa_print @data_source_tsql1
 
-	CLOSE db_cursor  
-	DEALLOCATE db_cursor 
+				EXEC(@data_source_tsql1)
+	
+				IF OBJECT_ID(@sql_batch_table) IS NOT NULL
+				BEGIN
+					SET @continue_loop = 0
+				END
+			END TRY
+			BEGIN CATCH
+				SET @continue_loop = 1
+				SET @err_msg = ERROR_MESSAGE()
+				SET @err_line = ERROR_LINE()
+			
+				IF ERROR_NUMBER() = 156 AND @err_msg = 'Incorrect syntax near the keyword ''INTO''.'
+				BEGIN
+					SET @continue_loop = 1
+				END
+				ELSE 
+				BEGIN
+					SET @continue_loop = 0
+				
+					EXEC('IF (OBJECT_ID(N''' + @sql_batch_table + ''', N''U'') IS NOT NULL) DROP TABLE ' + @sql_batch_table)
 
+					SET @catch_sql = 'SELECT ''Error'' [error_status], ''' + REPLACE(@err_msg,'''','''''') + ''' [error_msg], ' + CAST(@err_line AS VARCHAR(10)) +  ' [error_line] INTO ' + @sql_batch_table
+					EXEC(@catch_sql)
+			
+				END
+			
+			END CATCH
+
+			FETCH NEXT FROM db_cursor INTO @from_index 
+		END 
+
+		CLOSE db_cursor  
+		DEALLOCATE db_cursor 
+	END
 END TRY
 BEGIN CATCH
 	SET @err_msg = ERROR_MESSAGE()
