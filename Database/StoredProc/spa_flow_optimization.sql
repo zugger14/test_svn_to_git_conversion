@@ -319,6 +319,11 @@ BEGIN
 	WHERE path_id = @delivery_path
 END
 
+DECLARE @deal_status_void INT
+SELECT @deal_status_void = sdv.value_id
+FROM static_data_value sdv
+WHERE sdv.code = 'Void' 
+	AND sdv.type_id = 5600
 
 DECLARE @deal_detail_info VARCHAR(500) = dbo.FNAProcessTableName('deal_detail_info', @user_login_id, @process_id)
 
@@ -474,6 +479,7 @@ BEGIN
 					WHERE 1 = 1
 						AND dd.physical_financial_flag='p'
 						AND (ISNULL(@reschedule, 0) = 0 OR (ISNULL(sdh.internal_deal_type_value_id, -1) <> @transportation_deal_type_value_id AND sdh.template_id <> @transportation_template_id))
+						AND sdh.deal_status <> @deal_status_void
 				END 
 
 				IF NULLIF(@delivery_deals_id,'') IS NOT NULL
@@ -505,6 +511,7 @@ BEGIN
 					WHERE 1 = 1
 						AND dd.physical_financial_flag='p'
 						AND (ISNULL(@reschedule, 0) = 0 OR (ISNULL(sdh.internal_deal_type_value_id, -1) <> @transportation_deal_type_value_id AND sdh.template_id <> @transportation_template_id))
+						AND sdh.deal_status <> @deal_status_void
 					GROUP BY sdh.source_deal_header_id ,sdh.template_id,sdh.source_system_book_id1,sdh.source_system_book_id2,sdh.source_system_book_id3,sdh.source_system_book_id4 ,sdh.internal_deal_type_value_id, sdh.term_frequency   
 				END 
 			END
@@ -569,6 +576,7 @@ BEGIN
 			INNER JOIN source_deal_header sdh (NOLOCK) ON sdh.source_deal_header_id = dd.source_deal_header_id 
 				AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from) -- NOT required condition AS tm.term_start IS needed to filter
 				AND dd.physical_financial_flag='p'
+				AND sdh.deal_status <> @deal_status_void
 			INNER JOIN #books bk ON bk.source_system_book_id1 = sdh.source_system_book_id1
 				and bk.source_system_book_id2 = sdh.source_system_book_id2
 				and bk.source_system_book_id3 = sdh.source_system_book_id3
