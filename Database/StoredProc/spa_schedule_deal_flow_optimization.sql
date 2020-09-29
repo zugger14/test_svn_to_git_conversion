@@ -227,6 +227,8 @@ SELECT CAST(clm1_value AS INT) location_id
 		, clm2_value storage_type 
 		, CAST(clm3_value AS INT) pipeline
 		, CAST(clm4_value AS INT) sub_book_id 
+		, CAST(clm5_value AS INT) path_id
+		, CAST(clm6_value AS INT) pfc_curve_id 
 INTO #storage_book_mapping
 FROM generic_mapping_header h 
 INNER JOIN generic_mapping_values v 
@@ -4823,7 +4825,7 @@ BEGIN -- Insert/Update Deal data
 		, s.[capacity]
 		, s.[settlement_currency]
 		, s.[standard_yearly_volume]
-		, s.[formula_curve_id]
+		, ISNULL(pfc_curve.pfc_curve_id, s.[formula_curve_id])
 		, s.[price_uom_id]
 		, s.[category]
 		, s.[profile_code]
@@ -4847,6 +4849,11 @@ BEGIN -- Insert/Update Deal data
 	LEFT JOIN #dest_deal_info ddi 
 		ON ddi.term_start = tm.term_start  
 		AND ISNULL(p.single_path_id, p.path_id) = ddi.single_path_id
+	LEFT JOIN #storage_book_mapping pfc_curve
+		ON pfc_curve.path_id = ISNULL(p.single_path_id, p.path_id)
+		AND pfc_curve.location_id = p.leg2_loc_id
+		AND pfc_curve.pipeline = COALESCE(@counterparty_id, p.counterparty_id, th.[counterparty_id] )
+		AND p.storage_deal_type = 'i'
 	WHERE p.include_rec = 1 
 		AND ISNULL(@reschedule, 0) = 0	
 		AND NOT EXISTS(SELECT TOP 1 1 FROM #existing_deals e1 WHERE e1.source_deal_header_id = th.[source_deal_header_id]) --excluding duplicate insert of existing deals where error caused for unique key constraint 'IX_source_deal_detail'
