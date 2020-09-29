@@ -1548,19 +1548,14 @@ BEGIN
 		AND uddf.udf_template_id = uddft.udf_template_id	
 		AND uddft.field_label = 'From Deal' 
 
-	--UPDATE sdh
-	--	SET sdh.deal_date = sdh_m.deal_date
-	--FROM #temp_transport_deal ttd
-	--INNER JOIN source_deal_header sdh 
-	--	ON ttd.source_deal_header_id = sdh.source_deal_header_id
-	--CROSS JOIN source_deal_header sdh_m
-	--WHERE sdh_m.source_deal_header_id = @source_deal_header_id
+	UPDATE sdh
+		SET sdh.deal_date = sdh_m.deal_date
+	FROM #temp_transport_deal ttd
+	INNER JOIN source_deal_header sdh 
+		ON ttd.source_deal_header_id = sdh.source_deal_header_id
+	CROSS JOIN source_deal_header sdh_m
+	WHERE sdh_m.source_deal_header_id = @source_deal_header_id
 
-	--UPDATE sdh 
-	--	SET internal_portfolio_id = @product_group_id
-	--FROM source_deal_header sdh
-	--INNER JOIN #temp_transport_deal ttd
-	--	ON sdh.source_deal_header_id = ttd.source_deal_header_id	
 
 	--DELETE FROM #temp_transport_deal 
 	--WHERE type IN( 'Withdrawal' , 'Injection')
@@ -1658,6 +1653,7 @@ BEGIN
 		INNER JOIN #temp_transport_deal ttd
 			ON sdh.source_deal_header_id = ttd.source_deal_header_id	
 	END 
+
 	
 	IF EXISTS(SELECT 1 FROM #temp_updated_deals)
 	BEGIN
