@@ -139,7 +139,7 @@ SET @batch_index = IIF(@batch_index = 0, -1, @batch_index)
 
 EXEC spa_print 'Batch Index: ', @batch_index
 
-IF @handle_single_line_sql = 1  OR  @view_index > 0  OR  @batch_index > 0 OR @batch_index = -1
+IF @handle_single_line_sql = 1  OR  @view_index > 0  OR  @batch_index > 0 OR @batch_index = -1 OR @view_result_identifier_index > 0
 BEGIN TRY
 	DECLARE @err_msg VARCHAR(MAX)
 	DECLARE @err_line INT

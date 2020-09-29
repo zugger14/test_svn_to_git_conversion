@@ -140,7 +140,7 @@ BEGIN
 END
 
 
-IF @batch_index > 0 OR @handle_single_line_sql = 1  OR  @view_index > 0
+IF @batch_index > 0 OR @handle_single_line_sql = 1  OR  @view_index > 0 OR @view_result_identifier_index > 0
 BEGIN
 	IF ISNULL(@from_index, 0) = 0
 		RAISERROR (@error_msg, -- Message text.
