@@ -29,11 +29,11 @@ AS
 DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
 SET CONTEXT_INFO @contextinfo
 DECLARE @parent_deal_ids VARCHAR(1000)
-DECLARE @max_as_of_date DATETIME = NULL--'2019-12-27'
+DECLARE @max_as_of_date DATETIME =  '2019-12-27'
 DECLARE @flag VARCHAR(1000)
 
-SELECT @parent_deal_ids = '95666,95665'
-set @flag = 'rewind_cascade'
+SELECT @parent_deal_ids = '101620'
+set @flag = 'cascade'
 --select *from static_data_value where type_id = 5600
 --select deal_status, * from source_deal_header where source_deal_header_id=359
 --update source_deal_header set deal_status=5604 where source_deal_header_id=359
@@ -313,6 +313,7 @@ BEGIN
 		INTO #parent_source_deal_detail_id
 	FROM source_deal_detail sdd
 	INNER JOIN #curve_ids_value cidv ON cidv.source_deal_header_id = sdd.[source_deal_header_id]
+ 
 
 	BEGIN TRY
 		BEGIN TRANSACTION
@@ -355,6 +356,8 @@ BEGIN
 		CROSS JOIN #mapping m
 		WHERE m.deal_id = h.deal_id + '_' + m.gran + '_CASCADE'
 		ORDER BY m.term_start, h.source_deal_header_id 
+
+
 
 		INSERT INTO [dbo].[source_deal_detail] (
 			[source_deal_header_id], [term_start], [term_end], [Leg], [contract_expiration_date], [fixed_float_leg], [buy_sell_flag], [curve_id], [fixed_price], [fixed_price_currency_id],
@@ -401,6 +404,7 @@ BEGIN
 		WHERE aa.term_start NOT IN (SELECT sdd_inn.term_start FROM source_deal_detail sdd_inn 
 									INNER JOIN #parent_source_deal_detail_id ps ON ps.source_deal_detail_id = sdd_inn.source_deal_detail_id)
 
+										 
 		UPDATE sdd_inn 
 		SET sdd_inn.term_end = dbo.FNAGetTermEndDate('m', sdd_inn.term_start, 0)	
 			, sdd_inn.[contract_expiration_date] = @clm11_value
@@ -419,6 +423,8 @@ BEGIN
 			, sdd.formula_curve_id = sdd.curve_id
 			, sdd.physical_financial_flag = 'f'
 			, sdd.location_id = NULL
+			, sdd.shipper_code1 = NULL
+			, sdd.shipper_code2 = NULL
 		FROM source_deal_detail sdd
 		INNER JOIN #curve_ids_value cidv ON cidv.source_deal_header_id = sdd.[source_deal_header_id]
 
@@ -447,14 +453,69 @@ BEGIN
 		INNER JOIN source_price_curve_Def spcd ON spcd.source_curve_def_id = sdd.curve_id AND spcd.granularity = 980
 		INNER JOIN holiday_group hg ON hg.hol_group_value_id = spcd.exp_calendar_id AND hg.hol_date = sdd.term_start AND hg.hol_date_to = sdd.term_end
 
+		--shipper code1
+		UPDATE sdd
+		SET shipper_code1 = scmd1_default.shipper_code_mapping_detail_id
+		FROM  source_deal_detail sdd
+		OUTER APPLY (SELECT t.counterparty_id FROM #tmp_header t) sdh 
+		INNER JOIN shipper_code_mapping scm ON scm.counterparty_id = sdh.counterparty_id						
+		OUTER APPLY
+		(SELECT scmd1_fil.shipper_code_mapping_detail_id FROM
+			(SELECT * FROM
+				(SELECT scmd1_def.shipper_code_mapping_detail_id , 
+					scmd1_def.shipper_code1, 
+					scmd1_def.effective_date,
+					ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY scmd1_def.effective_date DESC) rn
+						FROM shipper_code_mapping_detail scmd1_def
+						WHERE scmd1_def.location_id = sdd.location_id 
+							AND scmd1_def.shipper_code_id = scm.shipper_code_id
+							AND scmd1_def.effective_date <= CAST(sdd.term_start AS DATE)
+							AND scmd1_def.is_active = 'y'
+				) a WHERE rn =1
+			) b 
+			INNER JOIN shipper_code_mapping_detail scmd1_fil ON
+				b.effective_date = scmd1_fil.effective_date  AND scmd1_fil.location_id = sdd.location_id 
+				AND scmd1_fil.is_active = 'y' AND scmd1_fil.shipper_code_id = scm.shipper_code_id
+			AND ISNULL(NULLIF(scmd1_fil.shipper_code1_is_default, ''), 'n') = 'y'
+		) scmd1_default
+
+		--shipper code2
+		UPDATE sdd
+		SET shipper_code2 = scmd2_default.shipper_code_mapping_detail_id
+		FROM  source_deal_detail sdd
+		OUTER APPLY (SELECT t.counterparty_id FROM #tmp_header t) sdh 
+		INNER JOIN shipper_code_mapping scm ON scm.counterparty_id = sdh.counterparty_id
+		OUTER APPLY 
+		( SELECT scmd2_fil.shipper_code_mapping_detail_id FROM
+			(SELECT * FROM
+				(SELECT scmd2_def.shipper_code_mapping_detail_id , 
+					scmd2_def.shipper_code, 
+					scmd2_def.effective_date,
+					ROW_NUMBER() OVER (PARTITION BY scmd2_def.shipper_code ORDER BY scmd2_def.effective_date DESC) rn
+				FROM shipper_code_mapping_detail scmd2_def
+				WHERE scmd2_def.location_id = sdd.location_id 
+					AND scmd2_def.effective_date <= CAST(sdd.term_start AS DATE)
+					AND scmd2_def.shipper_code_id = scm.shipper_code_id
+					AND scmd2_def.is_active = 'y'	
+				) a WHERE rn =1
+			) b 
+			INNER JOIN shipper_code_mapping_detail scmd2_fil ON b.effective_date = scmd2_fil.effective_date 
+			AND scmd2_fil.location_id = sdd.location_id  
+				AND scmd2_fil.is_active = 'y' AND scmd2_fil.shipper_code_id = scm.shipper_code_id
+			AND ISNULL(NULLIF(scmd2_fil.is_default, ''), 'n') = 'y'	
+		) scmd2_default
+
 		UPDATE sdh
 		SET sdh.close_reference_id = di.source_deal_header_id
 		FROM source_deal_header sdh
 		INNER JOIN #tmp_header t ON sdh.source_deal_header_id = t.source_deal_header_id
 		INNER JOIN #deal_info di ON di.source_deal_header_id = sdh.source_deal_header_id
 
+		--		select * from  #tmp_header
+		--rollback tran 
+		--return 
 		--select top 50 * from source_deal_header order by 1 desc 
-		--rollback 
+		--rollback tran
 		--return 
 
 		COMMIT TRAN
