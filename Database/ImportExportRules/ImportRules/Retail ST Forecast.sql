@@ -315,7 +315,7 @@ OUTER APPLY (
 ) hb  
 
 UPDATE a
-SET [Volume] = tp.position - a.Volume
+SET [Volume] = (ISNULL(tp.position, 0) - ISNULL(a.Volume, 0))
 FROM [temp_process_table]_calc a
 INNER JOIN #temp_position tp
 	ON a.[profile Name] = tp.profile_name
@@ -710,7 +710,7 @@ OUTER APPLY (
 ) hb  
 
 UPDATE a
-SET [Volume] = tp.position - a.Volume
+SET [Volume] = (ISNULL(tp.position, 0) - ISNULL(a.Volume, 0))
 FROM [temp_process_table]_calc a
 INNER JOIN #temp_position tp
 	ON a.[profile Name] = tp.profile_name
