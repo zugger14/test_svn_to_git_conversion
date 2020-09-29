@@ -39,14 +39,12 @@ DECLARE @source_deal_header_id INT,
 	EXEC [spa_drop_all_temp_table] 
 	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
 	
-	
-		select 
-			@source_deal_header_id = 104617,
+select
+			@source_deal_header_id = 106428,
 			@reschedule = 0,
-			@flow_date = '2020-02-01',
+			@flow_date = '2000-11-01',
 			@transport_deal_id = NULL,
-			@process_id = '8B614E8F_AEE4_41C4_86E0_DC7211A8B42C112'
-	
+			@process_id = '3F7D8C77_EFCF_40BF_BEB2_AD85610629F3'
 --**/
 SET NOCOUNT ON
 DECLARE  @flow_date_from DATETIME
@@ -260,6 +258,9 @@ BEGIN
 	, @receipt_deals_id = @receipt_deals_id
 	, @delivery_deals_id = @delivery_deals_id
 
+
+
+
 END
 
 SET @hourly_pos_info = dbo.FNAProcessTableName('hourly_pos_info', @user_name, @process_id) 
@@ -295,6 +296,8 @@ BEGIN
 	--print @xml_manual_vol
 	EXEC spa_flow_optimization  @flag = 'z', @process_id = @process_id , @xml_manual_vol = @xml_manual_vol, @call_from = @call_from
 
+
+
 END
 ELSE IF @granularity = 982
 BEGIN
@@ -305,8 +308,9 @@ BEGIN
 	IF @transport_deal_id IS NULL
 	BEGIN
 		SET @sql = N'
-			IF NOT EXISTS(
-				SELECT 1 
+			
+			IF EXISTS(
+			SELECT 1 
 				FROM ' + @hourly_pos_info + ' hpi
 				INNER JOIN source_deal_header sdh
 					ON sdh.source_deal_header_id = hpi.source_deal_header_id 
@@ -314,46 +318,60 @@ BEGIN
 					ON sdv.value_id = sdh.internal_portfolio_id
 					AND type_id = 39800
 				WHERE sdv.code IN (''Complex-LTO'', ''Complex-ROD'', ''Autopath Only'')
-					AND position >0	
 			)
 			BEGIN
+				IF NOT EXISTS(
+					SELECT 1 
+					FROM ' + @hourly_pos_info + ' hpi
+					INNER JOIN source_deal_header sdh
+						ON sdh.source_deal_header_id = hpi.source_deal_header_id 
+					INNER JOIN static_data_value sdv
+						ON sdv.value_id = sdh.internal_portfolio_id
+						AND type_id = 39800
+					WHERE sdv.code IN (''Complex-LTO'', ''Complex-ROD'', ''Autopath Only'')
+						AND position >0	
+				)
+				BEGIN
 
-				DECLARE @term_date_with_value DATETIME
+					DECLARE @term_date_with_value DATETIME
 	
-				SELECT @term_date_with_value = sddh.term_date
-				FROM source_deal_detail_hour sddh
-				INNER JOIN source_deal_detail sdd
-					ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
-				WHERE sdd.source_deal_header_id = ' + CAST(@source_deal_header_id AS VARCHAR(10)) + ' 
-					AND YEAR(sddh.term_date) = YEAR(''' + CAST(@flow_date AS VARCHAR(50)) + ''' )
-					AND MONTH(sddh.term_date) = MONTH(''' + CAST(@flow_date AS VARCHAR(50)) + ''' )	
-					AND ISNULL(sddh.volume, 0) > 0 
+					SELECT @term_date_with_value = sddh.term_date
+					FROM source_deal_detail_hour sddh
+					INNER JOIN source_deal_detail sdd
+						ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+					WHERE sdd.source_deal_header_id = ' + CAST(@source_deal_header_id AS VARCHAR(10)) + ' 
+						AND YEAR(sddh.term_date) = YEAR(''' + CAST(@flow_date AS VARCHAR(50)) + ''' )
+						AND MONTH(sddh.term_date) = MONTH(''' + CAST(@flow_date AS VARCHAR(50)) + ''' )	
+						AND ISNULL(sddh.volume, 0) > 0 
 
 				
-				DELETE FROM ' + @hourly_pos_info + '
+					DELETE FROM ' + @hourly_pos_info + '
 
-				IF @term_date_with_value IS NOT NULL
-				BEGIN
-					INSERT INTO ' + @hourly_pos_info + '
-					SELECT sdd.source_deal_header_id
-							, sdd.location_id
-							, sdd.curve_id	
-							, sdd.term_start
-							, sdh.profile_granularity
-							, CAST(LEFT( sddh.hr, 2) AS INT)
-							, 0
-							, sddh.volume
-							, sdd.source_deal_detail_id
-					FROM source_deal_header sdh
-					INNER JOIN source_deal_detail sdd
-						ON sdd.source_deal_header_id = sdh.source_deal_header_id
-						AND sdh.source_deal_header_id = ' + CAST(@source_deal_header_id AS VARCHAR(10)) + ' 
-					INNER JOIN source_deal_detail_hour sddh
-						ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
-					WHERE sddh.term_date = @term_date_with_value
-				END
+					-- Here instead of hourly table we should take hourly data from position table
 
-			END 
+					IF @term_date_with_value IS NOT NULL
+					BEGIN
+						INSERT INTO ' + @hourly_pos_info + '
+						SELECT sdd.source_deal_header_id
+								, sdd.location_id
+								, sdd.curve_id	
+								, sdd.term_start
+								, sdh.profile_granularity
+								, CAST(LEFT( sddh.hr, 2) AS INT)
+								, 0
+								, sddh.volume
+								, sdd.source_deal_detail_id
+						FROM source_deal_header sdh
+						INNER JOIN source_deal_detail sdd
+							ON sdd.source_deal_header_id = sdh.source_deal_header_id
+							AND sdh.source_deal_header_id = ' + CAST(@source_deal_header_id AS VARCHAR(10)) + ' 
+						INNER JOIN source_deal_detail_hour sddh
+							ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+						WHERE sddh.term_date = @term_date_with_value
+					END
+
+				END 
+			END
 		'	
 		--print @sql
 		EXEC(@sql)
@@ -376,7 +394,6 @@ BEGIN
 			AND MONTH(term_start) = MONTH(''' + CAST(@flow_date AS VARCHAR(50)) + ''' )	'
 		--print @sql
 		EXEC(@sql)
-
 
 	END 
 	ELSE 
@@ -522,15 +539,6 @@ BEGIN
 
 		
 
-
-
-	--		select storage_asset_id,* from adiha_process.dbo.contractwise_detail_mdq_dmanandhar_8B614E8F_AEE4_41C4_86E0_DC7211A8B42C112
-
-	--		select storage_asset_id,* from adiha_process.dbo.contractwise_detail_mdq_hourly_dmanandhar_8B614E8F_AEE4_41C4_86E0_DC7211A8B42C112
-
-
-	--return;
-
 	
 END 
 
@@ -572,6 +580,7 @@ SET @call_from = IIF(@transport_deal_id IS NULL, 'flow_auto', 'flow_opt');
 --	,  @receipt_deals_id 
 --	,  @delivery_deals_id
 --return;
+
 
 EXEC spa_schedule_deal_flow_optimization  
 	@flag = 'i'
