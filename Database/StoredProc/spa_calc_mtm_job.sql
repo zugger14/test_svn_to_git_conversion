@@ -163,6 +163,7 @@ declare	@sub_id varchar(1000),
 	,@ignore_deal_date BIT = 0
 	,@calc_settlement_adjustment BIT = 0
 	,@process_linear_options_delta CHAR(1) = NULL
+	,@trigger_workflow NCHAR(1) =  'y'
 	
 SET @calc_explain_type ='p'
 
@@ -193,7 +194,7 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =98474  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@source_deal_header_id ='102958, 102959'  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
 	@as_of_date = '2020-01-31' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
@@ -8010,6 +8011,24 @@ EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+
 --exec('select * from ' + @tmp_hourly_price_vol) 
 
 --For Positive/Negative Commodity Charges
+IF OBJECT_ID('tempdb..#tmp_deal_info') IS NOT NULL DROP TABLE #tmp_deal_info
+
+SELECT DISTINCT td.source_deal_header_id --, td.source_deal_detail_id
+INTO #tmp_deal_info
+FROM #temp_deals td
+INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
+INNER JOIN #uddft uddft ON uddft.template_id=sdh.template_id 
+	and td.leg= ISNULL(uddft.leg,td.leg)	
+INNER JOIN #udft udft ON udft.udf_template_id = uddft.udf_user_field_id 
+	and td.leg= ISNULL(udft.leg,td.leg)
+	AND udft.internal_field_type IN (18742,18743)
+INNER JOIN user_defined_deal_fields uddf1 ON uddf1.source_deal_header_id = sdh.source_deal_header_id
+	AND uddf1.udf_template_id = uddft.udf_template_id 
+	AND uddft.field_type<>'w'
+WHERE @calc_type = 's' 
+AND sdh.pricing_type IN (46700,46701)
+AND td.physical_financial_flag = 'p'
+
 IF OBJECT_ID('tempdb..#sddh1') IS NOT NULL DROP TABLE #sddh1
 
 SELECT sddh.source_deal_detail_id ,sddh.term_date,
@@ -8045,29 +8064,14 @@ select sddh.source_deal_detail_id,
 	sddh.term_date,
 	case when is_dst=1 then 25 else cast(left(sddh.hr,2) as int) end hr, 
 	price
-	from source_deal_detail_hour sddh
-	inner join #temp_deals a  on sddh.source_deal_detail_id=a.source_deal_detail_id
+	from #tmp_deal_info tdi
+	inner join #temp_deals a on a.source_deal_header_id = tdi.source_deal_header_id
+	inner join source_deal_detail_hour sddh ON sddh.source_deal_detail_id=a.source_deal_detail_id
 		and sddh.term_date between a.term_start and a.term_end
 	group by sddh.source_deal_detail_id,sddh.term_date,case when is_dst=1 then 25 else cast(left(sddh.hr,2) as int) end, price
 	) sddh
-where sddh.price is not null AND @calc_type = 's'
+where sddh.price is not null
 group by sddh.source_deal_detail_id,sddh.term_date
-
-IF OBJECT_ID('tempdb..#tmp_deal_info') IS NOT NULL DROP TABLE #tmp_deal_info
-
-SELECT DISTINCT td.source_deal_header_id --, td.source_deal_detail_id
-INTO #tmp_deal_info
-FROM #temp_deals td
-INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-INNER JOIN #uddft uddft ON uddft.template_id=sdh.template_id 
-	and td.leg= ISNULL(uddft.leg,td.leg)	
-INNER JOIN #udft udft ON udft.udf_template_id = uddft.udf_user_field_id 
-	and td.leg= ISNULL(udft.leg,td.leg)
-	AND udft.internal_field_type IN (18742,18743)
-INNER JOIN user_defined_deal_fields uddf1 ON uddf1.source_deal_header_id = sdh.source_deal_header_id
-	AND uddf1.udf_template_id = uddft.udf_template_id 
-	AND uddft.field_type<>'w'
-WHERE @calc_type = 's'
 
 SET @sql= ' SELECT 
 	source_deal_header_id,
@@ -8159,7 +8163,6 @@ UNPIVOT(
 	volume for vol in (vol1,vol2,vol3,vol4,vol5,vol6,vol7,vol8,vol9,vol10,vol11,vol12,vol13,vol14,vol15,vol16,vol17,vol18,vol19,vol20,vol21,vol22,vol23,vol24,vol25)
 ) t
 WHERE RIGHT(hr, CASE WHEN len(hr) = 3 THEN 1 ELSE 2 END) = RIGHT(vol, CASE WHEN len(vol) = 4 THEN 1 ELSE 2 END)
-AND ''' + @calc_type + ''' = ''s''
 GROUP BY source_deal_header_id, source_deal_detail_id'
 
 EXEC spa_print @sql
