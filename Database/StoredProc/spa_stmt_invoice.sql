@@ -193,7 +193,15 @@ BEGIN
 
 			 + 'INNER JOIN source_counterparty sc ON  sc.source_counterparty_id = si.counterparty_id  ' + char(10)
 			 + 'INNER JOIN contract_group cg ON  cg.contract_id = si.contract_id  ' + CHAR(10)
-			 + 'LEFT JOIN source_currency scu ON scu.source_currency_id = cg.currency  ' + char(10)
+
+			 + 'OUTER APPLY (
+					SELECT MAX(cg.currency) netting_currency FROM stmt_netting_group ng
+					INNER JOIN stmt_netting_group_detail ngd ON ng.netting_group_id = ngd.netting_group_id
+					INNER JOIN contract_group cg ON cg.contract_id = ngd.contract_detail_id
+					WHERE si.contract_id = ng.netting_contract_id
+				) nett ' + char(10)
+			 
+			 + 'LEFT JOIN source_currency scu ON scu.source_currency_id = ISNULL(nett.netting_currency, cg.currency)  ' + char(10)
 			 + 'LEFT JOIN static_data_value sdv_workflow ON sdv_workflow.value_id = si.invoice_status  ' + char(10)
 			 + 'LEFT JOIN static_data_value sdv ON sdv.value_id = si.invoice_status  ' + char(10)
 			 + 'LEFT JOIN Contract_report_template crp_invoice ON crp_invoice.template_id = cg.invoice_report_template' + char(10)
