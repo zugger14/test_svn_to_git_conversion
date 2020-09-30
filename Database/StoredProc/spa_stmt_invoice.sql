@@ -459,8 +459,10 @@ BEGIN
 		ON scu.source_currency_id = cg.currency	
 	LEFT JOIN stmt_checkout sch
 		ON sch.stmt_invoice_detail_id = sid.stmt_invoice_detail_id
+	LEFT JOIN stmt_checkout sch2
+		ON sch2.stmt_checkout_id =  sid.description1
 	LEFT JOIN source_uom su 
-		ON  su.source_uom_id = sch.uom_id
+		ON  su.source_uom_id = ISNULL(sch.uom_id, sch2.uom_id)
 	WHERE si.stmt_invoice_id = @invoice_id
 END
 
