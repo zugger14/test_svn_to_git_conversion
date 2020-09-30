@@ -3876,8 +3876,11 @@ BEGIN
 			FROM #temp_deals td	
 			LEFT JOIN #temp_settlement ts ON td.source_deal_header_id = ts.source_deal_header_id
 			INNER JOIN #temp_deal_details tdd ON td.source_deal_header_id = tdd.source_deal_header_id --AND ts.term_start = tdd.term_start
+			INNER JOIN source_deal_detail sdd  
+				ON sdd.source_deal_header_id = tdd.source_deal_header_id
+				ANd sdd.source_deal_detail_id = tdd.source_deal_detail_id
 			LEFT JOIN #temp_cpty_udf_values tcuv ON tcuv.source_deal_header_id = td.source_deal_header_id
-			LEFT JOIN source_uom tsu ON ts.volume_uom = tsu.source_uom_id
+			LEFT JOIN source_uom tsu ON ISNULL(ts.volume_uom,sdd.position_uom) = tsu.source_uom_id
 			LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = tdd.curve_id
 			LEFT JOIN source_commodity scom ON scom.source_commodity_id = ISNULL(spcd.commodity_id,td.commodity_id)
 			LEFT JOIN source_minor_location sml ON sml.source_minor_location_id = tdd.location_id
