@@ -502,7 +502,8 @@ BEGIN
 		   wemd.effective_date,
 		   wemd.document_category,
 		   wemd.document_template,
-		   0 [new_message_document_id]
+		   0 [new_message_document_id],
+		   wemd.use_generated_document
 	FROM module_events me
 	INNER JOIN event_trigger et ON me.module_events_id = et.modules_event_id
 	INNER JOIN workflow_event_message wem ON wem.event_trigger_id = et.event_trigger_id
@@ -1323,13 +1324,15 @@ BEGIN TRY
 									document_template_id,
 									effective_date,
 									document_category,
-									document_template
+									document_template,
+									use_generated_document
 							)
 							SELECT	wem.new_event_message_id,
 									wemd.document_template_id,
 									wemd.effective_date,
 									wemd.document_category,
-									wemd.document_template
+									wemd.document_template,
+									wemd.use_generated_document
 							FROM ' + @workflow_event_message_documents_table + ' wemd
 							INNER JOIN ' + @workflow_event_message_table + ' wem ON wemd.event_message_id = wem.event_message_id
 							WHERE wemd.message_document_id = @message_document_id
