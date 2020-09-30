@@ -122,11 +122,12 @@ EXEC('INSERT INTO #mapping_name(mapping_id,mapping_name)
 		INNER JOIN static_data_value sdv ON sdv.code = src.mapping_name AND sdv.type_id = 112700'
 		)
 
- 
+ -- alter table adiha_process.dbo.src_capacity_33333 drop column mapping_name
 
 DECLARE @mapping_id INT = 112700 
 
 SELECT @mapping_id = mapping_id  FROM #mapping_name
+
 
 --Generic mapping block starts.
 IF OBJECT_ID(N'tempdb..#generic_mapping_values') IS NOT NULL
@@ -219,25 +220,7 @@ BEGIN
 			AND ISNULL(gmv.clm20_value,'''') = ISNULL(mx.clm20_value,'''')
 		'
 END
-ELSE IF @mapping_id = 112707
-BEGIN
-	--Storage ST case pick process_type, subbook, buysell, template, offset deal max effective date
-	SET @sql += '
-		CROSS APPLY (
-			SELECT clm1_value, MAX(clm2_value) clm2_value,clm3_value,clm12_value,clm13_value
-			FROM generic_mapping_values gmv 
-			WHERE gmv.mapping_table_id = gmh.mapping_table_id
-			GROUP BY clm1_value,clm3_value,clm12_value,clm13_value
-		) mx
-		INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id 
-			AND gmv.clm1_value = mx.clm1_value
-			AND gmv.clm2_value = mx.clm2_value
-			AND ISNULL(gmv.clm3_value, '''') = ISNULL(mx.clm3_value,'''')
-			AND ISNULL(gmv.clm12_value, '''') = ISNULL(mx.clm12_value,'''')
-			AND ISNULL(gmv.clm13_value,'''') = ISNULL(mx.clm13_value,'''')
-		'
-END
-ELSE
+ELSE 
 BEGIN
 	--Max effective data of process type
 	SET @sql += '
@@ -259,23 +242,23 @@ SET @sql += '
 	
 EXEC(@sql)
 
---/* Line 168 Note: Only in case of storage process type template and delivery path are defined. For other process type these values are blank. */
+
 
 IF @debug_mode = 1
-SELECT 'generic_mapping_values', * from #generic_mapping_values
-
+select 'generic_mapping_values', * from #generic_mapping_values
+--return
 
 DROP TABLE IF EXISTS #gm_deals
 CREATE TABLE #gm_deals(source_deal_header_id INT)
 
 INSERT INTO #gm_deals
-SELECT sdh.close_reference_id source_deal_header_id 
+select sdh.close_reference_id source_deal_header_id 
 FROM source_deal_header sdh
-INNER JOIN #generic_mapping_values gmv ON gmv.clm15_value = sdh.deal_id OR gmv.clm16_value = sdh.deal_id 
+INNER JOIN #generic_mapping_values gmv ON gmv.clm15_value = sdh.source_deal_header_id OR gmv.clm16_value = sdh.source_deal_header_id 
 UNION
-SELECT sdh.source_deal_header_id
+select sdh.source_deal_header_id
 FROM source_deal_header sdh
-INNER JOIN #generic_mapping_values gmv ON gmv.clm14_value = sdh.deal_id
+INNER JOIN #generic_mapping_values gmv ON gmv.clm14_value = sdh.source_deal_header_id
 
 IF OBJECT_ID(N'tempdb..#deal_max_term') IS NOT NULL
 DROP TABLE #deal_max_term
@@ -333,7 +316,7 @@ BEGIN
 		) rs
 		'
 END
-ELSE IF @mapping_id IN (112702,112703,112704,112707)
+ELSE IF @mapping_id IN (112702,112703,112704)
 BEGIN	
 	IF @mapping_id = 112702
 BEGIN	
@@ -418,7 +401,7 @@ create nonclustered index indx_src_hour_breakdown on #src_hour_breakdown (hr,[pe
 IF @debug_mode = 1
 select  '#src_hour_breakdown',count(1) from #src_hour_breakdown --order by term,hr,[period]
 
-IF @mapping_id IN (112704,112707)	--storage and storage st case
+IF @mapping_id = 112704	--storage case
 BEGIN
 	DROP TABLE IF EXISTS #group_deals
 	CREATE TABLE #group_deals(group_source_deal_header_id INT, group_deal_id NVARCHAR(500))
@@ -648,7 +631,7 @@ SET @sql += ' FROM #src_hour_breakdown src '
 ELSE 
 SET @sql += ' FROM  #src_hour_breakdown_grp src '
 
-IF @mapping_id IN (112700,112703,112704,112707)
+IF @mapping_id IN (112700,112703,112704)
 BEGIN
 	SET @sql += '
 			INNER JOIN #collect_deals cd ON src.deal_id = cd.deal_id 
@@ -777,12 +760,9 @@ SET @sql = CAST('' AS NVARCHAR(MAX)) + N'
 		, IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, NULL, spc.curve_value) pfc_price
 		, IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, NULL,(IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume)*spc.curve_value)
 			) delta_pfc_price
-		, IIF(gmv.clm1_value = 112707,src.uploaded_volume
-			, IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) + org.original_volume
-		)
-		total_volume
+		, IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) + org.original_volume total_volume
 		, IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, src.uploaded_fixed_price,
-			IIF( org.template_id = ' + CAST(@stg_withdrawal_template_id AS NVARCHAR(20)) + ' AND gmv.clm1_value <> 112707, ISNULL(csw.wacog,0),
+			IIF( org.template_id = ' + CAST(@stg_withdrawal_template_id AS NVARCHAR(20)) + ', ISNULL(csw.wacog,0),
 			(org.original_volume*org.original_price 
 				+ IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) * spc.curve_value
 				)/CASE WHEN IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) 
@@ -826,16 +806,7 @@ BEGIN
 				AND (gmv.clm20_value IS NULL OR gmv.clm20_value = ISNULL(uddf.udf_value,-1))		
 		) gmv'
 END
-ELSE  IF @mapping_id = 112707	--Storage ST case check offset deal defined in generic mapping.
-BEGIN
-	SET @sql += ' 
-	OUTER APPLY(SELECT DISTINCT gmv.clm1_value, gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
-			FROM #generic_mapping_values gmv
-			INNER JOIN source_deal_header sdh ON sdh.deal_id = gmv.clm15_value	
-			WHERE sdh.deal_id = org.deal_id
-		) gmv'
-END
-ELSE
+ELSE  
 BEGIN
 	SET @sql += ' 
 	OUTER APPLY(SELECT DISTINCT gmv.clm1_value, gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
@@ -922,3 +893,4 @@ SET @sql = '
 	IF @debug_mode = 1
 	EXEC('select ''final data'', * from ' + @calc_process_table + ' order by deal_id,term_start,term_end,hr,period,is_dst' )
 END
+

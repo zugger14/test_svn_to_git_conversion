@@ -1052,11 +1052,7 @@ BEGIN
 			IF OBJECT_ID('tempdb..#temp_soap_table_name') IS NOT NULL
 				DROP TABLE #temp_soap_table_name
 			CREATE TABLE #temp_soap_table_name (table_name NVARCHAR(600) COLLATE DATABASE_DEFAULT)
-			IF OBJECT_ID('tempdb..#temp_files_list') IS NOT NULL
-				DROP TABLE #temp_files_list
-						
-			CREATE TABLE #temp_files_list (files_names NVARCHAR(MAX) COLLATE DATABASE_DEFAULT)
-
+			
 			IF @flag IN ('q', 'r')
 			BEGIN
 			
@@ -1093,6 +1089,11 @@ BEGIN
 					
 				IF ((@folder_loaction IS NOT NULL AND @folder_loaction <> '') AND @data_source_id NOT IN (21407, 21401)) OR @data_source_id = 21409
 				BEGIN
+					IF OBJECT_ID('tempdb..#temp_files_list') IS NOT NULL
+						DROP TABLE #temp_files_list
+						
+					CREATE TABLE #temp_files_list (files_names NVARCHAR(MAX) COLLATE DATABASE_DEFAULT)
+					
 					IF @data_source_id = 21409
 					BEGIN
 						IF OBJECT_ID('tempdb..#ixp_email_notes_list') IS NOT NULL
@@ -1962,70 +1963,48 @@ BEGIN
 			END	
 			--end of flag t
 			--common logic for r and t flag starts
-			IF @source  IN (21400,21402,21405)--,21404,21401
-			BEGIN
-				/*
-					Update numeric data according to decimal and group separator starts
-					This logic is bypassed for reimport and excel files.  Excel application auto corrects numeric data so conversion is not required.
-					Conversion is applicable only for non excel file based import.
-						1. Folder based import (batch) with non excel file.
-						2. Non excel uploaded file
-				*/
-			
-				DECLARE @decimal_group_separator BIT = 0
-
-				if OBJECT_ID(@reimport_data) IS NOT NULL 
-				SET @decimal_group_separator = 0
-				ELSE
-				if @flag = 'r' AND EXISTS(SELECT files_names FROM  #temp_files_list WHERE files_names NOT LIKE '%.xls%') 
-				SET @decimal_group_separator = 1
-				ELSE
-				IF @flag = 't' AND NULLIF(@server_path,'') IS NOT NULL AND CHARINDEX('.', @server_path) > 0 AND (CHARINDEX('.xls', RIGHT(@server_path,5)) = 0)
-				SET @decimal_group_separator = 1
-
-				IF @decimal_group_separator = 1
-				IF OBJECT_ID(@reimport_data) IS NULL 
-					AND (NULLIF(@server_path,'') IS NOT NULL AND (CHARINDEX('xls', RIGHT(@server_path,4)) = 0))
-					AND NOT EXISTS(SELECT files_names FROM  #temp_files_list WHERE files_names LIKE '%.xls%')
-				BEGIN 	
-					DECLARE @decimal_separator NVARCHAR(100), @group_separator  NVARCHAR(100)
-					SELECT @decimal_separator = decimal_separator
-						,  @group_separator = group_separator
-					FROM company_info 
+			/*Update numeric data according to decimal and group separator starts
+				This logic is bypassed for reimport and excel file import. In this case numeric data are auto corrected.
+			*/
+			IF OBJECT_ID(@reimport_data) IS NULL AND (NULLIF(@server_path,'') IS NULL OR (CHARINDEX('xls', RIGHT(@server_path,4)) = 0))
+			BEGIN 	
+				DECLARE @decimal_separator NVARCHAR(100), @group_separator  NVARCHAR(100)
+				SELECT @decimal_separator = decimal_separator
+					,  @group_separator = group_separator
+				FROM company_info 
 		
-					SELECT @decimal_separator = ISNULL(au.decimal_separator,@decimal_separator)
-						, @group_separator = ISNULL(au.group_separator, @group_separator)
-					FROM application_users au 
-					WHERE user_login_id = @user_name
+				SELECT @decimal_separator = ISNULL(au.decimal_separator,@decimal_separator)
+					, @group_separator = ISNULL(au.group_separator, @group_separator)
+				FROM application_users au 
+				WHERE user_login_id = @user_name
 			
-					IF OBJECT_ID('tempdb..#stg1') IS NOT NULL DROP TABLE #stg1
-					CREATE TABLE #stg1(column_name NVARCHAR(20) COLLATE DATABASE_DEFAULT)
+				IF OBJECT_ID('tempdb..#stg1') IS NOT NULL DROP TABLE #stg1
+				CREATE TABLE #stg1(column_name NVARCHAR(20) COLLATE DATABASE_DEFAULT)
 
-					SET @sql = 'SELECT TOP 1 * FROM '+ @temp_process_table 
+				SET @sql = 'SELECT TOP 1 * FROM '+ @temp_process_table 
 	
-					EXEC spa_get_output_schema_or_data @sql_query = @sql
-							, @process_table_name = '#stg1'
-							, @data_output_col_count = @total_columns OUTPUT
-							, @flag = 'schema'
+				EXEC spa_get_output_schema_or_data @sql_query = @sql
+						, @process_table_name = '#stg1'
+						, @data_output_col_count = @total_columns OUTPUT
+						, @flag = 'schema'
 			
-					DECLARE @sql_updt NVARCHAR(max)
-					SELECT @sql_updt = COALESCE(@sql_updt + ',','') +  iidm.source_column_name + ' = REPLACE(REPLACE(REPLACE(' + iidm.source_column_name + ',''' + @group_separator + ''',''''),''' + @decimal_separator + ''',''.''),''"'','''')'
-					FROM ixp_rules ir
-					INNER JOIN ixp_import_data_source iids ON iids.rules_id = ir.ixp_rules_id
-					INNER JOIN ixp_import_data_mapping iidm ON iidm.ixp_rules_id = ir.ixp_rules_id
-					INNER JOIN ixp_tables it ON it.ixp_tables_id = iidm.dest_table_id
-					INNER JOIN ixp_columns ic ON ic.ixp_columns_id = iidm.dest_column
-					INNER JOIN #stg1  ss ON ss.columnname = IIF(CHARINDEX('[', iidm.source_column_name) > 0,SUBSTRING(iidm.source_column_name, CHARINDEX('[', iidm.source_column_name) + 1, CHARINDEX(']', iidm.source_column_name) - CHARINDEX('[', iidm.source_column_name) - 1 ),iidm.source_column_name)
-					WHERE ic.datatype like 'numeric%' AND 
-					ir.ixp_rules_id = @ixp_rules_id
+				DECLARE @sql_updt NVARCHAR(max)
+				SELECT @sql_updt = COALESCE(@sql_updt + ',','') +  iidm.source_column_name + ' = REPLACE(REPLACE(REPLACE(' + iidm.source_column_name + ',''' + @group_separator + ''',''''),''' + @decimal_separator + ''',''.''),''"'','''')'
+				FROM ixp_rules ir
+				INNER JOIN ixp_import_data_source iids ON iids.rules_id = ir.ixp_rules_id
+				INNER JOIN ixp_import_data_mapping iidm ON iidm.ixp_rules_id = ir.ixp_rules_id
+				INNER JOIN ixp_tables it ON it.ixp_tables_id = iidm.dest_table_id
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_id = iidm.dest_column
+				INNER JOIN #stg1  ss ON ss.columnname = IIF(CHARINDEX('[', iidm.source_column_name) > 0,SUBSTRING(iidm.source_column_name, CHARINDEX('[', iidm.source_column_name) + 1, CHARINDEX(']', iidm.source_column_name) - CHARINDEX('[', iidm.source_column_name) - 1 ),iidm.source_column_name)
+				WHERE ic.datatype like 'numeric%' AND 
+				ir.ixp_rules_id = @ixp_rules_id
 
-					SELECT @data_source_alias =  data_source_alias FROM ixp_import_data_source WHERE rules_id = @ixp_rules_id
+				SELECT @data_source_alias =  data_source_alias FROM ixp_import_data_source WHERE rules_id = @ixp_rules_id
 
-					SELECT @sql_updt = 'UPDATE ' + @data_source_alias + ' SET ' + @sql_updt 
-							+ ' FROM ' + @temp_process_table + ' ' + @data_source_alias
+				SELECT @sql_updt = 'UPDATE ' + @data_source_alias + ' SET ' + @sql_updt 
+						+ ' FROM ' + @temp_process_table + ' ' + @data_source_alias
 				
-					EXEC(@sql_updt)	
-				END
+				EXEC(@sql_updt)	
 			END
 			--------------------Update numeric data according to decimal and group separator ends------------------------------------
 				
