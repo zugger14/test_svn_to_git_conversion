@@ -466,7 +466,7 @@ BEGIN
 			CASE MAX(sdd.buy_sell_flag) WHEN ''b'' THEN ''Buy'' WHEN ''s'' THEN ''Sell'' END  [Buy Sell Flag],
 			CASE WHEN MAX(sdd.physical_financial_flag) = ''p'' THEN ''Physical''
 				ELSE ''Financial'' END [Phy/Fin],
-			CAST(dbo.FNARemoveTrailingZeroes(AVG(sdd.fixed_price)) AS NUMERIC(32,4)) [Fixed Price],
+			dbo.FNANumberFormat(CAST(dbo.FNARemoveTrailingZeroes(AVG(sdd.fixed_price)) AS NUMERIC(32,4)),''p'') [Fixed Price],
 			dbo.FNARemoveTrailingZeroes(MAX(sdd.option_strike_price)) [Option Strike Price],
 			CASE WHEN max(sml.Location_Name) IS NULL THEN MAX(spcd.curve_id)
 				WHEN  MAX(spcd.curve_id) IS NULL THEN max(sml.Location_Name)
@@ -474,15 +474,15 @@ BEGIN
 			dbo.FNARemoveTrailingZeroes(MAX(sdd.fixed_cost)) [Fixed Cost],
 			dbo.FNARemoveTrailingZeroes(ROUND(AVG(sdd.price_adder),4)) [Adder],
 			dbo.FNARemoveTrailingZeroes(CAST(MAX(sdd.price_multiplier) AS VARCHAR)) [Multiplier],
-			CAST([dbo].[FNARemoveTrailingZeroes](AVG(sdd.deal_volume)) AS NUMERIC(32,2)) [Volume],
-			CAST(CAST([dbo].[FNARemoveTrailingZeroes](SUM(sdd.total_volume)) AS MONEY) AS NUMERIC(32,2)) [Total Volume],			
+			dbo.FNANumberFormat(CAST([dbo].[FNARemoveTrailingZeroes](AVG(sdd.deal_volume)) AS NUMERIC(32,2)), ''v'') [Volume],
+			dbo.FNANumberFormat(CAST(CAST([dbo].[FNARemoveTrailingZeroes](SUM(sdd.total_volume)) AS MONEY) AS NUMERIC(32,2)), ''v'') [Total Volume],			
 			MAX(scu.currency_id) [Currency],
 			MAX(sdd.deal_volume_frequency) [Frequency],
 			MAX(uom.uom_id) [UOM],
 			CASE WHEN MAX(sdd.formula_id) IS NOT NULL THEN ''Formula'' ELSE '''' END [Formula],
 			CAST (dbo.FNADATEFORMAT(MIN(sdd.term_start)) AS VARCHAR(20)) + '' - '' + CAST (dbo.FNADATEFORMAT(MAX(sdd.term_end)) AS VARCHAR(20))[Term],
 			MAX(spcd2.curve_name) [Indexed On],
-           CAST(dbo.FNARemoveTrailingZeroes(AVG(sdd.fixed_price)) * CAST([dbo].[FNARemoveTrailingZeroes](SUM(sdd.total_volume)) AS MONEY) AS NUMERIC(32,2)) [Notional Value]
+           dbo.FNANumberFormat(CAST(dbo.FNARemoveTrailingZeroes(AVG(sdd.fixed_price)) * CAST([dbo].[FNARemoveTrailingZeroes](SUM(sdd.total_volume)) AS MONEY) AS NUMERIC(32,2)), ''v'') [Notional Value]
 			' 
 SET @sql_Select2 = ' FROM 
 		source_deal_header sdh 
