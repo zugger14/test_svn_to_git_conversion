@@ -78,16 +78,17 @@ BEGIN TRY
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_process_id NVARCHAR(500) = ''@process_id''
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_process_id NVARCHAR(500)
 DECLARE @_user_login_id NVARCHAR(100) = dbo.FNADBUser()
 DECLARE @_report_position_deals NVARCHAR(600)
 DECLARE @_as_of_date VARCHAR(100)  = ''@as_of_date''
+
 IF ''@process_id'' <> ''NULL''
     SET @_process_id = ''@process_id''
 ELSE   
     SET @_process_id = NULL
-BEGIN TRY
-    IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result
+
+ IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result
     CREATE TABLE #tmp_result (
         ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
         Module VARCHAR(200) COLLATE DATABASE_DEFAULT ,
@@ -96,9 +97,12 @@ BEGIN TRY
         Message VARCHAR(1000) COLLATE DATABASE_DEFAULT ,
         Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT
     )
+
+BEGIN TRY
+   
     SET @_report_position_deals = dbo.FNAProcessTableName(''report_position'', @_user_login_id, @_process_id)
     DECLARE @_sql NVARCHAR(MAX)
-    SET @_sql = ''
+    SET @_sql = N''
         SELECT sdh.source_deal_header_id [source_deal_header_id], ''''u'''' [action]
         INTO '' + @_report_position_deals + ''
         FROM source_deal_header sdh
@@ -135,8 +139,8 @@ BEGIN CATCH
         ''Position Calculation completed successfully.'' [Message],
         '''' [Recommendation]
 END CATCH
-SELECT
-    @_as_of_date as_of_date,
+
+SELECT @_as_of_date as_of_date,
     @_process_id process_id,   
     [ErrorCode],
     [Module],

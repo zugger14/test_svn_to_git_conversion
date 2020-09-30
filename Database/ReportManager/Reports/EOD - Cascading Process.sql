@@ -82,6 +82,7 @@ BEGIN TRY
 
 DECLARE @_process_id VARCHAR(100) = ''@process_id''  
 
+DECLARE @_flag VARCHAR(100) = ''cascade''  
 		
 
 IF ''@process_id'' <> ''NULL''
@@ -169,7 +170,7 @@ SET @_source_deal_header_ids = STUFF((
 
 INSERT INTO #tmp_result (errorcode, module, area, [status], [message], recommendation) 
 
-EXEC dbo.spa_cascade_deal @_source_deal_header_ids, @_as_of_date 
+EXEC dbo.spa_cascade_deal @_source_deal_header_ids, @_as_of_date, NULL, @_flag
 
  
 
