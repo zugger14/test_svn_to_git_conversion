@@ -101,6 +101,7 @@ CREATE PROCEDURE [dbo].[spa_calc_mtm_job_wrapper]
 	@transaction_type_id VARCHAR(5000),
 	@portfolio_group_id INT = NULL,
 	@purge CHAR(1) = 'n',
+	@trigger_workflow NCHAR(1) = 'y',
 	@batch_process_id	VARCHAR(120) = NULL,--
 	@batch_report_param	VARCHAR(5000) = NULL--
 AS
@@ -495,6 +496,7 @@ BEGIN TRY
 				@calc_type = ''v'',
 				@curve_shift_val = NULL,
 				@curve_shift_per = NULL, 
+				@trigger_workflow = ''' + @trigger_workflow + '''
 				@deal_list_table = ''' + @tbl_name + ''',
 				@criteria_id = ''-1'''-- @criteria_id=-1 for monte carlo vAR
 				

@@ -844,7 +844,8 @@ BEGIN TRY
 					@portfolio_group_id = NULL,
 					@transaction_type_id = '400,401',
 					@purge = 'y',
-					@criteria_id = @criteria_id
+					@criteria_id = @criteria_id,
+					@trigger_workflow = @trigger_workflow
 			END		
 			----------------Revaluation Changes ends here-------------------------
 			
@@ -967,6 +968,7 @@ BEGIN TRY
 						@curve_shift_val = NULL,
 						@curve_shift_per = NULL, 
 						@deal_list_table = NULL,
+						@trigger_workflow = ''' + @trigger_workflow + ''',
 						@criteria_id = ' + CAST(@criteria_id AS VARCHAR) + ''
 						
 					exec spa_print @sql_stmt
@@ -1007,6 +1009,7 @@ BEGIN TRY
 						@calc_type = ''w'',
 						@curve_shift_val = NULL,
 						@curve_shift_per = NULL, 
+						@trigger_workflow = ''' + @trigger_workflow + ''',
 						@deal_list_table = ''' + @std_deal_table + ''',
 						@criteria_id = ' + CAST(@criteria_id AS VARCHAR) + ''
 						

@@ -418,7 +418,7 @@ END
 DECLARE @calc_price_change_at_tou_level varchar(1)
 set @calc_price_change_at_tou_level='n'
 SET @process_linear_options_delta = ISNULL(@process_linear_options_delta, 'y')
-
+SET @trigger_workflow = ISNULL(@trigger_workflow, 'y')
 declare @derive_on_calculation varchar(1),@CFD_id varchar(30)
 
 select @CFD_id=internal_deal_type_subtype_id from internal_deal_type_subtype_types where internal_deal_type_subtype_type='CFD'
