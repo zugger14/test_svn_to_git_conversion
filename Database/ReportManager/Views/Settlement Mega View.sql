@@ -1,4 +1,4 @@
-BEGIN TRY
+ BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'SSMV1'
@@ -120,7 +120,7 @@ FROM portfolio_hierarchy book(NOLOCK)
 	INNER JOIN source_system_book_map ssbm ON ssbm.fas_book_id = book.entity_id
 	INNER JOIN fas_subsidiaries fs ON fs.fas_subsidiary_id = sub.entity_id
 	LEFT JOIN static_data_value sdv ON sdv.[type_id] = 400 AND ssbm.fas_deal_type_value_id = sdv.value_id
---WHERE 1 = 1 AND (''@sub_id'' = ''NULL'' OR sub.entity_id IN (@sub_id)) AND (''@stra_id'' = ''NULL'' OR stra.entity_id IN (@stra_id)) AND (''@book_id'' = ''NULL'' OR book.entity_id IN (@book_id)) AND (''@sub_book_id'' = ''NULL'' OR ssbm.book_deal_type_map_id IN (@sub_book_id))
+WHERE 1 = 1 AND (''@sub_id'' = ''NULL'' OR sub.entity_id IN (@sub_id)) AND (''@stra_id'' = ''NULL'' OR stra.entity_id IN (@stra_id)) AND (''@book_id'' = ''NULL'' OR book.entity_id IN (@book_id)) AND (''@sub_book_id'' = ''NULL'' OR ssbm.book_deal_type_map_id IN (@sub_book_id))
 
 
 IF ''@from_as_of_date'' = ''NULL'' AND ''@to_as_of_date'' <> ''NULL''
