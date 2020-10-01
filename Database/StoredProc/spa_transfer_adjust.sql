@@ -45,8 +45,8 @@ EXEC [spa_drop_all_temp_table]
 --select top 10 * from source_deal_header order by 1 desc
 --103488
 
-DECLARE @source_deal_header_id INT = 103042 
---DECLARE @source_deal_header_id INT = 104614 
+DECLARE @source_deal_header_id INT = 106351
+--DECLARE @source_deal_header_id INT = 108076  
 
 --DECLARE @source_deal_header_id INT = 104615 
 
@@ -63,6 +63,10 @@ DECLARE @source_deal_header_id INT = 103042
 --*/
 
 --select top 10 * from  source_deal_header order by 1 desc
+
+
+--capacity release: 106173; EEX Deals: 106351,108076
+
 
 
 SET NOCOUNT ON
@@ -144,7 +148,6 @@ FROM(
 
 SET @capacity_lto = @all_physical_deals 
 
-
 SET @all_physical_deals = @source_deal_header_id
 
 SELECT  @all_physical_deals_capacity = ISNULL(@all_physical_deals_capacity + ',', '') + CAST(a.source_deal_header_id AS VARCHAR(10))
@@ -194,8 +197,6 @@ CREATE TABLE #temp_volume_capacity (
 	, volume NUMERIC(38,20)
 )
 
-
-
 IF @product_group = 'Complex-EEX'
 BEGIN
 	SELECT @path_id = uddf.udf_value
@@ -222,6 +223,7 @@ BEGIN
 	SET @flow_date_to = @deal_term_end -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_end, 'f')
 
 	DECLARE @has_deal_scheduled BIT = 0
+
 
 	WHILE (@flow_date_from <= @flow_date_to)
 	BEGIN
@@ -251,7 +253,7 @@ BEGIN
 		--	 @transport_deal_id,
 		--	 @process_id
 
-		--return;
+		
 
 		EXEC [dbo].[spa_auto_deal_schedule]
 			@source_deal_header_id = @source_deal_header_id,
@@ -433,6 +435,19 @@ BEGIN
 	SELECT source_deal_header_id
 	FROM #temp_transport_deal
 	WHERE type = 'Transport'
+
+
+	UPDATE uddf
+		SET uddf.udf_value = @source_deal_header_id	
+	FROM #temp_transport_deal ttd
+	INNER JOIN user_defined_deal_fields uddf
+		ON ttd.source_deal_header_id = uddf.source_deal_header_id
+	INNER JOIN source_deal_header sdh
+		ON sdh.source_deal_header_id = uddf.source_deal_header_id
+	INNER JOIN user_defined_deal_fields_template uddft
+		ON sdh.template_id = uddft.template_id 
+		AND uddf.udf_template_id = uddft.udf_template_id	
+		AND uddft.field_label = 'From Deal'
 	
 	IF EXISTS(SELECT 1 FROM #temp_updated_deals)
 	BEGIN
@@ -510,6 +525,9 @@ BEGIN
 		WHERE template_name = 'capacity bund'
 			AND sdh.header_buy_sell_flag = 's'
 			AND @deal_term_start BETWEEN sdd.term_start AND sdd.term_end
+
+
+			
 			
 		IF @capacity_deal_id IS NOT NULL
 		BEGIN
@@ -519,7 +537,8 @@ BEGIN
 				ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 			WHERE sdd.source_deal_header_id = @capacity_deal_id
 			AND sddh.term_date BETWEEN @deal_term_start AND @deal_term_end
-	
+
+			
 			INSERT INTO source_deal_detail_hour (
 				source_deal_detail_id
 				, term_date
@@ -532,7 +551,7 @@ BEGIN
 				, pmh.term_start
 				, RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00' 
 				, 0
-				,  IIF(tvc.volume < 0, 0, pmh.rmdq)
+				,  IIF(ISNULL(tvc.volume, 0) <= 0, 0, pmh.rmdq)
 				, 982 			
 			FROM [FNAGetPathMDQHourly](@path_id, @deal_term_start, @deal_term_end, '') pmh
 			INNER JOIN source_deal_detail sdd
@@ -542,7 +561,6 @@ BEGIN
 				ON tvc.term_date = pmh.term_start	
 				AND RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00'  = tvc.hr
 			WHERE pmh.is_complex = 'y'
-
 
 			INSERT INTO #temp_updated_deals(source_deal_header_id)
 			SELECT @capacity_deal_id
@@ -1175,11 +1193,14 @@ BEGIN
 			
 		END
 
-	--SELECT 	@source_deal_header_id,
-	--		@reschedule,
-	--		@flow_date_from,
-	--		@transport_deal_id,
-	--		@process_id
+
+		--SELECT 	@source_deal_header_id,
+		--	@reschedule,
+		--	@flow_date_from,
+		--	@transport_deal_id,
+		--	@process_id
+
+		--	return;
 
 			
 		EXEC [dbo].[spa_auto_deal_schedule]
@@ -1356,7 +1377,6 @@ BEGIN
 		AND sdv.code = 'Complex-ROD'
 		AND sdh.header_buy_sell_flag = 'b'		
 		AND @deal_term_start BETWEEN sdd.term_start AND sdd.term_end
-	
 
 	IF @capacity_deal_id IS NOT NULL
 	BEGIN
@@ -1366,6 +1386,9 @@ BEGIN
 			ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		WHERE sdd.source_deal_header_id = @capacity_deal_id
 		AND sddh.term_date BETWEEN @deal_term_start and @deal_term_end
+
+
+		
 
 		INSERT INTO source_deal_detail_hour (
 						source_deal_detail_id
