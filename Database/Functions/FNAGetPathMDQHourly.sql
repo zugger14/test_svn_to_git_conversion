@@ -61,7 +61,7 @@ DECLARE @return_table TABLE (
 	[stg_net_type] VARCHAR(50) NULL
 )
 
-SELECT @path_id = '310', @term_start = '2033-07-02', @term_end = '2033-07-02', @data_level = ''
+SELECT @path_id = '310', @term_start = '2033-07-01', @term_end = '2033-07-01', @data_level = ''
 
 	
 EXEC dbo.spa_drop_all_temp_table
@@ -110,7 +110,10 @@ BEGIN
 		WHERE ccrs.path_id = @path_id
 
 		--storage case: get storage type on basis of from and to location of path
-		SELECT @storage_type = CASE WHEN smj_from.location_name = 'storage' THEN 'w' WHEN smj_to.location_name = 'storage' THEN 'i' ELSE NULL END
+		SELECT @storage_type =	CASE WHEN smj_from.location_name = 'storage' AND sml_from.is_pool = 'y' THEN 'w' 
+									WHEN smj_to.location_name = 'storage' AND sml_to.is_pool = 'y' THEN 'i' 
+									ELSE NULL 
+								END
 			, @storage_loc_id = CASE WHEN smj_from.location_name = 'storage' THEN dp.from_location WHEN smj_to.location_name = 'storage' THEN dp.to_location ELSE NULL END
 		FROM delivery_path dp
 		INNER JOIN source_minor_location sml_from
@@ -122,6 +125,9 @@ BEGIN
 		INNER JOIN source_major_location smj_to
 			ON smj_to.source_major_location_id = sml_to.source_major_location_id
 		WHERE dp.path_id = @path_id
+
+		--select @storage_type
+
 
 		--SET @storage_type = null
 
