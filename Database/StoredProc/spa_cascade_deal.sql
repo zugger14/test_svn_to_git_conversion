@@ -456,21 +456,22 @@ BEGIN
 		--shipper code1
 		UPDATE sdd
 		SET shipper_code1 = scmd1_default.shipper_code_mapping_detail_id
-		FROM  source_deal_detail sdd
-		OUTER APPLY (SELECT t.counterparty_id FROM #tmp_header t) sdh 
+		FROM source_deal_detail sdd
+		OUTER APPLY (SELECT counterparty_id FROM #tmp_header) sdh 
 		INNER JOIN shipper_code_mapping scm ON scm.counterparty_id = sdh.counterparty_id						
 		OUTER APPLY
 		(SELECT scmd1_fil.shipper_code_mapping_detail_id FROM
 			(SELECT * FROM
-				(SELECT scmd1_def.shipper_code_mapping_detail_id , 
+				(SELECT TOP 1 scmd1_def.shipper_code_mapping_detail_id , 
 					scmd1_def.shipper_code1, 
 					scmd1_def.effective_date,
 					ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY scmd1_def.effective_date DESC) rn
-						FROM shipper_code_mapping_detail scmd1_def
-						WHERE scmd1_def.location_id = sdd.location_id 
-							AND scmd1_def.shipper_code_id = scm.shipper_code_id
-							AND scmd1_def.effective_date <= CAST(sdd.term_start AS DATE)
-							AND scmd1_def.is_active = 'y'
+				FROM shipper_code_mapping_detail scmd1_def
+				WHERE scmd1_def.location_id = sdd.location_id 
+					AND scmd1_def.shipper_code_id = scm.shipper_code_id
+					AND scmd1_def.effective_date <= CAST(sdd.term_start AS DATE)
+					AND scmd1_def.is_active = 'y'
+				ORDER BY scmd1_def.effective_date DESC
 				) a WHERE rn =1
 			) b 
 			INNER JOIN shipper_code_mapping_detail scmd1_fil ON
@@ -478,17 +479,17 @@ BEGIN
 				AND scmd1_fil.is_active = 'y' AND scmd1_fil.shipper_code_id = scm.shipper_code_id
 			AND ISNULL(NULLIF(scmd1_fil.shipper_code1_is_default, ''), 'n') = 'y'
 		) scmd1_default
-
+	 
 		--shipper code2
 		UPDATE sdd
 		SET shipper_code2 = scmd2_default.shipper_code_mapping_detail_id
-		FROM  source_deal_detail sdd
-		OUTER APPLY (SELECT t.counterparty_id FROM #tmp_header t) sdh 
+		FROM source_deal_detail sdd
+		OUTER APPLY (SELECT counterparty_id FROM #tmp_header ) sdh 
 		INNER JOIN shipper_code_mapping scm ON scm.counterparty_id = sdh.counterparty_id
 		OUTER APPLY 
 		( SELECT scmd2_fil.shipper_code_mapping_detail_id FROM
 			(SELECT * FROM
-				(SELECT scmd2_def.shipper_code_mapping_detail_id , 
+				(SELECT TOP 1 scmd2_def.shipper_code_mapping_detail_id , 
 					scmd2_def.shipper_code, 
 					scmd2_def.effective_date,
 					ROW_NUMBER() OVER (PARTITION BY scmd2_def.shipper_code ORDER BY scmd2_def.effective_date DESC) rn
@@ -497,6 +498,7 @@ BEGIN
 					AND scmd2_def.effective_date <= CAST(sdd.term_start AS DATE)
 					AND scmd2_def.shipper_code_id = scm.shipper_code_id
 					AND scmd2_def.is_active = 'y'	
+				ORDER BY scmd2_def.effective_date DESC
 				) a WHERE rn =1
 			) b 
 			INNER JOIN shipper_code_mapping_detail scmd2_fil ON b.effective_date = scmd2_fil.effective_date 
@@ -504,6 +506,7 @@ BEGIN
 				AND scmd2_fil.is_active = 'y' AND scmd2_fil.shipper_code_id = scm.shipper_code_id
 			AND ISNULL(NULLIF(scmd2_fil.is_default, ''), 'n') = 'y'	
 		) scmd2_default
+		 
 
 		UPDATE sdh
 		SET sdh.close_reference_id = di.source_deal_header_id
