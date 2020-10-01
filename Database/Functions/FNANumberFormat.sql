@@ -17,11 +17,11 @@ GO
 				o = no rounding
 */
 
-CREATE FUNCTION [dbo].[FNANumberFormat](@num NUMERIC(30,18),@num_type NCHAR(1))
+CREATE FUNCTION [dbo].[FNANumberFormat](@num NUMERIC(38,10),@num_type NCHAR(1))
 RETURNS NVARCHAR(50)
 AS
 /*
-DECLARE @num NUMERIC(30,18) = 1234.2678
+DECLARE @num NUMERIC(38,10) = 1234.2678
 ,@num_type NCHAR(1) = 'v'
 
 --*/

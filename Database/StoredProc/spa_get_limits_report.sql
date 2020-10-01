@@ -1015,19 +1015,19 @@ SET @sql_str = CASE WHEN OBJECT_ID('tempdb..#temp_limit_report') IS NOT NULL THE
 		END [Name],
 		sdv3.[code] [Limit Type],
 		CASE WHEN li.limit_type IN (1587, 1598) AND ISNULL(ml.limit_value, 0) = 0 THEN 
-				cast(ISNULL(li.tenor_month_from, 0) AS VARCHAR) + '' ~ '' + cast(li.tenor_month_to AS VARCHAR)
+				cast(ISNULL(li.tenor_month_from, 0) AS VARCHAR(50)) + '' ~ '' + cast(li.tenor_month_to AS VARCHAR(50))
 			WHEN li.limit_type = 1597 THEN
-				CAST(ISNULL(ml.limit_percentage, 0) AS VARCHAR) + '' ~ '' + CAST(ml.limit_value AS VARCHAR)
-			ELSE dbo.FNAAddThousandSeparator(str(ISNULL(ml.limit_value, 0), 26, 6)) 
+				CAST(dbo.FNANumberFormat(ISNULL(ml.limit_percentage, 0), ''n'') AS VARCHAR(50)) + '' ~ '' + CAST(dbo.FNANumberFormat(ISNULL(ml.limit_value, 0), ''n'') AS VARCHAR(50))
+			ELSE CAST(ISNULL(ml.limit_value, 0), ''n'') AS VARCHAR(50))		
 		END Limit,
 		CASE WHEN li.limit_type IN (1587, 1598) AND ISNULL(ml.limit_value, 0) = 0 THEN 
-				CASE WHEN lit.min_tenor is null THEN cast(lit.max_tenor AS VARCHAR) 
-					ELSE  cast(lit.min_tenor AS VARCHAR) + '' ~ '' + cast(lit.max_tenor AS VARCHAR) 
+				CASE WHEN lit.min_tenor is null THEN cast(lit.max_tenor AS VARCHAR(50)) 
+					ELSE  cast(lit.min_tenor AS VARCHAR) + '' ~ '' + cast(lit.max_tenor AS VARCHAR)  
 				END
 			WHEN li.limit_type = 1597 THEN
-					CAST(ISNULL(liv.value2, 0) AS VARCHAR) + '' ~ '' + CAST(liv.total_value AS VARCHAR)
+					CAST(dbo.FNANumberFormat(ISNULL(liv.value2, 0), ''n'') AS VARCHAR(50)) + '' ~ '' + CAST(dbo.FNANumberFormat(ISNULL(liv.total_value, 0), ''n'') AS VARCHAR(50))
 		ELSE
-			dbo.FNAAddThousandSeparator(str(ISNULL(ROUND(liv.total_value,2),0), 26,6))
+			CAST(ISNULL(liv.total_value, 0), ''n'') AS VARCHAR(50))
 		END [Total Value],
 		CASE WHEN li.limit_type IN (1587, 1598) AND ISNULL(ml.limit_value,0) = 0 THEN NULL
 			 WHEN li.limit_type = 1597 THEN NULL
@@ -1063,7 +1063,7 @@ SET @sql_str = CASE WHEN OBJECT_ID('tempdb..#temp_limit_report') IS NOT NULL THE
 				ELSE ''No'' 
 			END 
 		END [Limit Exceed],
-		dbo.FNAAddThousandSeparator(str(ROUND(ml.min_limit_value, 2), 26,6)) min_limit_value,
+		ISNULL(ml.min_limit_value, 0) min_limit_value,
 		CASE WHEN li.limit_type IN (1580,1584,1596,1599,1588) AND ml.min_limit_value IS NOT NULL AND 1 = ' + CASE WHEN ISNULL(@deal_level, 'n') = 'n' THEN '1' ELSE '2' END + ' THEN	
 				CASE WHEN (ISNULL(liv.total_value, 0) <= ISNULL(ml.min_limit_value, -99999999))
 				THEN ''Yes'' ELSE ''No'' END
