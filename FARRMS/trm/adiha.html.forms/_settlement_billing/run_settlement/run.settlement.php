@@ -241,6 +241,7 @@
         var counterparty_id = run_deal_settlement.form_run_deal_settlement.getItemValue('counterparty_id');                        
         var contract_id = run_deal_settlement.form_run_deal_settlement.getItemValue('contract_id');      
         counterparty_id = counterparty_id.toString();
+        var settlement_term = run_deal_settlement.form_run_deal_settlement.getItemValue('settlement_term');
 
         contract_id = contract_id.toString();
         var form_obj = run_deal_settlement.run_deal_settlement_layout.cells("b").getAttachedObject();
@@ -365,7 +366,13 @@
                         singleQuote('NULL') + ", " +
                         singleQuote(counterparty_id) + ", " +
                         singleQuote(ref_id) + ", " +
-                        singleQuote('NULL'); 
+                        singleQuote('NULL') + ", " +
+                        singleQuote('NULL') + ", " +
+                        singleQuote('0') + ", " +
+                        singleQuote('0') + ", " +
+                        singleQuote('0') + ", " +
+                        singleQuote('NULL') + ", " +
+                        singleQuote(settlement_term);
         //alert(exec_call)
         adiha_run_batch_process(exec_call, param, title);
     }   

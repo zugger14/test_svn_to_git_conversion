@@ -57,6 +57,9 @@ GO
 	@ignore_deal_date : Ignore deal date checking in process
 	@calc_settlement_adjustment : Calculate invoice adjustment settlement
 	@process_linear_options_delta : Process the option deal linearly
+	@look_term : Term filter column to process
+						- 'd' - Delivered term (term_start)
+						- 's' - Settled term (settlement_date)
 	@batch_process_id : process id when run through batch
 	@batch_report_param : paramater to run through barch
 
@@ -101,6 +104,7 @@ CREATE procedure [dbo].[spa_calc_mtm_job]
 	@ignore_deal_date BIT = 0,
 	@calc_settlement_adjustment BIT = 0,
 	@process_linear_options_delta CHAR(1) = NULL,
+	@look_term CHAR(1) = 'd', -- 'd'-> delivered term 's'-> settled term
 	@trigger_workflow NCHAR(1) =  'y',
 	@batch_process_id	VARCHAR(120) = NULL,
 	@batch_report_param	varchar(5000) = NULL

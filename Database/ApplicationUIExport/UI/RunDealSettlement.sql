@@ -195,6 +195,11 @@ BEGIN
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('10222300','contract_id','contract_id','Contract','browser','varchar','h','n',NULL,'200','n','n',NULL,'n','n','n','y','y','n','n','n',NULL,NULL,NULL)
 						
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
+			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
+			VALUES('10222300','settlement_term','settlement_term','Settlement Term','combo','varchar','h','n','SELECT ''d'',''Delivery'' UNION SELECT ''s'', ''Settlement''','200','n','n','s','y','n','n','y','n','n','n','n',NULL,NULL,NULL)
+						
 		END 
 	
 		IF OBJECT_ID('tempdb..#temp_old_template_group') IS NOT NULL
@@ -361,7 +366,8 @@ BEGIN
 		SELECT 58081,8682,57712,NULL,'General','deal_ref_id',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'6',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 58082,8682,57713,NULL,'General','deal_filter',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'7',NULL,NULL,NULL,NULL,NULL,NULL,'deal_filter',NULL,NULL UNION ALL 
 		SELECT 58083,8682,57714,NULL,'General','counterparty_id',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'8',NULL,NULL,NULL,NULL,NULL,NULL,'browse_counterparty',NULL,NULL UNION ALL 
-		SELECT 58084,8682,57715,NULL,'General','contract_id',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'9',NULL,NULL,NULL,NULL,NULL,NULL,'browse_contract_counterparty',NULL,NULL
+		SELECT 58084,8682,57715,NULL,'General','contract_id',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'9',NULL,NULL,NULL,NULL,NULL,NULL,'browse_contract_counterparty',NULL,NULL UNION ALL
+		SELECT 74676,10653,73686,NULL,'General','settlement_term',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
 				
 		UPDATE otf
 		SET otf.new_group_id = ntg.new_id
