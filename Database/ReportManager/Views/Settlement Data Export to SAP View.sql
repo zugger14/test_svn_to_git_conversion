@@ -1,4 +1,4 @@
-﻿BEGIN TRY
+ BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'SDETSV'
@@ -41,7 +41,6 @@
 	, @_sql1 NVARCHAR(MAX)
 	, @_sql2 NVARCHAR(MAX)
 	, @_sql3 NVARCHAR(MAX)
-
 IF ''@counterparty_id'' <> ''NULL''
 	SET @_counterparty_id = ''@counterparty_id''
 IF ''@contract_id'' <> ''NULL''
@@ -52,12 +51,10 @@ IF ''@prod_date_from'' <> ''NULL''
 	SET @_prod_date_from = ''@prod_date_from''
 IF ''@prod_date_to'' <> ''NULL''
 	SET @_prod_date_to = ''@prod_date_to''
-
 --SET @_stmt_invoice_id = 56
 --SET @_prod_date_from = ''2020-07-01''
 --SET @_prod_date_to = ''2020-07-31''
 --SET @_counterparty_id = 7713
-
 SET @_sql = N''
 	SELECT si.stmt_invoice_id
 	, sids.prod_date_from
@@ -110,13 +107,29 @@ SET @_sql = N''
 	INNER JOIN source_counterparty sc ON sc.source_counterparty_id = si.counterparty_id
 	LEFT JOIN contract_group cg ON cg.contract_id = si.contract_id
 	LEFT JOIN static_data_value sdv_ct ON sdv_ct.value_id = sids.invoice_line_item_id ''
-
 SET @_sql1 = N''
    OUTER APPLY (
+      SELECT TOP 1 * FROM (
 		SELECT TOP 1 chkout.*,sdh.header_buy_sell_flag  from stmt_checkout chkout 
 		INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = chkout.source_deal_detail_id
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
 		WHERE chkout.stmt_invoice_detail_id = sids.stmt_invoice_detail_id
+		UNION 
+		SELECT TOP 1 chkout.*,sdh.header_buy_sell_flag
+		FROM stmt_invoice si1
+		INNER JOIN stmt_invoice_detail stid ON si1.stmt_invoice_id = stid.stmt_invoice_id
+		OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a 
+		OUTER APPLY (
+		SELECT DISTINCT stid_b.stmt_invoice_id, a.stmt_checkout_id 
+		FROM stmt_invoice_detail stid_b
+		CROSS APPLY dbo.SplitCommaSeperatedValues(stid_b.description1) de
+		WHERE de.item = a.stmt_checkout_id 
+		) inv
+		INNER JOIN stmt_checkout chkout ON chkout.stmt_checkout_id = a.stmt_checkout_id
+		INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = chkout.source_deal_detail_id
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+		WHERE inv.stmt_invoice_id = si.stmt_invoice_id
+		) fnl
 	) stm_chkout
 	LEFT JOIN source_uom suom ON suom.source_uom_id = stm_chkout.uom_id
 	LEFT JOIN source_currency scu ON scu.source_currency_id = stm_chkout.currency_id
@@ -146,7 +159,6 @@ SET @_sql1 = N''
 + CASE WHEN @_stmt_invoice_id IS NOT NULL THEN '' AND  si.stmt_invoice_id IN (''+@_stmt_invoice_id+'') '' ELSE '''' END
 + CASE WHEN @_prod_date_from IS NOT NULL THEN '' AND  sids.prod_date_from >= ''''''+@_prod_date_from+'''''' '' ELSE '''' END
 + CASE WHEN @_prod_date_to IS NOT NULL THEN '' AND  sids.prod_date_to <= ''''''+@_prod_date_to+'''''' '' ELSE '''' END
-
 SET @_sql2 = N''
 SELECT  stmt_invoice_id
 	, prod_date_from
@@ -287,9 +299,7 @@ SELECT
 	, row_num
 	, header_buy_sell_flag
 FROM #temp_export_sap where  (invoice_type =''''i'''' AND  header_buy_sell_flag=  ''''b'''') OR   (invoice_type =''''r'''' AND  header_buy_sell_flag=  ''''s'''') ''
-
 SET @_sql3 = N''
-
 SELECT 
 	 null stmt_invoice_id
 	, prod_date_from
