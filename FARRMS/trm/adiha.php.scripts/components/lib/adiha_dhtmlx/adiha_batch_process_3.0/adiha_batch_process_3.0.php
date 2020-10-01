@@ -85,6 +85,7 @@ $export_csv_path = '';
 $ftp_folder_path = '';
 $export_web_services_id = '';
 $export_file_transfer_endpoint_id = '';
+$report_header = '';
 
 if ($flag == 'u') {
     $sp_url = "EXEC batch_report_process @flag='a', @jobId='" . $job_id . "'"; 
