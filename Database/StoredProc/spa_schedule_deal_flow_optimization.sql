@@ -4997,7 +4997,8 @@ BEGIN -- Insert/Update Deal data
 						, RIGHT(''0'' + CAST(cdmh.hour AS VARCHAR(10)), 2) + '':00'' hr
 						, 0 is_dst
 						, ' + CAST(@granularity AS VARCHAR(10)) + ' granularity
-						, ABS(CAST(CASE WHEN idd.leg = 1 THEN cdmh.received ELSE cdmh.delivered END AS NUMERIC(38,20))) deal_volume
+						--, ABS(CAST(CASE WHEN idd.leg = 1 THEN cdmh.received ELSE cdmh.delivered END AS NUMERIC(38,20))) deal_volume
+						, CAST(CASE WHEN idd.leg = 1 THEN cdmh.received ELSE cdmh.delivered END AS NUMERIC(38,20)) deal_volume
 					FROM #inserted_deal_detail idd
 					INNER JOIN ' + @contract_detail_hourly + ' cdmh
 						ON idd.term_start = cdmh.term_start
