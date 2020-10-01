@@ -1018,7 +1018,7 @@ SET @sql_str = CASE WHEN OBJECT_ID('tempdb..#temp_limit_report') IS NOT NULL THE
 				cast(ISNULL(li.tenor_month_from, 0) AS VARCHAR(50)) + '' ~ '' + cast(li.tenor_month_to AS VARCHAR(50))
 			WHEN li.limit_type = 1597 THEN
 				CAST(dbo.FNANumberFormat(ISNULL(ml.limit_percentage, 0), ''n'') AS VARCHAR(50)) + '' ~ '' + CAST(dbo.FNANumberFormat(ISNULL(ml.limit_value, 0), ''n'') AS VARCHAR(50))
-			ELSE CAST(ISNULL(ml.limit_value, 0), ''n'') AS VARCHAR(50))		
+			ELSE CAST(ISNULL(ml.limit_value, 0) AS VARCHAR(50))		
 		END Limit,
 		CASE WHEN li.limit_type IN (1587, 1598) AND ISNULL(ml.limit_value, 0) = 0 THEN 
 				CASE WHEN lit.min_tenor is null THEN cast(lit.max_tenor AS VARCHAR(50)) 
@@ -1027,7 +1027,7 @@ SET @sql_str = CASE WHEN OBJECT_ID('tempdb..#temp_limit_report') IS NOT NULL THE
 			WHEN li.limit_type = 1597 THEN
 					CAST(dbo.FNANumberFormat(ISNULL(liv.value2, 0), ''n'') AS VARCHAR(50)) + '' ~ '' + CAST(dbo.FNANumberFormat(ISNULL(liv.total_value, 0), ''n'') AS VARCHAR(50))
 		ELSE
-			CAST(ISNULL(liv.total_value, 0), ''n'') AS VARCHAR(50))
+			CAST(ISNULL(liv.total_value, 0) AS VARCHAR(50))
 		END [Total Value],
 		CASE WHEN li.limit_type IN (1587, 1598) AND ISNULL(ml.limit_value,0) = 0 THEN NULL
 			 WHEN li.limit_type = 1597 THEN NULL
