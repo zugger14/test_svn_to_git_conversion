@@ -45,7 +45,7 @@ EXEC [spa_drop_all_temp_table]
 --select top 10 * from source_deal_header order by 1 desc
 --103488
 
-DECLARE @source_deal_header_id INT = 106351
+DECLARE @source_deal_header_id INT = 108225
 --DECLARE @source_deal_header_id INT = 108076  
 
 --DECLARE @source_deal_header_id INT = 104615 
@@ -100,6 +100,7 @@ DECLARE
 		, @should_auto_path_calc BIT = 0
 		, @all_physical_deals_capacity VARCHAR(2000)
 		, @capacity_lto VARCHAR(2000)
+		, @contract_id INT
 
 SELECT @product_group = sdv.code 
 	, @product_group_id = internal_portfolio_id
@@ -165,6 +166,25 @@ FROM(
 		--AND sdh.header_buy_sell_flag = @header_buy_sell_flag
 		AND sdt.deal_type_id = 'Physical' 
 ) a
+
+
+SELECT  @contract_id = st.agreement
+FROM source_deal_header sdh
+INNER JOIN user_defined_deal_fields_template_main uddft
+	ON uddft.template_id = sdh.template_id
+INNER JOIN user_defined_deal_fields uddf
+	ON uddf.source_deal_header_id = sdh.source_deal_header_id 
+	AND uddf.udf_template_id = uddft.udf_template_id
+INNER JOIN user_defined_fields_template udft
+	ON udft.field_id = uddft.field_id
+--INNER JOIN contract_group cg
+--	ON CAST(cg.contract_id AS NVARCHAR(10)) = uddf.udf_value
+INNER JOIN general_assest_info_virtual_storage gs
+	ON CAST(gs.agreement AS VARCHAR(10)) =  uddf.udf_value
+LEFT JOIN general_assest_info_virtual_storage st 
+	on st.general_assest_id = gs.general_assest_id
+WHERE sdh.source_deal_header_id = @source_deal_header_id --7385 --
+	AND udft.Field_label = 'storage contract'
 
 --select @all_physical_deals return;
 
@@ -1200,7 +1220,6 @@ BEGIN
 		--	@transport_deal_id,
 		--	@process_id
 
-		--	return;
 
 			
 		EXEC [dbo].[spa_auto_deal_schedule]
@@ -1260,7 +1279,8 @@ BEGIN
 		AND uddft.field_label = 'From Deal'
 	
 	UPDATE sdh
-		SET sdh.deal_date = sdh_m.deal_date
+		SET sdh.deal_date = sdh_m.deal_date,
+		 sdh.contract_id = IIF(ttd.type = 'Withdrawal', @contract_id, sdh.contract_id)
 	FROM #temp_transport_deal ttd
 	INNER JOIN source_deal_header sdh 
 		ON ttd.source_deal_header_id = sdh.source_deal_header_id
