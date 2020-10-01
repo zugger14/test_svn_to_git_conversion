@@ -1085,15 +1085,16 @@ BEGIN
 			OUTER APPLY
 			(SELECT scmd1_fil.shipper_code_mapping_detail_id FROM
 				(SELECT * FROM
-					(SELECT scmd1_def.shipper_code_mapping_detail_id , 
+					(SELECT TOP 1 scmd1_def.shipper_code_mapping_detail_id , 
 						scmd1_def.shipper_code1, 
 						scmd1_def.effective_date,
 						ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY scmd1_def.effective_date DESC) rn
-							FROM shipper_code_mapping_detail scmd1_def
-							WHERE scmd1_def.location_id = sdd.location_id 
-								AND scmd1_def.shipper_code_id = scm.shipper_code_id
-								AND scmd1_def.effective_date <= CAST(sdd.term_start AS DATE)
-								AND scmd1_def.is_active = 'y'
+					FROM shipper_code_mapping_detail scmd1_def
+					WHERE scmd1_def.location_id = sdd.location_id 
+						AND scmd1_def.shipper_code_id = scm.shipper_code_id
+						AND scmd1_def.effective_date <= CAST(sdd.term_start AS DATE)
+						AND scmd1_def.is_active = 'y'
+					ORDER BY scmd1_def.effective_date DESC
 					) a WHERE rn =1
 				) b 
 				INNER JOIN shipper_code_mapping_detail scmd1_fil ON
@@ -1114,7 +1115,7 @@ BEGIN
 			OUTER APPLY 
 			( SELECT scmd2_fil.shipper_code_mapping_detail_id FROM
 				(SELECT * FROM
-					(SELECT scmd2_def.shipper_code_mapping_detail_id , 
+					(SELECT TOP 1 scmd2_def.shipper_code_mapping_detail_id , 
 						scmd2_def.shipper_code, 
 						scmd2_def.effective_date,
 						ROW_NUMBER() OVER (PARTITION BY scmd2_def.shipper_code ORDER BY scmd2_def.effective_date DESC) rn
@@ -1123,6 +1124,7 @@ BEGIN
 						AND scmd2_def.effective_date <= CAST(sdd.term_start AS DATE)
 						AND scmd2_def.shipper_code_id = scm.shipper_code_id
 						AND scmd2_def.is_active = 'y'	
+					ORDER BY scmd2_def.effective_date DESC
 					) a WHERE rn =1
 				) b 
 				INNER JOIN shipper_code_mapping_detail scmd2_fil ON b.effective_date = scmd2_fil.effective_date 
