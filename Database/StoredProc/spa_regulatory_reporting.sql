@@ -318,7 +318,7 @@ BEGIN
 		+ IIF(@commodity_id IS NOT NULL, ' AND sdh.commodity_id = ' + CAST(@commodity_id AS VARCHAR(10)), '')
 		+ IIF(@location_group_id IS NOT NULL, ' AND sml.source_major_location_ID = ' + CAST(@location_group_id AS VARCHAR(10)), '')
 		+ IIF(@location_id IS NOT NULL, ' AND sdd.location_id = ' + CAST(@location_id AS VARCHAR(10)), '')
-		+ IIF(@counterparty_id IS NOT NULL, ' AND sdh.counterparty_id = ' + CAST(@counterparty_id AS VARCHAR(10)), '')
+		+ IIF(@counterparty_id IS NOT NULL, ' AND sdh.counterparty_id = ' + CAST(@counterparty_id AS VARCHAR(10)), ' AND 1 = 2')
 		+ IIF(@counterpaty_type IS NOT NULL, ' AND sc.int_ext_flag = ''' + CAST(@counterpaty_type AS VARCHAR(10)) + '''', '')
 		+ IIF(@index_group IS NOT NULL, ' AND spcd.index_group = ' + CAST(@index_group AS VARCHAR(10)), '')
 		+ IIF(@curve_id IS NOT NULL, ' AND sdd.curve_id = ' + CAST(@curve_id AS VARCHAR(10)), '')
