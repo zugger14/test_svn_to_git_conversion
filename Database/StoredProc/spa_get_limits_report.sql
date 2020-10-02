@@ -2,6 +2,30 @@
 IF EXISTS ( SELECT  * FROM sys.objects WHERE   OBJECT_ID = OBJECT_ID(N'[dbo].[spa_get_limits_report]') AND TYPE IN ( N'P', N'PC' ) ) 
     DROP PROCEDURE [dbo].[spa_get_limits_report]
 GO
+/**
+	
+	Script to get limit report.
+
+	Parameters 
+	@as_of_date				: As of Date
+    @limit_for				: 
+    @limit_type				: 
+    @limit_id				: 
+    @show_exception_only	: 
+    @trader_id				: 
+    @commodity_id			: 
+    @role_id				: 
+    @counterparty_id		: 
+    @var_crit_det_id		: 
+    @curve_id				: 
+    @drillID				: 
+    @drillIDFor				: 
+    @drillCurveID			: 
+	@drillPosLimitType		: 
+	@drillflag				: 
+	@drillTenorLimit		: 
+	@deal_level				: 
+*/
 
 CREATE PROC [dbo].[spa_get_limits_report]
     @as_of_date DATETIME,
@@ -24,16 +48,17 @@ CREATE PROC [dbo].[spa_get_limits_report]
 	@deal_level CHAR(1) = 'n',
 	@source_deal_header_id  VARCHAR(MAX) = NULL
  AS
-/*
 
+/** * DEBUG QUERY START *
+	SET NOCOUNT ON
+	
+	--EXEC spa_get_limits_report '2013-02-06', NULL, 1581, '2', 'n', NULL, NULL, NULL
 
---EXEC spa_get_limits_report '2013-02-06', NULL, 1581, '2', 'n', NULL, NULL, NULL
-
-declare   @as_of_date DATETIME='2013-02-06',
+DECLARE   @as_of_date DATETIME='2020-03-30',
 	@limit_for int=null,-- 'l' for limit, 'b' book,'a' all
-	@limit_type INT = 1581,
-	@limit_id VARCHAR(MAX) = '2',
-	@show_exception_only CHAR(1) = 'n',
+	@limit_type INT = 1598,
+	@limit_id VARCHAR(MAX) = NULL,
+	@show_exception_only CHAR(1) = NULL,
 	@trader_id INT = NULL,
 	@commodity_id INT = NULL,
 	@role_id int=null,
@@ -45,31 +70,21 @@ declare   @as_of_date DATETIME='2013-02-06',
     @drillCurveID VARCHAR(100) = NULL,
     @drillPosLimitType VARCHAR(10) = NULL,
     @drillflag VARCHAR(1) = NULL,
-    @drillTenorLimit FLOAT = NULL
+    @drillTenorLimit FLOAT = NULL,
+	@deal_level CHAR(1) = 'n'
     
     
---select @as_of_date='2012-11-29', @limit_for=NULL, @limit_type=NULL, @limit_id=16, @show_exception_only='n', @trader_id=NULL, @commodity_id=NULL, @role_id=NULL
---select @as_of_date='2012-06-22', @limit_for=NULL, @limit_type=NULL, @limit_id=19, @show_exception_only='n', @trader_id=NULL, @commodity_id=NULL, @role_id=NULL
-
 --select @as_of_date='2012-06-22', @limit_for=NULL, @limit_type=NULL, @limit_id=8, @show_exception_only='n', @trader_id=NULL, @commodity_id=NULL, @role_id=NULL
 
+EXEC spa_drop_all_temp_table
 
+-- * DEBUG QUERY END * */
 
-drop table #limit_info_var
-drop table #limit_info_value
-drop table #limit_info_mtm
-drop table #limit_ids
-drop table #limit_info
-drop table #collect_deals
-drop table #limit_info_tenor
-
---*/
 DECLARE @sql_str VARCHAR(8000)
 DECLARE @sql_where VARCHAR(MAX)
 SELECT  @sql_where = ''
 DECLARE @sql_str1 VARCHAR(MAX)
 DECLARE @process_id VARCHAR(500), @user_name VARCHAR(500), @std_deal_table VARCHAR(100)
-
 
 SET @process_id = dbo.FNAGetNewID()
 SET @user_name = dbo.FNADBUser()
@@ -172,7 +187,7 @@ SET @sql_str='insert into  #limit_info (maintain_limit_id,limit_type,limit_for,p
 		AND lh.active = ''y'' 
 	INNER JOIN #limit_ids li on li.limit_id = lh.limit_id '  
 	+ CASE WHEN @limit_for IS NULL THEN '' ELSE ' AND lh.limit_for IN (' + CAST(@limit_for AS VARCHAR) + ')' END 
-	+ CASE WHEN @limit_type IS NULL THEN '' ELSE ' AND lt.limit_type IN ('+ @limit_type + ')' END 
+	+ CASE WHEN @limit_type IS NULL THEN '' ELSE ' AND lt.limit_type IN ('+ CAST(@limit_type as VARCHAR) + ')' END 
 	+ CASE WHEN @trader_id IS NULL THEN '' ELSE ' AND lh.trader_id='+ CAST(@trader_id AS VARCHAR)  END 
 	+ CASE WHEN @commodity_id IS NULL THEN '' ELSE ' AND lh.commodity='+ CAST(@commodity_id AS VARCHAR)  END 
 	+ CASE WHEN @counterparty_id IS NULL THEN '' ELSE ' AND lh.counterparty_id='+ CAST(@counterparty_id AS VARCHAR)  END 
