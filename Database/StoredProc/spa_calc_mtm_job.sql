@@ -114,14 +114,14 @@ SET STATISTICS IO off
 SET NOCOUNT ON
 SET ROWCOUNT 0
 
---BEGIN OF TESTING -------------------------
----------------------------------------------------
+----BEGIN OF TESTING -------------------------
+-----------------------------------------------------
 /*
 
 --select * from source_deal_pnl 
 --DBCC DROPCLEANBUFFERS
---DBCC FREEPROCCACHE
---dbcc stackdump(1)
+----DBCC FREEPROCCACHE
+----dbcc stackdump(1)
 
 
 SET nocount off	
@@ -167,8 +167,8 @@ declare	@sub_id varchar(1000),
 	,@ignore_deal_date BIT = 0
 	,@calc_settlement_adjustment BIT = 0
 	,@process_linear_options_delta CHAR(1) = NULL
+	,@look_term CHAR(1)='d'
 	,@trigger_workflow NCHAR(1) =  'y'
-	
 SET @calc_explain_type ='p'
 
 
@@ -189,17 +189,19 @@ delete index_fees_breakdown_settlement   where source_deal_header_id=1600
 select *  from source_deal_pnl_breakdown   where source_deal_header_id=7876
 select *  from source_deal_pnl_detail   where source_deal_header_id=7876
 
-update source_deal_detail set deal_volume_uom_id=1158  where source_deal_header_id=97409
+
 
 */
+
+
 
 SELECT	
 	@sub_id = null, 
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id ='102958, 102959'  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2020-01-31' , --'2017-02-15',
+	@source_deal_header_id =108264  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2020-08-31' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -216,8 +218,8 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2020-01-01' ,
-	@term_end = '2020-01-31' ,
+	@term_start = '2020-08-01' ,
+	@term_end = '2020-08-31' ,
 	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
@@ -226,6 +228,9 @@ SELECT
 	@counterparty_id=null,
 	@ref_id=null,
 	@process_linear_options_delta = NULL
+	,@look_term= 's' -- 'd'-> delivered term 's'-> settled term
+
+
 
 
 /*
@@ -395,6 +400,11 @@ BEGIN
 END
 
 
+
+
+
+
+
  -- exec dbo.spa_drop_all_temp_table
 
 -- select * from #temp_curves where source_curve_def_id IN ( 23, 76)
@@ -408,8 +418,6 @@ END
 
 
 --*/
-
-
 
 
 
@@ -595,6 +603,7 @@ if OBJECT_ID('tempdb..#pnl_comp_source_deal_header_id') is not null drop table #
 if OBJECT_ID('tempdb..#options_calc_method') is not null drop table #options_calc_method
 
 
+
 DECLARE @proc_begin_time datetime
 DECLARE @log_time datetime
 DECLARE @pr_name VARCHAR(5000)
@@ -670,6 +679,7 @@ END
 
 if @as_of_date>@term_end and @calc_type = 's'
 	set  @as_of_date=@term_end
+
 
 --Storing default dst to use below while returning null from vwDealTimezoneContract for REC deals
 DECLARE @default_dst_group VARCHAR(50)
@@ -1402,6 +1412,7 @@ create table #temp_deals(
 	match_info_id INT
 	,exception_handle bit
 	,mtm_sett_calc bit
+	,curve_as_of_date date
 ) 
 
 CREATE TABLE #fees_breakdown 
@@ -1531,10 +1542,34 @@ END
 --If @tenor_option = 'c' -- c, f
 --   SET @where_clause = @where_clause + ' AND sdd.term_start >= ''' +  dbo.FNAGetContractMonth(@as_of_date)  + ''''
 
+IF @calc_type ='s'
+begin
+	If isnull(@look_term,'d') = 's'  -- c, f
+	   SET @where_clause = @where_clause + ' and 
+		   CASE WHEN sdh.is_environmental = ''y'' THEN ned.delivery_date
+		   else  
+			   CASE WHEN sdh.option_flag = ''y'' THEN ned.option_settlement_date
+				else 
+					case when sdd.physical_financial_flag=''f'' then COALESCE(cexp.exp_date,sdd.settlement_date,sdd.term_start) else sdd.term_start end 
+				end
+			end BETWEEN ''' + @term_start + ''' AND ''' + @term_end + ''''
+	else
+	   SET @where_clause = @where_clause + ' and 
+		   CASE WHEN sdh.is_environmental = ''y'' THEN ned.delivery_date
+		   else  
+			   CASE WHEN sdh.option_flag = ''y'' THEN ned.option_settlement_date
+				else 
+					sdd.term_start
+				end
+			end BETWEEN ''' + @term_start + ''' AND ''' + @term_end + ''''
+end
+
+
 IF @calc_type <> 's'
-	SET @where_clause = @where_clause + ' AND (sdh.is_environmental = ''y'' OR ISNULL(case when sdh.option_flag=''y''
-	 or sdd.physical_financial_flag=''f'' or (sdd.physical_financial_flag=''p'' and sdh.internal_deal_subtype_value_id='+@CFD_id+') then ISNULL(cexp.exp_date,sdd.contract_expiration_date) else null end,sdd.term_end) > ''' +  @as_of_date  + ''')'
---	SET @where_clause = @where_clause + ' AND sdd.term_start >= ''' +  dbo.FNAGetContractMonth(@as_of_date)  + ''''
+	SET @where_clause = @where_clause + ' AND COALESCE(cexp.exp_date,sdd.contract_expiration_date,sdd.term_end) between
+		case when isnull(sdht.ignore_bom,''n'')=''n'' then dateadd(day,1,'''+@as_of_date+''')  else '''+ convert(varchar(10),dateadd(month,1,left(@as_of_date,8)+'01'),120) +''' end and  case when  (sdht.[month] is null and sdht.[year] is null) then ''9999-01-01''  
+			else  dateadd(month,isnull(sdht.[month],0),dateadd(year,isnull(sdht.[year],0),case when sdht.[year] is null then case when sdht.[month] is null then '''+@as_of_date+''' else '''+convert(varchar(10),dateadd(day,-1,dateadd(month,1,left(@as_of_date,8)+'01')),120)+''' end else '''+convert(varchar(10),dateadd(day,-1,dateadd(year,1,left(@as_of_date,5)+'01-01')),120)+''' end )) end'
+
 IF @calc_type = 's'
 SET @where_clause = @where_clause + ' AND (ISNULL(sdh.is_environmental, ''n'') <> ''y'' OR sdd.status = 25006 OR rec.transfer_status = 112102) 
 --	AND COALESCE(rec.delivery_date, sdd.actual_delivery_date, sdd.delivery_date, sdd.term_start) BETWEEN ''' + @term_start + ''' AND ''' + @term_end + '''
@@ -1835,11 +1870,7 @@ BEGIN
 	sdd.term_start, 
 	sdd.term_end,
 	fee_deals.source_deal_header_id
-	having '+	--max(sdd.contract_expiration_date) between ''' + @term_start + ''' and ''' + @term_end + ''' OR
-	' CASE WHEN MAX(sdh.is_environmental) = ''y'' THEN MAX(rec.dDate) ELSE sdd.term_start END BETWEEN ''' + @term_start + ''' and ''' + @term_end + ''' OR
-			CASE WHEN MAX(sdh.option_flag)= ''y'' THEN max(isnull(sdh.option_settlement_date, sdh.deal_date)) ELSE NULL END 
-					BETWEEN ''' + @term_start + ''' and ''' + @term_end + ''''
-
+'
 	EXEC spa_print @sqlstmt
 	exec('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@sqlstmt)
 END
@@ -1867,6 +1898,7 @@ If @calc_type = 's'
 	LEFT JOIN  formula_editor fe ON sdd.formula_id = fe.formula_id   
 	LEFT JOIN source_deal_header_template sdht on sdht.template_id = sdh.template_id  
 	LEFT JOIN days_count_def dcd on dcd.value_id = sdd.day_count_id 
+	LEFT JOIN source_price_curve_def spcd_f ON spcd_f.source_curve_def_id =  sdd.formula_curve_id 
 	LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = ISNULL(pd.price_index, sdd.curve_id) 
 	LEFT JOIN source_price_curve_def spcd_p ON spcd_p.source_curve_def_id = spcd.proxy_source_curve_def_id 
 	LEFT JOIN source_price_curve_def spcd_m ON spcd_m.source_curve_def_id = spcd.monthly_index 
@@ -1937,8 +1969,9 @@ BEGIN
 		 LEFT JOIN contract_group cg ON cg.contract_id = sdh.contract_id
 			LEFT OUTER JOIN  formula_editor fe  ON sdd.formula_id = fe.formula_id   LEFT OUTER JOIN
 			source_deal_header_template sdht  on sdht.template_id = sdh.template_id  LEFT OUTER JOIN
-			days_count_def dcd on dcd.value_id = sdd.day_count_id LEFT OUTER JOIN 
-			source_price_curve_def spcd  ON spcd.source_curve_def_id = ISNULL(pd.price_index, sdd.curve_id) LEFT OUTER JOIN
+			days_count_def dcd on dcd.value_id = sdd.day_count_id 
+		LEFT JOIN source_price_curve_def spcd_f ON spcd_f.source_curve_def_id =  sdd.formula_curve_id 
+		LEFT JOIN source_price_curve_def spcd  ON spcd.source_curve_def_id = ISNULL(pd.price_index, sdd.curve_id) LEFT OUTER JOIN
 			source_price_curve_def spcd_p  ON spcd_p.source_curve_def_id = spcd.proxy_source_curve_def_id LEFT OUTER JOIN 
 			source_price_curve_def spcd_m  ON spcd_m.source_curve_def_id = spcd.monthly_index LEFT OUTER JOIN 
 			source_price_curve_def spcd_s  ON spcd_s.source_curve_def_id = spcd.settlement_curve_id LEFT OUTER JOIN 
@@ -1990,7 +2023,6 @@ begin
 	set @log_time=getdate()
 	print  @pr_name+' Running..............'
 end
-
 
 
 --980 monthly, 981 daily, 991 quarterly, 992 semi-annual, 993 annual
@@ -2062,13 +2094,17 @@ set @maturity_date_s =
 	END 		 
 '
 
-IF @calc_type <> 's' 
-SET @from_clause1 = @from_clause1 + ' 
-OUTER APPLY(SELECT hg.exp_date
-			FROM holiday_group hg 
-			WHERE hg.hol_group_value_id = spcd.exp_calendar_id 
-			AND ' + @maturity_date + ' BETWEEN hg.hol_date AND hg.hol_date_to
-			AND sdh.option_flag=''y'') cexp '
+--IF @calc_type = 'm' 
+SET @from_clause = @from_clause + ' 
+OUTER APPLY(
+	select max(exp_date) exp_date,max(case when aa=0 then exp_date else null end) exp_date_market from (
+		SELECT max(hg.exp_date) exp_date,0 aa FROM holiday_group hg 
+			WHERE hg.hol_group_value_id = spcd.exp_calendar_id  AND ' + @maturity_date + ' BETWEEN hg.hol_date AND hg.hol_date_to
+		union all
+		SELECT max(hg.exp_date) exp_date,1 aa FROM holiday_group hg 
+			WHERE hg.hol_group_value_id = spcd_f.exp_calendar_id  AND ' + @maturity_date + ' BETWEEN hg.hol_date AND hg.hol_date_to
+		) a
+) cexp '
 
 set @sqlstmt='insert into #temp_deals  
 		SELECT -- top(100)
@@ -2195,7 +2231,8 @@ set @sqlstmt4='
 	+ CASE WHEN @calc_type = 's' THEN 'rec.match_info_id' ELSE 'NULL' END
 	+', case when sdht.template_id in ('+@storage_inventory_template_id +') then 0 else 1 end exception_handle
 	,case when sdht.template_id in ('+ @storage_inventory_template_id+') then 0 else 1 end  mtm_sett_calc
-	
+	,isnull(case when sdd.physical_financial_flag=''f'' and ''s''='''+@calc_type +''' then  isnull(cexp.exp_date_market,sdd.settlement_date) else null end,'''+@curve_as_of_date+''')  curve_as_of_date
+
 '
 
 SET @from_clause1 = ISNULL(@from_clause1,'')
@@ -2347,9 +2384,6 @@ begin
 		
 	end		
 END
-
-
-
 
 
 --Linear Model Option Leg 1
@@ -2905,11 +2939,11 @@ from #temp_deals td
 -- Deriving price  for 	103605:Custom Event, 103603:Standard Event, 103601:Indexed
 
 select td.source_deal_detail_id,isnull(dpb.curve_id,ft.pricing_index) curve_id 
-	,case when  dpt.price_type_id=103601 and dpd.pricing_period is null and @calc_type='m' then @curve_as_of_date else isnull(dpb.fin_term_start,ft.term_start) end as_of_date
+	,case when  dpt.price_type_id=103601 and dpd.pricing_period is null and @calc_type='m' then td.curve_as_of_date else isnull(dpb.fin_term_start,ft.term_start) end as_of_date
 	,case when datepart(dw,isnull(dpb.fin_term_start,ft.term_start))=isnull(tz.weekend_first_day,7)
 		or datepart(dw,isnull(dpb.fin_term_start,ft.term_start))=isnull(tz.weekend_second_day,1)
 		or h_day.hol_date is not null	then 1 else 0 end holiday
-	,case when isnull(dpb.fin_term_start,ft.term_start)<=@curve_as_of_date then 's' else 'f' end fwd_set
+	,case when isnull(dpb.fin_term_start,ft.term_start)<=td.curve_as_of_date then 's' else 'f' end fwd_set
 	,coalesce(spcd.proxy_source_curve_def_id,spcd.monthly_index,spcd.proxy_curve_id3) proxy_curve_id,spcd.settlement_curve_id
 	,min(isnull(dpb.fin_term_start,ft.term_start)) over(partition by td.source_deal_detail_id,isnull(dpb.curve_id,ft.pricing_index),isnull(dpb.fin_term_start,ft.term_start)) first_aod
 	,isnull(spcd1.exp_calendar_id,spcd.exp_calendar_id) exp_calendar_id,case when @calc_type='s' then dpd.pricing_month else 
@@ -2922,6 +2956,7 @@ select td.source_deal_detail_id,isnull(dpb.curve_id,ft.pricing_index) curve_id
 	,spcd.Granularity main_granularity
 	,spcd1.Granularity proxy_granularity
 	,dpd.pricing_start, isnull(dpd.pricing_end,dpd.pricing_start) pricing_end,dpd.pricing_method,td.fx_conversion_market market_value_desc
+	,td.curve_as_of_date
 into #pricing_aod --  select * from #pricing_aod where curve_id=7185 and first_aod='2021-01-01' and  maturity_date='2021-01-01'
 from #temp_deals td 
 	inner join deal_price_type dpt on td.source_deal_detail_id=dpt.source_deal_detail_id  -- @deal_detail_id --
@@ -2956,8 +2991,8 @@ from #temp_deals td
 	) ft
 	left join source_price_curve_def spcd on spcd.source_curve_def_id=isnull(dpb.curve_id,ft.pricing_index) 
 	left join source_price_curve_def spcd1 on spcd1.source_curve_def_id=
-		case when dpb.fin_term_start<=@curve_as_of_date then spcd.settlement_curve_id else 
-		case when convert(varchar(7),@curve_as_of_date,120)=convert(varchar(7),td.term_start,120) AND spcd.settlement_curve_id  IS NOT NULL then spcd.settlement_curve_id 
+		case when dpb.fin_term_start<=td.curve_as_of_date then spcd.settlement_curve_id else 
+		case when convert(varchar(7),td.curve_as_of_date,120)=convert(varchar(7),td.term_start,120) AND spcd.settlement_curve_id  IS NOT NULL then spcd.settlement_curve_id 
 			else coalesce(spcd.proxy_source_curve_def_id,spcd.monthly_index,spcd.proxy_curve_id3,spcd.source_curve_def_id) end 
 		 end  
 	left join time_zones tz on tz.TIMEZONE_ID=isnull(spcd.time_zone,@time_zone_id)	 --@time_zone_id
@@ -2979,16 +3014,16 @@ select distinct curve_id,fwd_set,as_of_date
 			WHEN 992 THEN cast(Year(as_of_date) as varchar) + '-' + cast(CASE datepart(q, as_of_date) WHEN 1 THEN 1 WHEN 2 THEN 1 ELSE 7 END as varchar) + '-01'
 			WHEN 993 THEN cast(Year(as_of_date) as varchar) + '-01-01'
 			ELSE as_of_date END    
-	else '1900-01-01' end maturity_date
+	else '1900-01-01' end maturity_date,curve_as_of_date
 into #price_curve_mat_pre -- select * from #price_curve_mat
 from #pricing_aod
 
 select distinct curve_id,fwd_set,as_of_date
 	,settlement_curve_id,proxy_curve_id,exp_calendar_id,min(expiration_calendar) expiration_calendar -- take 0 (not look expiration calendar) if found 0 and 1 for same curve
-	,first_aod,proxy_granularity,main_granularity,  maturity_date
+	,first_aod,proxy_granularity,main_granularity,  maturity_date,curve_as_of_date
 into #price_curve_mat -- select * from #price_curve_mat
 from #price_curve_mat_pre
-group by curve_id,fwd_set,as_of_date
+group by curve_id,fwd_set,as_of_date,curve_as_of_date
 	,settlement_curve_id,proxy_curve_id,exp_calendar_id,first_aod,proxy_granularity,main_granularity,  maturity_date
 
 
@@ -3003,10 +3038,11 @@ create index indx_006 on #price_curve_mat (	maturity_date)
 
 select distinct
 	pa.curve_id,pa.as_of_date,pa.first_aod,pa.fwd_set,pa.settlement_curve_id,pa.proxy_curve_id
-	, case when @curve_as_of_date< pa.first_aod then @curve_as_of_date else coalesce(s1.as_of_date,s.as_of_date,pa.as_of_date) end derived_as_of_date
-	,case when pa.fwd_set='s' then coalesce(s1.as_of_date,s.as_of_date,pa.as_of_date) else @curve_as_of_date end  set_as_of_date
+	, case when pa.curve_as_of_date< pa.first_aod then pa.curve_as_of_date else coalesce(s1.as_of_date,s.as_of_date,pa.as_of_date) end derived_as_of_date
+	,case when pa.fwd_set='s' then coalesce(s1.as_of_date,s.as_of_date,pa.as_of_date) else pa.curve_as_of_date end  set_as_of_date
 	,coalesce(mat_non_cal.min_maturity_date,mat.min_maturity_date,pa.maturity_date) min_maturity_date
 	,coalesce(mat_non_cal.max_maturity_date,mat.max_maturity_date,pa.maturity_date) max_maturity_date
+	,pa.curve_as_of_date
 into #curve_aod_mat  --   select * from #curve_aod_mat
 from #price_curve_mat pa 
     outer apply
@@ -3022,7 +3058,7 @@ from #price_curve_mat pa
     outer apply
     (
         select max(as_of_date) as_of_date from  source_price_curve where source_curve_def_id=pa.proxy_curve_id
-            and pa.fwd_set='f' and as_of_date=@curve_as_of_date and maturity_date>@curve_as_of_date
+            and pa.fwd_set='f' and as_of_date=pa.curve_as_of_date and maturity_date>pa.curve_as_of_date
     ) s2
     outer apply
     (
@@ -3038,7 +3074,7 @@ from #price_curve_mat pa
         WHERE source_curve_def_id = 
 			CASE  WHEN pa.fwd_set = 's' THEN CASE WHEN s1.as_of_date IS NULL  THEN pa.curve_id  ELSE pa.settlement_curve_id  END
 			ELSE CASE WHEN s2.as_of_date IS NULL  THEN pa.curve_id  ELSE pa.proxy_curve_id  END END
-            AND as_of_date <= CASE WHEN pa.fwd_set = 's' THEN coalesce(s1.as_of_date, s.as_of_date, pa.as_of_date)  ELSE @curve_as_of_date END
+            AND as_of_date <= CASE WHEN pa.fwd_set = 's' THEN coalesce(s1.as_of_date, s.as_of_date, pa.as_of_date)  ELSE pa.curve_as_of_date END
             AND pa.expiration_calendar = 0 AND maturity_date >= pa.maturity_date
         --order by maturity_date desc
     ) mat_non_cal
@@ -3059,7 +3095,7 @@ create index indx_007 on #curve_aod_mat (curve_id,as_of_date,first_aod)
     ,'n' batch_insert
     ,cast(1 as float) fx_factor_price_multipler
     ,cast(1 as float) fx_factor_price_adder
-	,pa.pricing_start , pa.pricing_end,	pa.pricing_period,pa.pricing_method,pa.market_value_desc
+	,pa.pricing_start , pa.pricing_end,	pa.pricing_period,pa.pricing_method,pa.market_value_desc,pa.curve_as_of_date
 into #component_price_detail --  select * from #component_price_detail where curve_id=7264
 from #pricing_aod pa -- select * from #pricing_aod where curve_id=7264
 	inner join #curve_aod_mat cam on pa.curve_id=cam.curve_id and pa.as_of_date=cam.as_of_date and pa.first_aod=cam.first_aod
@@ -3069,8 +3105,8 @@ from #pricing_aod pa -- select * from #pricing_aod where curve_id=7264
     left JOIN source_price_curve spc1 on spc1.source_curve_def_id=pa.settlement_curve_id
         and spc1.as_of_date=cam.as_of_date and spc1.maturity_date=cam.max_maturity_date and pa.fwd_set='s'
     left JOIN source_price_curve spc2 on spc2.source_curve_def_id= pa.curve_id
-        and spc2.as_of_date=@curve_as_of_date and spc2.maturity_date=cam.min_maturity_date and pa.fwd_set='f'
-    left JOIN source_price_curve spc3 on spc3.source_curve_def_id=pa.proxy_curve_id and spc3.as_of_date=@curve_as_of_date
+        and spc2.as_of_date=pa.curve_as_of_date and spc2.maturity_date=cam.min_maturity_date and pa.fwd_set='f'
+    left JOIN source_price_curve spc3 on spc3.source_curve_def_id=pa.proxy_curve_id and spc3.as_of_date=pa.curve_as_of_date
         and spc3.maturity_date=cam.min_maturity_date and pa.fwd_set='f'
 where coalesce(spc1.curve_value,spc.curve_value,spc2.curve_value,spc3.curve_value,pa.price_adder,pa.price_multiplier) is not null
 
@@ -3114,7 +3150,7 @@ insert into #component_price_detail(source_deal_detail_id,curve_id,curve_value,d
 	,curve_value_org,batch_insert,market_value_desc)
 select td.source_deal_detail_id,-1,dpd.fixed_price,dpt.deal_price_type_id,dpt.price_type_id
 	,isnull(dpd.rounding,9) rounding ,null adder_currency, dpd.currency pricing_curve_currency,dpd.pricing_uom uom_id,'m' is_formula
-	,@curve_as_of_date,td.term_start,td.shipment_id,td.ticket_detail_id, @curve_as_of_date fin_term_start,dpd.fixed_price
+	,td.curve_as_of_date,td.term_start,td.shipment_id,td.ticket_detail_id, td.curve_as_of_date fin_term_start,dpd.fixed_price
 	,'n' batch_insert,td.fx_conversion_market
 from #temp_deals td 
 	inner join deal_price_type dpt on td.source_deal_detail_id=dpt.source_deal_detail_id  
@@ -3414,6 +3450,9 @@ group by fx_currency_id, func_cur_id,as_of_date, maturity_date,market_value_desc
 having count(1)>1
 
 
+
+
+
 --  select * from #fx_curves where fx_currency_id=1 and func_cur_id=1109 and as_of_date='2019-11-01 00:00:00.000' and maturity_date='2019-11-01 00:00:00.000'
 --  select * from #fx_curves order by fx_currency_id,func_cur_id,fx_curve_id,as_of_date,maturity_date
 --  select * from #fx_curves where fx_currency_id=1109 and func_cur_id=1 and as_of_date='2019-11-01 00:00:00.000' and maturity_date='2019-11-01 00:00:00.000'
@@ -3551,8 +3590,8 @@ begin
 
 	SET @sql='
 		INSERT INTO '+@formula_table0+'(formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id, source_deal_detail_id, source_deal_header_id,deal_price_type_id)
-		SELECT 	 dpa.formula_id, ' + cast(@curve_source_value_id as varchar) + ', max(t.term_start) ,  ''' + cast(@curve_as_of_date as varchar) + ''', 980 granularity,MAX(t.contract_id), 
-			t.source_deal_detail_id, max(t.source_deal_header_id),dpt.deal_price_type_id
+		SELECT 	 dpa.formula_id, ' + cast(@curve_source_value_id as varchar) + ', max(t.term_start) ,  max(t.curve_as_of_date), 980 granularity
+		,MAX(t.contract_id),t.source_deal_detail_id, max(t.source_deal_header_id),dpt.deal_price_type_id
 		from  #temp_deals t  
 			inner join deal_price_type dpt on t.source_deal_detail_id=dpt.source_deal_detail_id
 			inner join deal_price_adjustment dpa on dpa.deal_price_type_id=dpt.deal_price_type_id
@@ -3592,7 +3631,7 @@ INSERT INTO #tx (
 	as_of_date, term_start, formula_id, granularity,contract_id,source_deal_detail_id,
 	volume,deal_price_type_id,price_type_id,rounding,pricing_curve_currency
 )
-select @curve_as_of_date as_of_date, t.term_start, isnull(t.formula_id,dpd.formula_id) formula_id
+select max(t.curve_as_of_date) as_of_date, t.term_start, isnull(t.formula_id,dpd.formula_id) formula_id
 	, 980 granularity,MAX(t.contract_id), t.source_deal_detail_id ,SUM(t.deal_volume),dpt.deal_price_type_id	
 	,max(dpt.price_type_id) price_type_id 
 	,isnull(max(dpd.rounding),9) rounding, max(dpd.formula_currency) pricing_curve_currency
@@ -3740,17 +3779,17 @@ from #component_price_detail cp
 		select max(as_of_date) as_of_date
 		from  #fx_curves where fx_currency_id = cp.pricing_curve_currency AND func_cur_id = td.fixed_price_currency_id AND source_system_id = td.source_system_id AND
 			-- as_of_date<= case when cp.fin_term_start<=@curve_as_of_date then cp.fin_term_start else  cp.as_of_date end 
-			 as_of_date<= case when cp.fin_term_start<=@curve_as_of_date then cp.fin_term_start else  @curve_as_of_date end 
+			 as_of_date<= case when cp.fin_term_start<=cp.curve_as_of_date then cp.fin_term_start else  cp.curve_as_of_date end 
 			  -- and as_of_date= case when cp.fin_term_start<=@curve_as_of_date then maturity_date else  as_of_date end 
-			and as_of_date= case when cp.fin_term_start<=@curve_as_of_date then maturity_date else  @curve_as_of_date end 
+			and as_of_date= case when cp.fin_term_start<=cp.curve_as_of_date then maturity_date else cp.curve_as_of_date end 
 			and market_value_desc=cp.market_value_desc
 	) max_aod
 	LEFT JOIN #fx_curves fx ON fx.fx_currency_id = cp.pricing_curve_currency AND 
 		fx.func_cur_id = td.fixed_price_currency_id AND fx.source_system_id = td.source_system_id AND
 		 fx.as_of_date= max_aod.as_of_date  -- fx.as_of_date= td.exp_curve_as_of_date 
-		AND fx.maturity_date=case when cp.fin_term_start<=@curve_as_of_date then max_aod.as_of_date else  cp.maturity_date end  -- AND fx.maturity_date= td.monthly_maturity
+		AND fx.maturity_date=case when cp.fin_term_start<=cp.curve_as_of_date then max_aod.as_of_date else  cp.maturity_date end  -- AND fx.maturity_date= td.monthly_maturity
 		--and fx.as_of_date= case when cp.fin_term_start<=@curve_as_of_date then fx.maturity_date else  fx.as_of_date end
-		and fx.as_of_date= case when cp.fin_term_start<=@curve_as_of_date then fx.maturity_date else  @curve_as_of_date end
+		and fx.as_of_date= case when cp.fin_term_start<=cp.curve_as_of_date then fx.maturity_date else cp.curve_as_of_date end
 		and fx.market_value_desc=cp.market_value_desc
 where 
 	td.fixed_price_currency_id<>cp.pricing_curve_currency and not (cp.uom_id is null and cp.pricing_curve_currency is null)
@@ -3768,13 +3807,13 @@ from #component_price_detail cp
 	outer apply (
 		select max(as_of_date) as_of_date
 		from  #fx_curves where fx_currency_id = cp.adder_currency AND func_cur_id = td.fixed_price_currency_id AND source_system_id = td.source_system_id AND
-			 as_of_date<= case when cp.fin_term_start<=@curve_as_of_date then cp.fin_term_start else  cp.as_of_date end 
+			 as_of_date<= case when cp.fin_term_start<=cp.curve_as_of_date then cp.fin_term_start else  cp.as_of_date end 
 			 and market_value_desc=cp.market_value_desc
 	) max_aod
 	LEFT JOIN #fx_curves fx ON fx.fx_currency_id = cp.adder_currency AND 
 		fx.func_cur_id = td.fixed_price_currency_id AND fx.source_system_id = td.source_system_id 
 		AND fx.as_of_date= max_aod.as_of_date  -- fx.as_of_date= td.exp_curve_as_of_date 
-		AND fx.maturity_date=case when cp.fin_term_start<=@curve_as_of_date then max_aod.as_of_date else  cp.maturity_date end  -- AND fx.maturity_date= td.monthly_maturity
+		AND fx.maturity_date=case when cp.fin_term_start<=cp.curve_as_of_date then max_aod.as_of_date else  cp.maturity_date end  -- AND fx.maturity_date= td.monthly_maturity
 		and fx.market_value_desc=cp.market_value_desc
 where 
 	td.fixed_price_currency_id<>cp.adder_currency and cp.pricing_curve_currency is not null
@@ -4017,52 +4056,64 @@ CREATE TABLE #cids (curve_id INT, maturity_date DATETIME, as_of_date DATETIME, p
 
 set @sqlstmt = '
 INSERT INTO #cids (curve_id, maturity_date, as_of_date, pnl_as_of_date, curve_granularity, factor, derive_on_calculation,maturity_date_end)
-	select distinct curve_id, maturity_date, ''' + @curve_as_of_date + ''' as_of_date, ''' + @curve_as_of_date + ''' pnl_as_of_date,
+	select distinct curve_id, maturity_date,curve_as_of_date  as_of_date, curve_as_of_date pnl_as_of_date,
 			curve_granularity, curve_factor,''n'' derive_on_calculation,convert(varchar(10),term_end,120) +'' 23:59:00'' maturity_date_end
 	from #temp_deals  
 	 where settled = 0 AND curve_id is NOT NULL AND pricing IN (1600,-1, 1603,1604,1605,1606,1607,1618,1619)
 	UNION
-	select distinct proxy_curve_id, maturity_date, ''' + @curve_as_of_date + ''' as_of_date, ''' + @curve_as_of_date + ''' pnl_as_of_date,
+	select distinct proxy_curve_id, maturity_date, curve_as_of_date as_of_date, curve_as_of_date  pnl_as_of_date,
 		proxy_curve_granularity, proxy_curve_factor,''n'' derive_on_calculation,convert(varchar(10),term_end,120) +'' 23:59:00'' maturity_date_end
 	from #temp_deals where --proxy_derived_curve = ''n''  and
 	 settled = 0 AND curve_id is NOT NULL AND proxy_curve_id IS NOT NULL AND pricing IN (1600,-1, 1603,1604,1605,1606,1607,1618,1619)
 	UNION
-	select distinct proxy_curve_id3, maturity_date, ''' + @curve_as_of_date + ''' as_of_date, ''' + @curve_as_of_date + ''' pnl_as_of_date,
+	select distinct proxy_curve_id3, maturity_date, curve_as_of_date  as_of_date,curve_as_of_date  pnl_as_of_date,
 		proxy_curve_granularity3, proxy_curve_factor3,''n'' derive_on_calculation,convert(varchar(10),term_end,120) +'' 23:59:00'' maturity_date_end
 	from #temp_deals where --proxy_derived_curve3 = ''n'' and 
 		settled = 0 AND curve_id is NOT NULL AND proxy_curve_id3 IS NOT NULL AND pricing IN (1600,-1, 1603,1604,1605,1606,1607,1618,1619)
 	UNION --ALL
-	select distinct monthly_index, maturity_date, ''' + @curve_as_of_date + ''' as_of_date, ''' + @curve_as_of_date + ''' pnl_as_of_date,
+	select distinct monthly_index, maturity_date, curve_as_of_date  as_of_date, curve_as_of_date pnl_as_of_date,
 		monthly_index_granularity, monthly_index_factor,''n'' derive_on_calculation,convert(varchar(10),term_end,120) +'' 23:59:00'' maturity_date_end
 	from #temp_deals where --monthly_index_derived_curve = ''n'' and 
 		settled = 0 AND curve_id is NOT NULL AND monthly_index IS NOT NULL AND pricing IN (1600,-1, 1603,1604,1605,1606,1607,1618,1619)
 	UNION
-	select distinct formula_curve_id, maturity_date, ''' + @curve_as_of_date + ''' as_of_date, ''' + @curve_as_of_date + ''' pnl_as_of_date,
+	select distinct formula_curve_id, maturity_date, isnull('+case when @calc_type='s' then 'cexp.exp_date' else 'null' end +',''' + @curve_as_of_date + ''') as_of_date
+	, isnull('+case when @calc_type='s' then 'cexp.exp_date' else 'null' end +',''' + @curve_as_of_date + ''') pnl_as_of_date,
 			s.granularity, ISNULL(su.factor, 1),''n'' derive_on_calculation,convert(varchar(10),a.term_end,120) +'' 23:59:00'' maturity_date_end
 	from #temp_deals a inner join
 		 source_price_curve_def s ON s.source_curve_def_id = a.formula_curve_id inner join
 		 source_currency su on su.source_currency_id = s.source_currency_id
+		 OUTER APPLY(SELECT hg.exp_date FROM holiday_group hg 
+			WHERE hg.hol_group_value_id = s.exp_calendar_id  AND convert(varchar(10),a.term_end,120) BETWEEN hg.hol_date AND hg.hol_date_to) cexp
 	UNION
-	select distinct sp1.source_curve_def_id, maturity_date, ''' + @curve_as_of_date + ''' as_of_date, ''' + @curve_as_of_date + ''' pnl_as_of_date,
+	select distinct sp1.source_curve_def_id, maturity_date, isnull('+case when @calc_type='s' then 'cexp.exp_date' else 'null' end +',a.curve_as_of_date) as_of_date
+	, isnull('+case when @calc_type='s' then 'cexp.exp_date' else 'null' end +',a.curve_as_of_date) pnl_as_of_date,
 			sp1.granularity, ISNULL(su.factor, 1),''n'' derive_on_calculation,convert(varchar(10),a.term_end,120) +'' 23:59:00'' maturity_date_end
 	from #temp_deals a inner join
 		 source_price_curve_def s ON s.source_curve_def_id = a.formula_curve_id inner join
 		 source_price_curve_def sp1 ON sp1.source_curve_def_id = s.proxy_source_curve_def_id inner join
 		 source_currency su on su.source_currency_id = sp1.source_currency_id
+		 OUTER APPLY(SELECT hg.exp_date FROM holiday_group hg 
+			WHERE hg.hol_group_value_id = sp1.exp_calendar_id  AND convert(varchar(10),a.term_end,120) BETWEEN hg.hol_date AND hg.hol_date_to) cexp
 	UNION	 	
-	select distinct sp1.source_curve_def_id, maturity_date, ''' + @curve_as_of_date + ''' as_of_date, ''' + @curve_as_of_date + ''' pnl_as_of_date,
+	select distinct sp1.source_curve_def_id, maturity_date, isnull('+case when @calc_type='s' then 'cexp.exp_date' else 'null' end +',a.curve_as_of_date) as_of_date
+	, isnull('+case when @calc_type='s' then 'cexp.exp_date' else 'null' end +',a.curve_as_of_date) pnl_as_of_date,
 			sp1.granularity, ISNULL(su.factor, 1),''n'' derive_on_calculation,convert(varchar(10),a.term_end,120) +'' 23:59:00'' maturity_date_end
 	from #temp_deals a inner join
 		 source_price_curve_def s ON s.source_curve_def_id = a.formula_curve_id inner join
 		 source_price_curve_def sp1 ON sp1.source_curve_def_id = s.monthly_index inner join
 		 source_currency su on su.source_currency_id = sp1.source_currency_id
+		 OUTER APPLY(SELECT hg.exp_date FROM holiday_group hg 
+			WHERE hg.hol_group_value_id = sp1.exp_calendar_id  AND convert(varchar(10),a.term_end,120) BETWEEN hg.hol_date AND hg.hol_date_to) cexp
 	UNION	 	
-	select distinct sp1.source_curve_def_id, maturity_date, ''' + @curve_as_of_date + ''' as_of_date, ''' + @curve_as_of_date + ''' pnl_as_of_date,
+	select distinct sp1.source_curve_def_id, maturity_date, isnull('+case when @calc_type='s' then 'cexp.exp_date' else 'null' end +',a.curve_as_of_date) as_of_date
+	, isnull('+case when @calc_type='s' then 'cexp.exp_date' else 'null' end +',a.curve_as_of_date) pnl_as_of_date,
 		sp1.granularity, ISNULL(su.factor, 1),''n'' derive_on_calculation,convert(varchar(10),a.term_end,120) +'' 23:59:00'' maturity_date_end
 	from #temp_deals a inner join
 		source_price_curve_def s ON s.source_curve_def_id = a.formula_curve_id inner join
 		source_price_curve_def sp1 ON sp1.source_curve_def_id = s.proxy_curve_id3 inner join
 		source_currency su on su.source_currency_id = sp1.source_currency_id
+	OUTER APPLY(SELECT hg.exp_date FROM holiday_group hg 
+		WHERE hg.hol_group_value_id = sp1.exp_calendar_id  AND convert(varchar(10),a.term_end,120) BETWEEN hg.hol_date AND hg.hol_date_to) cexp
 '
 
 exec spa_print @sqlstmt
@@ -4093,13 +4144,13 @@ update #temp_deals set settlement_curve_granularity =case when settlement_curve_
 -- RTC Mapped curve
 SELECT distinct td.curve_id main_curve_id,td.child_curve_id,tbk.term_start ,tbk.term_end
 	,CASE WHEN spcd.Granularity = 10000290  THEN tbk.term_start else convert(varchar(8),tbk.term_start,120) + '01' END maturity_date
-	,spcd.block_define_id,spcd.granularity,@curve_as_of_date as_of_date,ISNULL(su.factor, 1) curve_factor
+	,spcd.block_define_id,spcd.granularity,td.curve_as_of_date as_of_date,ISNULL(su.factor, 1) curve_factor
 INTO #rtc_curve_info -- select * from #rtc_curve_info
 from (
-	SELECT a.curve_id,a.term_start,a.term_end,rspc.rtc_curve child_curve_id FROM #temp_deals a
+	SELECT a.curve_id,a.term_start,a.term_end,rspc.rtc_curve child_curve_id,a.curve_as_of_date FROM #temp_deals a
 		INNER JOIN rtc_source_price_curve rspc ON rspc.rtc_curve_def_id = a.curve_id
 	UNION
-	SELECT a.formula_curve_id,a.term_start,a.term_end,rspc.rtc_curve child_curve_id FROM #temp_deals a
+	SELECT a.formula_curve_id,a.term_start,a.term_end,rspc.rtc_curve child_curve_id,a.curve_as_of_date FROM #temp_deals a
 		INNER JOIN rtc_source_price_curve rspc ON rspc.rtc_curve_def_id = a.formula_curve_id
 	 WHERE a.formula_curve_id IS NOT NULL
 ) td
@@ -4288,7 +4339,7 @@ END maturity_date, CASE WHEN hg.hol_group_value_id IS NOT NULL  then exp_date  E
 		--case when (td.settlement_curve_id is not null) then settlement_curve_factor else proxy_curve_factor end curve_factor 		 
 		ISNULL(case when (spcd.settlement_curve_id is not null) then sc2.factor else sc1.factor end,1) curve_factor,ISNULL(su.factor,1) factor
 		,hg.hol_group_value_id exp_calendar_id,isnull(spcd.derive_on_calculation,'n') derive_on_calculation
-into #s_cids1 
+into #s_cids1 --  select * from #s_cids1
 from #temp_deals td INNER JOIN
 	 source_price_curve_def spcd on spcd.source_curve_def_id = td.formula_curve_id LEFT JOIN
 	 source_price_curve_def spcd2 on spcd2.source_curve_def_id = spcd.settlement_curve_id 
@@ -4322,7 +4373,7 @@ insert into #cids_derive_on_calculation
 (curve_id , maturity_date, as_of_date, pnl_as_of_date, curve_granularity , factor)
 select DISTINCT spc.source_curve_def_id,spc.maturity_date, spc.as_of_date,  spc.as_of_date,a.curve_granularity ,1
 from #temp_deals a inner join source_price_curve spc  ON a.curve_id = spc.source_curve_def_id and
-		spc.as_of_date =@curve_as_of_date  and spc.maturity_date= a.term_end and
+		spc.as_of_date =a.curve_as_of_date  and spc.maturity_date= a.term_end and
 		spc.assessment_curve_type_value_id = @assessment_curve_type_value_id and spc.curve_source_value_id = @curve_source_value_id 
 	inner join source_price_curve_def spcd on spcd.source_curve_def_id =spc.source_curve_def_id
 			 and isnull(spcd.derive_on_calculation,'n')='y' 
@@ -4358,6 +4409,8 @@ if @derive_on_calculation='y'
 		@curve_pracess_table = @formula_derive --input granularity level maturity_date process table for deriving curve value.
 
 		--case when td.bid_n_ask_price=''y'' then case when td.buy_sale_flag=''b'' then spc.bid_value else spc.ask_value end else spc.curve_value end
+
+
 
 SET @sqlstmt ='
 	insert into #temp_curves_settlement (source_curve_def_id, as_of_date, Assessment_curve_type_value_id,
@@ -4422,7 +4475,7 @@ SET @sqlstmt ='
 	from #s_cids s_cids inner join
 	'+CASE WHEN @criteria_id<0 THEN 'source_price_curve_simulation' ELSE '~source_price_curve~' END +' spc 
 	 on spc.~source_curve_def_id~ = s_cids.curve_id AND  s_cids.derive_on_calculation=''~derive_on_calculation~'' and 
-			spc.as_of_date = ISNULL(s_cids.pnl_as_of_date, spc.as_of_date)
+		spc.as_of_date = ISNULL(s_cids.pnl_as_of_date, spc.as_of_date)
 			'+CASE WHEN @criteria_id<0 THEN ' AND spc.run_date = '''+@run_date+'''' ELSE '' END+ ' AND
 		((s_cids.exp_calendar_id IS NOT NULL AND 
 			year(spc.~maturity_date~) = year(s_cids.maturity_date) AND month(spc.~maturity_date~) = month(s_cids.maturity_date) AND 
@@ -4584,6 +4637,7 @@ set @sqlstmt1=REPLACE(@sqlstmt1,'~spc.Assessment_curve_type_value_id~','spc.Asse
 EXEC spa_print  @sqlstmt1
 EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@sqlstmt1)
 
+
 if @derive_on_calculation='y'
 begin
 	set @sqlstmt1=REPLACE(@sqlstmt,'~source_price_curve~',@calc_result_derive)	
@@ -4618,7 +4672,7 @@ set @sqlstmt = '
 		curve_source_value_id, maturity_date,is_dst, curve_value, pnl_as_of_date, curve_granularity,bid_value,ask_value) 
 	select DISTINCT spc.~source_curve_def_id~, spc.as_of_date,'+ CAST(@assessment_curve_type_value_id as varchar)+',spc.curve_source_value_id, spc.~maturity_date~,spc.is_dst, spc.~curve_value~,spc.as_of_date,a.curve_granularity ,spc.~bid_value~,spc.~ask_value~
 	from #temp_deals a inner join ~source_price_curve~ spc  ON a.curve_id = spc.~source_curve_def_id~ and
-			spc.as_of_date = ''' + @curve_as_of_date + ''' and 
+			spc.as_of_date = a.curve_as_of_date and 
 			spc.~maturity_date~= a.term_end and
 			~spc.assessment_curve_type_value_id~ = ' + cast(@assessment_curve_type_value_id as varchar) + ' and
 			spc.curve_source_value_id = ' + cast(@curve_source_value_id as varchar) + ' 
@@ -4888,8 +4942,8 @@ group by td.source_deal_header_id,sdd.curve_id,sdd.location_id, td.formula_curve
 
 create index indx_vwDealTimezone_001 on #vwDealTimezone (source_deal_header_id,curve_id,location_id) include (dst_group_value_id)
 
-
-
+--select * from #temp_curves where source_curve_def_id=7226
+--return
 --For REC MTM Calculation
 IF @calc_type <> 's'
 BEGIN
@@ -4917,9 +4971,9 @@ BEGIN
 		AND rnk.tier_value_id = td.tier_value_id
 	OUTER APPLY(SELECT SUM(assigned_vol) assigned 
 				FROM matching_header_detail_info mhdi 
-				WHERE td.source_deal_header_id = CASE WHEN td.buy_sell_flag = 'b' THEN 
-													mhdi.source_deal_header_id_from 
-												ELSE mhdi.source_deal_header_id END) mhdi
+				WHERE td.source_deal_detail_id = CASE WHEN td.buy_sell_flag = 'b' THEN 
+													mhdi.source_deal_detail_id_from 
+												ELSE mhdi.source_deal_detail_id END) mhdi
 	WHERE pd.price_index = td.curve_id
 	AND pd.state_value_id = td.state_value_id
 	AND pd.tier_value_id = td.tier_value_id
@@ -5949,7 +6003,7 @@ SELECT
 		CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN ISNULL(mvh2.Hr6,mvh1.Hr6) ELSE mvh.HR24 END,(CASE WHEN dst.[Hour] = 24 THEN 0 WHEN  mvh.prod_date IS NOT NULL THEN NULL ELSE mv.volume END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*ISNULL(CASE WHEN spcd.commodity_id=-1 THEN hbt1.Hr6 ELSE hbt.Hr24 END,1)*CASE WHEN mvh.prod_date IS NULL AND dst1.[Hour]=24 THEN 2 ELSE 1 END mhr24,
 		volume_multiplier * volume_multiplier2*case when mi.source_uom_id=@mw_id or mi.source_uom_id=@kw_id then isnull(mw.factor,1.00) else 1.00 end*
 	CASE WHEN (td.buy_sell_flag='s' AND mda.per_alloc IS NULL) THEN -1 ELSE 1 END * ISNULL(CASE WHEN spcd.commodity_id=-1 THEN mvh2.HR25 ELSE mvh.HR25 END,(CASE WHEN dst1.[Hour] IS NOT NULL THEN mv.volume ELSE 0 END/ISNULL(NULLIF(hbt_term.no_hrs,0),1))) *ISNULL(conv.conversion_factor,1) * ISNULL(mda.per_alloc,1)*CASE WHEN isnull(CASE WHEN spcd.commodity_id=-1 AND ISNULL(mvh2.prod_date,mvh1.prod_date) IS NOT NULL THEN hbt1.add_dst_hour ELSE hbt.add_dst_hour END,0)<=0 THEN 0 else 1 end mhr25,td.source_deal_header_id org_deal_id
-INTO #meter_data --   select * from #meter_data where leg=1
+INTO #meter_data --   select * from #meter_data
 FROM
 	#temp_deals td --INNER JOIN #deal_id_missing_15min fil ON td.source_deal_header_id=fil.source_deal_header_id
 	inner join dbo.vwDealTimezoneContract tz on  td.source_deal_header_id=tz.source_deal_header_id	
@@ -5992,7 +6046,7 @@ FROM
 		SELECT SUM(volume_mult) no_hrs from hour_block_term WHERE dst_group_value_id=tz.dst_group_value_id and block_define_id=@baseload_block_definition 
 			AND term_date BETWEEN mv.from_date AND mv.to_date
 	) hbt_term
-	left join source_deal_header sdh on sdh.source_deal_header_id=td.source_deal_header_id		
+	left join source_deal_header sdh on sdh.source_deal_header_id=td.source_deal_header_id				
 	left join #minute_break mw on mw.granularity=mv.granularity		
 WHERE @calc_type = 's' and ISNULL(mvh.prod_date,mv.from_date) BETWEEN  @term_start and @term_end 
 	AND (isnull(td.volume_type, -1) =17301 OR isnull(td.meter_id, smlm.meter_id) IS NOT NULL or (isnull(td.volume_type, -1)=17302 
@@ -6259,7 +6313,7 @@ SET @sqlstmt= '
 	case when @calc_type <> 's' then 
 	' AND case when ISNULL(spcd.hourly_volume_allocation,17601) =17606 then rp.expiration_date  else rp.term_start end  between td.filter_term_start and td.filter_term_end and rp.expiration_date  > '''+@as_of_date+''''
 	else
-	case when  @cpt_type='b' THEN '' else ' AND rp.term_start BETWEEN '''+@term_start+''' and '''+@term_end+'''' end 
+	case when  @cpt_type='b' THEN '' else case when isnull(@look_term,'d')='s' then ' and case when td.physical_financial_flag=''f'' then rp.expiration_date else rp.term_start end ' else ' and rp.term_start '  end +' BETWEEN '''+@term_start+''' and '''+@term_end+'''' end 
 	 end +';'
 			
 
@@ -6364,9 +6418,10 @@ from report_hourly_position_deal_main rd  inner join #temp_deals_filter td on rd
 	) actual_volume  ' ELSE '' END
 	+
 	'
-	WHERE '+case when @calc_type = 's' then  ' rd.term_start BETWEEN '''+@term_start+''' and '''+@term_end+'''-- AND ISNULL(td.actualization_flag,'''') <> ''d'' '
+	WHERE 1=1 '+case when @calc_type = 's' then case when isnull(@look_term,'d')='s' then ' and case when td.physical_financial_flag=''f'' then rd.expiration_date else rd.term_start end ' else ' and rd.term_start '  end 
+		+' BETWEEN '''+@term_start+''' and '''+@term_end+'''-- AND ISNULL(td.actualization_flag,'''') <> ''d'' '
 		  	else ' 
-				 case when ISNULL(spcd.hourly_volume_allocation,17601) =17606 then rd.expiration_date  else rd.term_start end  between td.filter_term_start and td.filter_term_end 
+				 AND case when ISNULL(spcd.hourly_volume_allocation,17601) =17606 then rd.expiration_date  else rd.term_start end  between td.filter_term_start and td.filter_term_end 
 				and rd.expiration_date > '''+@as_of_date+'''' end +';'
 			
 			
@@ -6425,8 +6480,9 @@ SET @sqlstmt3= ' --UNION ALL
 		LEFT JOIN  #meter_data md ON md.org_deal_id = td.source_deal_header_id AND md.leg = td.leg AND rd.term_start = md.term_start 
 			  AND td.location_id = md.location_id and md.period= case when rd.granularity IN(987,989) then isnull(rd.period,0) else md.period end  '
 	end+'
-	WHERE '+case when @calc_type = 's' then  ' rd.term_start BETWEEN '''+@term_start+''' and '''+@term_end+'''' 
-		else ' rd.term_start  between td.filter_term_start and td.filter_term_end and rd.expiration_date  > '''+@as_of_date+'''' end +';'
+	WHERE 1=1 '+case when @calc_type = 's' then case when isnull(@look_term,'d')='s' then ' and case when td.physical_financial_flag=''f'' then rd.expiration_date else rd.term_start end ' else ' and rd.term_start ' end 
+			+' BETWEEN '''+@term_start+''' and '''+@term_end+'''' 
+		else ' AND rd.term_start  between td.filter_term_start and td.filter_term_end and rd.expiration_date  > '''+@as_of_date+'''' end +';'
 			
 EXEC spa_print  @sqlstmt	
 
@@ -6898,6 +6954,8 @@ FROM '+@position_table_name+' vol with (NOLOCK)
 	left join source_price_curve_def spcd_set ON spcd_set.source_curve_def_id = spcd.settlement_curve_id  and '''+ @calc_type+''' = ''s'' 
 '
 
+
+
 set @sql_price2='
 	LEFT JOIN  ~#hrly_price_curves~ pr1_c with (NOLOCK) ON pr1_c.curve_id=spcd.source_curve_def_id
 		and pr1_c.maturity_date=CASE WHEN (spcd.granularity = 980 OR vol.pricing IN (1601,1602)) THEN cast(Year(vol.term_start) as varchar) + ''-'' + cast(Month(vol.term_start) as varchar) + ''-01'' 
@@ -6987,6 +7045,8 @@ EXEC spa_print  @qry6
 EXEC spa_print  @sqlstmt
 EXEC spa_print  '##############################################################################################################'
 
+
+
 EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@qry1+@qry4+@qry2+@qry5+@qry3+@qry6+@sqlstmt)
 
 
@@ -7067,6 +7127,9 @@ EXEC spa_print  @qry1
 exec(@qry1)
 
 
+
+
+
 --td.buy_sell_flag=''b''
 set @qry1='update t set 
 		hr1 = iif(isnull(t.hr1,0)+isnull(vfa.fee_amt,0)<isnull(t.hr1_c,0),-1*(isnull(t.hr1,0)-isnull(t.hr1_c,0)),0),
@@ -7131,7 +7194,6 @@ set @qry1='update t set
 		hr23 = iif(isnull(t.hr23,0)+isnull(vfa.fee_amt,0)>isnull(t.hr23_c,0),-1*(isnull(t.hr23,0)-isnull(t.hr23_c,0)),0),
 		hr24 = iif(isnull(t.hr24,0)+isnull(vfa.fee_amt,0)>isnull(t.hr24_c,0),-1*(isnull(t.hr24,0)-isnull(t.hr24_c,0)),0),
 		hr25 = iif(isnull(t.hr25,0)+isnull(vfa.fee_amt,0)>isnull(t.hr25_c,0),-1*(isnull(t.hr25,0)-isnull(t.hr25_c,0)),0)
-
 FROM '+@position_table_name+' vol inner join #temp_deals td on vol.source_deal_detail_id=td.source_deal_detail_id
 	inner join #tmp_hourly_price_only t on t.rowid=vol.rowid
 	left join #var_fee_amount vfa on vfa.source_deal_header_id=vol.source_deal_header_id
@@ -7139,6 +7201,11 @@ where td.header_buy_sell_flag=''s'' and td.internal_deal_type_value_id=103 and t
 
 EXEC spa_print  @qry1
 exec(@qry1)
+
+
+
+
+
 
 
 set @qry1=' update t set 
@@ -7173,6 +7240,8 @@ where td.internal_deal_type_value_id=103 and td.internal_deal_subtype_value_id=1
 
 EXEC spa_print  @qry1
 exec(@qry1)
+
+
 
 if object_id('tempdb..#block_type_group') is not null
 	drop table #block_type_group
@@ -9172,13 +9241,13 @@ begin
 				 tc.as_of_date = a.exp_curve_as_of_date LEFT OUTER JOIN	 
 			#temp_curves tc_p ON tc_p.source_curve_def_id = a.proxy_curve_id AND 
 				 tc_p.maturity_date = a.proxy_curve_maturity AND
-			 tc_p.as_of_date = '''+convert(varchar(10),@curve_as_of_date,120)+'''  LEFT OUTER JOIN
+			 tc_p.as_of_date = a.curve_as_of_date  LEFT OUTER JOIN
 			#temp_curves tc_m ON tc_m.source_curve_def_id = a.monthly_index AND 
 				 tc_m.maturity_date = a.monthly_index_maturity AND
-			 tc_m.as_of_date = '''+convert(varchar(10),@curve_as_of_date,120)+''' LEFT OUTER JOIN		 		 		 
+			 tc_m.as_of_date = a.curve_as_of_date LEFT OUTER JOIN		 		 		 
 			#temp_curves tc_p3 ON tc_p3.source_curve_def_id = a.proxy_curve_id3 AND 
 				 tc_p3.maturity_date = a.proxy_curve_maturity3 AND
-			 tc_p3.as_of_date = '''+convert(varchar(10),@curve_as_of_date,120)+'''
+			 tc_p3.as_of_date = a.curve_as_of_date
 		outer apply
 		(
 			select case when isnull(vol.bid_n_ask_price,''n'')=''n'' then  coalesce(tc.curve_value, tc_p.curve_value, tc_m.curve_value, tc_p3.curve_value)
@@ -9795,11 +9864,11 @@ set @mtm_value_17='
 	left join 	#temp_curves tc on tc.source_curve_def_id = '+case when @calc_type='s' then 'isnull(a.settlement_curve_id, a.curve_id)' else 'a.curve_id' END +' AND 
 		tc.maturity_date = a.curve_type_maturity_date AND tc.as_of_date = a.exp_curve_as_of_date 
 	LEFT OUTER JOIN	 #temp_curves tc_p ON tc_p.source_curve_def_id = a.proxy_curve_id AND 
-		tc_p.maturity_date = a.proxy_curve_maturity AND tc_p.as_of_date ='''+ @curve_as_of_date+'''  
+		tc_p.maturity_date = a.proxy_curve_maturity AND tc_p.as_of_date =a.curve_as_of_date  
 	LEFT OUTER JOIN #temp_curves tc_m ON tc_m.source_curve_def_id = a.monthly_index AND 
-		tc_m.maturity_date = a.monthly_index_maturity AND tc_m.as_of_date ='''+ @curve_as_of_date+''' 
+		tc_m.maturity_date = a.monthly_index_maturity AND tc_m.as_of_date =a.curve_as_of_date 
 	LEFT OUTER JOIN	#temp_curves tc_p3 ON tc_p3.source_curve_def_id = a.proxy_curve_id3 AND 
-		tc_p3.maturity_date = a.proxy_curve_maturity3 AND tc_p3.as_of_date = '''+ @curve_as_of_date+''' 
+		tc_p3.maturity_date = a.proxy_curve_maturity3 AND tc_p3.as_of_date = a.curve_as_of_date 
 	outer apply
 	(
 		select case when isnull(a.bid_n_ask_price,''n'')=''n'' then  coalesce(tc.curve_value, tc_p.curve_value, tc_m.curve_value, tc_p3.curve_value)
@@ -10437,7 +10506,7 @@ BEGIN
 	select	distinct a.risk_bucket_id, a.term_start 
 		,	isnull(cv2.as_of_date, cv.as_of_date)  
 	from (
-		select distinct isnull(spcd.risk_bucket_id,d.curve_id) risk_bucket_id,d.curve_id, d.term_start, d.option_strike_price from #temp_deals d 
+		select distinct curve_as_of_date,isnull(spcd.risk_bucket_id,d.curve_id) risk_bucket_id,d.curve_id, d.term_start, d.option_strike_price from #temp_deals d 
 		left join source_price_curve_def spcd on spcd.source_curve_def_id=d.curve_id
 		where d.option_flag = 'y'
 	) a LEFT JOIN source_price_curve_def spcd on spcd.source_curve_def_id=a.risk_bucket_id
@@ -10453,7 +10522,7 @@ BEGIN
 						 ELSE a.term_start 	END AS DATETIME
 					)
 					
-					and curve_source_value_id=4500	 and as_of_date <= @as_of_date
+					and curve_source_value_id=4500	 and as_of_date <= a.curve_as_of_date
 				order by 	as_of_date desc	
 	) cv 
 	OUTER APPLY
@@ -10467,7 +10536,7 @@ BEGIN
 						 ELSE a.term_start 	END AS DATETIME
 					)
 					
-					and curve_source_value_id=@curve_source_value_id and as_of_date <= @as_of_date
+					and curve_source_value_id=@curve_source_value_id and as_of_date <= a.curve_as_of_date
 					and strike_price = a.option_strike_price
 				order by 	as_of_date desc	
 			
@@ -10793,7 +10862,7 @@ BEGIN
 				 WHEN (spcd_dr.granularity = 993) THEN cast(Year(a.maturity_date) as varchar) + ''-01-01'' 
 				 ELSE a.maturity_date END AS DATETIME) and
 						  dr.curve_source_value_id = ' + cast(@curve_source_value_id as varchar) + ' and
-						  dr.as_of_date = convert(varchar(10),''' + @curve_as_of_date + ''',120)  
+						  dr.as_of_date = a.curve_as_of_date
 			outer apply (
 					select 
 						volume2, curve_id, strike_price, volatility, curve2_value, deal_volume 	,isnull(multiplier,1) multiplier
@@ -10827,18 +10896,19 @@ BEGIN
 				select a.source_deal_header_id, a.term_start, a.term_end, max(isnull(tc.curve_value, tc1.curve_value)) formula_curve_id_value
 	from #temp_deals a LEFT JOIN
 	#temp_curves tc on tc.source_curve_def_id=a.formula_curve_id 
-		and tc.as_of_date = convert(varchar(10),''' + @curve_as_of_date + ''',120) and tc.maturity_date=a.term_start
+		and tc.as_of_date = a.curve_as_of_date and tc.maturity_date=a.term_start
 	LEFT  JOIN source_price_curve_def spcd ON spcd.source_curve_def_id=a.formula_curve_id
 	LEFT  JOIN source_price_curve_def spcd1 ON spcd.proxy_source_curve_def_id=spcd1.source_curve_def_id
 	LEFT JOIN #temp_curves tc1 ON spcd1.source_curve_def_id=tc1.source_curve_def_id
-		and tc1.as_of_date = convert(varchar(10),''' + @curve_as_of_date + ''',120)
+		and tc1.as_of_date = a.curve_as_of_date
 		and tc1.maturity_date=a.term_start
-	WHERE a.option_flag = ''y'' and not (a.internal_deal_type_value_id IN (103) AND a.internal_deal_subtype_value_id = 102 AND '''+@process_linear_options_delta+''' = ''y'')
+	WHERE a.option_flag = ''y'' and not (a.internal_deal_type_value_id IN (103) AND a.internal_deal_subtype_value_id = 102 
+		AND '''+@process_linear_options_delta+''' = ''y'')
 	GROUP BY a.source_deal_header_id, a.term_start, a.term_end
 			) fcid ON fcid.source_deal_header_id = a.source_deal_header_id and fcid.term_start = a.term_start and 
 			fcid.term_end = a.term_end
-		where a.option_flag = ''y'' AND a.leg = 1 '+case when @calc_type ='s' then '' else ' AND a.contract_expiration_date > ''' + @curve_as_of_date + '''' END +'
-		group by  a.source_deal_detail_id, wcv.term_day,wcv.curve_id ,wcv.hr,wcv.period ,wcv.is_dst,a.options_calc_method,a.attribute_type'
+	where a.option_flag = ''y'' AND a.leg = 1 '+case when @calc_type ='s' then '' else ' AND a.contract_expiration_date >a.curve_as_of_date' END +'
+	group by a.source_deal_detail_id, wcv.term_day,wcv.curve_id ,wcv.hr,wcv.period ,wcv.is_dst,a.options_calc_method,a.attribute_type'
 
 	EXEC spa_print  @sqlstmt
 	EXEC spa_print  @sqlstmt2
@@ -10855,7 +10925,6 @@ BEGIN
 		print  @pr_name+': '+cast(datediff(ss,@log_time,getdate()) as varchar) +'*************************************'
 		EXEC spa_print  '****************End of retrieving Deal Correlation*****************************'	
 	END
-
 
 	If @print_diagnostic = 1
 	begin
@@ -10893,7 +10962,7 @@ BEGIN
 		((op.internal_deal_type_value_id = 3 OR op.internal_deal_type_value_id = 18) AND op.correlation is null  and a.internal_deal_subtype_value_id<>102) OR
 		((op.internal_deal_type_value_id = 3 OR op.internal_deal_type_value_id = 18) AND op.volatility_2 is null and a.internal_deal_subtype_value_id<>102) OR
 		((op.internal_deal_type_value_id = 3 OR op.internal_deal_type_value_id = 18) AND op.spot_price_2 is null)) AND
-		a.contract_expiration_date > @as_of_date
+		a.contract_expiration_date > a.curve_as_of_date
 	AND op.source_deal_header_id IS NOT NULL 
 --*/
 	If @print_diagnostic = 1
@@ -10957,20 +11026,18 @@ BEGIN
 		,option_excercise_type VARCHAR(1) COLLATE DATABASE_DEFAULT NULL
 		,IDT INT)
 
-		UPDATE op SET op.org_strike_price =
-			CASE WHEN (@T2-op.days_expiry) > 0 AND td.option_excercise_type = 's' THEN
-				CASE WHEN ((@T2 / op.days_expiry) * op.strike_price - ((@T2-op.days_expiry) / op.days_expiry) * op.spot_price_1) < 0 THEN
-					op.strike_price
-				ELSE
-					((@T2/op.days_expiry)*op.strike_price-((@T2-op.days_expiry)/op.days_expiry)*op.spot_price_1)
-				END
-			ELSE op.strike_price
+	UPDATE op SET op.org_strike_price =
+		CASE WHEN (@T2-op.days_expiry) > 0 AND td.option_excercise_type = 's' THEN
+			CASE WHEN ((@T2 / op.days_expiry) * op.strike_price - ((@T2-op.days_expiry) / op.days_expiry) * op.spot_price_1) < 0 THEN
+				op.strike_price
+			ELSE
+				((@T2/op.days_expiry)*op.strike_price-((@T2-op.days_expiry)/op.days_expiry)*op.spot_price_1)
 			END
-		FROM #option_param op
+		ELSE op.strike_price
+		END
+	FROM #option_param op
 		INNER JOIN #temp_deals td ON td.source_deal_detail_id = op.source_deal_detail_id
-		--WHERE td.option_excercise_type = 's'
-
-
+	--WHERE td.option_excercise_type = 's'
 
 	SET @sql = '
 		SELECT 
@@ -11033,7 +11100,7 @@ BEGIN
 /*
 -- Find if options calculation is already done using other methods
 */		
-		SELECT DISTINCT method INTO #options_calc_method FROM	#Options_Prem_detail
+	SELECT DISTINCT method INTO #options_calc_method FROM	#Options_Prem_detail
 --##############
 
 	INSERT INTO #Options_Prem_detail (
@@ -11528,18 +11595,18 @@ BEGIN
 		CASE WHEN (a.curve_uom_id IS NOT NULL AND a.curve_uom_id <> a.deal_volume_uom_id AND cucf.curve_uom_conv_factor IS NULL) THEN NULL ELSE isnull(cucf.curve_uom_conv_factor, 1) END curve_uom_conv_factor,
 		CASE WHEN (a.curve_currency_id IS NOT NULL AND a.func_cur_id <> a.curve_currency_id AND b.cfcf_price_fx_conv_factor_deal IS NULL) THEN NULL ELSE isnull(b.cfcf_price_fx_conv_factor_deal, 1) END curve_fx_conv_factor_deal, 
 		CASE WHEN (a.fixed_price_currency_id IS NOT NULL AND a.func_cur_id <> a.fixed_price_currency_id AND b.pfcf_price_fx_conv_factor_deal IS NULL) THEN NULL ELSE isnull(b.pfcf_price_fx_conv_factor_deal, 1) END price_fx_conv_factor_deal,
-				CASE WHEN (a.leg) <> 1 THEN 0 ELSE 
-					case when isnull(a.internal_deal_subtype_value_id,-1)<>102 then			
-						case when (a.contract_expiration_date > ''' + @curve_as_of_date + ''') then op.PREMIUM else coalesce(atc.avg_curve_value, market.curve_value)  end 
-					else
-						isnull(opd1.leg_set,0)/nullif(opd1.[tot_volume],0) --isnull(op.spot_price_1,0) - isnull(op.spot_price_2,0)
-					end
-				END curve_value,
-				ISNULL(a.fixed_cost, 0) fixed_cost,
-				isnull(a.fixed_price, 0)  fixed_price,
-				isnull(f.formula_value, 0) formula_value,
-				isnull(a.price_adder, 0) price_adder,
-				isnull(a.price_multiplier, 1) price_multiplier,
+		CASE WHEN (a.leg) <> 1 THEN 0 ELSE 
+			case when isnull(a.internal_deal_subtype_value_id,-1)<>102 then			
+				case when (a.contract_expiration_date >a.curve_as_of_date) then op.PREMIUM else coalesce(atc.avg_curve_value, market.curve_value)  end 
+			else
+				isnull(opd1.leg_set,0)/nullif(opd1.[tot_volume],0) --isnull(op.spot_price_1,0) - isnull(op.spot_price_2,0)
+			end
+		END curve_value,
+		ISNULL(a.fixed_cost, 0) fixed_cost,
+		isnull(a.fixed_price, 0)  fixed_price,
+		isnull(f.formula_value, 0) formula_value,
+		isnull(a.price_adder, 0) price_adder,
+		isnull(a.price_multiplier, 1) price_multiplier,
 		CASE WHEN (a.leg) <> 1 THEN 0 ELSE isnull(a.option_strike_price, 0) + isnull(ol.strike_price, 0) END strike_price,a.buy_sell_flag, a.leg_physical_financial_flag,
 		CASE WHEN (a.fixed_cost_currency IS NOT NULL AND a.func_cur_id <> a.fixed_cost_currency AND b.fcucf_price_fx_conv_factor_deal IS NULL) THEN NULL ELSE isnull(b.fcucf_price_fx_conv_factor_deal, 1) END fixed_cost_fx_conv_factor_deal, 
 		CASE WHEN (a.formula_currency IS NOT NULL AND a.func_cur_id <> a.formula_currency AND b.foucf_price_fx_conv_factor_deal IS NULL) THEN NULL ELSE isnull(b.foucf_price_fx_conv_factor_deal, 1) END formula_fx_conv_factor_deal,
@@ -11626,13 +11693,13 @@ BEGIN
 					 tc.maturity_date = a.curve_type_maturity_date AND 	tc.as_of_date = a.exp_curve_as_of_date
 		LEFT OUTER JOIN	#temp_curves tc_p ON tc_p.source_curve_def_id = a.proxy_curve_id AND 
 					tc_p.maturity_date = a.proxy_curve_maturity AND
-					tc_p.as_of_date = '''+convert(varchar(10),@curve_as_of_date,120)+'''
+					tc_p.as_of_date = a.curve_as_of_date
 		LEFT OUTER JOIN	#temp_curves tc_m ON tc_m.source_curve_def_id = a.monthly_index AND 
 					tc_m.maturity_date = a.monthly_index_maturity AND
-					tc_m.as_of_date = '''+convert(varchar(10),@curve_as_of_date,120)+''' 
+					tc_m.as_of_date =a.curve_as_of_date 
 		LEFT OUTER JOIN	#temp_curves tc_p3 ON tc_p3.source_curve_def_id = a.proxy_curve_id3 AND 
 					tc_p3.maturity_date = a.proxy_curve_maturity3 AND
-					tc_p3.as_of_date = '''+convert(varchar(10),@curve_as_of_date,120)+''' 
+					tc_p3.as_of_date =a.curve_as_of_date
 		outer apply
 		(
 			select case when isnull(a.bid_n_ask_price,''n'')=''n'' then  coalesce(tc.curve_value, tc_p.curve_value, tc_m.curve_value, tc_p3.curve_value)
@@ -11655,7 +11722,7 @@ BEGIN
 		outer apply ( select
 			CASE WHEN (a.leg) <> 1 THEN 0 ELSE 
 					case when isnull(a.internal_deal_subtype_value_id,-1)<>102  then						
-					case when (a.contract_expiration_date > ''' + @curve_as_of_date + ''') then	--forward months		
+					case when (a.contract_expiration_date >a.curve_as_of_date) then	--forward months		
 					case when a.internal_deal_type_value_id = 3 then case when a.buy_sell_flag=''b'' then 1 else -1 end else case when a.buy_sell_flag=''b'' then -1 else 1 end end *
 						--case when a.buy_sell_flag=''b'' then -1 else 1 end *
 					((isnull(b.pfcf_price_fx_conv_factor_deal, 1) * isnull(a.fixed_price, 0) * isnull(a.price_multiplier, 1)) + 
@@ -11677,7 +11744,7 @@ BEGIN
 		outer apply ( select
 			CASE WHEN (a.leg) <> 1 THEN 0 ELSE 
 				case when isnull(a.internal_deal_subtype_value_id,-1)<>102 then		
-					case when (a.contract_expiration_date > ''' + @curve_as_of_date + ''') then	--forward months				
+					case when (a.contract_expiration_date > a.curve_as_of_date) then	--forward months				
 						case when a.internal_deal_type_value_id = 3 then 1 else case when a.buy_sell_flag=''s'' then -1 else 1 end end*op.PREMIUM 
 					else
 						case when (a.physical_financial_flag = ''f'') then
@@ -11801,8 +11868,8 @@ outer apply
 		func_cur_id = a.settlement_currency AND source_system_id = a.source_system_id
 			AND maturity_date between a.term_start and a.term_end
 			and market_value_desc=a.fx_conversion_market
-			AND as_of_date>= case when @calc_type='s' then @term_start else @curve_as_of_date end 
-			AND as_of_date<= case when @calc_type='s' then @term_end else @curve_as_of_date end 
+			AND as_of_date>= case when @calc_type='s' then @term_start else a.curve_as_of_date end 
+			AND as_of_date<= case when @calc_type='s' then @term_end else a.curve_as_of_date end 
 
 
 		--	and fx_conversion_market=a.fx_conversion_market
@@ -11849,9 +11916,8 @@ from #temp_leg_mtm tlm
 			AND func_cur_id = a.func_cur_id AND source_system_id = a.source_system_id
 			AND maturity_date between a.term_start and a.term_end
 			and market_value_desc=a.fx_conversion_market
-			AND as_of_date>= case when @calc_type='s' then @term_start else @curve_as_of_date end 
-			AND as_of_date<= case when @calc_type='s' then @term_end else @curve_as_of_date end 
-
+			AND as_of_date>= case when @calc_type='s' then @term_start else a.curve_as_of_date end 
+			AND as_of_date<= case when @calc_type='s' then @term_end else a.curve_as_of_date end 
 	) fx
 
 --------------------------------------------------------------------------------------
@@ -12418,6 +12484,10 @@ end
 
 
 
+
+
+
+
 If @print_diagnostic = 1
 BEGIN
 	print  @pr_name+': '+cast(datediff(ss,@log_time,getdate()) as varchar) +'*************************************'
@@ -12517,10 +12587,10 @@ EXEC(@sql)
 
 SET @sql=' 
 	INSERT INTO '+@formula_table5+'
-		(rowid,formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation,internal_field_type,sequence_order)
+		(rowid,formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation)
 	SELECT 	
 		uddft.udf_template_id [ID],ISNULL(uddf.udf_value,udft.default_value) formula_id, ' + cast(@curve_source_value_id as varchar) + ', td.term_start, '''+@as_of_date+'''
-		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002,uddft.internal_field_type,CASE uddft.internal_field_type WHEN 18744 THEN 9999 ELSE 1 END
+		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002
 	FROM	
 		#temp_deals td 
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
@@ -12563,7 +12633,7 @@ EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@sql)
 --EXEC('select 1 temp into #check_existance_record_mtm from '+@formula_table5)
 --IF @@ROWCOUNT>0
 --BEGIN
-
+	
 
 --- Tax should be calculated seperately
 SET @sql  = 'SELECT * INTO '+REPLACE(@formula_table5,'udf_formula','udf_formula_tax')+' FROM '+@formula_table5+' WHERE internal_field_type IN(18744,18745)'
@@ -12576,12 +12646,10 @@ EXEC spa_calculate_formula	@as_of_date, @formula_table5,@process_id,@calc_result
 
 
 
-
 --SELECT * FROM index_fees_breakdown ifb WHERE ifb.internal_type <>-1
 --select * into #uddft from user_defined_deal_fields_template_main
 --select udf_deal_id,source_deal_header_id,udf_template_id,NULLIF(udf_value,'') udf_value,create_user,create_ts,update_user,update_ts,currency_id,uom_id,counterparty_id into #uddf from user_defined_deal_fields
 --select udf_deal_id,source_deal_detail_id,udf_template_id,NULLIF(udf_value,'') udf_value,create_user,create_ts,update_user,update_ts,currency_id,uom_id,counterparty_id into #udddf from user_defined_deal_detail_fields 
-
 --SELECT * INTO #uddft 
 --FROM 
 --	user_defined_deal_fields_template uddft 
@@ -12644,7 +12712,6 @@ FROM #temp_deals td
 /*
 Added logic for Tiered based fees calculations
 */
-
 CREATE TABLE #tmp_fees(
 		[id] INT identity(1,1),
 		source_deal_detail_id INT,
@@ -12663,7 +12730,7 @@ CREATE TABLE #tmp_fees(
 		to_volume FLOAT,
 		vol_slot FLOAT
 		,counterparty_id int, contract_id int,
-		rec_pay CHAR(1)
+		rec_pay CHAR(1) COLLATE DATABASE_DEFAULT
 	)
 
 
@@ -12680,8 +12747,8 @@ SET @qry8a='
 			COALESCE(spc.curve_value, sfv2.value, sfv.value) price,
 			abs(td.total_volume) volume,
 			COALESCE(spc.curve_value,sfv2.value, sfv.value) value,		
-			ISNULL(sfv2.minimum_value,sfv.minimum_value) minimum_value,
-			ISNULL(sfv2.maximum_value,sfv.maximum_value) maximum_value,
+			ISNULL(sfv2.minimum_value, sfv.minimum_value) minimum_value,
+			ISNULL(sfv2.maximum_value, sfv.maximum_value) maximum_value,
 			ISNULL(sfv.from_volume,0),
 			ISNULL(sfv.to_volume,999999999),
 			CASE WHEN sfv.type=3 then sfv.to_volume - sfv.from_volume+1 ELSE abs(td.total_volume) END vol_slot
@@ -12736,7 +12803,6 @@ SET @qry8a='
 		AND udsa.field_id = -10000329  --Initiator/Aggressor
 		LEFT JOIN #uddf uddfsa on uddfsa.udf_template_id = udsa.udf_template_id 
 		AND uddfsa.source_deal_header_id = td.source_deal_header_id
-
 	LEFT JOIN source_fee sf On sf.fees=CAST(uddft.field_id AS VARCHAR) 
 		AND ((sf.counterparty = td.broker_id AND calc_for = CASE WHEN udft.internal_field_type IN (18723,18724,18733,18737) THEN ''b'' WHEN udft.internal_field_type = 18739 THEN ''o'' ELSE ''t'' END)
 			OR (calc_for = ''o'' AND udft.internal_field_type NOT IN(18723,18724,18733,18737,18739,18740,18741)) 
@@ -12752,7 +12818,7 @@ SET @qry8a='
 		'+case when @calc_type='s' then 
 	' AND COALESCE(sdh.reporting_jurisdiction_id,sdh.state_value_id,-1)=COALESCE(jurisdiction,sdh.reporting_jurisdiction_id,sdh.state_value_id,-1) and COALESCE(sdh.reporting_tier_id,sdh.tier_value_id,-1)=COALESCE(tier,sdh.reporting_tier_id,sdh.tier_value_id,-1) '
 	else '' end	+'  AND ISNULL(aggressor_initiator,'''') = CASE  uddfsa.udf_value WHEN 1 THEN ''i'' WHEN 0 THEN ''a'' ELSE '''' END) sfv1
-			LEFT JOIN source_fee_volume sfv ON 	sfv.source_fee_id = sf.source_fee_id AND ISNULL(sfv.effective_date,''1900-01-01'') = sfv1.effective_date AND ISNULL(sfv.subsidiary,td.fas_sub_id) = td.fas_sub_id AND	ISNULL(sfv.deal_type,td.source_deal_type_id) = td.source_deal_type_id AND	ISNULL(sfv.buy_sell,td.buy_sell_flag) = td.buy_sell_flag
+		LEFT JOIN source_fee_volume sfv ON 	sfv.source_fee_id = sf.source_fee_id AND ISNULL(sfv.effective_date,''1900-01-01'') = sfv1.effective_date AND ISNULL(sfv.subsidiary,td.fas_sub_id) = td.fas_sub_id AND	ISNULL(sfv.deal_type,td.source_deal_type_id) = td.source_deal_type_id AND	ISNULL(sfv.buy_sell,td.buy_sell_flag) = td.buy_sell_flag
 			AND	COALESCE(sfv.commodity,sdh.commodity_id,-1) = ISNULL(sdh.commodity_id,-1) AND	COALESCE(sfv.location,td.location_id,-1) = ISNULL(td.location_id,-1)
 			AND ISNULL(sfv.aggressor_initiator,'''') = CASE  uddfsa.udf_value WHEN 1 THEN ''i'' WHEN 0 THEN ''a'' ELSE '''' END
 	'+case when @calc_type='s' then 
@@ -12782,10 +12848,6 @@ SET @qry8a='
 	ORDER BY sfv.from_volume'
 	exec spa_print @qry8a
 	EXEC(@qry8a)
-
-
-
-
 
 	;WITH CTE AS (
 		SELECT [id],
@@ -12861,7 +12923,6 @@ SET @qry8a='
 --####################################
 -- End Tiered based logic
 
-
 set @sqlstmt='
 select distinct sdh.source_deal_header_id,sdh.option_settlement_date,sdh.deal_date,sdh.template_id
 ,sdd.total_volume,sdh.commodity_id,sdh.header_buy_sell_flag
@@ -12911,9 +12972,7 @@ outer apply
 )sgn
 WHERE udft.internal_field_type IS NOT NULL AND try_cast(uddf.udf_value as float) is not null 
 	and udft.internal_field_type = 18722 ;
-
 '
-
 
 set @qry1b='
 SELECT	'''+ @as_of_date+''' as_of_date, td.source_deal_header_id,td.leg,
@@ -12941,7 +13000,7 @@ SELECT	'''+ @as_of_date+''' as_of_date, td.source_deal_header_id,td.leg,
 		--volume should be + if sell - if buy as fee cashflow should be opposite
 		MAX(CASE WHEN udft.internal_field_type IN(18705) THEN --Capacity based fee 18713 OffPeak
 			CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
-				CASE WHEN ISNUMERIC( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value))=1 THEN cast( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float) ELSE NULL END * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
+				CASE WHEN ISNUMERIC( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value))=1 THEN cast( COALESCE(sfv.value,udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float) ELSE NULL END * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)				
 			ELSE 0 END 
 			WHEN udft.internal_field_type IN(18710) THEN 
 			CASE WHEN (td.curve_tou=18901) THEN --ONPEAK
@@ -12959,7 +13018,7 @@ SELECT	'''+ @as_of_date+''' as_of_date, td.source_deal_header_id,td.leg,
 	END) volume
 	,sum(CASE WHEN udft.internal_field_type IN(18705) THEN --Capacity based fee 18713 OffPeak
 		CASE WHEN (td.curve_tou=18900) THEN --ONPEAK
-			CASE WHEN ISNUMERIC( COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value))=1 THEN cast( COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float) ELSE NULL END * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)			
+			CASE WHEN ISNUMERIC( COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value))=1 THEN cast( COALESCE(udf_formula.formula_eval_value,udddf.udf_value,uddf.udf_value) as float) ELSE NULL END * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)				
 		ELSE 0 END 
 		WHEN udft.internal_field_type IN(18710) THEN 
 		CASE WHEN (td.curve_tou=18901) THEN --ONPEAK
@@ -12975,7 +13034,7 @@ SELECT	'''+ @as_of_date+''' as_of_date, td.source_deal_header_id,td.leg,
 				* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
 		WHEN 18731 THEN --Injection based Fee
 			round(CASE WHEN isnull(hv.curve_id,-1)=-1 THEN  td.deal_volume  ELSE abs(hv.volume) END  * udfvalue.udfvalue, ISNULL(r.rounding, 100))* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
-'
+			'
 
 set @qry2b='
 		WHEN 18705 THEN --Position based fee  18705 OnPeak 
@@ -13038,7 +13097,7 @@ set @qry3b='
 		round((ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))*CAST((DATEDIFF(d,td.term_start,td.term_end)+1) AS FLOAT)/CAST((DATEDIFF(d,td.entire_term_start,td.entire_term_end)+1) AS FLOAT)) * cast (uddf.udf_value as float), ISNULL(r.rounding, 100)) * ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1) * ISNULL(partialhours/totalhours,1) 
 		WHEN 18732 THEN-- Lump Sum Fixed
 			ROUND(udfvalue.udfvalue, ISNULL(r.rounding, 100)) 
-			* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
+					* ISNULL(sc.factor, 1) * ISNULL(fx_deal.price_fx_conv_factor, 1)
 		WHEN 18737 THEN --Percentage - Fixed 
 		((udfvalue.udfvalue * tlm.contract_value)/100) /ISNULL(fx.price_fx_conv_factor,1)
 '
@@ -13067,9 +13126,9 @@ set @qry5b='
 		WHEN 18741 THEN
 			 td.deal_volume * sfv.value
 		WHEN 18742 THEN
-			sddh.positive_vol
+				sddh.positive_vol
 		WHEN 18743 THEN
-			sddh.negative_vol
+				sddh.negative_vol
 	ELSE NULL END) value_deal,cast(0 as float) value,cast(0 as float) value_inv,MAX(td.fixed_price_currency_id) deal_cur_id,
 	MAX(td.settlement_currency) inv_cur_id,NULL contract_value,NULL contract_value_deal,NULL contract_value_inv,
 	MAX(udft.internal_field_type) internal_type,MAX(uddft.udf_tabgroup) tab_group_name, MAX(uddft.udf_group) udf_group_name,
@@ -13082,13 +13141,13 @@ set @qry5b='
 	MAX(isnull(udddf.contract_id,uddf.contract_id)) contract_id
 	into  #tmp_fees_breakdown_000 --  select * from  #tmp_fees_breakdown 
 	FROM	#temp_deals td 
-	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-	INNER JOIN #uddft uddft ON uddft.template_id=sdh.template_id	and td.leg= ISNULL(uddft.leg,td.leg)	
-	INNER JOIN #udft udft ON udft.udf_template_id = uddft.udf_user_field_id and td.leg= ISNULL(udft.leg,td.leg)
-	LEFT JOIN #uddf uddf ON uddf.source_deal_header_id = td.source_deal_header_id 
-			AND uddf.udf_template_id = uddft.udf_template_id AND uddft.field_type<>''w''
-	LEFT JOIN #udddf udddf ON udddf.udf_template_id = uddft.udf_template_id
-			AND udddf.source_deal_detail_id = td.source_deal_detail_id AND uddft.field_type<>''w''
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
+		INNER JOIN #uddft uddft ON uddft.template_id=sdh.template_id	and td.leg= ISNULL(uddft.leg,td.leg)	
+		INNER JOIN #udft udft ON udft.udf_template_id = uddft.udf_user_field_id and td.leg= ISNULL(udft.leg,td.leg)
+		LEFT JOIN #uddf uddf ON uddf.source_deal_header_id = td.source_deal_header_id 
+				AND uddf.udf_template_id = uddft.udf_template_id AND uddft.field_type<>''w''
+		LEFT JOIN #udddf udddf ON udddf.udf_template_id = uddft.udf_template_id
+				AND udddf.source_deal_detail_id = td.source_deal_detail_id AND uddft.field_type<>''w''
 	LEFT JOIN ' + @tmp_pos_neg_price_vol + ' sddh ON sddh.source_deal_detail_id = td.source_deal_detail_id
 		AND udft.internal_field_type IN (18742,18743)
 		outer apply
@@ -13112,7 +13171,7 @@ set @qry6b='
 		--  AND fx_deal.as_of_date= td.exp_curve_as_of_date 
 			AND  maturity_date between td.term_start and td.term_end
 		and market_value_desc=td.fx_conversion_market'+
-		case when @calc_type='s' then ' and as_of_date between ''' +@term_start+''' and ''' +@term_end+'''' else ' and as_of_date=''' +@curve_as_of_date+'''' end 
+		case when @calc_type='s' then ' and as_of_date between ''' +@term_start+''' and ''' +@term_end+'''' else ' and as_of_date=td.curve_as_of_date' end 
 		+'
 	) fx_deal
 	LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = td.curve_id	
@@ -13168,7 +13227,7 @@ set @qry7b='
 		group by source_deal_header_id,source_deal_detail_id,leg, term_start, term_end
 	) tlm	
 	outer apply ( 
-		SELECT try_cast(isnull(abs(COALESCE(udddf.udf_value,uddf.udf_value,sfv.value))*
+		SELECT try_cast(isnull(abs(try_cast(COALESCE(udddf.udf_value,uddf.udf_value,sfv.value) as float))*
 			CASE WHEN COALESCE(sfv.rec_pay,udddf.receive_pay,uddf.receive_pay,case when ISNULL(gaivs.st_buy_sell_flag,td.buy_sell_flag)=''b'' then ''p'' else ''r'' end)=''r''
 				THEN 1 ELSE -1 END * CASE WHEN udft.internal_field_type = 18743 THEN -1 ELSE 1 END
 			,udf_formula.formula_eval_value) as float) udfvalue
@@ -13187,8 +13246,7 @@ set @qry8b=	'
 			1
 	END <> 0 and ((op.source_deal_header_id is not null and td.leg = 1) or op.source_deal_header_id is null)
 	GROUP BY  
-			td.source_deal_header_id,
-			td.leg,
+			td.source_deal_header_id,td.leg,
 			CASE WHEN '''+@cpt_type+'''=''b'' THEN CAST(CONVERT(VARCHAR(7),sdh.deal_date,120)+''-01'' AS DATETIME)
 		WHEN --op.source_deal_header_id IS NOT NULL and 
 			uddft.internal_field_type IN (18722) THEN 
@@ -13395,7 +13453,7 @@ into #tmp_fees_breakdown_001
 		AND udddf3.source_deal_detail_id = td.source_deal_detail_id'
 
 set @qry6a='
-	outer apply
+		outer apply
 		(
 		select uddft_t.*,trs.rec_pay, trs.rate* case when trs.rate_granularity=106202 then cast(1.0 as float)/(datediff(month,trs.begin_date,trs.end_date)+1) else 1 end *isnull(fx_t_deal.price_fx_conv_factor, 1)*ISNULL(conv_t.conversion_factor,1) rate_deal
 		--from (
@@ -13403,7 +13461,7 @@ set @qry6a='
 		--		WHERE rate_schedule_id = COALESCE(uddf1.udf_value,ccrs.rate_schedule_id,dp.rateSchedule,cg.maintain_rate_schedule)
 		--	GROUP BY rate_schedule_id,rate_type_id
 		--) trs1
-	from transportation_rate_schedule trs 
+		from transportation_rate_schedule trs 
 		inner join user_defined_fields_template uddft_t 
 				on uddft_t.field_id = trs.rate_type_id AND  td.leg= isnull(uddft_t.leg,td.leg)
 			and trs.rate_schedule_id = COALESCE(uddf1.udf_value,ccrs.rate_schedule_id,dp.rateSchedule,cg.maintain_rate_schedule)
@@ -13419,7 +13477,7 @@ set @qry6a='
 			--  AND fx_deal.as_of_date= td.exp_curve_as_of_date 
 				AND  maturity_date between td.term_start and td.term_end
 			and market_value_desc=td.fx_conversion_market'+
-		case when @calc_type='s' then ' and as_of_date between ''' +@term_start+''' and ''' +@term_end+'''' else ' and as_of_date=''' +@curve_as_of_date+'''' end 
+			case when @calc_type='s' then ' and as_of_date between ''' +@term_start+''' and ''' +@term_end+'''' else ' and as_of_date=td.curve_as_of_date' end 
 		+'
 		) fx_t_deal		
 		union all
@@ -13436,7 +13494,7 @@ set @qry6a='
 				func_cur_id = td.fixed_price_currency_id AND source_system_id = td.source_system_id 
 				AND  maturity_date between td.term_start and td.term_end
 				and market_value_desc=td.fx_conversion_market'+
-		case when @calc_type='s' then ' and as_of_date between ''' +@term_start+''' and ''' +@term_end+'''' else ' and as_of_date=''' +@curve_as_of_date+'''' end 
+		case when @calc_type='s' then ' and as_of_date between ''' +@term_start+''' and ''' +@term_end+'''' else ' and as_of_date=td.curve_as_of_date' end 
 		+'
 		) fx_v_deal		
 		) uddft  '
@@ -13454,7 +13512,7 @@ set @qry7a='
 				func_cur_id = td.fixed_price_currency_id AND source_system_id = td.source_system_id 
 				AND  maturity_date between td.term_start and td.term_end
 			and market_value_desc=td.fx_conversion_market'+
-		case when @calc_type='s' then ' and as_of_date between ''' +@term_start+''' and ''' +@term_end+'''' else ' and as_of_date=''' +@curve_as_of_date+'''' end 
+		case when @calc_type='s' then ' and as_of_date between ''' +@term_start+''' and ''' +@term_end+'''' else ' and as_of_date=td.curve_as_of_date' end 
 		+'
 		) fx_deal		
 		LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = td.curve_id	
@@ -13464,9 +13522,9 @@ set @qry7a='
 		OUTER APPLY(
 			SELECT ISNULL(NULLIF(SUM(CAST(volume_mult AS FLOAT)),0),1) AS totalhours, 
 			ISNULL(NULLIF(SUM(CASE WHEN '''+@calc_type+''' =''s'' AND term_date <= '''+@as_of_date+''' THEN CAST(volume_mult AS FLOAT)
-					WHEN '''+@calc_type+''' <> ''s'' AND '''+isnull(@calc_explain_type,'')+''' = ''d'' AND term_date >  '''+@as_of_date+''' AND term_date<='''+isnull(@next_business_day,'')+''' THEN CAST(volume_mult AS FLOAT)
-					WHEN '''+@calc_type+''' <> ''s'' AND '''+isnull(@calc_explain_type,'')+''' ='''' AND term_date > '''+@as_of_date+''' THEN CAST(volume_mult AS FLOAT)
-				ELSE 0 END),0),1) partialhours
+								   WHEN '''+@calc_type+''' <> ''s'' AND '''+isnull(@calc_explain_type,'')+''' = ''d'' AND term_date >  '''+@as_of_date+''' AND term_date<='''+isnull(@next_business_day,'')+''' THEN CAST(volume_mult AS FLOAT)
+								   WHEN '''+@calc_type+''' <> ''s'' AND '''+isnull(@calc_explain_type,'')+''' ='''' AND term_date > '''+@as_of_date+''' THEN CAST(volume_mult AS FLOAT)
+								ELSE 0 END),0),1) partialhours
 			FROM hour_block_term
 			WHERE block_type = case when uddft.internal_field_type =18702 then 12000 else ISNULL(spcd.block_type,12000) end
 				AND block_define_id = case when uddft.internal_field_type =18702 then '+cast(@baseload_block_definition as varchar)+' else ISNULL(spcd.block_define_id,'+cast(@baseload_block_definition as varchar)+') end 
@@ -13480,8 +13538,6 @@ set @qry7a='
 			CASE WHEN (uddft.internal_field_type IN (18702, 18703,18717)) THEN ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))
 				ELSE 1 END <> 0	;
 '
-
-
 
 
 set @qry8a='
@@ -13673,13 +13729,18 @@ exec spa_print @qry7a
 exec spa_print @qry8a
 exec spa_print @qry9a
 
+
+
+
+
+
+
+
+
 exec('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'
 	+@sqlstmt+@qry1b+@qry2b+@qry3b+@qry4b+@qry5b+@qry6b+@qry7b+@qry8b+@qry1a
 	+@qry2a+@qry3a+@qry4a+@qry5a+@qry6a+@qry7a+@qry8a+@qry9a
 )
-
-
-
 
 IF ((SELECT COUNT(*) FROM #fees_breakdown) = 0 AND @calc_type = 's'
 	AND (SELECT COUNT(*) FROM #temp_deals) = 0
@@ -13805,8 +13866,8 @@ outer apply
 		where fx_currency_id = a.fixed_price_currency_id 
 			AND func_cur_id = a.settlement_currency AND source_system_id = a.source_system_id
 			 AND maturity_date between a.term_start and a.term_end
-			AND as_of_date>= case when @calc_type='s' then @term_start else @curve_as_of_date end 
-		AND as_of_date<= case when @calc_type='s' then @term_end else @curve_as_of_date end 
+			AND as_of_date>= case when @calc_type='s' then @term_start else a.curve_as_of_date end 
+		AND as_of_date<= case when @calc_type='s' then @term_end else a.curve_as_of_date end 
 
 			-- and fx_conversion_market=a.fx_conversion_market
 			--AND
@@ -13832,10 +13893,9 @@ outer apply
 		func_cur_id = a.func_cur_id AND source_system_id = a.source_system_id
 			 AND maturity_date between a.term_start and a.term_end
 			and market_value_desc=a.fx_conversion_market
-			AND as_of_date>= case when @calc_type='s' then @term_start else @curve_as_of_date end 
-			AND as_of_date<= case when @calc_type='s' then @term_end else @curve_as_of_date end 
+			AND as_of_date>= case when @calc_type='s' then @term_start else a.curve_as_of_date end 
+			AND as_of_date<= case when @calc_type='s' then @term_end else a.curve_as_of_date end 
 ) fx
-
 
 --------------------------------------------------------------------------------------
 
@@ -14070,9 +14130,9 @@ BEGIN
 		group by f.source_deal_header_id, f.leg, f.term_start, f.term_end
 		OPTION (MAXRECURSION 32767, MAXDOP 8 )
 					
-		select  curve_as_of_date as_of_date,
+		select  td.curve_as_of_date as_of_date,
 				CASE WHEN t.match_info_id IS NOT NULL THEN MAX(td.settlement_date) ELSE 
-				MAX(COALESCE(s.delivery_date,  s.expiration_date,curve_as_of_date)) END settlement_date,
+				MAX(COALESCE(s.delivery_date,  s.expiration_date,td.curve_as_of_date)) END settlement_date,
 				NULL payment_Date, 
 				t.source_deal_header_id, 
 				s.term_start,
@@ -14115,11 +14175,11 @@ BEGIN
 			and tz.curve_id=td.curve_id  and tz.location_id=td.location_id 
 	where error_deal=0 and leg_set is not null 
 	--	and isnull(td.option_flag,'n')='n'
-	group by curve_as_of_date, t.source_deal_header_id, s.term_start, s.term_end, 
+	group by td.curve_as_of_date, t.source_deal_header_id, s.term_start, s.term_end, 
 				t.leg, t.physical_financial_flag,t.shipment_id, t.ticket_detail_id, t.match_info_id
 
-	select  curve_as_of_date as_of_date,
-			MAX( isnull(s.expiration_date,curve_as_of_date)) settlement_date, --expiration_date 
+	select  td.curve_as_of_date as_of_date,
+			MAX( isnull(s.expiration_date,td.curve_as_of_date)) settlement_date, --expiration_date 
 			NULL payment_Date, 
 			t.source_deal_header_id, s.term_start, s.term_end, 
 			--SUM(case when(t.physical_financial_flag='p') then volume else 0 end) volume, 				
@@ -14145,24 +14205,22 @@ BEGIN
 		,max(t.deal_cur_id) deal_cur_id,max(t.inv_cur_id) inv_cur_id,t.shipment_id, t.ticket_detail_id
 		,max(dst_group_value_id) dst_group_value_id,
 		t.match_info_id
-	into #source_deal_settlement1 --- select * from #source_deal_settlement
+	into #source_deal_settlement1 --- select * from #source_deal_settlement1
 	from #temp_leg_mtm t 
 		inner join #temp_deals td on td.source_deal_header_id = t.source_deal_header_id 
 			and td.term_start = t.term_start 
 			and td.term_end = t.term_end 
-			AND td.leg = t.leg
-			AND ISNULL(td.match_info_id, -1) = ISNULL(t.match_info_id, -1)
+			AND td.leg = t.leg AND ISNULL(td.match_info_id, -1) = ISNULL(t.match_info_id, -1)
 		inner join #tmp_deals_settled s on t.source_deal_header_id = s.source_deal_header_id and
 			t.term_start = s.term_start and t.term_end = s.term_end left join
 			#premium p ON	p.source_deal_header_id = t.source_deal_header_id and 
-					p.term_start = t.term_start and p.term_end = t.term_end AND p.leg = t.leg
+				p.term_start = t.term_start and p.term_end = t.term_end AND p.leg = t.leg
 		left join #vwDealTimezone tz on  tz.source_deal_header_id=td.source_deal_header_id
 			and tz.curve_id=td.curve_id  and tz.location_id=td.location_id 
-	where error_deal=0 and leg_set is not null 
-		and isnull(td.option_flag,'n')='y'
+	where error_deal=0 and leg_set is not null and isnull(td.option_flag,'n')='y'
 		--and not ( isnull(t.internal_deal_subtype_value_id,1) in (1,2)  and isnull(t.internal_deal_type_value_id,1) in (1,2))
-	group by curve_as_of_date, t.source_deal_header_id, s.term_start, s.term_end, 
-				t.leg, t.physical_financial_flag,t.shipment_id, t.ticket_detail_id, t.match_info_id
+	group by td.curve_as_of_date, t.source_deal_header_id, s.term_start, s.term_end, 
+		t.leg, t.physical_financial_flag,t.shipment_id, t.ticket_detail_id, t.match_info_id
 
 
 		 
@@ -14257,18 +14315,18 @@ BEGIN
 			END	
 		
 		SET @sql = 
-		'DELETE top(100000) sds from source_Deal_settlement sds 
-			INNER JOIN (select distinct source_deal_header_id from #tmp_deals_settled) s on s.source_deal_header_id = sds.source_deal_header_id 
-				--AND convert(varchar(7),sds.as_of_date,120)='''+convert(varchar(7),@as_of_date,120)+''' 
-				AND convert(varchar(10),sds.term_start,120)>='''+convert(varchar(10),@term_start,120)+''' 
-			    AND convert(varchar(10),sds.term_start,120)<='''+convert(varchar(10),@term_end,120)+''' 
+		'DELETE top(100000) sds 
+		from source_Deal_settlement sds 
+			INNER JOIN (select distinct source_deal_header_id,term_start,term_end from #temp_leg_mtm) s on s.source_deal_header_id = sds.source_deal_header_id 
+				AND convert(varchar(10),sds.term_start,120)>=convert(varchar(10),s.term_start,120)
+			    AND convert(varchar(10),sds.term_start,120)<=convert(varchar(10),s.term_end,120)
 				AND '
 				+ CASE @save_settlement_data WHEN 209 THEN 
 				' CAST(sds.as_of_date AS DATE) = ''' + @as_of_date + ''''
 				WHEN 211 THEN
 				' CAST(sds.as_of_date AS DATE) <= ''' + @as_of_date + ''' AND EOMONTH(sds.as_of_date) = ''' + CONVERT(VARCHAR(10), EOMONTH(@as_of_date), 120) + ''''
-				ELSE CASE WHEN @as_of_date = EOMONTH(@as_of_date) THEN ' sds.term_end <= ''' ELSE ' sds.as_of_date = ''' END + CONVERT(VARCHAR(10),@as_of_date,120) + '''' END
-
+					ELSE 
+						CASE WHEN @as_of_date = EOMONTH(@as_of_date) THEN ' sds.as_of_date <= ''' ELSE ' sds.as_of_date = ''' END + CONVERT(VARCHAR(10),@as_of_date,120) + '''' END
 
 			exec spa_print @sql
 		WHILE 1 = 1
@@ -14280,16 +14338,15 @@ BEGIN
 		set @st5 = 
 		'DELETE  TOP(100000) tou
 		FROM ' + dbo.FNAGetProcessTableName(@as_of_date, 'source_deal_settlement_tou') +  ' tou 
-		INNER JOIN (select distinct source_deal_header_id from #tmp_deals_settled) s on tou.source_deal_header_id = s.source_deal_header_id 
-			--AND convert(varchar(7),tou.as_of_date,120)='''+CONVERT(varchar(7),@as_of_date,120)+''' 
-		   	AND convert(varchar(10),tou.term_start,120)>='''+CONVERT(varchar(10),@term_start,120)+''' 
-			AND convert(varchar(10),tou.term_start,120)<='''+CONVERT(varchar(10),@term_end,120)+'''
-			AND '
-			+ CASE @save_settlement_data WHEN 209 THEN 
+		INNER JOIN (select distinct source_deal_header_id,term_start,term_end from #temp_leg_mtm) s on s.source_deal_header_id = tou.source_deal_header_id 
+			AND convert(varchar(10),tou.term_start,120)>=convert(varchar(10),s.term_start,120)
+			AND convert(varchar(10),tou.term_start,120)<=convert(varchar(10),s.term_end,120)
+			AND '+
+			 CASE @save_settlement_data WHEN 209 THEN 
 			' CAST(tou.as_of_date AS DATE) = ''' + @as_of_date + ''''
 			WHEN 211 THEN
 			' CAST(tou.as_of_date AS DATE) <= ''' + @as_of_date + ''' AND EOMONTH(tou.as_of_date) = ''' + CONVERT(VARCHAR(10), EOMONTH(@as_of_date), 120) + ''''
-			ELSE CASE WHEN @as_of_date = EOMONTH(@as_of_date) THEN ' tou.term_end <= ''' ELSE ' tou.as_of_date = ''' END + CONVERT(VARCHAR(10),@as_of_date,120) + '''' END
+			ELSE CASE WHEN @as_of_date = EOMONTH(@as_of_date) THEN ' tou.as_of_date <= ''' ELSE ' tou.as_of_date = ''' END + CONVERT(VARCHAR(10),@as_of_date,120) + '''' END
 
 		EXEC spa_print  @st5
 		
@@ -14308,8 +14365,8 @@ BEGIN
 			match_info_id
 		) 							 
 		
-		select  curve_as_of_date as_of_date,
-			 isnull(s.expiration_date,curve_as_of_date) settlement_date, --expiration_date 
+		select  td.curve_as_of_date as_of_date,
+			 isnull(s.expiration_date,td.curve_as_of_date) settlement_date, --expiration_date 
 			NULL payment_Date, 
 			t.source_deal_header_id, s.term_start, s.term_end, 
 			--SUM(case when(t.physical_financial_flag='p') then volume else 0 end) volume, 				
@@ -14474,8 +14531,14 @@ begin
 					AND ISNULL(sds.shipment_id, -1) = ISNULL(sett.shipment_id, -1)
 					AND ISNULL(sds.ticket_detail_id, -1) = ISNULL(sett.ticket_detail_id, -1)
 					AND ISNULL(sds.match_info_id, -1) = ISNULL(sett.match_info_id, -1)
-						AND (DATEADD(m,1,CAST(CAST(YEAR(sds.term_end) AS VARCHAR)+''-''+CAST(MONTH(sds.term_end) AS VARCHAR)+''-01'' AS DATETIME))-1 <= '''+@as_of_date+''' OR 
-							(DATEADD(m,1,CAST(CAST(YEAR(sds.term_end) AS VARCHAR)+''-''+CAST(MONTH(sds.term_end) AS VARCHAR)+''-01'' AS DATETIME))-1 > '''+@as_of_date+''' AND sett.as_of_date = '''+@as_of_date+'''))
+						AND (
+						
+						DATEADD(m,1,CAST(CAST(YEAR(sds.term_end) AS VARCHAR)+''-''+CAST(MONTH(sds.term_end) AS VARCHAR)+''-01'' AS DATETIME))-1 <= '''+@as_of_date+''' 
+						OR 
+							(
+							DATEADD(m,1,CAST(CAST(YEAR(sds.term_end) AS VARCHAR)+''-''+CAST(MONTH(sds.term_end) AS VARCHAR)+''-01'' AS DATETIME))-1 > '''+@as_of_date+''' AND sett.as_of_date = '''+@as_of_date+'''
+							)
+					)
 				OUTER APPLY(
 					SELECT NULLIF(SUM(volume_mult), 0) volume_mult FROM hour_block_term 
 						WHERE block_define_id ='+cast(@baseload_block_definition as varchar)+'
@@ -14895,7 +14958,7 @@ Select 	a.source_deal_header_id, a.deal_id,
 						tc_f.maturity_date = a.term_end and 
 						tc_f.as_of_date <> a.term_end  left outer join
 		' + @source_price_curve + ' spc_di  ON spc_di.source_curve_def_id = a.discount_curve_id and 
-			spc_di.as_of_date = ''' + @curve_as_of_date + ''' and
+			spc_di.as_of_date = a.curve_as_of_date and
 			spc_di.maturity_date = a.term_end and
 			spc_di.assessment_curve_type_value_id = ' + cast(@assessment_curve_type_value_id as varchar) + ' and 
 			spc_di.curve_source_value_id = ' + cast(@curve_source_value_id as varchar) + ' left outer join
@@ -15043,7 +15106,7 @@ Select
 						tc_f.maturity_date = a.term_end and 
 						tc_f.as_of_date <> a.term_end  left outer join
 		' + @source_price_curve + ' spc_di  ON spc_di.source_curve_def_id = a.discount_curve_id and 
-			spc_di.as_of_date = ''' + @curve_as_of_date + ''' and
+			spc_di.as_of_date =a.curve_as_of_date and
 			spc_di.maturity_date = a.term_end and
 			spc_di.assessment_curve_type_value_id = ' + cast(@assessment_curve_type_value_id as varchar) + ' and 
 			spc_di.curve_source_value_id = ' + cast(@curve_source_value_id as varchar) + ' left outer join
@@ -15235,7 +15298,7 @@ Select 	''' + @as_of_date + ''' as_of_date, a.source_deal_header_id,
 					tc_f.as_of_date <> a.term_end  left outer join
 
 		' + @source_price_curve + ' spc_di  ON spc_di.source_curve_def_id = a.discount_curve_id and 
-			spc_di.as_of_date = ''' + @curve_as_of_date + ''' and
+			spc_di.as_of_date =a.curve_as_of_date and
 			spc_di.maturity_date = a.term_end and
 			spc_di.assessment_curve_type_value_id = ' + cast(@assessment_curve_type_value_id as varchar) + ' and 
 			spc_di.curve_source_value_id = ' + cast(@curve_source_value_id 	as varchar) + ' 
@@ -17415,11 +17478,11 @@ save_mtm_at_low_granularity:
 				left join 	#temp_curves tc on tc.source_curve_def_id = '+case when @calc_type='s' then 'isnull(a.settlement_curve_id, a.curve_id)' else 'a.curve_id' END +' AND 
 						tc.maturity_date = a.curve_type_maturity_date AND tc.as_of_date = a.exp_curve_as_of_date 
 					LEFT OUTER JOIN	 #temp_curves tc_p ON tc_p.source_curve_def_id = a.proxy_curve_id AND 
-						 tc_p.maturity_date = a.proxy_curve_maturity AND tc_p.as_of_date ='''+ @curve_as_of_date+'''  
+						 tc_p.maturity_date = a.proxy_curve_maturity AND tc_p.as_of_date =a.curve_as_of_date  
 					LEFT OUTER JOIN #temp_curves tc_m ON tc_m.source_curve_def_id = a.monthly_index AND 
-						 tc_m.maturity_date = a.monthly_index_maturity AND tc_m.as_of_date ='''+ @curve_as_of_date+''' 
+						 tc_m.maturity_date = a.monthly_index_maturity AND tc_m.as_of_date =a.curve_as_of_date 
 					LEFT OUTER JOIN	#temp_curves tc_p3 ON tc_p3.source_curve_def_id = a.proxy_curve_id3 AND 
-						 tc_p3.maturity_date = a.proxy_curve_maturity3 AND tc_p3.as_of_date = '''+ @curve_as_of_date+''' 
+						 tc_p3.maturity_date = a.proxy_curve_maturity3 AND tc_p3.as_of_date = a.curve_as_of_date 
 				outer apply
 				(
 					select case when isnull(a.bid_n_ask_price,''n'')=''n'' then  coalesce(tc.curve_value, tc_p.curve_value, tc_m.curve_value, tc_p3.curve_value)
@@ -18265,4 +18328,3 @@ CleanUp_Process_Tables:
 
 GO
 --/************************************* Object: 'spa_calc_mtm_job' END *************************************/
-
