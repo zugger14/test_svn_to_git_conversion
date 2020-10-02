@@ -12587,10 +12587,10 @@ EXEC(@sql)
 
 SET @sql=' 
 	INSERT INTO '+@formula_table5+'
-		(rowid,formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation)
+		(rowid,formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation,internal_field_type,sequence_order)
 	SELECT 	
 		uddft.udf_template_id [ID],ISNULL(uddf.udf_value,udft.default_value) formula_id, ' + cast(@curve_source_value_id as varchar) + ', td.term_start, '''+@as_of_date+'''
-		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002
+		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002,uddft.internal_field_type,CASE uddft.internal_field_type WHEN 18744 THEN 9999 ELSE 1 END
 	FROM	
 		#temp_deals td 
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
