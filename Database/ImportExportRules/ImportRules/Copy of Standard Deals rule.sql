@@ -45,8 +45,8 @@ BEGIN
 					'N' ,
 					NULL ,
 					'UPDATE [temp_process_table]
-SET [Deal Status] = ISNULL([Deal Status], ''New'')
-	, [Confirm Status] = ISNULL([Confirm Status], ''Not Confirmed'')',
+SET [Deal Status] = ISNULL(NULLIF([Deal Status],''''), ''New'')
+	, [Confirm Status] = ISNULL(NULLIF([Confirm Status],''''), ''Not Confirmed'')',
 					'UPDATE sdh
 SET  sdh.deal_status = 5603
     ,sdh.confirm_status_type = 17200
@@ -83,8 +83,8 @@ INNER JOIN source_deal_header sdh
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
 				, before_insert_trigger = 'UPDATE [temp_process_table]
-SET [Deal Status] = ISNULL([Deal Status], ''New'')
-	, [Confirm Status] = ISNULL([Confirm Status], ''Not Confirmed'')'
+SET [Deal Status] = ISNULL(NULLIF([Deal Status],''''), ''New'')
+	, [Confirm Status] = ISNULL(NULLIF([Confirm Status],''''), ''Not Confirmed'')'
 				, after_insert_trigger = 'UPDATE sdh
 SET  sdh.deal_status = 5603
     ,sdh.confirm_status_type = 17200
