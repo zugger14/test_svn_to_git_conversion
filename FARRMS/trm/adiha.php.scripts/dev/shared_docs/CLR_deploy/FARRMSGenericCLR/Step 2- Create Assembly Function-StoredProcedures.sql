@@ -398,7 +398,7 @@ GO
 	Eg						: EXEC spa_export_to_csv  @table_name = 'source_counterparty', @export_file_name ='D:\exported.csv', @include_column_headers = 'y', @delimiter = ',', @compress_file = 'y', @use_date_conversion = 'y', @strip_html = 'y', @enclosed_with_quotes='n'
  */ 
 CREATE PROCEDURE [dbo].[spa_export_to_csv]
-	@table_name					NVARCHAR(1024),
+	@table_name					NVARCHAR(MAX),
 	@export_file_name			NVARCHAR(2048),
 	@include_column_headers		NVARCHAR(1),
 	@delimiter					NVARCHAR(10),
