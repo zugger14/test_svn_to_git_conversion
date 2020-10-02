@@ -11,7 +11,8 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE PROC [dbo].[spa_confirmation_replacement_report] 
-	@source_deal_header_id VARCHAR(MAX)
+	@source_deal_header_id VARCHAR(MAX),
+	@user_login_id NVARCHAR(1000) = NULL
 
 AS
 SET NOCOUNT ON
@@ -79,4 +80,10 @@ LEFT JOIN contract_report_template crt
 		COALESCE(dcr_1.confirm_template_id, dcr_2.confirm_template_id, dcr_3.confirm_template_id, dcr_4.confirm_template_id, dcr_5.confirm_template_id, dcr_6.confirm_template_id)
 	END
 ) cte 
+OUTER APPLY (
+		SELECT  case when (ISNULL(decimal_separator, '.') = '.' and ISNULL(group_separator, ',') = ',') Then 'en-US' Else 'de-DE' end global_number_format_region
+		FROM application_users au
+		INNER JOIN region rg ON au.region_id = rg.region_id
+		WHERE user_login_id = @user_login_id
+	) un
 WHERE rnk = 1
