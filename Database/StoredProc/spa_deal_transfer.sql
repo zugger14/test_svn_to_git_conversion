@@ -34,6 +34,7 @@ CREATE PROCEDURE [dbo].[spa_deal_transfer]
 AS
 
 /*------------Debug Section----------------------
+
 DECLARE @flag CHAR(1),
 		@source_deal_header_id NVARCHAR(MAX),
 		@transfer_without_offset BIT = 0,
@@ -45,10 +46,26 @@ DECLARE @flag CHAR(1),
 		@transfer_price_process_id NVARCHAR(100) = NULL,
 		@transfer_provisional_price_process_id NVARCHAR(100) = NULL
 
-SELECT @flag='t',@source_deal_header_id='219948',
-@xml='<GridXML><GridHeader source_deal_header_id="219948" transfer_without_offset="0" transfer_only_offset="0"><GridRow  transfer_counterparty_id="7648" transfer_contract_id="8151" transfer_trader_id="1154" transfer_sub_book="3523" transfer_template_id="" counterparty_id="11015" contract_id="14287" trader_id="1154" sub_book="3523" template_id="" location_id="" transfer_volume="" volume_per="20" pricing_options="d" fixed_price="" transfer_date="2019-04-15" index_adder="" fixed_adder=""></GridRow></GridHeader></GridXML>',
-@transfer_price_process_id='A97672CF_A7A1_4161_BA60_89D27AE88C01'
-,@transfer_provisional_price_process_id='064DD1C4_7CFE_445C_9B37_E26D948A8375'
+
+	
+	--Sets session DB users 
+	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
+
+	--Sets contextinfo to debug mode so that spa_print will prints data
+	DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
+	SET CONTEXT_INFO @contextinfo
+
+	EXEC spa_print 'Use spa_print instead of PRINT statement in debug mode.'
+		
+	--Drops all temp tables created in this scope.
+	EXEC [spa_drop_all_temp_table] 
+	
+	-- SPA parameter values
+	SELECT @flag = 't', @source_deal_header_id = '100650'
+		, @xml = '<GridXML><GridHeader source_deal_header_id="100650" transfer_without_offset="0" transfer_only_offset="0"><GridRow  transfer_counterparty_id="7717" transfer_contract_id="8449" transfer_trader_id="1188" transfer_sub_book="179" transfer_template_id="2698" counterparty_id="7711" contract_id="8433" trader_id="1188" sub_book="155" template_id="" location_id="" transfer_volume="" volume_per="" pricing_options="d" fixed_price="" transfer_date="2019-12-31" index_adder="7273" fixed_adder="1"></GridRow></GridHeader></GridXML>'
+		, @transfer_price_process_id = 'DB612DFB_85D4_45AC_9C7F_0DAB83FBFA81'
+		, @transfer_provisional_price_process_id = '17D5595C_34DC_4563_952D_B01A45F60E5E'
+
 
 -- SELECT @flag='s', @source_deal_header_id='249960'
 --------------------------------------------------*/
@@ -855,8 +872,8 @@ BEGIN
 					)
 					BEGIN
 						UPDATE sdh
-						SET sdh.source_deal_type_id = ISNULL(sdh.source_deal_type_id, sdht.source_deal_type_id), 
-							sdh.deal_sub_type_type_id = ISNULL(sdh.deal_sub_type_type_id, sdht.deal_sub_type_type_id)
+						SET sdh.source_deal_type_id = ISNULL(sdht.source_deal_type_id, sdh.source_deal_type_id), 
+							sdh.deal_sub_type_type_id = ISNULL(sdht.deal_sub_type_type_id, sdh.deal_sub_type_type_id)
 						FROM #temp_deal_transfer tdf
 						INNER JOIN source_deal_header_template sdht ON sdht.template_id = tdf.transfer_template_id
 						INNER JOIN source_deal_header sdh ON sdh.template_id = tdf.transfer_template_id
@@ -871,8 +888,8 @@ BEGIN
 				)
 				BEGIN
 					UPDATE sdh
-					SET sdh.source_deal_type_id = ISNULL(sdh.source_deal_type_id, sdht.source_deal_type_id),
-						sdh.deal_sub_type_type_id = ISNULL(sdh.deal_sub_type_type_id, sdht.deal_sub_type_type_id)
+					SET sdh.source_deal_type_id = ISNULL(sdht.source_deal_type_id, sdh.source_deal_type_id),
+						sdh.deal_sub_type_type_id = ISNULL(sdht.deal_sub_type_type_id, sdh.deal_sub_type_type_id)
 					FROM #temp_deal_transfer tdf
 					INNER JOIN source_deal_header_template sdht ON sdht.template_id = tdf.template_id
 					INNER JOIN source_deal_header sdh ON sdh.template_id = tdf.template_id
@@ -887,20 +904,21 @@ BEGIN
 				)
 				BEGIN					
 					UPDATE sdh
-					SET sdh.source_deal_type_id = ISNULL(sdh.source_deal_type_id, sdht.source_deal_type_id),
-						sdh.deal_sub_type_type_id = ISNULL(sdh.deal_sub_type_type_id, sdht.deal_sub_type_type_id)
+					SET sdh.source_deal_type_id = ISNULL(sdht.source_deal_type_id, sdh.source_deal_type_id),
+						sdh.deal_sub_type_type_id = ISNULL(sdht.deal_sub_type_type_id, sdh.deal_sub_type_type_id)
 					FROM #temp_deal_transfer tdf
 					INNER JOIN source_deal_header_template sdht ON sdht.template_id = tdf.template_id
 					INNER JOIN source_deal_header sdh ON sdh.template_id = tdf.template_id
 					INNER JOIN #temp_offset_deal_headers TEMP ON sdh.source_deal_header_id = TEMP.source_deal_header_id
 				
 					UPDATE sdh
-					SET sdh.source_deal_type_id = ISNULL(sdh.source_deal_type_id, sdht.source_deal_type_id),
-						sdh.deal_sub_type_type_id = ISNULL(sdh.deal_sub_type_type_id, sdht.deal_sub_type_type_id)
+					SET sdh.source_deal_type_id = ISNULL(sdht.source_deal_type_id, sdh.source_deal_type_id),
+						sdh.deal_sub_type_type_id = ISNULL(sdht.deal_sub_type_type_id, sdh.deal_sub_type_type_id)
 					FROM #temp_deal_transfer tdf
 					INNER JOIN source_deal_header_template sdht ON sdht.template_id = tdf.transfer_template_id
 					INNER JOIN source_deal_header sdh ON sdh.template_id = tdf.transfer_template_id
 					INNER JOIN #temp_transfer_deal_headers TEMP ON sdh.source_deal_header_id = TEMP.source_deal_header_id
+
 				END
 				
 				--[TO DO] changes done as per latest requirement in enercity which was done only for product_id IN (4100, 4101)
