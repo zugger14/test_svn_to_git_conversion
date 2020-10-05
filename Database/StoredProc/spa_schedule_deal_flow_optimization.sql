@@ -76,7 +76,7 @@ SET NOCOUNT ON
 		, @receipt_deals_id VARCHAR(200) = NULL
 		, @delivery_deals_id VARCHAR(200) = NULL
 
-	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
+	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'adangol'
 
 	--Sets contextinfo to debug mode so that spa_print will prints data
 	DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
@@ -91,22 +91,21 @@ SET NOCOUNT ON
 
 select 
 	@flag = 'i'
-	, @box_ids = '1'
+	, @box_ids = '3'
 	, @flow_date_from = '2025-07-01'
 	, @flow_date_to = '2025-07-01'
 	, @sub = NULL
 	, @str = NULL
 	, @book = NULL
 	, @sub_book = NULL
-	, @contract_process_id = '5B7C2DEF_3FE7_4E83_BCBB_D9147A9FFE36'
+	, @contract_process_id = 'E7FE6D8B_4A0E_444D_B2DC_34C122B9ADC9'
 	, @from_priority = NULL
 	, @to_priority = NULL
 	, @call_from = 'flow_auto'
 	, @target_uom = 1158
 	, @reschedule = 0
 	, @granularity = 982
-	, @receipt_deals_id  = -1 
-	, @delivery_deals_id  = 103042
+
 
 --transport_deal_id	deal_volume		up_down_stream	source_deal_header_id
 --219590				6014.00000000	U				219589
@@ -4855,6 +4854,7 @@ BEGIN -- Insert/Update Deal data
 		ON pfc_curve.path_id = ISNULL(p.single_path_id, p.path_id)
 		AND pfc_curve.location_id = p.leg2_loc_id
 		AND pfc_curve.pipeline = COALESCE(@counterparty_id, dp.counterParty, th.[counterparty_id] )
+		AND pfc_curve.storage_type = p.storage_deal_type
 		AND p.storage_deal_type = 'i'
 	WHERE p.include_rec = 1 
 		AND ISNULL(@reschedule, 0) = 0	
@@ -6637,7 +6637,26 @@ EXEC spa_ErrorHandler 0
 
 END TRY
 BEGIN CATCH
-	--PRINT 'Catch Error:' + ERROR_MESSAGE()	
+	--PRINT 'Catch Error:' + ERROR_MESSAGE()
+	
+	--delete junk deals	produced when error occured after inserting on deal header block. (mainly error occurs on inserting deal detail block)
+	BEGIN
+		DECLARE @junk_deal_ids VARCHAR(2000)
+		SELECT @junk_deal_ids = COALESCE(@junk_deal_ids + ',', '') + CAST(sdh.source_deal_header_id AS VARCHAR(20))
+		FROM #tmp_header th
+		INNER JOIN source_deal_header sdh 
+			ON sdh.source_deal_header_id = th.source_deal_header_id
+		LEFT JOIN source_deal_detail sdd
+			ON sdd.source_deal_header_id = sdh.source_deal_header_id
+		WHERE sdh.deal_id like '%[_][_]%'
+			AND sdd.source_deal_detail_id IS NULL
+
+		IF NULLIF(@junk_deal_ids, '') IS NOT NULL
+		BEGIN
+			EXEC spa_source_deal_header @flag='d', @deal_ids = @junk_deal_ids
+		END
+		
+	END
 
 	EXEC spa_ErrorHandler -1
 		, 'Flow Optimization'
