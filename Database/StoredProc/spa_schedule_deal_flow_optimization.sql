@@ -4849,10 +4849,12 @@ BEGIN -- Insert/Update Deal data
 	LEFT JOIN #dest_deal_info ddi 
 		ON ddi.term_start = tm.term_start  
 		AND ISNULL(p.single_path_id, p.path_id) = ddi.single_path_id
+	LEFT JOIN delivery_path dp
+		ON dp.path_id = ISNULL(p.path_id, p.single_path_id)
 	LEFT JOIN #storage_book_mapping pfc_curve
 		ON pfc_curve.path_id = ISNULL(p.single_path_id, p.path_id)
 		AND pfc_curve.location_id = p.leg2_loc_id
-		AND pfc_curve.pipeline = COALESCE(@counterparty_id, p.counterparty_id, th.[counterparty_id] )
+		AND pfc_curve.pipeline = COALESCE(@counterparty_id, dp.counterParty, th.[counterparty_id] )
 		AND p.storage_deal_type = 'i'
 	WHERE p.include_rec = 1 
 		AND ISNULL(@reschedule, 0) = 0	
