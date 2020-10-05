@@ -1,4 +1,4 @@
- BEGIN TRY
+BEGIN TRY
 		BEGIN TRAN
 
 		DECLARE @report_id_dest INT 
@@ -282,6 +282,9 @@ WHERE sdd.leg = 1
 	DECLARE @_import_rule_id INT
 		, @_temp_process_table NVARCHAR(100)
 		, @_path NVARCHAR(1000)
+		, @_stg_withdrawal_template_id INT
+	--Hardcoded for withdrawal template as per requested.
+	SELECT @_stg_withdrawal_template_id = template_id FROM source_deal_header_template WHERE template_name = ''Storage Withdrawal''
 
 	SELECT @_path = document_path + ''temp_Note''  FROM connection_string
 	SELECT @_import_rule_id = ixp_rules_id FROM ixp_rules
@@ -307,12 +310,28 @@ WHERE sdd.leg = 1
 				, tp.is_dst
 				, 1 leg
 				, tp.volume
-				, ISNULL(sddh.sddh_price, sdd.fixed_price) price
-				, ABS(tp.volume) * ISNULL(sddh.sddh_price, sdd.fixed_price) amount
+				, IIF( pd.template_id = '' + CAST(@_stg_withdrawal_template_id AS NVARCHAR(20)) + '', ISNULL(csw.wacog,0)
+					, ISNULL(sddh.sddh_price, sdd.fixed_price)) price
+				, ABS(tp.volume) * IIF( pd.template_id = '' + CAST(@_stg_withdrawal_template_id AS NVARCHAR(20)) + ''
+										, ISNULL(csw.wacog,0)
+										,ISNULL(sddh.sddh_price, sdd.fixed_price))
+					amount
 			INTO #final_resultset
 			FROM #temp_position tp
 			INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = tp.source_deal_detail_id
-			INNER JOIN #process_deals pd ON pd.deal_id = tp.deal_id_to_process
+			INNER JOIN source_deal_header pd on pd.deal_id = tp.deal_id_to_process				
+			OUTER APPLY(SELECT MAX(csw.term) term ,csw.location_id,csw.contract_id
+				FROM source_deal_detail sd 
+				INNER JOIN calcprocess_storage_wacog csw ON csw.term < tp.term_start
+					AND csw.location_id = sd.location_id
+					AND csw.contract_id = pd.contract_id
+				WHERE sd.source_deal_header_id = pd.source_deal_header_id
+					AND tp.term_start BETWEEN sd.term_start AND sd.term_end
+				GROUP BY csw.location_id, csw.contract_id
+			) mx_wacog
+			LEFT JOIN calcprocess_storage_wacog csw ON csw.term = mx_wacog.term
+				AND csw.location_id = mx_wacog.location_id
+				AND csw.contract_id = mx_wacog.contract_id	
 			LEFT JOIN #source_deal_detail_hour sddh ON sddh.source_deal_detail_id = tp.source_deal_detail_id
 				AND sddh.term_date = tp.term_start
 				AND sddh.hr = tp.hr
@@ -1380,7 +1399,7 @@ FROM #tmp_result
 	
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '1171' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 7 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '1171' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 7 AS param_order, 0 AS param_depth, 'Deal Type' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Trayport Balancing'
@@ -1407,7 +1426,7 @@ FROM #tmp_result
 	
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 9 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 9 AS param_order, 0 AS param_depth, 'Location' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Trayport Balancing'
