@@ -411,7 +411,7 @@ SELECT
 		AND uddf2.source_deal_header_id = td.source_deal_header_id
 	LEFT JOIN delivery_path dp ON dp.path_id = uddf2.udf_value	
 	left join #fuel_based_variable_charge fbvc on fbvc.location_id=td.location_id and fbvc.term_start=td.term_start
-	OUTER APPLY(SELECT try_cast(uddf.udf_value as int)	udf_value FROM user_defined_deal_fields uddf INNER JOIN user_defined_deal_fields_template udddft ON uddf.udf_template_id=udddft.udf_template_id WHERE uddf.source_deal_header_id=td.source_deal_header_id and udddft.field_id=-5604) uddf_broker
+	--OUTER APPLY(SELECT try_cast(uddf.udf_value as int)	udf_value FROM user_defined_deal_fields uddf INNER JOIN user_defined_deal_fields_template udddft ON uddf.udf_template_id=udddft.udf_template_id WHERE uddf.source_deal_header_id=td.source_deal_header_id and udddft.field_id=-5604) uddf_broker
 	LEFT JOIN #tmp_source_fees sfv ON sfv.source_deal_detail_id=td.source_deal_detail_id AND sfv.field_id=uddft.field_name
 	LEFT JOIN contract_group cg ON cg.contract_id = td.contract_id
 	outer apply (select top(1) storage_capacity,CASE WHEN ownership_type=45301 THEN ''s'' ELSE ''b'' END st_buy_sell_flag  from  general_assest_info_virtual_storage
