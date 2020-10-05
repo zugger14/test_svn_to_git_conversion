@@ -57,7 +57,13 @@ BEGIN
 		   send_bcc,
 		   notes_subject,
 		   notes_text,
-		   @shared_document_path + '\' + REPLACE(notes_attachment, '/', '\')
+		   LTRIM(RTRIM(STUFF((SELECT ';' + CAST((@shared_document_path + '\' + REPLACE(adi.attachment_file_path, '/', '\')) AS VARCHAR(MAX)) [text()]
+				FROM email_notes
+			INNER JOIN attachment_detail_info adi 
+				ON adi.email_id = notes_id
+			WHERE notes_id = en.notes_id
+				FOR XML PATH(''), TYPE)
+			.value('.','NVARCHAR(MAX)'),1,1,' '))) final_attachment
 	FROM email_notes en
 	WHERE active_flag = 'y'
 		AND send_status = 'n'
