@@ -36,7 +36,7 @@ GO
 	@save_invoice				: Save Invoice flag
 	@output_file_format			: Output File Format
 	@export_report_name			: Export Report Name as to be exported
-	@jobname					: Job Name
+	@job_name					: Job Name
 	@paramset_hash				: Unique report identifier to resolve report paramset at run time.
 	@job_name					: Job name
 */
@@ -374,6 +374,7 @@ BEGIN
 	SET @export_sql_cmd = ' 
 		DECLARE @job_name NVARCHAR(1000) = ''$(ESCAPE_NONE(JOBNAME))''
 		EXEC sys.sp_set_session_context @key = N''JOB_NAME'', @value = @job_name;
+		EXEC sys.sp_set_session_context @key = N''DB_USER'', @value = ''' + @user_name + '''
 		GO
 		spa_run_sp_with_dynamic_params @spa = ''' + REPLACE(@export_sql_cmd, '''', '''''') + ''',@batch_unique_id = ''' + ISNULL(@batch_unique_id,'') + ''',@holiday_calendar_id = ' + ISNULL('''' + CAST(@holiday_calendar_id AS VARCHAR(10)) + '''', 'NULL')
 	
@@ -387,6 +388,20 @@ BEGIN
 
 		END
 	END
+
+	/*
+	Preserve user for all remaining steps. 
+	One issue without this was CLR method spa_export_to_csv couldn't resolve username and thus 
+	couldn't get user number formatting (decimal separator). Issue #37155
+	*/
+	SET @report_param_success = '
+	EXEC sys.sp_set_session_context @key = N''DB_USER'', @value = ''' + @user_name + ''';
+	  ' + @report_param_success
+
+	SET @report_param_failed = '
+	EXEC sys.sp_set_session_context @key = N''DB_USER'', @value = ''' + @user_name + ''';
+	  ' + @report_param_failed
+
 	/*
 	Step1:- Process and generates custom xml file or generates invoice document or generate excel file from report server. 
 			CSV, TXT and XML file generation is handled in Step 2.
