@@ -340,8 +340,8 @@ BEGIN
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20012201','individual_invoice','individual_invoice','Show Backing Sheets','checkbox','VARCHAR','h','n',NULL,NULL,'n','n',NULL,'n','n',NULL,NULL,'n','n','n','n',NULL,NULL,NULL,NULL)
-						
+			VALUES('20012201','individual_invoice','individual_invoice','Show Backing Sheets','checkbox','VARCHAR','h','n',NULL,NULL,'n','n','y','n','n',NULL,NULL,'n','n','n','n',NULL,NULL,NULL,NULL)
+		
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
@@ -527,7 +527,7 @@ BEGIN
 			validation_message				VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 			load_child_without_parent		BIT
 		)	
-					
+			
 		IF OBJECT_ID('tempdb..#temp_new_template_fields') IS NOT NULL
 			DROP TABLE #temp_new_template_fields 
 					
