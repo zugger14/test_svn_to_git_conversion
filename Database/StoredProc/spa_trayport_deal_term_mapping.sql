@@ -25,6 +25,13 @@ SET NOCOUNT ON;
 
 DECLARE @sql VARCHAR(MAX)
 
+IF OBJECT_ID('tempdb..#temp_import_term_data') IS NOT NULL
+			DROP TABLE #temp_import_term_data
+CREATE TABLE #temp_import_term_data(
+	deal_id NVARCHAR(2000),
+	term_code NVARCHAR(1000)
+)
+
 SET @sql = 'IF OBJECT_ID(''tempdb..#temp_import_data'') IS NOT NULL
 			DROP TABLE #temp_import_data
 
@@ -56,7 +63,7 @@ SET @sql = 'IF OBJECT_ID(''tempdb..#temp_import_data'') IS NOT NULL
 			,buy_sell_flag = CASE WHEN CHARINDEX(''/'',temp.curve_id) <> 0 AND  temp.date_sep = 2 AND temp.term_end IS NOT NULL THEN CASE WHEN mod_buy_sell_flag = ''Buy'' THEN ''Sell'' ELSE ''Buy'' END ELSE mod_buy_sell_flag END
 			,fixed_price = CASE WHEN  CHARINDEX(''/'',temp.curve_id) <> 0 THEN ''0'' ELSE temp.fixed_price END
 			, @counter = ixp_source_unique_id = @counter + 1
-			, deal_date = DATEADD(HOUR, 2, deal_date)
+			, deal_date = CASE WHEN  CASE WHEN temp.[date_sep] = 1 THEN ISNULL(NULLIF(temp.term_start,''NULL''),temp.term_end) ELSE ISNULL(NULLIF(temp.term_end,''NULL''),temp.term_start) END = ''WD'' THEN deal_date ELSE DATEADD(HOUR, 2, deal_date) END
 		FROM #temp_import_data temp
 
 		ALTER TABLE #temp_import_data
@@ -72,6 +79,10 @@ SET @sql = 'IF OBJECT_ID(''tempdb..#temp_import_data'') IS NOT NULL
 
 		INSERT INTO ' + @process_table + '
 		SELECT *
+		FROM #temp_import_data
+
+		INSERT INTO #temp_import_term_data
+		SELECT deal_id,term_start
 		FROM #temp_import_data
 '
 EXEC(@sql)
@@ -131,7 +142,7 @@ CREATE TABLE #temp_term(
 			ELSE val END,1) active_date,  
 			CASE WHEN t.date_or_block=''r'' THEN DATEADD(d,ISNULL(t.relative_days,0),ts.deal_date) ELSE NULL END relative_term_start,  
 			CASE WHEN t.date_or_block=''r'' THEN  DATEADD(d,ISNULL(t.no_of_days,0),DATEADD(d,ISNULL(t.relative_days,0),ts.deal_date)) ELSE NULL END relative_term_end,  
-			CASE WHEN t.date_or_block=''m'' THEN  dbo.FNAGetNextAvailDate(DATEADD(d,ISNULL(t.relative_days,1),ts.deal_date),1,t.holiday_calendar_id )
+			CASE WHEN t.date_or_block=''m'' THEN  dbo.FNAGetNextAvailDate(CAST(DATEADD(d,ISNULL(t.relative_days,1),ts.deal_date) AS DATE),1,t.holiday_calendar_id )
 				ELSE  dbo.FNAGetNextAvailDate(t.term_start,1,t.holiday_calendar_id )  END term_start,
 			CASE WHEN t.date_or_block=''m'' THEN  dbo.FNAGetTermEndDate(''m'',ts.deal_date,0) ELSE t.term_end END term_end,
 			ts.deal_id,t.date_or_block,t.no_of_days,ts.term_start    
@@ -223,8 +234,11 @@ CREATE TABLE #temp_term(
 	SET @sql = '  
 		UPDATE ' + @process_table + ' 
 			SET term_start = CONVERT(VARCHAR,ht.term_start,120) , 
-				term_end = CONVERT(VARCHAR,ht.term_end,120)  
+				term_end = CONVERT(VARCHAR,ht.term_end,120),
+				deal_date = CASE WHEN titd.term_code = ''WD'' THEN DATEADD(HOUR, 2, deal_date) ELSE deal_date END
 		FROM ' + @process_table + ' t 
+		INNER JOIN #temp_import_term_data titd
+			ON titd.deal_id = t.deal_id
 		INNER JOIN (SELECT deal_id
 					,MIN(CASE WHEN date_or_block=''b'' THEN terms  
 							  WHEN date_or_block=''r'' THEN relative_term_start   
