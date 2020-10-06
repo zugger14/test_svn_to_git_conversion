@@ -183,7 +183,7 @@ select *  from source_deal_HEADER   where source_deal_header_id=1600
 select *  from source_deal_pnl_detail   where source_deal_header_id=1600
 select *  from source_deal_settlement   where source_deal_header_id=1600
 select * from index_fees_breakdown   where source_deal_header_id=1600
-select * from index_fees_breakdown_settlement   where source_deal_header_id=268560
+select * from index_fees_breakdown_settlement   where source_deal_header_id=103523
 delete index_fees_breakdown_settlement   where source_deal_header_id=1600
 
 select *  from source_deal_pnl_breakdown   where source_deal_header_id=7876
@@ -200,8 +200,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =108264  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2020-08-31' , --'2017-02-15',
+	@source_deal_header_id =103523  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2020-09-29' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -218,8 +218,8 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2020-08-01' ,
-	@term_end = '2020-08-31' ,
+	@term_start = '2020-09-01' ,
+	@term_end = '2020-09-29' ,
 	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
@@ -14002,10 +14002,18 @@ BEGIN
                 and convert(varchar(7),i.as_of_date,120)='''+convert(varchar(7),@as_of_date,120)+'''
                 and convert(varchar(10),i.term_start,120) >= CASE WHEN i.internal_type = 18722 THEN convert(varchar(10),i.term_start,120) ELSE '''+convert(varchar(10),@term_start,120)+''' END
                 and convert(varchar(10),i.term_end,120) <= CASE WHEN i.internal_type = 18722 THEN convert(varchar(10),i.term_end,120) ELSE EOMONTH('''+ convert(varchar(10),@term_end,120)+''') END
-                and convert(varchar(10),i.as_of_date,120) ' + CASE  WHEN @save_settlement_data = 209 THEN ' = '
-                                                                    WHEN convert(varchar(10),@as_of_date,120) = EOMONTH(convert(varchar(10),@as_of_date,120)) THEN ' <= '
-                                                                    ELSE ' = ' END +''''+convert(varchar(10),@as_of_date,120)+'''
-                '
+                and  ' 
+			+ CASE @save_settlement_data WHEN 209 THEN  
+				' convert(varchar(10),i.as_of_date,120)='''+convert(varchar(10),@as_of_date,120)+''''
+			
+			WHEN 211 THEN
+			' convert(varchar(10),i.as_of_date,120) <= ''' + @as_of_date + ''' AND EOMONTH(i.as_of_date) = ''' + CONVERT(VARCHAR(10), EOMONTH(@as_of_date), 120) + ''''
+			ELSE 
+				' convert(varchar(10),i.as_of_date,120)' +
+				CASE WHEN @as_of_date = EOMONTH(@as_of_date) THEN '<=' ELSE ' = ' END 
+				+''''+ CONVERT(VARCHAR(10),@as_of_date,120) + '''' 
+			END
+
 		exec spa_print @sql
 
 		WHILE 1 = 1
