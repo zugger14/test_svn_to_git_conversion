@@ -162,7 +162,7 @@ BEGIN
 		--SELECT @outmsg,@error_number1,@status,@error_number
 		IF @status = 'Success'
 		BEGIN
-			EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@result OUTPUT
+			EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@result OUTPUT, '.'
 
 			SET @sql = '
 			INSERT INTO source_emir_audit([status],error_code,error_description,message_received_timestamp,message_id,uti_id,trade_id,source_file_name)

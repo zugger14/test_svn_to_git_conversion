@@ -1,5 +1,3 @@
-
-/*************************************View: 'Multiple Scenario Shift View' START*************************************/
 BEGIN TRY
 		BEGIN TRAN
 	
@@ -37,77 +35,133 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Standard Multiple Scenario Shift View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) --= ''2017-01-02''
+
 DECLARE @_criteria_id  VARCHAR(2000)
+
 DECLARE @_delta VARCHAR(10) --= ''n''
+
 DECLARE @_sql VARCHAR(MAX) = NULL
 
 SET NOCOUNT ON
 
 IF ''@as_of_date'' <> ''NULL''
+
 	SET @_as_of_date = ''@as_of_date''
+
 IF ''@criteria_id'' <> ''NULL''
+
 	SET @_criteria_id = ''@criteria_id''
+
 IF ''@delta'' <> ''NULL''
+
 	SET @_delta = ''@delta''
 
 SET @_delta = ISNULL(@_delta, ''y'')
 
 IF OBJECT_ID(''tempdb..#final_table'') IS NOT NULL
+
 	DROP TABLE #final_table
 
 CREATE TABLE #final_table (
+
 	as_of_date DATETIME,
+
 	criteria_id VARCHAR(MAX) COLLATE DATABASE_DEFAULT,
+
 	criteria_name VARCHAR(MAX) COLLATE DATABASE_DEFAULT,
+
 	commodity_one VARCHAR(MAX) COLLATE DATABASE_DEFAULT,
+
 	commodity_two VARCHAR(MAX) COLLATE DATABASE_DEFAULT,
+
 	commodity_one_name VARCHAR(MAX) COLLATE DATABASE_DEFAULT,
+
 	commodity_two_name VARCHAR(MAX) COLLATE DATABASE_DEFAULT,
-	shift_one VARCHAR(MAX) COLLATE DATABASE_DEFAULT,
+
+	shift_one FLOAT,
+
 	shift_two VARCHAR(MAX) COLLATE DATABASE_DEFAULT,
+
 	value_one float,
+
 	value_two float,
+
 	calc_value_one float,
+
 	calc_value_two float,
+
 	fixed_value float,
+
 	total_value float,
+
 	term_start DATETIME,
+
 	term_end DATETIME,
+
 	delta VARCHAR(MAX) COLLATE DATABASE_DEFAULT
+
 )
 
 SET @_sql = ''
+
 	INSERT INTO #final_table
+
 	SELECT 
+
 		CAST(mssr.as_of_date AS DATETIME) as_of_date,
+
 		mssr.criteria_id,
+
 		mwc.criteria_name,
+
 		mssr.commodity_one,
+
 		ISNULL(mssr.commodity_two, mssr.commodity_one) commodity_two,
+
 		commodity_one.commodity_name [commodity_one_name],
+
 		commodity_two.commodity_name [commodity_two_name],
+
 		(mssr.shift_one / 100) shift_one,
+
 		(mssr.shift_two / 100) shift_two,
+
 		mssr.value_one,
+
 		mssr.value_two,
+
 		mssr.calc_value_one,
+
 		mssr.calc_value_two,
+
 		mssr.fixed_value,
+
 		'' + CASE WHEN @_delta = ''n'' THEN ''(isnull(mssr.total_value,0)+isnull(mssr.mtm_value_one,0)+isnull(mssr.mtm_value_two,0))'' ELSE ''ISNULL(mssr.total_value,0)'' END + '' AS total_value,
+
 		CAST(mssr.term_start AS DATETIME) term_start,
+
 		CAST(mssr.term_end AS DATETIME) term_end,
+
 		mssr.delta	
+
 	FROM maintain_whatif_criteria mwc 
+
 	INNER JOIN multiple_scenario_shift_result mssr ON mssr.criteria_id = mwc.criteria_id
+
 	INNER JOIN source_commodity commodity_one ON commodity_one.source_commodity_id = mssr.commodity_one
+
 	LEFT JOIN source_commodity commodity_two ON commodity_two.source_commodity_id = mssr.commodity_two
+
 	WHERE dbo.FNAGetSQLStandardDate(mssr.as_of_date) = '''''' + @_as_of_date +''''''
+
 	'' + CASE WHEN @_criteria_id IS NULL THEN '' '' ELSE '' AND mssr.criteria_id IN ('' + @_criteria_id + '')'' END
-	
+
 EXEC (@_sql)
 
 SELECT * 
+
 --[__batch_report__]
+
 FROM #final_table', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
@@ -469,7 +523,7 @@ FROM #final_table', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'MTM Shift One'
-			   , reqd_param = 0, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+			   , reqd_param = 0, widget_id = 1, datatype_id = 3, param_data_source = NULL, param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -482,7 +536,7 @@ FROM #final_table', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'shift_one' AS [name], 'MTM Shift One' AS ALIAS, 0 AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'shift_one' AS [name], 'MTM Shift One' AS ALIAS, 0 AS reqd_param, 1 AS widget_id, 3 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Multiple Scenario Shift View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -755,5 +809,3 @@ COMMIT TRAN
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
 	
-/*************************************View: 'Multiple Scenario Shift View' END***************************************/
-

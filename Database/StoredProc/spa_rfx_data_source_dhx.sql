@@ -461,7 +461,7 @@ BEGIN
 			SELECT  @csv_file_name =  @csv_file_folder + @name + '.csv';
 			DECLARE @result VARCHAR(MAX)
 
-			EXEC spa_export_to_csv @table_name=@csv_table, @export_file_name=@csv_file_name, @include_column_headers='y', @delimiter=',', @compress_file='n',@use_date_conversion='y',@strip_html='y',@enclosed_with_quotes='y',@result=@result OUTPUT
+			EXEC spa_export_to_csv @table_name=@csv_table, @export_file_name=@csv_file_name, @include_column_headers='y', @delimiter=',', @compress_file='n',@use_date_conversion='y',@strip_html='y',@enclosed_with_quotes='y',@result=@result OUTPUT, @decimal_Separator = '.'
 
 			EXEC spa_ErrorHandler 0, 'Reporting FX', 'spa_rfx_data_source_dhx', 'Success', 'Datasource successfully updated.', @source_id
 			

@@ -338,7 +338,7 @@ BEGIN
 
 							WHEN CAST(MAX(hourlyQty) AS decimal(10,2)) IS NULL THEN CAST(0 AS VARCHAR(10)) + '''' '''' + MAX(su.uom_name) + '''' per '''' + dbo.FNAGetFrequencyText(MAX(sdd.deal_volume_frequency), ''''v'''') 
 
-							ELSE CAST(dbo.FNARemoveTrailingZeroes(CAST(MAX(hourlyQty) AS decimal(10,2))) AS VARCHAR(1000)) + '''' '''' + MAX(su.uom_name) + '''' per '''' + dbo.FNAGetFrequencyText(MAX(sdd.deal_volume_frequency),''''v'''') 
+							ELSE CAST(dbo.FNANumberFormat(CAST(MAX(hourlyQty) AS decimal(10,2)),''''n'''') AS VARCHAR(1000)) + '''' '''' + MAX(su.uom_name) + '''' per '''' + dbo.FNAGetFrequencyText(MAX(sdd.deal_volume_frequency),''''v'''') 
 
 						END 
 
@@ -346,9 +346,9 @@ BEGIN
 
 				CASE WHEN MAX(sdh.internal_desk_id) = 17302
 
-					THEN dbo.FNARemoveTrailingZeroes(CAST(SUM(ISNULL(sddh.volume,0)) AS Numeric(28,10)))
+					THEN CAST(dbo.FNARemoveTrailingZeroes(CAST(SUM(ISNULL(sddh.volume,0)) AS DECIMAL(36,10))) AS DECIMAL(36,10))
 
-					ELSE dbo.FNARemoveTrailingZeroes(CAST(SUM(sdd.total_volume) AS Numeric(28,10)))
+					ELSE CAST(dbo.FNARemoveTrailingZeroes(CAST(SUM(sdd.total_volume) AS Decimal(36,10))) AS DECIMAL(36,10))
 
 				END [Total Quantity],			
 
@@ -408,7 +408,7 @@ BEGIN
 
 				CAST(CAST(ROUND(AVG((( isnull(sdd.fixed_price, 0) + isnull(sdd.price_adder, 0)) * isnull(sdd.price_multiplier, 1))),2)AS NUMERIC(20,2)) AS VARCHAR) + '''' ''''  [Premium],
 
-				CAST(dbo.FNARemoveTrailingZeroes(ROUND(SUM(((isnull(sdd.fixed_price, 0) +  isnull(sdd.price_adder, 0)) * isnull(sdd.price_multiplier, 1))* ISNULL(vft.Volume_Mult,1)*sdd.deal_volume),2)) AS VARCHAR(100)) + '''' '''' + MAX(scu.currency_name) [TotalPremium],
+				CAST(dbo.FNANumberFormat(ROUND(SUM(((isnull(sdd.fixed_price, 0) +  isnull(sdd.price_adder, 0)) * isnull(sdd.price_multiplier, 1))* ISNULL(vft.Volume_Mult,1)*sdd.deal_volume),2), ''''n'''') AS VARCHAR(100)) + '''' '''' + MAX(scu.currency_name) [TotalPremium],
 
 				dbo.FNAConvertTZAwareDateFormat(MAX(sdh.create_ts),1) [Input Date],
 
@@ -1263,6 +1263,7 @@ BEGIN
 						 WHERE sdd.source_deal_header_id = sdh.source_deal_header_id
 
 							 AND sdh.internal_desk_id = 17302
+
 							 AND sddh.term_date between sdh.entire_term_start and sdh.entire_term_end
 
 			) sddh_shp			
@@ -3303,7 +3304,7 @@ END', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Total Quantity'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 3, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -3316,7 +3317,7 @@ END', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'Total Quantity' AS [name], 'Total Quantity' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'Total Quantity' AS [name], 'Total Quantity' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 3 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Deal Confirmation Extract View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -5889,3 +5890,4 @@ END', report_id = @report_id_data_source_dest,
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
+	

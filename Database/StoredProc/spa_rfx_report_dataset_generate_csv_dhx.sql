@@ -466,7 +466,7 @@ begin try
 		declare @result int = 0
 		
 		--select @csv_export_table_name [table_name], @csv_file_name_c [export_file_name], 'y' [include_column_headers], ',' [delimiter], 'n' [compress_file],'y' [use_date_conversion],'y' [strip_html],'y' [enclosed_with_quotes]
-		EXEC spa_export_to_csv @table_name=@csv_export_table_name, @export_file_name=@csv_file_name_c, @include_column_headers='y', @delimiter=',', @compress_file='n',@use_date_conversion='y',@strip_html='y',@enclosed_with_quotes='y',@result=@result OUTPUT
+		EXEC spa_export_to_csv @table_name=@csv_export_table_name, @export_file_name=@csv_file_name_c, @include_column_headers='y', @delimiter=',', @compress_file='n',@use_date_conversion='y',@strip_html='y',@enclosed_with_quotes='y',@result=@result OUTPUT, @decimal_Separator = '.'
 		
 		if @result = 1
 		begin

@@ -126,7 +126,7 @@ BEGIN
 
 		IF @outmsg = 'Success'
 		BEGIN
-			EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@result OUTPUT
+			EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@result OUTPUT, '.'
 
 			SET @sql = 'DECLARE @process_id VARCHAR(MAX) = ''' + @process_id + '''
 						DECLARE @user_name VARCHAR(50) = ''' + @user_name + '''

@@ -52,46 +52,37 @@ BEGIN TRY
 
 	@_id_count INT
 
-
 IF ''@as_of_date_from'' <> ''NULL''
 
     SET @_as_of_date_from = ''@as_of_date_from''
-
 
 IF ''@as_of_date_to'' <> ''NULL''
 
     SET @_as_of_date_to = ''@as_of_date_to''
 
-
 IF ''@criteria_id'' <> ''NULL''
 
     SET @_criteria_id = ''@criteria_id''
-
 
 IF ''@marginal_var'' <> ''NULL''
 
     SET @_marginal_var = ''@marginal_var''
 
-
 IF ''@back_testing'' <> ''NULL''
 
     SET @_back_testing = ''@back_testing''
-
 
 IF ''@measure_id'' <> ''NULL''
 
     SET @_measure_id = ''@measure_id''
 
-
 IF OBJECT_ID(N''tempdb..#tmp_criteria_ids'') IS NOT NULL
 
 DROP TABLE #tmp_criteria_ids
 
-
 SELECT item AS criteria_id INTO #tmp_criteria_ids FROM dbo.FNASplit(@_criteria_id, '','')
 
 SELECT @_id_count = COUNT(criteria_id) FROM #tmp_criteria_ids
-
 
 IF @_criteria_id IS NOT NULL AND @_id_count = 1
 
@@ -163,21 +154,17 @@ BEGIN
 
 END
 
-
 IF @_as_of_date_from IS NULL
 
 	SET @_as_of_date_from = @_recent_date
-
 
 IF @_as_of_date_to IS NULL
 
 	SET @_as_of_date_to = @_as_of_date_from
 
-
 IF OBJECT_ID(N''tempdb..#tmp_var_pfe_results'') IS NOT NULL
 
     DROP TABLE #tmp_var_pfe_results 
-
 
 CREATE TABLE #tmp_var_pfe_results(	
 
@@ -619,7 +606,7 @@ END
 
 			ELSE
 
-				CAST(v1.at_risk_value AS VARCHAR)
+				v1.at_risk_value 
 
 			END '' ELSE ''v2.risk_value*-1'' END + '' AS at_risk_value,
 
@@ -664,7 +651,6 @@ END
 		INNER JOIN (SELECT ROW_NUMBER() OVER(ORDER BY to_as_of_date) row_id, mtm_cashflow_earnings, to_as_of_date, criteria_id, risk_value FROM #tmp_var_pfe_results) v2 ON v1.row_id+1 = v2.row_id 
 
 			AND v1.criteria_id = v2.criteria_id'' END
-
 
 	EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
@@ -1884,4 +1870,4 @@ END
 	END CATCH
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
-		DROP TABLE #data_source_column
+		DROP TABLE #data_source_column	

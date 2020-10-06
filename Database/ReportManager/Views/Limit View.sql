@@ -4,7 +4,7 @@ BEGIN TRY
 
 	declare @new_ds_alias varchar(10) = 'LV'
 	/** IF DATA SOURCE ALIAS ALREADY EXISTS ON DESTINATION, RAISE ERROR **/
-	if exists(select top 1 1 from data_source where alias = 'LV' and name <> 'Limit View')
+	if exists(select top 1 1 from data_source where alias = 'LV' and name <> 'limit view')
 	begin
 		select top 1 @new_ds_alias = 'LV' + cast(s.n as varchar(5))
 		from seq s
@@ -35,88 +35,165 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Standard Limit View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sql VARCHAR(MAX),
+
 	@_as_of_date DATETIME, 
+
 	@_LimitFor VARCHAR(MAX), 
+
 	@_show_exception CHAR(1), 
+
 	@_LimitType VARCHAR(MAX), 
+
 	@_limit_group_id VARCHAR(MAX),
+
 	@_LimitExceed CHAR(1)
-	
+
 IF ''@as_of_date'' <> ''NULL''
+
 	SET @_as_of_date = ''@as_of_date''
+
 IF ''@LimitExceed'' <> ''NULL''
+
 	SET @_LimitExceed = ''@LimitExceed''
+
 IF ''@LimitFor'' <> ''NULL''
+
 	SET @_LimitFor = ''@LimitFor''
+
 IF ''@limit_group_id'' <> ''NULL''
+
 	SET @_limit_group_id = ''@limit_group_id''
+
 IF ''@LimitType'' <> ''NULL''
+
 	SET @_LimitType = ''@LimitType''
+
 IF ''@show_exception'' <> ''NULL''
+
 	SET @_show_exception = ''y''
+
 ELSE
+
 	SET @_show_exception = ''n''
-	
+
 IF OBJECT_ID(N''tempdb..#temp_limit_report'') IS NOT NULL
+
 	DROP TABLE #temp_limit_report
-	
+
 CREATE TABLE #temp_limit_report (
+
 	LimitGroupName 	VARCHAR(500) COLLATE DATABASE_DEFAULT,
+
 	LimitName 		VARCHAR(500) COLLATE DATABASE_DEFAULT,
+
 	LimitFor 		VARCHAR(100) COLLATE DATABASE_DEFAULT,
+
 	Name 			VARCHAR(500) COLLATE DATABASE_DEFAULT,
+
 	LimitType 		VARCHAR(100) COLLATE DATABASE_DEFAULT,
+
 	Limit 			VARCHAR(100) COLLATE DATABASE_DEFAULT,
+
 	TotalValue 		VARCHAR(100) COLLATE DATABASE_DEFAULT,
-	AvailableValue 	VARCHAR(100) COLLATE DATABASE_DEFAULT,
+
+	AvailableValue 	FLOAT,
+
 	Unit 			VARCHAR(50) COLLATE DATABASE_DEFAULT,
+
 	LimitExceed 	VARCHAR(5) COLLATE DATABASE_DEFAULT,
+
 	min_limit_value VARCHAR(100) COLLATE DATABASE_DEFAULT,
+
 	MinLimitExceed 	VARCHAR(5) COLLATE DATABASE_DEFAULT
+
 )
+
 EXEC spa_get_limits_report @_as_of_date, @_LimitFor, @_LimitType, NULL, @_show_exception, NULL, NULL, NULL
+
 SET @_sql = ''
+
 	SELECT '''''' + CAST(@_as_of_date AS VARCHAR(50)) + '''''' as_of_date,
+
 		SUBSTRING(LimitGroupName,
+
 			CHARINDEX('''','''', LimitGroupName, 1) + 1,
+
 			CHARINDEX('''')'''', LimitGroupName, 1) -	(CHARINDEX('''','''', LimitGroupName, 1) + 1)
+
 		) AS [limit_group_id],
+
 		dbo.FNAStripHTML(LimitGroupName) [limit_group_name],
+
 		dbo.FNAStripHTML(LimitName) [limit_name],
+
 		LimitFor,
+
 		[Name],
+
 		LimitType,
+
 		REPLACE(Limit, '''','''', '''''''') Limit,
+
 		Unit,
+
 		REPLACE(TotalValue, '''','''', '''''''') TotalValue,
+
 		AvailableValue,
+
 		LimitExceed,
+
 		CASE
+
 			WHEN [Name] IS NOT NULL AND limittype NOT IN (''''Trade Duration Limit'''', ''''Tenor Limit'''',''''Price Corridor Limit'''')  THEN
+
 				((CAST(REPLACE(TotalValue, '''','''', '''''''') AS FLOAT)/
+
 				CASE CAST(REPLACE(Limit, '''','''', '''''''') AS FLOAT) 
+
 					WHEN 0 THEN 1 
+
 					ELSE CAST(REPLACE(Limit, '''','''', '''''''') AS FLOAT) END) * 100)
+
 			ELSE NULL
+
 		END AS [Percent],
+
 		'''''' + CASE @_show_exception WHEN ''y'' THEN ''Yes'' ELSE ''No'' END + '''''' AS [show_exception],
+
 		min_limit_value,
+
 		MinLimitExceed
+
 	--[__batch_report__]
+
 	FROM #temp_limit_report tlr
+
 	WHERE 1 = 1  and tlr.TotalValue <> ''''0'''' '' +
+
 	CASE
+
 		WHEN @_LimitExceed IS NOT NULL THEN '' AND tlr.LimitExceed = '''''' + CASE @_LimitExceed WHEN ''y'' THEN ''Yes'' WHEN ''n'' THEN ''No'' ELSE '''' END + ''''''''
+
 		ELSE ''''
+
 	END +
+
 	CASE
+
 		WHEN @_limit_group_id IS NOT NULL THEN ''
+
 			AND SUBSTRING(LimitGroupName,
+
 				CHARINDEX('''','''', LimitGroupName, 1) + 1,
+
 				CHARINDEX('''')'''', LimitGroupName, 1)-(CHARINDEX('''','''', LimitGroupName, 1) + 1)
+
 			) IN ('' + @_limit_group_id + '')''
+
 		ELSE ''''
+
 	END
+
 EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
@@ -172,7 +249,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Available Value'
-			   , reqd_param = 0, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+			   , reqd_param = 0, widget_id = 1, datatype_id = 3, param_data_source = NULL, param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -185,7 +262,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'AvailableValue' AS [name], 'Available Value' AS ALIAS, 0 AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'AvailableValue' AS [name], 'Available Value' AS ALIAS, 0 AS reqd_param, 1 AS widget_id, 3 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Limit View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
