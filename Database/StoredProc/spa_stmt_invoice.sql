@@ -700,7 +700,7 @@ BEGIN
 
 			IF @status <> 0
 			BEGIN
-				EXEC spa_generate_document @document_category = 10000283, @document_sub_category = '', @filter_object_id = @id, @temp_generate = 0, @get_generated = 1, @show_output = 0
+				EXEC spa_generate_document @document_category = 10000283, @document_sub_category = 42031, @filter_object_id = @id, @temp_generate = 0, @get_generated = 1, @show_output = 0
 
 				IF EXISTS (SELECT 1 FROM application_notes an WHERE ISNULL(parent_object_id, notes_object_id) = @id AND internal_type_value_id = 10000283)
 				BEGIN
