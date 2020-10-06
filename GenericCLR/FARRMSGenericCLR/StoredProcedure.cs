@@ -22,6 +22,7 @@ using System.Net.Sockets;
 using sql = FARRMS.WebServices.ReportService2005;
 using Row = DocumentFormat.OpenXml.Spreadsheet.Row;
 using FARRMSUtilities;
+using System.Globalization;
 
 namespace FARRMSGenericCLR
 {
@@ -1522,8 +1523,9 @@ namespace FARRMSGenericCLR
         /// <param name="stripHtml">Strip html content from data, possible value y/n</param>
         /// <param name="enclosedWithQuotes">Enclosed data with double quotes. possible value y/n</param>
         /// <param name="result">1 for success process otherwise failure exception message</param>
+        /// <param name="decimalSeparator">Set decimal separator for decimal data type column, if left null or empty it will reterive from user profile, default . will be used</param>
         [SqlProcedure]
-        public static void ExportToCsv(string tableName, string exportFileName, string includeColumnHeaders, string delimiter, string compressFile, string useDateConversion, string stripHtml, string enclosedWithQuotes, out string result)
+        public static void ExportToCsv(string tableName, string exportFileName, string includeColumnHeaders, string delimiter, string compressFile, string useDateConversion, string stripHtml, string enclosedWithQuotes, out string result, string decimalSeparator = null)
         {
             string query = "";
             //  check if sql query was supplied instead of table name
@@ -1536,10 +1538,34 @@ namespace FARRMSGenericCLR
             try
             {
                 using (SqlConnection cn = new SqlConnection("Context Connection=true"))
-                //using (SqlConnection cn = new SqlConnection(@"Data Source=SG-D-SQL01.FARRMS.US,2033;Initial Catalog=TRMTracker_release;Persist Security Info=True;User ID=farrms_admin;password=Admin2929"))
+                //using (SqlConnection cn = new SqlConnection(@"Data Source=SG-D-SQL02.farrms.us,2034;Initial Catalog=TRMTracker_release;Persist Security Info=True;User ID=farrms_admin;password=Admin2929"))
 
                 {
                     cn.Open();
+                    //  Get user decimal separator from profile, company info
+                    if (string.IsNullOrEmpty(decimalSeparator))
+                    {
+                        string sqlQuery = @"SELECT COALESCE(au.decimal_separator, r.decimal_separator, '.') [decimal_separator]
+                                    FROM application_users AU
+                                         OUTER apply(SELECT ci.decimal_separator FROM   company_info ci) r
+                                    WHERE  AU.user_login_id = dbo.Fnadbuser() ";
+                        using (var cmd1 = new SqlCommand(sqlQuery, cn))
+                        {
+                            using (SqlDataReader rd = cmd1.ExecuteSessionReader())
+                            {
+                                if (rd.HasRows)
+                                {
+                                    while (rd.Read())
+                                        decimalSeparator = rd["decimal_separator"].ToString();
+                                }
+                                else
+                                    decimalSeparator = ".";
+                            }
+                        }
+                    }
+                    
+                    NumberFormatInfo nfi = new NumberFormatInfo() { NumberDecimalSeparator = decimalSeparator, CurrencyDecimalSeparator = decimalSeparator, PercentDecimalSeparator = decimalSeparator };
+
                     //  Just to load the column shchema information to build select query 
                     SqlCommand cmd = new SqlCommand("select TOP 1 * from " + tableName, cn);
                     DataTable dt = new DataTable();
@@ -1581,11 +1607,15 @@ namespace FARRMSGenericCLR
                             string strRow = "";
                             for (int i = 0; i < dt.Columns.Count; i++)
                             {
+                                string value = row[i].ToString();
+                                if (dt.Columns[i].DataType == Type.GetType("System.Decimal") || dt.Columns[i].DataType == Type.GetType("System.Double"))
+                                    value = Convert.ToString(row[i], nfi);
+
                                 if (stripHtml.ToLower().Replace("1", "y") == "y")
-                                    strRow += enclosingChar + StripHtml(row[i].ToString().Replace("\"", "\"\"")) + enclosingChar;
+                                    strRow += enclosingChar + StripHtml(value.Replace("\"", "\"\"")) + enclosingChar;
                                 else
                                 {
-                                    strRow += enclosingChar + row[i].ToString().Replace("\"", "\"\"") + enclosingChar;
+                                    strRow += enclosingChar + value.Replace("\"", "\"\"") + enclosingChar;
                                 }
                                 if (i < dt.Columns.Count - 1)
                                 {

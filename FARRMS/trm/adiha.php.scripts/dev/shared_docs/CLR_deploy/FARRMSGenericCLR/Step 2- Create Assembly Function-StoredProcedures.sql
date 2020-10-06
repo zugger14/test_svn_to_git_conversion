@@ -406,7 +406,8 @@ CREATE PROCEDURE [dbo].[spa_export_to_csv]
 	@use_date_conversion		NVARCHAR(1),
 	@strip_html					NVARCHAR(1),
 	@enclosed_with_quotes		NVARCHAR(1),
-	@result						NVARCHAR(1024) OUTPUT
+	@result						NVARCHAR(1024) OUTPUT,
+	@decimal_Separator			NVARCHAR(1) = NULL
 AS
 	EXTERNAL NAME FARRMSGenericCLR.[FARRMSGenericCLR.StoredProcedure].ExportToCsv
 GO
