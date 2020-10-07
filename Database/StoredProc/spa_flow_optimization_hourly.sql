@@ -2264,6 +2264,20 @@ BEGIN
 
 	--select @child_proxy_from,@child_proxy_to
 	--select * from #loc_wise_capacity_hourly_mdq order by 1,2,3  select * from #tmp_filtered_data 
+
+	--store path mdq information prior Ffor performance optimization
+	BEGIN
+		SELECT b.*
+		INTO #path_mdq_info
+		FROM (
+			SELECT path_id
+			FROM #tmp_filtered_data
+			WHERE path_id > 0
+			GROUP BY path_id
+			) a
+		OUTER APPLY [dbo].[FNAGetPathMDQHourly](a.path_id, @flow_date_from, @flow_date_from, '') b
+	END
+
 	--create hourly table
 	SET @sql = '
 	IF OBJECT_ID(''' + @contractwise_detail_mdq_hourly + ''') IS NOT NULL
@@ -2355,27 +2369,6 @@ BEGIN
 		, t.[match_term_start]
 		, t.[match_term_end]
 		, t.[uom]
-
-		--, t.path_mdq + 
-		--	CASE 
-		--		WHEN ISNULL(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from) IS NOT NULL 
-		--				AND ISNULL(lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to) IS NOT NULL --if both capacity deal available; storage and non storage case
-					
-		--			THEN IIF(
-		--				ISNULL(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from) < ISNULL(lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to)
-		--				, ISNULL(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from)
-		--				, ISNULL(lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to)
-		--				)
-				
-		--		WHEN t.[from_loc_grp_name] = ''storage'' OR t.[to_loc_grp_name] = ''storage'' --if storage case; one side not available
-		--			THEN COALESCE(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from, lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to, 0)
-				
-		--		WHEN t.[from_loc_grp_name] <> ''storage'' AND t.[to_loc_grp_name] <> ''storage'' --if non storage case; one side not available
-		--			THEN 0
-		--	END
-		--	- ISNULL(sch.hourly_vol, 0)
-		--  [path_ormdq]
-
 		, path_mdq_info.rmdq [path_ormdq]
 		, t.rmdq [ormdq]
 		, ''' + CONVERT(VARCHAR(10),@flow_date_from,21) + ''' [term_start]
@@ -2391,42 +2384,9 @@ BEGIN
 		FROM seq sq
 		WHERE sq.n IN (' + @period_from + ')
 	) hr_values
-	--LEFT JOIN #loc_wise_capacity_hourly_mdq lwchm_from ON lwchm_from.location_id = t.from_loc_id
-	--	AND lwchm_from.[hour] = hr_values.[hour]
-	--	AND lwchm_from.contract_id = t.contract_id
-	--LEFT JOIN #loc_wise_capacity_hourly_mdq lwchm_to ON lwchm_to.location_id = t.to_loc_id
-	--	AND lwchm_to.[hour] = hr_values.[hour]
-	--	AND lwchm_to.contract_id = t.contract_id
-	--OUTER APPLY (
-	--	SELECT SUM(sch1.hourly_vol) [hourly_vol]
-	--	FROM #sch_deal_info sch1
-	--	WHERE sch1.from_loc = t.from_loc_id
-	--		AND sch1.to_loc = t.to_loc_id
-	--		AND sch1.contract_id = t.contract_id
-	--		AND sch1.hour = hr_values.hour
-	--) sch
-	--OUTER APPLY (
-	--	SELECT SUM(l1.hourly_mdq) [cap_mdq_from]
-	--	FROM #loc_wise_capacity_hourly_mdq l1
-	--	WHERE l1.location_id IN (' + ISNULL(@child_proxy_from, '-9999') + ')
-	--		AND l1.proxy_location_id = t.from_loc_id
-	--		AND l1.contract_id = t.contract_id
-	--		AND l1.[hour] = hr_values.[hour]
-	--) cap_mdq_child_proxy_from
-	--OUTER APPLY (
-	--	SELECT SUM(l1.hourly_mdq) [cap_mdq_to]
-	--	FROM #loc_wise_capacity_hourly_mdq l1
-	--	WHERE l1.location_id IN (' + ISNULL(@child_proxy_to, '-9999') + ')
-	--		AND l1.proxy_location_id = t.to_loc_id
-	--		AND l1.contract_id = t.contract_id
-	--		AND l1.[hour] = hr_values.[hour]
-	--) cap_mdq_child_proxy_to
-
-	OUTER APPLY (
-		SELECT p.*
-		FROM [dbo].[FNAGetPathMDQHourly](t.path_id, ''' + CONVERT(VARCHAR(10),@flow_date_from,21) + ''', ''' + CONVERT(VARCHAR(10),@flow_date_from,21) + ''','''') p
-		WHERE p.[hour] = hr_values.[hour]
-	) path_mdq_info
+	LEFT JOIN #path_mdq_info path_mdq_info
+		ON path_mdq_info.path_id = t.path_id
+		AND path_mdq_info.[hour] = hr_values.[hour]
 	OUTER APPLY (
 		SELECT SUM(hp.position) [position]
 		FROM ' + @hourly_pos_info + ' hp
