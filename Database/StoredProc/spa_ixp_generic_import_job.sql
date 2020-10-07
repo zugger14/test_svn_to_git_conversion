@@ -38293,12 +38293,18 @@ BEGIN
 			ON  ims.temp_id = a.temp_id
         WHERE ims.error_code = ''Error''
 	')
+	
+	CREATE TABLE #update_shipper_deal (
+		source_deal_header_id INT
+	)
 
 	EXEC('
 		UPDATE sdd  
 		SET 
 		shipper_code1 = ISNULL(scmd1_default.shipper_code_mapping_detail_id, scmd1_multi.shipper_code_mapping_detail_id),
 		shipper_code2 = ISNULL(scmd2_default.shipper_code_mapping_detail_id, scmd2_multi.shipper_code_mapping_detail_id)
+		OUTPUT deleted.source_deal_header_id 
+		INTO #update_shipper_deal
 		FROM ' + @import_temp_table_name + ' a
 		INNER JOIN source_deal_header sdh
 			ON sdh.deal_id = a.deal_id
@@ -38399,6 +38405,15 @@ BEGIN
 			) c		
 		) scmd2_multi
 	')
+
+	DECLARE @update_shipper_deal VARCHAR(MAX)
+
+	SELECT @update_shipper_deal = ISNULL(@update_shipper_deal + ', ', '') + CAST(source_deal_header_id AS VARCHAR(10))
+	FROM #update_shipper_deal
+
+	EXEC spa_insert_update_audit 'u', @update_shipper_deal ,'Updated from import rule shipper_code_deal_detail.'
+
+
 
 END
 
