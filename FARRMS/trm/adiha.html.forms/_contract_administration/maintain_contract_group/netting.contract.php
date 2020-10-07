@@ -14,8 +14,8 @@
     </head>
     <body>
         <?php  
-            $counterparty_id = get_sanitized_value($_GET['counterparty_id'] ?? '');
-            $contract_id = get_sanitized_value($_GET['contract_id'] ?? '');
+            $counterparty_id = isset($_GET['counterparty_id']) ? $_GET['counterparty_id'] : '';
+            $contract_id = isset($_GET['contract_id']) ? $_GET['contract_id'] : '';
              
             $function_id = 10105898;
             $rights_netting_add_save = 10105899;
