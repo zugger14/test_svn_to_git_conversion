@@ -61,7 +61,7 @@ DECLARE @return_table TABLE (
 	[stg_net_type] VARCHAR(50) NULL
 )
 
-SELECT @path_id = '310', @term_start = '2033-07-01', @term_end = '2033-07-01', @data_level = ''
+SELECT @path_id = '310', @term_start = '2025-07-01', @term_end = '2025-07-02', @data_level = ''
 
 	
 EXEC dbo.spa_drop_all_temp_table
@@ -281,6 +281,7 @@ BEGIN
 	BEGIN
 		DECLARE @stg_net_flow TABLE	(
 			[stg_affected_path_id] INT NULL,
+			[term_start] DATETIME NULL,
 			[hour] INT NULL,
 			[stg_net_flow] NUMERIC(10,4) NULL,
 			[stg_net_type] VARCHAR(50) NULL
@@ -288,21 +289,22 @@ BEGIN
 
 		INSERT INTO @stg_net_flow (
 			[stg_affected_path_id],
+			[term_start],
 			[hour],
 			[stg_net_flow],
 			[stg_net_type]
 		)
-		SELECT NULL [stg_affected_path_id], t.[hour], SUM(IIF(t.path_id = @inj_path_id, 1, -1) * t.hourly_mdq) [stg_net_flow], CAST(NULL AS VARCHAR(50)) [stg_net_type]
+		SELECT NULL [stg_affected_path_id], t.[term_start], t.[hour], SUM(IIF(t.path_id = @inj_path_id, 1, -1) * t.hourly_mdq) [stg_net_flow], CAST(NULL AS VARCHAR(50)) [stg_net_type]
 		FROM @sch_deal_info t
 		WHERE @storage_type IS NOT NULL --only on storage case
-		GROUP BY [hour]
+		GROUP BY t.[term_start], t.[hour]
 	
 		UPDATE @stg_net_flow SET [stg_affected_path_id] = IIF([stg_net_flow] >= 0, @inj_path_id, @with_path_id)
 			, [stg_net_type] = CASE WHEN [stg_net_flow] > 0 THEN 'net_inj' WHEN [stg_net_flow] < 0 THEN 'net_with' ELSE NULL END
 
 		--select * from @stg_net_flow
 	END
-	
+	--return
 	--store path mdq hourly information
 	BEGIN
 		DECLARE @path_mdq_info TABLE	(
@@ -415,6 +417,7 @@ BEGIN
 		) self_mdq
 		LEFT JOIN @stg_net_flow stn
 			ON stn.[hour] = hr_values.[hour]
+			AND stn.[term_start] = tm.term_start
 		WHERE dp.path_id = @path_id
 
 		
