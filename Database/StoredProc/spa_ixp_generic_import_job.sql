@@ -38295,7 +38295,10 @@ BEGIN
 	')
 	
 	CREATE TABLE #update_shipper_deal (
-		source_deal_header_id INT
+		source_deal_header_id INT,
+		source_deal_detail_id INT,
+		shipper_code1 INT,
+		shipper_code2 INT
 	)
 
 	EXEC('
@@ -38303,15 +38306,15 @@ BEGIN
 		SET 
 		shipper_code1 = ISNULL(scmd1_default.shipper_code_mapping_detail_id, scmd1_multi.shipper_code_mapping_detail_id),
 		shipper_code2 = ISNULL(scmd2_default.shipper_code_mapping_detail_id, scmd2_multi.shipper_code_mapping_detail_id)
-		OUTPUT deleted.source_deal_header_id 
-		INTO #update_shipper_deal
+		OUTPUT deleted.source_deal_header_id, deleted.source_deal_detail_id, deleted.shipper_code1, deleted.shipper_code2
+		INTO #update_shipper_deal(source_deal_header_id, source_deal_detail_id, shipper_code1, shipper_code2)
 		FROM ' + @import_temp_table_name + ' a
 		INNER JOIN source_deal_header sdh
 			ON sdh.deal_id = a.deal_id
 		INNER JOIN source_deal_header_template sdht
 			ON sdht.template_id = sdh.template_id
 		INNER JOIN source_deal_detail sdd
-			ON sdd.source_deal_header_id = sdh.source_deal_header_id
+			ON sdd.source_deal_header_id = sdh.source_deal_header_id,
 				AND DATEPART(YEAR, sdd.term_start) BETWEEN DATEPART(YEAR, a.term_start) AND DATEPART(YEAR, a.term_end)
 				AND DATEPART(MONTH, sdd.term_start) BETWEEN DATEPART(MONTH, a.term_start) AND DATEPART(MONTH, a.term_end)				
 				AND DATEPART(YEAR, sdd.term_end) BETWEEN DATEPART(YEAR, a.term_start) AND DATEPART(YEAR, a.term_end)
@@ -38413,7 +38416,9 @@ BEGIN
 
 	EXEC spa_insert_update_audit 'u', @update_shipper_deal ,'Updated from import rule shipper_code_deal_detail.'
 
-
+	INSERT INTO deal_detail_shipper_codes_history(source_deal_detail_id, shipper_code1, shipper_code2)
+	SELECT source_deal_detail_id, shipper_code1, shipper_code2
+	FROM #update_shipper_deal
 
 END
 
