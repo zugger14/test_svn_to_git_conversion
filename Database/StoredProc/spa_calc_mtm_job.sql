@@ -181,7 +181,7 @@ SET @calc_explain_type ='p'
 
 select *  from source_deal_HEADER   where source_deal_header_id=1600
 select *  from source_deal_pnl_detail   where source_deal_header_id=1600
-select *  from source_deal_settlement   where source_deal_header_id=1600
+select *  from source_deal_settlement   where source_deal_header_id=103493
 select * from index_fees_breakdown   where source_deal_header_id=1600
 select * from index_fees_breakdown_settlement   where source_deal_header_id=103523
 delete index_fees_breakdown_settlement   where source_deal_header_id=1600
@@ -233,6 +233,11 @@ SELECT
 
 
 
+
+
+
+
+
 /*
 
 select * from source_price_curve_def where curve_name= 'NYMEX CL'
@@ -249,7 +254,7 @@ select * from #component_price
 select curve_value,curve_value_deal,curve_value_inv,* from #temp_leg_mtm
 
 
-select * from drop table #temp_deals
+select * from   #temp_deals
 SELECT * FROM  #calc_status
 select * from #s_cids1
  select * from adiha_process.dbo.tmp_hourly_price_vol_dev_admin_A1D29672_773A_4C7C_B910_ABB5D49A8282 hv
@@ -342,6 +347,7 @@ select original_formula_currency, formula_Currency, contract_id, formula_id, *
 
 */
 --select * from adiha_process.dbo.testtest
+
 
 
 
@@ -1550,7 +1556,7 @@ begin
 		   else  
 			   CASE WHEN sdh.option_flag = ''y'' THEN ned.option_settlement_date
 				else 
-					case when sdd.physical_financial_flag=''f'' then COALESCE(cexp.exp_date,sdd.settlement_date,sdd.term_start) else sdd.term_start end 
+					case when sdd.physical_financial_flag=''f'' or (sdd.physical_financial_flag=''p'' and sdh.internal_deal_subtype_value_id='+@CFD_id+')  then COALESCE(cexp.exp_date,sdd.settlement_date,sdd.term_start) else sdd.term_start end 
 				end
 			end BETWEEN ''' + @term_start + ''' AND ''' + @term_end + ''''
 	else
@@ -1569,6 +1575,14 @@ IF @calc_type <> 's'
 	SET @where_clause = @where_clause + ' AND COALESCE(cexp.exp_date,sdd.contract_expiration_date,sdd.term_end) between
 		case when isnull(sdht.ignore_bom,''n'')=''n'' then dateadd(day,1,'''+@as_of_date+''')  else '''+ convert(varchar(10),dateadd(month,1,left(@as_of_date,8)+'01'),120) +''' end and  case when  (sdht.[month] is null and sdht.[year] is null) then ''9999-01-01''  
 			else  dateadd(month,isnull(sdht.[month],0),dateadd(year,isnull(sdht.[year],0),case when sdht.[year] is null then case when sdht.[month] is null then '''+@as_of_date+''' else '''+convert(varchar(10),dateadd(day,-1,dateadd(month,1,left(@as_of_date,8)+'01')),120)+''' end else '''+convert(varchar(10),dateadd(day,-1,dateadd(year,1,left(@as_of_date,5)+'01-01')),120)+''' end )) end'
+
+
+IF @calc_type <> 's'
+	SET @where_clause = @where_clause + ' AND (sdh.is_environmental = ''y'' OR ISNULL(case when sdh.option_flag=''y''
+	 or sdd.physical_financial_flag=''f'' or (sdd.physical_financial_flag=''p'' and sdh.internal_deal_subtype_value_id='+@CFD_id+') then ISNULL(cexp.exp_date,sdd.contract_expiration_date) else null end,sdd.term_end) > ''' +  @as_of_date  + ''')'
+
+
+
 
 IF @calc_type = 's'
 SET @where_clause = @where_clause + ' AND (ISNULL(sdh.is_environmental, ''n'') <> ''y'' OR sdd.status = 25006 OR rec.transfer_status = 112102) 
@@ -6313,7 +6327,8 @@ SET @sqlstmt= '
 	case when @calc_type <> 's' then 
 	' AND case when ISNULL(spcd.hourly_volume_allocation,17601) =17606 then rp.expiration_date  else rp.term_start end  between td.filter_term_start and td.filter_term_end and rp.expiration_date  > '''+@as_of_date+''''
 	else
-	case when  @cpt_type='b' THEN '' else case when isnull(@look_term,'d')='s' then ' and case when td.physical_financial_flag=''f'' then rp.expiration_date else rp.term_start end ' else ' and rp.term_start '  end +' BETWEEN '''+@term_start+''' and '''+@term_end+'''' end 
+	case when  @cpt_type='b' THEN '' else case when isnull(@look_term,'d')='s' then ' 
+		and case when td.physical_financial_flag=''f'' or (td.physical_financial_flag=''p'' and td.internal_deal_subtype_value_id='+@CFD_id+') then rp.expiration_date else rp.term_start end ' else ' and rp.term_start '  end +' BETWEEN '''+@term_start+''' and '''+@term_end+'''' end 
 	 end +';'
 			
 
@@ -6418,7 +6433,8 @@ from report_hourly_position_deal_main rd  inner join #temp_deals_filter td on rd
 	) actual_volume  ' ELSE '' END
 	+
 	'
-	WHERE 1=1 '+case when @calc_type = 's' then case when isnull(@look_term,'d')='s' then ' and case when td.physical_financial_flag=''f'' then rd.expiration_date else rd.term_start end ' else ' and rd.term_start '  end 
+	WHERE 1=1 '+case when @calc_type = 's' then case when isnull(@look_term,'d')='s' then '
+	 and case when td.physical_financial_flag=''f'' or (td.physical_financial_flag=''p'' and td.internal_deal_subtype_value_id='+@CFD_id+') then rd.expiration_date else rd.term_start end ' else ' and rd.term_start '  end 
 		+' BETWEEN '''+@term_start+''' and '''+@term_end+'''-- AND ISNULL(td.actualization_flag,'''') <> ''d'' '
 		  	else ' 
 				 AND case when ISNULL(spcd.hourly_volume_allocation,17601) =17606 then rd.expiration_date  else rd.term_start end  between td.filter_term_start and td.filter_term_end 
@@ -6480,7 +6496,8 @@ SET @sqlstmt3= ' --UNION ALL
 		LEFT JOIN  #meter_data md ON md.org_deal_id = td.source_deal_header_id AND md.leg = td.leg AND rd.term_start = md.term_start 
 			  AND td.location_id = md.location_id and md.period= case when rd.granularity IN(987,989) then isnull(rd.period,0) else md.period end  '
 	end+'
-	WHERE 1=1 '+case when @calc_type = 's' then case when isnull(@look_term,'d')='s' then ' and case when td.physical_financial_flag=''f'' then rd.expiration_date else rd.term_start end ' else ' and rd.term_start ' end 
+	WHERE 1=1 '+case when @calc_type = 's' then case when isnull(@look_term,'d')='s' then '
+	 and case when td.physical_financial_flag=''f'' or (td.physical_financial_flag=''p'' and td.internal_deal_subtype_value_id='+@CFD_id+') then rd.expiration_date else rd.term_start end ' else ' and rd.term_start ' end 
 			+' BETWEEN '''+@term_start+''' and '''+@term_end+'''' 
 		else ' AND rd.term_start  between td.filter_term_start and td.filter_term_end and rd.expiration_date  > '''+@as_of_date+'''' end +';'
 			
@@ -14448,7 +14465,7 @@ begin
 	 * In case of adjustment calc - the output is inserted into process table instead of inserting into direct source_deal_settlement table.
 	 * The output process table is used in spa_stmt_adjustments to find out delte
 	 */		
-		SET @sql = 	
+	SET @sql = 	
 		CASE WHEN @calc_settlement_adjustment = 0 THEN 
 		'INSERT INTO '+@deal_settlement_table+' 
 			(
@@ -14539,8 +14556,7 @@ begin
 					AND ISNULL(sds.shipment_id, -1) = ISNULL(sett.shipment_id, -1)
 					AND ISNULL(sds.ticket_detail_id, -1) = ISNULL(sett.ticket_detail_id, -1)
 					AND ISNULL(sds.match_info_id, -1) = ISNULL(sett.match_info_id, -1)
-						AND (
-						
+					AND (
 						DATEADD(m,1,CAST(CAST(YEAR(sds.term_end) AS VARCHAR)+''-''+CAST(MONTH(sds.term_end) AS VARCHAR)+''-01'' AS DATETIME))-1 <= '''+@as_of_date+''' 
 						OR 
 							(
@@ -14562,17 +14578,17 @@ begin
 
 
 	exec spa_print @sql
-
 	EXEC(@sql)
+		select @total_set_insert = @@rowcount
 
 	--Calling spa_calculate_fee for calculating VAT/TAX
 	IF @calc_settlement_adjustment = 0
-	EXEC spa_calculate_fee @as_of_date = @as_of_date,
-		@term_start = @term_start,
-		@term_end = @term_end,
-		@criteria_id = @criteria_id,
-		@tmp_hourly_price_vol = @tmp_hourly_price_vol,
-		@process_id = @process_id
+		EXEC spa_calculate_fee @as_of_date = @as_of_date,
+			@term_start = @term_start,
+			@term_end = @term_end,
+			@criteria_id = @criteria_id,
+			@tmp_hourly_price_vol = @tmp_hourly_price_vol,
+			@process_id = @process_id
 
 
 	-- Logic to run contract settlement
@@ -14595,8 +14611,7 @@ begin
 		EXEC spa_run_sp_as_job @cs_job_name, @cs_sql_statement, @cs_job_name, @user_name,NULL, NULL, NULL
 	END
 
-	select @total_set_insert = @@rowcount
-		END
+END
 
 
 
