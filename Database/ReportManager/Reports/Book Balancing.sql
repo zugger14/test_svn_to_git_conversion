@@ -30,7 +30,7 @@ BEGIN TRY
 		
 		declare @report_copy_name varchar(200)
 		
-		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'Book Balancing')
+		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'book balancing')
 		
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
 		SELECT TOP 1 'Book Balancing' [name], 'dev_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, 'A48E12D0_3792_4A72_95BC_9507138D83FA' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
@@ -58,7 +58,7 @@ BEGIN TRY
 	
 	SELECT @report_id_data_source_dest = report_id
 	FROM report r
-	WHERE r.[name] = 'Book Balancing'
+	WHERE r.[name] = 'book balancing'
 	IF NOT EXISTS (SELECT 1 
 	           FROM data_source 
 	           WHERE [name] = 'position_formula'
@@ -72,14 +72,15 @@ BEGIN TRY
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + '
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + '--EXEC spa_drop_all_temp_table
+
 DECLARE @_sql NVARCHAR(MAX)
 DECLARE @_source_subbook_id VARCHAR(1000)
 DECLARE @_destination_subbook_id VARCHAR(1000)  
 DECLARE @_location_id VARCHAR(1000)
 DECLARE @_term_start DATETIME
 DECLARE @_term_end DATETIME
-
+DECLARE @_distination_deal NVARCHAR(200)
 
 IF ''@source_subbook_id'' <> ''NULL''
     SET @_source_subbook_id = ''@source_subbook_id''
@@ -91,25 +92,22 @@ IF ''@term_start'' <> ''NULL''
     SET @_term_start = ''@term_start''
 IF ''@term_end'' <> ''NULL''
     SET @_term_end = ''@term_end''
+IF ''@distination_deal'' <> ''NULL''
+    SET @_distination_deal = ''@distination_deal''
 
+--SET @_term_start = ''2020-09-01''
+--SET @_term_end = ''2020-09-30''
+--SET @_source_subbook_id = 180
+--SET @_destination_subbook_id = 181
+--SET @_distination_deal = ''Destination GPLL''
 
+--SET @_location_id = ''2852''
 
---set @_term_start = ''2020-09-01''
---set @_term_end = ''2020-09-30''
-
-
---set @_source_subbook_id = 180
---set @_destination_subbook_id = 181
-
-
---select * from source_minor_location sml 
---where sml.location_id in (''NCGL'', ''GPLL'')
-
---set @_location_id = ''2854''
 
 SELECT item location_id
 INTO #temp_location
 FROM SplitCommaSeperatedValues(@_location_id)
+
 SELECT sdh.source_deal_header_id
 	, MAX(header_buy_sell_flag) header_buy_sell_flag 
 	, MAX(sdd.location_id) location_id
@@ -129,9 +127,10 @@ INNER JOIN #temp_location tl
 INNER JOIN SplitCommaSeperatedValues(@_source_subbook_id) sb
 	ON sb.item = ssbm.book_deal_type_map_id
 GROUP BY sdh.source_deal_header_id
+
+/*
 -- MIN(sdd.term_start) BETWEEN @_term_start AND @_term_end
 --	AND MAX(sdd.term_end) BETWEEN @_term_start AND @_term_end
-
 SELECT sdh.source_deal_header_id
 	, MAX(header_buy_sell_flag) header_buy_sell_flag 
 	, MAX(sdd.location_id) location_id
@@ -152,7 +151,19 @@ INNER JOIN #temp_location tl
 	ON tl.location_id = sdd.location_id
 WHERE sdh.description1 = ''Book Balance''
 GROUP BY sdh.source_deal_header_id
+*/
 
+SELECT sdh.source_deal_header_id
+	, MAX(header_buy_sell_flag) header_buy_sell_flag 
+	, MAX(sdd.location_id) location_id
+	, MIN(sdd.term_start) term_start
+	, MAX(sdd.term_end) term_end 
+INTO #temp_destination
+FROM source_deal_header sdh
+INNER JOIN source_deal_detail sdd
+	ON sdh.source_deal_header_id = sdd.source_deal_header_id
+WHERE sdh.deal_id = @_distination_deal --''Destination GPLL''  -- 
+GROUP BY sdh.source_deal_header_id
 
 SELECT sub.term_start, s.location_id,
 	SUM(ISNULL(sub.hr1, 0)) [01:00],
@@ -183,44 +194,27 @@ INTO #temp_unpivot
 FROM #temp_source s
 CROSS APPLY(
 		SELECT rhpd.source_deal_header_id, term_start, granularity
-
- , hr1, hr2, hr3, hr4, hr5, hr6, hr7
-
- , hr8, hr9, hr10, hr11, hr12, hr13
-
- , hr14, hr15, hr16, hr17, hr18, hr19
-
- , hr20, hr21, hr22, hr23, hr24
-
- FROM report_hourly_position_deal rhpd
-
- WHERE rhpd.source_deal_header_id = s.source_deal_header_id
-
- AND rhpd.term_start BETWEEN s.term_start AND s.term_end
-
- AND rhpd.term_start BETWEEN @_term_start AND @_term_end
-
- UNION ALL
-
- SELECT rhpp.source_deal_header_id, term_start, granularity
-
- , hr1, hr2, hr3, hr4, hr5, hr6, hr7
-
- , hr8, hr9, hr10, hr11, hr12, hr13
-
- , hr14, hr15, hr16, hr17, hr18, hr19
-
- , hr20, hr21, hr22, hr23, hr24
-
- FROM report_hourly_position_profile rhpp
-
- WHERE s.source_deal_header_id = rhpp.source_deal_header_id
-
- AND rhpp.term_start BETWEEN s.term_start AND s.term_end
-
- AND rhpp.term_start BETWEEN @_term_start AND @_term_end
+			, hr1, hr2, hr3, hr4, hr5, hr6, hr7
+			, hr8, hr9, hr10, hr11, hr12, hr13
+			, hr14, hr15, hr16, hr17, hr18, hr19
+			, hr20, hr21, hr22, hr23, hr24
+		FROM report_hourly_position_deal rhpd
+		WHERE rhpd.source_deal_header_id = s.source_deal_header_id
+			AND rhpd.term_start BETWEEN s.term_start AND s.term_end
+			AND rhpd.term_start BETWEEN @_term_start AND @_term_end
+		UNION ALL
+		SELECT rhpp.source_deal_header_id, term_start, granularity
+			, hr1, hr2, hr3, hr4, hr5, hr6, hr7
+			, hr8, hr9, hr10, hr11, hr12, hr13
+			, hr14, hr15, hr16, hr17, hr18, hr19
+			, hr20, hr21, hr22, hr23, hr24
+		FROM report_hourly_position_profile rhpp
+		WHERE s.source_deal_header_id = rhpp.source_deal_header_id
+			AND rhpp.term_start BETWEEN s.term_start AND s.term_end
+			AND rhpp.term_start BETWEEN @_term_start AND @_term_end
 ) sub
 GROUP BY sub.term_start,s.location_id
+
 SELECT unpvt.location_id
 	, unpvt.term_start term_date
 	, unpvt.hr 
@@ -240,18 +234,19 @@ UNPIVOT
 			[21:00], [22:00],[23:00], [24:00]
 		)
 	) unpvt
+
 SELECT sdd.source_deal_header_id,
 	sdd.source_deal_detail_id,
 	thd.term_date,
 	thd.hr,
 	thd.is_dst,
-	thd.volume,
+	thd.volume * -1 volume,
 	thd.granularity 
 INTO #temp_hourly_data
 FROM #temp_hourly_data_pre thd
 INNER JOIN #temp_destination td
 	ON thd.location_id = td.location_id
-	AND td.header_buy_sell_flag = IIF(thd.volume > 0, ''s'', ''b'')
+	--- AND td.header_buy_sell_flag = IIF(thd.volume > 0, ''s'', ''b'')
 	AND thd.term_date BETWEEN td.term_start AND td.term_end
 INNER JOIN source_deal_detail sdd
 	ON sdd.source_deal_header_id = td.source_deal_header_id
@@ -259,6 +254,7 @@ INNER JOIN source_deal_detail sdd
 
 
 DROP TABLE IF EXISTS #deleted_dest_deal	
+
 CREATE TABLE #deleted_dest_deal(source_deal_detail_id INT)
 
 DELETE sddh 
@@ -285,49 +281,48 @@ SELECT 	source_deal_detail_id,
 	term_date,
 	hr,
 	is_dst,
-	ABS(volume),
+	volume,
 	granularity
 FROM #temp_hourly_data
-
 
 DECLARE @_job_process_id VARCHAR(200), @_job_name VARCHAR(500)
 DECLARE @_user_name NVARCHAR(200) = dbo.FNADBUser()
 DECLARE @_after_insert_process_table NVARCHAR(500)
 
-
 SET @_job_process_id = dbo.FNAGETNEWID()
 SET @_after_insert_process_table = dbo.FNAProcessTableName(''report_position'', @_user_name, @_job_process_id)
+
 IF OBJECT_ID(@_after_insert_process_table) IS NOT NULL
 BEGIN
 	EXEC(''DROP TABLE '' + @_after_insert_process_table)
 END
 
 EXEC (''CREATE TABLE '' + @_after_insert_process_table + ''( source_deal_header_id INT, source_deal_detail_id INT)'')
-		
-	SET @_sql = ''INSERT INTO '' + @_after_insert_process_table + ''(source_deal_header_id, source_deal_detail_id) 
-				SELECT DISTINCT sdh.source_deal_header_id, sdd.source_deal_detail_id 
-				FROM #deleted_dest_deal d
-				INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = d.source_deal_detail_id
-				INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
-				''
-				--select @_sql
-	EXEC (@_sql)
-		
-	SET @_sql = '' spa_calc_deal_position_breakdown NULL,'''''' + @_job_process_id+ ''''''''
+SET @_sql = ''INSERT INTO '' + @_after_insert_process_table + ''(source_deal_header_id, source_deal_detail_id) 
+			SELECT DISTINCT sdh.source_deal_header_id, sdd.source_deal_detail_id 
+			FROM #deleted_dest_deal d
+			INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = d.source_deal_detail_id
+			INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+			''
+			
+EXEC (@_sql)
+SET @_sql = '' spa_calc_deal_position_breakdown NULL,'''''' + @_job_process_id+ ''''''''
+SET @_job_name = ''storage_st_jobs_'' + @_job_process_id
 
-	SET @_job_name = ''storage_st_jobs_'' + @_job_process_id
- 		
-	EXEC spa_run_sp_as_job @_job_name, @_sql, ''spa_calc_deal_position_breakdown'', @_user_name
+EXEC spa_run_sp_as_job @_job_name, @_sql, ''spa_calc_deal_position_breakdown'', @_user_name
 
-	
 SELECT @_source_subbook_id source_subbook_id,
 	   @_destination_subbook_id destination_subbook_id,  
+	   @_distination_deal distination_deal,
 	   @_location_id location_id,
 	   @_term_start term_start,
        @_term_end term_end
 --[__batch_report__] 
 FROM seq 
 WHERE n = 1
+
+
+
 ', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
@@ -380,7 +375,7 @@ WHERE n = 1
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Destination Subbook Id'
-			   , reqd_param = NULL, widget_id = 9, datatype_id = 5, param_data_source = 'SELECT sub_book_id, book_structure FROM [dbo].[FNAGetPipeSeparatedBookStructure](10131000)', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 1
+			   , reqd_param = NULL, widget_id = 9, datatype_id = 5, param_data_source = 'SELECT sub_book_id, book_structure FROM [dbo].[FNAGetPipeSeparatedBookStructure](10131000)', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -393,7 +388,7 @@ WHERE n = 1
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'destination_subbook_id' AS [name], 'Destination Subbook Id' AS ALIAS, NULL AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'SELECT sub_book_id, book_structure FROM [dbo].[FNAGetPipeSeparatedBookStructure](10131000)' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 1 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'destination_subbook_id' AS [name], 'Destination Subbook Id' AS ALIAS, NULL AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'SELECT sub_book_id, book_structure FROM [dbo].[FNAGetPipeSeparatedBookStructure](10131000)' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'position_formula'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -503,6 +498,39 @@ WHERE n = 1
 	END 
 	
 	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'position_formula'
+	            AND dsc.name =  'distination_deal'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Distination Deal'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 1
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'position_formula'
+			AND dsc.name =  'distination_deal'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'distination_deal' AS [name], 'Distination Deal' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 1 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'position_formula'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
 	DELETE dsc
 	FROM data_source_column dsc 
 	INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -563,7 +591,7 @@ WHERE n = 1
 	
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Position Formula'
@@ -590,7 +618,7 @@ WHERE n = 1
 	
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Position Formula'
@@ -617,7 +645,34 @@ WHERE n = 1
 	
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Position Formula'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Book Balancing'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Book Balancing'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'pf'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'pf'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'position_formula' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'distination_deal'	
+	
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Position Formula'
@@ -644,7 +699,7 @@ WHERE n = 1
 	
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Position Formula'
@@ -754,7 +809,7 @@ WHERE n = 1
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 4 column_order,NULL aggregation, NULL functions, 'Location ID' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 5 column_order,NULL aggregation, NULL functions, 'Location ID' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -775,7 +830,7 @@ WHERE n = 1
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 2 column_order,NULL aggregation, NULL functions, 'Term Start' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 4 render_as,-1 column_template,NULL negative_mark,NULL currency,0 date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 3 column_order,NULL aggregation, NULL functions, 'Term Start' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 4 render_as,-1 column_template,NULL negative_mark,NULL currency,0 date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -796,7 +851,7 @@ WHERE n = 1
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 3 column_order,NULL aggregation, NULL functions, 'Term End' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 4 render_as,-1 column_template,NULL negative_mark,NULL currency,0 date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 4 column_order,NULL aggregation, NULL functions, 'Term End' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 4 render_as,-1 column_template,NULL negative_mark,NULL currency,0 date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -812,7 +867,28 @@ WHERE n = 1
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'position_formula' 	
 		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'term_end'  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'term_end' 
+		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
+					, functions, [alias], sortable, rounding, thousand_seperation, font
+					, font_size, font_style, text_align, text_color, background, default_sort_order
+					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 2 column_order,NULL aggregation, NULL functions, 'Distination Deal' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+			
+		FROM sys.objects o
+		INNER JOIN report_page_tablix rpt 
+			ON rpt.[name] = 'position formula_tablix'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rpt.page_id 
+			AND rpage.[name] = 'Book Balancing'
+		INNER JOIN report r 
+			ON r.report_id = rpage.report_id
+			AND r.[name] = 'Book Balancing'
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id AND rd.[alias] = 'pf' 	
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'position_formula' 	
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'distination_deal'  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -947,6 +1023,33 @@ WHERE n = 1
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Term Start' --Added to handle custom column. Assumption: alias is unique and NOT NULL
+	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	  SELECT TOP 1 
+			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
+			'Tahoma' font,
+			'8' font_size,
+			'1,0,0' font_style,
+			'Left' text_align,
+			'#ffffff' text_color,
+			'#458bc1' background,
+			rtc.report_tablix_column_id			 		       
+		FROM   sys.objects o
+		INNER JOIN report_page_tablix rpt 
+			ON  rpt.[name] = 'position formula_tablix'
+		INNER JOIN report_page rpage 
+			ON  rpage.report_page_id = rpt.page_id 
+		AND rpage.[name] = 'Book Balancing'
+		INNER JOIN report r 
+			ON  r.report_id = rpage.report_id 
+			AND r.[name] = 'Book Balancing'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'position_formula' 	
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'distination_deal' 
+		INNER JOIN report_tablix_column rtc 
+			on rtc.tablix_id = rpt.report_page_tablix_id
+			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
+			AND rtc.alias = 'Distination Deal' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
 		--RETAIN APPLICATION FILTER DETAILS START (PART2)
 		update pm
