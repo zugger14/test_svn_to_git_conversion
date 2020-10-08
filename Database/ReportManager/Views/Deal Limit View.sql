@@ -91,10 +91,10 @@ SET @_sql = ''
 		tlr.LimitFor,
 		tlr.[Name],
 		tlr.LimitType,
-		REPLACE(tlr.Limit, '''','''', '''''''') Limit,
+		CASE WHEN TRY_CAST(tlr.Limit AS Float) IS NULL THEN CAST(tlr.Limit AS NVARCHAR) ELSE dbo.FNANumberFormat(tlr.Limit,''''n'''') END Limit,
 		tlr.Unit,
-		REPLACE(tlr.TotalValue, '''','''', '''''''') TotalValue,
-		tlr.AvailableValue,
+		CASE WHEN TRY_CAST(tlr.TotalValue AS Float) IS NULL THEN CAST(tlr.TotalValue AS NVARCHAR) ELSE dbo.FNANumberFormat(tlr.TotalValue,''''n'''') END TotalValue,
+		CASE WHEN TRY_CAST(tlr.AvailableValue AS Float) IS NULL THEN CAST(tlr.AvailableValue AS NVARCHAR) ELSE dbo.FNANumberFormat(tlr.AvailableValue,''''n'''') END AvailableValue,
 		tlr.LimitExceed,
 		CASE
 			WHEN tlr.[Name] IS NOT NULL AND tlr.limittype NOT IN (''''Trade Duration Limit'''', ''''Tenor Limit'''', ''''Price Corridor Limit'''') THEN
@@ -770,5 +770,4 @@ COMMIT TRAN
 	END CATCH
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
-		DROP TABLE #data_source_column	
-	
+		DROP TABLE #data_source_column

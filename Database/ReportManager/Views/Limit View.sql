@@ -4,7 +4,7 @@ BEGIN TRY
 
 	declare @new_ds_alias varchar(10) = 'LV'
 	/** IF DATA SOURCE ALIAS ALREADY EXISTS ON DESTINATION, RAISE ERROR **/
-	if exists(select top 1 1 from data_source where alias = 'LV' and name <> 'limit view')
+	if exists(select top 1 1 from data_source where alias = 'LV' and name <> 'Limit View')
 	begin
 		select top 1 @new_ds_alias = 'LV' + cast(s.n as varchar(5))
 		from seq s
@@ -132,13 +132,13 @@ SET @_sql = ''
 
 		LimitType,
 
-		REPLACE(Limit, '''','''', '''''''') Limit,
+		CASE WHEN TRY_CAST(Limit AS Float) IS NULL THEN CAST(Limit AS NVARCHAR) ELSE dbo.FNANumberFormat(limit,''''n'''') END Limit,
 
 		Unit,
 
-		REPLACE(TotalValue, '''','''', '''''''') TotalValue,
+		CASE WHEN TRY_CAST(TotalValue AS Float) IS NULL THEN CAST(TotalValue AS NVARCHAR) ELSE dbo.FNANumberFormat(TotalValue,''''n'''') END TotalValue,
 
-		AvailableValue,
+		CASE WHEN TRY_CAST(AvailableValue AS Float) IS NULL THEN CAST(AvailableValue AS NVARCHAR) ELSE dbo.FNANumberFormat(AvailableValue,''''n'''') END AvailableValue,
 
 		LimitExceed,
 
@@ -249,7 +249,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Available Value'
-			   , reqd_param = 0, widget_id = 1, datatype_id = 3, param_data_source = NULL, param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+			   , reqd_param = 0, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -262,7 +262,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'AvailableValue' AS [name], 'Available Value' AS ALIAS, 0 AS reqd_param, 1 AS widget_id, 3 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'AvailableValue' AS [name], 'Available Value' AS ALIAS, 0 AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Limit View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)

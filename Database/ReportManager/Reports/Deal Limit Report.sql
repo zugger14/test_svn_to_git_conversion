@@ -36,7 +36,7 @@ BEGIN TRY
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'Deal Limit report' [name], 'dev_admin' [owner], 0 is_system, 1 is_excel, 0 is_mobile, 'E3F0CC28_0560_48EF_A0AF_D8BE4EE82338' report_hash, 'Standard Deal Limit Report' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'Deal Limit Report' [name], 'dev_admin' [owner], 0 is_system, 1 is_excel, 0 is_mobile, 'E3F0CC28_0560_48EF_A0AF_D8BE4EE82338' report_hash, 'Standard Deal Limit Report' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Market Risk' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
@@ -53,18 +53,18 @@ BEGIN TRY
 		
 
 	INSERT INTO report_page(report_id, [name], report_hash, width, height)
-	SELECT @report_id_dest AS report_id, 'Deal Limit report' [name], 'E3F0CC28_0560_48EF_A0AF_D8BE4EE82338' report_hash, 12 width,7.252 height
+	SELECT @report_id_dest AS report_id, 'Deal Limit Report' [name], 'E3F0CC28_0560_48EF_A0AF_D8BE4EE82338' report_hash, 12 width,7.252 height
 	
 
-		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file)
-		SELECT TOP 1 rpage.report_page_id, 'Deal Limit Report', 'ED3DEE4F_84CE_47F0_AD7C_AF9B6670162C', 2,'','','.xlsx',',', 
-		-100003,'y','n'	
+		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
+		SELECT TOP 1 rpage.report_page_id, 'Deal Limit Report', 'ED3DEE4F_84CE_47F0_AD7C_AF9B6670162C', 3,'','','.xlsx',',', 
+		-100003,'y','n',0	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
-			on rpage.[name] = 'Deal Limit report'
+			on rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 		ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 	
 
 		INSERT INTO report_dataset_paramset(paramset_id, root_dataset_id, where_part, advance_mode)
@@ -74,10 +74,10 @@ BEGIN TRY
 			ON rp.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = @report_id_dest
 			AND rd.[alias] = 'dlv'
@@ -91,9 +91,9 @@ BEGIN TRY
 			ON rp.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'dlv'
@@ -119,9 +119,9 @@ BEGIN TRY
 			ON rp.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'dlv'
@@ -147,9 +147,9 @@ BEGIN TRY
 			ON rp.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'dlv'
@@ -175,9 +175,9 @@ BEGIN TRY
 			ON rp.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'dlv'
@@ -203,9 +203,9 @@ BEGIN TRY
 			ON rp.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'dlv'
@@ -231,9 +231,9 @@ BEGIN TRY
 			ON rp.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'dlv'
@@ -255,10 +255,10 @@ BEGIN TRY
 		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'Deal Limit Report' [name], '14.133333333333333' width, '5.493333333333333' height, '0' [top], '0' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
-		ON rpage.[name] = 'Deal Limit report'
+		ON rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id 
 			AND rd.[alias] = 'dlv' 
@@ -275,10 +275,10 @@ BEGIN TRY
 			ON rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'dlv' 	
 		INNER JOIN data_source ds 
@@ -290,17 +290,17 @@ BEGIN TRY
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 8 column_order,NULL aggregation, NULL functions, 'Available Value' [alias], 1 sortable, 0 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 8 column_order,NULL aggregation, NULL functions, 'Available Value' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
 			ON rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'dlv' 	
 		INNER JOIN data_source ds 
@@ -319,10 +319,10 @@ BEGIN TRY
 			ON rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'dlv' 	
 		INNER JOIN data_source ds 
@@ -341,10 +341,10 @@ BEGIN TRY
 			ON rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'dlv' 	
 		INNER JOIN data_source ds 
@@ -363,10 +363,10 @@ BEGIN TRY
 			ON rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'dlv' 	
 		INNER JOIN data_source ds 
@@ -385,10 +385,10 @@ BEGIN TRY
 			ON rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'dlv' 	
 		INNER JOIN data_source ds 
@@ -407,10 +407,10 @@ BEGIN TRY
 			ON rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'dlv' 	
 		INNER JOIN data_source ds 
@@ -429,10 +429,10 @@ BEGIN TRY
 			ON rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'dlv' 	
 		INNER JOIN data_source ds 
@@ -451,10 +451,10 @@ BEGIN TRY
 			ON rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'dlv' 	
 		INNER JOIN data_source ds 
@@ -473,10 +473,10 @@ BEGIN TRY
 			ON rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'dlv' 	
 		INNER JOIN data_source ds 
@@ -495,10 +495,10 @@ BEGIN TRY
 			ON rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'Deal Limit report'
+			AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'dlv' 	
 		INNER JOIN data_source ds 
@@ -520,10 +520,10 @@ BEGIN TRY
 			ON  rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'Deal Limit report'
+		AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Deal Limit View' 	
 		INNER JOIN data_source_column dsc 
@@ -548,10 +548,10 @@ BEGIN TRY
 			ON  rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'Deal Limit report'
+		AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Deal Limit View' 	
 		INNER JOIN data_source_column dsc 
@@ -576,10 +576,10 @@ BEGIN TRY
 			ON  rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'Deal Limit report'
+		AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Deal Limit View' 	
 		INNER JOIN data_source_column dsc 
@@ -604,10 +604,10 @@ BEGIN TRY
 			ON  rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'Deal Limit report'
+		AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Deal Limit View' 	
 		INNER JOIN data_source_column dsc 
@@ -632,10 +632,10 @@ BEGIN TRY
 			ON  rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'Deal Limit report'
+		AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Deal Limit View' 	
 		INNER JOIN data_source_column dsc 
@@ -660,10 +660,10 @@ BEGIN TRY
 			ON  rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'Deal Limit report'
+		AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Deal Limit View' 	
 		INNER JOIN data_source_column dsc 
@@ -688,10 +688,10 @@ BEGIN TRY
 			ON  rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'Deal Limit report'
+		AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Deal Limit View' 	
 		INNER JOIN data_source_column dsc 
@@ -716,10 +716,10 @@ BEGIN TRY
 			ON  rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'Deal Limit report'
+		AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Deal Limit View' 	
 		INNER JOIN data_source_column dsc 
@@ -744,10 +744,10 @@ BEGIN TRY
 			ON  rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'Deal Limit report'
+		AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Deal Limit View' 	
 		INNER JOIN data_source_column dsc 
@@ -772,10 +772,10 @@ BEGIN TRY
 			ON  rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'Deal Limit report'
+		AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Deal Limit View' 	
 		INNER JOIN data_source_column dsc 
@@ -800,10 +800,10 @@ BEGIN TRY
 			ON  rpt.[name] = 'Deal Limit Report'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'Deal Limit report'
+		AND rpage.[name] = 'Deal Limit Report'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'Deal Limit report'
+			AND r.[name] = 'Deal Limit Report'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Deal Limit View' 	
 		INNER JOIN data_source_column dsc 
