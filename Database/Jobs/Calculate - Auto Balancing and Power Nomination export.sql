@@ -24,14 +24,16 @@ DECLARE @command VARCHAR(MAX) = '
 --set statistics io on
 --set statistics time on
 DECLARE @current_datetime DATETIME = GETDATE()
-DECLARE @report_file_full_path VARCHAR(300) = ''\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\'' 
 
 DECLARE @_as_of_date VARCHAR(10) = CONVERT(VARCHAR(10), @current_datetime, 120)
 DECLARE @_term_start VARCHAR(10) = @_as_of_date, 
 		@_term_end VARCHAR(10) = CASE WHEN CAST(@current_datetime AS TIME) >= ''23:38'' THEN CONVERT(VARCHAR(10), DATEADD(DAY, 1, @current_datetime), 120) ELSE @_as_of_date END
 	  , @_location_ids VARCHAR(1000), @_balance_location_id INT, @_desc VARCHAR(MAX), @process_id VARCHAR(100) = REPLACE(NEWID(),''-'',''_'')
 
+DECLARE @report_file_full_path VARCHAR(300) -- ''\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\'' 
+SELECT @report_file_full_path = document_path + ''\temp_Note\'' FROM connection_string
 SET @report_file_full_path = @report_file_full_path + ''Enercity Nomination Report_farrms_admin.xlsx''
+
 SELECT @_location_ids = STUFF((SELECT '','' + CAST(source_minor_location_id AS VARCHAR(10))
 FROM source_minor_location where location_name IN (''Tennet'', ''Amprion'', ''Transnet'', ''50Hertz'')
 FOR XML PATH('''')) ,1,1,'''')
