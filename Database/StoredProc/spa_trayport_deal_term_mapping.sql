@@ -17,7 +17,7 @@ GO
 */
 
 CREATE PROCEDURE [dbo].[spa_trayport_deal_term_mapping]
-	@process_table VARCHAR(100)
+	@process_table VARCHAR(200)
 AS
 
 
