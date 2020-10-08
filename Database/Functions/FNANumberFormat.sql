@@ -15,6 +15,7 @@ GO
 				a = amount
 				p = price
 				o = no rounding
+				w = without rounding and tralling zeros
 */
 
 CREATE FUNCTION [dbo].[FNANumberFormat](@num NUMERIC(38,10),@num_type NCHAR(1))
@@ -35,6 +36,7 @@ BEGIN
 									   WHEN 'a' THEN ci.amount_rounding
 									   WHEN 'p' THEN ci.price_rounding
 									   WHEN 'o' THEN 0
+									   WHEN 'w' THEN -1
 									   ELSE ci.number_rounding END,0) AS NVARCHAR(2))
 	FROM company_info ci
 	LEFT JOIN application_users au 
@@ -47,7 +49,7 @@ BEGIN
 		SET @num_format =	REPLACE(
 							REPLACE(
 							REPLACE(
-							REPLACE(FORMAT(@num, 'N' + @num_rounding)
+							REPLACE(IIF( @num_rounding = -1, dbo.FNAAddThousandSeparator(dbo.FNARemoveTrailingZero(@num)), FORMAT(@num, 'N' + @num_rounding))
 								, ',', '<#GS#>')
 								, '.', '<#DS#>') 
 								, '<#GS#>', '' + @group_separator + '')
