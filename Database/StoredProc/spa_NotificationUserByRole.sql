@@ -19,7 +19,8 @@ create PROC [dbo].[spa_NotificationUserByRole]
 @errorcode VARCHAR(20),    
 @job_name varchar(MAX) = NULL,
 @include_self BIT = 0, --to include the dbo.FNADBUser() that triggered the import manaully when value is set to 1 .
-@email_enable BIT = 0
+@email_enable BIT = 0,
+@role_ids VARCHAR(MAX) = NULL
 AS     
 
 /*-----------------------------------------Test Script--------------------------------------------------------*/
@@ -58,7 +59,10 @@ SET @sql = '
 	SELECT application_users.user_login_id
 	FROM dbo.application_role_user 
 	INNER JOIN dbo.application_security_role ON dbo.application_role_user.role_id = dbo.application_security_role.role_id     
-	INNER JOIN dbo.application_users ON dbo.application_role_user.user_login_id = dbo.application_users.user_login_id    
+	INNER JOIN dbo.application_users ON dbo.application_role_user.user_login_id = dbo.application_users.user_login_id
+	' + CASE WHEN @role_ids IS NOT NULL THEN '
+	INNER JOIN dbo.SplitCommaSeperatedValues(''' + @role_ids + ''') a ON a.item = dbo.application_security_role.role_id
+	' ELSE '' END + '    
 	WHERE (dbo.application_users.user_active = ''y'') AND (dbo.application_security_role.role_type_value_id = ' + cast(@role_type_value_id AS VARCHAR(10)) +') 
 	GROUP BY dbo.application_users.user_login_id, dbo.application_users.user_emal_add ' + 
 	CASE WHEN @include_self = 1 THEN 'UNION SELECT dbo.FNADBUser() user_login_id ' ELSE '' END  
