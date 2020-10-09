@@ -459,10 +459,11 @@ BEGIN
 		ON scu.source_currency_id = cg.currency	
 	LEFT JOIN stmt_checkout sch
 		ON sch.stmt_invoice_detail_id = sid.stmt_invoice_detail_id
+	OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(sid.description1) itm) a 
 	LEFT JOIN stmt_checkout sch2
-		ON sch2.stmt_checkout_id =  sid.description1
+		ON sch2.stmt_checkout_id =  a.[stmt_checkout_id]
 	LEFT JOIN source_uom su 
-		ON  su.source_uom_id = ISNULL(sch.uom_id, sch2.uom_id)
+		ON  su.source_uom_id = COALESCE(cg.volume_uom,sch.uom_id, sch2.uom_id)
 	WHERE si.stmt_invoice_id = @invoice_id
 END
 
@@ -658,6 +659,16 @@ BEGIN
 		DECLARE @id INT, @status INT = 1, @url_name VARCHAR(5000), @total_time_for_pdf_process VARCHAR(200), @pdf_process_start_time  DATETIME 
 		SET @pdf_process_start_time = GETDATE()
 
+		/* To Finalize the Backing Sheet */
+		INSERT INTO #invoice_collection
+		SELECT DISTINCT si_b.stmt_invoice_id FROM stmt_invoice si
+		INNER JOIN #invoice_collection tid ON tid.item = si.stmt_invoice_id
+		INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
+		OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a 
+		INNER JOIN stmt_invoice_detail stid_b ON stid_b.description1 = a.[stmt_checkout_id]
+		INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = stid_b.stmt_invoice_id AND ISNULL(si_b.is_voided,'n') = ISNULL(si.is_voided,'n')
+		WHERE ISNULL(si_b.is_backing_sheet,'n') = 'y'
+
 		WHILE EXISTS(SELECT * FROM #invoice_collection) 
 		BEGIN
 			SELECT TOP(1) @id = item FROM #invoice_collection
@@ -769,12 +780,38 @@ END
 ELSE IF @flag = 'n' --Unfinalize Invoice  
 BEGIN
 	BEGIN TRY
-			SET @sql = '
-				UPDATE stmt_invoice
-					SET is_finalized = ''n''
-				WHERE stmt_invoice_id in (' + @invoice_id + ')
+			IF OBJECT_ID('tempdb..#invoice_unfinalize') IS NOT NULL
+				DROP TABLE #invoice_unfinalize
 
-				DELETE an FROM application_notes an WHERE ISNULL(an.parent_object_id, an.notes_object_id) IN(' + @invoice_id + ') AND an.internal_type_value_id = 10000283
+			SELECT * INTO #invoice_unfinalize FROM dbo.SplitCommaSeperatedValues(@invoice_id) id
+
+			/* Lock and Unlock backing sheet */
+			INSERT INTO #invoice_unfinalize
+			SELECT DISTINCT si_b.stmt_invoice_id FROM stmt_invoice si
+			INNER JOIN #invoice_unfinalize tid ON tid.item = si.stmt_invoice_id
+			INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
+			OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a 
+			INNER JOIN stmt_invoice_detail stid_b ON stid_b.description1 = a.[stmt_checkout_id]
+			INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = stid_b.stmt_invoice_id AND ISNULL(si_b.is_voided,'n') = ISNULL(si.is_voided,'n')
+			WHERE ISNULL(si_b.is_backing_sheet,'n') = 'y'
+
+			SET @sql = '
+				UPDATE si
+					SET is_finalized = ''n'',
+						finalized_date = NULL
+				FROM stmt_invoice si
+				INNER JOIN #invoice_unfinalize tmp ON si.stmt_invoice_id = tmp.item'
+			EXEC(@sql)
+			
+			SET @sql = '
+				UPDATE si
+					SET is_finalized = ''n'',
+						finalized_date = NULL
+				FROM stmt_invoice si
+				INNER JOIN #invoice_unfinalize tmp ON si.stmt_invoice_id = tmp.item
+
+				DELETE an FROM application_notes an 
+				INNER JOIN #invoice_unfinalize tmp ON ISNULL(an.parent_object_id, an.notes_object_id) = tmp.item AND an.internal_type_value_id = 10000283
 			'
 			exec(@sql);
 
@@ -1035,7 +1072,22 @@ BEGIN
 	BEGIN TRY
 	BEGIN TRAN
 
+		/* Void the backing sheet */
+		INSERT INTO #temp_void
+		SELECT DISTINCT si_b.stmt_invoice_id, tid.as_of_date FROM stmt_invoice si
+		INNER JOIN #temp_void tid ON tid.invoice_id = si.stmt_invoice_id
+		INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
+		OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a 
+		INNER JOIN stmt_invoice_detail stid_b ON stid_b.description1 = a.[stmt_checkout_id]
+		INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = stid_b.stmt_invoice_id AND ISNULL(si_b.is_voided,'n') = ISNULL(si.is_voided,'n')
+		WHERE ISNULL(si_b.is_backing_sheet,'n') = 'y'
+
+		IF OBJECT_ID('tempdb..#temp_new_inv') IS NOT NULL
+			DROP TABLE #temp_new_inv
+		CREATE TABLE #temp_new_inv(stmt_invoice_id INT, original_id_for_void INT)
+
 		INSERT INTO stmt_invoice (as_of_date, counterparty_id, contract_id, prod_date_from, prod_date_to, invoice_number, is_finalized, finalized_date, is_locked, invoice_status, invoice_type, invoice_note, invoice_template_id, payment_date, netting_invoice_id, invoice_file_name, netting_file_name, is_voided, description1, description2, description3, description4, description5, original_id_for_void)
+		OUTPUT INSERTED.stmt_invoice_id, INSERTED.original_id_for_void INTO #temp_new_inv(stmt_invoice_id, original_id_for_void)
 		SELECT tv.as_of_date, counterparty_id, contract_id, prod_date_from, prod_date_to, invoice_number, is_finalized, finalized_date, is_locked, invoice_status, CASE WHEN invoice_type = 'i' THEN 'r' ELSE 'i' END, invoice_note, invoice_template_id, payment_date, netting_invoice_id, invoice_file_name, netting_file_name, NULL, description1, description2, description3, description4, description5, si.stmt_invoice_id 
 		FROM stmt_invoice si INNER JOIN #temp_void tv ON si.stmt_invoice_id = tv.invoice_id
 
@@ -1044,18 +1096,26 @@ BEGIN
 		FROM stmt_invoice si
 		INNER JOIN #temp_void tmp ON si.stmt_invoice_id = tmp.invoice_id
 
-		DECLARE @new_id INT
-		SET @new_id = SCOPE_IDENTITY()
+		--DECLARE @new_id INT
+		--SET @new_id = SCOPE_IDENTITY()
 	
 		INSERT INTO stmt_invoice_detail (stmt_invoice_id, invoice_line_item_id, prod_date_from, prod_date_to, [value], volume, show_volume_in_invoice, show_charge_in_invoice, description1, description2, description3, description4, description5)
-		SELECT @new_id, invoice_line_item_id, prod_date_from, prod_date_to, -1 * [value], volume, show_volume_in_invoice, show_charge_in_invoice, description1, description2, description3, description4, description5 
+		SELECT tmp.stmt_invoice_id, invoice_line_item_id, prod_date_from, prod_date_to, -1 * [value], volume, show_volume_in_invoice, show_charge_in_invoice, description1, description2, description3, description4, description5 
 		FROM stmt_invoice_detail sid INNER JOIN #temp_void tv ON sid.stmt_invoice_id = tv.invoice_id
+		INNER JOIN #temp_new_inv tmp ON tmp.original_id_for_void =  tv.invoice_id
 
-		UPDATE stmt_invoice 
-			SET invoice_number = @new_id
-		WHERE stmt_invoice_id = @new_id
+		--UPDATE stmt_invoice 
+		--	SET invoice_number = @new_id
+		--WHERE stmt_invoice_id = @new_id
 
-		EXEC spa_generate_document @document_category = 10000283, @document_sub_category = '', @filter_object_id = @new_id, @temp_generate = 0, @get_generated = 1, @show_output = 0
+		UPDATE sti 
+		SET sti.invoice_number = sti.stmt_invoice_id,
+			sti.is_finalized = 'n',
+			sti.finalized_date =  NULL
+		FROM stmt_invoice sti
+		INNER JOIN #temp_new_inv tmp ON sti.stmt_invoice_id = tmp.stmt_invoice_id
+
+		--EXEC spa_generate_document @document_category = 10000283, @document_sub_category = '', @filter_object_id = @new_id, @temp_generate = 0, @get_generated = 1, @show_output = 0
 
 		DECLARE @vd_process_id VARCHAR(1000), @vd_alert_process_table VARCHAR(1000)
 		SET @vd_process_id = dbo.FNAGetNewID()
@@ -1066,7 +1126,7 @@ BEGIN
 		SET @sql = 'INSERT INTO ' + @vd_alert_process_table + '(stmt_invoice_id) 
 					SELECT tmp.invoice_id FROM #temp_void tmp
 					UNION ALL
-					SELECT ' + CAST(@new_id AS VARCHAR)
+					SELECT tmp1.stmt_invoice_id FROM #temp_new_inv tmp1'
 
 		EXEC(@sql)		
 		EXEC spa_register_event 20630, 20588, @vd_alert_process_table, 1, @vd_process_id
@@ -1915,10 +1975,27 @@ ELSE IF @flag = 'y' OR @flag = 'n'-- locked/Unlocked.
 BEGIN
 	BEGIN TRY
 		BEGIN TRAN
+			
+			IF OBJECT_ID('tempdb..#invoice_lock_unlock') IS NOT NULL
+				DROP TABLE #invoice_lock_unlock
+
+			SELECT * INTO #invoice_lock_unlock FROM dbo.SplitCommaSeperatedValues(@invoice_id) id
+
+			/* Lock and Unlock backing sheet */
+			INSERT INTO #invoice_lock_unlock
+			SELECT DISTINCT si_b.stmt_invoice_id FROM stmt_invoice si
+			INNER JOIN #invoice_lock_unlock tid ON tid.item = si.stmt_invoice_id
+			INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
+			OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a 
+			INNER JOIN stmt_invoice_detail stid_b ON stid_b.description1 = a.[stmt_checkout_id]
+			INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = stid_b.stmt_invoice_id AND ISNULL(si_b.is_voided,'n') = ISNULL(si.is_voided,'n')
+			WHERE ISNULL(si_b.is_backing_sheet,'n') = 'y'
+
 			SET @sql = '
-				UPDATE stmt_invoice
-					SET is_locked = ''' + @flag + '''
-				WHERE stmt_invoice_id IN (' + @invoice_id + ')'
+				UPDATE si
+					SET si.is_locked = ''' + @flag + '''
+				FROM stmt_invoice si
+				INNER JOIN #invoice_lock_unlock tmp ON si.stmt_invoice_id = tmp.item'
 			EXEC(@sql)
 
 		SET @message = 'Settlement ' + CASE WHEN @flag = 'y' THEN 'locked' ELSE 'unlocked' END + ' sucessfully.'
