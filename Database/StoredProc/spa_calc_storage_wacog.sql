@@ -927,7 +927,8 @@ BEGIN TRY
 			(
 			select min(maturity_date) maturity_date from source_price_curve where source_curve_def_id=isnull(lpi.curve_id,sml.term_pricing_index)
 				and as_of_date=@as_of_date
-				and maturity_date>=convert(varchar(8),ti.term_start,120)+'01'
+				--and maturity_date>=convert(varchar(8),ti.term_start,120)+'01'
+				and maturity_date>=ti.term_start
 			) mx_term
 			inner join source_price_curve spc on spc.source_curve_def_id=isnull(lpi.curve_id,sml.term_pricing_index)
 				and spc.as_of_date=@as_of_date
@@ -939,7 +940,7 @@ BEGIN TRY
 				total_inventory_amt=w.price*ti.total_inventory_vol,
 				wacog=w.price,
 				inj_inventory_amt=w.price*ISNULL(ti.inj_deal_total_volume, 0)
-				--,wth_inventory_amt=w.price*ISNULL(ti.wth_deal_total_volume, 0)
+				,wth_inventory_amt=w.price*ISNULL(ti.wth_deal_total_volume, 0)
 			from #tmp_inventory ti
 				inner join  #neg_wacog_price w on  ti.location_id=w.location_id 
 					and ti.commodity_id=w.commodity_id and ti.term_start=w.term_start 
