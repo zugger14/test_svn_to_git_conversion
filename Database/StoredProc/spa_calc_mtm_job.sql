@@ -124,6 +124,8 @@ SET ROWCOUNT 0
 ----dbcc stackdump(1)
 
 
+
+
 SET nocount off	
 DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
 SET CONTEXT_INFO @contextinfo
@@ -183,7 +185,7 @@ select *  from source_deal_HEADER   where source_deal_header_id=1600
 select *  from source_deal_pnl_detail   where source_deal_header_id=1600
 select *  from source_deal_settlement   where source_deal_header_id=103493
 select * from index_fees_breakdown   where source_deal_header_id=1600
-select * from index_fees_breakdown_settlement   where source_deal_header_id=103523
+select * from index_fees_breakdown_settlement   where source_deal_header_id=103922
 delete index_fees_breakdown_settlement   where source_deal_header_id=1600
 
 select *  from source_deal_pnl_breakdown   where source_deal_header_id=7876
@@ -200,8 +202,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =103523  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2020-09-29' , --'2017-02-15',
+	@source_deal_header_id =103922  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2020-01-31' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -218,8 +220,8 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2020-09-01' ,
-	@term_end = '2020-09-29' ,
+	@term_start = '2020-01-01' ,
+	@term_end = '2020-01-31' ,
 	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
@@ -229,12 +231,6 @@ SELECT
 	@ref_id=null,
 	@process_linear_options_delta = NULL
 	,@look_term= 's' -- 'd'-> delivered term 's'-> settled term
-
-
-
-
-
-
 
 
 
@@ -406,11 +402,6 @@ BEGIN
 END
 
 
-
-
-
-
-
  -- exec dbo.spa_drop_all_temp_table
 
 -- select * from #temp_curves where source_curve_def_id IN ( 23, 76)
@@ -424,10 +415,6 @@ END
 
 
 --*/
-
-
-
-
 
 
 -------------------------- END OF TESTING scripts -------------
@@ -3215,14 +3202,14 @@ UNION
 select distinct trs.currency_id fx_currency_id,td.exp_curve_as_of_date,td.source_system_id,td.fx_conversion_market
 FROM #temp_deals td
 	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-	LEFT JOIN user_defined_deal_fields_template_main ud ON ud.template_id = sdh.template_id AND ud.field_id = 293432
+	LEFT JOIN user_defined_deal_fields_template ud ON ud.template_id = sdh.template_id AND ud.field_id = 293432
 	LEFT JOIN user_defined_fields_template udft ON udft.udf_template_id = ud.udf_user_field_id and td.leg= ISNULL(udft.leg,td.leg)		
 	LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = td.source_deal_header_id AND ud.udf_template_id = uddf.udf_template_id
 	LEFT JOIN delivery_path dp ON dp.path_id =try_cast(uddf.udf_value as int)	
 	LEFT JOIN contract_group cg ON cg.contract_id = td.contract_id
 	LEFT JOIN counterparty_contract_rate_schedule ccrs ON ccrs.counterparty_id = dp.counterparty 
 		AND ccrs.contract_id = cg.contract_id AND dp.path_id = ccrs.path_id
-	LEFT JOIN user_defined_deal_fields_template_main ud1 ON ud1.template_id = sdh.template_id AND ud1.field_id = -5678
+	LEFT JOIN user_defined_deal_fields_template ud1 ON ud1.template_id = sdh.template_id AND ud1.field_id = -5678
 	LEFT JOIN user_defined_fields_template udft1 ON udft1.udf_template_id = ud1.udf_user_field_id and td.leg= ISNULL(udft1.leg,td.leg)	
 	LEFT JOIN user_defined_deal_fields uddf1 ON uddf1.source_deal_header_id = td.source_deal_header_id AND ud1.udf_template_id = uddf1.udf_template_id
 	--OUTER APPLY(
@@ -3239,14 +3226,14 @@ UNION
 select distinct vc.currency_id fx_currency_id ,td.exp_curve_as_of_date,td.source_system_id,td.fx_conversion_market
 FROM	#temp_deals td
 	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-	LEFT JOIN user_defined_deal_fields_template_main ud ON ud.template_id = sdh.template_id AND ud.field_id = 293432
+	LEFT JOIN user_defined_deal_fields_template ud ON ud.template_id = sdh.template_id AND ud.field_id = 293432
 	LEFT JOIN user_defined_fields_template udft ON udft.udf_template_id = ud.udf_user_field_id and td.leg= ISNULL(udft.leg,td.leg)		
 	LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = td.source_deal_header_id AND ud.udf_template_id = uddf.udf_template_id
 	LEFT JOIN delivery_path dp ON dp.path_id =try_cast(uddf.udf_value as int)		
 	LEFT JOIN contract_group cg ON cg.contract_id = td.contract_id
 	LEFT JOIN counterparty_contract_rate_schedule ccrs ON ccrs.counterparty_id = dp.counterparty 
 			AND ccrs.contract_id = cg.contract_id AND dp.path_id = ccrs.path_id
-	LEFT JOIN user_defined_deal_fields_template_main ud1 ON ud1.template_id = sdh.template_id AND ud1.field_id = -5678
+	LEFT JOIN user_defined_deal_fields_template ud1 ON ud1.template_id = sdh.template_id AND ud1.field_id = -5678
 	LEFT JOIN user_defined_fields_template udft1 ON udft1.udf_template_id = ud1.udf_user_field_id and td.leg= ISNULL(udft1.leg,td.leg)	
 	LEFT JOIN user_defined_deal_fields uddf1 ON uddf1.source_deal_header_id = td.source_deal_header_id AND ud1.udf_template_id = uddf1.udf_template_id
 	LEFT JOIN variable_charge vc ON vc.rate_schedule_id = COALESCE(try_cast(uddf1.udf_value as int),ccrs.rate_schedule_id,dp.rateSchedule,cg.maintain_rate_schedule)
@@ -12277,7 +12264,6 @@ BEGIN
 	group by t.as_of_date, t.source_deal_header_id, t.leg, t.term_start, t.term_end,shipment_id ,t.ticket_detail_id, t.match_info_id
 	having MAX(t.volume) <> 0 AND ABS(max(t.contract_value) - sum(value)) > 0.001
 
-
 --- If no formula is defined, then insert the fixed side
 	insert into #fees_breakdown 
 		(
@@ -12578,7 +12564,7 @@ SET @sql='
 	FROM '+@hourly_price_vol_at_low+' td 
 		--INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = td.source_deal_detail_id
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-		INNER JOIN user_defined_deal_fields_template_main uddft ON uddft.template_id=sdh.template_id	and isnull(uddft.leg,td.leg)=td.leg	
+		INNER JOIN user_defined_deal_fields_template uddft ON uddft.template_id=sdh.template_id	and isnull(uddft.leg,td.leg)=td.leg	
 		and uddft.udf_type=''h''
 		LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = td.source_deal_header_id  
 				AND uddf.udf_template_id = uddft.udf_template_id
@@ -12611,7 +12597,7 @@ SET @sql='
 	FROM	
 		#temp_deals td 
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-		INNER JOIN user_defined_deal_fields_template_main uddft ON uddft.template_id=sdh.template_id	
+		INNER JOIN user_defined_deal_fields_template uddft ON uddft.template_id=sdh.template_id	
 		AND uddft.udf_type=''h''
 		INNER JOIN user_defined_fields_template udft on uddft.field_id=udft.field_id
 			AND isnull(udft.leg,td.leg)=td.leg
@@ -12634,7 +12620,7 @@ SET @sql='
 		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002,uddft.internal_field_type,CASE uddft.internal_field_type WHEN 18744 THEN 9999 ELSE 1 END
 	FROM #temp_deals td 
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-		INNER JOIN user_defined_deal_fields_template_main uddft ON uddft.template_id=sdh.template_id	and isnull(uddft.leg,td.leg)=td.leg	
+		INNER JOIN user_defined_deal_fields_template uddft ON uddft.template_id=sdh.template_id	and isnull(uddft.leg,td.leg)=td.leg	
 		AND uddft.udf_type=''d''
 		--LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = td.source_deal_header_id  
 		--		AND uddf.udf_template_id = uddft.udf_template_id
@@ -12646,6 +12632,9 @@ SET @sql='
 
 exec spa_print @sql
 EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@sql)
+
+
+
 
 --EXEC('select 1 temp into #check_existance_record_mtm from '+@formula_table5)
 --IF @@ROWCOUNT>0
@@ -12661,10 +12650,13 @@ EXEC(@sql)
 
 EXEC spa_calculate_formula	@as_of_date, @formula_table5,@process_id,@calc_result_table5 output, @calc_result_table_breakdown5 output,'n','n',@calc_type,@criteria_id,NULL,@calc_type,'y'
 
+--print 'kkkkkkkkk'
+--print 'select * from '+@calc_result_table5
 
-
+--exec('select * from '+@calc_result_table5)
+--return
 --SELECT * FROM index_fees_breakdown ifb WHERE ifb.internal_type <>-1
---select * into #uddft from user_defined_deal_fields_template_main
+--select * into #uddft from user_defined_deal_fields_template
 --select udf_deal_id,source_deal_header_id,udf_template_id,NULLIF(udf_value,'') udf_value,create_user,create_ts,update_user,update_ts,currency_id,uom_id,counterparty_id into #uddf from user_defined_deal_fields
 --select udf_deal_id,source_deal_detail_id,udf_template_id,NULLIF(udf_value,'') udf_value,create_user,create_ts,update_user,update_ts,currency_id,uom_id,counterparty_id into #udddf from user_defined_deal_detail_fields 
 --SELECT * INTO #uddft 
@@ -12845,11 +12837,11 @@ SET @qry8a='
 	LEFT JOIN source_price_curve spc on spc.source_curve_def_id = sfv.index_market AND spc.as_of_date = spc1.as_of_date  AND spc.maturity_date = td.term_start
 
 	--------------Checking condition for Sleeve, Spread AND Initiator/Aggressor--------------
-	LEFT JOIN user_defined_deal_fields_template_main uds ON uds.template_id = sdh.template_id
+	LEFT JOIN user_defined_deal_fields_template uds ON uds.template_id = sdh.template_id
 		AND uds.field_id = -10000335  --Sleeve
 	LEFT JOIN user_defined_deal_fields uddfs on uddfs.udf_template_id = uds.udf_template_id 
 		AND uddfs.source_deal_header_id = td.source_deal_header_id
-	LEFT JOIN user_defined_deal_fields_template_main uds1 on uds1.template_id = sdh.template_id
+	LEFT JOIN user_defined_deal_fields_template uds1 on uds1.template_id = sdh.template_id
 		AND uds1.field_id= -10000336	 --Spread	
 	LEFT JOIN user_defined_deal_fields uddfs1 on uddfs1.udf_template_id = uds1.udf_template_id 
 		AND uddfs1.source_deal_header_id = td.source_deal_header_id
@@ -12863,8 +12855,8 @@ SET @qry8a='
 	WHERE 1 = 1 --	udft.internal_field_type IN(18723,18724,18733,18737)			
 	AND ISNUMERIC(ISNULL(sfv2.value, sfv.value)) = 1
 	ORDER BY sfv.from_volume'
-	exec spa_print @qry8a
-	EXEC(@qry8a)
+exec spa_print @qry8a
+EXEC(@qry8a)
 
 	;WITH CTE AS (
 		SELECT [id],
@@ -13254,7 +13246,7 @@ set @qry7b='
 		 '		
 
 set @qry8b=	' 
-	WHERE udft.internal_field_type not IN(18722,18723,18724,18733,18744,18745) and	udft.internal_field_type IS NOT NULL AND COALESCE(sfv.value,udddf.udf_value,uddf.udf_value,cast(udf_formula.formula_eval_value as varchar), sddh.vol) is not null and
+	WHERE isnull(udft.internal_field_type,-1) not IN(18722,18723,18724,18733,18744,18745) and	udft.internal_field_type IS NOT NULL AND COALESCE(sfv.value,udddf.udf_value,uddf.udf_value,cast(udf_formula.formula_eval_value as varchar), sddh.vol) is not null and
 		(( udft.internal_field_type <> 18722 AND ISNUMERIC(COALESCE(sfv.value,udddf.udf_value,uddf.udf_value,cast(udf_formula.formula_eval_value as varchar), sddh.vol)) = 1) OR udft.internal_field_type = 18722)
 			AND	udft.internal_field_type<>18718 and 
 		CASE WHEN (udft.internal_field_type IN (18702, 18703,18717)) THEN ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity))
@@ -13446,7 +13438,7 @@ set @qry5a='
 into #tmp_fees_breakdown_001
 	FROM	#temp_deals td
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-		LEFT JOIN user_defined_deal_fields_template_main ud ON ud.template_id = sdh.template_id AND ud.field_id = 293432
+		LEFT JOIN user_defined_deal_fields_template ud ON ud.template_id = sdh.template_id AND ud.field_id = 293432
 		LEFT JOIN user_defined_fields_template udft ON udft.udf_template_id = ud.udf_user_field_id and td.leg= ISNULL(udft.leg,td.leg)		
 		LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = td.source_deal_header_id AND ud.udf_template_id = uddf.udf_template_id
 		LEFT JOIN delivery_path dp ON dp.path_id = try_cast(uddf.udf_value as int)	
@@ -13455,15 +13447,15 @@ into #tmp_fees_breakdown_001
 		) gaivs  
 		LEFT JOIN counterparty_contract_rate_schedule ccrs ON ccrs.counterparty_id = dp.counterparty 
 				AND ccrs.contract_id = cg.contract_id AND dp.path_id = ccrs.path_id
-		LEFT JOIN user_defined_deal_fields_template_main ud1 ON ud1.template_id = sdh.template_id AND ud1.field_id = -5678
+		LEFT JOIN user_defined_deal_fields_template ud1 ON ud1.template_id = sdh.template_id AND ud1.field_id = -5678
 		LEFT JOIN user_defined_fields_template udft1 ON udft1.udf_template_id = ud1.udf_user_field_id and td.leg= ISNULL(udft1.leg,td.leg)	
 		LEFT JOIN user_defined_deal_fields uddf1 ON uddf1.source_deal_header_id = td.source_deal_header_id AND ud1.udf_template_id = uddf1.udf_template_id
-		LEFT JOIN user_defined_deal_fields_template_main ud2 ON ud2.template_id = sdh.template_id AND ud2.field_id = -10000046 --injection volume
+		LEFT JOIN user_defined_deal_fields_template ud2 ON ud2.template_id = sdh.template_id AND ud2.field_id = -10000046 --injection volume
 		LEFT JOIN user_defined_fields_template udft2 ON udft2.udf_template_id = ud2.udf_user_field_id and td.leg= ISNULL(udft2.leg,td.leg)	
 		LEFT JOIN user_defined_deal_fields uddf2 ON uddf2.source_deal_header_id = td.source_deal_header_id AND ud2.udf_template_id = uddf2.udf_template_id
 		LEFT JOIN user_defined_deal_detail_fields udddf2 ON udddf2.udf_template_id = ud2.udf_template_id
 			AND udddf2.source_deal_detail_id = td.source_deal_detail_id
-		LEFT JOIN user_defined_deal_fields_template_main ud3 ON ud3.template_id = sdh.template_id AND ud3.field_id = -10000047 --withdrawal volume
+		LEFT JOIN user_defined_deal_fields_template ud3 ON ud3.template_id = sdh.template_id AND ud3.field_id = -10000047 --withdrawal volume
 		LEFT JOIN user_defined_fields_template udft3 ON udft3.udf_template_id = ud3.udf_user_field_id and td.leg= ISNULL(udft3.leg,td.leg)	
 		LEFT JOIN user_defined_deal_fields uddf3 ON uddf3.source_deal_header_id = td.source_deal_header_id AND ud3.udf_template_id = uddf3.udf_template_id
 		LEFT JOIN user_defined_deal_detail_fields udddf3 ON udddf3.udf_template_id = ud3.udf_template_id
@@ -13618,16 +13610,16 @@ set @qry8a='
 				group by source_deal_header_id)op 
 		LEFT JOIN '+@calc_result_table5+' udf_formula ON udf_formula.source_deal_detail_id = td.source_deal_detail_id
 				and uddft.udf_template_id=udf_formula.source_id AND udf_formula.is_final_result = ''y'' 	
-		LEFT JOIN user_defined_deal_fields_template_main ud ON ud.template_id = sdh.template_id
+		LEFT JOIN user_defined_deal_fields_template ud ON ud.template_id = sdh.template_id
 			AND ud.field_id = 305013
-		LEFT JOIN user_defined_deal_fields_template_main ud1 on ud1.template_id = sdh.template_id
+		LEFT JOIN user_defined_deal_fields_template ud1 on ud1.template_id = sdh.template_id
 			AND ud1.field_id= 308062
 		LEFT JOIN user_defined_deal_fields uddf1 on uddf1.udf_template_id = ud1.udf_template_id 
 			AND uddf1.source_deal_header_id = td.source_deal_header_id
 		LEFT JOIN user_defined_deal_fields uddf2 on uddf2.udf_template_id = ud.udf_template_id 
 			AND uddf2.source_deal_header_id = td.source_deal_header_id
 		--------#############--------------------
-		OUTER APPLY(SELECT try_cast(uddf.udf_value as int)	udf_value FROM user_defined_deal_fields uddf INNER JOIN user_defined_deal_fields_template_main udddft ON uddf.udf_template_id=udddft.udf_template_id WHERE uddf.source_deal_header_id=td.source_deal_header_id and udddft.field_id=-5604) uddf_broker
+		OUTER APPLY(SELECT try_cast(uddf.udf_value as int)	udf_value FROM user_defined_deal_fields uddf INNER JOIN user_defined_deal_fields_template udddft ON uddf.udf_template_id=udddft.udf_template_id WHERE uddf.source_deal_header_id=td.source_deal_header_id and udddft.field_id=-5604) uddf_broker
 		LEFT JOIN #tmp_source_fees sfv ON sfv.source_deal_detail_id=td.source_deal_detail_id AND sfv.field_id=uddft.field_name
 		OUTER APPLY
 			(
@@ -13723,7 +13715,8 @@ set @qry9a='
 			FROM #tmp_fees_breakdown_002 tfb1 WHERE tfb1.source_deal_header_id = tfb.source_deal_header_id
 		) tfb1
 	where internal_type IS NOT NULL AND (( internal_type <> 18722 AND f_value = 1) OR internal_type = 18722)
-		AND	internal_type<>18718 and filter1 <> 0  AND tfb1.value  IS NOT NULL'
+		AND	internal_type<>18718 and filter1 <> 0  AND tfb1.value  IS NOT NULL
+				'
 
 exec spa_print @sqlstmt
 
@@ -13746,18 +13739,12 @@ exec spa_print @qry7a
 exec spa_print @qry8a
 exec spa_print @qry9a
 
-
-
-
-
-
-
-
-
 exec('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'
 	+@sqlstmt+@qry1b+@qry2b+@qry3b+@qry4b+@qry5b+@qry6b+@qry7b+@qry8b+@qry1a
 	+@qry2a+@qry3a+@qry4a+@qry5a+@qry6a+@qry7a+@qry8a+@qry9a
 )
+
+
 
 IF ((SELECT COUNT(*) FROM #fees_breakdown) = 0 AND @calc_type = 's'
 	AND (SELECT COUNT(*) FROM #temp_deals) = 0
@@ -13852,7 +13839,6 @@ begin
 	WHERE t.volume <> 0 ;
 
 
-
 --	select formula_conv_factor_deal,formula_conv_factor_inv,formula_conv_factor,* from #temp_leg_mtm
 	--select * from #temp_leg_mtm
 	--select * from #formula_value
@@ -13924,7 +13910,6 @@ BEGIN
 	print  @pr_name+': '+cast(datediff(ss,@log_time,getdate()) as varchar) +'*************************************'
 	EXEC spa_print '****************Fees/Premium Calcualtions*****************************'	
 END
-
 
 IF @calc_type = 's'
 BEGIN
@@ -14140,7 +14125,7 @@ BEGIN
 		 FROM #temp_leg_mtm where (error_deal is null OR leg_set IS NULL) AND volume <> 0 
 		group by source_deal_header_id, curve_as_of_Date
 		OPTION (MAXRECURSION 32767, MAXDOP 8 ) 
-		
+
 
 		SET @total_error_count = @@ROWCOUNT 
 	end
@@ -18339,14 +18324,14 @@ END CATCH
 CleanUp_Process_Tables:
 	DECLARE @debug_mode VARCHAR(128) = REPLACE(CONVERT(VARCHAR(128), CONTEXT_INFO()), 0x0, '')
 
-	IF ISNULL(@debug_mode, '') <> 'DEBUG_MODE_ON'
-	BEGIN
-		EXEC dbo.spa_clear_all_temp_table NULL, @original_process_id, @exclude_tables ='deal_settlement,index_fees_settlement,std_whatif_deals'  
-		EXEC dbo.spa_clear_all_temp_table NULL, @process_id
-		EXEC dbo.spa_clear_all_temp_table NULL, @process_id2
-		EXEC dbo.spa_clear_all_temp_table NULL, @process_id3
-		EXEC dbo.spa_clear_all_temp_table NULL, @process_id4
-	END
+	--IF ISNULL(@debug_mode, '') <> 'DEBUG_MODE_ON'
+	--BEGIN
+	--	EXEC dbo.spa_clear_all_temp_table NULL, @original_process_id, @exclude_tables ='deal_settlement,index_fees_settlement,std_whatif_deals'  
+	--	EXEC dbo.spa_clear_all_temp_table NULL, @process_id
+	--	EXEC dbo.spa_clear_all_temp_table NULL, @process_id2
+	--	EXEC dbo.spa_clear_all_temp_table NULL, @process_id3
+	--	EXEC dbo.spa_clear_all_temp_table NULL, @process_id4
+	--END
 -------------------------- Step 11 End ------------------------------------
 
 GO
