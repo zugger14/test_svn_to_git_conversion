@@ -1023,7 +1023,8 @@ BEGIN
 				CROSS APPLY dbo.SplitCommaSeperatedValues(stid_b.description1) de
 				WHERE de.item = a.stmt_checkout_id AND stid_b.stmt_invoice_id <> tid.invoice_id
 			) inv
-			INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = inv.stmt_invoice_id
+			INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = inv.stmt_invoice_id  AND ISNULL(si_b.is_voided,'n') = ISNULL(si.is_voided,'n')
+			WHERE ISNULL(si_b.is_backing_sheet,'n') = 'y'
 
 			DELETE si
 			FROM stmt_invoice si
@@ -1086,9 +1087,9 @@ BEGIN
 			DROP TABLE #temp_new_inv
 		CREATE TABLE #temp_new_inv(stmt_invoice_id INT, original_id_for_void INT)
 
-		INSERT INTO stmt_invoice (as_of_date, counterparty_id, contract_id, prod_date_from, prod_date_to, invoice_number, is_finalized, finalized_date, is_locked, invoice_status, invoice_type, invoice_note, invoice_template_id, payment_date, netting_invoice_id, invoice_file_name, netting_file_name, is_voided, description1, description2, description3, description4, description5, original_id_for_void)
+		INSERT INTO stmt_invoice (as_of_date, counterparty_id, contract_id, prod_date_from, prod_date_to, invoice_number, is_finalized, finalized_date, is_locked, invoice_status, invoice_type, invoice_note, invoice_template_id, payment_date, netting_invoice_id, invoice_file_name, netting_file_name, is_voided, description1, description2, description3, description4, description5, original_id_for_void, is_backing_sheet)
 		OUTPUT INSERTED.stmt_invoice_id, INSERTED.original_id_for_void INTO #temp_new_inv(stmt_invoice_id, original_id_for_void)
-		SELECT tv.as_of_date, counterparty_id, contract_id, prod_date_from, prod_date_to, invoice_number, is_finalized, finalized_date, is_locked, invoice_status, CASE WHEN invoice_type = 'i' THEN 'r' ELSE 'i' END, invoice_note, invoice_template_id, payment_date, netting_invoice_id, invoice_file_name, netting_file_name, NULL, description1, description2, description3, description4, description5, si.stmt_invoice_id 
+		SELECT tv.as_of_date, counterparty_id, contract_id, prod_date_from, prod_date_to, invoice_number, is_finalized, finalized_date, is_locked, invoice_status, CASE WHEN invoice_type = 'i' THEN 'r' ELSE 'i' END, invoice_note, invoice_template_id, payment_date, netting_invoice_id, invoice_file_name, netting_file_name, NULL, description1, description2, description3, description4, description5, si.stmt_invoice_id, is_backing_sheet 
 		FROM stmt_invoice si INNER JOIN #temp_void tv ON si.stmt_invoice_id = tv.invoice_id
 
 		UPDATE si 
