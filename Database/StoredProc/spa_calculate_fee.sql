@@ -138,6 +138,9 @@ SELECT
 	DECLARE @begin_time DATETIME
 	SET @begin_time = GETDATE()
 	
+	Declare @process_id1 VARCHAR(30)
+	SET @process_id1=REPLACE(newid(),'-','_')
+
 	-- FInd the Last business day of that month
 	DECLARE @last_day_in_Month VARCHAR(20)
 	SET @last_day_in_Month = CONVERT(VARCHAR(10),DATEADD(m,1,dbo.FNAGetContractMonth(@as_of_date)),120)
@@ -155,11 +158,58 @@ SELECT
 	FROM dbo.adiha_default_codes_values(NOLOCK)
 	WHERE instance_no = 1 AND default_code_id = 36 AND seq_no = 1
 
+if OBJECT_ID('tempdb..#fees_breakdown_tax') is not null drop table #fees_breakdown_tax
+
+CREATE TABLE #fees_breakdown_tax
+(
+	as_of_date DATETIME,
+	source_deal_header_id int,
+	leg int,
+	term_start DATETIME,
+	term_end DATETIME,
+	field_id int,
+	field_name VARCHAR(100) COLLATE DATABASE_DEFAULT,
+	price_deal FLOAT,
+	price FLOAT,
+	price_inv FLOAT,
+	total_price_deal FLOAT,
+	total_price FLOAT,
+	total_price_inv FLOAT,
+	volume FLOAT,
+	value_deal FLOAT,
+	[value] FLOAT,
+	value_inv FLOAT,
+	deal_cur_id int,
+	inv_cur_id int,
+	contract_value_deal FLOAT,
+	contract_value FLOAT,
+	contract_value_inv FLOAT,
+	internal_type int,
+	tab_group_name int,
+	udf_group_name int,
+	[sequence] int,
+	fee_currency_id int,
+	currency_id int,
+	contract_mkt_flag CHAR(1) COLLATE DATABASE_DEFAULT,
+	source_deal_detail_id int
+	,shipment_id INT,
+	ticket_detail_id INT,
+	match_info_id INT,
+	counterparty_id int NULL,
+	contract_id int NULL
+
+)
+
+
+
+
 	----###### Evaluate formula defined in UDF
 	DECLARE  @formula_table5 VARCHAR(100),@calc_result_table5 VARCHAR(100),@calc_result_table_breakdown5 VARCHAR(100)
-	SET @formula_table5 = dbo.FNAProcessTableName('udf_formula_tax', @user_id, @process_id)
+	SET @formula_table5 = dbo.FNAProcessTableName('udf_formula', @user_id, @process_id)
 
-	EXEC spa_calculate_formula	@as_of_date, @formula_table5,@process_id,@calc_result_table5 output, @calc_result_table_breakdown5 output,'n','n',@calc_type, @criteria_id,NULL,@calc_type,'y'
+
+
+	EXEC spa_calculate_formula	@as_of_date, @formula_table5,@process_id1,@calc_result_table5 output, @calc_result_table_breakdown5 output,'n','n',@calc_type, @criteria_id,NULL,@calc_type,'y'
 
 
 	SET @qry1b='
@@ -474,9 +524,8 @@ SELECT
 
 	--create index indx_tmp_fees_breakdown on #tmp_fees_breakdown (internal_type,f_value,filter1);
 
-	DELETE FROM #fees_breakdown
 
-	INSERT INTO #fees_breakdown(
+	INSERT INTO #fees_breakdown_tax(
 		as_of_date, source_deal_header_id,leg,term_start, term_end,		
 		field_id, field_name, price_deal,price,price_inv, total_price_deal,total_price
 		,total_price_inv,volume,value,value_deal,value_inv,deal_cur_id,inv_cur_id
@@ -515,15 +564,15 @@ SELECT
 	EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'
 		+@qry1b+@qry2b+@qry3b+@qry4b+@qry5b+@qry6b+@qry7b+@qry8b+@qry9b)
 
-	--SELECT * FROM #fees_breakdown RETURN
+	--SELECT * FROM #fees_breakdown_tax RETURN
 	---------------------------------------------------------
 	-- convert into invoice currency from deal currency------
 	---------------------------------------------------------
-	UPDATE #fees_breakdown SET
+	UPDATE #fees_breakdown_tax SET
 		value_inv = value_deal * COALESCE(a.invoice_fx_rate, fx.price_fx_conv_factor, 1),
 		price_inv = price_deal * COALESCE(a.invoice_fx_rate, fx.price_fx_conv_factor, 1),
 		total_price_inv = total_price_deal * COALESCE(a.invoice_fx_rate, fx.price_fx_conv_factor, 1)
-	FROM #fees_breakdown f
+	FROM #fees_breakdown_tax f
 	INNER JOIN #temp_deals a ON a.source_deal_detail_id = f.source_deal_detail_id
 	OUTER APPLY
 	(	
@@ -539,11 +588,11 @@ SELECT
 	-- convert into functional currency from invoice currency 
 	--------------------------------------------------------------
 
-	UPDATE #fees_breakdown SET
+	UPDATE #fees_breakdown_tax SET
 		[value] = value_deal * ISNULL(fx.price_fx_conv_factor, 1),
 		price = price_deal * ISNULL(fx.price_fx_conv_factor, 1),
 		total_price = total_price_deal * ISNULL(fx.price_fx_conv_factor, 1)
-	FROM #fees_breakdown f
+	FROM #fees_breakdown_tax f
 	INNER JOIN #temp_deals a ON a.source_deal_detail_id = f.source_deal_detail_id
 	OUTER APPLY
 		(
@@ -560,7 +609,7 @@ SELECT
 		'DELETE  top(100000) sc
 			from ' + dbo.FNAGetProcessTableName(@as_of_date, 'index_fees_breakdown_settlement') +  ' i 
 			INNER JOIN stmt_checkout sc ON sc.index_fees_id = i.index_fees_id AND sc.type = ''Cost'' AND sc.accrual_or_final = ''f''
-			inner join #fees_breakdown f ON 
+			inner join #fees_breakdown_tax f ON 
 					i.source_deal_header_id=f.source_deal_header_id
 					AND ISNULL(f.ticket_detail_id, -1) = coalesce(i.ticket_detail_id, f.ticket_detail_id,-1) 
 					and i.term_start=f.term_start and i.term_end=f.term_end
@@ -569,7 +618,7 @@ SELECT
 
 		'DELETE  top(100000) index_fees_breakdown_settlement
 			from ' + dbo.FNAGetProcessTableName(@as_of_date, 'index_fees_breakdown_settlement') +  ' i 
-			inner join #fees_breakdown f ON 
+			inner join #fees_breakdown_tax f ON 
 					i.source_deal_header_id=f.source_deal_header_id AND i.internal_type=f.internal_type
 					AND ISNULL(f.ticket_detail_id, -1) = coalesce(i.ticket_detail_id, f.ticket_detail_id,-1) 
 					and ((i.term_start=f.term_start and i.term_end=f.term_end) or f.internal_type=18722)
@@ -588,7 +637,7 @@ SELECT
 		'DELETE  top(100000) sc
 			from ' + dbo.FNAGetProcessTableName(@as_of_date, 'index_fees_breakdown_settlement') +  ' i 
 			INNER JOIN stmt_checkout sc ON sc.index_fees_id = i.index_fees_id AND sc.type = ''Cost'' AND sc.accrual_or_final = ''f''
-			inner join #fees_breakdown f ON 
+			inner join #fees_breakdown_tax f ON 
 				i.source_deal_header_id=f.source_deal_header_id
 				AND ISNULL(f.ticket_detail_id, -1) = coalesce(i.ticket_detail_id, f.ticket_detail_id,-1) 
 				and i.term_start=f.term_start and i.term_end=f.term_end
@@ -597,7 +646,7 @@ SELECT
 		
 		'DELETE  top(100000) index_fees_breakdown_settlement
 			from ' + dbo.FNAGetProcessTableName(@as_of_date, 'index_fees_breakdown_settlement') +  ' i 
-			inner join #fees_breakdown f ON 
+			inner join #fees_breakdown_tax f ON 
 				i.source_deal_header_id=f.source_deal_header_id AND i.internal_type=f.internal_type
 				AND ISNULL(f.ticket_detail_id, -1) = coalesce(i.ticket_detail_id, f.ticket_detail_id,-1) 
 				and ((i.term_start=f.term_start and i.term_end=f.term_end) or f.internal_type=18722)
@@ -672,7 +721,7 @@ SELECT
 					max(inv_cur_id) [inv_cur_id],
 					f.shipment_id,
 					f.ticket_detail_id
-			FROM  #fees_breakdown f 
+			FROM  #fees_breakdown_tax f 
 			WHERE f.value IS NOT NULL								
 			GROUP BY f.as_of_date, 
 				f.source_deal_header_id, 
