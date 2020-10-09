@@ -51,8 +51,8 @@ CREATE TABLE #tmp_result (
 	,Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT
 )
 
-INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation)   
-  EXEC spa_calc_power_balance 
+--INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation)   
+  EXEC spa_calc_power_balance  -- insert exec causes error due to nested so insertion in #tmp_result is used in sp itself
 	  ''b''
 	, @_as_of_date
 	, NULL
