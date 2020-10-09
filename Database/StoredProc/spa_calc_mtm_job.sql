@@ -18324,14 +18324,14 @@ END CATCH
 CleanUp_Process_Tables:
 	DECLARE @debug_mode VARCHAR(128) = REPLACE(CONVERT(VARCHAR(128), CONTEXT_INFO()), 0x0, '')
 
-	--IF ISNULL(@debug_mode, '') <> 'DEBUG_MODE_ON'
-	--BEGIN
-	--	EXEC dbo.spa_clear_all_temp_table NULL, @original_process_id, @exclude_tables ='deal_settlement,index_fees_settlement,std_whatif_deals'  
-	--	EXEC dbo.spa_clear_all_temp_table NULL, @process_id
-	--	EXEC dbo.spa_clear_all_temp_table NULL, @process_id2
-	--	EXEC dbo.spa_clear_all_temp_table NULL, @process_id3
-	--	EXEC dbo.spa_clear_all_temp_table NULL, @process_id4
-	--END
+	IF ISNULL(@debug_mode, '') <> 'DEBUG_MODE_ON'
+	BEGIN
+		EXEC dbo.spa_clear_all_temp_table NULL, @original_process_id, @exclude_tables ='deal_settlement,index_fees_settlement,std_whatif_deals'  
+		EXEC dbo.spa_clear_all_temp_table NULL, @process_id
+		EXEC dbo.spa_clear_all_temp_table NULL, @process_id2
+		EXEC dbo.spa_clear_all_temp_table NULL, @process_id3
+		EXEC dbo.spa_clear_all_temp_table NULL, @process_id4
+	END
 -------------------------- Step 11 End ------------------------------------
 
 GO
