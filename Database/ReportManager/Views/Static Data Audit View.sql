@@ -35,71 +35,124 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = ''
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE
+
   @_static_data	INT 
+
 , @_as_of_date_from	VARCHAR(20)--=''2019-12-01''
+
 , @_as_of_date_to VARCHAR(20) --= ''2019-12-04''
+
 , @_source_system_id INT=2
+
 , @_user_action_type VARCHAR(1000) --=''all''
+
 , @_source_id  VARCHAR(MAX)
 
+
 IF ''@static_data'' <> ''NULL''
+
   SET @_static_data  = ''@static_data''
 
+
 IF ''@as_of_date_from'' <> ''NULL''
+
   SET @_as_of_date_from  = ''@as_of_date_from''
 
+
 IF ''@as_of_date_to'' <> ''NULL''
+
   SET @_as_of_date_to  = ''@as_of_date_to''
 
+
 IF ''@user_action_type'' <> ''NULL''
+
   SET @_user_action_type  = ''@user_action_type''
 
+
 IF ''@source_id'' <> ''NULL''
+
   SET @_source_id  = ''@source_id''
 
+
 IF OBJECT_ID(''tempdb..#temp_static_data_audit'') IS NOT NULL
+
 	DROP TABLE   #temp_static_data_audit
 
+
 CREATE TABLE #temp_static_data_audit(
+
 	  [User Action]		VARCHAR(100)
+
 	, [Timestamp]		VARCHAR(500)
+
 	, [User]			VARCHAR(100)
+
 	, [Static Data Name] VARCHAR(500)
+
 	, [Name]			VARCHAR(500)
+
 	, [Field]			VARCHAR(100)
+
 	, [Prior Value]		VARCHAR(1000)
+
 	, [Current Value]	VARCHAR(1000)
+
 
 )
 
+
 INSERT INTO  #temp_static_data_audit
+
 EXEC spa_static_data_audit
+
   ''s''
+
 ,  @_static_data
+
 ,  @_as_of_date_from
+
 ,  @_as_of_date_to
+
 ,  @_source_system_id
+
 ,  @_user_action_type
+
 ,  @_source_id
 
 
+
 SELECT  
+
    [Timestamp]		
+
  , [User]			
+
  , [Static Data Name]	
+
  , [Name]			
+
  , [Field]			
- , [Prior Value]		
- , [Current Value]
+
+ , CASE WHEN TRY_CONVERT(NUMERIC(38,12),[prior value]) IS NOT NULL THEN dbo.FNANUMBERFORMAT(CAST ([prior value] AS NUMERIC(38,12)), ''w'')ELSE [prior value] END [prior value]
  
-  , [user action]	
+ , CASE WHEN TRY_CONVERT(NUMERIC(38,12),[current value]) IS NOT NULL THEN dbo.FNANUMBERFORMAT(CAST ([current value] AS NUMERIC(38,12)), ''w'')ELSE [current value] END [current value]
+ 
+ , [user action]	
+
  , @_static_data [static_data]
+
  , @_as_of_date_from [as_of_date_from]
+
  , @_as_of_date_to [as_of_date_to]
+
  , @_source_system_id [source_system_id]
+
  ,  @_user_action_type [user_action_type]
+
  , @_source_id [source_id]
+
 --[__batch_report__] 
+
 FROM #temp_static_data_audit', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106500' 
@@ -252,7 +305,7 @@ FROM #temp_static_data_audit', report_id = @report_id_data_source_dest,
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
 	           WHERE ds.[name] = 'Static Data Audit View'
-	            AND dsc.name =  'Current Value'
+	            AND dsc.name =  'current value'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
 		UPDATE dsc  
@@ -262,7 +315,7 @@ FROM #temp_static_data_audit', report_id = @report_id_data_source_dest,
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
 		WHERE ds.[name] = 'Static Data Audit View'
-			AND dsc.name =  'Current Value'
+			AND dsc.name =  'current value'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
 	ELSE
@@ -270,7 +323,7 @@ FROM #temp_static_data_audit', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'Current Value' AS [name], 'Current Value' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'current value' AS [name], 'Current Value' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Static Data Audit View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -354,7 +407,7 @@ FROM #temp_static_data_audit', report_id = @report_id_data_source_dest,
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
 	           WHERE ds.[name] = 'Static Data Audit View'
-	            AND dsc.name =  'Prior Value'
+	            AND dsc.name =  'prior value'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
 		UPDATE dsc  
@@ -364,7 +417,7 @@ FROM #temp_static_data_audit', report_id = @report_id_data_source_dest,
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
 		WHERE ds.[name] = 'Static Data Audit View'
-			AND dsc.name =  'Prior Value'
+			AND dsc.name =  'prior value'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
 	ELSE
@@ -372,7 +425,7 @@ FROM #temp_static_data_audit', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'Prior Value' AS [name], 'Prior Value' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'prior value' AS [name], 'Prior Value' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Static Data Audit View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)

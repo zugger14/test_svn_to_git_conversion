@@ -284,9 +284,9 @@ SELECT	@_sub_id [sub_id],
 
 	field,
 
-	[prior value],
+    CASE WHEN TRY_CONVERT(NUMERIC(38,12),[prior value]) IS NOT NULL THEN dbo.FNANUMBERFORMAT(CAST ([prior value] AS NUMERIC(38,12)), ''w'')ELSE [prior value] END [prior value],
 
-	[current value]
+    CASE WHEN TRY_CONVERT(NUMERIC(38,12),[current value]) IS NOT NULL THEN dbo.FNANUMBERFORMAT(CAST ([current value] AS NUMERIC(38,12)), ''w'')ELSE [current value] END [current value]
 
 --[__batch_report__]
 
