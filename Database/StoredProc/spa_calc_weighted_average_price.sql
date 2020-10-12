@@ -828,7 +828,7 @@ SET @sql +=
 		AND spc.source_curve_def_id = max_curve.source_curve_def_id
 		AND spc.maturity_date = max_curve.maturity_date
 		AND spc.is_dst = max_curve.is_dst
-	
+		AND spc.curve_source_value_id = 4500
 	OUTER APPLY( SELECT MAX(csw.term) term ,csw.location_id,csw.contract_id
 		FROM calcprocess_storage_wacog csw 
 		WHERE csw.term < org.term_start
