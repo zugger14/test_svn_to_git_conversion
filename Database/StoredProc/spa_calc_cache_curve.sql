@@ -45,7 +45,7 @@ CREATE proc [dbo].[spa_calc_cache_curve]
 						--@run_mode = 2: Return data without calculating.
 	@rowid int=null,
 	@batch_process_id varchar(100)=NULL,
-	@curve_ids VARCHAR(MAX)
+	@curve_ids VARCHAR(MAX) = NULL
 
 AS
 /*
@@ -340,8 +340,12 @@ SELECT	DISTINCT r.curve_id,
 		 
 		CASE	WHEN (spcd.asofdate_current_month = 'y' AND 
 					CONVERT(varchar(7), hg.exp_date, 120)=CONVERT(varchar(7), @as_of_date, 120)) then 'f'
-				WHEN (hg.hol_date <= @as_of_date OR hg.exp_date <= @as_of_date) THEN 's' ELSE 'f' END value_type,
-		CASE WHEN (r.o_fx_curve_id IS NULL) THEN NULL ELSE 
+				WHEN (hg.hol_date <= @as_of_date OR hg.exp_date <= @as_of_date) THEN 's' 
+				ELSE 'f' END value_type,
+				
+		CASE WHEN (r.o_fx_curve_id IS NULL) THEN NULL 
+		when not (hg.hol_date <= @as_of_date OR hg.exp_date <= @as_of_date) then r.maturity_date
+		ELSE 
 			convert(varchar(8),CASE WHEN (hg.hol_date <= @as_of_date OR hg.exp_date <= @as_of_date OR ISNULL(spcd.ratio_option, -1) = 18800) 
 				THEN hg.exp_date ELSE r.maturity_date END,120)+'01'   
 		END MATURITY_DATE_FX, 
@@ -364,7 +368,7 @@ FROM (
 		CONVERT(VARCHAR(8), r.maturity_date, 120)+'01' BETWEEN CONVERT(VARCHAR(8), hgs.hol_date, 120)+'01' AND 
 			CONVERT(VARCHAR(8), ISNULL(hgs.hol_date_to, hgs.hol_date), 120)+'01'
 		AND spcd.exp_calendar_id <> spcd3.exp_calendar_id
-
+ where hg.exp_date is not null
 
 create table #curve_value (curve_id INT,proxy_curve_id INT,as_of_date DATETIME,maturity_date DATETIME, curve_value FLOAT,bid_value FLOAT,ask_value 
 			FLOAT,value_type varchar(1) COLLATE DATABASE_DEFAULT,maturity_date_fx DATETIME)	
@@ -482,7 +486,7 @@ LEFT JOIN source_price_curve spc1 ON spcd1.source_curve_def_id=spc1.source_curve
 			cast(Year(a.maturity_date) as varchar) + '-' + cast(case datepart(q, a.maturity_date) when 1 then 1 when 2 then 4 when 3 then 7 else 10 end as varchar) + '-01' 
 		 WHEN spcd1.Granularity IN (993) THEN cast(Year(a.maturity_date) as varchar) + '-01-01' 
 	ELSE a.maturity_date END
-	AND (a.primary_is_settlement_curve = 0 OR (a.primary_is_settlement_curve = 1 AND a.value_type = 'f'))
+	AND (a.primary_is_settlement_curve = 0 OR (a.primary_is_settlement_curve = 1 AND a.value_type = 's'))
 
 LEFT JOIN source_price_curve spc2 ON spcd2.source_curve_def_id=spc2.source_curve_def_id
 	AND spc2.curve_Source_value_id=@curve_source_id
@@ -607,10 +611,9 @@ BEGIN
 
 		INSERT INTO  #lag_term_avg_value(curve_id ,lag_month,curve_value,bid_value,ask_value,maturity_date_fx, value_type)
 		SELECT cv.curve_id,convert(varchar(8),cv.maturity_date,120)+'01' lag_month, avg(cv.curve_value) curve_value 
-			, avg(cv.bid_value) bid_value, avg(cv.ask_value) ask_value,cv.maturity_date_fx, MIN(cv.value_type) value_type
+			, avg(cv.bid_value) bid_value, avg(cv.ask_value) ask_value,min(cv.maturity_date_fx) maturity_date_fx, MIN(cv.value_type) value_type
 		FROM #curve_value cv 
-		group by cv.curve_id ,convert(varchar(8),cv.maturity_date,120)+'01',cv.maturity_date_fx
-			
+		group by cv.curve_id ,convert(varchar(8),cv.maturity_date,120)+'01'--,cv.maturity_date_fx
 			
 		CREATE TABLE #lag_term_curve_value(ROWID INT,strip_month_from INT ,lag_months INT ,strip_month_to INT ,curve_id INT ,delivery_month DATETIME ,lag_month DATETIME
 			,cv_value FLOAT, fx_value FLOAT	,bid_value FLOAT,ask_value FLOAT,bid_ask_value FLOAT, value_type VARCHAR(1) COLLATE DATABASE_DEFAULT)
@@ -642,6 +645,19 @@ BEGIN
 			set @error_count = 	@@ROWCOUNT
 
 
+
+			;WITH CTE AS(
+			SELECT DISTINCT lv.curve_id,lv.lag_month,term_start,term_end
+			
+			FROM
+				#delivery_month lv
+				OUTER APPLY(SELECT curve_id,MIN(fin_term_start) term_start,MAX(fin_term_end) term_end FROM deal_position_break_down WHERE curve_id = lv.curve_id GROUP BY curve_Id
+				) p
+			WHERE
+				lv.lag_month BETWEEN p.term_start AND p.term_End	
+			)
+
+	
 			insert into MTM_TEST_RUN_LOG(process_id,code,module,source,type,[description],nextsteps)  
 			select	@batch_process_id, '<font color="red">Error</font>', 'Derive Curve', 'spa_calc_cache_curve', 
 					'Error',
@@ -649,7 +665,9 @@ BEGIN
 					' Curve: ' + spcd.curve_name + ' (ID: ' + CAST(spcd.source_curve_def_id as varchar) + ')' +
 					' for Term: ' + ISNULL(dbo.FNADateFormat(d.lag_month), CONVERT(varchar(10),d.lag_month, 120))  description,
 					'Please Import Price Curves'
-			from #delivery_month d left join 
+			from #delivery_month d 
+			     INNER JOIN CTE ct ON d.curve_id = ct.curve_id anD ct.lag_month = d.lag_month
+				 left join 
 				 #lag_term_curve_value l on l.curve_id=d.curve_id and l.lag_month=d.lag_month left join
 				 source_price_curve_def spcd on spcd.source_curve_def_id = d.curve_id 
 			where l.bid_ask_value IS NULL OR l.cv_value IS NULL	
