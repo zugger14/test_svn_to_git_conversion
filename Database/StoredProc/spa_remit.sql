@@ -2222,11 +2222,12 @@ BEGIN
 		[D35 Weight] VARCHAR(100) COLLATE DATABASE_DEFAULT,
 		[D35 Base Value] VARCHAR(100) COLLATE DATABASE_DEFAULT,
 		[Price Formula] VARCHAR(500) COLLATE DATABASE_DEFAULT,
-		[Trayport Date Time] VARCHAR(500) COLLATE DATABASE_DEFAULT
+		[Trayport Date Time] VARCHAR(500) COLLATE DATABASE_DEFAULT,
+		[Execution Timestamp] VARCHAR(500) COLLATE DATABASE_DEFAULT
 	)
 
-	INSERT INTO #temp_deal_udf_values (source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value],[Price Formula], [Trayport Date Time])
-	SELECT source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value], [Price Formula], [Trayport Date Time]
+	INSERT INTO #temp_deal_udf_values (source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value],[Price Formula], [Trayport Date Time], [Execution Timestamp])
+	SELECT source_deal_header_id, [Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value], [Price Formula], [Trayport Date Time], [Execution Timestamp]
 	FROM (
 		SELECT sdh.source_deal_header_id, udft.field_label, uddf.udf_value
 		FROM #temp_deals sdh
@@ -2240,7 +2241,7 @@ BEGIN
 		INNER JOIN user_defined_fields_template udft
 			ON udft.field_id = uddft.field_id
 		) AS a
-	PIVOT (MAX(a.udf_value) FOR a.Field_label IN ([Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value], [Price Formula], [Trayport Date Time])) AS p
+	PIVOT (MAX(a.udf_value) FOR a.Field_label IN ([Brent Weight], [Brent Base Value], [API2 Weight], [API2 Base Value], [D35 Weight], [D35 Base Value], [Price Formula], [Trayport Date Time],[Execution Timestamp])) AS p
 		
 	/*************************************Counterparty UDF Values END********************************************************/
         		
@@ -3326,7 +3327,7 @@ BEGIN
 																									END END,
 			[last_trading_date_and_time] = NULL,
 			----------Transaction details
-			[transaction_timestamp] = MAX(tduv.[Trayport Date Time]) ,--CONVERT(char(10), MAX(td.deal_date),120) + 'T' + MAX(gm_ts.[timestamp]) + '.00Z' ,
+			[transaction_timestamp] = ISNULL(MAX(tduv.[Execution Timestamp]),CONVERT(VARCHAR(10), MAX(td.deal_date),120) + 'T' +  CAST(CAST( MAX(td.create_ts) as time) AS VARCHAR(12)))  ,--CONVERT(char(10), MAX(td.deal_date),120) + 'T' + MAX(gm_ts.[timestamp]) + '.00Z' ,
 			[unique_transaction_id] = NULL,-- MAX(td.deal_id), --will be filled with UTI code later if @generate_uti=1
 			[linked_transaction_id] = NULL,
 			[linked_order_id] = NULL,
@@ -3796,7 +3797,7 @@ BEGIN
 				   [organised_market_place_id_otc] = 'XBIL',
 				   [contract_trading_hours] = NULL,
 				   [last_trading_date_and_time] = NULL,
-				   [transaction_timestamp] = CONVERT(VARCHAR(30), GETDATE(), 126), --This field should indicate the date each MP confirms the price and the quantity for the delivery period.
+				   [transaction_timestamp] = CONVERT(VARCHAR(10), CAST(MAX(gmv_rid.[date]) AS DATETIME),126) + 'T' + MAX(gmv_rid.[time]), --This field should indicate the date each MP confirms the price and the quantity for the delivery period.
 				   [unique_transaction_id] = td.source_deal_header_id,
 				   [linked_transaction_id] = NULL,
 				   [linked_order_id] = NULL,
@@ -3921,6 +3922,16 @@ BEGIN
 					 AND gmv.clm1_value = CAST(tdd.location_id AS VARCHAR(20))
 					 AND gmv.clm2_value = CAST(scom.source_commodity_id AS VARCHAR(20))
 				) tbl_delivery_point_area
+			OUTER APPLY (
+								SELECT clm3_value [date], clm4_value [time]
+								FROM   generic_mapping_header gmh
+									   INNER JOIN generic_mapping_values gmv
+											ON  gmh.mapping_table_id = gmv.mapping_table_id
+											AND gmh.mapping_name = 'Remit Invoice Date'
+											--AND CAST(gmv.clm2_value AS VARCHAR(10)) = CAST(civv.counterparty_id AS VARCHAR(10))
+											--AND CAST(gmv.clm1_value  AS VARCHAR(10))= CAST(civv.contract_id AS VARCHAR(10))
+								WHERE  gmh.mapping_name = 'Remit Invoice Date'
+							) gmv_rid
 			GROUP BY td.source_deal_header_id
         	
 			IF EXISTS (SELECT 1 FROM source_remit_standard WHERE process_id = @process_id AND action_type IS NULL)
