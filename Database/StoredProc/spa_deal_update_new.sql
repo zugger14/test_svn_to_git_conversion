@@ -1631,7 +1631,7 @@ BEGIN
 								INNER JOIN user_defined_fields_template udft ON udft.udf_template_id = ABS(uddf.udf_template_id)
 								INNER JOIN formula_editor fe ON CAST(fe.formula_id AS NVARCHAR(2000)) = uddf.udf_value
 								WHERE uddf.udf_template_id < 0 AND udft.deal_udf_type = ''c''
-								AND uddf.source_deal_header_id = ' + CAST(@source_deal_header_id AS NVARCHAR(20)) + '
+								AND uddf.source_deal_header_id = ' + CAST(ISNULL(@source_deal_header_id, -1) AS NVARCHAR(20)) + '
 							'
 				EXEC(@sql)
 		
@@ -2840,7 +2840,7 @@ BEGIN
 						''
 					END
 		EXEC(@sql)
-
+		
 		IF EXISTS(SELECT 1 FROM #temp_formula_id)
 		BEGIN
 
