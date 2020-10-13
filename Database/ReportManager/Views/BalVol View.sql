@@ -1,4 +1,4 @@
- BEGIN TRY
+  BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'BalVol'
@@ -46,7 +46,7 @@ SET @_calc_process_table = nullif(isnull(@_calc_process_table, nullif(''@calc_pr
 
 IF NULLIF(@_calc_process_table,''1900'') is null  -- debug mode only
 BEGIN
-SET @_source_deal_header_id = ''98202''--,7342,7343,7344,7345,7346''
+SET @_source_deal_header_id = ''102618''--,7342,7343,7344,7345,7346''
 DECLARE @_user_login_id varchar(50), @_process_id  varchar(100)
 SET @_user_login_id=dbo.FNADBUser()
 IF @_process_id IS NULL
@@ -84,17 +84,17 @@ EXEC(@_st)
 
 SET @_st='' 
 INSERT INTO ''+@_calc_process_table+''(counterparty_id, contract_id, curve_id, prod_date, as_of_date
-, volume, onPeakVolume, source_deal_detail_id, formula_id
-, invoice_Line_item_id, invoice_line_item_seq_id, price, granularity, volume_uom_id
-, generator_id, [Hour], commodity_id, meter_id
-, curve_source_value_id, [mins], source_deal_header_id, term_start, term_end
+	, volume, onPeakVolume, source_deal_detail_id, formula_id
+	, invoice_Line_item_id, invoice_line_item_seq_id, price, granularity, volume_uom_id
+	, generator_id, [Hour], commodity_id, meter_id
+	, curve_source_value_id, [mins], source_deal_header_id, term_start, term_end
 )
 SELECT 	sdh.counterparty_id, sdh.contract_id, sdd.curve_id, cast(t.term_start as date), sdh.deal_date		
-,  CASE WHEN sdd.buy_sell_flag = ''''s'''' THEN -1 ELSE 1 END * sdd.deal_volume, NULL onPeakVolume, sdd.source_deal_detail_id,
-sdd.position_formula_id, NULL invoice_Line_item_id, NULL invoice_line_item_seq_id, NULL price, sdht.hourly_position_breakdown granularity, NULL volume_uom_id,
-NULL generator_id, CASE WHEN sdht.hourly_position_breakdown IN ( 982, 987) THEN DATEPART(hh, t.term_start)+1 ELSE NULL END [hour],
-sdh.commodity_id, NULL meter_id, 4500 curve_source_value_id,  
-CASE WHEN sdht.hourly_position_breakdown IN (987) THEN DATEPART(MINUTE, t.term_start) ELSE 0 END [mins], sdh.source_deal_header_id, sdd.term_start, sdd.term_end
+	,  CASE WHEN sdd.buy_sell_flag = ''''s'''' THEN -1 ELSE 1 END * sdd.deal_volume, NULL onPeakVolume, sdd.source_deal_detail_id,
+	sdd.position_formula_id, NULL invoice_Line_item_id, NULL invoice_line_item_seq_id, NULL price, sdht.hourly_position_breakdown granularity, NULL volume_uom_id,
+	NULL generator_id, CASE WHEN sdht.hourly_position_breakdown IN ( 982, 987) THEN DATEPART(hh, t.term_start)+1 ELSE NULL END [hour],
+	sdh.commodity_id, NULL meter_id, 4500 curve_source_value_id,  
+	CASE WHEN sdht.hourly_position_breakdown IN (987) THEN DATEPART(MINUTE, t.term_start) ELSE 0 END [mins], sdh.source_deal_header_id, sdd.term_start, sdd.term_end
 FROM  source_deal_header sdh 
 INNER JOIN dbo.FNASplit('''''' + @_source_deal_header_id + '''''', '''','''') i ON i.item = sdh.source_deal_header_id
 INNER JOIN source_deal_header_template sdht ON sdht.template_id = sdh.template_id
@@ -109,43 +109,61 @@ end
 SELECT @_template_id = template_id FROM source_deal_header_template WHERE template_name = ''Transportation NG''
 IF OBJECT_ID(''tempdb..#location_id'') IS NOT NULL DROP TABLE #location_id 
 
-create table #location_id (location_id int, location_name varchar(1000) COLLATE DATABASE_DEFAULT, granularity INT)
+CREATE TABLE #location_id (location_id int, location_name varchar(1000) COLLATE DATABASE_DEFAULT, granularity INT, term_start datetime, term_end datetime)
 
-set @_st = ''insert into #location_id  
-select distinct sdd.location_id, sml.location_name , s.granularity
-from ''+ @_calc_process_table +'' s 
-inner join source_deal_detail sdd on sdd.source_deal_detail_id = s.source_deal_detail_id
-INNER JOIN source_minor_location sml ON sml.source_minor_location_id = sdd.location_id
+set @_st = ''INSERT INTO #location_id  
+			SELECT  sdd.location_id, sml.location_name , s.granularity, MIN(s.term_start) term_start, MAX(s.term_end) term_end
+			FROM ''+ @_calc_process_table +'' s 
+			INNER JOIN source_deal_detail sdd on sdd.source_deal_detail_id = s.source_deal_detail_id
+			INNER JOIN source_minor_location sml ON sml.source_minor_location_id = sdd.location_id
+			GROUP BY  sdd.location_id, sml.location_name , s.granularity
 ''
 EXEC spa_print @_st
 EXEC(@_st)
 
-SELECT DISTINCT sml.location_id ,
-sdh.source_deal_header_id transport_deal_id
---od.source_deal_header_id buy_deal_id
-, NULL buy_deal_id
-, sml.location_name
-,sdd.term_start,sdd.term_end
-, sdd.leg
-, buy_sell_flag   
-, granularity
-, sdd.deal_volume
-INTO #temp_pen_tran_buy_deals  
-FROM source_deal_header sdh
-INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id 
-INNER JOIN #location_id sml on sml.location_id = sdd.location_id 
---and sml.term_start between sdd.term_start and sdd.term_end
-INNER JOIN optimizer_detail od ON od.transport_deal_id = sdh.source_deal_header_id 
---AND od.up_down_stream = ''U''
-INNER JOIN source_system_book_map ssbm on ssbm.source_system_book_id1=sdh.source_system_book_id1
-AND ssbm.source_system_book_id2 = sdh.source_system_book_id2
-AND ssbm.source_system_book_id3 = sdh.source_system_book_id3
-AND ssbm.source_system_book_id4 = sdh.source_system_book_id4
-AND book_deal_type_map_id = ISNULL(@_subbook_id, book_deal_type_map_id)
-INNER JOIN source_deal_type sdt ON sdh.source_deal_type_id = sdt.source_deal_type_id
-WHERE  sdt.deal_type_id = ''Transportation''
---select * from #temp_pen_tran_buy_deals
---return 
+IF OBJECT_ID(''tempdb..#temp_pen_tran_buy_deals'') IS NOT NULL
+DROP TABLE #temp_pen_tran_buy_deals
+
+CREATE TABLE #temp_pen_tran_buy_deals (location_id	INT
+										, transport_deal_id	 INT
+										, buy_deal_id	INT
+										, location_name	VARCHAR(1000)
+										, term_start DATETIME	
+										, term_end	 DATETIME	
+										, leg	 INT
+										, buy_sell_flag	 CHAR(1)
+										, granularity	 INT 
+										, deal_volume NUMERIC(38, 18))
+
+SET @_st = ''INSERT INTO #temp_pen_tran_buy_deals
+			SELECT DISTINCT sml.location_id,
+				sdh.source_deal_header_id transport_deal_id
+				--od.source_deal_header_id buy_deal_id
+				, NULL buy_deal_id
+				, sml.location_name
+				,sdd.term_start,sdd.term_end
+				, sdd.leg
+				, buy_sell_flag   
+				, granularity
+				, sdd.deal_volume
+			FROM source_deal_header sdh
+			INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id 
+			INNER JOIN #location_id sml on sml.location_id = sdd.location_id 
+			INNER JOIN optimizer_detail od ON od.transport_deal_id = sdh.source_deal_header_id  
+			INNER JOIN source_system_book_map ssbm on ssbm.source_system_book_id1=sdh.source_system_book_id1
+				AND ssbm.source_system_book_id2 = sdh.source_system_book_id2
+				AND ssbm.source_system_book_id3 = sdh.source_system_book_id3
+				AND ssbm.source_system_book_id4 = sdh.source_system_book_id4 ''
+				+ CASE WHEN @_subbook_id  IS NOT NULL THEN '' AND book_deal_type_map_id = ISNULL('' + CAST(@_subbook_id AS VARCHAR(1000)) + '', book_deal_type_map_id)'' ELSE '''' END 
+				+ ''  INNER JOIN source_deal_type sdt ON sdh.source_deal_type_id = sdt.source_deal_type_id
+			WHERE  sdt.deal_type_id = ''''Transportation''''
+				AND sdd.term_start >= sml.term_start
+				AND sdd.term_end <= sml.term_end ''
+
+EXEC spa_print @_st
+EXEC(@_st)
+  
+
 IF OBJECT_ID(''tempdb..#final_trans_deals_coll'') IS NOT NULL
 DROP TABLE #final_trans_deals_coll
 
@@ -158,27 +176,34 @@ SELECT location_id
 , granularity 
 INTO #final_trans_deals_coll
 FROM (
-SELECT DISTINCT location_id	
-, transport_deal_id	
-, buy_deal_id	
-, location_name	
-, term_start	
-, term_end	
-, granularity
-FROM #temp_pen_tran_buy_deals 
-INTERSECT
-SELECT DISTINCT t.location_id	
-, t.transport_deal_id	
-, t.buy_deal_id	
-, t.location_name	
-, t.term_start	
-, t.term_end	
-, t.granularity
-FROM #temp_pen_tran_buy_deals t
-INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = t.transport_deal_id
-AND sdd.leg = CASE WHEN t.leg = 1 THEN 2 ELSE 1 END
-INNER JOIN source_minor_location sml ON sml.Location_Name = CASE WHEN t.location_name = ''NCGL'' THEN ''NCGH'' ELSE ''GPLH'' END 
+	SELECT DISTINCT location_id	
+	, transport_deal_id	
+	, buy_deal_id	
+	, location_name	
+	, term_start	
+	, term_end	
+	, granularity
+	FROM #temp_pen_tran_buy_deals 
+	INTERSECT
+	SELECT DISTINCT t.location_id	
+	, t.transport_deal_id	
+	, t.buy_deal_id	
+	, t.location_name	
+	, t.term_start	
+	, t.term_end	
+	, t.granularity
+	--, sml.location_id
+	FROM #temp_pen_tran_buy_deals t
+	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = t.transport_deal_id
+		--AND sdd.leg = CASE WHEN t.leg = 1 THEN 2 ELSE 1 END
+	INNER JOIN source_minor_location sml ON sml.Location_Name = CASE WHEN t.location_name = ''NCGL'' THEN ''NCGH'' ELSE ''GPLH'' END 
+		AND sdd.location_id = sml.source_minor_location_id
 ) z 
+
+ 
+--select * from #temp_pen_tran_buy_deals
+--select * from #final_trans_deals_coll 
+--return 
 
 IF OBJECT_ID(''tempdb..#position'') IS NOT NULL
 DROP TABLE #position
@@ -213,10 +238,10 @@ INTO #position
 FROM #final_trans_deals_coll t1  
 INNER JOIN source_deal_detail sdd01 ON sdd01.source_deal_header_id = t1.transport_deal_id
 INNER JOIN report_hourly_position_deal rhpd on rhpd.source_deal_header_id = t1.transport_deal_id
-AND rhpd.location_id = t1.location_id 
-AND rhpd.term_start = t1.term_start 
-AND rhpd.curve_id = sdd01.curve_id
-AND rhpd.term_start BETWEEN sdd01.term_start AND sdd01.term_end
+	AND rhpd.location_id = t1.location_id 
+	AND rhpd.term_start = t1.term_start 
+	AND rhpd.curve_id = sdd01.curve_id
+	AND rhpd.term_start BETWEEN sdd01.term_start AND sdd01.term_end
 GROUP BY t1.location_id,rhpd.term_start;
 --select * from #position
 ----select * from report_hourly_position_deal where source_deal_header_id IN ( 7402, 7403)
@@ -617,4 +642,4 @@ EXEC(@_st)
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
-	
+ 
