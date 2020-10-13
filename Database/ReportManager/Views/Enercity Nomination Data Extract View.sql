@@ -34,22 +34,23 @@ BEGIN TRY
 	SET alias = @new_ds_alias, description = 'Enercity Nomination Data Extract View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + '--DECLARE @_contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), ''DEBUG_MODE_ON'')
 --SET CONTEXT_INFO @_contextinfo
+
 SET NOCOUNT on
 DECLARE 
 	@_sub_id VARCHAR(MAX) = NULL
 	,@_stra_id VARCHAR(MAX) = NULL
 	,@_book_id VARCHAR(MAX) = null
 	,@_subbook_id VARCHAR(MAX) = NULL
-	,@_source_deal_header_ids NVARCHAR(1000)=NULL, --62976,--46363,--7264,  
+	,@_source_deal_header_ids NVARCHAR(1000)=NULL, --103969, --62976,--46363,--7264,  
 	@_deal_id NVARCHAR(50)=NULL,  
 	@_deal_detail_ids NVARCHAR(500),
 	@_counterparty_ids NVARCHAR(500),
 	@_deal_type_id NVARCHAR(20),
 	@_physical_financial_flag NVARCHAR(20)=''p'',
 	@_deal_status_id NVARCHAR(30),
-	@_as_of_date  NVARCHAR(100)=NULL, -- ''2020-09-01'',--''2020-07-21'',  
-    @_term_start NVARCHAR(100)=NULL, -- ''2020-09-02'',--''2021-10-31'',--''2020-07-22'',  
-	@_term_END NVARCHAR(100)=NULL, -- ''2020-09-02'',--''2021-10-31'', --''2020-07-22'',  
+	@_as_of_date  NVARCHAR(100)=NULL, --''2020-10-08'', -- ''2020-09-01'',--''2020-07-21'',  
+    @_term_start NVARCHAR(100)=NULL, --''2020-10-08'', -- ''2020-09-02'',--''2021-10-31'',--''2020-07-22'',  
+	@_term_END NVARCHAR(100)=NULL, --''2020-10-08'', -- ''2020-09-02'',--''2021-10-31'', --''2020-07-22'',  
 	@_location_ids NVARCHAR(500),
 	@_shipper_code_ids1  NVARCHAR(500),
 	@_shipper_code_ids2  NVARCHAR(500),
@@ -58,8 +59,10 @@ DECLARE
 	@_position_hour_end NVARCHAR(1)=''n'',
 	@_commodity_id NVARCHAR(20),
 	@_external_id1 NVARCHAR(50)=NULL --94900871
--- select * from vwDealTimezone where source_deal_header_id=7264
+-- select * from source_deal_detail where source_deal_header_id=103969 --778648
 -- select * from time_zones
+--select shipper_code1, shipper_code2, * from source_deal_detail where source_deal_header_id=103969
+--select * from deal_detail_shipper_codes_history where source_deal_detail_id=778648
 --DECLARE
 --@_sub_entity_id NVARCHAR(500),                 
 --@_strategy_entity_id NVARCHAR(500),               
@@ -247,16 +250,12 @@ end +''
 		--(select max(effective_date) effective_date from shipper_code_mapping_detail where shipper_code_id=sdd.shipper_code2
 		--	and location_id=sdd.location_id and effective_date<=''''''+@_as_of_date+''''''
 		--) max_eff2
-		
 	left join shipper_code_mapping_detail scmd on scmd.shipper_code_mapping_detail_id=sdd.shipper_code2
-		
 		--	--and scmd1.location_id=sdd.location_id and scmd1.effective_date=max_eff1.effective_date
 		--left join shipper_code_mapping_detail scmd2 on scmd2.shipper_code_mapping_detail_id=sdd.shipper_code1
 		--	and scmd2.location_id=sdd.location_id and scmd2.effective_date=max_eff2.effective_date
 	
-	where sdd.shipper_code2 is not null and sdd.shipper_code1 is not null 
-		and scmd.shipper_code is not null  and scmd.shipper_code1 is not null and scmd.external_id is not null 
-	''
+		''
 	+isnull('' AND sdh.counterparty_id in ('' + @_counterparty_ids+'')'','''')
 	+isnull('' AND sdh.source_deal_type_id=''+cast(@_deal_type_id as VARCHAR),'''')
 	+isnull('' AND sdh.physical_financial_flag=''''''+@_physical_financial_flag+'''''''','''')
@@ -268,6 +267,8 @@ end +''
 	+isnull('' AND sdh.commodity_id='' + @_commodity_id,'''')
 	+isnull('' AND scmd.external_id='' +@_external_id1,'''')
 exec spa_print @_Sql
+
+
 exec(@_Sql)
 SELECT s.curve_id,s.location_id,s.term_start,s.Period,s.deal_date,s.deal_volume_uom_id,s.physical_financial_flag
 	,s.hr1,s.hr2,s.hr3,s.hr4,s.hr5,s.hr6,s.hr7,s.hr8,s.hr9,s.hr10,s.hr11,s.hr12,s.hr13,s.hr14,s.hr15,s.hr16,s.hr17,s.hr18,s.hr19,s.hr20,s.hr21,s.hr22,s.hr23,s.hr24,s.hr25
@@ -507,17 +508,21 @@ SET @_Sql1 = '' ,sdh.counterparty_id [counterparty_ids]
 	,tdp.position Position
 	,tdp.source_uom_id [Position UOM ID]
 	,tdp.uom_name [Position UOM]
-	,sdd.shipper_code_id1 [shipper_code_ids1]
-	,sdd.shipper_code1 [Shipper Code 1]
-	,sdd.shipper_code_id2 [shipper_code_ids2]
-	,sdd.shipper_code2 [Shipper Code 2]
-	,sdd.external_id [External ID/Time Series ID]
+	--,sdd.shipper_code_id1 [shipper_code_ids1]
+	--,sdd.shipper_code1 [Shipper Code 1]
+	--,sdd.shipper_code_id2 [shipper_code_ids2]
+	--,sdd.shipper_code2 [Shipper Code 2]
+	, ISNULL(h.shipper_code1, sdd.shipper_code_id1) [shipper_code_ids1]
+	, ISNULL(scmdh.shipper_code1, sdd.shipper_code1) [Shipper Code 1]
+	, ISNULL(h.shipper_code2, sdd.shipper_code_id2) [shipper_code_ids2]
+	, ISNULL(scmdh.shipper_code, sdd.shipper_code2 ) [Shipper Code 2]
+	,ISNULL(scmdh.external_id, sdd.external_id )[External ID/Time Series ID]
 	,tdp.curve_id
 	,tdp.[index] [curve_name]
 	,sdh.source_deal_type_id deal_type_id
 	,''''''+@_as_of_date+'''''' as_of_date  
 	--,DATEADD(mi,15, RIGHT(''''0''''+ CAST(datepart(hour,term_to.term_to) AS VARCHAR),2)+'''':''''+ RIGHT(''''0''''+ CAST(tdp.Period AS VARCHAR),2) AS [Interval_End]  --02:00, 00:00
-	,sdd.external_id [external_id1]
+	,ISNULL(scmdh.external_id, sdd.external_id ) [external_id1]
 ''
 SET @_Sql2 = '' --[__batch_report__]
 FROM #tmp_deal_position tdp 
@@ -577,13 +582,24 @@ LEFT JOIN #books books ON
      	AND  sdh.source_system_book_id3=books.source_system_book_id3
 		AND  sdh.source_system_book_id4=books.source_system_book_id4
 LEFT JOIN source_counterparty sc1 on sc1.source_counterparty_id=books.counterparty_id
+OUTER APPLY (
+		SELECT TOP 1 shipper_code1, shipper_code2, dds.effective_date
+		FROM deal_detail_shipper_codes_history dds
+		WHERE dds.source_deal_detail_id =  sdd.source_deal_detail_id
+			AND cast(dds.effective_date as date)  >= tdp.[term]
+		ORDER BY dds.effective_date ASC
+	) h
+LEFT JOIN shipper_code_mapping_detail scmdh on scmdh.shipper_code_mapping_detail_id=h.shipper_code2
 --where sdd.leg=1 
 order by org_term_from,actual_term_to_start,actual_term_to_end
 ''
 exec spa_print @_Sql
 exec spa_print @_Sql1
 exec spa_print @_Sql2
-exec(@_Sql+@_Sql1+@_Sql2)', report_id = @report_id_data_source_dest,
+
+exec(@_Sql+@_Sql1+@_Sql2)
+
+', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106500' 
 	WHERE [name] = 'Enercity Nomination Data Extract View'
