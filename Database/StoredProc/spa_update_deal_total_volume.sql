@@ -1,50 +1,50 @@
 
-/****** Object:  StoredProcedure [dbo].[spa_update_deal_total_volume]    Script Date: 01/30/2012 02:20:26 ******/
-IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[spa_update_deal_total_volume]') AND type in (N'P', N'PC'))
-DROP PROCEDURE [dbo].[spa_update_deal_total_volume]
-GO
+--/****** Object:  StoredProcedure [dbo].[spa_update_deal_total_volume]    Script Date: 01/30/2012 02:20:26 ******/
+--IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[spa_update_deal_total_volume]') AND type in (N'P', N'PC'))
+--DROP PROCEDURE [dbo].[spa_update_deal_total_volume]
+--GO
 
-/****** Object:  StoredProcedure [dbo].[spa_update_deal_total_volume]    Script Date: 01/30/2012 02:20:37 ******/
-SET ANSI_NULLS ON
-GO
+--/****** Object:  StoredProcedure [dbo].[spa_update_deal_total_volume]    Script Date: 01/30/2012 02:20:37 ******/
+--SET ANSI_NULLS ON
+--GO
 
-SET QUOTED_IDENTIFIER ON
-GO
+--SET QUOTED_IDENTIFIER ON
+--GO
 
-/**
+--/**
 
-	Populate hourly position of the deals in portfolio.
+--	Populate hourly position of the deals in portfolio.
 
-	Parameters 
-	@source_deal_header_ids : Source Deal Header Ids to process
-	@process_id : Process Id for input process table of deal list to process
-	@insert_type : Insert Type
-				- 0 - Incremental FROM frontend
-				- 5 - Re calculate all existing deals
-	@partition_no : Partition No
-	@user_login_id : User Login Id of runner
-	@insert_process_table : Insert Process Table of deals
-	@call_from : Call From
-				- 0 - Call from application and adding deals in process table 
-				- 1 - Call from job to process position breakdown of process table deal (without inserting process table) and job will not be created
-	@call_from_2 : Call From 'alert' or other than 'alert'
+--	Parameters 
+--	@source_deal_header_ids : Source Deal Header Ids to process
+--	@process_id : Process Id for input process table of deal list to process
+--	@insert_type : Insert Type
+--				- 0 - Incremental FROM frontend
+--				- 5 - Re calculate all existing deals
+--	@partition_no : Partition No
+--	@user_login_id : User Login Id of runner
+--	@insert_process_table : Insert Process Table of deals
+--	@call_from : Call From
+--				- 0 - Call from application and adding deals in process table 
+--				- 1 - Call from job to process position breakdown of process table deal (without inserting process table) and job will not be created
+--	@call_from_2 : Call From 'alert' or other than 'alert'
 
-*/
+--*/
 
 
-CREATE PROC [dbo].[spa_update_deal_total_volume]
-	@source_deal_header_ids VARCHAR(MAX), 
-	@process_id VARCHAR(128) = NULL,
-	@insert_type INT = 0, -- 0=incremental FROM front	; 1= partial import; 2=bulk import ; 12= import FROM load forecast file
-	@partition_no INT = NULL,
-	@user_login_id VARCHAR(50) = NULL,
-	@insert_process_table VARCHAR(1) = 'n',
-	@call_from TINYINT = 0, --0=call from application and adding deals in process table ; 1=call from job to process position breakdown of process table deal (without inserting process table) and job will not be created
-	@call_from_2 VARCHAR(20) = NULL,
-	@trigger_workflow NCHAR(1) = 'y'
-AS 
-SET nocount on
-/*
+--CREATE PROC [dbo].[spa_update_deal_total_volume]
+--	@source_deal_header_ids VARCHAR(MAX), 
+--	@process_id VARCHAR(128) = NULL,
+--	@insert_type INT = 0, -- 0=incremental FROM front	; 1= partial import; 2=bulk import ; 12= import FROM load forecast file
+--	@partition_no INT = NULL,
+--	@user_login_id VARCHAR(50) = NULL,
+--	@insert_process_table VARCHAR(1) = 'n',
+--	@call_from TINYINT = 0, --0=call from application and adding deals in process table ; 1=call from job to process position breakdown of process table deal (without inserting process table) and job will not be created
+--	@call_from_2 VARCHAR(20) = NULL,
+--	@trigger_workflow NCHAR(1) = 'y'
+--AS 
+--SET nocount on
+--/*
 
 -- CALCULATE POSITION DIRECTLY WITHOUT JOB
 --exec [dbo].[spa_update_deal_total_volume] @source_deal_header_ids=????????????
@@ -66,7 +66,7 @@ declare @source_deal_header_ids VARCHAR(MAX),
 	@partition_no int
 	,@user_login_id VARCHAR(50),@insert_process_table VARCHAR(1)
 	,@call_from BIT=1,@call_from_2 VARCHAR(20) = NULL 
-	
+	,@trigger_workflow NCHAR(1) = 'y'
 
 /*
 select * from report_hourly_position_deal where source_deal_header_id=100856
@@ -78,10 +78,20 @@ select * from source_deal_detail_position where source_deal_detail_id=4194
 select total_volume,* from source_deal_detail where source_deal_header_id=17912
 select * from source_deal_detail where source_deal_detail_id=4194
 
-select * from report_hourly_position_fixed where source_deal_header_id=17912
+select * from report_hourly_position_deal where source_deal_header_id=104071
 select * from report_hourly_position_financial where source_deal_header_id=17912
 
-select * from source_deal_header where source_deal_header_id=17912
+select * from source_deal_header where source_deal_header_id=104071
+select * from source_deal_header where source_deal_header_id=104071
+2021-03-27
+2021-03-28
+
+2021-10-30
+2021-10-31
+
+select * from report_hourly_position_deal where source_deal_header_id=104071
+
+
 
 */
 
@@ -94,7 +104,7 @@ SET CONTEXT_INFO @contextinfo
 -- select * from  process_deal_position_breakdown set process_status=0
 -- delete process_deal_position_breakdown
 
-select @source_deal_header_ids=88563 , 
+select @source_deal_header_ids=104071 , 
 	@process_id = null, --'52C2B537_BDBA_41DB_BE8D_B657F070A041',
 	@insert_type =1,
 	@partition_no =1,
@@ -171,37 +181,19 @@ IF object_id('tempdb..#total_process_deals') IS NOT null
 
 create table #total_process_deals(source_deal_header_id int)
 
-begin_update:
-
-IF object_id('tempdb..#sdh') IS NOT null		
-	DROP TABLE #sdh
 	
-IF object_id('tempdb..#tmp_total_loc_volume') IS NOT null	
-	DROP TABLE #tmp_total_loc_volume
-	
-IF object_id('tempdb..#proxy_term') IS NOT null
-	DROP TABLE  #proxy_term
-
-IF object_id('tempdb..#proxy_term_summary') IS NOT null
-	DROP TABLE #proxy_term_summary
-	
-IF object_id('tempdb..#tmp_header_deal_id_1') IS NOT null
-	DROP TABLE  #tmp_header_deal_id_1
-	
-IF object_id('tempdb..#profile_info') IS NOT null
-	DROP TABLE  #profile_info
-
-set @exit=0
-
 
 --for debugging by deal id 
-if @process_id is null 
+set @process_id=isnull(@process_id,dbo.FNAGetNewID())
+
+--if @process_id is null 
+if @source_deal_header_ids is not null
 begin
-	set @process_id=dbo.FNAGetNewID()
 	IF ISNULL(@source_deal_header_ids,'')<>''
 	BEGIN
 		SET @source_deal_header_ids = REPLACE(@source_deal_header_ids, '#', '')
 		
+		if OBJECt_id('tempdb..#sdh11') is not null drop table #sdh11
 		CREATE TABLE #sdh11 (id INT) 
 		INSERT INTO #sdh11 SELECT CAST(Item AS INT) FROM dbo.SplitCommaSeperatedValues(@source_deal_header_ids)
 		
@@ -293,6 +285,29 @@ BEGIN
 	delete report_hourly_position_profile_main
 	delete report_hourly_position_financial_main
 end
+
+
+begin_update:
+
+IF object_id('tempdb..#sdh') IS NOT null		
+	DROP TABLE #sdh
+	
+IF object_id('tempdb..#tmp_total_loc_volume') IS NOT null	
+	DROP TABLE #tmp_total_loc_volume
+	
+IF object_id('tempdb..#proxy_term') IS NOT null
+	DROP TABLE  #proxy_term
+
+IF object_id('tempdb..#proxy_term_summary') IS NOT null
+	DROP TABLE #proxy_term_summary
+	
+IF object_id('tempdb..#tmp_header_deal_id_1') IS NOT null
+	DROP TABLE  #tmp_header_deal_id_1
+	
+IF object_id('tempdb..#profile_info') IS NOT null
+	DROP TABLE  #profile_info
+
+set @exit=0
 
 ----the table #is_total_volume_only_update is CREATEd for skipping update timestamp statement in the  trigger [TRGUPD_SOURCE_DEAL_DETAIL] of source_deal_detail
 IF  OBJECT_ID('tempdb..#is_total_volume_only_update') is  NULL
@@ -397,26 +412,6 @@ BEGIN
 
 		--EXEC [dbo].[spa_calc_deal_uom_conversion] null,null,null,null, @user_login_id, @process_id_uom
 
-		IF ISNULL(@source_deal_header_ids,'')<>''
-		BEGIN
-			SET @source_deal_header_ids = REPLACE(@source_deal_header_ids, '#', '')
-
-			CREATE TABLE #sdh (id INT) 
-
-			INSERT INTO #sdh SELECT CAST(Item AS INT) FROM dbo.SplitCommaSeperatedValues(@source_deal_header_ids)
-
-			INSERT INTO dbo.process_deal_position_breakdown (source_deal_detail_id,source_deal_header_id ,create_user,create_ts,process_status,insert_type 
-				,deal_type ,commodity_id,fixation,internal_deal_type_value_id )
-			SELECT sdd.source_deal_detail_id,max(sdh.source_deal_header_id),@user_login_id,getdate(),0,@orginal_insert_type
-				,max(isnull(sdh.internal_desk_id,17300)) deal_type ,
-				max(isnull(spcd.commodity_id,-1)) commodity_id,max(isnull(sdh.product_id,4101)) fixation 
-				,max(isnull(sdh.internal_deal_type_value_id,-999999)) 
-			FROM #sdh h inner join source_deal_header sdh on h.id=sdh.source_deal_header_id
-				inner join source_deal_detail sdd on sdh.source_deal_header_id=sdd.source_deal_header_id
-				left join source_price_curve_def spcd on sdd.curve_id=spcd.source_curve_def_id and sdd.curve_id is not null
-			group by sdd.source_deal_detail_id
-			
-		END
 		
 	-- changed for EOD	
 		IF ISNULL(@call_from,0)=0 --not call from eod  
@@ -473,6 +468,7 @@ BEGIN
 			order by insert_type ,deal_type,fixation desc --,commodity_id -- 
 		) q on p.insert_type =q.insert_type and p.deal_type=q.deal_type  and p.fixation=q.fixation --and p.commodity_id =q.commodity_id --
 		where ISNULL(p.process_status,0)=0 AND p.internal_deal_type_value_id NOT IN(19,20,21)'
+			+case when isnull(@orginal_insert_type,0)=3 then ' and p.insert_type=3' else '' end
 			
 		EXEC spa_print @sql
 		exec(@sql)
@@ -520,9 +516,6 @@ FROM source_deal_detail sdd
 BEGIN TRY
 ------------------------	
 	
-	--IF ISNULL(@insert_type,0)=0 --If clause is removed since the @insert_type passed is 12 instead of 0 to show delta value
-	--BEGIN
-
 
 	if object_id('tempdb..#position_report_group_map') is not null
 		drop table #position_report_group_map
@@ -676,9 +669,12 @@ BEGIN TRY
 		select	ed.source_deal_detail_id
 			,round(cast(CAST(sdd.deal_volume AS NUMERIC(24,10))
 			*cast(term_factor.factor AS NUMERIC(24,10)) AS NUMERIC(24,10)) ,isnull(rnd.position_calc_round,100))
-			*cast(cast(CAST(ISNULL(sdd.multiplier,1) AS NUMERIC(24,16)) AS NUMERIC(24,16))*CAST(ISNULL(sdd.volume_multiplier2,1) AS NUMERIC(24,16)) AS NUMERIC(24,16)) * CAST(COALESCE(case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,conv.conversion_factor,1) AS NUMERIC(24,16)) total_volume
+			*cast(cast(CAST(ISNULL(sdd.multiplier,1) AS NUMERIC(24,16)) AS NUMERIC(24,16))*CAST(ISNULL(sdd.volume_multiplier2,1) AS NUMERIC(24,16)) AS NUMERIC(24,16)) * CAST(COALESCE(case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,conv.conversion_factor,1) AS NUMERIC(24,16))
+			* case when sdd.deal_volume_uom_id<>COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id) and sdh.source_deal_type_id=1228 then sdd.fixed_price else 1.00000 end total_volume
+
 			,cast(CAST(sdd.deal_volume AS NUMERIC(24,10))/cast(nullif(term_factor.factor,0) AS NUMERIC(24,10)) AS NUMERIC(24,10)) 
-			*cast(cast(CAST(ISNULL(sdd.multiplier,1) AS NUMERIC(24,16)) AS NUMERIC(24,16))*CAST(ISNULL(sdd.volume_multiplier2,1) AS NUMERIC(24,16)) AS NUMERIC(24,16)) * CAST(COALESCE(case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,conv.conversion_factor,1) AS NUMERIC(24,16)) hourly_position
+			*cast(cast(CAST(ISNULL(sdd.multiplier,1) AS NUMERIC(24,16)) AS NUMERIC(24,16))*CAST(ISNULL(sdd.volume_multiplier2,1) AS NUMERIC(24,16)) AS NUMERIC(24,16)) * CAST(COALESCE(case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,conv.conversion_factor,1) AS NUMERIC(24,16))
+			* case when sdd.deal_volume_uom_id<>COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id) and sdh.source_deal_type_id=1228 then sdd.fixed_price else 1.00000 end hourly_position
 			,ed.rowid position_report_group_map_rowid
 		into #source_deal_detail_position
 		FROM '+ @source_deal_detail +' sdd
@@ -731,7 +727,6 @@ BEGIN TRY
 		from #source_deal_detail_position sddp inner join source_deal_detail sdd on sddp.source_deal_detail_id=sdd.source_deal_detail_id
 
 	'
-	
 		EXEC dbo.spa_print @sql
 		EXEC(@sql)	
 	end
@@ -744,7 +739,7 @@ BEGIN TRY
 	BEGIN		
 	
 	--	EXEC [dbo].[spa_deal_position_breakdown] 'u', null, @user_login_id, @process_id
-		SET @spa='EXEC spa_maintain_transaction_job ''' +@process_id +''','+cast(@orginal_insert_type AS VARCHAR)+',null,'''+@user_login_id+''''
+		SET @spa='EXEC spa_maintain_transaction_job ''' +@process_id +''','+case when @orginal_insert_type=3 then '1' else cast(@orginal_insert_type AS VARCHAR) end+',null,'''+@user_login_id+''''
 		--EXEC spa_run_sp_as_job @process_id,@spa , 'generating_report_table',@user_login_id
 		
 
