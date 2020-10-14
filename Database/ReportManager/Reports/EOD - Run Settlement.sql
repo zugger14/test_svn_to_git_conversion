@@ -135,7 +135,7 @@ END
 ELSE 
 BEGIN
     INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
-    EXEC spa_calc_mtm_job   ''@sub_id'',''@stra_id'',''@book_id'',''@sub_book_id'',NULL, @_as_of_date ,4500,775,NULL,@_process_id , NULL,NULL, 77,NULL,NULL,NULL,NULL,''d'',NULL,NULL,NULL,''n'',@_term_start ,@_term_end ,''s'',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,@_process_id
+    EXEC spa_calc_mtm_job   ''@sub_id'',''@stra_id'',''@book_id'',''@sub_book_id'',NULL, @_as_of_date ,4500,775,NULL,@_process_id , NULL,NULL, 77,NULL,NULL,NULL,NULL,''d'',NULL,NULL,NULL,''n'',@_term_start ,@_term_end ,''s'',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,NULL,''s'',''n'',@_process_id
 END
 
 SELECT  

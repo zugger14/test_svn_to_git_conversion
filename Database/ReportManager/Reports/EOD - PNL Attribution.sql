@@ -78,143 +78,137 @@ BEGIN TRY
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'', 
-
-		@_process_id VARCHAR(100) = ''@process_id'',       
-
-		@_sub_id VARCHAR(MAX) = ''@sub_id'',
-
-        @_stra_id VARCHAR(MAX) = ''@stra_id'',
-
-        @_book_id VARCHAR(MAX) = ''@book_id'',
-
-        @_sub_book_id VARCHAR(MAX) = ''@sub_book_id'' 
-
-		
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date''
+	,@_process_id VARCHAR(100) = ''@process_id''
+	,@_sub_id VARCHAR(MAX) = ''@sub_id''
+	,@_stra_id VARCHAR(MAX) = ''@stra_id''
+	,@_book_id VARCHAR(MAX) = ''@book_id''
+	,@_sub_book_id VARCHAR(MAX) = ''@sub_book_id''
 
 IF ''@process_id'' <> ''NULL''
-
-    SET @_process_id = ''@process_id''
-
- ELSE    
-
-    SET @_process_id = NULL 		
-
-
-
-	
-
-
+	SET @_process_id = ''@process_id''
+ELSE
+	SET @_process_id = NULL
 
 IF ''@sub_id'' <> ''NULL''
-
-    SET @_sub_id = ''@sub_id''
+	SET @_sub_id = ''@sub_id''
 
 IF ''@stra_id'' <> ''NULL''
-
-    SET @_stra_id = ''@stra_id''
+	SET @_stra_id = ''@stra_id''
 
 IF ''@book_id'' <> ''NULL''
-
-    SET @_book_id = ''@book_id''
+	SET @_book_id = ''@book_id''
 
 IF ''@sub_book_id'' <> ''NULL''
+	SET @_sub_book_id = ''@sub_book_id''
 
-    SET @_sub_book_id = ''@sub_book_id''
-
-
-
-
-
-	
-
-IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result
+IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL
+	DROP TABLE #tmp_result
 
 CREATE TABLE #tmp_result (
+	ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT
+	,Module VARCHAR(200) COLLATE DATABASE_DEFAULT
+	,Area VARCHAR(200) COLLATE DATABASE_DEFAULT
+	,STATUS VARCHAR(200) COLLATE DATABASE_DEFAULT
+	,Message VARCHAR(1000) COLLATE DATABASE_DEFAULT
+	,Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT
+	)
 
-    ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
-    Module VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
-    Area VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
-    Status VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
-    Message VARCHAR(1000) COLLATE DATABASE_DEFAULT ,
-
-    Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
-
-)
-
-
-
-
-
-IF ''@sub_id'' = ''1900'' AND  ''@stra_id'' = ''1900'' AND ''@book_id'' = ''1900'' AND ''@sub_book_id'' = ''1900'' 
-
+IF ''@sub_id'' = ''1900''
+	AND ''@stra_id'' = ''1900''
+	AND ''@book_id'' = ''1900''
+	AND ''@sub_book_id'' = ''1900''
 BEGIN
+	INSERT INTO #tmp_result (
+		ErrorCode
+		,Module
+		,Area
+		,STATUS
+		,Message
+		,Recommendation
+		)
+	SELECT NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+END
+ELSE
+BEGIN
+	INSERT INTO #tmp_result (
+		ErrorCode
+		,Module
+		,Area
+		,STATUS
+		,Message
+		,Recommendation
+		)
+	EXEC spa_calc_mtm_job @_sub_id
+		,@_stra_id
+		,@_book_id
+		,@_sub_book_id
+		,NULL
+		,@_as_of_date
+		,4500
+		,NULL
+		,''b''
+		,@_process_id
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,''n''
+		,@_as_of_date
+		,@_as_of_date
+		,''m''
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,''400,401''
+		,1
+		,0
+		,0
+		,NULL
+		,NULL
+		,''n''
+		,NULL
+		,@_process_id
 
-      INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
-
-      SELECT NULL, NUll, NULL, NULL, NUll, NULL  
-
-    
-
+	UPDATE #tmp_result
+	SET [Message] = ''PNL Attribution completed for run as of date'' + @_as_of_date + '' .''
+	WHERE [Status] = ''Success''
 END
 
-ELSE 
-
-BEGIN
-
-	INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
-
-	EXEC spa_calc_mtm_job  @_sub_id,@_stra_id,@_book_id,@_sub_book_id, NULL, @_as_of_date, 4500, NULL, ''b'', @_process_id, NULL, 
-
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ''n'', @_as_of_date, @_as_of_date, ''m'', NULL, 
-
-	NULL, NULL, NULL, NULL, NULL, NULL, ''400,401'', 1, 0, 0,''n'', NULL, @_process_id
-
-
-
-	UPDATE #tmp_result SET [Message] = ''PNL Attribution completed for run as of date'' + @_as_of_date + '' .'' WHERE [Status] = ''Success''
-
-END
-
-SELECT  TOP 1
-
-    @_as_of_date as_of_date, 
-
-    @_as_of_date term_start,
-
-    @_as_of_date term_end, 
-
-    @_process_id process_id,
-
-    @_sub_id sub_id,
-
-    @_stra_id stra_id,
-
-    @_book_id book_id,
-
-    @_sub_book_id sub_book_id,
-
-    [ErrorCode],
-
-    [Module],
-
-	[Area],
-
-	[Status],
-
-	[Message],
-
-	[Recommendation]
-
+SELECT TOP 1 @_as_of_date as_of_date
+	,@_as_of_date term_start
+	,@_as_of_date term_end
+	,@_process_id process_id
+	,@_sub_id sub_id
+	,@_stra_id stra_id
+	,@_book_id book_id
+	,@_sub_book_id sub_book_id
+	,[ErrorCode]
+	,[Module]
+	,[Area]
+	,[Status]
+	,[Message]
+	,[Recommendation]
 --[__batch_report__] 
-
 FROM #tmp_result
-
-WHERE 1=1 ', report_id = @report_id_data_source_dest,
+WHERE 1 = 1
+', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
 	WHERE [name] = 'PNl Attribution'
