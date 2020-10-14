@@ -13,7 +13,7 @@ BEGIN
 			BEGIN
 				SELECT @old_ixp_rule_id = ixp_rules_id
 			FROM ixp_rules ir
-			WHERE ir.ixp_rules_name = 'Copy of Standard Deals rule'
+			WHERE ir.ixp_rules_name = 'Deal Import Rule - Status'
 			END
 
 			 
@@ -41,12 +41,12 @@ BEGIN
 
 				INSERT INTO ixp_rules (ixp_rules_name, individuals_script_per_ojbect, limit_rows_to, before_insert_trigger, after_insert_trigger, import_export_flag, is_system_import, ixp_owner, ixp_category, is_active,ixp_rule_hash)
 				VALUES( 
-					'Copy of Standard Deals rule' ,
+					'Deal Import Rule - Status' ,
 					'N' ,
 					NULL ,
 					'UPDATE [temp_process_table]
-SET [Deal Status] = ISNULL(NULLIF([Deal Status],''''), ''New'')
-	, [Confirm Status] = ISNULL(NULLIF([Confirm Status],''''), ''Not Confirmed'')',
+SET [Deal Status] = ''New''
+	, [Confirm Status] = ''Not Confirmed''',
 					'UPDATE sdh
 SET  sdh.deal_status = 5603
     ,sdh.confirm_status_type = 17200
@@ -54,7 +54,7 @@ FROM [final_process_table] a
 INNER JOIN source_deal_header sdh
     ON sdh.deal_id = a.deal_id',
 					'i' ,
-					'n' ,
+					'y' ,
 					@admin_user ,
 					23502,
 					1,
@@ -79,12 +79,12 @@ INNER JOIN source_deal_header sdh
 			
 			UPDATE
 			ixp_rules
-			SET ixp_rules_name = 'Copy of Standard Deals rule'
+			SET ixp_rules_name = 'Deal Import Rule - Status'
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
 				, before_insert_trigger = 'UPDATE [temp_process_table]
-SET [Deal Status] = ISNULL(NULLIF([Deal Status],''''), ''New'')
-	, [Confirm Status] = ISNULL(NULLIF([Confirm Status],''''), ''Not Confirmed'')'
+SET [Deal Status] = ''New''
+	, [Confirm Status] = ''Not Confirmed'''
 				, after_insert_trigger = 'UPDATE sdh
 SET  sdh.deal_status = 5603
     ,sdh.confirm_status_type = 17200
@@ -94,7 +94,7 @@ INNER JOIN source_deal_header sdh
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
 				, ixp_category = 23502
-				, is_system_import = 'n'
+				, is_system_import = 'y'
 				, is_active = 1
 			WHERE ixp_rules_id = @ixp_rules_id_new
 				
