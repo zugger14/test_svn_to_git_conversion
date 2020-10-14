@@ -1,50 +1,50 @@
 
---/****** Object:  StoredProcedure [dbo].[spa_update_deal_total_volume]    Script Date: 01/30/2012 02:20:26 ******/
---IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[spa_update_deal_total_volume]') AND type in (N'P', N'PC'))
---DROP PROCEDURE [dbo].[spa_update_deal_total_volume]
---GO
+/****** Object:  StoredProcedure [dbo].[spa_update_deal_total_volume]    Script Date: 01/30/2012 02:20:26 ******/
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[spa_update_deal_total_volume]') AND type in (N'P', N'PC'))
+DROP PROCEDURE [dbo].[spa_update_deal_total_volume]
+GO
 
---/****** Object:  StoredProcedure [dbo].[spa_update_deal_total_volume]    Script Date: 01/30/2012 02:20:37 ******/
---SET ANSI_NULLS ON
---GO
+/****** Object:  StoredProcedure [dbo].[spa_update_deal_total_volume]    Script Date: 01/30/2012 02:20:37 ******/
+SET ANSI_NULLS ON
+GO
 
---SET QUOTED_IDENTIFIER ON
---GO
+SET QUOTED_IDENTIFIER ON
+GO
 
---/**
+/**
 
---	Populate hourly position of the deals in portfolio.
+	Populate hourly position of the deals in portfolio.
 
---	Parameters 
---	@source_deal_header_ids : Source Deal Header Ids to process
---	@process_id : Process Id for input process table of deal list to process
---	@insert_type : Insert Type
---				- 0 - Incremental FROM frontend
---				- 5 - Re calculate all existing deals
---	@partition_no : Partition No
---	@user_login_id : User Login Id of runner
---	@insert_process_table : Insert Process Table of deals
---	@call_from : Call From
---				- 0 - Call from application and adding deals in process table 
---				- 1 - Call from job to process position breakdown of process table deal (without inserting process table) and job will not be created
---	@call_from_2 : Call From 'alert' or other than 'alert'
+	Parameters 
+	@source_deal_header_ids : Source Deal Header Ids to process
+	@process_id : Process Id for input process table of deal list to process
+	@insert_type : Insert Type
+				- 0 - Incremental FROM frontend
+				- 5 - Re calculate all existing deals
+	@partition_no : Partition No
+	@user_login_id : User Login Id of runner
+	@insert_process_table : Insert Process Table of deals
+	@call_from : Call From
+				- 0 - Call from application and adding deals in process table 
+				- 1 - Call from job to process position breakdown of process table deal (without inserting process table) and job will not be created
+	@call_from_2 : Call From 'alert' or other than 'alert'
 
---*/
+*/
 
 
---CREATE PROC [dbo].[spa_update_deal_total_volume]
---	@source_deal_header_ids VARCHAR(MAX), 
---	@process_id VARCHAR(128) = NULL,
---	@insert_type INT = 0, -- 0=incremental FROM front	; 1= partial import; 2=bulk import ; 12= import FROM load forecast file
---	@partition_no INT = NULL,
---	@user_login_id VARCHAR(50) = NULL,
---	@insert_process_table VARCHAR(1) = 'n',
---	@call_from TINYINT = 0, --0=call from application and adding deals in process table ; 1=call from job to process position breakdown of process table deal (without inserting process table) and job will not be created
---	@call_from_2 VARCHAR(20) = NULL,
---	@trigger_workflow NCHAR(1) = 'y'
---AS 
---SET nocount on
---/*
+CREATE PROC [dbo].[spa_update_deal_total_volume]
+	@source_deal_header_ids VARCHAR(MAX), 
+	@process_id VARCHAR(128) = NULL,
+	@insert_type INT = 0, -- 0=incremental FROM front	; 1= partial import; 2=bulk import ; 12= import FROM load forecast file
+	@partition_no INT = NULL,
+	@user_login_id VARCHAR(50) = NULL,
+	@insert_process_table VARCHAR(1) = 'n',
+	@call_from TINYINT = 0, --0=call from application and adding deals in process table ; 1=call from job to process position breakdown of process table deal (without inserting process table) and job will not be created
+	@call_from_2 VARCHAR(20) = NULL,
+	@trigger_workflow NCHAR(1) = 'y'
+AS 
+SET nocount on
+/*
 
 -- CALCULATE POSITION DIRECTLY WITHOUT JOB
 --exec [dbo].[spa_update_deal_total_volume] @source_deal_header_ids=????????????
