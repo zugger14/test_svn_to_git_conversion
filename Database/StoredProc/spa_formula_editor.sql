@@ -349,6 +349,7 @@ BEGIN
 		DECLARE @user_login_id VARCHAR(100)
 		DECLARE @job_name VARCHAR(100)
 		
+		SET @formula =  dbo.[FNAFormulaResolveParamSeperator](@formula, 's');
 		set @str_formula=dbo.FNAFormulaFormatMaxString(@formula,'d')
 		SET @user_login_id=dbo.FNADBUser()
 
