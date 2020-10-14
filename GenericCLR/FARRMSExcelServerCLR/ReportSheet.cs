@@ -76,7 +76,7 @@ namespace FARRMSExcelServerCLR
                 snapshotInfo.ReplicaWorkbook.Clear(SheetName);
                 using (var cmd = new SqlCommand(spaRfxQuery, snapshotInfo.SqlConnection))
                 {
-                    cmd.CommandTimeout = 6000;
+                    cmd.CommandTimeout = 36000;     //  Timeout to 10 Hours
                     using (SqlDataReader rd = cmd.ExecuteReader())
                     {
                         var dataTable = new DataTable();
