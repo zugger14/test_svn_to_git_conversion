@@ -34,7 +34,6 @@ BEGIN TRY
 	SET alias = @new_ds_alias, description = 'Enercity Nomination Data Extract View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + '--DECLARE @_contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), ''DEBUG_MODE_ON'')
 --SET CONTEXT_INFO @_contextinfo
-
 SET NOCOUNT on
 DECLARE 
 	@_sub_id VARCHAR(MAX) = NULL
@@ -254,7 +253,10 @@ end +''
 		--	--and scmd1.location_id=sdd.location_id and scmd1.effective_date=max_eff1.effective_date
 		--left join shipper_code_mapping_detail scmd2 on scmd2.shipper_code_mapping_detail_id=sdd.shipper_code1
 		--	and scmd2.location_id=sdd.location_id and scmd2.effective_date=max_eff2.effective_date
-	
+
+		where sdd.shipper_code2 is not null and sdd.shipper_code1 is not null 
+
+		and scmd.shipper_code is not null  and scmd.shipper_code1 is not null and scmd.external_id is not null 
 		''
 	+isnull('' AND sdh.counterparty_id in ('' + @_counterparty_ids+'')'','''')
 	+isnull('' AND sdh.source_deal_type_id=''+cast(@_deal_type_id as VARCHAR),'''')
@@ -267,8 +269,6 @@ end +''
 	+isnull('' AND sdh.commodity_id='' + @_commodity_id,'''')
 	+isnull('' AND scmd.external_id='' +@_external_id1,'''')
 exec spa_print @_Sql
-
-
 exec(@_Sql)
 SELECT s.curve_id,s.location_id,s.term_start,s.Period,s.deal_date,s.deal_volume_uom_id,s.physical_financial_flag
 	,s.hr1,s.hr2,s.hr3,s.hr4,s.hr5,s.hr6,s.hr7,s.hr8,s.hr9,s.hr10,s.hr11,s.hr12,s.hr13,s.hr14,s.hr15,s.hr16,s.hr17,s.hr18,s.hr19,s.hr20,s.hr21,s.hr22,s.hr23,s.hr24,s.hr25
@@ -596,9 +596,7 @@ order by org_term_from,actual_term_to_start,actual_term_to_end
 exec spa_print @_Sql
 exec spa_print @_Sql1
 exec spa_print @_Sql2
-
 exec(@_Sql+@_Sql1+@_Sql2)
-
 ', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106500' 
