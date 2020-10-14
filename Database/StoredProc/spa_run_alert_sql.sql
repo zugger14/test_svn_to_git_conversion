@@ -393,15 +393,15 @@ BEGIN
 
 			IF EXISTS (SELECT 1 FROM eod_process_status WHERE process_id = @process_id AND [status] = 'Technical Error')
 			BEGIN
-				DECLARE @err_alert_process_table NVARCHAR(200),@err_process_id NVARCHAR(200)
-				SET @err_process_id = dbo.FNAGetNewID()
-				SET @err_alert_process_table = 'adiha_process.dbo.alert_eod_error_' + @err_process_id +  '_aee'
+				DECLARE @err_alert_process_table NVARCHAR(200)--,@err_process_id NVARCHAR(200)
+				--SET @err_process_id = dbo.FNAGetNewID()
+				SET @err_alert_process_table = 'adiha_process.dbo.alert_eod_error_' + @process_id +  '_aee'
 				EXEC('CREATE TABLE ' + @err_alert_process_table + ' (primary_temp_id INT) INSERT INTO ' + @err_alert_process_table + '(primary_temp_id) SELECT 1')
 
-				INSERT INTO eod_process_status(master_process_id, process_id,status,message,as_of_date,source)
-				SELECT master_process_id, @err_process_id,status,message,as_of_date,source FROM eod_process_status WHERE process_id = @process_id 
+				--INSERT INTO eod_process_status(master_process_id, process_id,status,message,as_of_date,source)
+				--SELECT master_process_id, @err_process_id,status,message,as_of_date,source FROM eod_process_status WHERE process_id = @process_id 
 
-				EXEC spa_register_event 20619, 20566, @err_alert_process_table, 1, @err_process_id
+				EXEC spa_register_event 20619, 20566, @err_alert_process_table, 1, @process_id
 			END
 		END
 		ELSE 
