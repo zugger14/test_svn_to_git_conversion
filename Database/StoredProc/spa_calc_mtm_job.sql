@@ -195,15 +195,15 @@ select *  from source_deal_pnl_detail   where source_deal_header_id=7876
 
 */
 
-
+--270109,270113,270118,270119
 
 SELECT	
 	@sub_id = null, 
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =103922  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2020-01-31' , --'2017-02-15',
+	@source_deal_header_id =270109  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2020-09-29' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -222,7 +222,7 @@ SELECT
 	@run_incremental = 'n',
 	@term_start = '2020-01-01' ,
 	@term_end = '2020-01-31' ,
-	@calc_type = 's',
+	@calc_type = 'm',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
 	@deal_list_table = null,
@@ -2035,6 +2035,9 @@ DECLARE @maturity_date_p3 varchar(1000)
 DECLARE @maturity_date_s varchar(1000)
 DECLARE @monthly_maturity varchar(1000)
 
+
+--select * from source_deal_type
+
 set @monthly_maturity = 
 '
 	cast(Year(sdd.term_start) as varchar) + ''-'' + cast(Month(sdd.term_start) as varchar) + ''-01'' 
@@ -2122,7 +2125,8 @@ set @sqlstmt='insert into #temp_deals
 		ISNULL(' + CASE WHEN @calc_type = 'm' THEN 'cexp.exp_date' ELSE 'NULL' END + ', sdd.contract_expiration_date), 
 		sdd.fixed_float_leg,sdd.buy_sell_flag,
 		ISNULL(pd.price_index, spcd.source_curve_def_id), 
-		COALESCE(wacog.wght_avg_cost, sdd.fixed_price, 0) fixed_price,
+		case when sdh.source_deal_type_id=1228 then 1.00/COALESCE(wacog.wght_avg_cost, sdd.fixed_price, 0)  -- Check FX
+			else COALESCE(wacog.wght_avg_cost, sdd.fixed_price, 0) end fixed_price,
 		--case when (isnull(sdd.fixed_price, 0) = 0) then NULL else ISNULL(sc5.currency_id_to, sdd.fixed_price_currency_id) end fixed_price_currency_id,
 		ISNULL(sc5.currency_id_to, sdd.fixed_price_currency_id) fixed_price_currency_id,
 		sdd.option_strike_price,
@@ -2155,14 +2159,24 @@ set @sqlstmt='insert into #temp_deals
 
 -- taking portion/ratio in current term by no. of days in period.
 
-set @sqlstmt2='
+set @sqlstmt2=
+	case when isnull(@look_term,'d') = 's' then
+		  '
+		CASE WHEN sdh.is_environmental = ''y'' then
+			case when '''+@calc_type+'''=''s'' THEN 1 else 0 end
+		else  
+			case when case when sdd.physical_financial_flag=''f'' then 
+				COALESCE(cexp.exp_date,sdd.settlement_date,sdd.term_end) 
+			else sdd.contract_expiration_date end >''' + @as_of_date + '''  then 0 else 1 end
+		end '
+	else
+		   '
 		CASE WHEN sdh.is_environmental = ''y'' THEN 
-			CASE WHEN '''+@calc_type+'''= ''s'' THEN
-				1
-			ELSE 0 END
+				CASE WHEN '''+@calc_type+'''= ''s'' THEN 1 ELSE 0 END
 		ELSE
 			case when (sdd.contract_expiration_date > ''' + @as_of_date + ''') then 0 else 1 end 
-		END settled,
+			END '
+	end+' settled,
 		isnull(sdd.physical_financial_flag, sdh.physical_financial_flag) leg_physical_financial_flag,
 		sbm.fas_deal_type_value_id,case when isnull(sdht.discounting_applies,''n'')=''y'' then 1 else dist.discount_factor end discount_factor, 
 		ISNULL(' + CASE WHEN @calc_type = 's' THEN  'rec.assigned_vol' ELSE 'NULL' END + ',sdd.deal_volume) contract_volume, 
@@ -2224,7 +2238,8 @@ set @sqlstmt4='
 			else  dateadd(month,isnull(sdht.[month],0),dateadd(year,isnull(sdht.[year],0),case when sdht.[year] is null then case when sdht.[month] is null then '''+@as_of_date+''' else '''+convert(varchar(10),dateadd(day,-1,dateadd(month,1,left(@as_of_date,8)+'01')),120)+''' end else '''+convert(varchar(10),dateadd(day,-1,dateadd(year,1,left(@as_of_date,5)+'01-01')),120)+''' end )) end filter_term_end
 		,sdht.actual_granularity,isnull(sdht.actualization_flag,''d'') actualization_flag,sdd.actual_volume,sdd.schedule_volume 		
 		,sdht.options_calc_method,sdht.attribute_type,sdht.bid_n_ask_price,sdh.broker_id
-		,COALESCE(sdh.fx_conversion_market, sbm.fx_conversion_market,'''') fx_conversion_market
+		-- For excluding fx conversion for FX deal type.
+		,case when sdh.source_deal_type_id=1228 then ''-999999'' else COALESCE(sdh.fx_conversion_market, sbm.fx_conversion_market,'''') end fx_conversion_market
 		,sdd.fx_conversion_rate invoice_fx_rate
 		,sbm.fas_sub_id,isnull(sdh.fx_rounding,10),isnull(sdh.fx_option,104500) fx_option, cg.holiday_calendar_id,cg.settlement_days,cg.invoice_due_date, null invoice_date
 	,isnull(sdh.term_frequency,''m'') term_frequency,''n'' calc_mtm_at_tou_level
@@ -2233,7 +2248,6 @@ set @sqlstmt4='
 	+', case when sdht.template_id in ('+@storage_inventory_template_id +') then 0 else 1 end exception_handle
 	,case when sdht.template_id in ('+ @storage_inventory_template_id+') then 0 else 1 end  mtm_sett_calc
 	,isnull(case when sdd.physical_financial_flag=''f'' and ''s''='''+@calc_type +''' then  isnull(cexp.exp_date_market,sdd.settlement_date) else null end,'''+@curve_as_of_date+''')  curve_as_of_date
-
 '
 
 SET @from_clause1 = ISNULL(@from_clause1,'')
@@ -2280,14 +2294,10 @@ WHERE sdh.pricing in(1618,1619)
 
 UPDATE td SET pricing=-1 FROM #temp_deals td where td.pricing in (1618,1619)
 
-
 update #temp_deals 
 	set invoice_date=
 dbo.FNAInvoiceDueDate(settlement_date,invoice_due_date,holiday_calendar_id,settlement_days)
 where fx_option=104501 and @calc_type='s'
-
---select * from #temp_deals
-
 
 update #temp_deals 
 	set calc_mtm_at_tou_level=case when tou.tou_mtm=1 then 'y' else 'n' end
@@ -5025,7 +5035,6 @@ BEGIN
 	AND td.state_value_id IS NOT NULL
 	AND pd.source_deal_detail_id IS NULL
 
-
 END
 /* New Hourly-Monthly, TOU_Monthly and RTC Curve Logic END*/
 
@@ -5136,6 +5145,13 @@ begin
 	set @log_time=getdate()
 	print  @pr_name+' Running..............'
 end
+
+update tc set
+	curve_value=isnull(1/nullif(curve_value,0),0)
+	,bid_value=isnull(1/nullif(bid_value,0),0)
+	,ask_value=isnull(1/nullif(ask_value,0),0)
+ from #temp_curves tc inner join source_price_curve_def spcd on tc.source_curve_def_id=spcd.source_curve_def_id
+	and spcd.source_curve_type_value_id=	576		--FX Curve
 
 
 select	curve_id, term_start, contract_id, func_cur_id, Pricing,
