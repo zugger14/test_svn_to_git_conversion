@@ -4140,7 +4140,7 @@ function get_paging($noOfRows, $max_row, $sel_page, $args, $sql) {
 
 
     $total_row_returned = explode('__total_row_return__=', $url_arg);
-    $total_row_returned_final = $total_row_returned[1];
+    $total_row_returned_final = isset($total_row_returned[1]) ? $total_row_returned[1] : null;
     
     if (isset($_POST['__total_row_return__'] )) {
         $total_row_returned_final = $_POST['__total_row_return__'];
