@@ -563,7 +563,7 @@ BEGIN
 							OUTER APPLY (
 								SELECT volume_per, location_id, pricing_options, fixed_price, transfer_volume, fixed_adder, parent_source_deal_header_id, index_adder
 								FROM #temp_deal_transfer t
-								WHERE t.id = CAST(REPLACE(REPLACE(sdh.deal_id, t.parent_source_deal_header_id, ''''), ''_Offset_'', '''') AS INT)
+								WHERE t.id = CAST(REPLACE(REPLACE(tod.deal_id, t.parent_source_deal_header_id, ''''), ''_Offset_'', '''') AS INT)
 							) tdt
 							WHERE tdt.parent_source_deal_header_id = t1.source_deal_header_id
 						) t2
@@ -778,7 +778,7 @@ BEGIN
 							OUTER APPLY (
 								SELECT volume_per, location_id, pricing_options, fixed_price, transfer_volume, fixed_adder, parent_source_deal_header_id, index_adder
 								FROM #temp_deal_transfer
-								WHERE #temp_deal_transfer.id = CAST(REPLACE(REPLACE(sdh.deal_id, parent_source_deal_header_id, ''''), ''_Xferred_'', '''') AS INT)
+								WHERE #temp_deal_transfer.id = CAST(REPLACE(REPLACE(tod.deal_id, parent_source_deal_header_id, ''''), ''_Xferred_'', '''') AS INT)
 							) tdt
 							WHERE tdt.parent_source_deal_header_id = t1.source_deal_header_id
 						) t2
