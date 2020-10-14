@@ -48,7 +48,7 @@ DECLARE @_sql_from4 VARCHAR(max)
 
 DECLARE @_sql_whr VARCHAR(max)
 
-DECLARE @_from_as_of_date VARCHAR(50) --=''2020-09-30''
+DECLARE @_from_as_of_date VARCHAR(50) --=''2020-01-31''
 
 DECLARE @_to_as_of_date VARCHAR(50) --=''2020-09-30''
 
@@ -66,7 +66,7 @@ DECLARE @_deal_date_from VARCHAR(50), @_deal_date_to VARCHAR(50), @_source_count
 
  @_index_id VARCHAR(max), 
 
-@_source_deal_header_id VARCHAR(50) --=101894  
+@_source_deal_header_id VARCHAR(50) --=103922  
 
 	,@_currency_id VARCHAR(MAX),
 
@@ -1170,7 +1170,7 @@ FROM #settlement_value sv
 
 			AND as_of_date <= Isnull(fv.from_as_of_date, @_from_as_of_date) 
 
-			AND field_id > 0 and internal_type not in (18722,18723,18733,18742,18743)
+			AND field_id > 0 and internal_type not in (18722,18723,18733,18742,18743, 18732)
 
 	) ifbs_mx
 
@@ -1220,7 +1220,7 @@ FROM #settlement_value sv
 
 		AND (as_of_date = ifbs_mx.as_of_date or field_id in (307014,307075)) AND field_id > 0
 
-		  and internal_type not in (18722,18723,18733,18742,18743)
+		  and internal_type not in (18722,18723,18733,18742,18743, 18732)
 
 	) ifbs
 
@@ -1276,19 +1276,19 @@ from
 
 			AND as_of_date <= Isnull(sv.from_as_of_date, @_from_as_of_date) 
 
-			and internal_type in (18722,18723,18733,18742,18743)
+			and internal_type in (18722,18723,18733,18742,18743, 18732)
 
 	) ifbs_mx
 
-	cross join ( VALUES (18722),(18723),(18733) , (18742),(18743) ) fee (internal_type)
+	cross join ( VALUES (18722),(18723),(18733) , (18742),(18743),(18732) ) fee (internal_type)
 
 	outer apply
 
-	( select top(1) * from index_fees_breakdown_settlement  where source_deal_header_id = sv.source_deal_header_id 
+	( select * from index_fees_breakdown_settlement  where source_deal_header_id = sv.source_deal_header_id 
 
 		and internal_type =fee.internal_type ---and as_of_date=ifbs_mx.as_of_date
 
-		order by term_start
+		--order by term_start
 
 	)ifbs
 
@@ -1354,7 +1354,7 @@ FROM #final_values fv
 
 	LEFT JOIN source_currency scur_dc ON scur_dc.source_currency_id = ifb.deal_cur_id 
 
-WHERE ifb.field_id IS NOT NULL and ifb.internal_type not in (18722,18723,18733,18742,18743)
+WHERE ifb.field_id IS NOT NULL and ifb.internal_type not in (18722,18723,18733,18742,18743, 18732)
 
 --and fv.term_start>Isnull(fv.from_as_of_date, @_from_as_of_date)
 
