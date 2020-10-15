@@ -36,7 +36,7 @@ BEGIN TRY
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'EOD - Run MTM' [name], 'dev_admin' [owner], 1 is_system, 0 is_excel, 0 is_mobile, '328BD88E_C636_4762_9555_155218CA1680' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'EOD - Run MTM' [name], 'trm_enercity_db_user' [owner], 1 is_system, 0 is_excel, 0 is_mobile, '328BD88E_C636_4762_9555_155218CA1680' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
@@ -87,7 +87,6 @@ IF ''@process_id'' <> ''NULL''
    SET @_process_id = NULL         
 --SET @_as_of_date = ''2019-06-25''
 
- 
 
 
 SELECT sub.entity_id sub_id,
@@ -116,8 +115,6 @@ AND (''@book_id'' = ''NULL'' OR book.entity_id IN (@book_id))
 AND (''@sub_book_id'' = ''NULL'' OR ssbm.book_deal_type_map_id IN (@sub_book_id))
 
  
-
-
 IF OBJECT_ID(''tempdb..#tmp_result_new'') IS NOT NULL DROP TABLE #tmp_result_new
 CREATE TABLE #tmp_result_new (
     ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
@@ -128,7 +125,6 @@ CREATE TABLE #tmp_result_new (
     Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
 )
 
- 
 
 
 IF ''@sub_id'' = ''1900'' AND  ''@stra_id'' = ''1900'' AND ''@book_id'' = ''1900'' AND ''@sub_book_id'' = ''1900'' 
@@ -136,15 +132,14 @@ BEGIN
       INSERT INTO #tmp_result_new (ErrorCode, Module, Area, Status, Message, Recommendation) 
       SELECT NULL, NUll, NULL, NULL, NUll, NULL      
     
+
 END
 ELSE 
 BEGIN
     INSERT INTO #tmp_result_new (ErrorCode, Module, Area, Status, Message, Recommendation) 
-    EXEC spa_calc_mtm_job  ''@sub_id'',''@stra_id'',''@book_id'',''@sub_book_id'',NULL, @_as_of_date ,4500,NULL,NULL,@_process_id , NULL,NULL, 77,NULL,NULL,NULL,NULL,''d'',NULL,NULL,NULL,''n'',@_as_of_date ,@_as_of_date ,''m'',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,''n'',NULL,@_process_id
-END 
-
+   EXEC spa_calc_mtm_job ''@sub_id'',''@stra_id'',''@book_id'',''@sub_book_id'',NULL, @_as_of_date ,4500,  NULL, NULL,  @_process_id ,NULL,NULL,77,NULL, NULL, NULL, NULL,''d'', NULL,NULL,NULL,''n'',@_as_of_date ,@_as_of_date ,''m'',NULL,NULL, NULL, NULL,NULL,NULL,NULL,NULL,0,0,0,NULL,''d'', ''n'',@_process_id
+ END 
  
-
 SELECT  
     @_as_of_date as_of_date, 
     @_as_of_date term_start,
@@ -160,10 +155,7 @@ SELECT
     [Status],
     [Message],
     [Recommendation]
---[__batch_report__] 
-
- 
-
+--[__batch_report__]
 FROM #tmp_result_new
 WHERE 1=1
  ', report_id = @report_id_data_source_dest,
@@ -887,7 +879,7 @@ COMMIT TRAN
 	
 
 		INSERT INTO report_page_tablix(page_id,root_dataset_id, [name], width, height, [top], [left], group_mode, border_style, page_break, type_id, cross_summary, no_header, export_table_name, is_global)
-		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'EOD _ Run MTM_tablix' [name], '4' width, '2.6666666666666665' height, '0' [top], '0' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
+		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'EOD _ Run MTM_tablix' [name], '4.64' width, '2.6666666666666665' height, '0' [top], '0' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 		ON rpage.[name] = 'EOD - Run MTM'

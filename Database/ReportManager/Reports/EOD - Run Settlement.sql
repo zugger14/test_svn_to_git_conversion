@@ -36,7 +36,7 @@ BEGIN TRY
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'EOD - Run Settlement' [name], 'dev_admin' [owner], 1 is_system, 0 is_excel, 0 is_mobile, 'FBB5FEB8_045A_459B_A5C8_D5B089765857' report_hash, 'EOD - Run Settlement' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'EOD - Run Settlement' [name], 'trm_enercity_db_user' [owner], 1 is_system, 0 is_excel, 0 is_mobile, 'FBB5FEB8_045A_459B_A5C8_D5B089765857' report_hash, 'EOD - Run Settlement' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()

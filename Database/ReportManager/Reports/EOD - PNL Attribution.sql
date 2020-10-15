@@ -36,7 +36,7 @@ BEGIN TRY
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'EOD - PNL Attribution' [name], 'dev_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, 'CF6AE2A8_402A_4CE0_9EEA_EE849EA4C7FC' report_hash, 'EOD - PNL Attribution' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'EOD - PNL Attribution' [name], 'trm_enercity_db_user' [owner], 0 is_system, 0 is_excel, 0 is_mobile, 'CF6AE2A8_402A_4CE0_9EEA_EE849EA4C7FC' report_hash, 'EOD - PNL Attribution' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
@@ -79,135 +79,183 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date''
+
 	,@_process_id VARCHAR(100) = ''@process_id''
+
 	,@_sub_id VARCHAR(MAX) = ''@sub_id''
+
 	,@_stra_id VARCHAR(MAX) = ''@stra_id''
+
 	,@_book_id VARCHAR(MAX) = ''@book_id''
+
 	,@_sub_book_id VARCHAR(MAX) = ''@sub_book_id''
 
+
+
 IF ''@process_id'' <> ''NULL''
+
 	SET @_process_id = ''@process_id''
+
 ELSE
+
 	SET @_process_id = NULL
 
+
+
 IF ''@sub_id'' <> ''NULL''
+
 	SET @_sub_id = ''@sub_id''
 
+
+
 IF ''@stra_id'' <> ''NULL''
+
 	SET @_stra_id = ''@stra_id''
 
+
+
 IF ''@book_id'' <> ''NULL''
+
 	SET @_book_id = ''@book_id''
 
+
+
 IF ''@sub_book_id'' <> ''NULL''
+
 	SET @_sub_book_id = ''@sub_book_id''
 
+
+
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL
+
 	DROP TABLE #tmp_result
 
+
+
 CREATE TABLE #tmp_result (
+
 	ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT
+
 	,Module VARCHAR(200) COLLATE DATABASE_DEFAULT
+
 	,Area VARCHAR(200) COLLATE DATABASE_DEFAULT
+
 	,STATUS VARCHAR(200) COLLATE DATABASE_DEFAULT
+
 	,Message VARCHAR(1000) COLLATE DATABASE_DEFAULT
+
 	,Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT
+
 	)
 
+
+
 IF ''@sub_id'' = ''1900''
+
 	AND ''@stra_id'' = ''1900''
+
 	AND ''@book_id'' = ''1900''
+
 	AND ''@sub_book_id'' = ''1900''
+
 BEGIN
+
 	INSERT INTO #tmp_result (
+
 		ErrorCode
+
 		,Module
+
 		,Area
+
 		,STATUS
+
 		,Message
+
 		,Recommendation
+
 		)
+
 	SELECT NULL
+
 		,NULL
+
 		,NULL
+
 		,NULL
+
 		,NULL
+
 		,NULL
+
 END
+
 ELSE
+
 BEGIN
+
 	INSERT INTO #tmp_result (
+
 		ErrorCode
+
 		,Module
+
 		,Area
+
 		,STATUS
+
 		,Message
+
 		,Recommendation
+
 		)
-	EXEC spa_calc_mtm_job @_sub_id
-		,@_stra_id
-		,@_book_id
-		,@_sub_book_id
-		,NULL
-		,@_as_of_date
-		,4500
-		,NULL
-		,''b''
-		,@_process_id
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,''n''
-		,@_as_of_date
-		,@_as_of_date
-		,''m''
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,NULL
-		,''400,401''
-		,1
-		,0
-		,0
-		,NULL
-		,NULL
-		,''n''
-		,NULL
-		,@_process_id
+
+	EXEC spa_calc_mtm_job ''@sub_id'',''@stra_id'',''@book_id'',''@sub_book_id'',NULL, @_as_of_date ,4500,  NULL, NULL,  @_process_id ,NULL,NULL,77,NULL, NULL, NULL, NULL,NULL, NULL,NULL,NULL,''n'',@_as_of_date ,@_as_of_date ,''m'',NULL,NULL, NULL, NULL,NULL,NULL,NULL,''400,401'',1,0,0,NULL,''d'', ''n'',@_process_id
 
 	UPDATE #tmp_result
+
 	SET [Message] = ''PNL Attribution completed for run as of date'' + @_as_of_date + '' .''
+
 	WHERE [Status] = ''Success''
+
 END
 
+
+
 SELECT TOP 1 @_as_of_date as_of_date
+
 	,@_as_of_date term_start
+
 	,@_as_of_date term_end
+
 	,@_process_id process_id
+
 	,@_sub_id sub_id
+
 	,@_stra_id stra_id
+
 	,@_book_id book_id
+
 	,@_sub_book_id sub_book_id
+
 	,[ErrorCode]
+
 	,[Module]
+
 	,[Area]
+
 	,[Status]
+
 	,[Message]
+
 	,[Recommendation]
+
 --[__batch_report__] 
+
 FROM #tmp_result
+
 WHERE 1 = 1
+
 ', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
@@ -263,7 +311,7 @@ WHERE 1 = 1
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'As of Date'
-			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 4, key_column = 0, required_filter = 0
+			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 4, key_column = 0, required_filter = 1
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -276,7 +324,7 @@ WHERE 1 = 1
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'as_of_date' AS [name], 'As of Date' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'as_of_date' AS [name], 'As of Date' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, 1 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'PNl Attribution'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -929,7 +977,7 @@ COMMIT TRAN
 	
 
 		INSERT INTO report_page_tablix(page_id,root_dataset_id, [name], width, height, [top], [left], group_mode, border_style, page_break, type_id, cross_summary, no_header, export_table_name, is_global)
-		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'EOD _ PNL Attribution_tablix' [name], '4.64' width, '2.96' height, '0' [top], '0.05333333333333334' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
+		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'EOD _ PNL Attribution_tablix' [name], '4.64' width, '2.96' height, '0' [top], '0.08' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 		ON rpage.[name] = 'EOD - PNL Attribution'
