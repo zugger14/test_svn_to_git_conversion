@@ -21357,7 +21357,7 @@ BEGIN
  	
  	--PRINT('Source Deal Detail INSERT COMPLETED. Process took ' + dbo.FNACalculateTimestamp(@deal_detail_insert_batch_ts))	
  	
-	
+
 
 	DECLARE @select_udf_stmt NVARCHAR(MAX)
 	
@@ -21459,9 +21459,37 @@ BEGIN
 						DEALLOCATE cur_udf_cmb 
 				END 
 		END CATCH
-
+		
 		/* UDF combo field cide, value pair logic ends */
 
+		-- Insert default templates UDF values that are not mapped in deal import rule
+		IF OBJECT_ID(N'tempdb..#unmapped_udf_fields') IS NOT NULL
+			DROP TABLE #unmapped_udf_fields
+		
+		CREATE TABLE #unmapped_udf_fields(
+			source_deal_header_id INT,
+			udf_template_id INT,
+			leg INT,
+			default_value NVARCHAR(MAX) COLLATE DATABASE_DEFAULT,
+			udf_type NCHAR(1) COLLATE DATABASE_DEFAULT
+		)
+		
+		EXEC ('
+			INSERT INTO #unmapped_udf_fields (source_deal_header_id,udf_template_id,leg,default_value,udf_type)
+			SELECT b.source_deal_header_id, uddft.udf_template_id, a.leg, uddft.default_value, uddft.udf_type
+			FROM ' + @import_temp_table_name + ' a 
+			INNER JOIN source_deal_header b ON a.deal_id = b.deal_id 
+				AND b.source_system_id = a.source_system_id 
+			INNER JOIN user_defined_deal_fields_template uddft 
+				ON uddft.template_id = b.template_id
+			LEFT JOIN #ixp_udf_mapped_columns iumc
+				ON uddft.field_id = iumc.udf_field_id
+			WHERE uddft.default_value IS NOT NULL
+				AND iumc.udf_field_id IS NULL
+				AND uddft.udf_template_id > 0
+			GROUP BY b.source_deal_header_id, uddft.udf_template_id, a.leg, uddft.default_value, uddft.udf_type
+		')
+		     
 		/*Process header UDF values */
 		--Update old udf data
 		IF OBJECT_ID(N'tempdb..#header_udf_data') IS NOT NULL
@@ -21481,7 +21509,7 @@ BEGIN
 			AND uddf.udf_template_id = uddft.udf_template_id
 		LEFT JOIN #udf_combo_value ucv ON ucv.udf_field_id = hud.udf_field_id
 			AND ucv.code = hud.udf_value
-
+		
 		----Insert new udf data
 		INSERT INTO user_defined_deal_fields (source_deal_header_id, udf_template_id, udf_value) 
 		SELECT hud.source_deal_header_id, uddft.udf_template_id, ISNULL(ucv.id, IIF(uddft.Field_type IN ('d','c'), NULL, NULLIF(hud.udf_value,'')))
@@ -21495,6 +21523,16 @@ BEGIN
 		LEFT JOIN #udf_combo_value ucv ON ucv.udf_field_id = hud.udf_field_id
 			AND ucv.code = hud.udf_value
 		WHERE uddf.udf_deal_id IS NULL
+		UNION
+		SELECT udf.source_deal_header_id
+			, udf.udf_template_id
+			, udf.default_value
+		FROM #unmapped_udf_fields udf
+		LEFT JOIN user_defined_deal_fields uddf 
+			ON uddf.source_deal_header_id = udf.source_deal_header_id
+			AND uddf.udf_template_id = udf.udf_template_id
+		WHERE udf.udf_type = 'h'
+			AND uddf.udf_deal_id IS NULL
 
 		/*End of inserting header UDF values*/
  	
@@ -21539,7 +21577,18 @@ BEGIN
 		LEFT JOIN #udf_combo_value ucv ON ucv.udf_field_id = tud.udf_field_id
 			AND ucv.code = tud.udf_value
 		WHERE tud.udf_type = 'd' AND udddf.udf_deal_id IS NULL
-
+		UNION
+		SELECT sdd.source_deal_detail_id
+			, udf.udf_template_id
+			, udf.default_value
+		FROM #unmapped_udf_fields udf
+		INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = udf.source_deal_header_id
+			AND sdd.leg = udf.leg
+		LEFT JOIN user_defined_deal_detail_fields udddf 
+			ON udddf.source_deal_detail_id = sdd.source_deal_detail_id
+			AND udddf.udf_template_id = udf.udf_template_id
+		WHERE udf.udf_type = 'd'
+			AND udddf.udf_deal_id IS NULL
 		/*Ends detail udf import */
 
 	END	/* UDF import logic ends */
