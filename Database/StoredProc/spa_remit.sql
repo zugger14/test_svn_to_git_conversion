@@ -4534,6 +4534,7 @@ BEGIN
 			-- 42 is hardcoded length defined in excel uti generation logic
 			UPDATE srns
 			SET srns.unique_transaction_id = LEFT(srns.Hash_of_concatenated_values + REPLICATE('E', 42), 42) + RIGHT('00000' + CAST(srns.progressive_number AS VARCHAR), 3)
+			    ,srns.linked_transaction_id = IIF(@report_type = 39405, LEFT(srns.Hash_of_concatenated_values + REPLICATE('E', 42), 42) + RIGHT('00000' + CAST(srns.progressive_number AS VARCHAR), 3),linked_transaction_id)
 			FROM source_remit_standard srns
 			INNER JOIN #temp_strHash ts ON srns.source_deal_header_id = ts.source_deal_header_id
 			WHERE srns.process_id = @process_id
