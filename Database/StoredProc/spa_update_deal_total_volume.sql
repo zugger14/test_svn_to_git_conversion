@@ -428,7 +428,7 @@ BEGIN
 				--IF  not EXISTS (SELECT 1 FROM  @currently_running_jobs rJOB  INNER JOIN [msdb].[dbo].[sysjobs_view] AS [sJOB] ON rJOB.[job_id] = [sJOB].[job_id] 
 				--					WHERE [sJOB].name like db_name()+'- Calc Position Breakdown%' AND running=1 and next_run_date=0)
 				BEGIN   
-					SET @spa = 'spa_update_deal_total_volume null,null,0,1,''' + @user_login_id + ''',''n'',1, ' + ISNULL('''' + @call_from_2 + '''', 'NULL') + ',''' + @trigger_workflow + '''' 
+					SET @spa = 'spa_update_deal_total_volume null,null,0,1,''' + @user_login_id + ''',''n'',1, ' + ISNULL('''' + @call_from_2 + '''', 'NULL') + ',''' + @trigger_workflow + ''', ''' + @process_id + ''''
 					select @job_name= 'Calc Position Breakdown_'+@process_id
 					EXEC spa_run_sp_as_job @job_name,  @spa, 'FARRMS - Calc Position Breakdown', @user_login_id
 			
