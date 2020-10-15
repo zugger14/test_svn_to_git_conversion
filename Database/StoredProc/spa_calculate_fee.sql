@@ -205,7 +205,7 @@ CREATE TABLE #fees_breakdown_tax
 
 	----###### Evaluate formula defined in UDF
 	DECLARE  @formula_table5 VARCHAR(100),@calc_result_table5 VARCHAR(100),@calc_result_table_breakdown5 VARCHAR(100)
-	SET @formula_table5 = dbo.FNAProcessTableName('udf_formula', @user_id, @process_id)
+	SET @formula_table5 = dbo.FNAProcessTableName('udf_formula_tax', @user_id, @process_id)
 
 
 
