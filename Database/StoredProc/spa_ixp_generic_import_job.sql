@@ -137,6 +137,10 @@ DECLARE @sql								NVARCHAR(MAX),
 		, @rebuild_status					NVARCHAR(MAX)
 		, @dest_col_qry						NVARCHAR(1000)
 		, @dest_ixp_col_qry					NVARCHAR(1000)
+		, @ixp_rule_hash					NVARCHAR(100)
+
+	SELECT @ixp_rule_hash = ixp_rule_hash from ixp_rules where ixp_rules_name = @rules_names
+
 	SET	@final_stg_table  = @import_temp_table_name + '_pre'	
 	SET @ixp_destination_column_mapping = dbo.FNAProcessTableName('ixp_destination_column_mapping', @user_login_id, @process_id)	
 	SET @source_ixp_column_mapping = dbo.FNAProcessTableName('source_ixp_column_mapping', @user_login_id, @process_id)
@@ -21685,6 +21689,19 @@ BEGIN
 
 	EXEC spa_auto_transfer @source_deal_header_id = @inserted_source_deal_header_id
 	--deal transfer ends
+	
+	--call auto adjust
+	IF @ixp_rule_hash = '26B22427_56C6_466F_A207_A5DCC04CD25B' --trayport import
+	BEGIN
+		DECLARE @alert_process_table_auto_adjust NVARCHAR(300)
+		SET @alert_process_table_auto_adjust = 'adiha_process.dbo.auto_adjust_' + @process_id3 + '_aa'
+
+		EXEC('SELECT DISTINCT source_deal_header_id 
+			  INTO ' + @alert_process_table_auto_adjust + '
+			  FROM #inserted_deals '
+		)
+	END
+
 END 
 
 IF @table_name IN ('ixp_15mins_allocation_data_template', 'ixp_mv90_data_template')
@@ -25005,6 +25022,15 @@ BEGIN
   		       '
  	EXEC(@sql)
  	
+	--call auto adjust
+	DECLARE @alert_process_table_auto_adjust_c NVARCHAR(300)
+	SET @alert_process_table_auto_adjust_c = 'adiha_process.dbo.auto_adjust_' + @process_id4 + '_aa'
+
+	EXEC('SELECT DISTINCT source_deal_header_id 
+		  INTO ' + @alert_process_table_auto_adjust_c + '
+		  FROM #tmp_second_table '
+	)
+
  	SET @pos_job_name4 =  'calc_position_breakdown_' + @process_id4
  	EXEC spa_update_deal_total_volume NULL, @process_id4, 0,1,@user_login_id
 

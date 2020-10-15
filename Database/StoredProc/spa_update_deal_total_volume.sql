@@ -41,7 +41,8 @@ CREATE PROC [dbo].[spa_update_deal_total_volume]
 	@insert_process_table VARCHAR(1) = 'n',
 	@call_from TINYINT = 0, --0=call from application and adding deals in process table ; 1=call from job to process position breakdown of process table deal (without inserting process table) and job will not be created
 	@call_from_2 VARCHAR(20) = NULL,
-	@trigger_workflow NCHAR(1) = 'y'
+	@trigger_workflow NCHAR(1) = 'y',
+	@process_id_alert VARCHAR(128) = NULL
 AS 
 SET nocount on
 /*
@@ -766,6 +767,9 @@ BEGIN
 	END 
 END
 -- alert call
+IF @process_id_alert IS NOT NULL
+	SET @process_id = @process_id_alert
+
 DECLARE @alert_process_table VARCHAR(300)
 SET @alert_process_table = 'adiha_process.dbo.alert_deal_' + @process_id + '_ad'
 
