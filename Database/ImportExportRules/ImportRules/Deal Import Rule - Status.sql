@@ -47,12 +47,7 @@ BEGIN
 					'UPDATE [temp_process_table]
 SET [Deal Status] = ''New''
 	, [Confirm Status] = ''Not Confirmed''',
-					'UPDATE sdh
-SET  sdh.deal_status = 5603
-    ,sdh.confirm_status_type = 17200
-FROM [final_process_table] a
-INNER JOIN source_deal_header sdh
-    ON sdh.deal_id = a.deal_id',
+					NULL,
 					'i' ,
 					'y' ,
 					@admin_user ,
@@ -85,12 +80,7 @@ INNER JOIN source_deal_header sdh
 				, before_insert_trigger = 'UPDATE [temp_process_table]
 SET [Deal Status] = ''New''
 	, [Confirm Status] = ''Not Confirmed'''
-				, after_insert_trigger = 'UPDATE sdh
-SET  sdh.deal_status = 5603
-    ,sdh.confirm_status_type = 17200
-FROM [final_process_table] a
-INNER JOIN source_deal_header sdh
-    ON sdh.deal_id = a.deal_id'
+				, after_insert_trigger = NULL
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
 				, ixp_category = 23502
