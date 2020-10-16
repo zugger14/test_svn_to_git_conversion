@@ -381,7 +381,7 @@ CREATE TABLE #fees_breakdown_tax
 	SUM(CASE WHEN (uddft.internal_field_type IN (18702, 18703,18717)) THEN ABS(coalesce(td.capacity, cg.mdq,gaivs.storage_capacity)) ELSE 1 END) filter1,MAX(sfv.minimum_value) minimum_value,MAX(sfv.maximum_value) maximum_value,
 	MAX(isnull(udddf.counterparty_id,uddf.counterparty_id)) counterparty_id,
 	MAX(isnull(udddf.contract_id,uddf.contract_id)) contract_id
-	into  #tmp_fees_breakdown_000 --  select * from  #tmp_fees_breakdown 
+	into  #tmp_fees_breakdown_000_tax --  select * from  #tmp_fees_breakdown 
 	FROM	#temp_deals td 
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
 		INNER JOIN #uddft uddft ON uddft.template_id=sdh.template_id	and td.leg= ISNULL(uddft.leg,td.leg)	
@@ -544,7 +544,7 @@ CREATE TABLE #fees_breakdown_tax
 		,contract_value,contract_value_deal,contract_value_inv,internal_type,tab_group_name
 		,udf_group_name,sequence,fee_currency_id,currency_id,contract_mkt_flag,source_deal_detail_id
 		--,shipment_id,ticket_detail_id
-	 from #tmp_fees_breakdown_000 
+	 from #tmp_fees_breakdown_000_tax 
 	 where internal_type IS NOT NULL AND (( internal_type <> 18722 AND f_value = 1) OR internal_type = 18722)
 			AND	internal_type<>18718 and filter1 <> 0 '
 
