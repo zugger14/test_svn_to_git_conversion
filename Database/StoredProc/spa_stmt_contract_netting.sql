@@ -36,16 +36,16 @@ GO
 -- Description: operations for Contract Netting
  
 -- Params:
--- @flag CHAR(1) - Operation flag 
+-- @flag NCHAR(1) - Operation flag 
 -- ===========================================================================================================
 CREATE PROCEDURE [dbo].[spa_stmt_contract_netting]
-    @flag CHAR(1) = NULL, 
+    @flag NCHAR(1) = NULL, 
 	@counterparty_id INT = NULL,
-	@contract_ids VARCHAR(MAX) = NULL,
+	@contract_ids NVARCHAR(MAX) = NULL,
 	@netting_group_id INT = NULL,
 	@netting_contract_id INT = NULL,
-	@xml VARCHAR(MAX) = NULL,
-	@form_xml VARCHAR(MAX) = NULL,
+	@xml NVARCHAR(MAX) = NULL,
+	@form_xml NVARCHAR(MAX) = NULL,
 	@internal_counterparty_id INT = NULL
 AS
 SET NOCOUNT ON
@@ -53,13 +53,13 @@ SET NOCOUNT ON
 /** * DEBUG QUERY START *
 	SET NOCOUNT ON
 
-	DECLARE @flag CHAR(1) = NULL, 
+	DECLARE @flag NCHAR(1) = NULL, 
 		@counterparty_id INT = NULL,
-		@contract_ids VARCHAR(MAX) = NULL,
+		@contract_ids NVARCHAR(MAX) = NULL,
 		@netting_group_id INT = NULL,
 		@netting_contract_id INT = NULL,
-		@xml VARCHAR(MAX) = NULL,
-		@form_xml VARCHAR(MAX) = NULL
+		@xml NVARCHAR(MAX) = NULL,
+		@form_xml NVARCHAR(MAX) = NULL
 
 	SELECT  @flag='i',
 			@xml='<Root><GridGroup><Grid><GridRow  netting_contract_id="21" internal_counterparty_id="8890" netting_contract="1" description="1" effective_date="2019-02-01" netting_type="109801" contract_id="11571" counterparty_id ="123" ></GridRow> <GridRow  netting_contract_id="22" internal_counterparty_id="9014" netting_contract="2a" description="2a" effective_date="2019-02-01" netting_type="109800" contract_id="11572" counterparty_id ="123" ></GridRow> <GridRow  netting_contract_id="23" internal_counterparty_id="8908" netting_contract="asd" description="asd" effective_date="2019-03-01" netting_type="109802" contract_id="11573" counterparty_id ="123" ></GridRow> <GridRow  netting_contract_id="" internal_counterparty_id="9049" netting_contract="1" description="" effective_date="2019-02-04" netting_type="109801" contract_id="" counterparty_id ="123" ></GridRow> </Grid></GridGroup></Root>',
@@ -67,9 +67,9 @@ SET NOCOUNT ON
  
 -- * DEBUG QUERY END * */
 
-DECLARE @sql VARCHAR(MAX)
+DECLARE @sql NVARCHAR(MAX)
 DECLARE @error_no INT
-DECLARE @error_msg VARCHAR(500)
+DECLARE @error_msg NVARCHAR(500)
 
 IF @flag = 's'
 BEGIN
@@ -113,8 +113,8 @@ BEGIN
 			   WITH (
 						netting_contract_id INT,
 						internal_counterparty_id INT,
-						netting_contract VARCHAR(500),
-						[description] VARCHAR(500),
+						netting_contract NVARCHAR(500),
+						[description] NVARCHAR(500),
 						effective_date DATETIME, 
 						netting_type INT,
 						counterparty_id INT,
@@ -170,7 +170,7 @@ BEGIN
 						contract_report_template INT ,
 						netting_template INT ,
 						contract_email_template INT ,
-						netting_contract VARCHAR(100) ,
+						netting_contract NVARCHAR(100) ,
 						credit INT ,
 						receivables INT ,
 						payables INT ,
@@ -231,7 +231,7 @@ BEGIN
 
 		IF EXISTS(SELECT 1 FROM #temp_already_existed_nettng_contract)
 		BEGIN 
-			DECLARE @existing_contracts VARCHAR(200)
+			DECLARE @existing_contracts NVARCHAR(200)
 			SELECT  @existing_contracts = STUFF(( SELECT  ', ' + netting_contract
 					 FROM    #temp_already_existed_nettng_contract
 							FOR XML PATH('')), 1, 1, '')  
@@ -381,10 +381,10 @@ BEGIN
 	FROM counterparty_contract_address cca
 	INNER JOIN contract_group cg ON cca.contract_id = cg.contract_id
 	WHERE 1 = 1
-		AND cca.counterparty_id =' + CAST(@counterparty_id AS VARCHAR) + '
+		AND cca.counterparty_id =' + CAST(@counterparty_id AS NVARCHAR) + '
 		AND ISNULL(contract_type_def_id,38400) <> 38405 ' +
 	CASE WHEN NULLIF(@internal_counterparty_id, '') IS NOT NULL THEN ' 
-		AND cca.internal_counterparty_id = ' + CAST (@internal_counterparty_id AS VARCHAR) 
+		AND cca.internal_counterparty_id = ' + CAST (@internal_counterparty_id AS NVARCHAR) 
 	ELSE '' END 
 
 	EXEC (@sql)
@@ -417,7 +417,7 @@ BEGIN
 			   INTO  #temp_contract
 		FROM   OPENXML(@idoc, '/Root/GridGroup/Grid/GridRow', 1)
 			   WITH (
-						netting_group_detail_id VARCHAR(20),
+						netting_group_detail_id NVARCHAR(20),
 						netting_group_id INT,
 						contract_id INT 
 					)      
@@ -484,7 +484,7 @@ BEGIN
 		FROM #temp_contract t 
 		WHERE t.netting_group_detail_id IS NULL OR t.netting_group_detail_id = ' '
 
-		DECLARE @recommendation_return VARCHAR(2000) = SCOPE_IDENTITY()
+		DECLARE @recommendation_return NVARCHAR(2000) = SCOPE_IDENTITY()
 
 		EXEC spa_ErrorHandler 0,
 		         'contract_netting',
@@ -564,7 +564,7 @@ ELSE IF @flag = 'f'
 BEGIN
 	BEGIN TRY
 		BEGIN TRAN
-			DECLARE @contract_id VARCHAR(20)
+			DECLARE @contract_id NVARCHAR(20)
 			SELECT @contract_id = netting_contract_id from stmt_netting_group where netting_group_id = @netting_group_id
 
 			DELETE FROM contract_group WHERE contract_id = @contract_id
