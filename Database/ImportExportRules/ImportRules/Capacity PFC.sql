@@ -115,7 +115,7 @@ EXEC(''
 	INNER JOIN '' + @output_table + '' rs ON a.[Deal Ref ID] = rs.deal_id
 		AND a.[Term Date] between rs.term_start AND rs.term_end
 		AND a.[Hour] = rs.hr
-		AND a.[Minute] = rs.[period]
+	    AND ISNULL(a.[Minute],0) = rs.[period]
 		AND a.[is dst] = rs.is_dst
 	'')',
 					'IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
@@ -372,7 +372,7 @@ EXEC(''
 	INNER JOIN '' + @output_table + '' rs ON a.[Deal Ref ID] = rs.deal_id
 		AND a.[Term Date] between rs.term_start AND rs.term_end
 		AND a.[Hour] = rs.hr
-		AND a.[Minute] = rs.[period]
+	    AND ISNULL(a.[Minute],0) = rs.[period]
 		AND a.[is dst] = rs.is_dst
 	'')'
 				, after_insert_trigger = 'IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
@@ -556,7 +556,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-T-SQL01\shared_docs_TRMTracker_Release_Enercity\temp_Note\0',
+						   '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
@@ -658,4 +658,3 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-		
