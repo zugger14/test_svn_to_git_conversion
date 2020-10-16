@@ -258,7 +258,7 @@ BEGIN
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20011200','prior_period','prior_period','Prior Period','checkbox','char','h','y',NULL,NULL,'n','y','y','n','n',NULL,NULL,'n','n','n','n',NULL,NULL,NULL)
+			VALUES('20011200','prior_period','prior_period','Prior Period','checkbox','char','h','y',NULL,NULL,'n','y',NULL,'n','n',NULL,NULL,'n','n','n','n',NULL,NULL,NULL)
 
            INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
