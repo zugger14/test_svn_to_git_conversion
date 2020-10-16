@@ -31,10 +31,48 @@ CREATE PROC [dbo].[spa_run_whatif_scenario_report]
 	@criteria_group INT = NULL,
 	@drill_criteria VARCHAR(100)=NULL,
 	@drill_source VARCHAR(100)=NULL
-
+	, @batch_process_id VARCHAR(250) = NULL
+	, @batch_report_param VARCHAR(500) = NULL  
+	, @enable_paging INT = 0  -- '1' = enable, '0' = disable 
+	, @page_size INT = NULL
+	, @page_no INT = NULL 
 	
 AS 
 SET NOCOUNT ON
+
+/*******************************************1st Paging Batch START**********************************************/
+DECLARE @str_batch_table VARCHAR(8000)
+DECLARE @sql_paging VARCHAR(8000)
+DECLARE @is_batch BIT
+DECLARE @user_login_id VARCHAR(2000)
+
+SET @str_batch_table = '' 
+
+SET @user_login_id = dbo.FNADBUser()  
+
+SET @is_batch = CASE WHEN @batch_process_id IS NOT NULL AND @batch_report_param IS NOT NULL THEN 1 ELSE 0 END
+
+IF @is_batch = 1
+	SET @str_batch_table = ' INTO ' + dbo.FNAProcessTableName('batch_report', @user_login_id, @batch_process_id)
+   
+IF @enable_paging = 1 -- paging processing 
+BEGIN 
+	IF @batch_process_id IS NULL 
+		SET @batch_process_id = dbo.FNAGetNewID()
+
+	SET @str_batch_table = dbo.FNAPagingProcess('p', @batch_process_id, @page_size, @page_no) 
+
+	-- retrieve data from paging table instead of main table 
+	IF @page_no IS NOT NULL  
+	BEGIN 
+		SET @sql_paging = dbo.FNAPagingProcess('s', @batch_process_id, @page_size, @page_no)  
+		EXEC (@sql_paging)  
+		RETURN  
+	END 
+END
+/*******************************************1st Paging Batch END**********************************************/ 
+
+
 DECLARE @sql_stmt VARCHAR(MAX)
 
 IF @criteria_group IS NOT NULL AND @whatif_criteria_id IS NULL
@@ -130,7 +168,7 @@ BEGIN
 			
 			CASE MAX(wcm.gmar) WHEN ''y'' THEN CAST((ROUND(MAX(grw.gross_margin), 4)*100) AS VARCHAR)+''%'' ELSE NULL END [GM],
 			CASE MAX(wcm.gmar) WHEN ''y'' THEN CAST((ROUND(MAX(grw.gmar), 4)*100) AS VARCHAR)+''%'' ELSE NULL END [GMaR],
-			sc.currency_name [Currency]
+			sc.currency_name [Currency] ' + @str_batch_table + ' 
 		FROM maintain_whatif_criteria mwc
 		INNER JOIN #source_deal_pnl_WhatIf sdpw ON sdpw.criteria_id = mwc.criteria_id 
 			AND sdpw.term_start >= 
@@ -213,7 +251,7 @@ BEGIN
 				CASE MAX(mwc.use_market_value) WHEN ''y'' THEN ROUND(SUM(sdpw.market_value), 6) ELSE ROUND(SUM(sdpw.und_pnl), 6) END [What-If MTM],
 				ROUND((SUM(sdpw.org_mtm) - CASE MAX(mwc.use_market_value) WHEN ''y'' THEN SUM(sdpw.market_value) ELSE SUM(sdpw.und_pnl) END), 6) [Delta MTM],' 
 			 END +
-			 'sc.currency_name [Currency]
+			 'sc.currency_name [Currency] ' + @str_batch_table + ' 
 			 
 		FROM #source_deal_pnl_WhatIf sdpw
 		INNER JOIN maintain_whatif_criteria mwc ON sdpw.criteria_id = mwc.criteria_id
@@ -281,7 +319,7 @@ BEGIN
 		prw.fixed_exposure [Fixed Exposure],
 		prw.current_exposure [Current Forward Exposure],
 		prw.pfe [PFE],
-		prw.total_future_exposure [Total Potential Exposure]
+		prw.total_future_exposure [Total Potential Exposure] ' + @str_batch_table + ' 
 	FROM
 		pfe_results_whatif prw
 	LEFT JOIN static_data_value sdv ON sdv.value_id = prw.measurement_approach
@@ -305,7 +343,7 @@ BEGIN
 	       vrw.VaR,
 	       vrw.VaRC,
 	       vrw.VaRI,
-	       sc.currency_desc Currency
+	       sc.currency_desc Currency ' + @str_batch_table + ' 
 	FROM   source_deal_pnl_WhatIf sdpw
 	INNER JOIN maintain_whatif_criteria mwc ON sdpw.criteria_id = mwc.criteria_id
 		AND sdpw.term_start >= 
@@ -347,4 +385,29 @@ BEGIN
 
 
 EXEC spa_print 'VAR REPORT'
+
 END
+
+/*******************************************2nd Paging Batch START**********************************************/
+ 
+--update time spent and batch completion message in message board
+IF @is_batch = 1
+BEGIN
+   SELECT @sql_paging = dbo.FNABatchProcess('u', @batch_process_id, @batch_report_param, GETDATE(), NULL, NULL) 
+   EXEC(@sql_paging)
+ 
+   --TODO: modify sp and report name
+   SELECT @sql_paging = dbo.FNABatchProcess('c', @batch_process_id, @batch_report_param, GETDATE(), 'spa_get_import_process_status_detail', 'spa_get_import_process_status_detail')
+   EXEC(@sql_paging)  
+ 
+   RETURN
+END
+ 
+--if it is first call from paging, return total no. of rows and process id instead of actual data
+IF @enable_paging = 1 AND @page_no IS NULL
+BEGIN
+   SET @sql_paging = dbo.FNAPagingProcess('t', @batch_process_id, @page_size, @page_no)
+   EXEC(@sql_paging)
+END
+ 
+/*******************************************2nd Paging Batch END**********************************************/

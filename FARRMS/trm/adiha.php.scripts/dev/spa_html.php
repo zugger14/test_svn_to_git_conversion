@@ -247,7 +247,7 @@ $build_exec_code = [];
             }
 
             $manual_enable_paging_status = false;
-            $manual_enable_paging_sp = ['spa_get_import_process_status','spa_get_mtm_test_run_log'];
+            $manual_enable_paging_sp = ['spa_get_import_process_status','spa_get_mtm_test_run_log','spa_run_whatif_scenario_report'];
             foreach ($manual_enable_paging_sp as $sp_name) {
                 $sp_position = stripos($sql, $sp_name);
                 if ($sp_position) {
