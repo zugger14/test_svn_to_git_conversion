@@ -124,8 +124,6 @@ SET ROWCOUNT 0
 ----dbcc stackdump(1)
 
 
-
-
 SET nocount off	
 DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
 SET CONTEXT_INFO @contextinfo
@@ -170,7 +168,10 @@ declare	@sub_id varchar(1000),
 	,@calc_settlement_adjustment BIT = 0
 	,@process_linear_options_delta CHAR(1) = NULL
 	,@look_term CHAR(1)='d'
-	,@trigger_workflow NCHAR(1) =  'y'
+,@trigger_workflow NCHAR(1) =  'n'
+	--,@batch_process_id	VARCHAR(120) = '212aaaaaaaaaaaaaaaaaa',
+	--@batch_report_param	varchar(5000) = NULL
+
 SET @calc_explain_type ='p'
 
 
@@ -181,11 +182,11 @@ SET @calc_explain_type ='p'
 
 /* 
 
-select *  from source_deal_HEADER   where source_deal_header_id=1600
+select *  from source_deal_HEADER   where source_deal_header_id=104416
 select *  from source_deal_pnl_detail   where source_deal_header_id=1600
-select *  from source_deal_settlement   where source_deal_header_id=103493
+select *  from source_deal_settlement   where source_deal_header_id=104416
 select * from index_fees_breakdown   where source_deal_header_id=1600
-select * from index_fees_breakdown_settlement   where source_deal_header_id=103922
+select * from index_fees_breakdown_settlement   where source_deal_header_id=104416
 delete index_fees_breakdown_settlement   where source_deal_header_id=1600
 
 select *  from source_deal_pnl_breakdown   where source_deal_header_id=7876
@@ -202,8 +203,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =270109  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2020-09-29' , --'2017-02-15',
+	@source_deal_header_id =104416  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2020-10-31' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -220,9 +221,9 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2020-01-01' ,
-	@term_end = '2020-01-31' ,
-	@calc_type = 'm',
+	@term_start = '2020-10-01' ,
+	@term_end = '2020-10-31' ,
+	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
 	@deal_list_table = null,
@@ -231,8 +232,6 @@ SELECT
 	@ref_id=null,
 	@process_linear_options_delta = NULL
 	,@look_term= 's' -- 'd'-> delivered term 's'-> settled term
-
-
 
 /*
 
@@ -250,7 +249,7 @@ select * from #component_price
 select curve_value,curve_value_deal,curve_value_inv,* from #temp_leg_mtm
 
 
-select * from   #temp_deals
+select * from   #temp_curves
 SELECT * FROM  #calc_status
 select * from #s_cids1
  select * from adiha_process.dbo.tmp_hourly_price_vol_dev_admin_A1D29672_773A_4C7C_B910_ABB5D49A8282 hv
@@ -264,6 +263,7 @@ select original_formula_currency, formula_Currency, contract_id, formula_id, *
 
 
 */
+
 
 
 --select * from deal_position_break_down where source_deal_header_id=36740
@@ -311,9 +311,9 @@ select original_formula_currency, formula_Currency, contract_id, formula_id, *
 	 --select * from source_deal_pnl where source_deal_header_id=263
 	 --	 select * from source_deal_pnl_detail where source_deal_header_id=263
 
-	 -- select * from #temp_leg_mtm
+	 -- select * from #temp_curves
 	 --select * from #fees_breakdown
-
+	 
 -- select distinct source_curve_def_id from #temp_curves
 -- select * from #formula_value3
 --select * from source_price_curve where source_curve_def_id between 238 and 242 and as_of_date = '2009-12-01'
@@ -324,6 +324,8 @@ select original_formula_currency, formula_Currency, contract_id, formula_id, *
 --select source_deal_header_id, sum(leg_mtm) from #temp_leg_mtm group by source_deal_header_id
 -- select * from #calc_status
 -- select * from source_deal_settlement where source_deal_header_id = 1667
+-- select * from source_deal_settlement where source_deal_header_id = 1667
+
 /*
 
  SET @sub_id = 1 --179 (Gas)
@@ -343,6 +345,7 @@ select original_formula_currency, formula_Currency, contract_id, formula_id, *
 
 */
 --select * from adiha_process.dbo.testtest
+
 
 
 
@@ -594,6 +597,8 @@ if OBJECT_ID('tempdb..#tmp_source_fees') is not null drop table #tmp_source_fees
 if OBJECT_ID('tempdb..#price_curve_mat_pre') is not null drop table #price_curve_mat_pre
 if OBJECT_ID('tempdb..#pnl_comp_source_deal_header_id') is not null drop table #pnl_comp_source_deal_header_id
 if OBJECT_ID('tempdb..#options_calc_method') is not null drop table #options_calc_method
+if OBJECT_ID('tempdb..#list_need_next_maturity_date_price') is not null drop table #list_need_next_maturity_date_price
+
 
 
 
@@ -5119,7 +5124,7 @@ SELECT source_curve_def_id, as_of_date, assessment_curve_type_value_id, curve_so
 
 
 --select * from #cids
---select * from #temp_curves
+-- select * from #temp_curves
 
 
 If @print_diagnostic = 1
@@ -5152,6 +5157,51 @@ update tc set
 	,ask_value=isnull(1/nullif(ask_value,0),0)
  from #temp_curves tc inner join source_price_curve_def spcd on tc.source_curve_def_id=spcd.source_curve_def_id
 	and spcd.source_curve_type_value_id=	576		--FX Curve
+
+-- Deduct -7 hours for GAS-hour
+select	source_commodity_id, [year], case when (source_commodity_id=-1) then DATEADD(DAY, -1, [date]) else [date] end [date],case when (source_commodity_id=-1) then [hour]+18 else [hour] end [hour],
+		insert_delete  ,dst_group_value_id
+into #mv90_dst -- select * from #mv90_dst where [year]=2020
+from dbo.mv90_dst dst cross join dbo.source_commodity 
+
+create index indx_mv90_dst on #mv90_dst (dst_group_value_id,[date],insert_delete,source_commodity_id)
+
+-- taking next date from maturity date's price for supporting gas hour (commodity_id=-1)
+select distinct tc.source_curve_def_id, tc.as_of_date, tc.Assessment_curve_type_value_id,
+		tc.curve_source_value_id, convert(varchar(10),tc.maturity_date,120) maturity_date
+		, tc.pnl_as_of_date, tc.curve_granularity
+into #list_need_next_maturity_date_price --  select * from #list_need_next_maturity_date_price
+from #temp_curves tc
+  inner join source_price_curve_def spcd on tc.source_curve_def_id=spcd.source_curve_def_id
+	and spcd.commodity_id=	-1 -- gas hour
+	and spcd.granularity in (982,987,994,989,995)
+left join #temp_curves tc1 on tc1.source_curve_def_id=tc.source_curve_def_id
+	and tc1.as_of_date=case when @calc_type='s' then tc1.as_of_date else tc.as_of_date end
+		AND   convert(varchar(10),tc.maturity_date,120)=convert(varchar(10),dateadd(day,-1,tc1.maturity_date),120)
+where tc1.source_curve_def_id is null
+
+insert into #temp_curves (source_curve_def_id, as_of_date, Assessment_curve_type_value_id,
+		curve_source_value_id, maturity_date,is_dst, curve_value, pnl_as_of_date, curve_granularity,bid_value,ask_value)
+select tc.source_curve_def_id, tc.as_of_date, tc.Assessment_curve_type_value_id,
+		tc.curve_source_value_id,spc.maturity_date
+		,spc.is_dst, spc.curve_value, tc.pnl_as_of_date, tc.curve_granularity,spc.bid_value,spc.ask_value
+
+from #list_need_next_maturity_date_price tc
+outer apply
+(
+	select max(as_of_date) as_of_date from source_price_curve where  source_curve_def_id=tc.source_curve_def_id
+	and  convert(varchar(10),dateadd(day,1,tc.maturity_date),120)=convert(varchar(10),maturity_date,120)
+) aod
+inner join source_price_curve spc on spc.as_of_date=case when @calc_type='s' then aod.as_of_date else tc.as_of_date end and spc.source_curve_def_id=tc.source_curve_def_id
+	AND  convert(varchar(10),dateadd(day,1,tc.maturity_date),120)=convert(varchar(10),spc.maturity_date,120)
+	
+update tc set maturity_date= dateadd(hour,-6,maturity_date)
+ from #temp_curves tc inner join source_price_curve_def spcd on tc.source_curve_def_id=spcd.source_curve_def_id
+	and spcd.commodity_id=	-1 -- gas hour
+	and spcd.granularity in (982,987,994,989,995)
+
+-----------------------------------------------------------
+
 
 
 select	curve_id, term_start, contract_id, func_cur_id, Pricing,
@@ -5485,12 +5535,6 @@ end
 -- select * from  #tmp_hourly_price_vol
 -- select * from #hrly_price_curves where month(maturity_date)=7 and curve_id in (23,76) order by curve_id, maturity_date
 
-select	source_commodity_id, [year], case when (source_commodity_id=-1) then DATEADD(DAY, -1, [date]) else [date] end [date],case when (source_commodity_id=-1) then 21 else [hour] end [hour],
-		insert_delete  ,dst_group_value_id
-into #mv90_dst
-from dbo.mv90_dst dst cross join dbo.source_commodity 
-
-create index indx_mv90_dst on #mv90_dst (dst_group_value_id,[date],insert_delete,source_commodity_id)
 
 
 select  spcd.Granularity,td.source_deal_detail_id,td.location_id,pguc.term_hr,convert(varchar(10),pguc.term_hr,120) term_date 
@@ -5535,10 +5579,36 @@ where  st.source_deal_detail_id is null
 
 --   select * from process_generation_unit_cost where location_id=1587
 
-
-
-select * 
-into #hrly_price_curves -- select * from #hrly_price_curves
+select curve_id,Assessment_curve_type_value_id,curve_source_value_id,Granularity
+	, maturity_date,datepart(minute,maturity_date)  period
+	,min(as_of_date) as_of_date,
+	max([0]) [0], 
+	max([1]) [1], 
+	max([2]) [2], 
+	max([3]) [3], 
+	max([4]) [4],
+	max([5]) [5],
+	max([6]) [6],
+	max([7]) [7],
+	max([8]) [8],
+	max([9]) [9],
+	max([10]) [10],
+	max([11]) [11],
+	max([12]) [12]
+	,max([13]) [13]
+	,max([14]) [14]
+	,max([15]) [15]
+	,max([16]) [16]
+	,max([17]) [17]
+	,max([18]) [18]
+	,max([19]) [19]
+	,max([20]) [20]
+	,max([21]) [21]
+	,max([22]) [22]
+	,max([23]) [23]
+	,max([24]) [24]
+	
+	into #hrly_price_curves -- select * from #hrly_price_curves
 from (
 	select tc.source_curve_def_id curve_id,tc.as_of_date,Assessment_curve_type_value_id,tc.curve_source_value_id,tc.curve_value,spcd.Granularity
 	,convert(varchar(10),maturity_date,120) maturity_date
@@ -5552,10 +5622,38 @@ Pivot
 max(curve_value) for hr
 	in ([0], [1], [2], [3], [4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24])
 ) pr
+group by
+curve_id,Assessment_curve_type_value_id,curve_source_value_id,Granularity,maturity_date,period
 
-
-select * 
-into #hrly_price_curves_bid
+select curve_id,Assessment_curve_type_value_id,curve_source_value_id,Granularity
+	, maturity_date,datepart(minute,maturity_date)  period
+	,min(as_of_date) as_of_date,
+	max([0]) [0], 
+	max([1]) [1], 
+	max([2]) [2], 
+	max([3]) [3], 
+	max([4]) [4],
+	max([5]) [5],
+	max([6]) [6],
+	max([7]) [7],
+	max([8]) [8],
+	max([9]) [9],
+	max([10]) [10],
+	max([11]) [11],
+	max([12]) [12]
+	,max([13]) [13]
+	,max([14]) [14]
+	,max([15]) [15]
+	,max([16]) [16]
+	,max([17]) [17]
+	,max([18]) [18]
+	,max([19]) [19]
+	,max([20]) [20]
+	,max([21]) [21]
+	,max([22]) [22]
+	,max([23]) [23]
+	,max([24]) [24]
+	into #hrly_price_curves_bid
 from (
 	select tc.source_curve_def_id curve_id,tc.as_of_date,Assessment_curve_type_value_id,tc.curve_source_value_id,tc.bid_value,spcd.Granularity
 	,convert(varchar(10),maturity_date,120) maturity_date
@@ -5569,9 +5667,38 @@ Pivot
 sum(bid_value) for hr
 	in ([0], [1], [2], [3], [4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24])
 ) pr
+group by
+curve_id,Assessment_curve_type_value_id,curve_source_value_id,Granularity,maturity_date,period
 
-select * 
-into #hrly_price_curves_ask
+select curve_id,Assessment_curve_type_value_id,curve_source_value_id,Granularity
+	, maturity_date,datepart(minute,maturity_date)  period
+	,min(as_of_date) as_of_date,
+	max([0]) [0], 
+	max([1]) [1], 
+	max([2]) [2], 
+	max([3]) [3], 
+	max([4]) [4],
+	max([5]) [5],
+	max([6]) [6],
+	max([7]) [7],
+	max([8]) [8],
+	max([9]) [9],
+	max([10]) [10],
+	max([11]) [11],
+	max([12]) [12]
+	,max([13]) [13]
+	,max([14]) [14]
+	,max([15]) [15]
+	,max([16]) [16]
+	,max([17]) [17]
+	,max([18]) [18]
+	,max([19]) [19]
+	,max([20]) [20]
+	,max([21]) [21]
+	,max([22]) [22]
+	,max([23]) [23]
+	,max([24]) [24]
+	into #hrly_price_curves_ask
 from (
 	select tc.source_curve_def_id curve_id,tc.as_of_date,Assessment_curve_type_value_id,tc.curve_source_value_id,tc.ask_value,spcd.Granularity
 	,convert(varchar(10),maturity_date,120) maturity_date
@@ -5585,6 +5712,8 @@ Pivot
 sum(ask_value) for hr
 	in ([0], [1], [2], [3], [4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24])
 ) pr
+group by
+curve_id,Assessment_curve_type_value_id,curve_source_value_id,Granularity,maturity_date,period
 
 select td.source_deal_detail_id
 	,max(td.location_id) location_id 
@@ -6974,8 +7103,6 @@ FROM '+@position_table_name+' vol with (NOLOCK)
 	left join source_price_curve_def spcd_set ON spcd_set.source_curve_def_id = spcd.settlement_curve_id  and '''+ @calc_type+''' = ''s'' 
 '
 
-
-
 set @sql_price2='
 	LEFT JOIN  ~#hrly_price_curves~ pr1_c with (NOLOCK) ON pr1_c.curve_id=spcd.source_curve_def_id
 		and pr1_c.maturity_date=CASE WHEN (spcd.granularity = 980 OR vol.pricing IN (1601,1602)) THEN cast(Year(vol.term_start) as varchar) + ''-'' + cast(Month(vol.term_start) as varchar) + ''-01'' 
@@ -7109,7 +7236,6 @@ EXEC spa_print  @qry1
 exec(@qry1)
 
 
-
 --td.buy_sell_flag=''s''
 set @qry1='update vol set 
 		hr1 = iif(isnull(t.hr1,0)+isnull(vfa.fee_amt,0)>isnull(t.hr1_c,0),vol.hr1,0),
@@ -7145,9 +7271,6 @@ where td.header_buy_sell_flag=''s'' and td.internal_deal_type_value_id=103
 
 EXEC spa_print  @qry1
 exec(@qry1)
-
-
-
 
 
 --td.buy_sell_flag=''b''
@@ -7221,10 +7344,6 @@ where td.header_buy_sell_flag=''s'' and td.internal_deal_type_value_id=103 and t
 
 EXEC spa_print  @qry1
 exec(@qry1)
-
-
-
-
 
 
 
@@ -7580,7 +7699,7 @@ sum(case when t.granularity_c in (982,987,989,997) then --hourly/15/30 min
 			+ case when isnull(hb.hr19,-1)=9999 then vol.hr19 else 0 end+ case when isnull(hb.hr20,-1)=9999 then vol.hr20 else 0 end
 			+ case when isnull(hb.hr21,-1)=9999 then vol.hr21 else 0 end + case when isnull(hb.hr22,-1)=9999 then vol.hr22 else 0 end
 			+ case when isnull(hb.hr23,-1)=9999 then vol.hr23 else 0 end + case when isnull(hb.hr24,-1)=9999 then vol.hr24 else 0 end),0),1) fixed_price_9999,			
-		'
+	'
 
 
 set @qry5='
@@ -8212,7 +8331,7 @@ FROM(
 		ISNULL(CASE WHEN sddh.hr25 <> 0 THEN sddh.hr25 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr25_c) ELSE ISNULL(pr.price, t.hr25) END END, 0) hr25,
 		vol.hr1   vol1,
 		vol.hr2   vol2,
-		vol.hr3   vol3,
+		vol.hr3-case when td.commodity_id<>-1 and isnull(vol.hr25,0)<>0 then isnull(vol.hr25,0) else 0 end   vol3,
 		vol.hr4   vol4,
 		vol.hr5   vol5,
 		vol.hr6   vol6,
@@ -8230,7 +8349,7 @@ FROM(
 		vol.hr18  vol18,
 		vol.hr19  vol19,
 		vol.hr20  vol20,
-		vol.hr21  vol21,
+		vol.hr21-case when td.commodity_id=-1 and isnull(vol.hr25,0)<>0 then isnull(vol.hr25,0) else 0 end vol21,
 		vol.hr22  vol22,
 		vol.hr23  vol23,
 		vol.hr24  vol24,
@@ -8260,7 +8379,6 @@ GROUP BY source_deal_header_id, source_deal_detail_id'
 
 EXEC spa_print @sql
 EXEC(@sql)
-
 
 set @group_by_clms='vol.save_mtm_at_calculation_granularity,vol.source_deal_detail_id,vol.term_start,isnull(vol.period,-1)'
 
@@ -8709,15 +8827,6 @@ inner join '+ @tmp_hourly_price_vol +' hv on
 exec spa_print @sql
 exec(@sql)
 
-
-
-
-
-
-
-
-
-If @print_diagnostic = 1
 BEGIN
 	print  @pr_name+': '+cast(datediff(ss,@log_time,getdate()) as varchar) +'*************************************'
 	EXEC spa_print  '****************End of Calculating Hourly Market Values*****************************'	
@@ -14580,8 +14689,17 @@ begin
 
 	exec spa_print @sql
 	EXEC(@sql)
-		select @total_set_insert = @@rowcount
+	select @total_set_insert = @@rowcount
 
+
+	--select @as_of_date,
+	--		@term_start,
+	--		 @term_end,
+	--		 @criteria_id,
+	--		@tmp_hourly_price_vol,
+	--	@process_id
+
+		
 	--Calling spa_calculate_fee for calculating VAT/TAX
 	IF @calc_settlement_adjustment = 0
 		EXEC spa_calculate_fee @as_of_date = @as_of_date,
@@ -14613,7 +14731,6 @@ begin
 	END
 
 END
-
 
 
 		set @desc=CASE WHEN @calc_settlement_adjustment=1 THEN 'Settlemet Adjustment' ELSE 'Deal Settlement' END +' Calculation done for as of date: '+ ISNULL(dbo.FNADateFormat(@as_of_date), @as_of_date) +
