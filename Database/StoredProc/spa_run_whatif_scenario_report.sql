@@ -396,8 +396,7 @@ BEGIN
    SELECT @sql_paging = dbo.FNABatchProcess('u', @batch_process_id, @batch_report_param, GETDATE(), NULL, NULL) 
    EXEC(@sql_paging)
  
-   --TODO: modify sp and report name
-   SELECT @sql_paging = dbo.FNABatchProcess('c', @batch_process_id, @batch_report_param, GETDATE(), 'spa_get_import_process_status_detail', 'spa_get_import_process_status_detail')
+   SELECT @sql_paging = dbo.FNABatchProcess('c', @batch_process_id, @batch_report_param, GETDATE(), 'spa_run_whatif_scenario_report', 'What If Analysis Report')
    EXEC(@sql_paging)  
  
    RETURN
