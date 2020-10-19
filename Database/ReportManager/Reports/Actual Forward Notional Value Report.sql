@@ -1066,7 +1066,7 @@ AND ESSMV11.[charge_type_id] <> ''@charge_type_id'')' AS where_part, 0
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, 'o' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 16 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, 'a' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 16 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Actual Forward Notional Value Report'
