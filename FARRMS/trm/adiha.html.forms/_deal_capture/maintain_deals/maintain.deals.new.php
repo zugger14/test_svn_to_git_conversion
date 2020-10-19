@@ -45,6 +45,8 @@ $rights_schedule_volume_update = 10131032;
 $rights_actual_volume_update = 10131033;
 $rights_void_deal = 10131037;
 $rights_unviod_deal = 10131038;
+$rights_cascade = 10131053;
+$rights_rewind_cascade = 10131054;
 
 list (
     $has_rights_deal_edit,
@@ -62,7 +64,9 @@ list (
     $has_schedule_vol_update,
     $has_actual_vol_update ,
     $has_rights_void_deals,
-    $has_rights_unvoid_deals
+    $has_rights_unvoid_deals,
+    $has_rights_cascade,
+    $has_rights_rewind_cascade
     ) = build_security_rights(
     $rights_deal_edit,
     $rights_deal_delete,
@@ -79,7 +83,9 @@ list (
     $rights_schedule_volume_update,
     $rights_actual_volume_update,
     $rights_void_deal,
-    $rights_unviod_deal
+    $rights_unviod_deal,
+    $rights_cascade,
+    $rights_rewind_cascade
 );
 
 if ($has_schedule_vol_update || $has_actual_vol_update) {
@@ -1369,6 +1375,8 @@ $form_data_json = json_encode($form_data_array);
         var has_update_actual_edit = Boolean('<?php echo $enable_update_actual; ?>');
         var has_rights_void_deals = Boolean('<?php echo $has_rights_void_deals; ?>');
         var has_rights_unvoid_deals = Boolean('<?php echo $has_rights_unvoid_deals; ?>');
+        var has_rights_cascade = Boolean('<?php echo $has_rights_cascade; ?>');
+        var has_rights_rewind_cascade = Boolean('<?php echo $has_rights_rewind_cascade; ?>');
 
         if (row_ids != null && deleted_checked == 'n') {
             if (has_delete_rights) setupDeals.deal_menu.setItemEnabled('delete');
@@ -1379,14 +1387,13 @@ $form_data_json = json_encode($form_data_array);
             if (has_rights_change_confirm_status) setupDeals.deal_menu.setItemEnabled('confirm_status');
             if (has_rights_schedule_deal) setupDeals.deal_menu.setItemEnabled('schedule_deal');
             if (has_rights_void_deals) setupDeals.deal_menu.setItemEnabled('void');
-            if (has_rights_unvoid_deals) setupDeals.deal_menu.setItemEnabled('unvoid');
+            if (has_rights_unvoid_deals) setupDeals.deal_menu.setItemEnabled('unvoid');        
+           
             setupDeals.deal_menu.setItemEnabled('group_deal');
             // setupDeals.deal_menu.setItemEnabled('scheduling_report');
 
             if (has_rights_deal_edit) {
-                setupDeals.deal_menu.setItemEnabled('calc_position');
-                setupDeals.deal_menu.setItemEnabled('cascade');		
-				setupDeals.deal_menu.setItemEnabled('rewind_cascade');					
+                setupDeals.deal_menu.setItemEnabled('calc_position');				
                 setupDeals.deal_menu.setItemEnabled('update_book');
             }
             setupDeals.deal_menu.setItemEnabled('generate_confirmation');
@@ -1399,12 +1406,16 @@ $form_data_json = json_encode($form_data_array);
                 if (has_rights_copy) setupDeals.deal_menu.setItemEnabled('copy');
                 if (has_rights_transfer) setupDeals.deal_menu.setItemEnabled('transfer');
                 if (has_update_actual_edit) setupDeals.deal_menu.setItemEnabled('update_actual');
+                if (has_rights_cascade)  setupDeals.deal_menu.setItemEnabled('cascade');		
+			    if (has_rights_rewind_cascade) setupDeals.deal_menu.setItemEnabled('rewind_cascade');	
                 setupDeals.deal_menu.setItemEnabled('dashboard_reports');                
             } else {
                 setupDeals.deal_menu.setItemDisabled('copy');
                 setupDeals.deal_menu.setItemDisabled('transfer');
                 setupDeals.deal_menu.setItemDisabled('update_actual');
-                setupDeals.deal_menu.setItemDisabled('dashboard_reports');
+                setupDeals.deal_menu.setItemDisabled('dashboard_reports');                
+                setupDeals.deal_menu.setItemDisabled('cascade');	
+                setupDeals.deal_menu.setItemDisabled('rewind_cascade');	
             }
         } else {
             setupDeals.deal_menu.setItemDisabled('delete');
