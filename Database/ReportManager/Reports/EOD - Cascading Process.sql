@@ -115,7 +115,7 @@ CREATE TABLE #tmp_result (
 
 
 
-DECLARE @_source_deal_header_ids NVARCHAR(MAX)
+DECLARE @_source_deal_header_ids VARCHAR(MAX)
 
  
 

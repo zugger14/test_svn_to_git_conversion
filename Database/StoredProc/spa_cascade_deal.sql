@@ -19,7 +19,7 @@ This SP used cascade deal using generic mapping definition
 */
 
 CREATE PROC [dbo].[spa_cascade_deal]
-	@parent_deal_ids VARCHAR(1000), 
+	@parent_deal_ids VARCHAR(MAX), 
 	@max_as_of_date DATETIME = NULL,
 	@result_output VARCHAR = NULL OUTPUT,
 	@flag VARCHAR(1000)
