@@ -21696,6 +21696,18 @@ BEGIN
 		EXEC spa_run_sp_as_job @job_name, @sql, 'UpdateProratedVolume', @user_login_id
 	END 
 
+	--call auto adjust
+	IF @ixp_rule_hash = '1C668AFD_E3AE_4344_AF42_EB23F4BD8B59' --trayport import
+	BEGIN
+		DECLARE @alert_process_table_auto_adjust NVARCHAR(300)
+		SET @alert_process_table_auto_adjust = 'adiha_process.dbo.auto_adjust_' + @process_id3 + '_aa'
+
+		EXEC('SELECT DISTINCT source_deal_header_id 
+			  INTO ' + @alert_process_table_auto_adjust + '
+			  FROM ' + @alert_process_table
+		)
+	END
+
  	SET @pos_job_name =  'calc_position_breakdown_' + @process_id3
 -- 	SET @sql = 'spa_update_deal_total_volume NULL,'''+@process_id3+''',0,1,''' + @user_login_id + ''''
  	SET @sql = 'spa_calc_deal_position_breakdown NULL,'''+@process_id3+''''
@@ -21738,18 +21750,6 @@ BEGIN
 
 	EXEC spa_auto_transfer @source_deal_header_id = @inserted_source_deal_header_id
 	--deal transfer ends
-	
-	--call auto adjust
-	IF @ixp_rule_hash = '26B22427_56C6_466F_A207_A5DCC04CD25B' --trayport import
-	BEGIN
-		DECLARE @alert_process_table_auto_adjust NVARCHAR(300)
-		SET @alert_process_table_auto_adjust = 'adiha_process.dbo.auto_adjust_' + @process_id3 + '_aa'
-
-		EXEC('SELECT DISTINCT source_deal_header_id 
-			  INTO ' + @alert_process_table_auto_adjust + '
-			  FROM #inserted_deals '
-		)
-	END
 
 END 
 

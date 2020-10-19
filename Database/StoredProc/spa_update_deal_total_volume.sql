@@ -773,6 +773,9 @@ IF @process_id_alert IS NOT NULL
 DECLARE @alert_process_table VARCHAR(300)
 SET @alert_process_table = 'adiha_process.dbo.alert_deal_' + @process_id + '_ad'
 
+IF OBJECT_id(@alert_process_table, N'U') IS NOT NULL
+	EXEC('DROP TABLE '+ @alert_process_table)
+
 if 	exists(select top(1) 1 from  #total_process_deals ) 
 begin
 
