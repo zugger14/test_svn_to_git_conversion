@@ -62,6 +62,8 @@ CREATE PROCEDURE [dbo].[spa_remit]
 	@submission_type INT = NULL,
 	@submission_status INT = NULL,
 	@filter_table_process_id VARCHAR(100) = NULL,
+	@file_transfer_endpoint_id INT = NULL,
+	@remote_directory NVARCHAR(2000) = NULL,
 	@batch_process_id VARCHAR(120) = NULL,
 	@batch_report_param	VARCHAR(5000) = NULL
 AS
@@ -855,13 +857,8 @@ BEGIN
 				@col_contract_capacity VARCHAR(100), @col_buyer_hubcode VARCHAR(100), @col_seller_hubcode VARCHAR(100), @col_trader_name VARCHAR(100),
 				@col_reference_document_id AS VARCHAR(500), @col_reference_document_version AS VARCHAR(500), @col_broker_fee VARCHAR(100),
 				@file_path VARCHAR(1000), @baseload_block_define_id INT, @xml_string VARCHAR(MAX), @result VARCHAR(MAX), @file_name VARCHAR(255), @xml_inner4 XML,
-				@include_broker NVARCHAR(12) = 'n', @file_name_export NVARCHAR(MAX) = '', @file_transfer_endpoint_id INT, @ecm_document_type NVARCHAR(20)
+				@include_broker NVARCHAR(12) = 'n', @file_name_export NVARCHAR(MAX) = '', @ecm_document_type NVARCHAR(20)
 				, @mapping_table_id INT
-
-	
-		SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id
-		FROM file_transfer_endpoint
-		WHERE [name] = 'Enercity SFTP ECM'
 		
 		SELECT @file_path = gmv.clm1_value
 		FROM generic_mapping_header gmh
@@ -1298,7 +1295,10 @@ BEGIN
 
             SET @desc = 'Export process completed for ECM Xml for process_id: ' + @process_id + '. File has been saved at ' + @file_path
 			EXEC spa_message_board 'i', @user_login_id, NULL, 'Export Xml', @desc, '', '', 's', 'ECM Xml Export'
-			EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-TEST/', @file_name_export, @result OUTPUT
+			IF @file_transfer_endpoint_id IS NOT NULL
+			BEGIN
+				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, @remote_directory, @file_name_export, @result OUTPUT
+			END			
 			RETURN
 		END
         ELSE IF @report_type = 39400
@@ -1542,8 +1542,10 @@ BEGIN
 				SET file_export_name = @file_name
 				    ,acer_submission_status =39501
 				WHERE process_id = @process_id
-
-				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @full_file_path, @result OUTPUT
+				IF @file_transfer_endpoint_id IS NOT NULL
+				BEGIN
+					EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, @remote_directory, @full_file_path, @result OUTPUT
+				END
 			END
             RETURN
         END
@@ -1702,7 +1704,10 @@ BEGIN
 				SET file_export_name = @file_name
 					,acer_submission_status =39501
 				WHERE process_id = @process_id
-				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @full_file_path, @result OUTPUT
+				IF @file_transfer_endpoint_id IS NOT NULL
+				BEGIN
+					EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, @remote_directory, @full_file_path, @result OUTPUT
+				END
 			END
 			RETURN
 		END
@@ -1909,7 +1914,10 @@ BEGIN
 				SET file_export_name = @file_name
 					,acer_submission_status =39501
 				WHERE process_id = @process_id
-				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, '/home/pioneer/equias/cms-uat/outbox/CMS-ERR3-REMIT-TEST/', @full_file_path, @result OUTPUT
+				IF @file_transfer_endpoint_id IS NOT NULL
+				BEGIN
+					EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, @remote_directory, @full_file_path, @result OUTPUT
+				END
 			END
 			RETURN
 		END
@@ -4629,16 +4637,11 @@ BEGIN
 	SELECT @server_location = document_path + '\temp_note\ECM'
 	FROM connection_string 
 
-	SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id
-			,@remote_location = remote_directory + 'inbox/CMS-ERR3-REMIT-TEST'
-	FROM file_transfer_endpoint
-	WHERE [name] = 'Enercity SFTP ECM'
-
 	IF OBJECT_ID('tempdb..#temp_ftp_files') IS NOT NULL
 		DROP TABLE #temp_ftp_files
 	CREATE TABLE #temp_ftp_files(ftp_url NVARCHAR(1000), dir_file NVARCHAR(2000))
 	INSERT INTO #temp_ftp_files
-	EXEC spa_list_ftp_contents_using_clr @file_transfer_endpoint_id, @remote_location , @output_result OUTPUT
+	EXEC spa_list_ftp_contents_using_clr @file_transfer_endpoint_id, @remote_directory , @output_result OUTPUT
 
 	DELETE FROM #temp_ftp_files 
 	WHERE dir_file not like '%.xml%'
@@ -4651,7 +4654,7 @@ BEGIN
 	--SELECT @download_files
 	IF @download_files IS NOT NULL
 	BEGIN
-		EXEC spa_download_file_from_ftp_using_clr @file_transfer_endpoint_id, @remote_location, @download_files, @server_location, '.xml', @output_result OUTPUT
+		EXEC spa_download_file_from_ftp_using_clr @file_transfer_endpoint_id, @remote_directory, @download_files, @server_location, '.xml', @output_result OUTPUT
 		
 		IF OBJECT_ID('tempdb..#temp_remit_xml_data') IS NOT NULL
 			DROP TABLE #temp_remit_xml_data
@@ -4772,14 +4775,14 @@ BEGIN
 		BEGIN
 			IF @success_files IS NOT NULL
 			BEGIN
-				SET @target_remote_directory = @remote_location + '/Processed/' + CONVERT(VARCHAR(7), GETDATE(), 120) + '/'
-				EXEC spa_move_ftp_file_to_folder_using_clr @file_transfer_endpoint_id, @remote_location , @target_remote_directory, @success_files, @output_result OUTPUT
+				SET @target_remote_directory = @remote_directory + '/Processed/' + CONVERT(VARCHAR(7), GETDATE(), 120) + '/'
+				EXEC spa_move_ftp_file_to_folder_using_clr @file_transfer_endpoint_id, @remote_directory , @target_remote_directory, @success_files, @output_result OUTPUT
 			END
 
 			IF @error_files IS NOT NULL
 			BEGIN
 				SET @target_remote_directory = @remote_location + '/Error/' + CONVERT(VARCHAR(7), GETDATE(), 120) + '/'
-				EXEC spa_move_ftp_file_to_folder_using_clr @file_transfer_endpoint_id, @remote_location , @target_remote_directory, @error_files, @output_result OUTPUT
+				EXEC spa_move_ftp_file_to_folder_using_clr @file_transfer_endpoint_id, @remote_directory , @target_remote_directory, @error_files, @output_result OUTPUT
 			END
 
 

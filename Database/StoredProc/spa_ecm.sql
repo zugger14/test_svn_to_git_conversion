@@ -28,7 +28,8 @@ CREATE PROC [dbo].[spa_ecm]
 	@create_date_to VARCHAR(100) = NULL,
 	@process_id VARCHAR(MAX) = NULL,
 	@include_bfi BIT = NULL,
-	@filter_table_process_id VARCHAR(1000) = NULL
+	@filter_table_process_id VARCHAR(1000) = NULL,
+	@file_transfer_endpoint_name NVARCHAR(2000) = NULL
 AS
 
 /*------------------Debug Section------------------
@@ -1015,9 +1016,9 @@ BEGIN
 		FROM connection_string 
 
 		SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id
-			  ,@remote_location = remote_directory + 'inbox/CMS-TEST'
+			  ,@remote_location = remote_directory
 		FROM file_transfer_endpoint
-		WHERE [name] = 'Enercity SFTP ECM'
+		WHERE [name] = @file_transfer_endpoint_name
 
 		IF OBJECT_ID('tempdb..#temp_ftp_files') IS NOT NULL
 			DROP TABLE #temp_ftp_files
@@ -1352,9 +1353,9 @@ BEGIN
 	FROM connection_string 
 
 	SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id
-		  ,@remote_location = remote_directory + 'AckInbox'
+		  ,@remote_location = remote_directory
 	FROM file_transfer_endpoint
-	WHERE [name] = 'Enercity SFTP ECM'
+	WHERE [name] = @file_transfer_endpoint_name
 
 	IF OBJECT_ID('tempdb..#temp_ftp_files_feedback') IS NOT NULL
 		DROP TABLE #temp_ftp_files_feedback

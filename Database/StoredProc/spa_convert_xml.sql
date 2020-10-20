@@ -46,7 +46,8 @@ CREATE PROCEDURE [dbo].[spa_convert_xml]
 	@page_size INT = NULL,
 	@page_no INT = NULL,
 	@call_from_export BIT = NULL,
-	@xml_out VARCHAR(MAX) = NULL OUTPUT
+	@xml_out VARCHAR(MAX) = NULL OUTPUT,
+	@file_transfer_endpoint_name NVARCHAR(2000) = NULL
 AS
 /*----------------Debug Section---------------
 DECLARE @sub_id VARCHAR(1000) = NULL,
@@ -84,7 +85,10 @@ DECLARE @str_batch_table VARCHAR(8000),
 		@source XML,
 		@batch_table_name VARCHAR(1000),
 		@phy_remit_table_name VARCHAR(25),
-		@report_code VARCHAR(100)
+		@report_code VARCHAR(100),
+		@file_transfer_endpoint_id INT,
+		@remote_directory NVARCHAR(2000),
+		@batch_notification_process_id NVARCHAR(40)
 
 SELECT @report_code = code
 FROM static_data_value
@@ -121,9 +125,46 @@ BEGIN
 	END
 END
 
-EXEC spa_remit @Delivery_Start_Date, @Delivery_End_Date, 1,
-			   @generate_uti, @report_type, @process_id, 'i', NULL, NULL, @source OUTPUT,
-			   @mirror_reporting, @intragroup, @as_of_date
+IF NULLIF(@file_transfer_endpoint_name,'') IS NULL AND @batch_process_id IS NOT NULL
+BEGIN
+	SET @batch_notification_process_id = RIGHT(@batch_process_id, 13)
+	SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id
+		 , @remote_directory = ftp_folder_path
+	FROM batch_process_notifications
+	WHERE process_id = @batch_notification_process_id
+
+	SELECT @remote_directory = COALESCE(@remote_directory,remote_directory)
+	FROM file_transfer_endpoint
+	WHERE file_transfer_endpoint_id = @file_transfer_endpoint_id
+	
+	UPDATE batch_process_notifications
+		SET file_transfer_endpoint_id = NULL
+		   ,ftp_folder_path = NULL
+	WHERE process_id = @batch_notification_process_id
+END
+ELSE
+BEGIN
+	SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id
+	      ,@remote_directory = remote_directory
+	FROM file_transfer_endpoint
+	WHERE [name] = @file_transfer_endpoint_name	
+END
+
+EXEC spa_remit @create_date_from = @Delivery_Start_Date
+			  , @create_date_to = @Delivery_End_Date
+			  , @generate_xml =  1
+			  , @generate_uti =  @generate_uti
+			  , @report_type = @report_type
+			  , @process_id = @process_id
+			  , @flag = 'i'
+			  , @batch_unique_id = NULL
+			  , @cancellation = NULL
+			  , @source = @source OUTPUT
+			  , @mirror_reporting = @mirror_reporting
+			  , @intragroup = @intragroup
+			  , @as_of_date = @as_of_date
+			  , @file_transfer_endpoint_id = @file_transfer_endpoint_id
+			  , @remote_directory = @remote_directory
 
 IF @call_from_export = 1
 BEGIN
