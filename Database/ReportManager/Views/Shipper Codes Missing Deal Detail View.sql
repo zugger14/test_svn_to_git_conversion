@@ -28,12 +28,12 @@ BEGIN TRY
 	AND NOT EXISTS (SELECT 1 FROM map_function_category WHERE [function_name] = 'Shipper Codes Missing Deal Detail View' AND '106500' = '106501') 
 	BEGIN
 		INSERT INTO data_source([type_id], [name], [alias], [description], [tsql], report_id, system_defined,category)
-		SELECT TOP 1 1 AS [type_id], 'Shipper Codes Missing Deal Detail View' AS [name], @new_ds_alias AS ALIAS, '' AS [description],null AS [tsql], @report_id_data_source_dest AS report_id,'0' AS [system_defined]
+		SELECT TOP 1 1 AS [type_id], 'Shipper Codes Missing Deal Detail View' AS [name], @new_ds_alias AS ALIAS, 'Shipper Codes Missing Deal Detail View' AS [description],null AS [tsql], @report_id_data_source_dest AS report_id,'0' AS [system_defined]
 			,'106500' AS [category]
 	END
 
 	UPDATE data_source
-	SET alias = @new_ds_alias, description = ''
+	SET alias = @new_ds_alias, description = 'Shipper Codes Missing Deal Detail View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'IF OBJECT_ID(N''tempdb..#books'') IS NOT NULL
     DROP TABLE #books
 
@@ -47,6 +47,7 @@ DECLARE @_header_buy_sell_flag NCHAR(1)
 DECLARE @_commodity_id VARCHAR(1000) 
 DECLARE @_location_id VARCHAR(1000) 
 DECLARE @_Market_index VARCHAR(1000)
+DECLARE @_curve_id VARCHAR(1000)
 
 IF ''@deal_date_from'' <> ''NULL''
     SET @_deal_date_from = ''@deal_date_from''
@@ -72,10 +73,12 @@ IF ''@commodity_id'' <> ''NULL''
  IF ''@location_id'' <> ''NULL''
     SET @_location_id = ''@location_id''
 
-IF ''Market_index'' <> ''NULL''
+IF ''@Market_index'' <> ''NULL''
     SET @_Market_index  = ''@Market_index''
 
-
+IF ''@curve_id'' <> ''NULL''
+    SET @_curve_id  = ''@curve_id''
+	
 SELECT sub.[entity_id] sub_id,
 
        stra.[entity_id] stra_id,
@@ -135,8 +138,10 @@ SELECT books.stra_id stra_id,
        books.sub_name sub,
        books.stra_name stra,
        books.book_name book,
+	   books.[sub_book_id],
+	   books.logical_name sub_book,
        sdh.source_deal_header_id,
-       sdh.close_reference_id [reference_id],
+       sdh.deal_id [reference_id],
        sdh.deal_date,
        sdh.trader_id,
        st.trader_name,
@@ -170,10 +175,12 @@ SELECT books.stra_id stra_id,
        spcd.market_value_id [Market_index],
        sdd.shipper_code1,
        sdd.shipper_code2,
-       scmd.shipper_code [shipper_code_name1],
-       scmd.shipper_code [shipper_code_name2],
+       scmd.shipper_code1 [shipper_code_name1],
+       scmd2.shipper_code [shipper_code_name2],
        ''''@deal_date_from'''' [deal_date_from],
        ''''@deal_date_to'''' [deal_date_to]
+
+	   --[__batch_report__] 
   FROM source_deal_header sdh
     INNER JOIN #books books 
 
@@ -185,14 +192,16 @@ SELECT books.stra_id stra_id,
 
 	AND books.source_system_book_id4 = sdh.source_system_book_id4
 
-INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = sdh.source_deal_header_id
+INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
 LEFT JOIN source_minor_location sml ON sml.source_minor_location_id = sdd.location_id 
 LEFT JOIN source_traders st ON st.source_trader_id = sdh.trader_id
 LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.counterparty_id
 LEFT JOIN source_commodity scom ON scom.source_commodity_id = sdh.commodity_id
 LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
 LEFT JOIN shipper_code_mapping_detail scmd ON scmd.shipper_code_mapping_detail_id = sdd.shipper_code1
-WHERE 1=1'' +
+LEFT JOIN shipper_code_mapping_detail scmd2 ON scmd2.shipper_code_mapping_detail_id = sdd.shipper_code2
+
+WHERE 1=1 AND sdh.physical_financial_flag = ''''p'''' AND (sdd.shipper_code1 IS NULL OR sdd.shipper_code2 IS NULL )'' +
     CASE  WHEN @_term_start IS NOT NULL THEN '' AND sdd.term_start >= '''''' + @_term_start + '''''''' ELSE '''' END +
 	CASE WHEN @_term_end IS NOT NULL THEN '' AND sdd.term_start <= '''''' + @_term_end + '''''''' ELSE '''' END +
     CASE WHEN @_deal_date_from IS NOT NULL THEN '' AND sdh.deal_date >= '''''' + @_deal_date_from + '''''''' ELSE '''' END +
@@ -200,16 +209,10 @@ WHERE 1=1'' +
     CASE WHEN @_counterparty_id IS NOT NULL THEN '' AND sdh.counterparty_id IN('' + @_counterparty_id + '')'' ELSE '''' END +
     CASE WHEN @_header_buy_sell_flag IS NOT NULL THEN '' AND sdh.header_buy_sell_flag = '''''' + @_header_buy_sell_flag + '''''''' ELSE '''' END +
     CASE WHEN @_commodity_id IS NOT NULL THEN '' AND sdh.commodity_id IN('' + @_commodity_id + '')'' ELSE '''' END +
-    CASE WHEN @_location_id IS NOT NULL THEN '' AND sdd.location_id IN('' + @_location_id + '')'' ELSE '''' END 
-EXEC (@_sql);
+    CASE WHEN @_location_id IS NOT NULL THEN '' AND sdd.location_id IN('' + @_location_id + '')'' ELSE '''' END +
+	CASE WHEN @_curve_id IS NOT NULL THEN '' AND sdd.curve_id IN('' + @_curve_id + '')'' ELSE '''' END 
 
-
-
-
-
-
-
-', report_id = @report_id_data_source_dest,
+EXEC (@_sql);', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106500' 
 	WHERE [name] = 'Shipper Codes Missing Deal Detail View'
@@ -434,7 +437,7 @@ EXEC (@_sql);
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Curve ID'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 7, datatype_id = 4, param_data_source = 'browse_curve', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -447,7 +450,7 @@ EXEC (@_sql);
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_id' AS [name], 'Curve ID' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_id' AS [name], 'Curve ID' AS ALIAS, NULL AS reqd_param, 7 AS widget_id, 4 AS datatype_id, 'browse_curve' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Shipper Codes Missing Deal Detail View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -706,7 +709,7 @@ EXEC (@_sql);
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Reference Id'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -719,7 +722,7 @@ EXEC (@_sql);
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'reference_id' AS [name], 'Reference Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'reference_id' AS [name], 'Reference Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Shipper Codes Missing Deal Detail View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -1230,6 +1233,74 @@ EXEC (@_sql);
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'shipper_code_name2' AS [name], 'Shipper Code Name2' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Shipper Codes Missing Deal Detail View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Shipper Codes Missing Deal Detail View'
+	            AND dsc.name =  'sub_book'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Sub Book'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Shipper Codes Missing Deal Detail View'
+			AND dsc.name =  'sub_book'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'sub_book' AS [name], 'Sub Book' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Shipper Codes Missing Deal Detail View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Shipper Codes Missing Deal Detail View'
+	            AND dsc.name =  'sub_book_id'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Sub Book ID'
+			   , reqd_param = NULL, widget_id = 8, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Shipper Codes Missing Deal Detail View'
+			AND dsc.name =  'sub_book_id'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'sub_book_id' AS [name], 'Sub Book ID' AS ALIAS, NULL AS reqd_param, 8 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Shipper Codes Missing Deal Detail View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
