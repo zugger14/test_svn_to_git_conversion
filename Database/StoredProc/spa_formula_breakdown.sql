@@ -637,6 +637,23 @@ SELECT rowid=IDENTITY(INT,1,1), formula_level INTO #tmp_func_level from #formula
 
 update #formula_breakdown set [parent_nested_id]=arg1 WHERE func_name IN('ROW','CountRow','RowSum') AND arg1 IS NOT null 
 
+UPDATE #formula_breakdown 
+SET 
+	func_name=replace(func_name,nchar(160),''),
+	arg1=replace(arg1,nchar(160),''),
+	arg2=replace(arg2,nchar(160),''),
+	arg3=replace(arg3,nchar(160),''),
+	arg4=replace(arg4,nchar(160),''),
+	arg5=replace(arg5,nchar(160),''),
+	arg6=replace(arg6,nchar(160),''),
+	arg7=replace(arg7,nchar(160),''),
+	arg8=replace(arg8,nchar(160),''),
+	arg9=replace(arg9,nchar(160),''),
+	arg10=replace(arg10,nchar(160),''),
+	arg11=replace(arg11,nchar(160),''),
+	arg12=replace(arg12,nchar(160),'')
+
+
 --/*
 DELETE dbo.formula_breakdown WHERE formula_id =ISNULL(@formula_group_id,@formula_id) AND isnull(nested_id,9999999)=isnull(@nested_id,9999999)
 
