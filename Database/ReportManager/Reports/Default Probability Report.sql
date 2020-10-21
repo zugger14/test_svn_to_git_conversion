@@ -36,7 +36,7 @@ BEGIN TRY
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'Default Probability Report' [name], 'farrms_admin' [owner], 1 is_system, 1 is_excel, 0 is_mobile, '74E89C25_462E_450B_89E9_178DDCCFADF2' report_hash, 'Standard Default Probability Report' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'Default Probability Report' [name], 'dev_admin' [owner], 1 is_system, 1 is_excel, 0 is_mobile, '74E89C25_462E_450B_89E9_178DDCCFADF2' report_hash, 'Standard Default Probability Report' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Credit Risk' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
@@ -56,9 +56,9 @@ BEGIN TRY
 	SELECT @report_id_dest AS report_id, 'Default Probability Report' [name], '74E89C25_462E_450B_89E9_178DDCCFADF2' report_hash, 11.5 width,5.5 height
 	
 
-		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file)
+		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
 		SELECT TOP 1 rpage.report_page_id, 'Default Probability Report', 'B1C85C97_2B36_4DB1_8A48_EEEFAFC73767', 3,NULL,NULL,NULL,NULL, 
-		NULL,'n','n'	
+		NULL,'n','n',NULL	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 			on rpage.[name] = 'Default Probability Report'
@@ -272,7 +272,7 @@ BEGIN TRY
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 4 column_order,NULL aggregation, NULL functions, 'Probability' [alias], 1 sortable, -1 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 4 column_order,NULL aggregation, NULL functions, 'Probability' [alias], 1 sortable, 5 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
