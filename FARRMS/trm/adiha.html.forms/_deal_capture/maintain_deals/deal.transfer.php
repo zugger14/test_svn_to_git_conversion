@@ -478,7 +478,7 @@
                    //var percentage = (nValue/deal_volume)*100;
                    //dealTransfer.deal_transfer.cells(rId, volume_percengate_index).setValue(percentage);
                 } else if (cInd == volume_percengate_index) {
-                    if (Number(total_percentage) > Number(avail_per) && deal_type == 17300) {
+                    if ((deal_volume && Number(total_percentage) > Number(avail_per)) && deal_type == 17300) {
                         show_messagebox('Transfer volume exceed available volume.');
                         transfer_error = true;
                         return false;
