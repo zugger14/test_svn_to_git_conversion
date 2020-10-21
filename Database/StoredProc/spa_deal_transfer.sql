@@ -923,7 +923,7 @@ BEGIN
 				
 				--[TO DO] changes done as per latest requirement in enercity which was done only for product_id IN (4100, 4101)
 				UPDATE sdh
-				SET deal_id = t2.deal_id + '_offset_' + CAST(t1.original_deal_id AS NVARCHAR(20))
+				SET deal_id = t2.deal_id + '_offset_' + CAST(t1.original_deal_id AS NVARCHAR(20)) + '_' + CAST(t1.source_deal_header_id AS NVARCHAR(20))
 				   --,close_reference_id = t2.close_reference_id
 				   ,create_user = dbo.FNADBUser()
 				   ,create_ts = GETDATE()
@@ -935,7 +935,7 @@ BEGIN
 				--WHERE t2.product_id IN (4100, 4101)
 				
 				UPDATE sdh
-				SET deal_id = t2.deal_id + '_Xferred_' + CAST(t1.original_deal_id AS NVARCHAR(20))
+				SET deal_id = t2.deal_id + '_Xferred_' + CAST(t1.original_deal_id AS NVARCHAR(20)) + '_' + CAST(t1.source_deal_header_id AS NVARCHAR(20))
 				   --,close_reference_id = t2.close_reference_id
 				   ,create_user = dbo.FNADBUser()
 				   ,create_ts = GETDATE()
