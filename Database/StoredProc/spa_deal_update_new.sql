@@ -4322,19 +4322,26 @@ BEGIN TRY
 		LEFT JOIN source_deal_detail sdd1 ON sdd1.source_deal_header_id = sdh1.source_deal_header_id
 			 AND sdd1.term_start = sdd.term_start
 			 AND sdd1.leg = sdd1.leg
-		WHERE sdd1.deal_volume <> sdd.deal_volume OR 
-			sdd1.fixed_price <> sdd.fixed_price OR  
-			sdd1.fixed_cost <> sdd.fixed_cost OR 
-			sdd1.curve_id <> sdd.curve_id OR 
-			sdd1.fixed_price_currency_id <> sdd.fixed_price_currency_id OR 
-			sdd1.option_strike_price <> sdd.option_strike_price OR 
-			sdd1.deal_volume_frequency <> sdd.deal_volume_frequency OR 
-			sdd1.deal_volume_uom_id<> sdd.deal_volume_uom_id OR 
-			sdd1.price_adder <> sdd.price_adder OR 
-			sdd1.price_multiplier <> sdd.price_multiplier OR 
-			sdd1.multiplier <> sdd.multiplier OR
-			sdd1.formula_curve_id <> sdd.formula_curve_id
+		WHERE ISNULL(sdd1.deal_volume,'-1') <> ISNULL(sdd.deal_volume,'-1') OR 
+			  ISNULL(sdd1.fixed_price,'-1') <> ISNULL(sdd.fixed_price,'-1') OR  
+			  ISNULL(sdd1.fixed_cost,'-1') <> ISNULL(sdd.fixed_cost,'-1') OR 
+			  ISNULL(sdd1.curve_id,'-1') <> ISNULL(sdd.curve_id,'-1') OR 
+			  ISNULL(sdd1.fixed_price_currency_id,'-1') <> ISNULL(sdd.fixed_price_currency_id,'-1') OR 
+			  ISNULL(sdd1.option_strike_price,'-1') <> ISNULL(sdd.option_strike_price,'-1') OR 
+			  ISNULL(sdd1.deal_volume_frequency,'-1') <> ISNULL(sdd.deal_volume_frequency,'-1') OR 
+			  ISNULL(sdd1.deal_volume_uom_id,'-1') <> ISNULL(sdd.deal_volume_uom_id,'-1') OR 
+			  ISNULL(sdd1.price_adder,'-1') <> ISNULL(sdd.price_adder,'-1') OR 
+			  ISNULL(sdd1.price_multiplier,'-1') <> ISNULL(sdd.price_multiplier,'-1') OR 
+			  ISNULL(sdd1.multiplier,'-1') <> ISNULL(sdd.multiplier,'-1') OR
+			  ISNULL(sdd1.formula_curve_id,'-1') <> ISNULL(sdd.formula_curve_id,'-1')
 		
+		;WITH CTE AS(
+		   SELECT source_deal_header_id,
+			   row_num = ROW_NUMBER()OVER(PARTITION BY source_deal_header_id ORDER BY source_deal_header_id)
+		   FROM #temp_updated_transfer_deals
+		)
+		DELETE FROM CTE WHERE row_num > 1
+
 		IF NOT EXISTS(SELECT 1 FROM #temp_updated_transfer_deals) 
 		BEGIN
 			-- update transfer only calse
@@ -4362,19 +4369,26 @@ BEGIN TRY
 				 ON  sdd1.source_deal_header_id = sdh1.source_deal_header_id
 				 AND sdd1.term_start = sdd.term_start
 				 AND sdd1.leg = sdd1.leg  
-			WHERE sdd1.deal_volume <> sdd.deal_volume OR 
-					sdd1.fixed_price <> sdd.fixed_price OR  
-					sdd1.fixed_cost <> sdd.fixed_cost OR 
-					sdd1.curve_id <> sdd.curve_id OR 
-					sdd1.fixed_price_currency_id <> sdd.fixed_price_currency_id OR 
-					sdd1.option_strike_price <> sdd.option_strike_price OR 
-					sdd1.deal_volume_frequency <> sdd.deal_volume_frequency OR 
-					sdd1.deal_volume_uom_id<> sdd.deal_volume_uom_id OR 
-					sdd1.price_adder <> sdd.price_adder OR 
-					sdd1.price_multiplier <> sdd.price_multiplier OR 
-					sdd1.multiplier <> sdd.multiplier OR 
-					sdd1.formula_curve_id <> sdd.formula_curve_id
+			WHERE ISNULL(sdd1.deal_volume,'-1') <> ISNULL(sdd.deal_volume,'-1') OR 
+			  ISNULL(sdd1.fixed_price,'-1') <> ISNULL(sdd.fixed_price,'-1') OR  
+			  ISNULL(sdd1.fixed_cost,'-1') <> ISNULL(sdd.fixed_cost,'-1') OR 
+			  ISNULL(sdd1.curve_id,'-1') <> ISNULL(sdd.curve_id,'-1') OR 
+			  ISNULL(sdd1.fixed_price_currency_id,'-1') <> ISNULL(sdd.fixed_price_currency_id,'-1') OR 
+			  ISNULL(sdd1.option_strike_price,'-1') <> ISNULL(sdd.option_strike_price,'-1') OR 
+			  ISNULL(sdd1.deal_volume_frequency,'-1') <> ISNULL(sdd.deal_volume_frequency,'-1') OR 
+			  ISNULL(sdd1.deal_volume_uom_id,'-1') <> ISNULL(sdd.deal_volume_uom_id,'-1') OR 
+			  ISNULL(sdd1.price_adder,'-1') <> ISNULL(sdd.price_adder,'-1') OR 
+			  ISNULL(sdd1.price_multiplier,'-1') <> ISNULL(sdd.price_multiplier,'-1') OR 
+			  ISNULL(sdd1.multiplier,'-1') <> ISNULL(sdd.multiplier,'-1') OR
+			  ISNULL(sdd1.formula_curve_id,'-1') <> ISNULL(sdd.formula_curve_id,'-1')
 		END
+
+		;WITH CTE AS(
+		   SELECT source_deal_header_id,
+			   row_num = ROW_NUMBER()OVER(PARTITION BY source_deal_header_id ORDER BY source_deal_header_id)
+		   FROM #temp_updated_transfer_deals
+		)
+		DELETE FROM CTE WHERE row_num > 1
 		
 		-- update offset deal
 		UPDATE  sdd1  
@@ -4401,18 +4415,25 @@ BEGIN TRY
 			 ON  sdd1.source_deal_header_id = sdh1.source_deal_header_id
 			 AND sdd1.term_start = sdd.term_start
 			 AND sdd1.leg = sdd1.leg  
-		WHERE sdd1.deal_volume <> sdd.deal_volume OR 
-				sdd1.fixed_price <> sdd.fixed_price OR  
-				sdd1.fixed_cost <> sdd.fixed_cost OR 
-				sdd1.curve_id <> sdd.curve_id OR 
-				sdd1.fixed_price_currency_id <> sdd.fixed_price_currency_id OR 
-				sdd1.option_strike_price <> sdd.option_strike_price OR 
-				sdd1.deal_volume_frequency <> sdd.deal_volume_frequency OR 
-				sdd1.deal_volume_uom_id<> sdd.deal_volume_uom_id OR 
-				sdd1.price_adder <> sdd.price_adder OR 
-				sdd1.price_multiplier <> sdd.price_multiplier OR 
-				sdd1.multiplier <> sdd.multiplier OR
-				sdd1.formula_curve_id <> sdd.formula_curve_id
+		WHERE ISNULL(sdd1.deal_volume,'-1') <> ISNULL(sdd.deal_volume,'-1') OR 
+			  ISNULL(sdd1.fixed_price,'-1') <> ISNULL(sdd.fixed_price,'-1') OR  
+			  ISNULL(sdd1.fixed_cost,'-1') <> ISNULL(sdd.fixed_cost,'-1') OR 
+			  ISNULL(sdd1.curve_id,'-1') <> ISNULL(sdd.curve_id,'-1') OR 
+			  ISNULL(sdd1.fixed_price_currency_id,'-1') <> ISNULL(sdd.fixed_price_currency_id,'-1') OR 
+			  ISNULL(sdd1.option_strike_price,'-1') <> ISNULL(sdd.option_strike_price,'-1') OR 
+			  ISNULL(sdd1.deal_volume_frequency,'-1') <> ISNULL(sdd.deal_volume_frequency,'-1') OR 
+			  ISNULL(sdd1.deal_volume_uom_id,'-1') <> ISNULL(sdd.deal_volume_uom_id,'-1') OR 
+			  ISNULL(sdd1.price_adder,'-1') <> ISNULL(sdd.price_adder,'-1') OR 
+			  ISNULL(sdd1.price_multiplier,'-1') <> ISNULL(sdd.price_multiplier,'-1') OR 
+			  ISNULL(sdd1.multiplier,'-1') <> ISNULL(sdd.multiplier,'-1') OR
+			  ISNULL(sdd1.formula_curve_id,'-1') <> ISNULL(sdd.formula_curve_id,'-1')
+
+		;WITH CTE AS(
+		   SELECT source_deal_header_id,
+			   row_num = ROW_NUMBER()OVER(PARTITION BY source_deal_header_id ORDER BY source_deal_header_id)
+		   FROM #temp_updated_transfer_deals
+		)
+		DELETE FROM CTE WHERE row_num > 1
 		
 		IF OBJECT_ID('tempdb..#temp_updated_transfer_deals2') IS NOT NULL
 			DROP TABLE #temp_updated_transfer_deals2
@@ -4465,37 +4486,43 @@ BEGIN TRY
 			 ON  sdd1.source_deal_header_id = sdh1.source_deal_header_id
 			 AND sdd1.term_start = sdd.term_start
 			 AND sdd1.leg = sdd1.leg  
-		WHERE sdd1.deal_volume <> sdd.deal_volume OR 
-				sdd1.fixed_price <> sdd.fixed_price OR  
-				sdd1.fixed_cost <> sdd.fixed_cost OR 
-				sdd1.curve_id <> sdd.curve_id OR 
-				sdd1.fixed_price_currency_id <> sdd.fixed_price_currency_id OR 
-				sdd1.option_strike_price <> sdd.option_strike_price OR 
-				sdd1.deal_volume_frequency <> sdd.deal_volume_frequency OR 
-				sdd1.deal_volume_uom_id<> sdd.deal_volume_uom_id OR 
-				sdd1.price_adder <> sdd.price_adder OR 
-				sdd1.price_multiplier <> sdd.price_multiplier OR 
-				sdd1.multiplier <> sdd.multiplier  OR
-				sdd1.formula_curve_id <> sdd.formula_curve_id OR 
-				sdd1.fixed_float_leg<>  sdd.fixed_float_leg OR 
-				sdd1.meter_id<> sdd.meter_id OR 
-				sdd1.physical_financial_flag <>  sdd.physical_financial_flag OR 
-				sdd1.adder_currency_id <>  sdd.adder_currency_id OR  
-				sdd1.fixed_cost_currency_id <>  sdd.fixed_cost_currency_id OR 
-				sdd1.formula_currency_id <>  sdd.formula_currency_id OR 
-				sdd1.price_adder2 <>  sdd.price_adder2 OR 
-				sdd1.price_adder_currency2 <>  sdd.price_adder_currency2 OR 
-				sdd1.pay_opposite <> sdd.pay_opposite OR 
-				sdd1.capacity <> sdd1.capacity OR 
-				sdd1.settlement_currency <>  sdd.settlement_currency OR 
-				sdd1.standard_yearly_volume <>  sdd.standard_yearly_volume OR 
-				sdd1.price_uom_id <>  sdd.price_uom_id OR 
-				sdd1.category <>  sdd.category OR 
-				sdd1.profile_code <>  sdd.profile_code OR 
-				sdd1.pv_party <>  sdd.pv_party OR
-				sdd1.buy_sell_flag <> sdd.buy_sell_flag OR
-				sdd1.formula_id <> sdd.formula_id
+		WHERE   ISNULL(sdd1.deal_volume, '-1') <> ISNULL(sdd.deal_volume, '-1') OR 
+				ISNULL(sdd1.fixed_price, '-1') <> ISNULL(sdd.fixed_price, '-1') OR  
+				ISNULL(sdd1.fixed_cost, '-1') <> ISNULL(sdd.fixed_cost, '-1') OR 
+				ISNULL(sdd1.curve_id, '-1') <> ISNULL(sdd.curve_id, '-1') OR 
+				ISNULL(sdd1.fixed_price_currency_id, '-1') <> ISNULL(sdd.fixed_price_currency_id, '-1') OR 
+				ISNULL(sdd1.option_strike_price, '-1') <> ISNULL(sdd.option_strike_price, '-1') OR 
+				ISNULL(sdd1.deal_volume_frequency, '-1') <> ISNULL(sdd.deal_volume_frequency, '-1') OR 
+				ISNULL(sdd1.deal_volume_uom_id , '-1') <> ISNULL(sdd.deal_volume_uom_id, '-1') OR 
+				ISNULL(sdd1.price_adder, '-1') <> ISNULL(sdd.price_adder, '-1') OR 
+				ISNULL(sdd1.price_multiplier, '-1') <> ISNULL(sdd.price_multiplier, '-1') OR 
+				ISNULL(sdd1.multiplier, '-1') <> ISNULL(sdd.multiplier , '-1') OR
+				ISNULL(sdd1.formula_curve_id, '-1') <> ISNULL(sdd.formula_curve_id, '-1') OR 
+				ISNULL(sdd1.fixed_float_leg, '-1') <>  ISNULL(sdd.fixed_float_leg, '-1') OR 
+				ISNULL(sdd1.meter_id, '-1') <> ISNULL(sdd.meter_id, '-1') OR 
+				ISNULL(sdd1.physical_financial_flag, '-1') <>  ISNULL(sdd.physical_financial_flag, '-1') OR 
+				ISNULL(sdd1.adder_currency_id, '-1') <>  ISNULL(sdd.adder_currency_id, '-1') OR  
+				ISNULL(sdd1.fixed_cost_currency_id, '-1') <>  ISNULL(sdd.fixed_cost_currency_id, '-1') OR 
+				ISNULL(sdd1.formula_currency_id, '-1') <>  ISNULL(sdd.formula_currency_id, '-1') OR 
+				ISNULL(sdd1.price_adder2, '-1') <>  ISNULL(sdd.price_adder2, '-1') OR 
+				ISNULL(sdd1.price_adder_currency2, '-1') <>  ISNULL(sdd.price_adder_currency2, '-1') OR 
+				ISNULL(sdd1.pay_opposite, '-1') <> ISNULL(sdd.pay_opposite, '-1') OR 
+				ISNULL(sdd1.capacity, '-1') <> ISNULL(sdd1.capacity, '-1') OR 
+				ISNULL(sdd1.settlement_currency, '-1') <>  ISNULL(sdd.settlement_currency, '-1') OR 
+				ISNULL(sdd1.standard_yearly_volume, '-1') <>  ISNULL(sdd.standard_yearly_volume, '-1') OR 
+				ISNULL(sdd1.price_uom_id, '-1') <>  ISNULL(sdd.price_uom_id, '-1') OR 
+				ISNULL(sdd1.category, '-1') <>  ISNULL(sdd.category, '-1') OR 
+				ISNULL(sdd1.profile_code, '-1') <>  ISNULL(sdd.profile_code, '-1') OR 
+				ISNULL(sdd1.pv_party, '-1') <>  ISNULL(sdd.pv_party, '-1') OR
+				ISNULL(sdd1.buy_sell_flag, '-1') <> ISNULL(sdd.buy_sell_flag, '-1') OR
+				ISNULL(sdd1.formula_id, '-1') <> ISNULL(sdd.formula_id, '-1')
 
+		;WITH CTE AS(
+			SELECT source_deal_header_id,
+				row_num = ROW_NUMBER()OVER(PARTITION BY source_deal_header_id ORDER BY source_deal_header_id)
+			FROM #temp_updated_transfer_deals2
+		)
+		DELETE FROM CTE WHERE row_num > 1
 		---- vice versa  update original deal when updating transfer deal
 		UPDATE  sdd1  
 		SET     sdd1.deal_volume = sdd.deal_volume,
@@ -4521,18 +4548,18 @@ BEGIN TRY
 			 ON  sdd1.source_deal_header_id = sdh1.source_deal_header_id
 			 AND sdd1.term_start = sdd.term_start
 			 AND sdd1.leg = sdd1.leg  
-		WHERE sdd1.deal_volume <> sdd.deal_volume OR 
-				sdd1.fixed_price <> sdd.fixed_price OR  
-				sdd1.fixed_cost <> sdd.fixed_cost OR 
-				sdd1.curve_id <> sdd.curve_id OR 
-				sdd1.fixed_price_currency_id <> sdd.fixed_price_currency_id OR 
-				sdd1.option_strike_price <> sdd.option_strike_price OR 
-				sdd1.deal_volume_frequency <> sdd.deal_volume_frequency OR 
-				sdd1.deal_volume_uom_id<> sdd.deal_volume_uom_id OR 
-				sdd1.price_adder <> sdd.price_adder OR 
-				sdd1.price_multiplier <> sdd.price_multiplier OR 
-				sdd1.multiplier <> sdd.multiplier OR
-				sdd1.formula_curve_id <> sdd.formula_curve_id
+		WHERE   ISNULL(sdd1.deal_volume, '-1') <> ISNULL(sdd.deal_volume, '-1') OR 
+				ISNULL(sdd1.fixed_price, '-1') <> ISNULL(sdd.fixed_price, '-1') OR  
+				ISNULL(sdd1.fixed_cost, '-1') <> ISNULL(sdd.fixed_cost, '-1') OR 
+				ISNULL(sdd1.curve_id, '-1') <> ISNULL(sdd.curve_id, '-1') OR 
+				ISNULL(sdd1.fixed_price_currency_id, '-1') <> ISNULL(sdd.fixed_price_currency_id, '-1') OR 
+				ISNULL(sdd1.option_strike_price, '-1') <> ISNULL(sdd.option_strike_price, '-1') OR 
+				ISNULL(sdd1.deal_volume_frequency, '-1') <> ISNULL(sdd.deal_volume_frequency, '-1') OR 
+				ISNULL(sdd1.deal_volume_uom_id, '-1') <> ISNULL(sdd.deal_volume_uom_id, '-1') OR 
+				ISNULL(sdd1.price_adder, '-1') <> ISNULL(sdd.price_adder, '-1') OR 
+				ISNULL(sdd1.price_multiplier, '-1') <> ISNULL(sdd.price_multiplier, '-1') OR 
+				ISNULL(sdd1.multiplier, '-1') <> ISNULL(sdd.multiplier, '-1') OR
+				ISNULL(sdd1.formula_curve_id, '-1') <> ISNULL(sdd.formula_curve_id, '-1')
 
 		INSERT INTO #temp_updated_transfer_deals(source_deal_header_id)
 		SELECT DISTINCT source_deal_header_id FROM #temp_updated_transfer_deals2
