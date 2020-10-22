@@ -36,13 +36,13 @@ BEGIN TRY
 --SET CONTEXT_INFO @_contextinfo
 --SET NOCOUNT off
 SET NOCOUNT on
-DECLARE @_summary_option CHAR(6) =null --''x'' --''y'' -- ''m'' --''d'' -------  ''d'' Detail, ''h'' =hourly,''x''/''y'' = 15/30 minute, q=quatar, a=annual
+DECLARE @_summary_option CHAR(6) =NULL --''m'' --''x'' --''y'' -- ''m'' --''d'' -------  ''d'' Detail, ''h'' =hourly,''x''/''y'' = 15/30 minute, q=quatar, a=annual
 	,@_sub_id VARCHAR(MAX) = NULL
 	,@_stra_id VARCHAR(MAX) = NULL
 	,@_book_id VARCHAR(MAX) = null
 	,@_subbook_id VARCHAR(MAX) = NULL
-	,@_as_of_date VARCHAR(20) =null --''2020-09-07'' --''2020-06-30''
-	,@_source_deal_header_id VARCHAR(1000) =null -- 45871 --540 -- --223683,
+	,@_as_of_date VARCHAR(20) =NULL--''2020-02-03'' --''2020-09-07'' --''2020-06-30''
+	,@_source_deal_header_id VARCHAR(1000) = NULL--80150 -- 45871 --540 -- --223683,
 	,@_period_from VARCHAR(6) = NULL
 	,@_period_to VARCHAR(6) = NULL
 	,@_tenor_option VARCHAR(6) = NULL
@@ -177,6 +177,10 @@ DECLARE @_format_option CHAR(1) = ''r''
 	,@_column_level VARCHAR(100)
 	,@_temp_process_id VARCHAR(100)
 	,@_sql_final VARCHAR(MAX)
+
+
+
+
 IF object_id(''tempdb..#temp_deals'') IS NOT NULL
 	DROP TABLE #temp_deals
 IF object_id(''tempdb..#source_deal_header_id'') IS NOT NULL
@@ -317,7 +321,6 @@ IF NULLIF(@_format_option, '''') IS NULL
 DECLARE @_term_start_temp DATETIME
 	,@_term_END_temp DATETIME
 CREATE TABLE #temp_deals (term_start date,term_end date, source_deal_detail_id int,source_deal_header_id int,physical_financial CHAR(1) COLLATE DATABASE_DEFAULT, pricing_type INT, internal_portfolio_id INT,template_id int, internal_deal_type_value_id int, internal_deal_subtype_value_id int
-
 )
 --print @_term_start
 --print @_as_of_date
@@ -530,6 +533,8 @@ CREATE TABLE #term_date (
 	,hr24 TINYINT
 	,add_dst_hour INT
 )
+
+
 INSERT INTO #term_date (
 	block_define_id
 	,term_date
@@ -591,17 +596,18 @@ SELECT DISTINCT a.block_define_id
 	,hb.hr24
 	,hb.add_dst_hour
 FROM (
-	select DISTINCT tz.dst_group_value_id, isnull(spcd.block_define_id, nullif(@_baseload_block_define_id, ''NULL'')) block_define_id  
+	select DISTINCT tz.dst_group_value_id, isnull(spcd.block_define_id, nullif(-10000298, NULL)) block_define_id  
 			,s.term_start
 			,s.term_end
 	FROM report_hourly_position_breakdown s (NOLOCK)
-			INNER JOIN #temp_deals td on s.term_start between td.term_start and td.term_end
-			 and td.source_deal_detail_id=s.source_deal_detail_id
+			INNER JOIN #temp_deals td on --s.term_start between td.term_start and td.term_end and
+			  td.source_deal_detail_id=s.source_deal_detail_id
 			INNER JOIN [deal_status_group] dsg ON dsg.status_value_id = s.deal_status_id
 			LEFT JOIN source_price_curve_def spcd WITH (NOLOCK) ON spcd.source_curve_def_id = s.curve_id
 			LEFT JOIN vwDealTimezone tz ON tz.source_deal_header_id = s.source_deal_header_id
 				AND ISNULL(tz.formula_curve_id, - 1) = ISNULL(s.curve_id, - 1)
-				AND ISNULL(tz.location_id, - 1) = ISNULL(s.location_id, - 1)
+				--AND ISNULL(tz.location_id, - 1) = ISNULL(s.location_id, - 1)
+
 	) a
 OUTER APPLY (
 	SELECT h.*
@@ -847,7 +853,8 @@ BEGIN
 	SET @_rhpb2=
 	'',s.source_deal_header_id,s.commodity_id,s.counterparty_id,s.fas_book_id,s.source_system_book_id1,s.source_system_book_id2,s.source_system_book_id3,s.source_system_book_id4,CASE WHEN s.formula IN(''''dbo.FNACurveH'''',''''dbo.FNACurveD'''') THEN ISNULL(hg.exp_date,hb.term_date) WHEN ISNULL(spcd.hourly_volume_allocation,17601) IN(17603,17604) THEN ISNULL(hg.exp_date,s.expiration_date) ELSE s.expiration_date END expiration_date,''''y'''' AS is_fixedvolume ,deal_status_id,1 breakdown, spcd.block_define_id
 			from ''+@_view_name1+''_breakdown s ''+CASE WHEN @_view_nameq=''vwHourly_position_AllFilter'' THEN '' WITH(NOEXPAND) '' ELSE '' (nolock) '' END +'' 
-			 inner join #temp_deals td on s.term_start between td.term_start and td.term_end and td.source_deal_detail_id=s.source_deal_detail_id
+			 inner join #temp_deals td on --s.term_start between td.term_start and td.term_end and 
+			 td.source_deal_detail_id=s.source_deal_detail_id
 			INNER JOIN #books bk ON bk.fas_book_id=s.fas_book_id 
 			'' +CASE WHEN @_source_deal_header_id IS NOT NULL THEN '' and s.source_deal_header_id IN ('' +CAST(@_source_deal_header_id AS VARCHAR) + '')'' ELSE '''' END 
 			+''	AND bk.source_system_book_id1=s.source_system_book_id1 AND bk.source_system_book_id2=s.source_system_book_id2 AND bk.source_system_book_id3=s.source_system_book_id3 AND bk.source_system_book_id4=s.source_system_book_id4 '' 
@@ -856,7 +863,7 @@ BEGIN
 		+'' left JOIN source_price_curve_def spcd with (nolock) ON spcd.source_curve_def_id=s.curve_id 
 		LEFT JOIN source_price_curve_def spcd1 (nolock) On spcd1.source_curve_def_id=spcd.settlement_curve_id
 		left JOIN  vwDealTimezone tz on tz.source_deal_header_id=s.source_deal_header_id
-			AND ISNULL(tz.formula_curve_id,-1)=ISNULL(s.curve_id,-1) AND ISNULL(tz.location_id,-1)=ISNULL(s.location_id,-1)
+			AND ISNULL(tz.formula_curve_id,-1)=ISNULL(s.curve_id,-1) --AND ISNULL(tz.location_id,-1)=ISNULL(s.location_id,-1)
 		outer apply (select sum(volume_mult) term_no_hrs from hour_block_term hbt where isnull(spcd.hourly_volume_allocation,17601) <17603 and hbt.block_define_id=COALESCE(spcd.block_define_id,''+@_baseload_block_define_id+'')	and  hbt.block_type=COALESCE(spcd.block_type,''+@_baseload_block_type+'') and hbt.term_date between s.term_start  and s.term_END and hbt.dst_group_value_id=tz.dst_group_value_id ) term_hrs
 		outer apply ( select sum(volume_mult) term_no_hrs from hour_block_term hbt inner join 
 		(select distinct exp_date from holiday_group h where  h.hol_group_value_id=ISNULL(spcd.exp_calendar_id,spcd1.exp_calendar_id) and h.exp_date between s.term_start  and s.term_END  ) ex on ex.exp_date=hbt.term_date
@@ -878,6 +885,10 @@ BEGIN
 		    '' +CASE WHEN @_tenor_option <> ''a'' THEN '' and CASE WHEN s.formula IN(''''dbo.FNACurveH'''',''''dbo.FNACurveD'''') THEN ISNULL(hg.exp_date,hb.term_date) WHEN ISNULL(spcd.hourly_volume_allocation,17601) IN(17603,17604) THEN ISNULL(hg.exp_date,s.expiration_date) ELSE s.expiration_date END>''''''+@_as_of_date+'''''''' ELSE '''' END + 
 			@_scrt
 END
+
+
+
+
 	--select @_group_by, @_summary_option,@_format_option		
 IF  @_summary_option IN (''d'' ,''m'',''q'',''a'')	
 --IF  @_summary_option IN (''q'',''a'')
@@ -1138,8 +1149,6 @@ exec(''CREATE INDEX indx_tmp_subqry1''+@_temp_process_id+'' ON ''+@_position_dea
 	CREATE INDEX indx_tmp_subqry2''+@_temp_process_id+'' ON ''+@_position_deal +''(location_id);
 	CREATE INDEX indx_tmp_subqry3''+@_temp_process_id+'' ON ''+@_position_deal +''(counterparty_id)''
 )
-
-
 select distinct sdd.source_deal_header_id,s.term_date, 
 case when is_dst=1 then 25 else s.hours end [hours], isnull(s.period,0) period, 1 non_money
 into #tmp_delta_0 -- select * from  #tmp_delta_0
@@ -1150,10 +1159,7 @@ inner join #temp_deals td on td.source_deal_header_id=s.source_deal_header_id
 	and sdd.leg =s.leg and s.term_date between sdd.term_start and sdd.term_end
 where leg_mtm_deal<0  and as_of_date=@_as_of_date 
 	and @_summary_option IN (''h'',''x'',''y'') 
-
 create index indx_90909 on #tmp_delta_0 (source_deal_header_id,term_date,[hours], [period])
-
-
 if object_id(''tempdb..#tmp_delta_pvt'') is not null drop table #tmp_delta_pvt
 select * 
 into #tmp_delta_pvt -- select * from #tmp_delta_pvt
@@ -1163,7 +1169,6 @@ Pivot
 max(non_money) for [hours]
 	in ( [1], [2], [3], [4],[5],[6],[7],[8],[9],[10],[11],[12],[13],[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24],[25])
 ) pr
-
 if @@rowcount>0
 begin
 	set @_sqry=''update t set
@@ -1199,9 +1204,6 @@ begin
 	EXEC spa_print  @_sqry
 	exec(@_sqry)
 end
-
-
-
 set @_sqry=CASE WHEN @_convert_to_uom_id IS NULL then '''' else ''
 	select distinct sdd.source_deal_detail_id,vw.term_start,cf_p.factor physical_density_mult,cf_f.factor financial_density_mult
 	into #density_multiplier
@@ -1389,9 +1391,6 @@ set @_commodity_str1='' INTO #tmp_pos_detail_gas FROM ''+@_hour_pivot_table+'' s
 	LEFT JOIN static_data_value sdv_block_group WITH (NOLOCK) ON sdv_block_group.value_id = hb1.block_type_group_id
 ''
 else '''' end
-
-
-
 SET @_rhpb1= ''
 SELECT 
 	id = IDENTITY(INT, 1, 1),
@@ -1721,7 +1720,6 @@ set @_rhpb4=''
 	  else '''' END
 --CASE WHEN @_physical_financial_flag IS NOT NULL THEN '' WHERE vw.physical_financial_flag = '''''' + @_physical_financial_flag + '''''''' ELSE '''' END end
 	+CASE WHEN @_leg IS NOT NULL THEN '' AND sdd.leg =''+@_leg ELSE '''' END
-	
 IF @_show_delta_volume = ''y''
 SET @_rhpb5 = ''
 	select row_number() over(partition by t.source_deal_header_id,t.leg order by t.term_start) row_no,t.source_deal_header_id,t.Leg ,t.term_start,sdpdo.DELTA,sdpdo.DELTA2 
