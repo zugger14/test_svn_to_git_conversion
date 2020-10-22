@@ -171,11 +171,11 @@ BEGIN
 	INNER JOIN #temp_trans_off tto
 		ON tto.source_deal_header_id = sdh.source_deal_header_id
 	INNER JOIN source_deal_detail sdd
-		ON sdd.source_deal_header_id = ISNULL(tto.transfer_deal_id, tto.offset_deal_id)
+		ON sdd.source_deal_header_id = ISNULL(tto.transfer_deal_id, tto.offset_deal_id)		
+		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
-		AND sddh.term_date BETWEEN sdd.term_start AND sdd.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
 
@@ -211,18 +211,18 @@ BEGIN
 	 FROM [temp_process_table] t
 	INNER JOIN source_deal_header sdh
 		ON sdh.deal_id = t.deal_id
-	INNER JOIN #temp_trans_off tto
-		ON tto.source_deal_header_id = sdh.source_deal_header_id
-	INNER JOIN source_deal_detail sdd
-		ON sdd.source_deal_header_id = tto.source_deal_header_id		
-	INNER JOIN source_deal_detail sdd_to
-		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
+	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id	
+		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
-		AND sddh.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
+	INNER JOIN #temp_trans_off tto
+		ON tto.source_deal_header_id = sdh.source_deal_header_id		
+	INNER JOIN source_deal_detail sdd_to
+		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
+		AND t.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
 END
 
 
@@ -248,6 +248,7 @@ SET @output_table = ''adiha_process.dbo.temp_output_details_''+ @set_process_id
 	FROM '' + @output_table + '' a
 	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = a.source_deal_header_id	AND sdh.structured_deal_id <> a.source_deal_header_id	
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	    AND a.term_start BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = a.term_start --BETWEEN a.term_start AND a.term_end
 		AND CAST(LEFT(sddh.hr,2) AS INT) = a.hr
@@ -454,11 +455,11 @@ BEGIN
 	INNER JOIN #temp_trans_off tto
 		ON tto.source_deal_header_id = sdh.source_deal_header_id
 	INNER JOIN source_deal_detail sdd
-		ON sdd.source_deal_header_id = ISNULL(tto.transfer_deal_id, tto.offset_deal_id)
+		ON sdd.source_deal_header_id = ISNULL(tto.transfer_deal_id, tto.offset_deal_id)		
+		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
-		AND sddh.term_date BETWEEN sdd.term_start AND sdd.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
 
@@ -494,18 +495,18 @@ BEGIN
 	 FROM [temp_process_table] t
 	INNER JOIN source_deal_header sdh
 		ON sdh.deal_id = t.deal_id
-	INNER JOIN #temp_trans_off tto
-		ON tto.source_deal_header_id = sdh.source_deal_header_id
-	INNER JOIN source_deal_detail sdd
-		ON sdd.source_deal_header_id = tto.source_deal_header_id		
-	INNER JOIN source_deal_detail sdd_to
-		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
+	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id	
+		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
-		AND sddh.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
+	INNER JOIN #temp_trans_off tto
+		ON tto.source_deal_header_id = sdh.source_deal_header_id		
+	INNER JOIN source_deal_detail sdd_to
+		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
+		AND t.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
 END
 
 
@@ -531,6 +532,7 @@ SET @output_table = ''adiha_process.dbo.temp_output_details_''+ @set_process_id
 	FROM '' + @output_table + '' a
 	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = a.source_deal_header_id	AND sdh.structured_deal_id <> a.source_deal_header_id	
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	    AND a.term_start BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = a.term_start --BETWEEN a.term_start AND a.term_end
 		AND CAST(LEFT(sddh.hr,2) AS INT) = a.hr
@@ -608,7 +610,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
+						   '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
@@ -710,4 +712,3 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-	
