@@ -1138,12 +1138,12 @@ echo $layout->close_layout();
                 var custom_as_of_date = batch_layout_namespace.general_form.getItemValue('dt_custom_as_of_date', true);
                 var run_mode = batch_layout_namespace.general_form.getItemValue('rdo_run_mode');
                 var one_time = batch_layout_namespace.general_form.getItemValue('rdo_one_time');
-                var today_date_time = new Date();
                 var date_time_now = '<?php echo getCurrentDate('t'); ?>'; 
                 var split_date_time = date_time_now.split(" ");
                 var time_now = split_date_time[1].split(':');
                 var frequency = batch_layout_namespace.general_form.getItemValue('cmb_frequency_c');
                 var holiday_calendar = batch_layout_namespace.general_form.getItemValue('cmb_holiday_calendar_c');
+                var today_date_time = new_date_construct(split_date_time[0], time_now[0], time_now[1]);
                 
                 //Report Tab Fields
 
@@ -1371,7 +1371,7 @@ echo $layout->close_layout();
                     adiha_post_data('alert', data, '', '', 'call_back_msg');  
                 } else {
                     var schedule_type = batch_layout_namespace.general_form.getItemValue('rdo_one_time');
-                   
+                    
                     if (schedule_type == 'ONE_TIME') {
                         var active_start_date = batch_layout_namespace.general_form.getItemValue('dt_date', true);
                         var one_time_occurence_hour = batch_layout_namespace.general_form.getItemValue('cmb_hour_c');
