@@ -236,7 +236,7 @@ BEGIN
 	                 		counterparty_credit_limit_id INT,
 	                 		counterparty_name  VARCHAR(200),
 	                 		debt_rating        VARCHAR(200),
-	                 		credit_limit       INT,
+	                 		credit_limit       float,
 	                 		as_of_date			VARCHAR(30),
 	                 		hyperlink1 VARCHAR(5000), 
          					hyperlink2 VARCHAR(5000), 
