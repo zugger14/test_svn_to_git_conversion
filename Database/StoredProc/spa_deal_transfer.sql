@@ -46,8 +46,6 @@ DECLARE @flag CHAR(1),
 		@transfer_price_process_id NVARCHAR(100) = NULL,
 		@transfer_provisional_price_process_id NVARCHAR(100) = NULL
 
-
-	
 	--Sets session DB users 
 	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
 
@@ -57,14 +55,24 @@ DECLARE @flag CHAR(1),
 
 	EXEC spa_print 'Use spa_print instead of PRINT statement in debug mode.'
 		
+	
+	--Sets session DB users 
+	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
+
+	--Sets contextinfo to debug mode so that spa_print will prints data
+	
+	SET CONTEXT_INFO @contextinfo
+
+	EXEC spa_print 'Use spa_print instead of PRINT statement in debug mode.'
+		
 	--Drops all temp tables created in this scope.
 	EXEC [spa_drop_all_temp_table] 
-	
+
 	-- SPA parameter values
-	SELECT @flag = 't', @source_deal_header_id = '100650'
-		, @xml = '<GridXML><GridHeader source_deal_header_id="100650" transfer_without_offset="0" transfer_only_offset="0"><GridRow  transfer_counterparty_id="7717" transfer_contract_id="8449" transfer_trader_id="1188" transfer_sub_book="179" transfer_template_id="2698" counterparty_id="7711" contract_id="8433" trader_id="1188" sub_book="155" template_id="" location_id="" transfer_volume="" volume_per="" pricing_options="d" fixed_price="" transfer_date="2019-12-31" index_adder="7273" fixed_adder="1"></GridRow></GridHeader></GridXML>'
-		, @transfer_price_process_id = 'DB612DFB_85D4_45AC_9C7F_0DAB83FBFA81'
-		, @transfer_provisional_price_process_id = '17D5595C_34DC_4563_952D_B01A45F60E5E'
+	SELECT @flag = 't', @source_deal_header_id = '104486', 
+		@xml = '<GridXML><GridHeader source_deal_header_id="104486" transfer_without_offset="0" transfer_only_offset="0"><GridRow  transfer_counterparty_id="7717" transfer_contract_id="8210" transfer_trader_id="1239" transfer_sub_book="12" transfer_template_id="" counterparty_id="7717" contract_id="8191" trader_id="1239" sub_book="19" template_id="" location_id="" transfer_volume="200" volume_per="" pricing_options="d" fixed_price="" transfer_date="2020-10-23" index_adder="" fixed_adder=""></GridRow></GridHeader></GridXML>'
+		, @transfer_price_process_id = '8E33B05F_F2E0_4AC8_B8D9_57BFA8F5BAD4'
+		, @transfer_provisional_price_process_id = 'F49A627A_A2CF_4A57_881C_637DFF194D88'
 
 
 -- SELECT @flag='s', @source_deal_header_id='249960'
@@ -1023,6 +1031,62 @@ BEGIN
 				) a
 				INNER JOIN #temp_deal_transfer t ON sdp.source_deal_header_id = t.parent_source_deal_header_id
 			
+				
+				--Updating Shipper mapping data in transportation deal 
+				IF EXISTS( 
+					SELECT 1 FROM #temp_all_deal_ids
+					
+				)
+				BEGIN
+					DECLARE @source_deal_header_id_ot INT,
+							@entire_term_start DATETIME,
+							@entire_term_end DATETIME,
+							@deal_counterparty_id INT,
+							@contract_id INT,
+							@shipper_mapping_id INT, 
+							@location_id_ot INT
+
+					DECLARE  cur_shipper CURSOR LOCAL FOR
+						SELECT tm.source_deal_header_id, sdh.entire_term_start, sdh.entire_term_end, sdh.counterparty_id, sdh.contract_id
+							, sdd.location_id
+						FROM #temp_all_deal_ids tm
+							INNER JOIN source_deal_header sdh
+							ON sdh.source_deal_header_id = tm.source_deal_header_id 
+						CROSS APPLY (
+							SELECT MAX(location_id) location_id
+							FROM source_deal_detail sdd
+							WHERE sdd.source_deal_header_id = tm.source_deal_header_id
+						) sdd
+						
+					OPEN cur_shipper
+					FETCH NEXT FROM cur_shipper INTO  @source_deal_header_id_ot, @entire_term_start, @entire_term_end, @deal_counterparty_id, @contract_id, @location_id_ot
+					WHILE @@FETCH_STATUS = 0   
+					BEGIN
+			
+						EXEC spa_deal_fields_mapping @flag = 'v'
+													, @deal_id = @source_deal_header_id_ot										
+													, @counterparty_id = @deal_counterparty_id									
+													, @deal_fields = 'shipper_code1'
+													, @term_start =  @entire_term_start									
+													, @contract_id = @contract_id
+													, @location_id = @location_id_ot
+													, @json_string = @shipper_mapping_id OUTPUT
+			
+						UPDATE source_deal_detail
+							SET shipper_code1 = @shipper_mapping_id,
+								shipper_code2 = @shipper_mapping_id
+						FROM source_deal_detail
+						WHERE source_deal_header_id = @source_deal_header_id_ot
+						AND term_start BETWEEN @entire_term_start AND @entire_term_end
+
+						FETCH NEXT FROM cur_shipper INTO @source_deal_header_id_ot, @entire_term_start, @entire_term_end, @deal_counterparty_id, @contract_id, @location_id_ot
+					END
+
+					CLOSE cur_shipper
+		
+				END
+				
+				
 				IF EXISTS(SELECT 1 FROM #temp_all_deal_ids) 
 				BEGIN
 					DECLARE @after_insert_process_table NVARCHAR(300)
