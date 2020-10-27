@@ -253,9 +253,7 @@ end +''
 		--	--and scmd1.location_id=sdd.location_id and scmd1.effective_date=max_eff1.effective_date
 		--left join shipper_code_mapping_detail scmd2 on scmd2.shipper_code_mapping_detail_id=sdd.shipper_code1
 		--	and scmd2.location_id=sdd.location_id and scmd2.effective_date=max_eff2.effective_date
-
 		where sdd.shipper_code2 is not null and sdd.shipper_code1 is not null 
-
 		and scmd.shipper_code is not null  and scmd.shipper_code1 is not null and scmd.external_id is not null 
 		''
 	+isnull('' AND sdh.counterparty_id in ('' + @_counterparty_ids+'')'','''')
@@ -267,7 +265,7 @@ end +''
 	+isnull('' AND sdd.shipper_code2 in ('' + @_shipper_code_ids2+'')'','''')
 	+isnull('' AND sdd.source_deal_detail_id in ('' + @_deal_detail_ids+'')'','''')
 	+isnull('' AND sdh.commodity_id='' + @_commodity_id,'''')
-	+isnull('' AND scmd.external_id='' +@_external_id1,'''')
+	+isnull('' AND scmd.external_id='''''' +@_external_id1 + '''''''','''')
 exec spa_print @_Sql
 exec(@_Sql)
 SELECT s.curve_id,s.location_id,s.term_start,s.Period,s.deal_date,s.deal_volume_uom_id,s.physical_financial_flag
@@ -2608,3 +2606,4 @@ exec(@_Sql+@_Sql1+@_Sql2)
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
+	
