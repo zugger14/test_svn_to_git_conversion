@@ -1053,6 +1053,11 @@ BEGIN
 				DROP TABLE #temp_soap_table_name
 			CREATE TABLE #temp_soap_table_name (table_name NVARCHAR(600) COLLATE DATABASE_DEFAULT)
 			
+			IF OBJECT_ID('tempdb..#temp_files_list') IS NOT NULL
+				DROP TABLE #temp_files_list
+						
+			CREATE TABLE #temp_files_list (files_names NVARCHAR(MAX) COLLATE DATABASE_DEFAULT)
+					
 			IF @flag IN ('q', 'r')
 			BEGIN
 			
@@ -1089,11 +1094,6 @@ BEGIN
 					
 				IF ((@folder_loaction IS NOT NULL AND @folder_loaction <> '') AND @data_source_id NOT IN (21407, 21401)) OR @data_source_id = 21409
 				BEGIN
-					IF OBJECT_ID('tempdb..#temp_files_list') IS NOT NULL
-						DROP TABLE #temp_files_list
-						
-					CREATE TABLE #temp_files_list (files_names NVARCHAR(MAX) COLLATE DATABASE_DEFAULT)
-					
 					IF @data_source_id = 21409
 					BEGIN
 						IF OBJECT_ID('tempdb..#ixp_email_notes_list') IS NOT NULL
@@ -1961,12 +1961,28 @@ BEGIN
 				IF @run_with_custom_enable = 'y' OR @is_datasource_customized = 'y'
 					SET @use_customization = 'y'
 			END	
-			--end of flag t
-			--common logic for r and t flag starts
-			/*Update numeric data according to decimal and group separator starts
-				This logic is bypassed for reimport and excel file import. In this case numeric data are auto corrected.
+			IF @source  IN (21400,21402,21405)
+			BEGIN
+				/*
+					Update numeric data according to decimal and group separator starts
+					This logic is bypassed for reimport and excel files.  Excel application auto corrects numeric data so conversion is not required.
+					Conversion is applicable only for non excel file based import.
+						1. Folder based import (batch) with non excel file.
+						2. Non excel uploaded file
 			*/
-			IF OBJECT_ID(@reimport_data) IS NULL AND (NULLIF(@server_path,'') IS NULL OR (CHARINDEX('xls', RIGHT(@server_path,4)) = 0))
+
+				DECLARE @decimal_group_separator BIT = 0
+
+				if OBJECT_ID(@reimport_data) IS NOT NULL 
+				SET @decimal_group_separator = 0
+				ELSE
+				if @flag = 'r' AND EXISTS(SELECT files_names FROM  #temp_files_list WHERE files_names NOT LIKE '%.xls%') 
+				SET @decimal_group_separator = 1
+				ELSE
+				IF @flag = 't' AND NULLIF(@server_path,'') IS NOT NULL AND CHARINDEX('.', @server_path) > 0 AND (CHARINDEX('.xls', RIGHT(@server_path,5)) = 0)
+				SET @decimal_group_separator = 1
+
+				IF @decimal_group_separator = 1
 			BEGIN 	
 				DECLARE @decimal_separator NVARCHAR(100), @group_separator  NVARCHAR(100)
 				SELECT @decimal_separator = decimal_separator
@@ -2005,6 +2021,7 @@ BEGIN
 						+ ' FROM ' + @temp_process_table + ' ' + @data_source_alias
 				
 				EXEC(@sql_updt)	
+			END
 			END
 			--------------------Update numeric data according to decimal and group separator ends------------------------------------
 				
