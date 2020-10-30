@@ -236,18 +236,10 @@ END
 
 ELSE IF @flag = 'test_connection'
 BEGIN 
-	-- For testing connection we dont have test connection method in clr, so using ftp list directory method
+	--	Test ftp / sftp connection
 	DECLARE @status NVARCHAR(MAX)
-	IF OBJECT_ID ('tempdb..#ftp_test_status') IS NOT NULL
-		DROP TABLE #ftp_test_status
 
-	CREATE TABLE #ftp_test_status(
-		ftp_url NVARCHAR(MAX),
-		dir_file NVARCHAR(MAX)
-	)
-
-	INSERT INTO #ftp_test_status
-	EXEC spa_list_ftp_contents @file_transfer_endpoint_id = @file_transfer_endpoint_id, @remote_directory = @remote_directory, @result= @status OUTPUT
+	EXEC [spa_test_file_transfer_endpoint_connection] @file_transfer_endpoint_id = @file_transfer_endpoint_id, @output_result= @status OUTPUT
 
 	DECLARE @message NVARCHAR(max) = NULL
 

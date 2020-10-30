@@ -154,3 +154,17 @@ CREATE PROC [dbo].[spa_ftp_delete_file_using_clr]
 AS
 EXTERNAL NAME FAARMSFileTransferCLR.[FAARMSFileTransferCLR.StoredProcedure].FtpDeleteFile
 GO
+
+-- Test FTP Connection
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROC [dbo].[spa_test_file_transfer_endpoint_connection]
+(
+    @file_transfer_endpoint_id INT,
+    @output_result NVARCHAR(MAX) OUTPUT
+)
+AS
+EXTERNAL NAME FAARMSFileTransferCLR.[FAARMSFileTransferCLR.StoredProcedure].TestFileTransferEndpointConnection
+GO

@@ -114,6 +114,30 @@ namespace FAARMSFileTransferCLR
         }
 
         /// <summary>
+        /// Test Endpoint connection
+        /// </summary>
+        /// <param name="fileTransferEndpointId">fileTransferEndpointId</param>
+        /// <param name="result">sucess or failure message</param>
+        public static void TestFileTransferEndpointConnection(int fileTransferEndpointId, out string result)
+        {
+            try
+            {
+                using (var client = new FileTransferService(fileTransferEndpointId))
+                {
+                    client.FileTransferEndpoint.WorkingDirectory = "";
+                    if (client.FileTransferEndpoint.FileProtocol == FileProtocol.FTP)
+                        client.FileTransferEndpoint.HostNameUrl = "ftp://" + client.FileTransferEndpoint.HostNameUrl;
+                    string[] files = client.ListFiles();
+                }
+                result = "success";
+            }
+            catch (Exception ex)
+            {
+                result = ex.Message;
+                ex.LogError("TestEndpointConnection", fileTransferEndpointId + "|" + ex.Message);
+            }
+        }
+        /// <summary>
         /// Move remote file from endpoint
         /// </summary>
         /// <param name="fileTransferEndpointId">fileTransferEndpointId</param>

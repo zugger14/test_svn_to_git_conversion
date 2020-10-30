@@ -10,7 +10,8 @@ namespace ConsoleApp1
         {
             string msg = "";
             string s;
-            FAARMSFileTransferCLR.StoredProcedure.ListFtpContents(26, null, out s);
+            FAARMSFileTransferCLR.StoredProcedure.TestEndpointConnection(27, out s);
+            //FAARMSFileTransferCLR.StoredProcedure.ListFtpContents(26, null, out s);
             //FARRMSExcelServerCLR.StoredProcedure.SynchronizeExcelWithSpire("2294", "y", "y", "farrms_admin", "n", "PDF", "EFD4A339_8F7F_485C_935C_C646FF17DAE8", out s);
             //FARRMSExcelServerCLR.StoredProcedure.SynchronizeExcelWithSpire("2294", "y", "y", "farrms_admin", "n", "pdf", "EFD4A339_8F7F_485C_935C_C646FF17DAE8", out s);
             //FARRMSGenericCLR.StoredProcedure.CreateFolder(@"\\PSDL20\shared_docs_TRMTracker_Release\temp_Note\Import\Trader\Error\", out s);
