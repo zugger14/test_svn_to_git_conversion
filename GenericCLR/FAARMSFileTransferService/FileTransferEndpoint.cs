@@ -151,7 +151,7 @@ namespace FAARMSFileTransferService
         private void GetEndPointConfiguration(int fileTransferEndpointId, string targetRemoteDirectory)
         {
             //  Get configuration of end point from db
-            //using (SqlConnection cn = new SqlConnection(@"Data Source=PSDL20\INSTANCE2016;Initial Catalog=TRMTracker_Release;Persist Security Info=True;User ID=sa;password=pioneer"))
+            //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-D-SQL01.farrms.us,2033;Initial Catalog=TRMTracker_Enercity;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
             using (var cn = new SqlConnection("Context Connection=True"))
             {
                 cn.Open();

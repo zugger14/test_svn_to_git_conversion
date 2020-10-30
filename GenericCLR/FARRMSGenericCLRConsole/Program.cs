@@ -1,5 +1,6 @@
 ﻿using FARRMSGenericCLR;
 using FARRMSUtilities;
+using FAARMSFileTransferCLR;
 
 namespace ConsoleApp1
 {
@@ -9,10 +10,11 @@ namespace ConsoleApp1
         {
             string msg = "";
             string s;
-            FARRMSExcelServerCLR.StoredProcedure.SynchronizeExcelWithSpire("2294", "y", "y", "farrms_admin", "n", "PDF", "EFD4A339_8F7F_485C_935C_C646FF17DAE8", out s);
+            FAARMSFileTransferCLR.StoredProcedure.ListFtpContents(26, null, out s);
+            //FARRMSExcelServerCLR.StoredProcedure.SynchronizeExcelWithSpire("2294", "y", "y", "farrms_admin", "n", "PDF", "EFD4A339_8F7F_485C_935C_C646FF17DAE8", out s);
             //FARRMSExcelServerCLR.StoredProcedure.SynchronizeExcelWithSpire("2294", "y", "y", "farrms_admin", "n", "pdf", "EFD4A339_8F7F_485C_935C_C646FF17DAE8", out s);
             //FARRMSGenericCLR.StoredProcedure.CreateFolder(@"\\PSDL20\shared_docs_TRMTracker_Release\temp_Note\Import\Trader\Error\", out s);
-            FARRMSGenericCLR.StoredProcedure.MoveFileToFolder(@"D:\Temp\test\surya.txt", @"D:\temp\Error\", out s);
+            //FARRMSGenericCLR.StoredProcedure.MoveFileToFolder(@"D:\Temp\test\surya.txt", @"D:\temp\Error\", out s);
             //StoredProcedure.ExecuteSSISPackage("", "", "", "13", 64, "n", out msg);
             //StoredProcedure.GenerateDocFromRDL(@"http://psdb2016/ReportServer_INSTANCE2016","USER","U$er","DPCS", "FASTracker_Master_RWE_DE/Book Mapping Report_Book Mapping Report", "paramset_id:15138,ITEM_BookMappingReport_tablix:15420,report_filter:'',is_refresh:0,report_region:en-US,runtime_user:snakarmi,global_currency_format:$,global_date_format:dd.M.yyyy,global_thousand_format:,#,global_rounding_format:#0.00,global_science_rounding_format:2,global_negative_mark_format:1,is_html:n","CSV", @"\\APP03\shared_docs_FASTracker_Master_RWE_DE\temp_Note\16.csv",",","y","41241", out msg );
             //StoredProcedure.ImportWithCLRRule(@"<Root><PSRecordset paramName=""PS_StartDate"" paramValue =""today""/></Root>", 12879, "3423423423423");
