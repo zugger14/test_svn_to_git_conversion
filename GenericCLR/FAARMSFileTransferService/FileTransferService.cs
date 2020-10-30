@@ -851,7 +851,10 @@ namespace FAARMSFileTransferService
         {
             if (this._sftpClient != null)
             {
-                this._sftpClient.Disconnect();
+                if (this._sftpClient.IsConnected)
+                {
+                    this._sftpClient.Disconnect();
+                }
                 this._sftpClient.Dispose();
             }   
             GC.Collect();
