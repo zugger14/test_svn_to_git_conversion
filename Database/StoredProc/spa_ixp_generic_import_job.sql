@@ -25072,13 +25072,16 @@ BEGIN
  	EXEC(@sql)
  	
 	--call auto adjust
-	DECLARE @alert_process_table_auto_adjust_c NVARCHAR(300)
-	SET @alert_process_table_auto_adjust_c = 'adiha_process.dbo.auto_adjust_' + @process_id4 + '_aa'
+	IF @ixp_rule_hash IN ('F224E702_7357_4EC5_BDE4_544D80D32E9D', '60D8CDF3_4A27_4776_8C79_F7597CD1EFE8', '30F320BA_815F_4DB7_9314_B037E84311B6')
+	BEGIN
+		DECLARE @alert_process_table_auto_adjust_c NVARCHAR(300)
+		SET @alert_process_table_auto_adjust_c = 'adiha_process.dbo.auto_adjust_' + @process_id4 + '_aa'
 
-	EXEC('SELECT DISTINCT source_deal_header_id 
-		  INTO ' + @alert_process_table_auto_adjust_c + '
-		  FROM #tmp_second_table '
-	)
+		EXEC('SELECT DISTINCT source_deal_header_id 
+			  INTO ' + @alert_process_table_auto_adjust_c + '
+			  FROM #tmp_second_table '
+		)
+	END
 
  	SET @pos_job_name4 =  'calc_position_breakdown_' + @process_id4
  	EXEC spa_update_deal_total_volume NULL, @process_id4, 0,1,@user_login_id
