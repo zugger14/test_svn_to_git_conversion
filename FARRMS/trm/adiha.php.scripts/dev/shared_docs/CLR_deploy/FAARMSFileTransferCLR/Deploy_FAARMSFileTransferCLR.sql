@@ -44,6 +44,10 @@ IF OBJECT_ID('spa_move_ftp_file_to_folder_using_clr') IS NOT NULL
 IF OBJECT_ID('spa_ftp_delete_file_using_clr') IS NOT NULL
     DROP PROC spa_ftp_delete_file_using_clr
 
+IF OBJECT_ID('spa_test_file_transfer_endpoint_connection') IS NOT NULL
+    DROP PROC [spa_test_file_transfer_endpoint_connection]
+
+
 IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'FARRMSUtilities')
 BEGIN
 	CREATE ASSEMBLY [FARRMSUtilities]
