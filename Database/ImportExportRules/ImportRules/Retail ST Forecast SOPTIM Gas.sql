@@ -7,13 +7,13 @@
 
 			
 			SELECT @old_ixp_rule_id = ixp_rules_id FROM ixp_rules ir 
-			WHERE ixp_rule_hash = '9911E4A5_0832_4848_8C66_CFA68E707C75'
+			WHERE ixp_rule_hash = 'C40361BC_8194_4D83_990D_07250FAC81A8'
 
 			if @old_ixp_rule_id IS NULL
 			BEGIN
 				SELECT @old_ixp_rule_id = ixp_rules_id
 			FROM ixp_rules ir
-			WHERE ir.ixp_rules_name = 'Generation ST Forecast'
+			WHERE ir.ixp_rules_name = 'Retail ST Forecast SOPTIM Gas'
 			END
 
 			 
@@ -41,7 +41,7 @@
 
 				INSERT INTO ixp_rules (ixp_rules_name, individuals_script_per_ojbect, limit_rows_to, before_insert_trigger, after_insert_trigger, import_export_flag, is_system_import, ixp_owner, ixp_category, is_active,ixp_rule_hash)
 				VALUES( 
-					'Generation ST Forecast' ,
+					'Retail ST Forecast SOPTIM Gas' ,
 					'N' ,
 					NULL ,
 					'UPDATE a
@@ -49,7 +49,6 @@ SET [Term] = CAST(dbo.FNAClientToSqlDate([Term]) AS DATE)
 FROM [temp_process_table] a
 
 DROP TABLE IF EXISTS [temp_process_table]_calc
-
 SELECT * INTO [temp_process_table]_calc
 FROM [temp_process_table]
 
@@ -58,12 +57,12 @@ DROP TABLE #generic_mapping_values
 
 DECLARE @mapping_table_id INT
 SELECT @mapping_table_id = mapping_table_id FROM generic_mapping_header 
-WHERE mapping_name = ''Update Volume Profile Mapping''
+WHERE mapping_name = ''Retail Gas Delta Volume''
 
 SELECT gmv.[mapping_table_id]	 
 	   , gmv.[clm1_value] [process]
 	   , gmv.[clm2_value] [sub_book]
-	   , gmv.[clm3_value] [counterparty]
+	   , gmv.[clm3_value] [location]
 	   , gmv.[clm4_value] [source_profile1]
 	   , gmv.[clm5_value] [source_profile2]
 	   , gmv.[clm6_value] [dest_buy_profile]
@@ -79,13 +78,14 @@ CROSS APPLY (
 ) mx
 INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id 
 	AND gmv.clm1_value = mx.clm1_value
-	AND ISNULL(gmv.clm2_value,-1) = ISNULL(mx.clm2_value, -1)
+	AND gmv.clm2_value = mx.clm2_value
 	AND ISNULL(gmv.clm3_value, 1) = ISNULL(mx.clm3_value, 1)
 	AND gmv.clm4_value = mx.clm4_value
 	AND ISNULL(gmv.clm5_value, 1) = ISNULL(mx.clm5_value, 1)
-WHERE gmh.mapping_name = ''Update Volume Profile Mapping'' 
-	and gmv.clm1_value = 112700
+WHERE gmh.mapping_name = ''Retail Gas Delta Volume'' 
+	and gmv.clm1_value = 112701
 	and gmv.mapping_table_id = @mapping_table_id
+
 
 DECLARE @dst_group_value_id INT 
 
@@ -100,38 +100,49 @@ CREATE TABLE #deal_max_term (
 	, source_profile2 NVARCHAR(200) COLLATE DATABASE_DEFAULT
 	, dest_buy_profile INT
 	, dest_sell_profile INT
+	, location_id INT
 )
 
-INSERT INTO #deal_max_term (source_deal_header_id, block_define_id, term_start, term_end, profile_name, source_profile2, dest_buy_profile, dest_sell_profile)
+INSERT INTO #deal_max_term (source_deal_header_id, block_define_id, term_start, term_end, profile_name, source_profile2, dest_buy_profile, dest_sell_profile, location_id)
 SELECT sdh.source_deal_header_id, MAX(sdh.block_define_id), MIN(a.Term) term_start, MAX(a.Term) term_end, fp.external_id
-	, max(fp2.external_id), max(gmv.dest_buy_profile), max(gmv.dest_sell_profile)
+	, max(fp2.external_id), max(gmv.dest_buy_profile), max(gmv.dest_sell_profile), max(location) location_id
 FROM #generic_mapping_values gmv
 INNER JOIN forecast_profile fp
 	ON gmv.source_profile1 = fp.profile_id
-LEFT JOIN forecast_profile fp2
+INNER JOIN forecast_profile fp2
 	ON gmv.source_profile2 = fp2.profile_id
 INNER JOIN [temp_process_table]_calc a
 	ON fp.external_id = a.[Profile Name]
+	OR fp2.external_id = a.[Profile Name]
 INNER JOIN source_deal_header sdh
 	ON  sdh.sub_book = gmv.sub_book
-WHERE sdh.deal_reference_type_id IN (12500, 12503)
-AND gmv.source_profile2 IS NULL
-AND sdh.commodity_id=123 and sdh.source_deal_type_id=2261
+WHERE 1 = 1
+	AND gmv.source_profile1 IS NOT NULL
+	AND gmv.source_profile2 IS NOT NULL
+	AND sdh.deal_reference_type_id IN (12500, 12503)
 GROUP BY sdh.source_deal_header_id, fp.external_id
 
 IF OBJECT_ID(N''tempdb..#collect_profiles'') IS NOT NULL
 	DROP TABLE #collect_profiles
 SELECT MIN(a.Term) term_start, MAX(a.Term) term_end, max(fp.external_id) profile_name, max(fp2.external_id) source_profile2
 	, MAX(gmv.dest_buy_profile) [dest_buy_profile], MAX(gmv.dest_sell_profile) [dest_sell_profile]
+	, MAX(IIF(a1.[Profile Name] IS NULL, fp.external_id,fp2.external_id)) [pair_profile]
 INTO #collect_profiles
 FROM #generic_mapping_values gmv
-INNER JOIN forecast_profile fp
+LEFT JOIN forecast_profile fp
 	ON gmv.source_profile1 = fp.profile_id
-INNER JOIN [temp_process_table]_calc a
-	ON fp.external_id = a.[Profile Name]
 LEFT JOIN forecast_profile fp2
 	ON gmv.source_profile2 = fp2.profile_id
-WHERE gmv.source_profile2 IS NOT NULL
+INNER JOIN [temp_process_table]_calc a
+	ON fp.external_id = a.[Profile Name]
+	OR fp2.external_id = a.[Profile Name]
+LEFT JOIN [temp_process_table]_calc a1
+	ON fp.external_id = a1.[Profile Name]
+LEFT JOIN [temp_process_table]_calc a2
+	ON fp2.external_id = a2.[Profile Name]
+WHERE 1 = 1
+	AND gmv.source_profile1 IS NOT NULL
+	AND gmv.source_profile2 IS NOT NULL
 GROUP BY a.[Profile Name], a.[Term]
 
 IF OBJECT_ID(N''tempdb..#collect_deals'') IS NOT NULL
@@ -170,6 +181,7 @@ INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = dmt.source_deal
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
 	AND ((sdd.term_start >= dmt.term_start or dmt.term_start between sdd.term_start and sdd.term_end)
 		AND (sdd.term_end <= dmt.term_end or dmt.term_end between sdd.term_start and sdd.term_end))
+WHERE dmt.location_id = sdd.location_id
 CREATE INDEX indx_collect_deals_ps ON #collect_deals(source_deal_header_id, term_start, term_end)
 
 SELECT @dst_group_value_id = tz.dst_group_value_id
@@ -188,14 +200,59 @@ FROM mv90_dst
 WHERE insert_delete = ''i''
 AND dst_group_value_id = @dst_group_value_id 
 
+UPDATE a
+SET a.Volume = a.volume + p.volume
+FROM [temp_process_table]_calc a
+INNER JOIN (
+	SELECT term_date [term_start]
+		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, dst.hour , cast(substring(upv.hr,3,2) AS INT)) Hr
+		, [period]
+		, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
+		, (val) volume
+		, '''' granularity
+		, profile_name
+		, source_profile2
+		, dest_buy_profile
+		, dest_sell_profile
+	FROM (
+		SELECT 
+			ddh.profile_id
+ 			, ddh.term_date
+			, hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
+			, ddh.[period]
+			, p.profile_name
+			, p.source_profile2
+			, p.dest_buy_profile
+			, p.dest_sell_profile
+		FROM #collect_profiles p
+		INNER JOIN forecast_profile fp
+			ON fp.external_id = p.pair_profile
+		INNER JOIN deal_detail_hour ddh ON ddh.profile_id = fp.profile_id
+			AND ddh.term_date BETWEEN p.term_start AND p.term_end
+			) rs
+	UNPIVOT (val for Hr IN (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25)	
+		) upv
+	OUTER APPLY(SELECT dst.date,dst.[hour]
+		FROM #mv90_dst dst 
+		WHERE dst.date = upv.term_date
+		GROUP BY dst.date,dst.[hour]
+	) dst
+) p 
+on (a.[Profile Name] = p.profile_name
+	OR a.[Profile Name] = p.source_profile2)
+	AND a.Term = p.term_start
+	AND a.Hour = p.Hr
+	AND a.Minute = p.period
+	AND a.[Is DST] = p.is_dst
 
-DROP TABLE IF EXISTS  #temp_position
+DROP TABLE IF EXISTS #temp_position
 SELECT rs.term_start [Term]
 	, rs.hr
 	, rs.period
 	, rs.is_dst
-	, SUM(rs.volume)*4 position
+	, ABS(SUM(rs.volume)) position
 	, rs.profile_name
+	, MAX(rs.source_profile2) source_profile2
 	, MAX(rs.dest_buy_profile) dest_buy_profile
 	, MAX(rs.dest_sell_profile) dest_sell_profile
 INTO #temp_position
@@ -278,47 +335,26 @@ INTO #temp_position
 		WHERE dst.date = upv.term_start
 		GROUP BY dst.date,dst.[hour]
 		) dst
-	UNION ALL
-	SELECT '''' source_deal_header_id
-		, '''' source_deal_detail_id
-		, term_date [term_start]
-		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, dst.hour , cast(substring(upv.hr,3,2) AS INT)) Hr
-		, [period]
-		, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
-		, (val/4) volume
-		, '''' granularity
-		, profile_name
-		, source_profile2
-		, dest_buy_profile
-		, dest_sell_profile
-	FROM (
-		SELECT 
-			ddh.profile_id
- 			, ddh.term_date
-			, hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
-			, ddh.[period]
-			, p.profile_name
-			, p.source_profile2
-			, p.dest_buy_profile
-			, p.dest_sell_profile
-		FROM #collect_profiles p
-		INNER JOIN forecast_profile fp
-			ON fp.external_id = p.source_profile2
-		INNER JOIN deal_detail_hour ddh ON ddh.profile_id = fp.profile_id
-			AND ddh.term_date BETWEEN p.term_start AND p.term_end
-			) rs
-	UNPIVOT (val for Hr IN (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25)	
-		) upv
-	OUTER APPLY(SELECT dst.date,dst.[hour]
-		FROM #mv90_dst dst 
-		WHERE dst.date = upv.term_date
-		GROUP BY dst.date,dst.[hour]
-		) dst
 ) rs
 GROUP BY rs.profile_name, rs.term_start, rs.hr, rs.period, rs.is_dst
 
+-- Shift DATE
 UPDATE tp
-SET position = (ISNULL(tp.position, 0) - ISNULL(tpd.position, 0))
+SET [Term] = CAST(DATEADD(DD,+1, [Term]) AS DATE) 
+FROM #temp_position tp
+WHERE 1 = 1
+	AND ([hr] BETWEEN 19 AND 24)
+
+-- Shift Hour		
+UPDATE tp
+SET [hr] = CASE WHEN [hr] BETWEEN  1 AND 18 THEN [hr] + 6
+		WHEN [hr] BETWEEN 19 AND 24 THEN [hr] - 18
+	ELSE [hr]
+	END
+FROM #temp_position tp
+
+UPDATE tp
+SET position = (tp.position - tpd.position)
 FROM #temp_position tp
 INNER JOIN #mv90_dst dst ON tp.[Term] = dst.DATE
 	AND tp.Hr = dst.hour
@@ -334,52 +370,24 @@ LEFT JOIN (
 	AND tp.hr = tpd.hour
 	AND tp.period = tpd.period
 
--- format temp position
-DECLARE @min_term DATETIME 
-	, @max_term DATETIME
-
-SELECT @min_term = min(term)
-	, @max_term = max(term)
-FROM [temp_process_table]
-
-IF OBJECT_ID(''tempdb..#temp_hour_breakdown'') IS NOT NULL
-	DROP TABLE #temp_hour_breakdown
-
-SELECT clm_name, is_dst, REPLACE(alias_name,''DST'','''') [user_clm],
-	CASE 
-		WHEN is_dst = 0 THEN RIGHT(''0'' + CAST(LEFT(clm_name, 2) + 1 AS VARCHAR(10)), 2) + '':'' + RIGHT(clm_name, 2) 
-		ELSE RIGHT(''0'' + CAST(LEFT(clm_name, 2) + 1 AS VARCHAR(10)), 2) + '':'' + RIGHT(clm_name, 2) 
-	END [process_clm]
-INTO #temp_hour_breakdown
-FROM dbo.[FNAGetDisplacedPivotGranularityColumn](@min_term,@max_term,987,@dst_group_value_id,0)
-
-UPDATE tp
-SET [hr] = hb.user_hr
-	, period = hb.user_period
-FROM #temp_position tp
-OUTER APPLY (
-	SELECT CAST(LEFT(user_clm,2) AS INT) user_hr, CAST(RIGHT(user_clm,2) AS INT) user_period
-	FROM #temp_hour_breakdown thb
-	WHERE CAST(LEFT(thb.process_clm,2) AS INT) = tp.hr
-	AND CAST(RIGHT(thb.process_clm,2) AS INT) = tp.period
-) hb 
-
 UPDATE a
-SET [Volume] = ISNULL(a.Volume,0) - ISNULL(tp.position, 0)
+SET [Volume] = CAST(a.Volume - (ABS(tp.position)) AS NUMERIC(38))
 FROM [temp_process_table]_calc a
 INNER JOIN #temp_position tp
-	ON a.[profile Name] = tp.profile_name
+	ON (a.[profile Name] = tp.profile_name
+		OR a.[Profile Name] = tp.source_profile2)
 	AND a.[Term] = tp.[Term]
 	AND a.[Hour] = ISNULL(tp.[hr], -1)
-	AND a.[Minute] = tp.[period]
+	AND ISNULL(a.[Minute],0) = tp.[period]
 	AND a.[Is DST] = tp.[is_dst]
 LEFT JOIN forecast_profile fp_buy
 	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
 
+
 INSERT INTO [temp_process_table](
-    [Profile Name]
+    	[Profile Name]
     , [Term]
     , [Hour]
     , [Minute]
@@ -387,7 +395,7 @@ INSERT INTO [temp_process_table](
     , [Volume]
 )
 SELECT 
-	IIF(cast(calc.[Volume] as numeric(38)) >= 0.00, fp_buy.external_id, fp_sell.external_id)
+	IIF(cast(calc.[Volume] as numeric(38)) >= 0.00, fp_sell.external_id, fp_buy.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
@@ -395,10 +403,11 @@ SELECT
     , ABS(calc.[Volume])
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
-	ON calc.[Profile Name] = tp.[profile_name]
+	ON (calc.[Profile Name] = tp.[profile_name]
+		OR calc.[Profile Name] = tp.source_profile2)
 	AND calc.Term = tp.Term
 	AND calc.hour = tp.hr
-	AND calc.Minute = tp.period
+	AND ISNULL(calc.Minute,0) = tp.period
 	AND calc.[Is DST] = tp.is_dst
 LEFT JOIN forecast_profile fp_buy
 	ON tp.dest_buy_profile = fp_buy.profile_id
@@ -414,35 +423,38 @@ SELECT
     , ABS(calc.[Volume])
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
-	ON calc.[Profile Name] = tp.[profile_name]
+	ON (calc.[Profile Name] = tp.[profile_name]
+		OR calc.[Profile Name] = tp.source_profile2)
 	AND calc.Term = tp.Term
 	AND calc.hour = tp.hr
-	AND calc.Minute = tp.period
+	AND ISNULL(calc.Minute,0) = tp.period
 	AND calc.[Is DST] = tp.is_dst
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
 WHERE cast(calc.[Volume] as numeric(38)) = 0.00
 UNION ALL
-SELECT IIF(CAST(a.Volume AS NUMERIC(38)) > 0.00, gm.dest_buy_profile, gm.dest_sell_profile) [profile name]
+SELECT IIF(CAST(a.Volume AS NUMERIC(38)) > 0.00, gm.dest_sell_profile, gm.dest_buy_profile) [profile name]
 	, a.Term
 	, a.[Hour]
 	, a.[Minute]
 	, a.[Is DST]
 	, cast(ABS(a.[Volume]) as nvarchar)
 FROM [temp_process_table] a
-INNER JOIN forecast_profile fp 
-		ON a.[Profile Name] = fp.external_id
 LEFT JOIN #temp_position tp
-	ON a.[Profile Name] = tp.profile_name
+	ON (a.[Profile Name] = tp.profile_name
+		OR a.[Profile Name] = tp.source_profile2)
 	AND a.Term = tp.Term
 	AND a.Hour = tp.hr
-	AND a.Minute = tp.period
+	AND ISNULL(a.Minute,0) = tp.period
 	AND a.[Is DST] = tp.is_dst
+INNER JOIN forecast_profile fp 
+		ON a.[Profile Name] = fp.external_id
 OUTER APPLY (
 	SELECT gmv.source_profile1 [source_profile1]
 		from #generic_mapping_values gmv
 		INNER JOIN forecast_profile fp
-    		ON gmv.source_profile1 = fp.profile_id
+    		ON (gmv.source_profile1 = fp.profile_id
+				OR gmv.source_profile2 = fp.profile_id)
 		WHERE a.[Profile Name] = fp.external_id
 		GROUP BY gmv.source_profile1
 	) gm_profile
@@ -457,14 +469,15 @@ OUTER APPLY (
 		GROUP BY dest_buy_profile, dest_sell_profile
 	) gm
 WHERE tp.Term IS NULL
-AND gm_profile.source_profile1 IS NOT NULL',
+AND gm_profile.source_profile1 IS NOT NULL
+',
 					NULL,
 					'i' ,
 					'y' ,
 					@admin_user ,
 					23502,
 					1,
-					'9911E4A5_0832_4848_8C66_CFA68E707C75'
+					'C40361BC_8194_4D83_990D_07250FAC81A8'
 					 )
 
 				SET @ixp_rules_id_new = SCOPE_IDENTITY()
@@ -485,7 +498,7 @@ AND gm_profile.source_profile1 IS NOT NULL',
 			
 			UPDATE
 			ixp_rules
-			SET ixp_rules_name = 'Generation ST Forecast'
+			SET ixp_rules_name = 'Retail ST Forecast SOPTIM Gas'
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
 				, before_insert_trigger = 'UPDATE a
@@ -493,7 +506,6 @@ SET [Term] = CAST(dbo.FNAClientToSqlDate([Term]) AS DATE)
 FROM [temp_process_table] a
 
 DROP TABLE IF EXISTS [temp_process_table]_calc
-
 SELECT * INTO [temp_process_table]_calc
 FROM [temp_process_table]
 
@@ -502,12 +514,12 @@ DROP TABLE #generic_mapping_values
 
 DECLARE @mapping_table_id INT
 SELECT @mapping_table_id = mapping_table_id FROM generic_mapping_header 
-WHERE mapping_name = ''Update Volume Profile Mapping''
+WHERE mapping_name = ''Retail Gas Delta Volume''
 
 SELECT gmv.[mapping_table_id]	 
 	   , gmv.[clm1_value] [process]
 	   , gmv.[clm2_value] [sub_book]
-	   , gmv.[clm3_value] [counterparty]
+	   , gmv.[clm3_value] [location]
 	   , gmv.[clm4_value] [source_profile1]
 	   , gmv.[clm5_value] [source_profile2]
 	   , gmv.[clm6_value] [dest_buy_profile]
@@ -523,13 +535,14 @@ CROSS APPLY (
 ) mx
 INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id 
 	AND gmv.clm1_value = mx.clm1_value
-	AND ISNULL(gmv.clm2_value,-1) = ISNULL(mx.clm2_value, -1)
+	AND gmv.clm2_value = mx.clm2_value
 	AND ISNULL(gmv.clm3_value, 1) = ISNULL(mx.clm3_value, 1)
 	AND gmv.clm4_value = mx.clm4_value
 	AND ISNULL(gmv.clm5_value, 1) = ISNULL(mx.clm5_value, 1)
-WHERE gmh.mapping_name = ''Update Volume Profile Mapping'' 
-	and gmv.clm1_value = 112700
+WHERE gmh.mapping_name = ''Retail Gas Delta Volume'' 
+	and gmv.clm1_value = 112701
 	and gmv.mapping_table_id = @mapping_table_id
+
 
 DECLARE @dst_group_value_id INT 
 
@@ -544,38 +557,49 @@ CREATE TABLE #deal_max_term (
 	, source_profile2 NVARCHAR(200) COLLATE DATABASE_DEFAULT
 	, dest_buy_profile INT
 	, dest_sell_profile INT
+	, location_id INT
 )
 
-INSERT INTO #deal_max_term (source_deal_header_id, block_define_id, term_start, term_end, profile_name, source_profile2, dest_buy_profile, dest_sell_profile)
+INSERT INTO #deal_max_term (source_deal_header_id, block_define_id, term_start, term_end, profile_name, source_profile2, dest_buy_profile, dest_sell_profile, location_id)
 SELECT sdh.source_deal_header_id, MAX(sdh.block_define_id), MIN(a.Term) term_start, MAX(a.Term) term_end, fp.external_id
-	, max(fp2.external_id), max(gmv.dest_buy_profile), max(gmv.dest_sell_profile)
+	, max(fp2.external_id), max(gmv.dest_buy_profile), max(gmv.dest_sell_profile), max(location) location_id
 FROM #generic_mapping_values gmv
 INNER JOIN forecast_profile fp
 	ON gmv.source_profile1 = fp.profile_id
-LEFT JOIN forecast_profile fp2
+INNER JOIN forecast_profile fp2
 	ON gmv.source_profile2 = fp2.profile_id
 INNER JOIN [temp_process_table]_calc a
 	ON fp.external_id = a.[Profile Name]
+	OR fp2.external_id = a.[Profile Name]
 INNER JOIN source_deal_header sdh
 	ON  sdh.sub_book = gmv.sub_book
-WHERE sdh.deal_reference_type_id IN (12500, 12503)
-AND gmv.source_profile2 IS NULL
-AND sdh.commodity_id=123 and sdh.source_deal_type_id=2261
+WHERE 1 = 1
+	AND gmv.source_profile1 IS NOT NULL
+	AND gmv.source_profile2 IS NOT NULL
+	AND sdh.deal_reference_type_id IN (12500, 12503)
 GROUP BY sdh.source_deal_header_id, fp.external_id
 
 IF OBJECT_ID(N''tempdb..#collect_profiles'') IS NOT NULL
 	DROP TABLE #collect_profiles
 SELECT MIN(a.Term) term_start, MAX(a.Term) term_end, max(fp.external_id) profile_name, max(fp2.external_id) source_profile2
 	, MAX(gmv.dest_buy_profile) [dest_buy_profile], MAX(gmv.dest_sell_profile) [dest_sell_profile]
+	, MAX(IIF(a1.[Profile Name] IS NULL, fp.external_id,fp2.external_id)) [pair_profile]
 INTO #collect_profiles
 FROM #generic_mapping_values gmv
-INNER JOIN forecast_profile fp
+LEFT JOIN forecast_profile fp
 	ON gmv.source_profile1 = fp.profile_id
-INNER JOIN [temp_process_table]_calc a
-	ON fp.external_id = a.[Profile Name]
 LEFT JOIN forecast_profile fp2
 	ON gmv.source_profile2 = fp2.profile_id
-WHERE gmv.source_profile2 IS NOT NULL
+INNER JOIN [temp_process_table]_calc a
+	ON fp.external_id = a.[Profile Name]
+	OR fp2.external_id = a.[Profile Name]
+LEFT JOIN [temp_process_table]_calc a1
+	ON fp.external_id = a1.[Profile Name]
+LEFT JOIN [temp_process_table]_calc a2
+	ON fp2.external_id = a2.[Profile Name]
+WHERE 1 = 1
+	AND gmv.source_profile1 IS NOT NULL
+	AND gmv.source_profile2 IS NOT NULL
 GROUP BY a.[Profile Name], a.[Term]
 
 IF OBJECT_ID(N''tempdb..#collect_deals'') IS NOT NULL
@@ -614,6 +638,7 @@ INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = dmt.source_deal
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
 	AND ((sdd.term_start >= dmt.term_start or dmt.term_start between sdd.term_start and sdd.term_end)
 		AND (sdd.term_end <= dmt.term_end or dmt.term_end between sdd.term_start and sdd.term_end))
+WHERE dmt.location_id = sdd.location_id
 CREATE INDEX indx_collect_deals_ps ON #collect_deals(source_deal_header_id, term_start, term_end)
 
 SELECT @dst_group_value_id = tz.dst_group_value_id
@@ -632,14 +657,59 @@ FROM mv90_dst
 WHERE insert_delete = ''i''
 AND dst_group_value_id = @dst_group_value_id 
 
+UPDATE a
+SET a.Volume = a.volume + p.volume
+FROM [temp_process_table]_calc a
+INNER JOIN (
+	SELECT term_date [term_start]
+		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, dst.hour , cast(substring(upv.hr,3,2) AS INT)) Hr
+		, [period]
+		, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
+		, (val) volume
+		, '''' granularity
+		, profile_name
+		, source_profile2
+		, dest_buy_profile
+		, dest_sell_profile
+	FROM (
+		SELECT 
+			ddh.profile_id
+ 			, ddh.term_date
+			, hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
+			, ddh.[period]
+			, p.profile_name
+			, p.source_profile2
+			, p.dest_buy_profile
+			, p.dest_sell_profile
+		FROM #collect_profiles p
+		INNER JOIN forecast_profile fp
+			ON fp.external_id = p.pair_profile
+		INNER JOIN deal_detail_hour ddh ON ddh.profile_id = fp.profile_id
+			AND ddh.term_date BETWEEN p.term_start AND p.term_end
+			) rs
+	UNPIVOT (val for Hr IN (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25)	
+		) upv
+	OUTER APPLY(SELECT dst.date,dst.[hour]
+		FROM #mv90_dst dst 
+		WHERE dst.date = upv.term_date
+		GROUP BY dst.date,dst.[hour]
+	) dst
+) p 
+on (a.[Profile Name] = p.profile_name
+	OR a.[Profile Name] = p.source_profile2)
+	AND a.Term = p.term_start
+	AND a.Hour = p.Hr
+	AND a.Minute = p.period
+	AND a.[Is DST] = p.is_dst
 
-DROP TABLE IF EXISTS  #temp_position
+DROP TABLE IF EXISTS #temp_position
 SELECT rs.term_start [Term]
 	, rs.hr
 	, rs.period
 	, rs.is_dst
-	, SUM(rs.volume)*4 position
+	, ABS(SUM(rs.volume)) position
 	, rs.profile_name
+	, MAX(rs.source_profile2) source_profile2
 	, MAX(rs.dest_buy_profile) dest_buy_profile
 	, MAX(rs.dest_sell_profile) dest_sell_profile
 INTO #temp_position
@@ -722,47 +792,26 @@ INTO #temp_position
 		WHERE dst.date = upv.term_start
 		GROUP BY dst.date,dst.[hour]
 		) dst
-	UNION ALL
-	SELECT '''' source_deal_header_id
-		, '''' source_deal_detail_id
-		, term_date [term_start]
-		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, dst.hour , cast(substring(upv.hr,3,2) AS INT)) Hr
-		, [period]
-		, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
-		, (val/4) volume
-		, '''' granularity
-		, profile_name
-		, source_profile2
-		, dest_buy_profile
-		, dest_sell_profile
-	FROM (
-		SELECT 
-			ddh.profile_id
- 			, ddh.term_date
-			, hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
-			, ddh.[period]
-			, p.profile_name
-			, p.source_profile2
-			, p.dest_buy_profile
-			, p.dest_sell_profile
-		FROM #collect_profiles p
-		INNER JOIN forecast_profile fp
-			ON fp.external_id = p.source_profile2
-		INNER JOIN deal_detail_hour ddh ON ddh.profile_id = fp.profile_id
-			AND ddh.term_date BETWEEN p.term_start AND p.term_end
-			) rs
-	UNPIVOT (val for Hr IN (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25)	
-		) upv
-	OUTER APPLY(SELECT dst.date,dst.[hour]
-		FROM #mv90_dst dst 
-		WHERE dst.date = upv.term_date
-		GROUP BY dst.date,dst.[hour]
-		) dst
 ) rs
 GROUP BY rs.profile_name, rs.term_start, rs.hr, rs.period, rs.is_dst
 
+-- Shift DATE
 UPDATE tp
-SET position = (ISNULL(tp.position, 0) - ISNULL(tpd.position, 0))
+SET [Term] = CAST(DATEADD(DD,+1, [Term]) AS DATE) 
+FROM #temp_position tp
+WHERE 1 = 1
+	AND ([hr] BETWEEN 19 AND 24)
+
+-- Shift Hour		
+UPDATE tp
+SET [hr] = CASE WHEN [hr] BETWEEN  1 AND 18 THEN [hr] + 6
+		WHEN [hr] BETWEEN 19 AND 24 THEN [hr] - 18
+	ELSE [hr]
+	END
+FROM #temp_position tp
+
+UPDATE tp
+SET position = (tp.position - tpd.position)
 FROM #temp_position tp
 INNER JOIN #mv90_dst dst ON tp.[Term] = dst.DATE
 	AND tp.Hr = dst.hour
@@ -778,52 +827,24 @@ LEFT JOIN (
 	AND tp.hr = tpd.hour
 	AND tp.period = tpd.period
 
--- format temp position
-DECLARE @min_term DATETIME 
-	, @max_term DATETIME
-
-SELECT @min_term = min(term)
-	, @max_term = max(term)
-FROM [temp_process_table]
-
-IF OBJECT_ID(''tempdb..#temp_hour_breakdown'') IS NOT NULL
-	DROP TABLE #temp_hour_breakdown
-
-SELECT clm_name, is_dst, REPLACE(alias_name,''DST'','''') [user_clm],
-	CASE 
-		WHEN is_dst = 0 THEN RIGHT(''0'' + CAST(LEFT(clm_name, 2) + 1 AS VARCHAR(10)), 2) + '':'' + RIGHT(clm_name, 2) 
-		ELSE RIGHT(''0'' + CAST(LEFT(clm_name, 2) + 1 AS VARCHAR(10)), 2) + '':'' + RIGHT(clm_name, 2) 
-	END [process_clm]
-INTO #temp_hour_breakdown
-FROM dbo.[FNAGetDisplacedPivotGranularityColumn](@min_term,@max_term,987,@dst_group_value_id,0)
-
-UPDATE tp
-SET [hr] = hb.user_hr
-	, period = hb.user_period
-FROM #temp_position tp
-OUTER APPLY (
-	SELECT CAST(LEFT(user_clm,2) AS INT) user_hr, CAST(RIGHT(user_clm,2) AS INT) user_period
-	FROM #temp_hour_breakdown thb
-	WHERE CAST(LEFT(thb.process_clm,2) AS INT) = tp.hr
-	AND CAST(RIGHT(thb.process_clm,2) AS INT) = tp.period
-) hb 
-
 UPDATE a
-SET [Volume] = ISNULL(a.Volume,0) - ISNULL(tp.position, 0)
+SET [Volume] = CAST(a.Volume - (ABS(tp.position)) AS NUMERIC(38))
 FROM [temp_process_table]_calc a
 INNER JOIN #temp_position tp
-	ON a.[profile Name] = tp.profile_name
+	ON (a.[profile Name] = tp.profile_name
+		OR a.[Profile Name] = tp.source_profile2)
 	AND a.[Term] = tp.[Term]
 	AND a.[Hour] = ISNULL(tp.[hr], -1)
-	AND a.[Minute] = tp.[period]
+	AND ISNULL(a.[Minute],0) = tp.[period]
 	AND a.[Is DST] = tp.[is_dst]
 LEFT JOIN forecast_profile fp_buy
 	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
 
+
 INSERT INTO [temp_process_table](
-    [Profile Name]
+    	[Profile Name]
     , [Term]
     , [Hour]
     , [Minute]
@@ -831,7 +852,7 @@ INSERT INTO [temp_process_table](
     , [Volume]
 )
 SELECT 
-	IIF(cast(calc.[Volume] as numeric(38)) >= 0.00, fp_buy.external_id, fp_sell.external_id)
+	IIF(cast(calc.[Volume] as numeric(38)) >= 0.00, fp_sell.external_id, fp_buy.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
@@ -839,10 +860,11 @@ SELECT
     , ABS(calc.[Volume])
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
-	ON calc.[Profile Name] = tp.[profile_name]
+	ON (calc.[Profile Name] = tp.[profile_name]
+		OR calc.[Profile Name] = tp.source_profile2)
 	AND calc.Term = tp.Term
 	AND calc.hour = tp.hr
-	AND calc.Minute = tp.period
+	AND ISNULL(calc.Minute,0) = tp.period
 	AND calc.[Is DST] = tp.is_dst
 LEFT JOIN forecast_profile fp_buy
 	ON tp.dest_buy_profile = fp_buy.profile_id
@@ -858,35 +880,38 @@ SELECT
     , ABS(calc.[Volume])
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
-	ON calc.[Profile Name] = tp.[profile_name]
+	ON (calc.[Profile Name] = tp.[profile_name]
+		OR calc.[Profile Name] = tp.source_profile2)
 	AND calc.Term = tp.Term
 	AND calc.hour = tp.hr
-	AND calc.Minute = tp.period
+	AND ISNULL(calc.Minute,0) = tp.period
 	AND calc.[Is DST] = tp.is_dst
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
 WHERE cast(calc.[Volume] as numeric(38)) = 0.00
 UNION ALL
-SELECT IIF(CAST(a.Volume AS NUMERIC(38)) > 0.00, gm.dest_buy_profile, gm.dest_sell_profile) [profile name]
+SELECT IIF(CAST(a.Volume AS NUMERIC(38)) > 0.00, gm.dest_sell_profile, gm.dest_buy_profile) [profile name]
 	, a.Term
 	, a.[Hour]
 	, a.[Minute]
 	, a.[Is DST]
 	, cast(ABS(a.[Volume]) as nvarchar)
 FROM [temp_process_table] a
-INNER JOIN forecast_profile fp 
-		ON a.[Profile Name] = fp.external_id
 LEFT JOIN #temp_position tp
-	ON a.[Profile Name] = tp.profile_name
+	ON (a.[Profile Name] = tp.profile_name
+		OR a.[Profile Name] = tp.source_profile2)
 	AND a.Term = tp.Term
 	AND a.Hour = tp.hr
-	AND a.Minute = tp.period
+	AND ISNULL(a.Minute,0) = tp.period
 	AND a.[Is DST] = tp.is_dst
+INNER JOIN forecast_profile fp 
+		ON a.[Profile Name] = fp.external_id
 OUTER APPLY (
 	SELECT gmv.source_profile1 [source_profile1]
 		from #generic_mapping_values gmv
 		INNER JOIN forecast_profile fp
-    		ON gmv.source_profile1 = fp.profile_id
+    		ON (gmv.source_profile1 = fp.profile_id
+				OR gmv.source_profile2 = fp.profile_id)
 		WHERE a.[Profile Name] = fp.external_id
 		GROUP BY gmv.source_profile1
 	) gm_profile
@@ -901,7 +926,8 @@ OUTER APPLY (
 		GROUP BY dest_buy_profile, dest_sell_profile
 	) gm
 WHERE tp.Term IS NULL
-AND gm_profile.source_profile1 IS NOT NULL'
+AND gm_profile.source_profile1 IS NOT NULL
+'
 				, after_insert_trigger = NULL
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
@@ -932,7 +958,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   NULL,
 						   '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
 						   NULL,
-						   ',',
+						   ';',
 						   2,
 						   'fv',
 						   '0',
