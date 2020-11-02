@@ -122,11 +122,8 @@ namespace FAARMSFileTransferCLR
         {
             try
             {
-                using (var client = new FileTransferService(fileTransferEndpointId))
+                using (var client = new FileTransferService(fileTransferEndpointId, "/"))
                 {
-                    client.FileTransferEndpoint.WorkingDirectory = "";
-                    if (client.FileTransferEndpoint.FileProtocol == FileProtocol.FTP)
-                        client.FileTransferEndpoint.HostNameUrl = "ftp://" + client.FileTransferEndpoint.HostNameUrl;
                     string[] files = client.ListFiles();
                 }
                 result = "success";
