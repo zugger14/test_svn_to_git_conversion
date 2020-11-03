@@ -1024,10 +1024,10 @@ BEGIN TRY
 		SET @st_sql = @destination_tbl + ' SELECT max(pdd.source_deal_header_id),
 			hb.term_date term_start,max(pdd.deal_date) deal_date,max(pdd.deal_volume_uom_id),
 			sum((cast(hb.hr1 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 +') AS Hr1,  
-			sum((cast(case when isnull(hb1.add_dst_hour,0)<>0 and pdd.commodity_id=-1 then 1.000
-		else isnull(hb.hr2,0)* case when abs(isnull(hb.add_dst_hour,0))=2 and pdd.commodity_id<>-1 then 2.000 else 1.000 end end as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr2, 
-			sum((cast(case when isnull(hb1.add_dst_hour,0)<>0 and pdd.commodity_id=-1 then 1.000
-		else isnull(hb.hr3,0)* case when abs(isnull(hb.add_dst_hour,0))=3 and pdd.commodity_id<>-1 then 2.000 else 1.000 end end as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr3, 
+			sum((cast(case when pdd.commodity_id=-1 then case when abs(isnull(hb1.add_dst_hour,0))=2 then 1.00 else isnull(hb1.hr2,0) end
+			else isnull(hb.hr2,0)*case when abs(isnull(hb.add_dst_hour,0))=2 then 2.000 else 1.000 end end as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr2, 
+			sum((cast(case when pdd.commodity_id=-1 then case when abs(isnull(hb1.add_dst_hour,0))=3 then 1.00 else isnull(hb1.hr3,0) end
+			else isnull(hb.hr3,0)*case when abs(isnull(hb.add_dst_hour,0))=3 then 2.000 else 1.000 end end as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr3, 
 			sum((cast(hb.hr4 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr4, '
 			
 		SET @st_sql1 = '
@@ -1278,6 +1278,9 @@ BEGIN TRY
 		EXEC (@st_sql0+@st_sql + @st_sql1 + @st_sql2 + @st_sql3 + @st_from)
 	END --deal_volume	
 	END --ISNULL(@insert_type, 0) IN (0,12)
+
+
+
 
 
 
