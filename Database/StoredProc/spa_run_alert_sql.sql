@@ -741,6 +741,22 @@ BEGIN
 						SET @sql_statement = REPLACE(@sql_statement, '__primary_column', @primary_column)
 						exec spa_print @sql_statement
 						EXEC(@sql_statement)
+
+						IF @table_name IN ('source_deal_header', 'source_deal_detail', 'WF_deal')
+						BEGIN
+							SET @return_deal_ids = NULL
+							SET @sql_string = 'SELECT @return_deal_ids =  COALESCE(@return_deal_ids + '','', '''') + CAST(source_deal_header_id AS NVARCHAR(20)) FROM ' + @process_table;  
+							SET @param = '@return_deal_ids Nvarchar(MAX) OUTPUT';
+							EXEC sp_executesql @sql_string, @param, @return_deal_ids = @return_deal_ids OUTPUT;
+								
+							IF @return_deal_ids IS NOT NULL
+							BEGIN
+								SELECT @alert_name = alert_sql_name FROM alert_sql WHERE alert_sql_id = @alert_sql_id
+								SET @sql = 'spa_insert_update_audit ''u'',''' + CAST(@return_deal_ids AS NVARCHAR(MAX)) + '''' + ','' Updated by event rule: ' + ISNULL(@alert_name, '') + ''''
+								SET @job_name = 'spa_insert_update_audit_' + @process_id
+								EXEC spa_run_sp_as_job @job_name, @sql,'spa_insert_update_audit' ,@user_login_id
+							END
+						END
 					END
 				END			
 			END
