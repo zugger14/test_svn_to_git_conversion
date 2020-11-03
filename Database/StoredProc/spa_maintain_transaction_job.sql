@@ -47,7 +47,7 @@ drop table #tmp_header_deal_id
 drop table #tmp_position_breakdown
 declare @process_id varchar(50),@insert_type int,@partition_no int,@user_login_id varchar(30),@deal_delete varchar(1)
 drop table #source_deal_detail_hour
-select  @process_id='1131FC08_8CFF_4C2C_A589_127A79F46970',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
+select  @process_id='2347E021_4DA3_4386_8D37_6A00DAD6C7B8',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
 --report_position_farrms_admin_49AFBFA8_BC35_404B_8590_78F087008D35
 --TRUNCATE TABLE select * from adiha_process.dbo.report_position_farrms_admin_E5D1C26F_C332_4A0A_8082_F3936706EEA8
 --insert into adiha_process.dbo.report_position_farrms_admin_testing select 4100,'d'
@@ -1023,37 +1023,42 @@ BEGIN TRY
 			
 		SET @st_sql = @destination_tbl + ' SELECT max(pdd.source_deal_header_id),
 			hb.term_date term_start,max(pdd.deal_date) deal_date,max(pdd.deal_volume_uom_id),
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 7 ELSE 1  END THEN 1.000 else 0 end + isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr7 ELSE hb.hr1 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 +') AS Hr1,  
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 8 ELSE 2 END THEN 1.000 else 0 end + isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr8 ELSE hb.hr2 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr2, 
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 9 ELSE 3 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr9 ELSE hb.hr3 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr3, 
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 10 ELSE 4 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr10 ELSE hb.hr4 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr4, '
+			sum((cast(hb.hr1 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 +') AS Hr1,  
+			sum((cast(case when isnull(hb1.add_dst_hour,0)<>0 and pdd.commodity_id=-1 then 1.000
+		else isnull(hb.hr2,0)* case when abs(isnull(hb.add_dst_hour,0))=2 and pdd.commodity_id<>-1 then 2.000 else 1.000 end end as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr2, 
+			sum((cast(case when isnull(hb1.add_dst_hour,0)<>0 and pdd.commodity_id=-1 then 1.000
+		else isnull(hb.hr3,0)* case when abs(isnull(hb.add_dst_hour,0))=3 and pdd.commodity_id<>-1 then 2.000 else 1.000 end end as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr3, 
+			sum((cast(hb.hr4 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr4, '
 			
 		SET @st_sql1 = '
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 11 ELSE 5 END THEN 1 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr11 ELSE hb.hr5 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr5, 
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 12 ELSE 6 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr12 ELSE hb.hr6 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr6,
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 13 ELSE 7 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr13 ELSE hb.hr7 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr7,
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 14 ELSE 8 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr14 ELSE hb.hr8 END,0) as numeric(1,0)))*' + @col_exp2 + '*'+ @col_exp3 + ') AS Hr8, 
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 15 ELSE 9 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr15 ELSE hb.hr9 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr9,  
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 16 ELSE 10 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr16 ELSE hb.hr10 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr10, 
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 17 ELSE 11 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr17 ELSE hb.hr11 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr11, '
+			sum((cast(hb.hr5 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr5, 
+			sum((cast(hb.hr6 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr6,
+			sum((cast(hb.hr7 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr7,
+			sum((cast(hb.hr8 as numeric(1,0)))*' + @col_exp2_gas + '*'+ @col_exp3 + ') AS Hr8, 
+			sum((cast(hb.hr9 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr9,  
+			sum((cast(hb.hr10 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr10, 
+			sum((cast(hb.hr11 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr11, '
 			
 		SET @st_sql2 = '
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 18 ELSE 12 END THEN 1 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr18 ELSE hb.hr12 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr12, 
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 19 ELSE 13 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr19 ELSE hb.hr13 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr13, 
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 20 ELSE 14 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr20 ELSE hb.hr14 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr14, 
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 21 ELSE 15 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr21 ELSE hb.hr15 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr15,  
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 22 ELSE 16 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr22 ELSE hb.hr16 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr16,  
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 23 ELSE 17 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr23 ELSE hb.hr17 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr17, 
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 24 ELSE 18 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr24 ELSE hb.hr18 END,0) as numeric(1,0)))*' + @col_exp2 + '*' + @col_exp3 + ') AS Hr18, '
-
+			sum((cast(hb.hr12 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr12, 
+			sum((cast(hb.hr13 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr13, 
+			sum((cast(hb.hr14 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr14, 
+			sum((cast(hb.hr15 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr15,  
+			sum((cast(hb.hr16 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr16,  
+			sum((cast(hb.hr17 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr17, 
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 24 ELSE 18 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr24 ELSE hb.hr18 END,0) as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr18, '
 
 		SET @st_sql3 = '
-			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 1 ELSE 19 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr1 ELSE hb.hr19 END,0) as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr19, 
-			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 2 ELSE 20 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr2 ELSE hb.hr20 END,0) as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr20 ,
-			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 3 ELSE 21 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr3 ELSE hb.hr21 END,0) as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr21,	
+			sum((cast(hb.hr19 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr19, 
+			sum((cast(case when isnull(hb1.add_dst_hour,0)<>0 and pdd.commodity_id=-1 then
+				isnull(hb1.hr2,0)* case when abs(isnull(hb1.add_dst_hour,0))+18=20 then 2.000 else 1.000 end
+			else isnull(hb.hr20,0) end as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr20 ,
+			sum((cast(case when isnull(hb1.add_dst_hour,0)<>0 and pdd.commodity_id=-1 then
+				isnull(hb1.hr3,0)* case when abs(isnull(hb1.add_dst_hour,0))+18=21 then 2.000 else 1.000 end
+			else isnull(hb.hr21,0) end as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr21,	
 			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 4 ELSE 22 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr4 ELSE hb.hr22 END,0) as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr22, 
-			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 5 ELSE 23 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr5 ELSE hb.hr23 END,0) as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr23, 
-			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 6 ELSE 24 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr6 ELSE hb.hr24 END,0) as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr24, 
+			sum((cast(hb.hr23 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr23, 
+			sum((cast(hb.hr24 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr24, 
 			sum(isnull(' +@dst_column + ',0)*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr25,getdate() create_ts,max(pdd.create_user) create_user,isnull(h_grp.exp_date,hb.term_date) expiration_date
 		,isnull(mb.period,0) period ,max(pdd.granularity) granularity,pdd.source_deal_detail_id,pdd.rowid'
 			
@@ -1126,6 +1131,7 @@ BEGIN TRY
 		SET @col_exp2_gas = 'cast(CASE WHEN pdd.deal_volume_frequency in (''h'',''x'',''y'') THEN pdd.deal_volume *pdd.conversion_factor*cast(pdd.multiplier*pdd.volume_multiplier2 as numeric(21,16)) ELSE pdd.total_volume/nullif(pdd.no_days*
 		case when pdd.commodity_id=-1 then isnull(hb_term1.volume_mult,term_hrs_exp1.term_no_hrs) else isnull(hb_term.volume_mult,term_hrs_exp.term_no_hrs) end ,0) END AS NUMERIC(32,16))'
 	
+		
 		SET @col_exp3 = 'cast(CASE WHEN pdd.buy_sell_flag=''b'' THEN 1.000000 ELSE -1.000000 END /case when pdd.deal_volume_uom_id in ('+@mw_uoms+') then isnull(mb.factor,1) else 1.00 end as numeric(20,18))'
 
 		SET @dst_column = 'cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END,0)<=0 THEN 0 else 1 end as numeric(1,0))'
