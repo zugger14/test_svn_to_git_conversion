@@ -254,7 +254,7 @@ BEGIN
 				[role]                VARCHAR(1000) COLLATE DATABASE_DEFAULT
 			)
 
-			DECLARE @user VARCHAR(50), @role VARCHAR(100), @db_id INT
+			DECLARE @user VARCHAR(50), @role VARCHAR(MAX), @db_id INT
  			DECLARE template_priv_cursor CURSOR FORWARD_ONLY READ_ONLY 
  			FOR
  				SELECT template_mapping_id, [user_id], [role_name]
