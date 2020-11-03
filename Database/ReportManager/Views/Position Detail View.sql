@@ -35,14 +35,16 @@ BEGIN TRY
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + '--DECLARE @_contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), ''DEBUG_MODE_ON'')
 --SET CONTEXT_INFO @_contextinfo
 --SET NOCOUNT off
+
+
 SET NOCOUNT on
-DECLARE @_summary_option CHAR(6) =NULL --''m'' --''x'' --''y'' -- ''m'' --''d'' -------  ''d'' Detail, ''h'' =hourly,''x''/''y'' = 15/30 minute, q=quatar, a=annual
+DECLARE @_summary_option CHAR(6) =null --''h'' --''m'' --''x'' --''y'' -- ''m'' --''d'' -------  ''d'' Detail, ''h'' =hourly,''x''/''y'' = 15/30 minute, q=quatar, a=annual
 	,@_sub_id VARCHAR(MAX) = NULL
 	,@_stra_id VARCHAR(MAX) = NULL
 	,@_book_id VARCHAR(MAX) = null
 	,@_subbook_id VARCHAR(MAX) = NULL
-	,@_as_of_date VARCHAR(20) =NULL--''2020-02-03'' --''2020-09-07'' --''2020-06-30''
-	,@_source_deal_header_id VARCHAR(1000) = NULL--80150 -- 45871 --540 -- --223683,
+	,@_as_of_date VARCHAR(20) =null --''2018-01-01'' --''2020-09-07'' --''2020-06-30''
+	,@_source_deal_header_id VARCHAR(1000) = 182--80150 -- 45871 --540 -- --223683,
 	,@_period_from VARCHAR(6) = NULL
 	,@_period_to VARCHAR(6) = NULL
 	,@_tenor_option VARCHAR(6) = NULL
@@ -58,8 +60,8 @@ DECLARE @_summary_option CHAR(6) =NULL --''m'' --''x'' --''y'' -- ''m'' --''d'' 
 	,@_deal_status VARCHAR(8) = NULL
 	,@_confirm_status VARCHAR(8) = NULL
 	,@_profile VARCHAR(8) = NULL
-	,@_term_start VARCHAR(20) =null -- ''2021-10-30''
-	,@_term_end VARCHAR(20) =null -- ''2021-12-01''
+	,@_term_start VARCHAR(20) =null --''2018-10-27'' -- ''2021-10-30''
+	,@_term_end VARCHAR(20) =null --''2018-10-28'' -- ''2021-12-01''
 	,@_deal_type VARCHAR(MAX) = NULL
 	,@_deal_sub_type VARCHAR(MAX) = NULL
 	,@_buy_sell_flag VARCHAR(6)
@@ -177,7 +179,6 @@ DECLARE @_format_option CHAR(1) = ''r''
 	,@_column_level VARCHAR(100)
 	,@_temp_process_id VARCHAR(100)
 	,@_sql_final VARCHAR(MAX)
-
 
 
 
@@ -1298,38 +1299,39 @@ SET @_rhpb=''SELECT s.source_deal_detail_id,s.source_curve_def_id,s.commodity_id
 if  @_summary_option IN (''h'',''x'',''y'') -- (''h'',''x'',''y'',''d'',''m'') 
 begin
 	set @_volume_clm=''
-		CAST(hb1.hr1*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr19 ELSE s.hr1 END - CASE WHEN hb.add_dst_hour=1 THEN isnull(s.hr25,0) ELSE 0 END ) AS NUMERIC(38,20)) [1],
-		CAST(hb1.hr2*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr20 ELSE s.hr2 END - CASE WHEN hb.add_dst_hour=2 THEN isnull(s.hr25,0) ELSE 0 END) AS NUMERIC(38,20)) [2],
-		CAST(hb1.hr3*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr21 ELSE s.hr3 END - CASE WHEN hb.add_dst_hour=3 THEN isnull(s.hr25,0) ELSE 0 END) AS NUMERIC(38,20)) [3],
-		CAST(hb1.hr4*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr22 ELSE s.hr4 END - CASE WHEN hb.add_dst_hour=4 THEN isnull(s.hr25,0) ELSE 0 END) AS NUMERIC(38,20)) [4],
-		CAST(hb1.hr5*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr23 ELSE s.hr5 END - CASE WHEN hb.add_dst_hour=5 THEN isnull(s.hr25,0) ELSE 0 END) AS NUMERIC(38,20)) [5],
-		CAST(hb1.hr6*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr24 ELSE s.hr6 END - CASE WHEN hb.add_dst_hour=6 THEN isnull(s.hr25,0) ELSE 0 END) AS NUMERIC(38,20)) [6],
-		CAST(hb1.hr7*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr1 ELSE s.hr7 END - CASE WHEN hb.add_dst_hour=7 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [7],
-		CAST(hb1.hr8*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr2 ELSE s.hr8 END - CASE WHEN hb.add_dst_hour=8 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [8],
-		CAST(hb1.hr9*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr3 ELSE s.hr9 END - CASE WHEN hb.add_dst_hour=9 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [9],
-		CAST(hb1.hr10*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr4 ELSE  s.hr10 END - CASE WHEN hb.add_dst_hour=10 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [10],
-		CAST(hb1.hr11*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr5 ELSE  s.hr11 END - CASE WHEN hb.add_dst_hour=11 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [11],
-		CAST(hb1.hr12*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr6 ELSE  s.hr12 END - CASE WHEN hb.add_dst_hour=12 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [12],
-		CAST(hb1.hr13*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr7 ELSE  s.hr13 END - CASE WHEN hb.add_dst_hour=13 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [13],
-		CAST(hb1.hr14*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr8 ELSE  s.hr14 END - CASE WHEN hb.add_dst_hour=14 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [14],
-		CAST(hb1.hr15*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr9 ELSE  s.hr15 END - CASE WHEN hb.add_dst_hour=15 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [15],
-		CAST(hb1.hr16*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr10 ELSE s.hr16 END - CASE WHEN hb.add_dst_hour=16 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [16],
-		CAST(hb1.hr17*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr11 ELSE s.hr17 END - CASE WHEN hb.add_dst_hour=17 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [17],
-		CAST(hb1.hr18*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr12 ELSE s.hr18 END - CASE WHEN hb.add_dst_hour=18 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [18],
-		CAST(hb1.hr19*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr13 ELSE s.hr19 END - CASE WHEN hb.add_dst_hour=19 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [19],
-		CAST(hb1.hr20*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr14 ELSE s.hr20 END - CASE WHEN hb.add_dst_hour=20 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [20],
-		CAST(hb1.hr21*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr15 ELSE s.hr21 END - CASE WHEN hb.add_dst_hour=21 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [21],
-		CAST(hb1.hr22*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr16 ELSE s.hr22 END - CASE WHEN hb.add_dst_hour=22 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [22],
-		CAST(hb1.hr23*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr17 ELSE s.hr23 END - CASE WHEN hb.add_dst_hour=23 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [23],
-		CAST(hb1.hr24*(CASE WHEN s.commodity_id=-1 AND s.is_fixedvolume =''''n'''' THEN  s.hr18 ELSE s.hr24 END - CASE WHEN hb.add_dst_hour=24 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [24],
+		CAST(hb1.hr1*s.hr1 AS NUMERIC(38,20)) [1],
+		CAST(case when s.commodity_id=-1 then case when abs(isnull(hb1.add_dst_hour,0))=2 then 1.00 else isnull(hb1.hr2,0) end else isnull(hb.hr2,0) end*(s.hr2 - CASE WHEN hb1.add_dst_hour=2 THEN isnull(s.hr25,0) ELSE 0 END) AS NUMERIC(38,20)) [2],
+		CAST(case when s.commodity_id=-1 then case when abs(isnull(hb1.add_dst_hour,0))=3 then 1.00 else isnull(hb1.hr3,0) end else isnull(hb.hr3,0) end*(s.hr3 - CASE WHEN hb1.add_dst_hour=3 THEN isnull(s.hr25,0) ELSE 0 END) AS NUMERIC(38,20)) [3],
+		CAST(hb1.hr4*s.hr4 AS NUMERIC(38,20)) [4],
+		CAST(hb1.hr5*s.hr5 AS NUMERIC(38,20)) [5],
+		CAST(hb1.hr6*s.hr6 AS NUMERIC(38,20)) [6],
+		CAST(hb1.hr7*s.hr7 AS NUMERIC(38,20)) [7],
+		CAST(hb1.hr8*s.hr8 AS NUMERIC(38,20)) [8],
+		CAST(hb1.hr9*s.hr9 AS NUMERIC(38,20)) [9],
+		CAST(hb1.hr10*s.hr10 AS NUMERIC(38,20)) [10],
+		CAST(hb1.hr11*s.hr11 AS NUMERIC(38,20)) [11],
+		CAST(hb1.hr12*s.hr12 AS NUMERIC(38,20)) [12],
+		CAST(hb1.hr13*s.hr13 AS NUMERIC(38,20)) [13],
+		CAST(hb1.hr14*s.hr14 AS NUMERIC(38,20)) [14],
+		CAST(hb1.hr15*s.hr15 AS NUMERIC(38,20)) [15],
+		CAST(hb1.hr16*s.hr16 AS NUMERIC(38,20)) [16],
+		CAST(hb1.hr17*s.hr17 AS NUMERIC(38,20)) [17],
+		CAST(hb1.hr18*s.hr18 AS NUMERIC(38,20)) [18],
+		CAST(hb1.hr19*s.hr19 AS NUMERIC(38,20)) [19],
+		CAST(hb1.hr20*(s.hr20 - CASE WHEN abs(hb.add_dst_hour)+18=20 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [20],
+		CAST(hb1.hr21*(s.hr21- CASE WHEN abs(hb.add_dst_hour)+18=21 THEN s.hr25 ELSE 0 END) AS NUMERIC(38,20)) [21],
+		CAST(hb1.hr22*s.hr22 AS NUMERIC(38,20)) [22],
+		CAST(hb1.hr23*s.hr23 AS NUMERIC(38,20)) [23],
+		CAST(hb1.hr24*s.hr24 AS NUMERIC(38,20)) [24],
 		CAST(hb1.hr3*(s.hr25) AS NUMERIC(38,20)) [25],cast(hb1.hr3*(s.hr25) AS NUMERIC(38,20)) dst_hr,(hb.add_dst_hour) add_dst_hour
-		,ISNULL(hb1.block_type_id, spcd.source_curve_def_id)  block_type_id
-		--,   ISNULL(hb1.block_name, spcd.curve_name) block_name
-		,   hb1.block_name
-		, sdv_block_group.code [user_defined_block] ,sdv_block_group.value_id [user_defined_block_id],hb1.block_type_group_id '' --,no_hrs.no_hrs hr_nos
+		,ISNULL(hb1.block_type_id, spcd.source_curve_def_id)  block_type_id,hb1.block_name
+		,sdv_block_group.code [user_defined_block] ,sdv_block_group.value_id [user_defined_block_id],hb1.block_type_group_id '' --,no_hrs.no_hrs hr_nos
+	
 	SET @_rhpb_0= '' 
-		select *,convert(varchar(10),''
-		+CASE WHEN  @_summary_option IN (''h'',''x'',''y'')  THEN ''CASE WHEN commodity_id=-1 AND is_fixedvolume =''''n'''' AND  ([hours]<7 OR [hours]=25) THEN dateadd(DAY,1,[term]) ELSE [term] END'' else  ''[term]'' end +'',120) [term_date] ,1  tot_hours
+		select source_deal_detail_id,source_curve_def_id,commodity_id,[Term],Period,is_fixedvolume,physical_financial_flag,source_uom_id,[UOM],counterparty_id,location_id,fas_book_id,proxy_curve_id,breakdown,block_define_id,dst_hr,add_dst_hour,block_type_id
+		,block_name,[user_defined_block] ,[user_defined_block_id],block_type_group_id
+		,convert(varchar(10),CASE WHEN commodity_id=-1 AND is_fixedvolume =''''n'''' AND [hours]>18 THEN dateadd(DAY,1,[term]) ELSE [term] END,120) [term_date] 
+		,CASE WHEN commodity_id=-1 AND is_fixedvolume =''''n'''' then case when [hours]<19 then [Hours]+6 when [hours] between 19 and 24 then [Hours]-18 else [Hours] end else [Hours] end [Hours] ,1  tot_hours,Volume
 		into #unpvt 
 		from (
 			SELECT * FROM #tmp_pos_detail_power
@@ -1369,6 +1371,8 @@ set @_commodity_str='' INTO #tmp_pos_detail_power FROM ''+@_hour_pivot_table+'' 
 		) hb1
 		LEFT JOIN static_data_value sdv_block_group WITH (NOLOCK) ON sdv_block_group.value_id = hb1.block_type_group_id
 	'' else '''' end
+
+
 set @_commodity_str1='' INTO #tmp_pos_detail_gas FROM ''+@_hour_pivot_table+'' s  
 	inner JOIN source_price_curve_def spcd (nolock) on spcd.source_curve_def_id = s.source_curve_def_id and s.commodity_id=-1 AND s.is_fixedvolume =''''n''''
 	''
@@ -1391,6 +1395,10 @@ set @_commodity_str1='' INTO #tmp_pos_detail_gas FROM ''+@_hour_pivot_table+'' s
 	LEFT JOIN static_data_value sdv_block_group WITH (NOLOCK) ON sdv_block_group.value_id = hb1.block_type_group_id
 ''
 else '''' end
+
+
+
+
 SET @_rhpb1= ''
 SELECT 
 	id = IDENTITY(INT, 1, 1),
