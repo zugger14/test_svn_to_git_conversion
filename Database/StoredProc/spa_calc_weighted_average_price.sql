@@ -220,6 +220,22 @@ BEGIN
 			AND ISNULL(gmv.clm20_value,'''') = ISNULL(mx.clm20_value,'''')
 		'
 END
+ELSE IF @mapping_id = 112703
+BEGIN
+	--Transportation Capacity case pick max effective date of process_type, location
+	SET @sql += '
+		CROSS APPLY (
+			SELECT clm1_value, MAX(clm2_value) clm2_value,clm11_value 
+			FROM generic_mapping_values gmv 
+			WHERE gmv.mapping_table_id = gmh.mapping_table_id
+			GROUP BY clm1_value,clm11_value
+		) mx
+		INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id 
+			AND gmv.clm1_value = mx.clm1_value
+			AND gmv.clm2_value = mx.clm2_value
+			AND ISNULL(gmv.clm11_value, '''') = ISNULL(mx.clm11_value,'''')
+		'
+END
 ELSE 
 BEGIN
 	--Max effective data of process type
@@ -807,6 +823,14 @@ BEGIN
 			WHERE 1=1 
 				AND (gmv.clm13_value IS NULL OR gmv.clm13_value = ISNULL(sdh.template_id,-1))
 				AND (gmv.clm20_value IS NULL OR gmv.clm20_value = ISNULL(uddf.udf_value,-1))		
+		) gmv'
+END
+ELSE  IF @mapping_id = 112703	--Transportation capacity check location if defined in generic mapping.
+BEGIN
+	SET @sql += ' OUTER APPLY(SELECT DISTINCT gmv.clm1_value, gmv.clm17_value,gmv.clm18_value, gmv.clm19_value
+			FROM #generic_mapping_values gmv
+			WHERE 1=1 
+				AND  gmv.clm11_value = ISNULL(org.location_id,-1)	
 		) gmv'
 END
 ELSE  
