@@ -2173,6 +2173,28 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Enercity Settlement Netting View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'gross_total' 
+
+		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
+					, functions, [alias], sortable, rounding, thousand_seperation, font
+					, font_size, font_style, text_align, text_color, background, default_sort_order
+					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 69 column_order,NULL aggregation, NULL functions, 'Commodity Energy Tax' [alias], 1 sortable, -1 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+			
+		FROM sys.objects o
+		INNER JOIN report_page_tablix rpt 
+			ON rpt.[name] = 'Enercity Settlement Netting Report_tablix'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rpt.page_id 
+			AND rpage.[name] = 'Enercity Settlement Netting Report'
+		INNER JOIN report r 
+			ON r.report_id = rpage.report_id
+			AND r.[name] = 'Enercity Settlement Netting Report'
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id AND rd.[alias] = 'ENSNV1' 	
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Enercity Settlement Netting View' 	
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'commodity_energy_tax_value' 
  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
@@ -4104,6 +4126,34 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Vat' --Added to handle custom column. Assumption: alias is unique and NOT NULL
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	  SELECT TOP 1 
+			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
+			'Tahoma' font,
+			'8' font_size,
+			'1,0,0' font_style,
+			'Right' text_align,
+			'#ffffff' text_color,
+			'#458bc1' background,
+			rtc.report_tablix_column_id			 		       
+		FROM   sys.objects o
+		INNER JOIN report_page_tablix rpt 
+			ON  rpt.[name] = 'Enercity Settlement Netting Report_tablix'
+		INNER JOIN report_page rpage 
+			ON  rpage.report_page_id = rpt.page_id 
+		AND rpage.[name] = 'Enercity Settlement Netting Report'
+		INNER JOIN report r 
+			ON  r.report_id = rpage.report_id 
+			AND r.[name] = 'Enercity Settlement Netting Report'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Enercity Settlement Netting View' 	
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'commodity_energy_tax_value' 
+		INNER JOIN report_tablix_column rtc 
+			on rtc.tablix_id = rpt.report_page_tablix_id
+			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
+			AND rtc.alias = 'Commodity Energy Tax' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
 
 		--RETAIN APPLICATION FILTER DETAILS START (PART2)
