@@ -22,7 +22,7 @@ GO
 CREATE PROCEDURE [dbo].[spa_rfx_handle_data_source_dhx]
 	@data_source_tsql				VARCHAR(MAX)= NULL
 	, @data_source_alias			VARCHAR(100) = NULL
-	, @criteria						VARCHAR(5000) = NULL
+	, @criteria						VARCHAR(MAX) = NULL
 	, @data_source_process_id		VARCHAR(100) = NULL
 	, @handle_single_line_sql		BIT = 0
 	, @validate						BIT	= 0 --validate required?

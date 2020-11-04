@@ -19,8 +19,8 @@ GO
 -- ==========================================================================================
 CREATE FUNCTION [dbo].[FNACharIndexReverseMatchWholeWord]
 (
-	@searchString		varchar(1000)
-	, @fullString		varchar(8000)
+	@searchString		varchar(MAX)
+	, @fullString		varchar(MAX)
 	, @startLocation	int = 0
 )
 RETURNS int
