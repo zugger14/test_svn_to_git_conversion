@@ -40,6 +40,13 @@ FROM source_minor_location where location_name IN ('Tennet', 'Amprion', 'Transne
 FOR XML PATH('')) ,1,1,'')
 SELECT @_balance_location_id = source_minor_location_id FROM source_minor_location WHERE location_name = 'Tennet'
 
+DECLARE  @sub VARCHAR(MAX) = ''
+SELECT @sub = STUFF((SELECT DISTINCT ',' +  CAST(entity_id AS VARCHAR(20)) 
+					 FROM portfolio_hierarchy
+					 WHERE [entity_name] IN ('Market Access & Speculative Trading','Market Services','Risk Management & Hedging')
+					  AND entity_type_value_id = 525
+				FOR XML PATH('')), 1, 1, '') 
+
 IF OBJECT_ID('tempdb..#tmp_result') IS NOT NULL
 	DROP TABLE #tmp_result
  
@@ -56,7 +63,7 @@ CREATE TABLE #tmp_result (
   EXEC spa_calc_power_balance  -- insert exec causes error due to nested so insertion in #tmp_result is used in sp itself
 	  'b'
 	, @as_of_date
-	, NULL
+	, @sub
 	, NULL
 	, NULL
 	, NULL
