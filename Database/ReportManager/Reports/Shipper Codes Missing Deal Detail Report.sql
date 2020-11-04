@@ -36,7 +36,7 @@ BEGIN TRY
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'Shipper Codes Missing Deal Detail Report' [name], 'ashakya' [owner], 0 is_system, 0 is_excel, 0 is_mobile, 'C4D0C1EF_9330_4A73_9CA9_F89A421B22F9' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'Shipper Codes Missing Deal Detail Report' [name], 'dev_admin' [owner], 0 is_system, 1 is_excel, 0 is_mobile, 'C4D0C1EF_9330_4A73_9CA9_F89A421B22F9' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Deal' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
@@ -81,202 +81,6 @@ BEGIN TRY
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = @report_id_dest
 			AND rd.[alias] = 'scmdv'
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 8 AS param_order, 0 AS param_depth, 'Counterparty' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'scmdv'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'scmdv'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'counterparty_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 11 AS param_order, 0 AS param_depth, 'Location' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'scmdv'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'scmdv'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'location_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 13 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'scmdv'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'scmdv'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'Market_index'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 10 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'scmdv'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'scmdv'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'term_end'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 9 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'scmdv'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'scmdv'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'term_start'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'scmdv'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'scmdv'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'deal_date_from'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'scmdv'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'scmdv'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'deal_date_to'	
 	
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
@@ -337,6 +141,34 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 8 AS param_order, 0 AS param_depth, 'Counterparty' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'scmdv'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'scmdv'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'counterparty_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 12 AS param_order, 0 AS param_depth, 'Index' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
@@ -389,6 +221,62 @@ BEGIN TRY
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'header_buy_sell_flag'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 11 AS param_order, 0 AS param_depth, 'Location' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'scmdv'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'scmdv'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'location_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 13 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'scmdv'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'scmdv'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'Market_index'	
 	
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
@@ -449,7 +337,119 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 10 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'scmdv'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'scmdv'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'term_end'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 9 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'scmdv'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'scmdv'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'term_start'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'scmdv'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'scmdv'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'deal_date_from'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Shipper Codes Missing Deal Detail Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'scmdv'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'scmdv'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Shipper Codes Missing Deal Detail View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'deal_date_to'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Shipper Codes Missing Deal Detail Report'

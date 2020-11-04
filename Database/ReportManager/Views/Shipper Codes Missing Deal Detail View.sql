@@ -181,7 +181,7 @@ SELECT books.stra_id stra_id,
        ''''@deal_date_to'''' [deal_date_to]
 
 	   --[__batch_report__] 
-  FROM source_deal_header sdh
+FROM source_deal_header sdh
     INNER JOIN #books books 
 
 	ON  books.source_system_book_id1 = sdh.source_system_book_id1
@@ -200,8 +200,8 @@ LEFT JOIN source_commodity scom ON scom.source_commodity_id = sdh.commodity_id
 LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
 LEFT JOIN shipper_code_mapping_detail scmd ON scmd.shipper_code_mapping_detail_id = sdd.shipper_code1
 LEFT JOIN shipper_code_mapping_detail scmd2 ON scmd2.shipper_code_mapping_detail_id = sdd.shipper_code2
-
-WHERE 1=1 AND sdh.physical_financial_flag = ''''p'''' AND (sdd.shipper_code1 IS NULL OR sdd.shipper_code2 IS NULL )'' +
+INNER JOIN deal_status_group dsg ON sdh.deal_status = dsg.status_value_id
+WHERE 1=1 AND sdh.deal_reference_type_id IS NULL AND sdh.physical_financial_flag = ''''p'''' AND (sdd.shipper_code1 IS NULL OR sdd.shipper_code2 IS NULL )'' +
     CASE  WHEN @_term_start IS NOT NULL THEN '' AND sdd.term_start >= '''''' + @_term_start + '''''''' ELSE '''' END +
 	CASE WHEN @_term_end IS NOT NULL THEN '' AND sdd.term_start <= '''''' + @_term_end + '''''''' ELSE '''' END +
     CASE WHEN @_deal_date_from IS NOT NULL THEN '' AND sdh.deal_date >= '''''' + @_deal_date_from + '''''''' ELSE '''' END +
@@ -1117,7 +1117,7 @@ EXEC (@_sql);', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Deal Date From'
-			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 1
+			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -1130,7 +1130,7 @@ EXEC (@_sql);', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'deal_date_from' AS [name], 'Deal Date From' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 1 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'deal_date_from' AS [name], 'Deal Date From' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Shipper Codes Missing Deal Detail View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -1151,7 +1151,7 @@ EXEC (@_sql);', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Deal Date To'
-			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 1
+			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -1164,7 +1164,7 @@ EXEC (@_sql);', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'deal_date_to' AS [name], 'Deal Date To' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 1 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'deal_date_to' AS [name], 'Deal Date To' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Shipper Codes Missing Deal Detail View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
