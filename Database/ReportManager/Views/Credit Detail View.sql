@@ -456,9 +456,11 @@ SET @_sql_one =
 
 		[deal_status_group]
 
-		--[__batch_report__] ''
+		''
 
 	SET @_sql_two = ''
+
+	--[__batch_report__]
 
 	FROM source_counterparty sc
 
@@ -476,11 +478,7 @@ SET @_sql_one =
 
 		WHERE type_id = 5600
 
-	
-
 		EXCEPT
-
-	
 
 		SELECT status_value_id
 
@@ -559,8 +557,6 @@ SET @_sql_one =
 	 '' 
 
 	+ CASE WHEN @_as_of_date IS NULL THEN '''' ELSE '' AND ced.as_of_date = '''''' + @_as_of_date + '''''''' END + CASE WHEN @_source_counterparty_id IS NULL THEN '''' ELSE '' AND ced.Source_Counterparty_ID IN ('' + @_source_counterparty_id + '')'' END + CASE WHEN @_internal_counterparty_id IS NULL THEN '''' ELSE '' AND ced.internal_counterparty_id IN ('' + @_internal_counterparty_id + '')'' END + CASE WHEN @_contract_id IS NULL THEN '''' ELSE '' AND ced.contract_id IN ('' + @_contract_id + '')'' END + CASE WHEN @_account_status_id IS NULL THEN '''' ELSE '' AND cci.account_status IN ('' + @_account_status_id + '')'' END
-
-	--SELECT @_sql_one, @_sql_two
 
 	EXEC (@_sql_one + @_sql_two)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
