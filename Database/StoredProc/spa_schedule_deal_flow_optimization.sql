@@ -4706,8 +4706,12 @@ BEGIN -- Insert/Update Deal data
 		 ON  p.single_path_id = cp.single_path_id
 		 AND p.first_dom = cp.first_dom 
 		 AND p.contract_id = cp.contract_id	
-	WHERE ISNULL(CASE WHEN sdd.Leg = 1 THEN ed.leg1_volume ELSE ed.leg2_volume END,0)
-		+ ROUND(CASE WHEN leg = 1 THEN p.leg1_deal_volume ELSE p.leg2_deal_volume END, 0) <> 0
+	WHERE ( ISNULL(CASE WHEN sdd.Leg = 1 THEN ed.leg1_volume ELSE ed.leg2_volume END,0)
+			+ ROUND(CASE WHEN leg = 1 THEN p.leg1_deal_volume ELSE p.leg2_deal_volume END, 0) <> 0
+			OR -- allowing negative volume to me deal volume 0
+			ISNULL(CASE WHEN sdd.Leg = 1 THEN ed.leg1_volume ELSE ed.leg2_volume END,0)
+			= ROUND(CASE WHEN leg = 1 THEN p.leg1_deal_volume ELSE p.leg2_deal_volume END, 0) * -1
+			)
 	--rollback transaction t1;
 	--return
 	INSERT INTO [dbo].[source_deal_detail](
