@@ -78,14 +78,11 @@ BEGIN TRY
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10), 
-		@_process_id VARCHAR(100)
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'', 
+		@_process_id VARCHAR(100) = ''@process_id'',
+		@_whatif_criteria_id VARCHAR(1000) = ''@whatif_criteria_id''
 
-IF ''@process_id'' <> ''NULL''
-    SET @_process_id = ''@process_id''
 
-IF ''@as_of_date'' <> ''NULL''
-    SET @_as_of_date = ''@as_of_date''
 
 IF OBJECT_ID(''tempdb..#tmp_result_calc_mtm_whatif'') IS NOT NULL 
 	DROP TABLE #tmp_result_calc_mtm_whatif
@@ -100,10 +97,15 @@ CREATE TABLE #tmp_result_calc_mtm_whatif (
 )
 
 
-DECLARE @_whatif_criteria_id VARCHAR(1000)
+--DECLARE @_whatif_criteria_id VARCHAR(1000)
+IF (@_whatif_criteria_id IS NULL OR @_whatif_criteria_id = '''') 
+
+BEGIN
 
 SELECT @_whatif_criteria_id = ISNULL(@_whatif_criteria_id + '','', '''') + CAST(mwc.criteria_id AS VARCHAR(10)) 
 FROM maintain_whatif_criteria mwc WHERE active = ''y''
+
+END
 
 IF ''@as_of_date'' = ''1900'' 
 BEGIN
@@ -115,7 +117,7 @@ BEGIN
     EXEC spa_calc_mtm_whatif ''c'', @_as_of_date,  @_whatif_criteria_id, NULL, NULL, @_process_id,1,''n'', @_process_id
 END
 
-SELECT TOP 1 ''@as_of_date'' [as_of_date], ''@process_id'' [process_id],*
+SELECT TOP 1 @_as_of_date [as_of_date], @_process_id [process_id], @_whatif_criteria_id [whatif_criteria_id],*
 --[__batch_report__] 
 FROM #tmp_result_calc_mtm_whatif ORDER BY [Status] DESC', report_id = @report_id_data_source_dest,
 	system_defined = NULL
@@ -401,6 +403,40 @@ FROM #tmp_result_calc_mtm_whatif ORDER BY [Status] DESC', report_id = @report_id
 	
 	
 
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Calc What If SQL'
+	            AND dsc.name =  'whatif_criteria_id'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Whatif Criteria Id'
+			   , reqd_param = NULL, widget_id = 9, datatype_id = 5, param_data_source = 'SELECT mwc.criteria_id [value], mwc.criteria_name [label] FROM maintain_whatif_criteria mwc', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Calc What If SQL'
+			AND dsc.name =  'whatif_criteria_id'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'whatif_criteria_id' AS [name], 'Whatif Criteria Id' AS ALIAS, NULL AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'SELECT mwc.criteria_id [value], mwc.criteria_name [label] FROM maintain_whatif_criteria mwc' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Calc What If SQL'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
 	DELETE dsc
 	FROM data_source_column dsc 
 	INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -440,7 +476,7 @@ COMMIT TRAN
 
 		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
 		SELECT TOP 1 rpage.report_page_id, 'EOD-Run What If', 'CE938247_BB52_47E8_B9E9_270DC08CDE6B', 1,'','','.xlsx',',', 
-		-100000,'n','n',NULL	
+		-100000,'n','n',0	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 			on rpage.[name] = 'EOD - Run What If'
@@ -467,7 +503,7 @@ COMMIT TRAN
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'EOD-Run What If'
@@ -495,7 +531,7 @@ COMMIT TRAN
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, 'Process ID' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'EOD-Run What If'
@@ -521,8 +557,36 @@ COMMIT TRAN
 			AND dsc.[name] = 'process_id'	
 	
 
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, 'What If Criteria' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'EOD-Run What If'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'EOD - Run What If'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'EOD - Run What If'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'CWIS'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'CWIS'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Calc What If SQL' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'whatif_criteria_id'	
+	
+
 		INSERT INTO report_page_tablix(page_id,root_dataset_id, [name], width, height, [top], [left], group_mode, border_style, page_break, type_id, cross_summary, no_header, export_table_name, is_global)
-		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'EOD_Run What If_tablix' [name], '4' width, '2.6666666666666665' height, '0' [top], '0' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
+		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'EOD_Run What If_tablix' [name], '4.346666666666667' width, '2.6133333333333333' height, '0' [top], '0' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 		ON rpage.[name] = 'EOD - Run What If'
