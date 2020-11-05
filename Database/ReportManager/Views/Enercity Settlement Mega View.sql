@@ -1,4 +1,4 @@
-BEGIN TRY
+ BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'ESSMV1'
@@ -654,13 +654,16 @@ from
 	CROSS APPLY (
 		SELECT Max(as_of_date) as_of_date FROM index_fees_breakdown_settlement WHERE source_deal_header_id = sv.source_deal_header_id 
 			AND as_of_date <= Isnull(sv.from_as_of_date, @_from_as_of_date) 
+            AND term_start BETWEEN @_term_start AND @_term_end
 			--and internal_type in (18722,18723,18733,18742,18743, 18732)
 	) ifbs_mx
 	--cross join ( VALUES (18722),(18723),(18733) , (18742),(18743),(18732) ) fee (internal_type)
 	outer apply
 	( select * from index_fees_breakdown_settlement  where source_deal_header_id = sv.source_deal_header_id 
-	--	and internal_type =fee.internal_type ---and as_of_date=ifbs_mx.as_of_date
-		--order by term_start
+	--	and internal_type =fee.internal_type 
+        AND as_of_date=ifbs_mx.as_of_date
+		 AND term_start BETWEEN @_term_start AND @_term_end
+        --order by term_start
 	)ifbs
 	LEFT JOIN source_currency scur ON scur.source_currency_id = ifbs.currency_id
 WHERE ifbs.field_id IS NOT NULL
@@ -8383,4 +8386,3 @@ FROM #tmp_final_data', report_id = @report_id_data_source_dest,
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
-	
