@@ -163,6 +163,9 @@
                             for (var a in data) {
                                 field_label = a;
                                 field_value = data[a];
+                                if (field_label == 'password') {
+                                    field_value = escapeXML(field_value);
+                                }
                                 form_xml += " " + field_label + "=\"" + field_value + "\"";
                             }
                         } else {
