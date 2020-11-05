@@ -77,6 +77,9 @@ CREATE procedure [dbo].[spa_user_application_log]
 					LEFT JOIN  application_functions af2 ON af2.function_id = af1.func_ref_id
 					LEFT JOIN  application_functions af3 ON af3.function_id = af2.func_ref_id
 					LEFT JOIN  application_functions af4 ON af4.function_id = af3.func_ref_id
+					LEFT JOIN  setup_menu sm1 ON sm1.function_id = sm.parent_menu_id AND sm1.product_category = 10000000
+					LEFT JOIN  setup_menu sm2 ON sm2.function_id = sm1.parent_menu_id AND sm2.product_category = 10000000
+					LEFT JOIN  setup_menu sm3 ON sm3.function_id = sm2.parent_menu_id AND sm3.product_category = 10000000
 					WHERE 1=1 ' 
 		            
 		IF @user_login_id_1 IS NOT NULL
@@ -92,7 +95,10 @@ CREATE procedure [dbo].[spa_user_application_log]
 								OR af1.func_ref_id = ' + CAST(@function_id AS NVARCHAR) +'
 								OR af2.func_ref_id = ' + CAST(@function_id AS NVARCHAR) +'
 								OR af3.func_ref_id = ' + CAST(@function_id AS NVARCHAR) +'
-								OR af4.func_ref_id = ' + CAST(@function_id AS NVARCHAR) +'								
+								OR af4.func_ref_id = ' + CAST(@function_id AS NVARCHAR) +'
+								OR sm1.function_id = ' + CAST(@function_id AS NVARCHAR) +'
+								OR sm2.function_id = ' + CAST(@function_id AS NVARCHAR) +'
+								OR sm3.function_id = ' + CAST(@function_id AS NVARCHAR) +'							
 								)'
 		END
 		
