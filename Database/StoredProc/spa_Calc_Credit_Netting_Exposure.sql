@@ -1084,9 +1084,8 @@ IF @user_login_id IS NULL
 
 				LEFT JOIN counterparty_contract_address cca1 ON cca1.counterparty_id = sc.source_counterparty_id
 					AND (cca1.internal_counterparty_id IS NULL OR cca1.internal_counterparty_id=fs1.counterparty_id) 
-					AND cca1.contract_id = CASE WHEN eff.eff_date IS NOT NULL THEN 
-											sng.netting_contract_id 
-										ELSE COALESCE(h.contract_id, cca1.contract_id) END
+					AND ((cca1.contract_id = sng.netting_contract_id) OR (cca1.contract_id =  
+										COALESCE(h.contract_id, cca1.contract_id)))
 				LEFT JOIN contract_group cg ON cg.contract_id = CASE WHEN eff.eff_date IS NOT NULL									THEN sng.netting_contract_id ELSE h.contract_id END
 				OUTER APPLY(SELECT MAX(sdd.source_deal_header_id) source_deal_header_id 
 					FROM stmt_checkout sc 
@@ -2172,9 +2171,8 @@ IF @user_login_id IS NULL
 
 					INNER JOIN counterparty_contract_address cca1 ON sc.source_counterparty_id = cca1.counterparty_id
 						AND (cca1.internal_counterparty_id IS NULL OR fs1.counterparty_id = cca1.internal_counterparty_id) 
-						AND cca1.contract_id = CASE WHEN eff.eff_date IS NOT NULL THEN 
-													sng.netting_contract_id 
-												ELSE COALESCE(sdh.contract_id, cca1.contract_id) END
+						AND ((cca1.contract_id = sng.netting_contract_id) OR (cca1.contract_id =
+												COALESCE(sdh.contract_id, cca1.contract_id)))
 					
 					LEFT JOIN contract_group cg ON cg.contract_id = CASE WHEN eff.eff_date IS NOT NULL THEN																				sng.netting_contract_id 
 																ELSE sdh.contract_id END
