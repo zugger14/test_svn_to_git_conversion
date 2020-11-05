@@ -1076,62 +1076,53 @@ BEGIN
 
 		IF COL_LENGTH('tempdb..#temp_source_deal_detail', 'shipper_code1') IS NOT NULL
 		BEGIN
+			
 			UPDATE sdd
-			SET shipper_code1 = scmd1_default.shipper_code_mapping_detail_id
-			FROM  
-			#temp_source_deal_detail sdd
+			SET shipper_code1 = scmd.shipper_code_mapping_detail_id
+			FROM  #temp_source_deal_detail sdd
 			OUTER APPLY (SELECT counterparty_id FROM #temp_source_deal_header ) sdh 
-			INNER JOIN shipper_code_mapping scm ON scm.counterparty_id = sdh.counterparty_id						
-			OUTER APPLY
-			(SELECT scmd1_fil.shipper_code_mapping_detail_id FROM
-				(SELECT * FROM
-					(SELECT TOP 1 scmd1_def.shipper_code_mapping_detail_id , 
-						scmd1_def.shipper_code1, 
-						scmd1_def.effective_date,
-						ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY scmd1_def.effective_date DESC) rn
-					FROM shipper_code_mapping_detail scmd1_def
-					WHERE scmd1_def.location_id = sdd.location_id 
-						AND scmd1_def.shipper_code_id = scm.shipper_code_id
-						AND scmd1_def.effective_date <= CAST(sdd.term_start AS DATE)
-						AND scmd1_def.is_active = 'y'
-					ORDER BY scmd1_def.effective_date DESC
-					) a WHERE rn =1
-				) b 
-				INNER JOIN shipper_code_mapping_detail scmd1_fil ON
-					b.effective_date = scmd1_fil.effective_date  AND scmd1_fil.location_id = sdd.location_id 
-					AND scmd1_fil.is_active = 'y' AND scmd1_fil.shipper_code_id = scm.shipper_code_id
-				AND ISNULL(NULLIF(scmd1_fil.shipper_code1_is_default, ''), 'n') = 'y'
-			) scmd1_default
+			INNER JOIN shipper_code_mapping scm ON scm.counterparty_id = sdh.counterparty_id					
+			CROSS APPLY (
+					SELECT location_id, shipper_code_id, MAX(effective_date) effective_date
+					FROM shipper_code_mapping_detail 
+					WHERE shipper_code_id =  scm.shipper_code_id
+						AND location_id = sdd.location_id
+						AND effective_date <= CAST(sdd.term_start AS DATE)
+						AND is_active = 'y'
+						AND ISNULL(NULLIF(shipper_code1_is_default, ''), 'n') = 'y'
+					GROUP BY location_id, shipper_code_id
+			) scmd_mx
+			INNER JOIN shipper_code_mapping_detail scmd ON scmd.effective_date = scmd_mx.effective_date  
+				AND scmd.location_id = scmd_mx.location_id 
+				AND scmd.shipper_code_id = scmd_mx.shipper_code_id
+				AND scmd.is_active = 'y' 
+				AND ISNULL(NULLIF(scmd.shipper_code1_is_default, ''), 'n') = 'y'
+
 		END
 		
 		IF COL_LENGTH('tempdb..#temp_source_deal_detail', 'shipper_code2') IS NOT NULL
 		BEGIN
+
 			UPDATE sdd
-			SET shipper_code2 = scmd2_default.shipper_code_mapping_detail_id
-			FROM  
-			#temp_source_deal_detail sdd
+			SET shipper_code2 = scmd.shipper_code_mapping_detail_id
+			FROM  #temp_source_deal_detail sdd
 			OUTER APPLY (SELECT counterparty_id FROM #temp_source_deal_header ) sdh 
-			INNER JOIN shipper_code_mapping scm ON scm.counterparty_id = sdh.counterparty_id
-			OUTER APPLY 
-			( SELECT scmd2_fil.shipper_code_mapping_detail_id FROM
-				(SELECT * FROM
-					(SELECT TOP 1 scmd2_def.shipper_code_mapping_detail_id , 
-						scmd2_def.shipper_code, 
-						scmd2_def.effective_date,
-						ROW_NUMBER() OVER (PARTITION BY scmd2_def.shipper_code ORDER BY scmd2_def.effective_date DESC) rn
-					FROM shipper_code_mapping_detail scmd2_def
-					WHERE scmd2_def.location_id = sdd.location_id 
-						AND scmd2_def.effective_date <= CAST(sdd.term_start AS DATE)
-						AND scmd2_def.shipper_code_id = scm.shipper_code_id
-						AND scmd2_def.is_active = 'y'	
-					ORDER BY scmd2_def.effective_date DESC
-					) a WHERE rn =1
-				) b 
-				INNER JOIN shipper_code_mapping_detail scmd2_fil ON b.effective_date = scmd2_fil.effective_date 
-				AND scmd2_fil.location_id = sdd.location_id  
-					AND scmd2_fil.is_active = 'y' AND scmd2_fil.shipper_code_id = scm.shipper_code_id
-				AND ISNULL(NULLIF(scmd2_fil.is_default, ''), 'n') = 'y'	
-			) scmd2_default
+			INNER JOIN shipper_code_mapping scm ON scm.counterparty_id = sdh.counterparty_id					
+			CROSS APPLY (
+					SELECT location_id, shipper_code_id, MAX(effective_date) effective_date
+					FROM shipper_code_mapping_detail 
+					WHERE shipper_code_id =  scm.shipper_code_id
+						AND location_id = sdd.location_id
+						AND effective_date <= CAST(sdd.term_start AS DATE)
+						AND is_active = 'y'
+						AND ISNULL(NULLIF(is_default, ''), 'n') = 'y'
+					GROUP BY location_id, shipper_code_id
+			) scmd_mx
+			INNER JOIN shipper_code_mapping_detail scmd ON scmd.effective_date = scmd_mx.effective_date  
+				AND scmd.location_id = scmd_mx.location_id 
+				AND scmd.shipper_code_id = scmd_mx.shipper_code_id
+				AND scmd.is_active = 'y' 
+				AND ISNULL(NULLIF(scmd.is_default, ''), 'n') = 'y'
 		END
 		
 		DECLARE @grouping_info NVARCHAR(MAX)
