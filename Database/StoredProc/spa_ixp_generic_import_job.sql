@@ -38138,6 +38138,72 @@ BEGIN
 			AND a.is_active NOT IN (''y'', ''n'', ''yes'', ''no'')
      ')
 
+	EXEC(' 
+		INSERT INTO #error_status (temp_id, error_number, template_values, import_file_name, message_status, message_type, recommendation) 
+		SELECT t.temp_id, 
+			NULL, 
+			''Multiple data saved with default value as ''''YES'''' for the same effective data'', 
+			t.import_file_name,  
+			''Error'', ''Duplicate Data'', ''Please correct data and re-import.'' 
+		FROM   ' + @import_temp_table_name + ' t 
+		inner join (
+			SELECT a.effective_date
+				, sml.source_minor_location_id
+				, a.shipper_code1_is_default
+				, a.is_default
+			FROM ' + @import_temp_table_name + ' a
+			INNER JOIN source_minor_location sml
+				ON sml.location_id = a.location
+			GROUP BY a.effective_date
+				, sml.source_minor_location_id
+				, a.shipper_code1_is_default
+				, a.is_default
+			HAVING COUNT(*) > 1 
+				AND a.is_default IN (''y'',''yes'') 
+				AND a.shipper_code1_is_default IN (''y'',''yes'')
+
+			UNION
+
+			SELECT a.effective_date
+				, sml.source_minor_location_id
+				, a.shipper_code1_is_default
+				, a.is_default
+			FROM ' + @import_temp_table_name + ' a 
+			INNER JOIN source_minor_location sml
+				ON sml.location_id = a.location
+			INNER JOIN source_counterparty sc
+				ON sc.counterparty_id = a.counterparty
+			INNER JOIN shipper_code_mapping_detail scmd
+			ON scmd.effective_date = a.effective_date
+				AND scmd.location_id = sml.source_minor_location_id
+				AND (
+					scmd.shipper_code1_is_default = CASE 
+						WHEN a.shipper_code1_is_default = ''yes'' THEN ''y'' 
+						WHEN a.shipper_code1_is_default = ''no'' THEN ''n'' 
+						ELSE a.shipper_code1_is_default
+					END 
+					OR scmd.is_default = CASE 
+						WHEN a.is_default = ''yes'' THEN ''y'' 
+						WHEN a.is_default = ''no'' THEN ''n'' 
+						ELSE a.is_default
+					END 
+				)
+			INNER JOIN shipper_code_mapping scm
+				ON scm.shipper_code_id = scmd.shipper_code_id
+			WHERE scm.counterparty_id = sc.source_counterparty_id
+				AND (
+					a.is_default in (''y'', ''yes'') 
+						OR a.shipper_code1_is_default in (''y'', ''yes'')
+				)
+		) b
+		INNER JOIN source_minor_location sml1
+			ON sml1.source_minor_location_id = b.source_minor_location_id
+		ON b.effective_date = t.effective_date
+			AND b.source_minor_location_id = sml1.source_minor_location_id
+			AND b.shipper_code1_is_default = t.shipper_code1_is_default
+			AND b.is_default = t.is_default
+	')
+
 	EXEC('  
         DELETE ' + @import_temp_table_name + '
         FROM #error_status es

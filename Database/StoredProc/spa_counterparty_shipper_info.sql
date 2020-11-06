@@ -37,9 +37,17 @@ DECLARE @flag CHAR(1),
 	@counterparty_shipper_info_id INT = NULL,
     @shipper_code_id INT = NULL
 
-	SELECT @flag = 'i'
-		, @xml='<Root><GridDelete></GridDelete><GridRow shipper_code_mapping_detail_id="155" shipper_code_id="58" location_id="12417" effective_date="2020-05-02" shipper_code="" is_default="" is_active="" external_id=""></GridRow></Root>'
-		, @source_counterparty_id=10642
+SELECT @flag = 'i'
+	, @xml='<Root>
+		<GridDelete></GridDelete>
+		<GridRow shipper_code_mapping_detail_id="" shipper_code_id="" location_id="2848" effective_date="2020-11-01" shipper_code1="sdasdasd" 
+			shipper_code="asdasd" shipper_code1_is_default="y" is_default="y" is_active="y" external_id="" internal_counterparty="">
+		</GridRow>
+		<GridRow shipper_code_mapping_detail_id="" shipper_code_id="" location_id="2848" effective_date="2020-11-01" shipper_code1="dfgdf" 
+			shipper_code="dfg" shipper_code1_is_default="y" is_default="y" is_active="y" external_id="" internal_counterparty="">
+		</GridRow>
+	</Root>'
+	, @source_counterparty_id=7730
 
 --*/
 
@@ -265,104 +273,138 @@ BEGIN
 		, internal_counterparty VARCHAR(100) '@internal_counterparty'
 	)
 
-	IF EXISTS(
-		SELECT 1
-		FROM shipper_code_mapping scm
+	BEGIN TRY
+		BEGIN TRAN
+		DECLARE @new_shipper_code_id INT
+
+		IF NOT EXISTS(
+			SELECT 1 FROM shipper_code_mapping
+			WHERE counterparty_id = @source_counterparty_id
+		) BEGIN
+			INSERT INTO shipper_code_mapping (counterparty_id)
+			SELECT @source_counterparty_id
+
+			SET @new_shipper_code_id = SCOPE_IDENTITY()
+		END
+		ELSE
+		BEGIN
+			SELECT TOP 1 @new_shipper_code_id = shipper_code_id 
+			FROM shipper_code_mapping
+			WHERE counterparty_id = @source_counterparty_id
+		END
+
+		DELETE scmd
+		FROM #delete_shipper_code_mapping_detail dscmd
 		INNER JOIN shipper_code_mapping_detail scmd
-			ON scm.shipper_code_id = scmd.shipper_code_id
-		INNER JOIN #shipper_code_mapping_detail tscmd
-			ON tscmd.effective_date = scmd.effective_date
-				AND tscmd.location_id = scmd.location_id
-				AND tscmd.shipper_code = scmd.shipper_code
-				AND tscmd.shipper_code1 = scmd.shipper_code1
-		WHERE counterparty_id = @source_counterparty_id
-			AND tscmd.shipper_code_mapping_detail_id IS NULL
-	)
-	BEGIN
-		EXEC spa_ErrorHandler 1
+			ON dscmd.shipper_code_mapping_detail_id = scmd.shipper_code_mapping_detail_id
+
+		IF EXISTS(
+			SELECT Count(*)
+			FROM #shipper_code_mapping_detail
+			GROUP BY effective_date
+				, location_id
+				, shipper_code1_is_default
+				, is_default
+			HAVING COUNT(*) > 1 
+				AND is_default = 'y' 
+				AND shipper_code1_is_default = 'y'
+
+			UNION
+
+			SELECT 1
+			FROM #shipper_code_mapping_detail tscmd
+			INNER JOIN shipper_code_mapping_detail scmd
+				ON scmd.effective_date = tscmd.effective_date
+					AND scmd.location_id = tscmd.location_id
+					AND (
+						scmd.shipper_code1_is_default = tscmd.shipper_code1_is_default 
+							OR scmd.is_default = tscmd.is_default
+					)
+			INNER JOIN shipper_code_mapping scm
+				ON scm.shipper_code_id = scmd.shipper_code_id
+			WHERE scm.counterparty_id = @source_counterparty_id
+				AND (
+					tscmd.is_default = 'y' 
+						OR tscmd.shipper_code1_is_default = 'y'
+				)
+		)
+		BEGIN
+			EXEC spa_ErrorHandler 1
+				, 'Shipper Code Maping Detail'
+				, 'spa_counterparty_shipper_info'
+				, 'Error'
+				, 'Multiple data saved with default value as ''YES'' for the same effective data'
+				, @source_counterparty_id
+
+			RETURN
+		END
+
+		MERGE shipper_code_mapping_detail AS TARGET
+		USING (SELECT * FROM #shipper_code_mapping_detail) AS SOURCE
+			ON TARGET.shipper_code_mapping_detail_id = SOURCE.shipper_code_mapping_detail_id
+		WHEN MATCHED THEN
+			UPDATE SET TARGET.location_id = ISNULL(SOURCE.location_id, TARGET.location_id)
+				, TARGET.effective_date = ISNULL(SOURCE.effective_date, TARGET.effective_date)
+				, TARGET.shipper_code1 = ISNULL(SOURCE.shipper_code1, TARGET.shipper_code1)
+				, TARGET.shipper_code = ISNULL(SOURCE.shipper_code, TARGET.shipper_code)
+				, TARGET.shipper_code1_is_default = ISNULL(SOURCE.shipper_code1_is_default, TARGET.shipper_code1_is_default)
+				, TARGET.is_default = ISNULL(SOURCE.is_default, TARGET.is_default)
+				, TARGET.is_active = ISNULL(SOURCE.is_active, TARGET.is_active)
+				, TARGET.external_id = ISNULL(SOURCE.external_id, TARGET.external_id)
+				, TARGET.internal_counterparty = ISNULL(SOURCE.internal_counterparty, TARGET.internal_counterparty)
+		WHEN NOT MATCHED BY TARGET THEN
+			INSERT (shipper_code_id
+				, location_id
+				, effective_date
+				, shipper_code1
+				, shipper_code
+				, shipper_code1_is_default
+				, is_default
+				, is_active
+				, external_id
+				, internal_counterparty
+			)
+			VALUES (COALESCE(SOURCE.shipper_code_id, @new_shipper_code_id)
+				, SOURCE.location_id
+				, SOURCE.effective_date
+				, SOURCE.shipper_code1
+				, SOURCE.shipper_code
+				, SOURCE.shipper_code1_is_default
+				, SOURCE.is_default
+				, SOURCE.is_active
+				, SOURCE.external_id
+				, SOURCE.internal_counterparty
+			);
+
+		IF NOT EXISTS(
+			SELECT 1 FROM shipper_code_mapping_detail scmd
+			INNER JOIN shipper_code_mapping scm
+				on scm.shipper_code_id = scmd.shipper_code_id
+			WHERE scm.counterparty_id = @source_counterparty_id
+		)
+		BEGIN
+			DELETE FROM shipper_code_mapping where counterparty_id = @source_counterparty_id
+		END
+
+		COMMIT TRAN
+
+		EXEC spa_ErrorHandler 0
 			, 'Shipper Code Maping Detail'
 			, 'spa_counterparty_shipper_info'
-			, 'Error'
-			, 'Duplicate data in <b>Location</b>, <b>Effective Date</b>, <b>Shipper Code 1</b>, and <b>Shipper Code 2</b>.'
-		, @source_counterparty_id
+			, 'Success'
+			, 'Changes have been saved successfully.'
+			, @source_counterparty_id
+	END TRY
+	BEGIN CATCH
+		ROLLBACK TRAN
 
-		RETURN
-	END
-
-	DECLARE @new_shipper_code_id INT
-
-	IF NOT EXISTS(
-		SELECT 1 FROM shipper_code_mapping
-		WHERE counterparty_id = @source_counterparty_id
-	) BEGIN
-		INSERT INTO shipper_code_mapping (counterparty_id)
-		SELECT @source_counterparty_id
-
-		SET @new_shipper_code_id = SCOPE_IDENTITY()
-	END
-	ELSE
-	BEGIN
-		SELECT TOP 1 @new_shipper_code_id = shipper_code_id 
-		FROM shipper_code_mapping
-		WHERE counterparty_id = @source_counterparty_id
-	END
-
-	DELETE scmd
-	FROM #delete_shipper_code_mapping_detail dscmd
-	INNER JOIN shipper_code_mapping_detail scmd
-		ON dscmd.shipper_code_mapping_detail_id = scmd.shipper_code_mapping_detail_id
-
-	MERGE shipper_code_mapping_detail AS TARGET
-	USING (SELECT * FROM #shipper_code_mapping_detail) AS SOURCE
-		ON TARGET.shipper_code_mapping_detail_id = SOURCE.shipper_code_mapping_detail_id
-	WHEN MATCHED THEN
-		UPDATE SET TARGET.location_id = ISNULL(SOURCE.location_id, TARGET.location_id)
-			, TARGET.effective_date = ISNULL(SOURCE.effective_date, TARGET.effective_date)
-			, TARGET.shipper_code1 = ISNULL(SOURCE.shipper_code1, TARGET.shipper_code1)
-			, TARGET.shipper_code = ISNULL(SOURCE.shipper_code, TARGET.shipper_code)
-			, TARGET.shipper_code1_is_default = ISNULL(SOURCE.shipper_code1_is_default, TARGET.shipper_code1_is_default)
-			, TARGET.is_default = ISNULL(SOURCE.is_default, TARGET.is_default)
-			, TARGET.is_active = ISNULL(SOURCE.is_active, TARGET.is_active)
-			, TARGET.external_id = ISNULL(SOURCE.external_id, TARGET.external_id)
-			, TARGET.internal_counterparty = ISNULL(SOURCE.internal_counterparty, TARGET.internal_counterparty)
-	WHEN NOT MATCHED BY TARGET THEN
-		INSERT (shipper_code_id
-			, location_id
-			, effective_date
-			, shipper_code1
-			, shipper_code
-			, shipper_code1_is_default
-			, is_default
-			, is_active
-			, external_id
-			, internal_counterparty
-		)
-		VALUES (COALESCE(SOURCE.shipper_code_id, @new_shipper_code_id)
-			, SOURCE.location_id
-			, SOURCE.effective_date
-			, SOURCE.shipper_code1
-			, SOURCE.shipper_code
-			, SOURCE.shipper_code1_is_default
-			, SOURCE.is_default
-			, SOURCE.is_active
-			, SOURCE.external_id
-			, SOURCE.internal_counterparty
-		);
-
-	IF NOT EXISTS(
-		SELECT 1 FROM shipper_code_mapping_detail scmd
-		INNER JOIN shipper_code_mapping scm
-			on scm.shipper_code_id = scmd.shipper_code_id
-		WHERE scm.counterparty_id = @source_counterparty_id
-	)
-	BEGIN
-		DELETE FROM shipper_code_mapping where counterparty_id = @source_counterparty_id
-	END
-
-	EXEC spa_ErrorHandler 0
-		, 'Shipper Code Maping Detail'
-		, 'spa_counterparty_shipper_info'
-		, 'Success'
-		, 'Changes have been saved successfully.'
-		, @source_counterparty_id
+		SET @desc = dbo.FNAHandleDBError('20016500')
+            
+        EXEC spa_ErrorHandler -1,
+	        'Shipper Code Mapping',
+	        'spa_counterparty_shipper_info',
+	        'Error',
+	        @desc,
+	         ''
+	END CATCH
 END
