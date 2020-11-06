@@ -225,7 +225,7 @@
             arr_texts[i] = sb.options[i].text;
         }
 
-        arr_texts.sort();
+        // arr_texts.sort();
 
         for (var i = 0; i < sb.length; i++) {
             sb.options[i].text = arr_texts[i];
