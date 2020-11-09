@@ -1,4 +1,4 @@
- BEGIN TRY
+BEGIN TRY
 		BEGIN TRAN
 
 		DECLARE @report_id_dest INT 
@@ -73,33 +73,63 @@
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + '--EXEC spa_drop_all_temp_table
+
 DECLARE @_sql NVARCHAR(MAX)
+
 DECLARE @_source_subbook_id VARCHAR(1000)
+
 DECLARE @_destination_subbook_id VARCHAR(1000)  
+
 DECLARE @_location_id VARCHAR(1000)
+
 DECLARE @_term_start DATETIME
+
 DECLARE @_term_end DATETIME
+
 DECLARE @_distination_deal NVARCHAR(200)
 
+
+
 IF ''@source_subbook_id'' <> ''NULL''
+
     SET @_source_subbook_id = ''@source_subbook_id''
+
 IF ''@destination_subbook_id'' <> ''NULL''
+
     SET @_destination_subbook_id = ''@destination_subbook_id''
+
 IF ''@location_id'' <> ''NULL''
+
     SET @_location_id = ''@location_id''
+
 IF ''@term_start'' <> ''NULL''
+
     SET @_term_start = ''@term_start''
+
 IF ''@term_end'' <> ''NULL''
+
     SET @_term_end = ''@term_end''
+
 IF ''@distination_deal'' <> ''NULL''
+
     SET @_distination_deal = ''@distination_deal''
 
+
+
 --SET @_term_start = ''2025-06-01''
+
 --SET @_term_end = ''2025-06-30''
+
 --SET @_source_subbook_id = 180
+
 --SET @_destination_subbook_id = 181
+
 --SET @_distination_deal = ''Destination GPLL''
+
 --SET @_location_id = ''2852'' --GPLL
+
+
+
 
 
 SELECT item location_id
@@ -129,6 +159,10 @@ INNER JOIN SplitCommaSeperatedValues(@_source_subbook_id) sb
 WHERE sdht.template_name <> ''Physical_Bal''
 GROUP BY sdh.source_deal_header_id, sdd.location_id
 
+
+DELETE FROM #temp_source 
+WHERE @_term_start NOT BETWEEN term_start AND term_end
+
 CREATE TABLE #temp_destination (
 	source_deal_header_id INT
 	, header_buy_sell_flag CHAR(1) COLLATE DATABASE_DEFAULT 
@@ -136,6 +170,8 @@ CREATE TABLE #temp_destination (
 	, term_start DATETIME
 	, term_end DATETIME
 )
+
+
 -- Inserts destination deals
 INSERT INTO #temp_destination
 SELECT sdh.source_deal_header_id
@@ -164,6 +200,8 @@ INNER JOIN source_deal_detail sdd
 	ON sdh.source_deal_header_id = sdd.source_deal_header_id
 GROUP BY sdh.source_deal_header_id
 
+
+
 SELECT sub.term_start, s.location_id,
 	SUM(ISNULL(sub.hr1, 0)) [01:00],
 	SUM(ISNULL(sub.hr2, 0)) [02:00],
@@ -189,10 +227,12 @@ SELECT sub.term_start, s.location_id,
 	SUM(ISNULL(sub.hr22, 0)) [22:00],
 	SUM(ISNULL(sub.hr23, 0)) [23:00],
 	SUM(ISNULL(sub.hr24, 0)) [24:00]
-INTO #temp_unpivot
+ INTO #temp_unpivot
+
 FROM #temp_source s
 INNER JOIN source_deal_detail sdd
 	ON s.source_deal_header_id = sdd.source_deal_header_id
+	 AND sdd.term_start BETWEEN @_term_start AND @_term_end
 	AND s.location_id = sdd.location_id
 CROSS APPLY(
 		SELECT rhpd.source_deal_header_id, term_start, granularity
@@ -200,23 +240,22 @@ CROSS APPLY(
 			, hr8, hr9, hr10, hr11, hr12, hr13
 			, hr14, hr15, hr16, hr17, hr18, hr19
 			, hr20, hr21, hr22, hr23, hr24
-		FROM report_hourly_position_deal rhpd
-		WHERE rhpd.source_deal_detail_id = sdd.source_deal_detail_id
-			AND rhpd.term_start BETWEEN s.term_start AND s.term_end
+		FROM report_hourly_position_deal_main rhpd
+		WHERE rhpd.term_start BETWEEN s.term_start AND s.term_end
 			AND rhpd.term_start BETWEEN @_term_start AND @_term_end
+			AND rhpd.source_deal_detail_id = sdd.source_deal_detail_id
 		UNION ALL
 		SELECT rhpp.source_deal_header_id, term_start, granularity
 			, hr1, hr2, hr3, hr4, hr5, hr6, hr7
 			, hr8, hr9, hr10, hr11, hr12, hr13
 			, hr14, hr15, hr16, hr17, hr18, hr19
 			, hr20, hr21, hr22, hr23, hr24
-		FROM report_hourly_position_profile rhpp
-		WHERE sdd.source_deal_detail_id = rhpp.source_deal_detail_id
-			AND rhpp.term_start BETWEEN s.term_start AND s.term_end
+		FROM report_hourly_position_profile_main rhpp
+		WHERE rhpp.term_start BETWEEN s.term_start AND s.term_end
 			AND rhpp.term_start BETWEEN @_term_start AND @_term_end
+			AND sdd.source_deal_detail_id = rhpp.source_deal_detail_id
 ) sub
 GROUP BY sub.term_start,s.location_id
-
 
 SELECT unpvt.location_id
 	, unpvt.term_start term_date
@@ -238,6 +277,8 @@ UNPIVOT
 		)
 	) unpvt
 
+
+
 SELECT sdd.source_deal_header_id,
 	sdd.source_deal_detail_id,
 	thd.term_date,
@@ -254,10 +295,8 @@ INNER JOIN #temp_destination td
 INNER JOIN source_deal_detail sdd
 	ON sdd.source_deal_header_id = td.source_deal_header_id
 	AND thd.term_date BETWEEN sdd.term_start AND sdd.term_end
-
 DROP TABLE IF EXISTS #deleted_dest_deal	
 CREATE TABLE #deleted_dest_deal(source_deal_detail_id INT)
-
 DELETE sddh 
 OUTPUT DELETED.source_deal_detail_id
 INTO #deleted_dest_deal(source_deal_detail_id)
@@ -267,8 +306,6 @@ INNER JOIN source_deal_detail sdd
 INNER JOIN source_deal_detail_hour sddh
 	ON sdd.source_deal_detail_id = sddh.source_deal_detail_id
 WHERE sddh.term_date BETWEEN @_term_start AND @_term_end
-
-
 INSERT INTO source_deal_detail_hour (
 	source_deal_detail_id,
 	term_date,
@@ -286,7 +323,6 @@ SELECT 	source_deal_detail_id,
 	volume,
 	granularity
 FROM #temp_hourly_data
-
 DECLARE @_job_process_id VARCHAR(200), @_job_name VARCHAR(500)
 DECLARE @_user_name NVARCHAR(200) = dbo.FNADBUser()
 DECLARE @_after_insert_process_table NVARCHAR(500)
