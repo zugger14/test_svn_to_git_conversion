@@ -150,7 +150,7 @@ DECLARE @flag NVARCHAR(1000),
 		
 	--Drops all temp tables created in this scope.
 	EXEC [spa_drop_all_temp_table] 
-
+	
 --exec spa_debug_helper N'EXEC sys.sp_set_session_context @key = N''DB_USER'', @value = ''dmanandhar'';EXEC spa_deal_update_new  
 --@flag=@P1,@source_deal_header_id=@P2,@header_xml=@P3,@detail_xml=@P4,@pricing_process_id=@P5,@header_cost_xml=@P6,@deal_type_id=@P7,@pricing_type=@P8,@term_frequency=@P9,@shaped_process_id=@P10,@formula_process_id=@P11,@udf_process_id=@P12,@environment_process_id=@P13,@certificate_process_id=@P14,@deal_price_data_process_id=@P15,@deal_provisional_price_data_process_id=@P16,@header_prepay_xml=@P17',N'@P1 
 --nvarchar(4000),@P2 nvarchar(4000),@P3 nvarchar(4000),@P4 char(1),@P5 char(1),@P6 nvarchar(4000),@P7 nvarchar(4000),@P8 nvarchar(4000),@P9 nvarchar(4000),@P10 char(1),@P11 nvarchar(4000),@P12 
@@ -3648,7 +3648,7 @@ BEGIN TRY
 
 		SET @sql = '
 			INSERT INTO user_defined_deal_fields (source_deal_header_id, udf_template_id, udf_value, currency_id, uom_id, counterparty_id, seq_no
-													, settlement_date, settlement_calendar, settlement_days, payment_date, payment_calendar, payment_days, fixed_fx_rate)
+													, settlement_date, settlement_calendar, settlement_days, payment_date, payment_calendar, payment_days, fixed_fx_rate, receive_pay,contract_id)
 			SELECT ' + CAST(@source_deal_header_id AS NVARCHAR(20)) + ' , hct.cost_id, NULLIF(hct.udf_value, ''''), NULLIF(hct.currency_id, ''''), NULLIF(hct.uom_id, '''')
 					, NULLIF(hct.counterparty_id, ''''), NULLIF(hct.seq_no, ''''),
 				NULLIF(hct.settlement_date 	, ''''),
@@ -3657,7 +3657,9 @@ BEGIN TRY
 				NULLIF(hct.payment_date		, ''''),
 				NULLIF(hct.payment_calendar	, ''''),
 				NULLIF(hct.payment_days		, ''''),
-				NULLIF(hct.fixed_fx_rate	, '''')
+				NULLIF(hct.fixed_fx_rate	, ''''),
+				NULLIF(hct.receive_pay	, ''''),
+				NULLIF(hct.contract_id	, '''')
 			FROM ' + @header_costs_table + ' hct
 			LEFT JOIN user_defined_deal_fields uddf
 				ON hct.cost_id = uddf.udf_template_id
