@@ -439,7 +439,11 @@ BEGIN
 					SELECT DISTINCT sdh.source_deal_header_id,sdh.template_id,sdh.source_system_book_id1,sdh.source_system_book_id2,sdh.source_system_book_id3,sdh.source_system_book_id4 ,sdh.internal_deal_type_value_id, sdh.term_frequency  
 					FROM source_deal_detail dd (NOLOCK)
 					INNER JOIN source_deal_header sdh (NOLOCK) ON sdh.source_deal_header_id = dd.source_deal_header_id 
-						AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
+						AND (
+							(@flow_date_from BETWEEN dd.term_start AND dd.term_end) 
+							OR (ISNULL(@flow_date_to, @flow_date_from) BETWEEN dd.term_start AND dd.term_end)
+						)
+						--AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
 						AND dd.physical_financial_flag='p'
 					INNER JOIN #books bk ON bk.source_system_book_id1 = sdh.source_system_book_id1
 						AND bk.source_system_book_id2 = sdh.source_system_book_id2
@@ -471,7 +475,11 @@ BEGIN
 					SELECT sdh.source_deal_header_id ,sdh.template_id,sdh.source_system_book_id1,sdh.source_system_book_id2,sdh.source_system_book_id3,sdh.source_system_book_id4 ,sdh.internal_deal_type_value_id, sdh.term_frequency   
 					FROM source_deal_detail dd (NOLOCK)
 					INNER JOIN source_deal_header sdh (NOLOCK) ON sdh.source_deal_header_id = dd.source_deal_header_id 
-						AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
+						AND (
+							(@flow_date_from BETWEEN dd.term_start AND dd.term_end) 
+							OR (ISNULL(@flow_date_to, @flow_date_from) BETWEEN dd.term_start AND dd.term_end)
+						)
+						--AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
 						AND dd.physical_financial_flag='p'
 					INNER JOIN #books bk ON bk.source_system_book_id1 = sdh.source_system_book_id1
 						AND bk.source_system_book_id2 = sdh.source_system_book_id2
@@ -523,9 +531,13 @@ BEGIN
 				SELECT DATEADD(DAY, n - 1, dd.term_start) term_start, DATEADD(DAY, n - 1, dd.term_start) term_end  
 				FROM seq 
 				WHERE dd.term_end >= DATEADD(DAY, n - 1, dd.term_start) --AND dd.term_start <> dd.term_end
-					AND dd.term_start BETWEEN 
-						CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) 
-						ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
+					AND (
+						(@flow_date_from BETWEEN dd.term_start AND dd.term_end) 
+						OR (ISNULL(@flow_date_to, @flow_date_from) BETWEEN dd.term_start AND dd.term_end)
+					)
+					--AND dd.term_start BETWEEN 
+					--	CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) 
+					--	ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
 					AND dd.physical_financial_flag='p'
 			) tm
 			LEFT JOIN optimizer_header oh ON oh.transport_deal_id = dd.source_deal_header_id
@@ -550,8 +562,12 @@ BEGIN
 			UNION
 			SELECT source_deal_detail_id,tm.term_start,tm.term_end,scsv.proxy_record,dd.location_id,MAX(dd.source_deal_header_id),MAX(dd.curve_id)
 			from source_deal_detail dd (nolock)
-			INNER JOIN source_deal_header sdh (NOLOCK) ON sdh.source_deal_header_id = dd.source_deal_header_id 
-				AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from) -- NOT required condition AS tm.term_start IS needed to filter
+			INNER JOIN source_deal_header sdh (NOLOCK) ON sdh.source_deal_header_id = dd.source_deal_header_id
+				AND (
+					(@flow_date_from BETWEEN dd.term_start AND dd.term_end) 
+					OR (ISNULL(@flow_date_to, @flow_date_from) BETWEEN dd.term_start AND dd.term_end)
+				)
+				--AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from) -- NOT required condition AS tm.term_start IS needed to filter
 				AND dd.physical_financial_flag='p'
 				AND sdh.deal_status <> @deal_status_void
 			INNER JOIN #books bk ON bk.source_system_book_id1 = sdh.source_system_book_id1
@@ -595,7 +611,11 @@ BEGIN
 				SELECT DATEADD(DAY, n - 1, dd.term_start) term_start, DATEADD(DAY, n - 1, dd.term_start) term_end  
 				FROM seq 
 				WHERE dd.term_end >= DATEADD(DAY, n - 1, dd.term_start) --AND dd.term_start <> dd.term_end
-					AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
+					--AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
+					AND (
+						(@flow_date_from BETWEEN dd.term_start AND dd.term_end) 
+						OR (ISNULL(@flow_date_to, @flow_date_from) BETWEEN dd.term_start AND dd.term_end)
+					)
 					AND dd.physical_financial_flag='p'
 			) tm
 			LEFT JOIN optimizer_header oh ON oh.transport_deal_id = dd.source_deal_header_id
