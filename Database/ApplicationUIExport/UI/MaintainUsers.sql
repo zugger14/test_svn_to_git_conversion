@@ -321,7 +321,7 @@ BEGIN
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('10111000','entity_id','entity_id','Business Unit','combo','int','h','n','EXEC spa_StaticDataValues ''h'', 10076',NULL,'*','n','','n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
+			VALUES('10111000','entity_id','entity_id','Business Unit','combo','int','h','n','EXEC spa_StaticDataValues ''h'', 10076',NULL,'n','y','','n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
@@ -597,7 +597,7 @@ BEGIN
 		SELECT 112854,19714,111633,NULL,'General','region_id',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'8',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 112855,19714,111634,NULL,'General','menu_type_role_id',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'9',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 112856,19714,111636,NULL,'General','user_title',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'12',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 112857,19714,111635,NULL,'General','entity_id',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 112857,19714,111635,NULL,'General','entity_id',NULL,NULL,NULL,NULL,'y',NULL,'combo',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 112858,19714,111637,NULL,'General','user_address1',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'13',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 112859,19714,111638,NULL,'General','user_address2',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 112860,19714,111639,NULL,'General','city_value_id',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
