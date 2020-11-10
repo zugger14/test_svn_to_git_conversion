@@ -38146,7 +38146,7 @@ BEGIN
 			t.import_file_name,  
 			''Error'', ''Duplicate Data'', ''Please correct data and re-import.'' 
 		FROM   ' + @import_temp_table_name + ' t 
-		inner join (
+		INNER JOIN (
 			SELECT a.effective_date
 				, sml.source_minor_location_id
 				, a.shipper_code1_is_default
@@ -38161,40 +38161,6 @@ BEGIN
 			HAVING COUNT(*) > 1 
 				AND a.is_default IN (''y'',''yes'') 
 				AND a.shipper_code1_is_default IN (''y'',''yes'')
-
-			UNION
-
-			SELECT a.effective_date
-				, sml.source_minor_location_id
-				, a.shipper_code1_is_default
-				, a.is_default
-			FROM ' + @import_temp_table_name + ' a 
-			INNER JOIN source_minor_location sml
-				ON sml.location_id = a.location
-			INNER JOIN source_counterparty sc
-				ON sc.counterparty_id = a.counterparty
-			INNER JOIN shipper_code_mapping_detail scmd
-			ON scmd.effective_date = a.effective_date
-				AND scmd.location_id = sml.source_minor_location_id
-				AND (
-					scmd.shipper_code1_is_default = CASE 
-						WHEN a.shipper_code1_is_default = ''yes'' THEN ''y'' 
-						WHEN a.shipper_code1_is_default = ''no'' THEN ''n'' 
-						ELSE a.shipper_code1_is_default
-					END 
-					OR scmd.is_default = CASE 
-						WHEN a.is_default = ''yes'' THEN ''y'' 
-						WHEN a.is_default = ''no'' THEN ''n'' 
-						ELSE a.is_default
-					END 
-				)
-			INNER JOIN shipper_code_mapping scm
-				ON scm.shipper_code_id = scmd.shipper_code_id
-			WHERE scm.counterparty_id = sc.source_counterparty_id
-				AND (
-					a.is_default in (''y'', ''yes'') 
-						OR a.shipper_code1_is_default in (''y'', ''yes'')
-				)
 		) b
 		INNER JOIN source_minor_location sml1
 			ON sml1.source_minor_location_id = b.source_minor_location_id
@@ -38287,6 +38253,30 @@ BEGIN
 			AND scmd.shipper_code_id = scm.shipper_code_id
 			AND scmd.shipper_code1 = a.shipper_code1
 			AND scmd.shipper_code = a.shipper_code
+
+
+	UPDATE scmd
+	SET
+		shipper_code1 = a.shipper_code1
+		, shipper_code = a.shipper_code
+		, shipper_code1_is_default = a.shipper_code1_is_default
+		, is_default = a.is_default
+		, is_active = a.is_active
+		, external_id = a.external_id
+		, internal_counterparty = a.internal_counterparty_id
+	FROM #a a
+	INNER JOIN shipper_code_mapping scm
+			ON a.counterparty = scm.counterparty_id
+	INNER JOIN shipper_code_mapping_detail scmd
+		ON scmd.location_id = a.location
+			AND scmd.effective_date = a.effective_date
+			AND scmd.shipper_code_id = scm.shipper_code_id
+			AND scmd.shipper_code1_is_default = a.shipper_code1_is_default
+			AND scmd.is_default = a.is_default
+	WHERE a.is_default in ('y', 'yes')
+		AND a.shipper_code1_is_default in ('y', 'yes')
+
+
 
 	--Insert new
 	INSERT INTO shipper_code_mapping_detail (
