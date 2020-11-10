@@ -45,8 +45,9 @@ EXEC [spa_drop_all_temp_table]
 --select top 10 * from source_deal_header order by 1 desc
 --103488
 
-DECLARE @source_deal_header_id INT = 108225
---DECLARE @source_deal_header_id INT = 108076  
+-- DECLARE @source_deal_header_id INT = 108076
+ 
+ DECLARE @source_deal_header_id INT = 115390  
 
 --DECLARE @source_deal_header_id INT = 104615 
 
@@ -535,15 +536,15 @@ BEGIN
 		FROM source_deal_header sdh
 		INNER JOIN source_deal_header_template sdht
 			ON sdh.template_id = sdht.template_id 
-			AND sdh.contract_id = @path_contract_id
+			AND sdh.contract_id = @path_contract_id 
 		INNER JOIN source_deal_detail sdd
 			ON sdd.source_deal_header_id = sdh.source_deal_header_id
-			--AND sdd.location_id = CASE WHEN leg = 1 
-			--						THEN @from_location 
-			--						ELSE @to_location 							
-			--						END 
+		INNER JOIN static_data_value sdv
+			ON sdv.value_id = sdh.internal_portfolio_id
+			AND sdv.type_id = 39800
 		WHERE template_name = 'capacity bund'
-			AND sdh.header_buy_sell_flag = 's'
+			AND sdv.code = 'Complex-EEX'
+			AND sdh.header_buy_sell_flag = 's'		
 			AND @deal_term_start BETWEEN sdd.term_start AND sdd.term_end
 
 
@@ -551,14 +552,21 @@ BEGIN
 			
 		IF @capacity_deal_id IS NOT NULL
 		BEGIN
-			DELETE sddh
-			FROM source_deal_detail_hour sddh
+			DELETE sddh	
+			FROM [FNAGetPathMDQHourly] (@path_id, @deal_term_start, @deal_term_end, '') pmh --(330, '2020-09-25', '2020-09-25', '')pmh --
 			INNER JOIN source_deal_detail sdd
+				ON pmh.term_start BETWEEN sdd.term_start  AND sdd.term_end
+				AND sdd.source_deal_header_id = @capacity_deal_id -- 106173 -- 
+			INNER JOIN #temp_volume_capacity tvc
+				ON tvc.term_date = pmh.term_start	
+				AND RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00'  = tvc.hr
+			INNER JOIN source_deal_detail_hour sddh
 				ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
-			WHERE sdd.source_deal_header_id = @capacity_deal_id
-			AND sddh.term_date BETWEEN @deal_term_start AND @deal_term_end
+				AND tvc.hr = sddh.hr
+			WHERE pmh.is_complex = 'y'
+				AND  sddh.term_date BETWEEN  @deal_term_start AND @deal_term_end
 
-			
+
 			INSERT INTO source_deal_detail_hour (
 				source_deal_detail_id
 				, term_date
