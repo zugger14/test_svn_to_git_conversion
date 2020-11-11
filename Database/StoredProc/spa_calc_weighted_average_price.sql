@@ -128,6 +128,10 @@ DECLARE @mapping_id INT = 112700
 
 SELECT @mapping_id = mapping_id  FROM #mapping_name
 
+DECLARE @gas_case INT = 0
+
+IF @mapping_id IN (112704,112707,112703) 
+SET @gas_case = 1
 
 --Generic mapping block starts.
 IF OBJECT_ID(N'tempdb..#generic_mapping_values') IS NOT NULL
@@ -383,12 +387,16 @@ BEGIN
 
 	IF @granularity IN (982, 989, 987, 994, 995)
 	BEGIN
+		DECLARE @shift_value INT = 0
+		IF @gas_case = 1
+		SET @shift_value = 6 --Gas case source hr starts from 7 as first hour.
+
 		IF OBJECT_ID('tempdb..#temp_hour_breakdown') IS NOT NULL
 			DROP TABLE #temp_hour_breakdown
 
 		SELECT clm_name, is_dst, alias_name, CASE WHEN is_dst = 0 THEN RIGHT('0' + CAST(LEFT(clm_name, 2) + 1 AS VARCHAR(10)), 2) + '_' + RIGHT(clm_name, 2) ELSE RIGHT('0' + CAST(LEFT(clm_name, 2) + 1 AS VARCHAR(10)), 2) + '_' + RIGHT(clm_name, 2) + '_DST' END [process_clm_name]
 		INTO #temp_hour_breakdown 
-		FROM dbo.FNAGetPivotGranularityColumn(@min_term,@max_term,@granularity,@dst_group_value_id) 
+		FROM dbo.FNAGetDisplacedPivotGranularityColumn(@min_term,@max_term,@granularity,@dst_group_value_id, @shift_value) 
 	END
 	
 	SET @sql = 'SELECT  REPLACE(REPLACE(thb.process_clm_name, ''_DST'',''''),''_'','':'') hr_min
@@ -399,7 +407,7 @@ BEGIN
 					, CAST(src.term AS DATE) src_term_end
 					, src.* 		
 				FROM ' + @source_process_table + '  src
-				INNER JOIN #temp_hour_breakdown thb ON REPLACE(thb.alias_name,''DST'','''') = RIGHT(''0'' + src.hour,2) + '':'' + RIGHT(''0''+ISNULL(minute,0),2)
+				INNER JOIN #temp_hour_breakdown thb ON REPLACE(REPLACE(thb.process_clm_name, ''_DST'',''''),''_'','':'') = RIGHT(''0'' + src.hour,2) + '':'' + RIGHT(''0''+ISNULL(minute,0),2)
 					AND thb.is_dst = src.is_dst
 				--where src.term=''2021-10-31'' and [is_dst]=1
 				ORDER BY term,hour,minute,[is_dst]'
@@ -489,8 +497,7 @@ OUTER APPLY (
 ) lnk_deal
 INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = dmt.source_deal_header_id OR sdh.source_deal_header_id = lnk_deal.source_deal_header_id
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
-	AND sdd.term_start >= dmt.term_start 
-	AND sdd.term_end <= dmt.term_end
+	AND sdd.term_start BETWEEN dmt.term_start  AND dmt.term_end
 
 CREATE INDEX indx_collect_deals_ps ON #collect_deals(source_deal_header_id, term_start, term_end)
 --select 'total collect deals' , count(1) FROM #collect_deals
@@ -500,13 +507,13 @@ IF OBJECT_ID(N'tempdb..#mv90_dst') IS NOT NULL
 DROP TABLE #mv90_dst
 
 SELECT [year]
-	, [date]
-	, [hour]
+	, IIF(@gas_case = 0, [date], DATEADD(DAY,-1,date)) [date]
+	, IIF(@gas_case = 0, [hour], [hour]+18) [hour]
 INTO #mv90_dst
 FROM mv90_dst
 WHERE insert_delete = 'i'
 	AND dst_group_value_id = @dst_group_value_id 
-
+	
 	-------------------------Collect hour_block_term starts------------------------
 IF OBJECT_ID(N'tempdb..#hour_block_term') IS NOT NULL
 DROP TABLE #hour_block_term
@@ -611,6 +618,9 @@ OUTER APPLY(SELECT dst.date,dst.[hour]
 	GROUP BY dst.date,dst.[hour]
 	) dst
 CREATE INDEX indx_udt_tp ON #temp_position (source_deal_detail_id,term_start,hr,[period])
+
+
+
 ------------------------collect deal position ends-------------------------------------------------------------
 DROP TABLE IF EXISTS #source_deal_detail_hour
 	
@@ -637,10 +647,10 @@ SET @sql = 'select  cd.profile_name, cd.deal_id,src.Term,src.hr , src.[period], 
 		, sddh.fixed_price,cd.fixed_price org_fixed_price
 		, spcd.source_curve_def_id uploaded_curve_id
 		, cd.internal_desk_id
-		, src.src_hr_min
+		, ' + IIF (@gas_case = 0, 'src.src_hr_min', 'src.hr_min') + ' src_hr_min
 		, src.src_term_start 
 		, src.src_term_end 
-	
+		, src.hr_min process_hr_min	--added for resolving source hr for gas dst case.
 	'
 IF OBJECT_ID('tempdb..#src_hour_breakdown_grp') IS NULL
 SET @sql += ' FROM #src_hour_breakdown src '
@@ -667,8 +677,8 @@ SET @sql += '
 	LEFT JOIN #source_deal_detail_hour sddh ON sddh.source_deal_detail_id = cd.source_deal_detail_id		
 		AND sddh.term_date = src.term 
 		AND sddh.hr_min = src.hr_min
+		AND sddh.is_dst = src.is_dst
 	'
-
 	
 
 EXEC spa_get_output_schema_or_data @sql_query = @sql
@@ -677,7 +687,7 @@ EXEC spa_get_output_schema_or_data @sql_query = @sql
 		,@flag = 'data'
 
 If @debug_mode = 1
-SELECT '#src_term_breakdown',@sql, * FROM #src_term_breakdown	where term = '2020-01-01' and hr=1	
+SELECT top 1 '#src_term_breakdown',@sql, * FROM #src_term_breakdown	--where term = '2020-01-01' and hr=1	
 
 IF OBJECT_ID(N'tempdb..#original_deal') IS NOT NULL
 	DROP TABLE #original_deal
@@ -703,8 +713,9 @@ IF OBJECT_ID(N'tempdb..#original_deal') IS NOT NULL
 		, cd.template_id
 		, cd.structured_deal_id
 		, tp.deal_volume_frequency
+		, src.process_hr_min
 	INTO #original_deal
-	--select top 1 * from #collect_deals
+	--select top 1 * --from #collect_deals
 	FROM #src_term_breakdown src
 	INNER JOIN #collect_deals cd ON (src.profile_name = cd.profile_name  OR src.deal_id = cd.deal_id)
 		AND src.term between cd.term_start AND cd.term_end
@@ -721,6 +732,7 @@ IF OBJECT_ID(N'tempdb..#original_deal') IS NOT NULL
 		AND hbt.term_date = src.term
 		AND hbt.hr = src.hr
 
+		
 UPDATE a
 SET original_volume = IIF(a.is_dst = 0, a.original_volume - rs.original_volume,a.original_volume)  
 FROM #original_deal a
@@ -791,8 +803,8 @@ SET @sql = CAST('' AS NVARCHAR(MAX)) + N'
 					END
 				)
 			)wap
-		, CAST(LEFT(org.src_hr_min,2) AS INT)  src_hr
-		, CAST(RIGHT(org.src_hr_min,2) AS INT)  src_period
+		, CAST(LEFT(' + IIF(@gas_case = 1, 'org.process_hr_min', 'org.src_hr_min') + ',2) AS INT)  src_hr
+		, CAST(RIGHT(' + IIF(@gas_case = 1, 'org.process_hr_min', 'org.src_hr_min') + ',2) AS INT)  src_period
 		, IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, src.uploaded_fixed_price,(org.original_volume*org.original_price 
 				+ IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) * spc.curve_value
 				)/CASE WHEN IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) 
@@ -847,7 +859,7 @@ SET @sql +=
 			AND CONVERT(date, max_curve.maturity_date) =  org.term_start 
 			AND DATEPART(hour,max_curve.maturity_date) = IIF(max_curve.granularity=981,DATEPART(hour,max_curve.maturity_date),org.hr -1)
 			AND DATEPART(minute,max_curve.maturity_date) = IIF(max_curve.granularity=982,DATEPART(minute,max_curve.maturity_date),org.[period])
-			AND max_curve.is_dst = org.is_dst
+			AND max_curve.is_dst = IIF(max_curve.granularity IN (995,994,987,989,982),org.is_dst,0)
 	LEFT JOIN source_price_curve spc ON spc.as_of_date = max_curve.as_of_date
 		AND spc.source_curve_def_id = max_curve.source_curve_def_id
 		AND spc.maturity_date = max_curve.maturity_date
@@ -920,4 +932,5 @@ SET @sql = '
 	IF @debug_mode = 1
 	EXEC('select ''final data'', * from ' + @calc_process_table + ' order by deal_id,term_start,term_end,hr,period,is_dst' )
 END
+
 
