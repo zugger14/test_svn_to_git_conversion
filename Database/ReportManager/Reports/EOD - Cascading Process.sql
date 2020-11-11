@@ -78,42 +78,29 @@ BEGIN TRY
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10)  = ''@as_of_date''
-
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_msg_process_table VARCHAR(1000)
+DECLARE @_as_of_date VARCHAR(10)  = ''@as_of_date''
 DECLARE @_process_id VARCHAR(100) = ''@process_id''  
-
 DECLARE @_flag VARCHAR(100) = ''cascade''  
+DECLARE @_sql VARCHAR(MAX)  
 		
-
 IF ''@process_id'' <> ''NULL''
-
 	SET @_process_id = ''@process_id''
-
 ELSE    
+	SET @_process_id = dbo.FNAGETNewID()    
 
-	SET @_process_id = NULL    
-
-
+SET @_msg_process_table = dbo.FNAProcessTableName(''msg_process_table'', dbo.fnadbUser(), @_process_id)
 
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result 
 
 CREATE TABLE #tmp_result (
-
 	[errorcode]			NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
 	[module]			NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
 	[area]				NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
 	[status]			NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
 	[message]			NVARCHAR(1000) COLLATE DATABASE_DEFAULT ,
-
 	[recommendation]	NVARCHAR(200) COLLATE DATABASE_DEFAULT 
-
 )
-
-
 
 DECLARE @_source_deal_header_ids VARCHAR(MAX)
 
@@ -123,7 +110,7 @@ DECLARE @_source_deal_header_ids VARCHAR(MAX)
 
 SET @_source_deal_header_ids = STUFF((
 
-										SELECT '','' + CAST(sdd.source_deal_header_id AS VARCHAR(100))
+										SELECT DISTINCT '','' + CAST(sdd.source_deal_header_id AS VARCHAR(100))
 
 										FROM generic_mapping_header gmh
 
@@ -138,41 +125,29 @@ SET @_source_deal_header_ids = STUFF((
 										INNER JOIN source_deal_type sdt on sdt.source_deal_type_id = sdh.source_deal_type_id
 
 										LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
-
 										WHERE gmh.mapping_name =  ''Cascading'' 
-										
 										    AND sdt.deal_type_id = ''Future''
-
 											AND sc.counterparty_id = ''EEX''
-
 											AND TRY_CAST(gmv.clm2_value AS INT) IS NOT NULL
 
-											--AND TRY_CAST(gmv.clm11_value AS DATETIME) < sdd.term_start
 											AND TRY_CAST(gmv.clm11_value AS DATETIME) =  @_as_of_date--''2019-12-27''
 
 											AND (sdd.term_start > TRY_CAST(gmv.clm11_value AS DATETIME) AND sdd.term_start <= DATEADD(MONTH, CASE TRY_CAST(gmv.clm9_value AS INT) WHEN 1 THEN 12 WHEN 2 THEN 3 WHEN 3 THEN 6 END, TRY_CAST(gmv.clm11_value AS DATETIME)) )
-
-											--AND spcd.granularity IN(991, 993)
-
-											--AND YEAR(sdd.term_start) = YEAR(DATEADD(YEAR, IIF(spcd.granularity = 993, 1, 0), gmv.clm11_value))
-
-											--AND YEAR(sdd.term_start) = CASE WHEN TRY_CAST(gmv.clm9_value AS INT) = 1 THEN YEAR(DATEADD(YEAR, 1, gmv.clm11_value)) ELSE YEAR(sdd.term_start) END
-
-											--AND TRY_CAST(gmv.clm11_value AS DATETIME) < sdd.term_start
-
-										GROUP BY sdd.source_deal_header_id
+									GROUP BY sdd.source_deal_header_id
 
 									FOR XML PATH('''')
 
 								), 1, 1, '''')
 
- 
+SET @_sql = '' IF OBJECT_ID('''''' + @_msg_process_table + '''''') IS NOT NULL
+			DROP TABLE '' + @_msg_process_table
+EXEC(@_sql)
+EXEC dbo.spa_cascade_deal @_source_deal_header_ids, @_as_of_date, @_msg_process_table, @_flag 
 
-INSERT INTO #tmp_result (errorcode, module, area, [status], [message], recommendation) 
+SET @_sql = '' INSERT INTO #tmp_result (errorcode, module, area, [status], [message], recommendation) 
+				SELECT errorcode, module, area, [status], [message], recommendation FROM '' + @_msg_process_table
 
-EXEC dbo.spa_cascade_deal @_source_deal_header_ids, @_as_of_date, NULL, @_flag
-
- 
+EXEC(@_sql)
 
 SELECT  
 

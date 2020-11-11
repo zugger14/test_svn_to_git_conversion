@@ -21,7 +21,7 @@ This SP used cascade deal using generic mapping definition
 CREATE PROC [dbo].[spa_cascade_deal]
 	@parent_deal_ids VARCHAR(MAX), 
 	@max_as_of_date DATETIME = NULL,
-	@result_output VARCHAR = NULL OUTPUT,
+	@result_output VARCHAR(125) = NULL,
 	@flag VARCHAR(1000)
 AS
 
@@ -556,7 +556,18 @@ BEGIN
  		
 		EXEC spa_run_sp_as_job @job_name, @sql, 'spa_deal_insert_update_jobs', @user_name	
 
-		SELECT 'Success' ErrorCode, 'Deal Cascading' Module, 'spa_cascade_deal' Area, 'Success' [Status], 'Deal Cascading successfully completed.' [Message], '' Recommendation
+		IF @result_output IS NOT NULL
+		BEGIN 
+			SET @sql = ' SELECT * INTO ' + @result_output + ' FROM (
+						SELECT ''Success'' ErrorCode, ''Deal Cascading'' Module, ''spa_cascade_deal'' Area, ''Success'' [Status]
+								, ''Deal Cascading successfully completed.'' [Message], '''' Recommendation
+						) z '
+			EXEC(@sql)
+		END 
+		ELSE 
+		BEGIN 
+			SELECT 'Success' ErrorCode, 'Deal Cascading' Module, 'spa_cascade_deal' Area, 'Success' [Status], 'Deal Cascading successfully completed.' [Message], '' Recommendation
+		END 
 	END TRY
 	BEGIN CATCH
 		SET @error_message = ERROR_MESSAGE()
