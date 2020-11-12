@@ -38435,7 +38435,7 @@ BEGIN
 		shipper_code2 INT
 	)
 
-	EXEC('
+	EXEC ('
 		UPDATE sdd  
 		SET 
 		shipper_code1 = ISNULL(scmd1_default.shipper_code_mapping_detail_id, scmd1_multi.shipper_code_mapping_detail_id),
@@ -38453,7 +38453,14 @@ BEGIN
 				AND DATEPART(MONTH, sdd.term_start) BETWEEN DATEPART(MONTH, a.term_start) AND DATEPART(MONTH, a.term_end)				
 				AND DATEPART(YEAR, sdd.term_end) BETWEEN DATEPART(YEAR, a.term_start) AND DATEPART(YEAR, a.term_end)
 				AND DATEPART(MONTH, sdd.term_end) BETWEEN DATEPART(MONTH, a.term_start) AND DATEPART(MONTH, a.term_end)		
-				AND IIF(a.buy_sell IS NOT NULL, sdd.buy_sell_flag, ''1'') = ISNULL(a.buy_sell, ''1'')
+				AND IIF(a.buy_sell IS NOT NULL, sdd.buy_sell_flag, ''1'') = ISNULL(
+					CASE 
+						WHEN a.buy_sell IN(''buy'', ''b'') THEN ''b'' 
+						WHEN a.buy_sell IN(''sell'', ''s'') THEN ''s''
+						ELSE NULL
+					END
+					, ''1''
+				)
 		INNER JOIN source_counterparty sc
 			ON sc.counterparty_id = a.counterparty		
 		LEFT JOIN transportation_contract_location tcl
