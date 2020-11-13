@@ -25085,6 +25085,14 @@ BEGIN
 
  	SET @pos_job_name4 =  'calc_position_breakdown_' + @process_id4
  	EXEC spa_update_deal_total_volume NULL, @process_id4, 0,1,@user_login_id
+	
+	/* Update timestamp and user of the deal whose shaped volume are updated. */
+	UPDATE sdh
+	SET update_user = dbo.FNADBUser(),
+		update_ts = GETDATE()
+	-- SELECT *
+	FROM #sdh_temp sdht
+	INNER JOIN source_deal_header sdh on sdht.source_deal_header_id = sdh.source_deal_header_id
 
 	--[TO DO]: Removed because this is called from Deal Transfer adjust alert
 	----insert into process table for spa_transfer adjust call from post trigger in complex gas gas hour shaped import(enercity demo)

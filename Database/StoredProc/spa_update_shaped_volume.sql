@@ -1338,6 +1338,12 @@ BEGIN
 				EXEC spa_run_sp_as_job @_pos_job_name,  @_sql, 'Position Calculation', @user_name
 			END
 		END
+		
+		/* Update timestamp and user of the deal whose shaped volume are updated. */
+		UPDATE source_deal_header
+		SET update_user = dbo.FNADBUser(),
+			update_ts = GETDATE()
+		WHERE source_deal_header_id = @source_deal_header_id
 
 		/* Update timestamp and user of child deals(offset/transfer) when parent deal is updated*/
 		UPDATE sdh
