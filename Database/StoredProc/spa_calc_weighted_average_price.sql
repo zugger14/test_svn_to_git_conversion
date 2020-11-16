@@ -301,8 +301,8 @@ BEGIN
 		INSERT INTO #deal_max_term(source_deal_header_id, block_define_id, term_start, term_end)
 		SELECT sdh.source_deal_header_id
 			, MAX(sdh.block_define_id) block_define_id
-			, MIN([term_start]) term_start
-			, MAX([term_end]) term_end	
+			, MIN(CAST([term_start] AS DATE)) term_start
+			, MAX(CAST([term_end]  AS DATE)) term_end	
 		FROM ' + @source_process_table + ' s1
 		INNER JOIN source_deal_header sdh ON sdh.deal_id = s1.[deal_id]
 		GROUP BY sdh.source_deal_header_id '
@@ -344,8 +344,8 @@ BEGIN
 		INSERT INTO #deal_max_term(source_deal_header_id, block_define_id, term_start, term_end, profile_name)
 		SELECT sdh.source_deal_header_id
 			, MAX(sdh.block_define_id) block_define_id
-			, MIN(s1.[term]) term_start
-			, MAX(s1.[term]) term_end
+			, MIN(CAST(s1.[term] AS DATE)) term_start
+			, MAX(CAST(s1.[term]  AS DATE)) term_end
 			, MAX(s1.profile_name) profile_name
 		FROM #gm_deals gd
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = gd.source_deal_header_id
@@ -356,8 +356,8 @@ BEGIN
 		GROUP BY sdh.source_deal_header_id '
 	EXEC(@sql)
 
-	SELECT @min_term = MIN(term_start)
-		, @max_term = MAX(term_end) 
+	SELECT @min_term = MIN(CAST(term_start AS DATE))
+		, @max_term = MAX(CAST(term_end AS DATE)) 
 		, @granularity = MAX(fp.granularity) 
 	FROM #deal_max_term src
 	INNER JOIN forecast_profile fp ON fp.external_id = src.profile_name
@@ -369,16 +369,16 @@ BEGIN
 			INSERT INTO #deal_max_term(source_deal_header_id, block_define_id, term_start, term_end)
 			SELECT sdh.source_deal_header_id
 				, MAX(sdh.block_define_id) block_define_id
-				, MIN(s1.[term]) term_start
-				, MAX(s1.[term]) term_end			
+				, MIN(CAST(s1.[term] AS DATE)) term_start
+				, MAX(CAST(s1.[term] AS DATE)) term_end			
 			FROM ' + @source_process_table + ' s1
 			INNER JOIN source_deal_header sdh ON sdh.deal_id = s1.[deal_id]			
 			GROUP BY sdh.source_deal_header_id '
 
 		EXEC(@sql)
 
-		SELECT @min_term = MIN(term_start)
-			, @max_term = MAX(term_end) 
+		SELECT @min_term = MIN(CAST(term_start AS DATE))
+			, @max_term = MAX(CAST(term_end AS DATE)) 
 			, @granularity = 982 
 		FROM #deal_max_term src
 		--INNER JOIN forecast_profile fp ON fp.external_id = src.profile_name
