@@ -1,6 +1,3 @@
-DROP PROCEDURE IF EXISTS spa_counterparty_shipper_info
-GO 
-
 SET ANSI_NULLS ON
 GO
   
@@ -19,7 +16,7 @@ GO
     @shipper_code_id : Shipper Code ID
 */
 
-CREATE PROC spa_counterparty_shipper_info
+CREATE OR ALTER PROC spa_counterparty_shipper_info
 	@flag CHAR(1),
 	@xml VARCHAR(MAX) = NULL,
 	@source_counterparty_id INT = NUll,
@@ -327,6 +324,7 @@ BEGIN
 					tscmd.is_default = 'y' 
 						OR tscmd.shipper_code1_is_default = 'y'
 				)
+				AND tscmd.shipper_code_mapping_detail_id <> scmd.shipper_code_mapping_detail_id
 		)
 		BEGIN
 			EXEC spa_ErrorHandler 1
