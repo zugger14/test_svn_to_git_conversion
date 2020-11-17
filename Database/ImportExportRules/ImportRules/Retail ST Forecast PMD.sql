@@ -1,4 +1,4 @@
- BEGIN 
+BEGIN 
 	BEGIN TRY 
 		BEGIN TRAN 
 		DECLARE @admin_user VARCHAR(100) =  dbo.FNAAppAdminID(), @old_ixp_rule_id INT
@@ -119,6 +119,7 @@ INNER JOIN source_deal_header sdh
 WHERE sdh.deal_reference_type_id IN (12500, 12503)
 GROUP BY sdh.source_deal_header_id, fp.external_id
 
+
 IF OBJECT_ID(N''tempdb..#collect_deals'') IS NOT NULL
 DROP TABLE #collect_deals
 
@@ -157,6 +158,7 @@ INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal
 		AND (sdd.term_end <= dmt.term_end or dmt.term_end between sdd.term_start and sdd.term_end))
 CREATE INDEX indx_collect_deals_ps ON #collect_deals(source_deal_header_id, term_start, term_end)
 
+
 SELECT @dst_group_value_id = tz.dst_group_value_id
 FROM adiha_default_codes_values adcv
 INNER JOIN time_zones tz ON tz.timezone_id = adcv.var_value
@@ -177,7 +179,7 @@ AND dst_group_value_id = @dst_group_value_id
 DROP TABLE IF EXISTS  #temp_position
 SELECT rs.term_start [Term]
 	, rs.hr
-	, rs.period
+	, COALESCE(rs.period, NULL) [period]
 	, rs.is_dst
 	, SUM(rs.volume)*4 position
 	, rs.profile_name
@@ -266,9 +268,8 @@ INTO #temp_position
 ) rs
 GROUP BY rs.profile_name, rs.term_start, rs.hr, rs.period, rs.is_dst
 
-
 UPDATE tp
-SET position = (tp.position - tpd.position)
+SET position = (ISNULL(tp.position,0) - ISNULL(tpd.position,0))
 FROM #temp_position tp
 INNER JOIN #mv90_dst dst ON tp.[Term] = dst.DATE
 	AND tp.Hr = dst.hour
@@ -292,6 +293,7 @@ SELECT @min_term = min(term)
 	, @max_term = max(term)
 FROM [temp_process_table]
 
+--select @min_term, @max_term
 IF OBJECT_ID(''tempdb..#temp_hour_breakdown'') IS NOT NULL
 	DROP TABLE #temp_hour_breakdown
 
@@ -407,8 +409,7 @@ OUTER APPLY (
 		GROUP BY dest_buy_profile, dest_sell_profile
 	) gm
 WHERE tp.Term IS NULL
-AND gm_profile.source_profile1 IS NOT NULL
-',
+AND gm_profile.source_profile1 IS NOT NULL',
 					NULL,
 					'i' ,
 					'y' ,
@@ -514,6 +515,7 @@ INNER JOIN source_deal_header sdh
 WHERE sdh.deal_reference_type_id IN (12500, 12503)
 GROUP BY sdh.source_deal_header_id, fp.external_id
 
+
 IF OBJECT_ID(N''tempdb..#collect_deals'') IS NOT NULL
 DROP TABLE #collect_deals
 
@@ -552,6 +554,7 @@ INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal
 		AND (sdd.term_end <= dmt.term_end or dmt.term_end between sdd.term_start and sdd.term_end))
 CREATE INDEX indx_collect_deals_ps ON #collect_deals(source_deal_header_id, term_start, term_end)
 
+
 SELECT @dst_group_value_id = tz.dst_group_value_id
 FROM adiha_default_codes_values adcv
 INNER JOIN time_zones tz ON tz.timezone_id = adcv.var_value
@@ -572,7 +575,7 @@ AND dst_group_value_id = @dst_group_value_id
 DROP TABLE IF EXISTS  #temp_position
 SELECT rs.term_start [Term]
 	, rs.hr
-	, rs.period
+	, COALESCE(rs.period, NULL) [period]
 	, rs.is_dst
 	, SUM(rs.volume)*4 position
 	, rs.profile_name
@@ -661,9 +664,8 @@ INTO #temp_position
 ) rs
 GROUP BY rs.profile_name, rs.term_start, rs.hr, rs.period, rs.is_dst
 
-
 UPDATE tp
-SET position = (tp.position - tpd.position)
+SET position = (ISNULL(tp.position,0) - ISNULL(tpd.position,0))
 FROM #temp_position tp
 INNER JOIN #mv90_dst dst ON tp.[Term] = dst.DATE
 	AND tp.Hr = dst.hour
@@ -687,6 +689,7 @@ SELECT @min_term = min(term)
 	, @max_term = max(term)
 FROM [temp_process_table]
 
+--select @min_term, @max_term
 IF OBJECT_ID(''tempdb..#temp_hour_breakdown'') IS NOT NULL
 	DROP TABLE #temp_hour_breakdown
 
@@ -802,8 +805,7 @@ OUTER APPLY (
 		GROUP BY dest_buy_profile, dest_sell_profile
 	) gm
 WHERE tp.Term IS NULL
-AND gm_profile.source_profile1 IS NOT NULL
-'
+AND gm_profile.source_profile1 IS NOT NULL'
 				, after_insert_trigger = NULL
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
@@ -832,7 +834,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
+						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
 						   NULL,
 						   ';',
 						   2,
@@ -851,8 +853,8 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   '', 
 						   '0',
 						   '0',
-						   NULL,
-						   NULL
+						   '5',
+						   'Import2TRM/RETAIL_Claudio/DEAL_Retail_ST_Forecast_PMD'
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
 					LEFT JOIN ixp_soap_functions isf ON isf.ixp_soap_functions_name = '' 
