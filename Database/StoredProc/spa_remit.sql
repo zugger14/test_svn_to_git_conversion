@@ -4839,7 +4839,7 @@ BEGIN
 							send_to,
 							send_status,
 							active_flag,
-							notes_attachment
+							attachment_file_name
 						)		
 					SELECT DB_NAME() + ': ECM Remit Feedback',
 						'Dear <b>' + MAX(au.user_l_name) + '</b><br><br>
@@ -4849,7 +4849,7 @@ BEGIN
 						au.user_emal_add,
 						'n',
 						'y',
-						'temp_Note/'+ @file_name +''
+						@full_file_path
 					FROM dbo.application_role_user aru
 					INNER JOIN dbo.application_security_role asr ON aru.role_id = asr.role_id 
 					INNER JOIN dbo.application_users au ON aru.user_login_id = au.user_login_id
