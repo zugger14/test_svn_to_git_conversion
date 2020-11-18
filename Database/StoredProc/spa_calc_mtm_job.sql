@@ -12729,8 +12729,7 @@ SET @sql='
 		INNER JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = td.source_deal_header_id  
 				AND uddf.udf_template_id = uddft.udf_template_id
 	WHERE uddft.internal_field_type IS NOT NULL 
-		AND ISNULL(uddf.udf_value,udft.default_value) IS NOT NULL  and uddft.field_type=''w''
-	AND sdh.source_deal_header_id IN (' + @source_deal_header_id + ')'
+		AND ISNULL(uddf.udf_value,udft.default_value) IS NOT NULL  and uddft.field_type=''w'''
 
 exec spa_print @sql
 EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@sql )
@@ -12752,8 +12751,7 @@ SET @sql='
 		INNER JOIN user_defined_deal_detail_fields udddf ON udddf.udf_template_id = uddft.udf_template_id
 				AND udddf.source_deal_detail_id = td.source_deal_detail_id
 	WHERE uddft.internal_field_type IS NOT NULL 
-		AND ISNULL(udddf.udf_value,uddft.default_value) IS NOT NULL  and uddft.field_type=''w''
-	AND sdh.source_deal_header_id IN (' + @source_deal_header_id + ')'
+		AND ISNULL(udddf.udf_value,uddft.default_value) IS NOT NULL  and uddft.field_type=''w'''
 
 exec spa_print @sql
 EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@sql)
