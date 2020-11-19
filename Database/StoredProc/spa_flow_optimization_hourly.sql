@@ -242,7 +242,7 @@ SET @sql = '
 				CREATE TABLE  ' + @storage_position + ' (
 					type			CHAR(1),				
 					location_id		INT,				
-					position		NUMERIC(38,0)
+					position		NUMERIC(38,20)
 				
 				)
 			END
@@ -289,7 +289,7 @@ FROM static_data_value sdv
 WHERE sdv.code = 'Void' 
 	AND sdv.type_id = 5600
 
-DECLARE @rounding_value VARCHAR(2) = '2'
+DECLARE @rounding_value VARCHAR(2) = '4'
 
 IF @flag IN ('l','c','p')
 BEGIN
@@ -673,7 +673,8 @@ BEGIN
 					 ELSE 0
 				END
 			  ) [hourly_vol]
-			, CAST(ROUND(MIN(sdd.deal_volume), 1) AS INT) deal_volume 	
+			--, CAST(ROUND(MIN(sdd.deal_volume), 1) AS INT) deal_volume 
+			, MIN(sdd.deal_volume) deal_volume
 		INTO #sch_deal_info--SELECT * FROM #sch_deal_info WHERE from_loc = 2857
 		FROM   source_deal_detail sdd
 		INNER JOIN source_deal_header sdh 
@@ -895,7 +896,7 @@ BEGIN
 				, unpv.granularity
 				, CAST(REPLACE(unpv.[hour],''hr'','''') AS INT) [hour]
 				, unpv.period
-				, IIF(unpv.location_name = ''storage'', ABS(CAST(unpv.[position] AS NUMERIC(20,2))), CAST(unpv.[position] AS NUMERIC(20,2))) [position]
+				, IIF(unpv.location_name = ''storage'', ABS(CAST(unpv.[position] AS NUMERIC(38,20))), CAST(unpv.[position] AS NUMERIC(38,20))) [position]
 				, unpv.source_deal_detail_id
 			INTO ' + @hourly_pos_info + '
 			FROM (
@@ -1081,8 +1082,8 @@ BEGIN
 		
 	CREATE TABLE #locwise_range_total (
 		location_id INT NULL,
-		total_position NUMERIC(20,5),
-		[beg_pos] NUMERIC(20,5)
+		total_position NUMERIC(38,20),
+		[beg_pos] NUMERIC(38,20)
 	)
 
 	--derive minor location from from location and to location
@@ -1161,7 +1162,7 @@ BEGIN
 	END
 	
 	SET @sql = CASE WHEN @receipt_delivery = 'FROM' THEN '
-	SELECT ''from'' [market_side], sdd.source_deal_header_id, sdd.source_deal_detail_id,sdd.curve_id, dtb.term_start, sdd.location_id, sdd.deal_volume, CAST(NULL AS NUMERIC(38,17)) total_volume, CAST(NULL AS NUMERIC(38,17)) avail_volume, GETDATE() [create_ts]
+	SELECT ''from'' [market_side], sdd.source_deal_header_id, sdd.source_deal_detail_id,sdd.curve_id, dtb.term_start, sdd.location_id, sdd.deal_volume, CAST(NULL AS NUMERIC(38,20)) total_volume, CAST(NULL AS NUMERIC(38,20)) avail_volume, GETDATE() [create_ts]
 	INTO ' + @deal_detail_info
 	ELSE 
 	'
@@ -1472,7 +1473,7 @@ BEGIN
 		--changed logic to show daily balance for that term on storage location (modified on:2019-08-12, for TRMTracker_Gas_Demo, Consulted BA: Sulav Nepal, Dev: Sangam Ligal)
 		SELECT
 			--sum(cast(sp.injection as float) - cast(sp.withdrawal as float)) [storage_position]
-			sum(cast(sp.balance AS NUMERIC(20, 10))) [storage_position]
+			sum(cast(sp.balance AS NUMERIC(38,20))) [storage_position]
 		FROM #storage_position sp
 		WHERE sp.location = minor.Location_Name
 			AND sp.term = isnull(@flow_date_to, @flow_date_from)
@@ -1659,8 +1660,8 @@ BEGIN
 		END  + sml.location_name + ISNULL(' [' + tlpi.location_type + ']', '') [location_name]
 		, tlpi.location_id
 		, tlpi.location_type
-		, dbo.FNARemoveTrailingZero(ROUND(COALESCE(tlpi.proxy_pos,lrt.[beg_pos],0), 0)) [position]
-		, dbo.FNARemoveTrailingZero(ROUND(ISNULL( CASE pmj.location_name WHEN 'storage' THEN tlpi.position ELSE COALESCE(tlpi.proxy_pos_total,lrt.total_position,0) END,0), 0)) [total_pos]
+		, dbo.FNARemoveTrailingZero(ROUND(COALESCE(tlpi.proxy_pos,lrt.[beg_pos],0), @round)) [position]
+		, dbo.FNARemoveTrailingZero(ROUND(ISNULL( CASE pmj.location_name WHEN 'storage' THEN tlpi.position ELSE COALESCE(tlpi.proxy_pos_total,lrt.total_position,0) END,0), @round)) [total_pos]
 		, tlpi.[rank]
 		, CASE WHEN tlpi.proxy_loc_id = tlpi.location_id THEN -1 ELSE tlpi.proxy_loc_id END [proxy_loc_id]
 		, ISNULL(pmj.location_name, -1) [proxy_loc_type]
@@ -1736,7 +1737,7 @@ BEGIN
 			ELSE '''' 
 		END [type]
 		, sml.source_minor_location_id [location_id]
-		, SUM(CAST(sp.balance AS NUMERIC(20, 10))) [total_pos] 
+		, SUM(CAST(sp.balance AS NUMERIC(38,20))) [total_pos] 
 	FROM #storage_position sp
 	INNER JOIN source_minor_location sml ON sml.location_name = sp.location
 	WHERE sp.term = ''' + CONVERT(VARCHAR(10), ISNULL(@flow_date_to, @flow_date_from), 21) + '''
@@ -2623,15 +2624,15 @@ BEGIN
 		, t.to_loc
 		, t.from_rank
 		, t.to_rank
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(cdh.received), 0)) received
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(cdh.delivered), 0)) delivered
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(t.mdq), 0)) mdq
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(t.rmdq), 0)) rmdq
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(t.ormdq), 0)) ormdq
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(cdh.received), ' + CAST(@round AS VARCHAR(10)) + ')) received
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(cdh.delivered), ' + CAST(@round AS VARCHAR(10)) + ')) delivered
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(t.mdq), ' + CAST(@round AS VARCHAR(10)) + ')) mdq
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(t.rmdq), ' + CAST(@round AS VARCHAR(10)) + ')) rmdq
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(t.ormdq), ' + CAST(@round AS VARCHAR(10)) + ')) ormdq
 		, MAX(t.path_exists) path_exists
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(IIF(t.contract_id = path_mdq_info.contract_id, path_mdq_info.pmdq, 0)), 0))  path_mdq
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(IIF(t.contract_id = path_mdq_info.contract_id, path_mdq_info.prmdq, 0)), 0)) path_rmdq
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(IIF(t.contract_id = path_mdq_info.contract_id, path_mdq_info.prmdq, 0)), 0)) path_ormdq
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(IIF(t.contract_id = path_mdq_info.contract_id, path_mdq_info.pmdq, 0)), ' + CAST(@round AS VARCHAR(10)) + '))  path_mdq
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(IIF(t.contract_id = path_mdq_info.contract_id, path_mdq_info.prmdq, 0)), ' + CAST(@round AS VARCHAR(10)) + ')) path_rmdq
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(IIF(t.contract_id = path_mdq_info.contract_id, path_mdq_info.prmdq, 0)), ' + CAST(@round AS VARCHAR(10)) + ')) path_ormdq
 		, MAX(process_id) process_id
 		, t.from_loc_grp_id
 		, t.from_loc_grp_name
@@ -2642,8 +2643,8 @@ BEGIN
 		, MAX(t.to_proxy_loc_id) to_proxy_loc_id
 		, NULL [from_is_agg]
 		, NULL [to_is_agg]
-		, CAST(SUM(IIF(cdh.hour = @first_hour, cdh.received,  NULL)) AS NUMERIC(10,2)) [first_hour_rec_vol]
-		, CAST(SUM(IIF(cdh.hour = @first_hour, cdh.delivered, NULL)) AS NUMERIC(10,2)) [first_hour_del_vol]
+		, CAST(SUM(IIF(cdh.hour = @first_hour, cdh.received,  NULL)) AS NUMERIC(38,20)) [first_hour_rec_vol]
+		, CAST(SUM(IIF(cdh.hour = @first_hour, cdh.delivered, NULL)) AS NUMERIC(38,20)) [first_hour_del_vol]
 
 	FROM #tmp_filtered_data1 t
 	INNER JOIN ' + @contractwise_detail_mdq_hourly + ' cdh on cdh.box_id = t.box_id
@@ -3196,8 +3197,8 @@ SET @sql = CAST('' AS VARCHAR(MAX)) + '
 				,a.single_path_id
 				,a.path_name
 				,a.group_path
-				,cast(a.path_mdq as numeric(10,2))
-				,cast(a.path_rmdq as numeric(10,2))
+				,cast(a.path_mdq as numeric(38,20))
+				,cast(a.path_rmdq as numeric(38,20))
 				,a.contract_id
 				,a.contract_name
 				,a.mdq
@@ -3392,7 +3393,7 @@ EXEC(@sql)
                 ) h
 					
 					
-				DECLARE @r_id INT, @box_id INT, @single_path_id INT, @received NUMERIC(38, 20), @delivered NUMERIC(38, 20), @loss_factor NUMERIC(38, 18), @next_path INT
+				DECLARE @r_id INT, @box_id INT, @single_path_id INT, @received NUMERIC(38, 20), @delivered NUMERIC(38, 20), @loss_factor NUMERIC(38, 20), @next_path INT
 						,@delivery_detail_id INT
 				
 				--UP PATHS
@@ -3567,16 +3568,16 @@ EXEC(@sql)
 	
 	FROM (
 	SELECT tsd.[box_id], tsd.from_loc_id, tsd.from_loc, tsd.to_loc_id, tsd.to_loc, tsd.from_rank, tsd.to_rank
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.received), 0)) [received]
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.delivered), 0)) [delivered]
-		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.mdq), 0)) [mdq]
-		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.rmdq), 0)) [rmdq]
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.total_sch_volume), 0)) [total_sch_volume]
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.received), ' + CAST(@round AS VARCHAR(10)) + ')) [received]
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.delivered), ' + CAST(@round AS VARCHAR(10)) + ')) [delivered]
+		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.mdq), ' + CAST(@round AS VARCHAR(10)) + ')) [mdq]
+		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.rmdq), ' + CAST(@round AS VARCHAR(10)) + ')) [rmdq]
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.total_sch_volume), ' + CAST(@round AS VARCHAR(10)) + ')) [total_sch_volume]
 		, MAX(tsd.path_id) [path_exists]
 		, MAX(tsd.path_name) [path_name]
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.path_mdq), 0)) [path_mdq]
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.path_rmdq), 0)) [path_rmdq] 
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.path_ormdq), 0)) [path_ormdq]
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.path_mdq), ' + CAST(@round AS VARCHAR(10)) + ')) [path_mdq]
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.path_rmdq), ' + CAST(@round AS VARCHAR(10)) + ')) [path_rmdq] 
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.path_ormdq), ' + CAST(@round AS VARCHAR(10)) + ')) [path_ormdq]
 		, tsd.from_loc_grp_id, tsd.from_loc_grp_name, tsd.to_loc_grp_id, tsd.to_loc_grp_name
 		, MAX(IIF(tsd.hour = @first_hour, tsd.received, 0)) [first_hour_rec_vol]
 		, MAX(IIF(tsd.hour = @first_hour, tsd.delivered, 0)) [first_hour_del_vol]
@@ -3587,16 +3588,16 @@ EXEC(@sql)
 	--order by from_rank asc, from_loc asc, to_rank asc, to_loc asc
 	UNION ALL
 	SELECT tsd.[box_id], tsd.from_loc_id, tsd.from_loc, tsd.to_loc_id, tsd.to_loc, tsd.from_rank, tsd.to_rank
-		, dbo.FNARemoveTrailingZero(ROUND(MAX(tsd.received), 0)) [received]
-		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.delivered), 0)) [delivered]
-		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.mdq), 0)) [mdq]
-		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.rmdq), 0)) [rmdq]
-		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.total_sch_volume), 0)) [total_sch_volume]
+		, dbo.FNARemoveTrailingZero(ROUND(MAX(tsd.received), ' + CAST(@round AS VARCHAR(10)) + ')) [received]
+		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.delivered), ' + CAST(@round AS VARCHAR(10)) + ')) [delivered]
+		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.mdq), ' + CAST(@round AS VARCHAR(10)) + ')) [mdq]
+		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.rmdq), ' + CAST(@round AS VARCHAR(10)) + ')) [rmdq]
+		, dbo.FNARemoveTrailingZero(ROUND(SUM(tsd.total_sch_volume), ' + CAST(@round AS VARCHAR(10)) + ')) [total_sch_volume]
 		, MAX(tsd.path_id) [path_exists]
 		, MAX(tsd.path_name) [path_name]
-		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.path_mdq), 0)) [path_mdq]
-		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.path_rmdq), 0))  [path_rmdq]
-		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.path_ormdq), 0)) [path_ormdq]
+		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.path_mdq), ' + CAST(@round AS VARCHAR(10)) + ')) [path_mdq]
+		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.path_rmdq), ' + CAST(@round AS VARCHAR(10)) + '))  [path_rmdq]
+		, dbo.FNARemoveTrailingZero(ROUND(MIN(tsd.path_ormdq), ' + CAST(@round AS VARCHAR(10)) + ')) [path_ormdq]
 		, tsd.from_loc_grp_id, tsd.from_loc_grp_name, tsd.to_loc_grp_id, tsd.to_loc_grp_name
 		, MAX(IIF(tsd.hour = @first_hour, tsd.received, 0)) [first_hour_rec_vol]
 		, MAX(IIF(tsd.hour = @first_hour, tsd.delivered, 0)) [first_hour_del_vol]
@@ -3734,19 +3735,19 @@ BEGIN
 			,loss_factor
 			,contract_id
 			,contract_name
-			,dbo.FNARemoveTrailingZero(ROUND(contract_mdq, 0)) contract_mdq
-			,dbo.FNARemoveTrailingZero(ROUND(contract_rmdq, 0)) contract_rmdq
-			,dbo.FNARemoveTrailingZero(ROUND(contract_ormdq, 0)) contract_ormdq
-			,dbo.FNARemoveTrailingZero(ROUND(path_mdq, 0)) path_mdq
-			,dbo.FNARemoveTrailingZero(ROUND(path_rmdq, 0)) path_rmdq
-			,dbo.FNARemoveTrailingZero(ROUND(path_ormdq, 0)) path_ormdq
-			,dbo.FNARemoveTrailingZero(ROUND(first_path_mdq, 0)) first_path_mdq
-			,dbo.FNARemoveTrailingZero(ROUND(total_mdq, 0)) total_mdq
-			,dbo.FNARemoveTrailingZero(ROUND(total_rmdq, 0)) total_rmdq
-			,dbo.FNARemoveTrailingZero(ROUND(receipt, 0)) receipt
-			,dbo.FNARemoveTrailingZero(ROUND(receipt_total, 0)) receipt_total
-			,dbo.FNARemoveTrailingZero(ROUND(delivery, 0)) delivery
-			,dbo.FNARemoveTrailingZero(ROUND(delivery_total, 0)) delivery_total
+			,dbo.FNARemoveTrailingZero(ROUND(contract_mdq, @round)) contract_mdq
+			,dbo.FNARemoveTrailingZero(ROUND(contract_rmdq, @round)) contract_rmdq
+			,dbo.FNARemoveTrailingZero(ROUND(contract_ormdq, @round)) contract_ormdq
+			,dbo.FNARemoveTrailingZero(ROUND(path_mdq, @round)) path_mdq
+			,dbo.FNARemoveTrailingZero(ROUND(path_rmdq, @round)) path_rmdq
+			,dbo.FNARemoveTrailingZero(ROUND(path_ormdq, @round)) path_ormdq
+			,dbo.FNARemoveTrailingZero(ROUND(first_path_mdq, @round)) first_path_mdq
+			,dbo.FNARemoveTrailingZero(ROUND(total_mdq, @round)) total_mdq
+			,dbo.FNARemoveTrailingZero(ROUND(total_rmdq, @round)) total_rmdq
+			,dbo.FNARemoveTrailingZero(ROUND(receipt, @round)) receipt
+			,dbo.FNARemoveTrailingZero(ROUND(receipt_total, @round)) receipt_total
+			,dbo.FNARemoveTrailingZero(ROUND(delivery, @round)) delivery
+			,dbo.FNARemoveTrailingZero(ROUND(delivery_total, @round)) delivery_total
 			,segmentation
 			,pipeline
 			,group_path
@@ -3832,7 +3833,7 @@ BEGIN
 		 , sc.counterparty_name
 		 , IIF(sdd.leg = 2, sml.Location_Name + '' ['' + smj.location_name + '']'', ca_leg_loc.location_id) [to_location]
 		 ,sdd.curve_id,cg.contract_name,uom.uom_name
-		 ,ca_pos.sub_hour_rank [hour], cast(ca_pos.position as numeric(18,' + @rounding_value + ')) position, cast(ca_total_pos.total_position as numeric(18,' + @rounding_value + ')) total_position
+		 ,ca_pos.sub_hour_rank [hour], cast(ca_pos.position as numeric(38,' + @rounding_value + ')) position, cast(ca_total_pos.total_position as numeric(38,' + @rounding_value + ')) total_position
 		 
 		FROM ' + @deal_detail_info + ' ddi
 		INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = ddi.source_deal_detail_id
@@ -4039,7 +4040,7 @@ BEGIN
 			, v.item [volume]
 			, CASE v.item 
 				WHEN ''PMDQ/PRMDQ'' 
-					THEN  CAST(dbo.FNARemoveTrailingZero(CAST(cd.path_mdq AS NUMERIC(10,2))) AS VARCHAR(100)) + ''/'' 
+					THEN  CAST(dbo.FNARemoveTrailingZero(CAST(cd.path_mdq AS NUMERIC(38,20))) AS VARCHAR(100)) + ''/'' 
 						 + CAST(dbo.FNARemoveTrailingZero(CAST(
 								(
 									cd.path_ormdq 
@@ -4051,7 +4052,7 @@ BEGIN
 									)
 								)
 
-							 AS NUMERIC(10,2))) AS VARCHAR(100)) 
+							 AS NUMERIC(38,20))) AS VARCHAR(100)) 
 				WHEN ''Fuel'' THEN CAST(cd.loss_factor AS VARCHAR(100))
 				WHEN ''Rec'' THEN dbo.FNARemoveTrailingZero(ROUND
 																	(ISNULL
@@ -4059,7 +4060,7 @@ BEGIN
 																			[dbo].[FNAGetGasSupplyDemandVol](supply_pos.position, demand_pos.position, IIF(to_loc_grp_name = ''storage'', ''storage_injection'', ''''))
 																			
 																		)
-																		, 2
+																		, ' + CAST(@round AS VARCHAR(10)) + '
 																	)
 																)
 
@@ -4069,7 +4070,7 @@ BEGIN
 																			[dbo].[FNAGetGasSupplyDemandVol](supply_pos.position, demand_pos.position, IIF(to_loc_grp_name = ''storage'', ''storage_injection'', ''''))
 																			
 																		)
-																		, 2
+																		, ' + CAST(@round AS VARCHAR(10)) + '
 																	)
 																)
 				ELSE NULL END [value]
@@ -4237,7 +4238,7 @@ BEGIN
 								FROM (
 									SELECT ''supply_position'' [value_type]
 										, sp.hour [hr]
-										, CAST(sp.position AS NUMERIC(10,4)) [value]
+										, CAST(sp.position AS NUMERIC(38,20)) [value]
 									FROM ' + @hourly_pos_info +  ' sp
 									WHERE 1 = 1 ' 
 										+ ISNULL(' AND sp.source_deal_header_id IN (' + @receipt_deals_id + ')', '')
@@ -4247,7 +4248,7 @@ BEGIN
 									UNION ALL
 									SELECT ''demand_position''
 										, dp.hour
-										, CAST(dp.position AS NUMERIC(10,4))
+										, CAST(dp.position AS NUMERIC(38,20))
 									FROM ' + @hourly_pos_info +  ' dp
 									WHERE 1 = 1' 
 										+ ISNULL(' AND dp.source_deal_header_id IN (' + @delivery_deals_id + ')', '')
@@ -4257,7 +4258,7 @@ BEGIN
 									UNION ALL
 									SELECT ''path_ormdq''
 										, cd.hour
-										, CAST(MAX(cd.path_ormdq) AS NUMERIC(10,4))
+										, CAST(MAX(cd.path_ormdq) AS NUMERIC(38,20))
 									FROM ' + @contractwise_detail_mdq_hourly +  ' cd
 									WHERE 1 = 1' 
 										+ ISNULL(' AND cd.box_id = ' + @xml_manual_vol, '')

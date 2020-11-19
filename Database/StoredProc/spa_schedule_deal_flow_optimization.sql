@@ -78,7 +78,7 @@ SET NOCOUNT ON
 		, @receipt_deals_id VARCHAR(200) = NULL
 		, @delivery_deals_id VARCHAR(200) = NULL
 
-	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'adangol'
+	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
 
 	--Sets contextinfo to debug mode so that spa_print will prints data
 	DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
@@ -91,22 +91,26 @@ SET NOCOUNT ON
 	
 	-- SPA parameter values
 
+--	2020-01-01 00:00:00.000	2020-01-01 00:00:00.000	DB9138AE_0ECD_4845_9081_3FED34C293FD	flow_auto	1158	0	982	-1	104935
+
 select 
 	@flag = 'i'
-	, @box_ids = '3'
-	, @flow_date_from = '2025-07-01'
-	, @flow_date_to = '2025-07-01'
+	, @box_ids = '1'
+	, @flow_date_from = '2020-01-01'
+	, @flow_date_to = '2020-01-01'
 	, @sub = NULL
 	, @str = NULL
 	, @book = NULL
 	, @sub_book = NULL
-	, @contract_process_id = 'E7FE6D8B_4A0E_444D_B2DC_34C122B9ADC9'
+	, @contract_process_id = 'DB9138AE_0ECD_4845_9081_3FED34C293FD'
 	, @from_priority = NULL
 	, @to_priority = NULL
 	, @call_from = 'flow_auto'
 	, @target_uom = 1158
 	, @reschedule = 0
 	, @granularity = 982
+	, @receipt_deals_id =-1
+	, @delivery_deals_id = 104935
 
 
 --transport_deal_id	deal_volume		up_down_stream	source_deal_header_id
@@ -145,10 +149,11 @@ DECLARE @process_id					VARCHAR(50)
 	, @is_hourly_calc				BIT --flag to check if hourly calculation is needed
 	, @sql							VARCHAR(MAX)
 	, @template_names				VARCHAR(1000)
+	, @round						INT = '4'
 
 SET @is_hourly_calc = IIF(@granularity = 982, 1, 0);
 
-SET @package_id = REPLACE(LTRIM(REPLACE(STR(CAST(RAND() AS NUMERIC(20,20)),20,20),'0.','')),' ','')
+SET @package_id = REPLACE(LTRIM(REPLACE(STR(CAST(RAND() AS NUMERIC(38,20)),20,20),'0.','')),' ','')
 
 SELECT @sdv_from_deal = value_id
 FROM static_data_value
@@ -1045,14 +1050,14 @@ BEGIN --Data Prepararion
 		box_id INT,
 		master_rowid INT,
 		[priority] INT,
-		available_volume NUMERIC(20, 2),
-		delivery_volume NUMERIC(20, 2),
-		tot_volume NUMERIC(20, 2),
+		available_volume NUMERIC(38,20),
+		delivery_volume NUMERIC(38,20),
+		tot_volume NUMERIC(38,20),
 		loss_factor FLOAT,
 		contract_id INT,
 		storage_asset_id INT,
 		path_id INT,
-		run_sum NUMERIC(20, 2),
+		run_sum NUMERIC(38,20),
 		source_deal_header_id INT,
 		[description1] VARCHAR(500) COLLATE DATABASE_DEFAULT,
 		[description2] VARCHAR(500) COLLATE DATABASE_DEFAULT,
@@ -1069,7 +1074,7 @@ BEGIN --Data Prepararion
 		group_path VARCHAR(1) COLLATE DATABASE_DEFAULT,
 		single_path_id INT,
 		source0  TINYINT,
-		actual_available_volume NUMERIC(20, 2),
+		actual_available_volume NUMERIC(38,20),
 		term_start DATETIME,
 		term_end DATETIME,
 		is_transport_deal BIT
@@ -1079,14 +1084,14 @@ BEGIN --Data Prepararion
 		box_id INT,
 		master_rowid INT,
 		[priority] INT,
-		available_volume NUMERIC(20, 2),
-		delivery_volume NUMERIC(20, 2),
-		tot_volume NUMERIC(20, 2),
+		available_volume NUMERIC(38,20),
+		delivery_volume NUMERIC(38,20),
+		tot_volume NUMERIC(38,20),
 		loss_factor FLOAT,
 		contract_id INT,
 		storage_asset_id INT,
 		path_id INT,
-		run_sum NUMERIC(20, 2),
+		run_sum NUMERIC(38,20),
 		source_deal_header_id INT,
 		[description1] VARCHAR(500) COLLATE DATABASE_DEFAULT,
 		[description2] VARCHAR(500) COLLATE DATABASE_DEFAULT,
@@ -1103,7 +1108,7 @@ BEGIN --Data Prepararion
 		group_path VARCHAR(1) COLLATE DATABASE_DEFAULT,
 		single_path_id INT,
 		source0  TINYINT,
-		actual_available_volume NUMERIC(20, 2),
+		actual_available_volume NUMERIC(38,20),
 		term_start DATETIME,
 		term_end DATETIME,
 		is_transport_deal BIT
@@ -1118,14 +1123,14 @@ BEGIN --Data Prepararion
 			hr INT,
 			period INT,
 			[priority] INT,
-			available_volume NUMERIC(20, 2),
-			delivery_volume NUMERIC(20, 2),
-			tot_volume NUMERIC(20, 2),
+			available_volume NUMERIC(38,20),
+			delivery_volume NUMERIC(38,20),
+			tot_volume NUMERIC(38,20),
 			loss_factor FLOAT,
 			contract_id INT,
 			storage_asset_id INT,
 			path_id INT,
-			run_sum NUMERIC(20, 2),
+			run_sum NUMERIC(38,20),
 			source_deal_header_id INT,
 			[description1] VARCHAR(500) COLLATE DATABASE_DEFAULT,
 			[description2] VARCHAR(500) COLLATE DATABASE_DEFAULT,
@@ -1142,7 +1147,7 @@ BEGIN --Data Prepararion
 			group_path VARCHAR(1) COLLATE DATABASE_DEFAULT,
 			single_path_id INT,
 			source0  TINYINT,
-			actual_available_volume NUMERIC(20, 2),
+			actual_available_volume NUMERIC(38,20),
 			term_start DATETIME,
 			term_end DATETIME,
 			is_transport_deal BIT
@@ -1154,14 +1159,14 @@ BEGIN --Data Prepararion
 			hr INT,
 			period INT,
 			[priority] INT,
-			available_volume NUMERIC(20, 2),
-			delivery_volume NUMERIC(20, 2),
-			tot_volume NUMERIC(20, 2),
+			available_volume NUMERIC(38,20),
+			delivery_volume NUMERIC(38,20),
+			tot_volume NUMERIC(38,20),
 			loss_factor FLOAT,
 			contract_id INT,
 			storage_asset_id INT,
 			path_id INT,
-			run_sum NUMERIC(20, 2),
+			run_sum NUMERIC(38,20),
 			source_deal_header_id INT,
 			[description1] VARCHAR(500) COLLATE DATABASE_DEFAULT,
 			[description2] VARCHAR(500) COLLATE DATABASE_DEFAULT,
@@ -1178,7 +1183,7 @@ BEGIN --Data Prepararion
 			group_path VARCHAR(1) COLLATE DATABASE_DEFAULT,
 			single_path_id INT,
 			source0  TINYINT,
-			actual_available_volume NUMERIC(20, 2),
+			actual_available_volume NUMERIC(38,20),
 			term_start DATETIME,
 			term_end DATETIME,
 			is_transport_deal BIT
@@ -2199,9 +2204,9 @@ BEGIN --Data Prepararion
 		, t.source0
 		, ISNULL(t.actual_available_volume - rem_vol.vol_used, 0) actual_available_volume
 		, ISNULL(abs(t.available_volume) - rem_vol.vol_used,0) intial_available_volume
-		, CAST(0 AS NUMERIC(20, 4)) over_flow_volume
+		, CAST(0 AS NUMERIC(38,20)) over_flow_volume
 		, tm.term_start term_end
-		, CAST(0 AS NUMERIC(20, 4)) tot_volume_sell
+		, CAST(0 AS NUMERIC(38,20)) tot_volume_sell
 		, ISNULL(abs(t.available_volume) - rem_vol.vol_used, 0) available_volume_sell
 		, ISNULL(t.run_sum, 0) run_sum_sell
 		, is_transport_deal
@@ -2253,9 +2258,9 @@ BEGIN --Data Prepararion
 			, t.source0
 			, ISNULL(t.actual_available_volume - rem_vol.vol_used, 0) actual_available_volume
 			, ISNULL(abs(t.available_volume) - rem_vol.vol_used,0) intial_available_volume
-			, CAST(0 AS NUMERIC(20, 4)) over_flow_volume
+			, CAST(0 AS NUMERIC(38,20)) over_flow_volume
 			, tm.term_start term_end
-			, CAST(0 AS NUMERIC(20, 4)) tot_volume_sell
+			, CAST(0 AS NUMERIC(38,20)) tot_volume_sell
 			, ISNULL(abs(t.available_volume) - rem_vol.vol_used, 0) available_volume_sell
 			, ISNULL(t.run_sum, 0) run_sum_sell
 			, is_transport_deal
@@ -2346,9 +2351,9 @@ BEGIN --Data Prepararion
 		, t.source0
 		, ISNULL(t.actual_available_volume - rem_vol.vol_used, 0) actual_available_volume
 		, ISNULL(t.available_volume - rem_vol.vol_used, 0) intial_available_volume
-		, CAST(0 AS NUMERIC(20, 4)) over_flow_volume
+		, CAST(0 AS NUMERIC(38,20)) over_flow_volume
 		, tm.term_start term_end
-		, CAST(0 AS NUMERIC(20, 4)) tot_volume_buy
+		, CAST(0 AS NUMERIC(38,20)) tot_volume_buy
 		, ISNULL(t.available_volume - rem_vol.vol_used, 0) available_volume_buy
 		, ISNULL(t.run_sum, 0) run_sum_buy
 		, t.is_transport_deal
@@ -2405,9 +2410,9 @@ BEGIN --Data Prepararion
 			, t.source0
 			, ISNULL(t.actual_available_volume - rem_vol.vol_used, 0) actual_available_volume
 			, ISNULL(t.available_volume - rem_vol.vol_used, 0) intial_available_volume
-			, CAST(0 AS NUMERIC(20, 4)) over_flow_volume
+			, CAST(0 AS NUMERIC(38,20)) over_flow_volume
 			, tm.term_start term_end
-			, CAST(0 AS NUMERIC(20, 4)) tot_volume_buy
+			, CAST(0 AS NUMERIC(38,20)) tot_volume_buy
 			, ISNULL(t.available_volume - rem_vol.vol_used, 0) available_volume_buy
 			, ISNULL(t.run_sum, 0) run_sum_buy
 			, t.is_transport_deal
@@ -3444,8 +3449,8 @@ BEGIN --Data Prepararion
 			, [contract_id] 
 			, storage_deal_type
 			, path_id,single_path_id
-			, CAST(available_volume AS NUMERIC(20,4)) received_volume
-			, CAST(available_volume * (1 - loss_factor) AS NUMERIC(20,4)) delivered_volume
+			, CAST(available_volume AS NUMERIC(38,20)) received_volume
+			, CAST(available_volume * (1 - loss_factor) AS NUMERIC(38,20)) delivered_volume
 			, loss_factor
 			, from_location
 			, to_location
@@ -3465,7 +3470,7 @@ BEGIN --Data Prepararion
 				, r.path_id
 				, r.single_path_id
 				, c.delivered_volume received_volume
-				, CAST(c.delivered_volume * (1 - r.loss_factor) AS NUMERIC(20,4)) delivered_volume
+				, CAST(c.delivered_volume * (1 - r.loss_factor) AS NUMERIC(38,20)) delivered_volume
 				, r.loss_factor 
 				, r.from_location
 				, r.to_location
@@ -3513,12 +3518,12 @@ BEGIN --Data Prepararion
 			 							MAX(p.tot_volume * CASE WHEN ISNULL(p.storage_deal_type,'n') IN ('n','w') THEN 1 ELSE 1-COALESCE(p.loss_factor,0) END)
 			 						ELSE 
 			 							MAX(p.tot_volume * CASE WHEN ISNULL(p.storage_deal_type,'n') IN ('n','w') THEN 1 ELSE 1-COALESCE(p.loss_factor,0) END)
-			 						END, 0)
+			 						END, @round)
 			, leg2_volume = ROUND(CASE WHEN MAX(mn.no_source_deal)>1 THEN 
 			 							MAX(p.tot_volume * (1-COALESCE(p.loss_factor,0)) )
 			 						ELSE 
 			 							MAX(p.tot_volume * (1-COALESCE(p.loss_factor,0)) )
-			 						END, 0)
+			 						END, @round)
 			, leg1_loc_id= MAX(CASE WHEN ISNULL(p.storage_deal_type, 'n') = 'n' THEN  p.from_location  WHEN ISNULL(p.storage_deal_type, 'n') = 'w' THEN p.from_location ELSE p.to_location END)
 			, leg2_loc_id= MAX(CASE WHEN ISNULL(p.storage_deal_type, 'n') = 'n' THEN  p.to_location  WHEN ISNULL(p.storage_deal_type, 'n') = 'w' THEN p.from_location ELSE p.to_location END)
 			, leg1_meter_id = MAX(CASE WHEN ISNULL(p.storage_deal_type, 'n') = 'n' THEN  dp.meter_from  WHEN ISNULL(p.storage_deal_type, 'n') = 'w' THEN dp.meter_from ELSE dp.meter_to END )
@@ -3599,8 +3604,8 @@ BEGIN --Data Prepararion
 		, leg1_volume = ROUND(CASE WHEN ISNULL(p.storage_deal_type, 'n') IN ('n', 'w') 
 							THEN ISNULL(gpv.received_volume, p.leg1_volume) 
 							ELSE ISNULL(gpv.delivered_volume, p.leg1_volume) 
-							END, 0)
-		, leg2_volume = ROUND(ISNULL(gpv.delivered_volume, p.leg2_volume), 0)
+							END, @round)
+		, leg2_volume = ROUND(ISNULL(gpv.delivered_volume, p.leg2_volume), @round)
 		, leg1_loc_id = (CASE WHEN ISNULL(p.storage_deal_type, 'n') = 'n' 
 								THEN  ISNULL(gpv.from_location,p.leg1_loc_id)  
 							WHEN ISNULL(p.storage_deal_type, 'n') = 'w' 
@@ -3629,8 +3634,8 @@ BEGIN --Data Prepararion
 		, leg1_deal_volume = ROUND(CASE WHEN ISNULL(p.storage_deal_type, 'n') IN ('n', 'w') 
 							THEN ISNULL(gpv.received_volume, p.leg1_volume) 
 							ELSE ISNULL(gpv.delivered_volume, p.leg1_volume) 
-							END, 0)
-		, leg2_deal_volume = ROUND(ISNULL(gpv.delivered_volume, p.leg2_volume), 0)
+							END, @round)
+		, leg2_deal_volume = ROUND(ISNULL(gpv.delivered_volume, p.leg2_volume), @round)
 		, CAST(NULL AS INT) source_deal_header_id
 		, @flow_date_from flow_date_from 
 		, @flow_date_to flow_date_to
@@ -4661,17 +4666,17 @@ BEGIN -- Insert/Update Deal data
 		, source_deal_detail_id	INT
 		, leg						INT
 		, term_start DATETIME
-		, deal_volume NUMERIC(28,8)
+		, deal_volume NUMERIC(38,20)
 		, fixed_price FLOAT
 		, is_insert BIT
-		, deal_volume_old NUMERIC(28,8)
+		, deal_volume_old NUMERIC(38,20)
 		, group_path_id INT
 		, single_path_id INT
 	)
 
 	UPDATE [dbo].[source_deal_detail] 
 		SET [deal_volume] = ISNULL(CASE WHEN sdd.Leg = 1 THEN ed.leg1_volume ELSE ed.leg2_volume END,0)
-							+ ROUND(CASE WHEN leg = 1 THEN ISNULL(cp.leg1_volume,  p.leg1_deal_volume) ELSE ISNULL(cp.leg2_volume, p.leg2_deal_volume) END, 0)
+							+ ROUND(CASE WHEN leg = 1 THEN ISNULL(cp.leg1_volume,  p.leg1_deal_volume) ELSE ISNULL(cp.leg2_volume, p.leg2_deal_volume) END, @round)
 							, actual_volume = CASE WHEN ISNULL(@reschedule, 0) = 1 THEN NULL ELSE actual_volume END
 							, schedule_volume = CASE WHEN ISNULL(@reschedule, 0) = 1 THEN NULL ELSE schedule_volume END
 							, attribute4 = ISNULL(p.path_id, p.single_path_id)
@@ -4709,10 +4714,10 @@ BEGIN -- Insert/Update Deal data
 		 AND p.first_dom = cp.first_dom 
 		 AND p.contract_id = cp.contract_id	
 	WHERE ( ISNULL(CASE WHEN sdd.Leg = 1 THEN ed.leg1_volume ELSE ed.leg2_volume END,0)
-			+ ROUND(CASE WHEN leg = 1 THEN p.leg1_deal_volume ELSE p.leg2_deal_volume END, 0) <> 0
+			+ ROUND(CASE WHEN leg = 1 THEN p.leg1_deal_volume ELSE p.leg2_deal_volume END, @round) <> 0
 			OR -- allowing negative volume to me deal volume 0
 			ISNULL(CASE WHEN sdd.Leg = 1 THEN ed.leg1_volume ELSE ed.leg2_volume END,0)
-			= ROUND(CASE WHEN leg = 1 THEN p.leg1_deal_volume ELSE p.leg2_deal_volume END, 0) * -1
+			= ROUND(CASE WHEN leg = 1 THEN p.leg1_deal_volume ELSE p.leg2_deal_volume END, @round) * -1
 			)
 	--rollback transaction t1;
 	--return
@@ -4795,14 +4800,14 @@ BEGIN -- Insert/Update Deal data
 		, s.[fixed_price_currency_id]
 		, s.[option_strike_price]
 		, ROUND(CASE WHEN tm.term_start BETWEEN ISNULL(p.match_term_start, @flow_date_from) AND ISNULL(p.match_term_end, @flow_date_to) 
-				THEN ROUND(CASE WHEN s.leg = 1 THEN p.leg1_deal_volume ELSE p.leg2_deal_volume END,0) ELSE 0 	END, 0) [deal_volume]
+				THEN ROUND(CASE WHEN s.leg = 1 THEN p.leg1_deal_volume ELSE p.leg2_deal_volume END,@round) ELSE 0 	END, @round) [deal_volume]
 		, CASE @granularity WHEN 981 THEN 'd' WHEN 982 THEN 'h' ELSE 'd' END [deal_volume_frequency]
 		, ISNULL(NULLIF(@target_uom, ''), s.[deal_volume_uom_id]) deal_volume_uom_id
 		, s.[block_description]
 		, s.[deal_detail_description]
 		, s.[formula_id]
 		, ROUND(CASE WHEN tm.term_start BETWEEN ISNULL(p.match_term_start,@flow_date_from) AND ISNULL(p.match_term_end,@flow_date_to) 
-			THEN ROUND(CASE WHEN s.leg = 1 THEN p.leg1_deal_volume ELSE p.leg2_deal_volume END, 0) ELSE 0 END, 0) [volume_left]
+			THEN ROUND(CASE WHEN s.leg = 1 THEN p.leg1_deal_volume ELSE p.leg2_deal_volume END, @round) ELSE 0 END, @round) [volume_left]
 		, s.[settlement_volume]
 		, s.[settlement_uom]
 		, s.[create_user]
@@ -5129,8 +5134,8 @@ BEGIN -- Insert/Update Deal data
 		, u.[udf_template_id]
 		, CASE uddft.field_id
 			WHEN -5614 THEN CAST((p.leg1_volume - p.leg2_volume) / p.leg1_volume AS VARCHAR)	 -- loss_factor
-			WHEN @delivery_path_id THEN CAST(CAST(ISNULL(p.single_path_id, p.path_id) AS NUMERIC(28, 0)) AS VARCHAR)
-			WHEN @grp_delivery_path_id THEN CASE WHEN p.group_path = 'y' THEN CAST(CAST(p.path_id AS NUMERIC(28, 0)) AS VARCHAR) ELSE NULL END
+			WHEN @delivery_path_id THEN CAST(CAST(ISNULL(p.single_path_id, p.path_id) AS NUMERIC(38,20)) AS VARCHAR)
+			WHEN @grp_delivery_path_id THEN CASE WHEN p.group_path = 'y' THEN CAST(CAST(p.path_id AS NUMERIC(38,20)) AS VARCHAR) ELSE NULL END
 			ELSE u.udf_value
 		 END
 		, dbo.fnadbuser()
@@ -5159,8 +5164,8 @@ BEGIN -- Insert/Update Deal data
 		,u.[udf_template_id]
 		, CASE uddft.field_id
 			WHEN -5614 THEN CAST((p.leg1_volume-p.leg2_volume) / p.leg1_volume AS VARCHAR)	 -- loss_factor
-			WHEN @delivery_path_id THEN CAST(CAST(ISNULL(p.single_path_id,p.path_id) AS NUMERIC(28,0)) AS VARCHAR)
-			WHEN @grp_delivery_path_id THEN CASE WHEN p.group_path='y' THEN CAST(CAST(p.path_id AS NUMERIC(28,0)) AS VARCHAR) ELSE NULL END
+			WHEN @delivery_path_id THEN CAST(CAST(ISNULL(p.single_path_id,p.path_id) AS NUMERIC(38,20)) AS VARCHAR)
+			WHEN @grp_delivery_path_id THEN CASE WHEN p.group_path='y' THEN CAST(CAST(p.path_id AS NUMERIC(38,20)) AS VARCHAR) ELSE NULL END
 			ELSE u.udf_value
 		END		
 	FROM #tmp_vol_split_deal_final_grp p
@@ -5225,7 +5230,7 @@ BEGIN -- Insert/Update Deal data
 		, uddft.udf_template_id
 		, CASE uddft.field_id				
 			WHEN  @sdv_priority 
-			THEN CAST(CAST(CASE WHEN p.storage_deal_type = 'i' THEN sdv.value_id ELSE uddft.default_value END AS NUMERIC(28, 0)) AS VARCHAR)
+			THEN CAST(CAST(CASE WHEN p.storage_deal_type = 'i' THEN sdv.value_id ELSE uddft.default_value END AS NUMERIC(38,20)) AS VARCHAR)
 			ELSE uddft.default_value
 		END default_value
 	FROM #tmp_vol_split_deal_final_grp p 
@@ -5351,12 +5356,12 @@ BEGIN -- Insert/Update Optimizer Data
 		, SLN_id INT
 		, flow_date DATETIME
 		, transport_deal_id INT
-		, del_nom_volume NUMERIC(28,8)
-		, rec_nom_volume  NUMERIC(28,8)
+		, del_nom_volume NUMERIC(38,20)
+		, rec_nom_volume  NUMERIC(38,20)
 		, is_insert BIT
-		, del_nom_volume_old NUMERIC(28,8)
-		, rec_nom_volume_old  NUMERIC(28,8)
-		, rec_nom_cycle5 NUMERIC(28,8) 
+		, del_nom_volume_old NUMERIC(38,20)
+		, rec_nom_volume_old  NUMERIC(38,20)
+		, rec_nom_cycle5 NUMERIC(38,20) 
 		, receipt_location_id INT
 		, delivery_location_id INT
 		, group_path_id INT
@@ -5475,8 +5480,8 @@ BEGIN -- Insert/Update Optimizer Data
 		, p.rowid SLN_id 
 		, leg1_loc_id receipt_location_id
 		, leg2_loc_id delivery_location_id
-		, ROUND(CASE WHEN idd.term_start BETWEEN @flow_date_from AND @flow_date_to THEN leg1_deal_volume ELSE NULL END, 0) rec_nom_volume
-		, ROUND(CASE WHEN idd.term_start BETWEEN @flow_date_from AND @flow_date_to THEN leg2_deal_volume ELSE NULL END, 0)  del_nom_volume
+		, ROUND(CASE WHEN idd.term_start BETWEEN @flow_date_from AND @flow_date_to THEN leg1_deal_volume ELSE NULL END, @round) rec_nom_volume
+		, ROUND(CASE WHEN idd.term_start BETWEEN @flow_date_from AND @flow_date_to THEN leg2_deal_volume ELSE NULL END, @round)  del_nom_volume
 		, CASE p.org_storage_deal_type WHEN 'i' THEN 1 WHEN 'w' THEN 2 ELSE 0 END rec_nom_cycle5
 		, IIF(cp.single_path_id IS NULL, p.path_id, NULL) group_path_id
 		, ISNULL(p.single_path_id, p.path_id)
@@ -6291,7 +6296,7 @@ BEGIN
 			, ROUND(MAX(CASE WHEN dvry.available_volume <= dvry.tot_volume 
 						THEN IIF(p_stor.storage_deal_type = 'i' --OR @call_from = 'flow_auto'
 									, dvry.tot_volume, dvry.available_volume)
-						ELSE dvry.tot_volume END), 4)	
+						ELSE dvry.tot_volume END), @round)	
 			, p.path_id
 			, i.single_path_id
 			, i.contract_id --	SELECT * FROM #inserted_optimizer_header SELECT * FROM #inserted_deal_detail111
@@ -6360,7 +6365,7 @@ BEGIN
 		, ROUND(MAX(CASE WHEN dvry.available_volume <= dvry.tot_volume 
 					THEN IIF(p_stor.storage_deal_type = 'i' --OR @call_from = 'flow_auto'
 								, dvry.tot_volume, dvry.available_volume)
-					ELSE dvry.tot_volume END), 4)	
+					ELSE dvry.tot_volume END), @round)	
 		, p.path_id
 		, i.single_path_id
 		, i.contract_id --	SELECT * FROM #inserted_optimizer_header SELECT * FROM #inserted_deal_detail111
