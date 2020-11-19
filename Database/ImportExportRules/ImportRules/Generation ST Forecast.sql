@@ -1,4 +1,4 @@
- BEGIN 
+BEGIN 
 	BEGIN TRY 
 		BEGIN TRAN 
 		DECLARE @admin_user VARCHAR(100) =  dbo.FNAAppAdminID(), @old_ixp_rule_id INT
@@ -114,10 +114,12 @@ INNER JOIN [temp_process_table]_calc a
 	ON fp.external_id = a.[Profile Name]
 INNER JOIN source_deal_header sdh
 	ON  sdh.sub_book = gmv.sub_book
-WHERE sdh.deal_reference_type_id IN (12500, 12503)
-AND gmv.source_profile2 IS NULL
-AND sdh.commodity_id=123 and sdh.source_deal_type_id=2261
+WHERE --sdh.deal_reference_type_id IN (12500, 12503)
+ gmv.source_profile2 IS NULL
+AND sdh.commodity_id=123 and sdh.source_deal_type_id in (2261, 2290)
 GROUP BY sdh.source_deal_header_id, fp.external_id
+
+--select * from source_deal_type
 
 IF OBJECT_ID(N''tempdb..#collect_profiles'') IS NOT NULL
 	DROP TABLE #collect_profiles
@@ -558,10 +560,12 @@ INNER JOIN [temp_process_table]_calc a
 	ON fp.external_id = a.[Profile Name]
 INNER JOIN source_deal_header sdh
 	ON  sdh.sub_book = gmv.sub_book
-WHERE sdh.deal_reference_type_id IN (12500, 12503)
-AND gmv.source_profile2 IS NULL
-AND sdh.commodity_id=123 and sdh.source_deal_type_id=2261
+WHERE --sdh.deal_reference_type_id IN (12500, 12503)
+ gmv.source_profile2 IS NULL
+AND sdh.commodity_id=123 and sdh.source_deal_type_id in (2261, 2290)
 GROUP BY sdh.source_deal_header_id, fp.external_id
+
+--select * from source_deal_type
 
 IF OBJECT_ID(N''tempdb..#collect_profiles'') IS NOT NULL
 	DROP TABLE #collect_profiles
@@ -932,7 +936,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   NULL,
 						   '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
 						   NULL,
-						   ',',
+						   ';',
 						   2,
 						   'fv',
 						   '0',
@@ -1009,4 +1013,3 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-		
