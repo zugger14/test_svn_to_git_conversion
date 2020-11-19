@@ -32,7 +32,7 @@ BEGIN
     EXEC spa_print 'batch_table: ', @str_batch_table         
     EXEC (@str_batch_table)
     
-    SET @str_batch_table = 'IF EXISTS(SELECT 1 FROM adiha_process.INFORMATION_SCHEMA.COLUMNS  
+    SET @str_batch_table = 'IF EXISTS(SELECT 1 FROM adiha_process.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK)
 									WHERE [column_name]=''ROWID'' AND table_name=''' + REPLACE(@temptablename ,'adiha_process.dbo.' ,'') + ''') 
 							BEGIN 
 								ALTER TABLE ' + @temptablename + ' DROP COLUMN ROWID

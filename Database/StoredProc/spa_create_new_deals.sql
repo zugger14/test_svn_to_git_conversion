@@ -134,7 +134,7 @@ BEGIN
 			INSERT INTO #import_status
 			SELECT '''+ @process_id +''', ''column_missing'', ''Column Error: '' + vc.[name] + '' column missing '' FROM #validate_column vc
 				LEFT JOIN (
-					SELECT * FROM ADIHA_PROCESS.INFORMATION_SCHEMA.COLUMNS 
+					SELECT * FROM ADIHA_PROCESS.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK)
 					WHERE TABLE_NAME =  N''' + REPLACE(@temp_table_name, 'adiha_process.dbo.', '') + '''
 				) as b
 			ON b.column_name = vc.name

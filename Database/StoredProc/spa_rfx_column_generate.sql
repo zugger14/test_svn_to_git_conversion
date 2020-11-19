@@ -49,7 +49,7 @@ SET NOCOUNT ON -- NOCOUNT is set ON since returning row count has side effects o
 					WHERE  TABLE_NAME = ''' + @table_name + '''
 					UNION ALL
 					SELECT '''' as Status, COLUMN_NAME Columns
-					FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS
+					FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK)
 					WHERE  TABLE_NAME = ''' + @table_name + '''
 					'
 		EXEC spa_print @sql					
@@ -69,11 +69,11 @@ SET NOCOUNT ON -- NOCOUNT is set ON since returning row count has side effects o
 		SELECT t.[name], t.[name] FROM sys.tables t
 		UNION ALL 
 		SELECT '[adiha_process]'+ '.[dbo].' + QUOTENAME(t.[name])  ,SUBSTRING(t.[name], LEN('batch_export_') + 1, LEN(t.[name]) - LEN('batch_export_')) 
-		FROM adiha_process.sys.tables t 
+		FROM adiha_process.sys.tables t WITH(NOLOCK)
 		WHERE t.[name] LIKE '%batch_export%'
 		UNION ALL 
 		SELECT '[adiha_process]'+ '.[dbo].' + QUOTENAME(t.[name])  ,SUBSTRING(t.[name], LEN('report_export_') + 1, LEN(t.[name]) - LEN('report_export_')) 
-		FROM adiha_process.sys.tables t 
+		FROM adiha_process.sys.tables t WITH(NOLOCK)
 		WHERE t.[name] LIKE '%report_export%'
 		ORDER BY 2 ASC
 	END

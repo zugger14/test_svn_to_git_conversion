@@ -428,7 +428,7 @@ SELECT @table_name = 'SAP_final_' + @user + '_' + @process_id
 IF @flag = 's' OR @flag = 'z'
 BEGIN
 	EXEC (
-		'IF EXISTS(SELECT 1 FROM adiha_process.sys.tables WHERE  name =  ' + '''' + @table_name + ''')
+		'IF EXISTS(SELECT 1 FROM adiha_process.sys.tables WITH(NOLOCK) WHERE  name =  ' + '''' + @table_name + ''')
 			DROP TABLE ' + @process_table
 		)
 CREATE TABLE #sap_export_data (

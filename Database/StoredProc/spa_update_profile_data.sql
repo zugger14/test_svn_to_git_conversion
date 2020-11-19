@@ -166,7 +166,7 @@ BEGIN
 		
 		INSERT INTO #temp_process_table_columns(column_name)
 		SELECT COLUMN_NAME
- 		FROM adiha_process.INFORMATION_SCHEMA.COLUMNS
+ 		FROM adiha_process.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK)
  		WHERE TABLE_NAME = @table_name
  		
  		UPDATE #temp_process_table_columns
@@ -637,7 +637,7 @@ BEGIN
 		
 			INSERT INTO #temp_xml_table_columns(column_name)
 			SELECT COLUMN_NAME
- 			FROM adiha_process.INFORMATION_SCHEMA.COLUMNS
+ 			FROM adiha_process.INFORMATION_SCHEMA.COLUMNS WITH (NOLOCK)
  			WHERE TABLE_NAME = @table_name
 						
 				

@@ -1095,8 +1095,8 @@ BEGIN
 			
 			SET @col_id_string = NULL
 			SELECT @col_id_string = COALESCE(@col_id_string+N',', N'') + QUOTENAME(c.name)
-				FROM adiha_process.dbo.sysobjects o
-				INNER JOIN adiha_process.dbo.syscolumns c ON o.id = c.id AND o.xtype = 'U'
+				FROM adiha_process.dbo.sysobjects o WITH(NOLOCK)
+				INNER JOIN adiha_process.dbo.syscolumns c WITH(NOLOCK) ON o.id = c.id AND o.xtype = 'U'
 				WHERE (o.name = REPLACE(@detail_grid_xml_table_name, 'adiha_process.dbo.', '')) AND c.name <> 'source_deal_detail_id' AND c.name <> 'leg'
 					AND c.name LIKE 'UDF[_][_][_]%'
 			
@@ -1134,8 +1134,8 @@ BEGIN
 				DECLARE @select_list VARCHAR(MAX)
 				SELECT @col_id_string = COALESCE(@col_id_string+N',', N'') + QUOTENAME(c.name),
 						@select_list = COALESCE(@select_list+N',', N'') +  'NULLIF(NULLIF(a.'+ c.name +',''NULL''),'''')' 
-				FROM adiha_process.dbo.sysobjects o
-				INNER JOIN adiha_process.dbo.syscolumns c ON o.id = c.id AND o.xtype = 'U'
+				FROM adiha_process.dbo.sysobjects o WITH(NOLOCK)
+				INNER JOIN adiha_process.dbo.syscolumns c WITH(NOLOCK) ON o.id = c.id AND o.xtype = 'U'
 				WHERE (o.name = REPLACE(@detail_grid_xml_table_name, 'adiha_process.dbo.', '')) AND c.name <> 'source_deal_detail_id'
 					AND c.name NOT LIKE 'UDF[_][_][_]%'
 				
@@ -1441,8 +1441,8 @@ BEGIN
 			
 			SET @col_id_string = NULL
 			SELECT @col_id_string = COALESCE(@col_id_string+N',', N'') + QUOTENAME(c.name)
-				FROM adiha_process.dbo.sysobjects o
-				INNER JOIN adiha_process.dbo.syscolumns c ON o.id = c.id AND o.xtype = 'U'
+				FROM adiha_process.dbo.sysobjects o WITH(NOLOCK)
+				INNER JOIN adiha_process.dbo.syscolumns c WITH(NOLOCK) ON o.id = c.id AND o.xtype = 'U'
 				WHERE (o.name = REPLACE(@detail_grid_xml_table_name, 'adiha_process.dbo.', '')) AND c.name <> 'source_deal_detail_id' AND c.name <> 'leg'
 					AND c.name LIKE 'UDF[_][_][_]%'
 			
@@ -1556,8 +1556,8 @@ BEGIN
 				SELECT @col_id_string = COALESCE(@col_id_string+N',', N'') + QUOTENAME(c.name),
 						@select_list = COALESCE(@select_list+N',', N'') +  'NULLIF(NULLIF(a.'+ c.name +',''NULL''),'''')',
 						@update_list = COALESCE(@update_list + N', ', N'') + 'b.' + c.name + ' = NULLIF(NULLIF(a.'+ c.name +',''NULL''),'''')'
-				FROM adiha_process.dbo.sysobjects o
-				INNER JOIN adiha_process.dbo.syscolumns c ON o.id = c.id AND o.xtype = 'U'
+				FROM adiha_process.dbo.sysobjects o WITH(NOLOCK)
+				INNER JOIN adiha_process.dbo.syscolumns c WITH(NOLOCK) ON o.id = c.id AND o.xtype = 'U'
 				WHERE (o.name = REPLACE(@detail_grid_xml_table_name, 'adiha_process.dbo.', '')) AND c.name <> 'source_deal_detail_id'
 					AND c.name NOT LIKE 'UDF[_][_][_]%'
 			
@@ -1949,8 +1949,8 @@ BEGIN
 		SET @select_list = NULL
 		SELECT @col_id_string = COALESCE(@col_id_string + N',', N'') + QUOTENAME(c.name),
 			   @select_list = COALESCE(@select_list + N',', N'') + IIF(c.name = 'template_name', CAST(@deal_template_id AS VARCHAR(10)), QUOTENAME(c.name))
-		FROM dbo.sysobjects o
-		INNER JOIN dbo.syscolumns c ON o.id = c.id AND o.xtype = 'U'
+		FROM dbo.sysobjects o WITH(NOLOCK)
+		INNER JOIN dbo.syscolumns c WITH(NOLOCK) ON o.id = c.id AND o.xtype = 'U'
 		WHERE (o.name = 'source_deal_header_template') AND c.name <> 'template_id'
 		
 		IF OBJECT_ID('tempdb..#temp_inserted_sdth_copy') IS NOT NULL
@@ -1988,8 +1988,8 @@ BEGIN
 		SET @select_list = NULL
 		SELECT @col_id_string = COALESCE(@col_id_string + N',', N'') + QUOTENAME(c.name),
 			   @select_list = COALESCE(@select_list + N',', N'') + IIF(c.name = 'template_id', CAST(@deal_header_template_id AS VARCHAR(10)), QUOTENAME(c.name))
-		FROM dbo.sysobjects o
-		INNER JOIN dbo.syscolumns c ON o.id = c.id AND o.xtype = 'U'
+		FROM dbo.sysobjects o WITH(NOLOCK)
+		INNER JOIN dbo.syscolumns c WITH(NOLOCK) ON o.id = c.id AND o.xtype = 'U'
 		WHERE (o.name = 'source_deal_detail_template') AND c.name <> 'template_detail_id'
 		
 		SET @sql = '

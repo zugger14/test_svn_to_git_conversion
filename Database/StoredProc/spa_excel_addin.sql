@@ -261,7 +261,7 @@
 				
 				SET @sql ='  SELECT COLUMN_NAME [Name],
 				                    ORDINAL_POSITION [Position]
-				             FROM   [adiha_process].INFORMATION_SCHEMA.COLUMNS
+				             FROM   [adiha_process].INFORMATION_SCHEMA.COLUMNS  WITH(NOLOCK) 
 				             WHERE  TABLE_NAME = ''excel_addin_report_results_' + @process_id + '''
 				             ORDER BY
 				                    ORDINAL_POSITION ASC'

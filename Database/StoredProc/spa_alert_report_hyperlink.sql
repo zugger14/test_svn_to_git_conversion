@@ -28,7 +28,7 @@ BEGIN
 			arp.parameter_name, arp.parameter_value
 		FROM 
 			alert_report_params arp
-		INNER JOIN adiha_process.information_schema.columns cols 
+		INNER JOIN adiha_process.information_schema.columns cols WITH(NOLOCK)
 			ON	cols.table_Name = @output_table AND cols.column_name = arp.parameter_value
 		WHERE 
 			arp.alert_report_id = @alert_reports_id

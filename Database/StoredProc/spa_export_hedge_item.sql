@@ -86,7 +86,7 @@ BEGIN
 				SET @row_from = @page_no
 			SET @sql_stmt=''
 
-			SELECT @sql_stmt=@sql_stmt+',['+[name]+']' FROM adiha_process.sys.columns WHERE [OBJECT_ID] = OBJECT_ID(@temptablename) AND [name] <> 'ROWID' ORDER BY column_id
+			SELECT @sql_stmt=@sql_stmt+',['+[name]+']' FROM adiha_process.sys.columns  WITH(NOLOCK) WHERE [OBJECT_ID] = OBJECT_ID(@temptablename) AND [name] <> 'ROWID' ORDER BY column_id
 			SET @sql_stmt = SUBSTRING(@sql_stmt, 2, LEN(@sql_stmt))
 			
 			SET @sql_stmt = 'SELECT ' + @sql_stmt + '

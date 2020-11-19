@@ -101,7 +101,7 @@ AS
 												CONVERT(VARCHAR, DATEPART(MS, GETDATE()))
 			
 			SELECT @cols = COALESCE(@cols + ',', '') + c.name
-			FROM   adiha_process.sys.columns c
+			FROM   adiha_process.sys.columns c WITH(NOLOCK)
 			WHERE  c.object_id = OBJECT_ID(@table_name)
 			       AND c.name NOT IN ('sno', 'source_deal_detail_id')
 			

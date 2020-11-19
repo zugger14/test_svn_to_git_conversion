@@ -117,7 +117,7 @@ BEGIN
 	FROM   process_risk_controls_activities prca
 	WHERE  prca.risk_control_activity_id = @risk_control_activity_id
 	
-	IF EXISTS (SELECT 1 FROM adiha_process.sys.tables WHERE [name] = 'nested_alert_' + ISNULL(@process_id, '') + '_na')
+	IF EXISTS (SELECT 1 FROM adiha_process.sys.tables WITH(NOLOCK) WHERE [name] = 'nested_alert_' + ISNULL(@process_id, '') + '_na')
 	BEGIN
 	SET @sql_stmt = 'DECLARE @list VARCHAR(2000)
 	                 SELECT @list = (COALESCE(@list + '', '', '''')) + counterparty_name
@@ -139,7 +139,7 @@ BEGIN
 	WHERE  prca.risk_control_activity_id = @risk_control_activity_id
 	
 	
-	IF EXISTS (SELECT 1 FROM adiha_process.sys.tables WHERE [name] = 'deal_validation_' + ISNULL(@process_id, '') + '_dv')
+	IF EXISTS (SELECT 1 FROM adiha_process.sys.tables WITH(NOLOCK) WHERE [name] = 'deal_validation_' + ISNULL(@process_id, '') + '_dv')
 	BEGIN
 	SET @sql_stmt = 'DECLARE @list VARCHAR(2000)
 	                 SELECT @list = (COALESCE(@list + '', '', '''')) + dbo.FNAHyperLinkText(10131010, temp.source_deal_header_id, temp.source_deal_header_id)
@@ -160,7 +160,7 @@ BEGIN
 	WHERE  prca.risk_control_activity_id = @risk_control_activity_id
 	
 	
-	IF EXISTS (SELECT 1 FROM adiha_process.sys.tables WHERE [name] = 'workflow_table_' + ISNULL(@process_id, ''))
+	IF EXISTS (SELECT 1 FROM adiha_process.sys.tables WITH(NOLOCK) WHERE [name] = 'workflow_table_' + ISNULL(@process_id, ''))
 	BEGIN
 	SET @sql_stmt = 'DECLARE @list VARCHAR(5000)
 	                 SELECT @list = (COALESCE(@list + '', '', '''')) + dbo.FNAHyperLinkText(10211010, cg.contract_name, temp.id) + 

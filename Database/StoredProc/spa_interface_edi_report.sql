@@ -54,22 +54,22 @@ IF OBJECT_ID('tempdb..#temp_status') IS NOT NULL
 CREATE TABLE #temp_status ([Alert] VARCHAR(16) COLLATE DATABASE_DEFAULT)
 
 SET @sql_stm = ' 
-		IF NOT EXISTS (SELECT 1 FROM adiha_process.sys.objects WHERE [type] = ''u'' AND [name] = ''' + @thread_info_detail + ''')
+		IF NOT EXISTS (SELECT 1 FROM adiha_process.sys.objects WITH(NOLOCK) WHERE [type] = ''u'' AND [name] = ''' + @thread_info_detail + ''')
 		BEGIN
 			INSERT INTO #temp_status
 			SELECT ''No Record Found.''	status
 		END 
-		IF NOT EXISTS (SELECT 1 FROM adiha_process.sys.objects WHERE [type] = ''u'' AND [name] = ''' + @unthread_info_detail + ''')
+		IF NOT EXISTS (SELECT 1 FROM adiha_process.sys.objects WITH(NOLOCK) WHERE [type] = ''u'' AND [name] = ''' + @unthread_info_detail + ''')
 		BEGIN
 			INSERT INTO #temp_status
 			SELECT ''No Record Found.''	status
 		END
-		IF NOT EXISTS (SELECT 1 FROM adiha_process.sys.objects WHERE [type] = ''u'' AND [name] = ''' + @thread_info_summary + ''')
+		IF NOT EXISTS (SELECT 1 FROM adiha_process.sys.objects WITH(NOLOCK) WHERE [type] = ''u'' AND [name] = ''' + @thread_info_summary + ''')
 		BEGIN
 			INSERT INTO #temp_status
 			SELECT ''No Record Found.''	status
 		END 
-		IF NOT EXISTS (SELECT 1 FROM adiha_process.sys.objects WHERE [type] = ''u'' AND [name] = ''' + @unthread_info_summary + ''')
+		IF NOT EXISTS (SELECT 1 FROM adiha_process.sys.objects WITH(NOLOCK) WHERE [type] = ''u'' AND [name] = ''' + @unthread_info_summary + ''')
 		BEGIN
 			INSERT INTO #temp_status
 			SELECT ''No Record Found.''	status

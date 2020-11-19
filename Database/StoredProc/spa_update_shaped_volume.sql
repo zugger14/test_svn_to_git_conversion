@@ -641,7 +641,7 @@ BEGIN
 			-- Existence check for Index IX_pt_1 in process table.
 			IF NOT EXISTS (
 				SELECT 1 
-				FROM adiha_process.sys.indexes 
+				FROM adiha_process.sys.indexes WITH(NOLOCK)
 				WHERE OBJECT_ID = OBJECT_ID(''' + @process_table + ''') 
 					AND [name] = ''IX_pt_1''
 			)
@@ -730,7 +730,7 @@ BEGIN
 		SELECT @existence_check = @existence_check + CONCAT('
 			IF NOT EXISTS (
 				SELECT 1
-				FROM adiha_process.sys.columns
+				FROM adiha_process.sys.columns WITH(NOLOCK)
 				WHERE OBJECT_ID = OBJECT_ID(''', @process_table, ''')
 					AND [name] = ''', REPLACE(REPLACE(item, '[', ''), ']', ''), '''
 			)

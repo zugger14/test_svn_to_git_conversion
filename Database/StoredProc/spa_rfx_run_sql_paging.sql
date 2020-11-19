@@ -95,7 +95,7 @@ BEGIN
 
 	DECLARE @cols VARCHAR(8000)	
 	SELECT @cols = COALESCE(@cols + ',[' + [name] + ']', '[' + [name] + ']')  
-	FROM adiha_process.sys.columns 
+	FROM adiha_process.sys.columns WITH(NOLOCK)
 	WHERE [OBJECT_ID] = OBJECT_ID(@tempTable) AND [name] <> 'sno'
 	ORDER BY column_id	
 	

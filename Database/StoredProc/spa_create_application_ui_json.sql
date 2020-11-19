@@ -272,8 +272,8 @@ BEGIN
 	SELECT 
 		@sql_join = ISNULL(@sql_join+' AND ','') + ' CAST(s.' +QUOTENAME(c.name)+' AS NVARCHAR(500))'+' = CAST(f.' +QUOTENAME(c.name)+'  AS NVARCHAR(500))'
 	FROM 
-			adiha_process.dbo.sysobjects o 
-			INNER JOIN adiha_process.dbo.syscolumns c ON o.id = c.id AND o.xtype = 'U'
+			adiha_process.dbo.sysobjects o WITH(NOLOCK)
+			INNER JOIN adiha_process.dbo.syscolumns c WITH(NOLOCK) ON o.id = c.id AND o.xtype = 'U'
 	WHERE     (o.name = REPLACE(@xml_table_name,'adiha_process.dbo.',''))
 
 	IF ISNULL(@sql_join,'')<>''
@@ -350,8 +350,8 @@ BEGIN
 		EXEC(@sql_udf)	
 		
 		SELECT @sql_join = @sql_join + ' LEFT JOIN ' + @udft_lists_table + ' u on CAST(u.primary_field_object_id AS NVARCHAR(500)) = CAST(f.' +QUOTENAME(c.name)+'  AS NVARCHAR(500))'
-		FROM adiha_process.dbo.sysobjects o 
-		INNER JOIN adiha_process.dbo.syscolumns c ON o.id = c.id AND o.xtype = 'U'
+		FROM adiha_process.dbo.sysobjects o  WITH(NOLOCK)
+		INNER JOIN adiha_process.dbo.syscolumns c WITH(NOLOCK) ON o.id = c.id AND o.xtype = 'U'
 		WHERE (o.name = REPLACE(@xml_table_name,'adiha_process.dbo.',''))
 	END
 				

@@ -386,7 +386,7 @@ BEGIN
 	--SET @table_name = 'custom_import_table_' + @user_name  + '_' + @process_id
 	SET @table_name = REPLACE(@custom_temp_table, 'adiha_process.dbo.', '')
 	
-	EXEC('IF EXISTS(SELECT * FROM adiha_process.sys.tables WHERE [name] = ''' + @table_name + ''')
+	EXEC('IF EXISTS(SELECT * FROM adiha_process.sys.tables WITH(NOLOCK) WHERE [name] = ''' + @table_name + ''')
 			DROP TABLE ' + @custom_temp_table)
 	SET @sql_stmt = 'SELECT @custom_query = CASE WHEN data_source_type = 21400 THEN REPLACE(customizing_query, ''[temp_process_table]'', ''adiha_process.dbo.temp_import_data_table_' + @process_id + ''') 
 	                                             WHEN data_source_type = 21403 THEN REPLACE(customizing_query, ''[temp_process_table]'', ' + ISNULL(@ssis_table, '''''') + ') 

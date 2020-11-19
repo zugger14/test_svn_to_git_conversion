@@ -1054,7 +1054,7 @@ BEGIN
 
 			SELECT @Columns = ''
 
-			SELECT @Columns =  @Columns +'],' + COLUMN_NAME FROM adiha_process.INFORMATION_SCHEMA.COLUMNS 
+			SELECT @Columns =  @Columns +'],' + COLUMN_NAME FROM adiha_process.INFORMATION_SCHEMA.COLUMNS  WITH(NOLOCK)  
 				WHERE TABLE_NAME = @table_tmp		
 				AND COLUMN_NAME <> 'Source Counterparty ID'
 			ORDER BY ORDINAL_POSITION ASC

@@ -207,7 +207,7 @@ BEGIN TRY
 		  '
 	exec( @sql)   
 	exec('
-		if not exists(select 1 from adiha_process.sys.columns where [name]=''temp_id'' and [object_id]=object_id('''+@tablename+'''))
+		if not exists(select 1 from adiha_process.sys.columns WITH(NOLOCK) where [name]=''temp_id'' and [object_id]=object_id('''+@tablename+'''))
 		alter table '+ @tablename+' add temp_id int identity'
 	)
 

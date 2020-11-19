@@ -193,7 +193,7 @@ BEGIN
 					   iidm.dest_column,
 	                   iidm.column_function,
 	                   iidm.column_aggregation
-                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS temp
+                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS temp WITH(NOLOCK)
                 LEFT JOIN ' + @ixp_import_data_source + ' iids ON iids.rules_id = ' + CAST(@ixp_rules_id AS VARCHAR(20)) + '
                 LEFT JOIN ' + @ixp_import_data_mapping + ' iidm ON iids.data_source_alias + ''.['' + temp.COLUMN_NAME + '']'' = iidm.source_column_name  AND iidm.dest_table_id = ' + CAST(@ixp_table_id AS VARCHAR(10)) + '
                 INNER JOIN #tmp_table_alias tmp ON TABLE_NAME = tmp.table_alias
@@ -240,7 +240,7 @@ BEGIN
 					   iidm.dest_column,
 	                   iidm.column_function,
 	                   iidm.column_aggregation
-                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS temp
+                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS temp  WITH(NOLOCK)
                 LEFT JOIN ' + @ixp_import_data_source + ' iids ON iids.rules_id = ' + CAST(@ixp_rules_id AS VARCHAR(20)) + '
                 LEFT JOIN ' + @ixp_import_data_mapping + ' iidm ON iids.data_source_alias + ''.['' + temp.COLUMN_NAME + '']'' = iidm.source_column_name  AND iidm.dest_table_id = ' + CAST(@ixp_table_id AS VARCHAR(10)) + '
                 INNER JOIN #tmp_table_alias tmp ON TABLE_NAME = tmp.table_alias
@@ -553,7 +553,7 @@ BEGIN
 					   iidm.dest_column,
 	                   iidm.column_function,
 	                   iidm.column_aggregation
-                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS temp
+                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS temp  WITH(NOLOCK)
                 LEFT JOIN ' + @ixp_import_data_source + ' iids ON iids.rules_id = ' + CAST(@ixp_rules_id AS VARCHAR(20)) + '
                 LEFT JOIN ' + @ixp_import_data_mapping + ' iidm ON (ISNULL(iids.data_source_alias + ''.'', '''') + ''['' +  temp.COLUMN_NAME + '']'') = ISNULL(REPLACE(iidm.source_column_name, NULLIF(SUBSTRING(iidm.source_column_name, 0, CHARINDEX(''.'', iidm.source_column_name)+1), ''''), ISNULL(iids.data_source_alias + ''.'', '''')), ISNULL(iids.data_source_alias + ''.'', '''') + ''['' + iidm.source_column_name + '']'')  AND iidm.dest_table_id = ' + CAST(@ixp_table_id AS VARCHAR(10)) + '
                 WHERE  TABLE_NAME = ''' + @temp_process_table + ''' AND (iidm.ixp_import_data_mapping_id IS NULL OR ISNULL(iidm.repeat_number, 0) = ' + CAST(@repeat_number AS VARCHAR(20)) + ') 
@@ -581,7 +581,7 @@ BEGIN
 	EXEC('SELECT TOP 1 * INTO adiha_process.dbo.' + @temp_process_table  + ' FROM ' + @connection_string)
 		       
 	SET @sql = 'SELECT temp.COLUMN_NAME [source_column_name]
-                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS temp
+                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS temp  WITH(NOLOCK)
                 WHERE  TABLE_NAME = ''' + @temp_process_table + ''''
     --PRINT(@sql)
     EXEC(@sql)
@@ -590,7 +590,7 @@ END
 IF @flag = 't'
 BEGIN
 	SET @sql = 'SELECT temp.COLUMN_NAME [source_column_name]
-                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS temp
+                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS temp  WITH(NOLOCK)
                 WHERE  TABLE_NAME = ''' + @temp_process_table + ''''
                 
     --PRINT(@sql)

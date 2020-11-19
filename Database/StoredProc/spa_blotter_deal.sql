@@ -816,7 +816,7 @@ BEGIN
 		SELECT @fields_list = COALESCE(@fields_list + ', ', '') + Column_name + ' ' + DATA_TYPE + CASE WHEN DATA_TYPE = 'NVARCHAR' THEN '(MAX)' ELSE '' END ,
 			   @insert_field_list = COALESCE(@insert_field_list + ', ', '') + Column_name,
 			   @select_field_list = COALESCE(@select_field_list + ', ', '') + 'temp.' + Column_name
-		FROM adiha_process.INFORMATION_SCHEMA.Columns
+		FROM adiha_process.INFORMATION_SCHEMA.Columns WITH(NOLOCK)
 		WHERE TABLE_NAME = REPLACE(@process_table_detail, 'adiha_process.dbo.', '') 
 		AND Column_name NOT IN ('term_start', 'term_end')
 		
@@ -873,14 +873,14 @@ BEGIN
 	IF @flag = 'u'
 	BEGIN
 		SELECT @update_clause = COALESCE(@update_clause + ', ', '') + Column_name + ' = NULLIF(temp_update.' + Column_name + ','''')'
-		FROM adiha_process.INFORMATION_SCHEMA.Columns
+		FROM adiha_process.INFORMATION_SCHEMA.Columns WITH (NOLOCK)
 		WHERE TABLE_NAME = REPLACE(@update_process_table, 'adiha_process.dbo.', '') 
 		AND Column_name NOT IN ('term_start', 'term_end', 'leg', 'blotterleg')
 	END
 	ELSE 
 	BEGIN
 		SELECT @update_clause = COALESCE(@update_clause + ', ', '') + Column_name + ' = NULLIF(temp_update.' + Column_name + ','''')'
-		FROM adiha_process.INFORMATION_SCHEMA.Columns
+		FROM adiha_process.INFORMATION_SCHEMA.Columns WITH (NOLOCK)
 		WHERE TABLE_NAME = REPLACE(@update_process_table, 'adiha_process.dbo.', '') 
 		AND Column_name NOT IN ('leg', 'blotterleg')
 	END
@@ -947,7 +947,7 @@ BEGIN
 	EXEC spa_parse_xml_file 'b', NULL, @xml, @update_process_table
 	
 	SELECT @update_clause = COALESCE(@update_clause + ', ', '') + Column_name + ' = NULLIF(temp_update.' + Column_name + ','''')'
-	FROM adiha_process.INFORMATION_SCHEMA.Columns
+	FROM adiha_process.INFORMATION_SCHEMA.Columns WITH (NOLOCK)
 	WHERE TABLE_NAME = REPLACE(@update_process_table, 'adiha_process.dbo.', '') 
 	AND Column_name NOT IN ('term_start', 'term_end', 'leg', 'blotterleg')
 	

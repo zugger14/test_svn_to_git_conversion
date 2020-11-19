@@ -389,7 +389,7 @@ BEGIN
             ' as process_id,c.column_id,
  			CASE WHEN c.name = ''Effective Date'' THEN ''a_1''
  					ELSE ''a_5'' END a2
- 			FROM adiha_process.sys.[columns] c INNER JOIN adiha_process.sys.tables t on t.object_id = c.object_id   where t.name  ='
+ 			FROM adiha_process.sys.[columns] c WITH(NOLOCK) INNER JOIN adiha_process.sys.tables t WITH(NOLOCK) on t.object_id = c.object_id   where t.name  ='
             + '''' + @table_name + ''') a1 WHERE name <> ''row_ord'''
         
         EXEC (@sql)
@@ -408,7 +408,7 @@ BEGIN
             ' as process_id,c.column_id,
  										CASE WHEN c.name = ''Effective Date'' THEN ''a_1''
  											 ELSE ''a_5'' END a2
- 										FROM adiha_process.sys.[columns] c INNER JOIN adiha_process.sys.tables t on t.object_id = c.object_id   where t.name  ='
+ 										FROM adiha_process.sys.[columns] c WITH(NOLOCK) INNER JOIN adiha_process.sys.tables t WITH(NOLOCK) on t.object_id = c.object_id   where t.name  ='
             + '''' + @table_name + ''''
         
         SET @header_query_1 = @header_query_1 +

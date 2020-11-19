@@ -34,19 +34,19 @@ SET @table_name = STUFF(@deal_table, 1, 18, '')
 CREATE TABLE #xml (xml_string VARCHAR(MAX) COLLATE DATABASE_DEFAULT)
 
 SELECT @header_cols = COALESCE(@header_cols+',' ,'') +  'ISNULL(' + column_name + ', '''') ' + ' AS ' + CASE WHEN column_name = 'leg' THEN 'blotter_value' ELSE CASE WHEN column_name = 'row_id' THEN LOWER(column_name) ELSE  ISNULL(STUFF(LOWER(column_name),1, 2, ''), column_name) END END
-FROM adiha_process.INFORMATION_SCHEMA.columns WHERE TABLE_NAME = @table_name
+FROM adiha_process.INFORMATION_SCHEMA.columns WITH(NOLOCK) WHERE TABLE_NAME = @table_name
 AND (STUFF(column_name,3, len(column_name), '') = 'h_' or column_name in ('row_id', 'leg'))
 --SELECT @header_cols
 
 
 SELECT @header_cols_ignore = COALESCE(@header_cols_ignore + ',' ,'') +   STUFF(column_name,1, 2, '') + '= ''__ignore__''' 
-FROM adiha_process.INFORMATION_SCHEMA.columns WHERE TABLE_NAME = @table_name
+FROM adiha_process.INFORMATION_SCHEMA.columns WITH(NOLOCK) WHERE TABLE_NAME = @table_name
 AND STUFF(column_name,3, len(column_name), '') = 'h_' and column_name <> 'h_sub_book'
 --SELECT @header_cols_ignore
 
 
 SELECT @detail_cols = COALESCE(@detail_cols+',' ,'') +  'ISNULL(' + column_name + ', '''') ' + ' AS ' + CASE WHEN column_name = 'leg' THEN 'blotter_value' ELSE CASE WHEN column_name = 'row_id' THEN LOWER(column_name) ELSE  ISNULL(STUFF(LOWER(column_name),1, 2, ''), column_name) END END
-FROM adiha_process.INFORMATION_SCHEMA.columns WHERE TABLE_NAME = @table_name
+FROM adiha_process.INFORMATION_SCHEMA.columns WITH(NOLOCK) WHERE TABLE_NAME = @table_name
 AND (STUFF(column_name,3, len(column_name), '') = 'd_'or column_name in ('row_id', 'leg'))
 --SELECT @detail_cols
 

@@ -2034,9 +2034,9 @@ BEGIN
 			SET @sql = 'INSERT INTO #col_rename_query
 					SELECT  ''EXEC adiha_process..sp_rename N'' + '''''''' + QUOTENAME(s.name) + ''.'' + QUOTENAME(o.name) + ''.'' + QUOTENAME(REPLACE(c.name, '''''''','''''''''''')) 
 						+ '''''''' + '', '' + ''N'''''' +  REPLACE(vlm.original_keyword, '''''''','''''''''''') + ''''''''
-					FROM adiha_process.sys.columns c
-					INNER JOIN adiha_process.sys.objects o ON c.object_id = o.object_id
-					INNER JOIN adiha_process.sys.schemas s ON o.schema_id = s.schema_id
+					FROM adiha_process.sys.columns c  WITH(NOLOCK)
+					INNER JOIN adiha_process.sys.objects o  WITH(NOLOCK) ON c.object_id = o.object_id
+					INNER JOIN adiha_process.sys.schemas s  WITH(NOLOCK) ON o.schema_id = s.schema_id
 					LEFT JOIN vw_locale_mapping vlm ON vlm.translated_keyword = c.[name]
 					WHERE c.object_id = OBJECT_ID(''' + @temp_process_table + ''')
 						AND vlm.original_keyword IS NOT NULL
@@ -2281,7 +2281,7 @@ BEGIN
 				DECLARE @sheetname NVARCHAR(100) =  CASE WHEN  (CHARINDEX('xls', RIGHT(@server_path,4)) > 0) THEN ISNULL(@excel_sheet_name, 'Sheet1') ELSE '' END
 				
 				EXEC('INSERT INTO #available_col(sheet_name,column_name) 
-					SELECT ''' + @sheetname  + ''', name FROM adiha_process.sys.columns sc
+					SELECT ''' + @sheetname  + ''', name FROM adiha_process.sys.columns sc WITH(NOLOCK)
 					LEFT JOIN #available_col i ON i.column_name = sc.name								
 					WHERE object_id = OBJECT_ID(''' + @temp_process_table + ''')
 					AND i.column_name is null' )
@@ -2456,9 +2456,9 @@ BEGIN
 											EXEC( 'INSERT INTO #rel_col_rename_query
 												SELECT  ''EXEC adiha_process..sp_rename N'' + '''''''' + QUOTENAME(s.name) + ''.'' + QUOTENAME(o.name) + ''.'' + QUOTENAME(REPLACE(c.name, '''''''','''''''''''')) 
 													+ '''''''' + '', '' + ''N'''''' +  REPLACE(vlm.original_keyword, '''''''','''''''''''') + ''''''''
-												FROM adiha_process.sys.columns c
-												INNER JOIN adiha_process.sys.objects o ON c.object_id = o.object_id
-												INNER JOIN adiha_process.sys.schemas s ON o.schema_id = s.schema_id
+												FROM adiha_process.sys.columns c  WITH(NOLOCK)
+												INNER JOIN adiha_process.sys.objects o  WITH(NOLOCK) ON c.object_id = o.object_id
+												INNER JOIN adiha_process.sys.schemas s  WITH(NOLOCK) ON o.schema_id = s.schema_id
 												LEFT JOIN vw_locale_mapping vlm ON vlm.translated_keyword = c.[name]
 												WHERE c.object_id = OBJECT_ID(''' + @temp_relation_table + ''')
 													AND vlm.original_keyword IS NOT NULL
@@ -2489,7 +2489,7 @@ BEGIN
 
 										
 										EXEC('INSERT INTO #available_col(sheet_name,column_name) 
-											SELECT  ''' + @relation_excel_sheet +  ''',name FROM adiha_process.sys.columns sc
+											SELECT  ''' + @relation_excel_sheet +  ''',name FROM adiha_process.sys.columns sc WITH(NOLOCK)
 											LEFT JOIN #available_col i ON i.column_name = sc.name
 											WHERE object_id = OBJECT_ID(''' + @temp_relation_table + ''')
 											AND i.column_name is null' )
@@ -2512,7 +2512,7 @@ BEGIN
 								
 								SET @sql = 'INSERT INTO #grouping_relation_columns (rel_columns)
 											SELECT ISNULL(iir.ixp_relation_alias + ''.'', '''') + + ''['' + COLUMN_NAME + '']'' [column_name]
-											FROM  adiha_process.INFORMATION_SCHEMA.COLUMNS '
+											FROM  adiha_process.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK)'
 								
 								IF @flag = 'r' OR @flag = 't'
 									SET @sql = @sql + ' LEFT JOIN ixp_import_relation  iir ON iir.ixp_import_relation_id = ' + CAST(@relation_id AS NVARCHAR(20))
@@ -2791,7 +2791,7 @@ BEGIN
 									-- Few templates are using this @final_stg_table to preserve original final stg data and to prevent issue while running generic import logic multiple times in debug mode.
 									EXEC ('IF EXISTS(
  										   SELECT 1
- 										   FROM   adiha_process.sys.tables
+ 										   FROM   adiha_process.sys.tables  WITH(NOLOCK)
  										   WHERE  [name] =  REPLACE(''' + @insert_process_table + '_pre'',''adiha_process.dbo.'','''')
  												  AND [type] = ''U''
  											)

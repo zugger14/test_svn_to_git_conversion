@@ -1123,8 +1123,8 @@ BEGIN
 				WHEN c.name = ''is_dst''  THEN ''a_4'' 
 							ELSE ''a_5'' 
 						END a2
-					FROM adiha_process.sys.[columns] c 
-					INNER JOIN adiha_process.sys.tables t 
+					FROM adiha_process.sys.[columns]  c  WITH(NOLOCK)
+					INNER JOIN adiha_process.sys.tables t  WITH(NOLOCK)
 						ON t.object_id = c.object_id
 					WHERE t.name  =' + '''' + @table_name + '''
 			'
@@ -1139,8 +1139,8 @@ BEGIN
 				WHEN c.name = ''is_dst''  THEN ''b_4'' 
 						ELSE ''b_5'' 
 					END a2
-				FROM adiha_process.sys.[columns] c 
-				INNER JOIN adiha_process.sys.tables t 
+				FROM adiha_process.sys.[columns] c  WITH(NOLOCK)
+				INNER JOIN adiha_process.sys.tables t  WITH(NOLOCK)
 					ON t.object_id = c.object_id
 				WHERE t.name  = ' + '''' + @table_name_settled + '''
 			' 
@@ -1185,8 +1185,8 @@ BEGIN
 											WHEN c.name = ''is_dst''  THEN ''a_4'' 
 									ELSE ''a_5''
 								END a2
-							FROM adiha_process.sys.[columns] c 
-							INNER JOIN adiha_process.sys.tables t 
+							FROM adiha_process.sys.[columns] c  WITH(NOLOCK)
+							INNER JOIN adiha_process.sys.tables t  WITH(NOLOCK)
 								ON t.object_id = c.object_id 
 							WHERE t.name = ' + '''' + @table_name + '''
 						'
@@ -1200,8 +1200,8 @@ BEGIN
 						WHEN c.name = ''is_dst''  THEN ''b_4''
 									ELSE ''b_5'' 
 								END a2
-							FROM adiha_process.sys.[columns] c 
-							INNER JOIN adiha_process.sys.tables t ON t.object_id = c.object_id 
+							FROM adiha_process.sys.[columns] c  WITH(NOLOCK)
+							INNER JOIN adiha_process.sys.tables t  WITH(NOLOCK) ON t.object_id = c.object_id 
 							WHERE t.name = ' + '''' + @table_name_settled + '''
 						' 
 			END

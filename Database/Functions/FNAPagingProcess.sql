@@ -50,7 +50,7 @@ BEGIN
 		   SET @row_from = @page_no			   
 	   
 	   SELECT @str = COALESCE(@str + ',' + QUOTENAME([name]), QUOTENAME([name]))
-	   FROM adiha_process.sys.columns
+	   FROM adiha_process.sys.columns  WITH(NOLOCK)
 	   WHERE [OBJECT_ID] = OBJECT_ID(@temp_table_name)
 			  AND [name] <> @id_col_name
 	   ORDER BY column_id  

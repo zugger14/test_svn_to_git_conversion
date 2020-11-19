@@ -1197,7 +1197,7 @@ BEGIN
 					
 				DECLARE @name varchar(MAX)
 				select @name = COALESCE(@name + '','', '''') + ''['' + name + '']'' 
-				from tempdb.sys.columns where object_id =
+				from tempdb.sys.columns  WITH(NOLOCK)  where object_id =
 				object_id(''tempdb..#temp_schedules'')-- and name <> ''term_start'' 
 				ORDER BY column_id
 				

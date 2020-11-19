@@ -445,13 +445,13 @@ BEGIN
 						LEFT JOIN (
 							SELECT c.name
 							FROM ' + 
-								CASE WHEN  @regg_type = 109701 THEN 'adiha_process.sys.tables'
-									ELSE 'sys.tables'
-								END + ' t
+								CASE WHEN  @regg_type = 109701 THEN 'adiha_process.sys.tables  t WITH(NOLOCK)'
+									ELSE 'sys.tables t'
+								END + ' 
 							INNER JOIN ' +
-								CASE WHEN @regg_type = 109701 THEN ' adiha_process.sys.columns'
-									ELSE ' sys.columns'
-								END  + ' c ON t.object_id = c.object_id
+								CASE WHEN @regg_type = 109701 THEN ' adiha_process.sys.columns  c WITH(NOLOCK)'
+									ELSE ' sys.columns c'
+								END  + '  ON t.object_id = c.object_id
 							WHERE t.name = REPLACE('''
 							+ ISNULL(
 								CASE
@@ -644,45 +644,45 @@ BEGIN
 
 					SELECT @floating_point_diff = ISNULL(@floating_point_diff + ' OR ', '') + ' ABS(ISNULL(ROUND(benchmark_table.' + ISNULL(item, '') + ', 5), 0.0) - ISNULL(ROUND(physical_table.' + ISNULL(item, '') + ', 5), 0.0)) > ' + CONVERT(VARCHAR, ISNULL(dbo.FNARemoveTrailingZero(@floating_tolerance_value), '0.0'))
 					FROM dbo.SplitCommaSeperatedValues(@compare_columns) scsv
-					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
+					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c  WITH(NOLOCK) ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND (c.DATA_TYPE = 'float' OR c.DATA_TYPE = 'numeric')
 
 					SELECT @select_unique_columns = ISNULL(@select_unique_columns, '') + ',ISNULL(dbo.FNARemoveTrailingZero(benchmark_table.' + ISNULL(item, '') + '), dbo.FNARemoveTrailingZero(physical_table.' + ISNULL(item, '') + ')) ' + ISNULL(item, '')
 					FROM dbo.SplitCommaSeperatedValues(@unique_columns) scsv
-					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
+					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE = 'numeric'	
 
 					SELECT @select_unique_columns = ISNULL(@select_unique_columns, '') + ',ISNULL(benchmark_table.' + ISNULL(item, '') + ',physical_table.' + ISNULL(item, '') + ') ' + ISNULL(item, '')
 					FROM dbo.SplitCommaSeperatedValues(@unique_columns) scsv
-					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
+					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE  <> 'numeric'			
 
 					SELECT @select_compare_columns = ISNULL(@select_compare_columns, '') + ', dbo.FNARemoveTrailingZero(benchmark_table.' + ISNULL(item, '') + ') ' + ISNULL(item, '') + ' , dbo.FNARemoveTrailingZero(physical_table.' + ISNULL(item, '') + ') [' + ISNULL(REPLACE(REPLACE(item, '[', ''), ']', ''), '') + '_new]'
 					FROM dbo.SplitCommaSeperatedValues(@compare_columns) scsv
-					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
+					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE = 'numeric'	
 
 					SELECT @select_compare_columns = ISNULL(@select_compare_columns, '') + ',benchmark_table.' + ISNULL(item, '') + ' ' + ISNULL(item, '') + ' ,physical_table.' + ISNULL(item, '') + ' [' + ISNULL(REPLACE(REPLACE(item, '[', ''), ']', ''), '') + '_new]'
 					FROM dbo.SplitCommaSeperatedValues(@compare_columns) scsv
-					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
+					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE  <> 'numeric'	
 						
 					
 					SELECT @display_column_name = ISNULL(@display_column_name, '') + ', dbo.FNARemoveTrailingZero(benchmark_table.' + ISNULL(item, '') + ') ' + ISNULL(item, '') + ' , dbo.FNARemoveTrailingZero(physical_table.' + ISNULL(item, '') + ') [' + ISNULL(REPLACE(REPLACE(item, '[', ''), ']', ''), '') + '_new]'
 					FROM dbo.SplitCommaSeperatedValues(@display_columns) scsv
-					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
+					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE = 'numeric'	
 						
 					
 					SELECT @display_column_name = ISNULL(@display_column_name, '') + ', benchmark_table.' + ISNULL(item, '') + ' ' + ISNULL(item, '') + ' ,physical_table.' + ISNULL(item, '') + ' [' + ISNULL(REPLACE(REPLACE(item, '[', ''), ']', ''), '') + '_new]'
 					FROM dbo.SplitCommaSeperatedValues(@display_columns) scsv
-					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
+					INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON 'adiha_process.dbo.' + c.TABLE_NAME = @report_batch_table
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE <> 'numeric'
 				END
@@ -691,20 +691,20 @@ BEGIN
 			
 					SELECT @floating_point_diff = ISNULL(@floating_point_diff + ' OR ', '') + 'ABS(ISNULL(ROUND(benchmark_table.' + ISNULL(item, '') + ', 5), 0.0) - ISNULL(ROUND(physical_table.' + ISNULL(item, '') + ', 5), 0.0)) > ' + CONVERT(VARCHAR, ISNULL(dbo.FNARemoveTrailingZero(@floating_tolerance_value), '0.0')) + ''
 					FROM dbo.SplitCommaSeperatedValues(@compare_columns) scsv
-					INNER JOIN INFORMATION_SCHEMA.COLUMNS c ON c.TABLE_NAME = @tbl_name
+					INNER JOIN INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON c.TABLE_NAME = @tbl_name
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND (c.DATA_TYPE = 'float' OR c.DATA_TYPE = 'numeric')
 
 
 					SELECT @select_unique_columns = ISNULL(@select_unique_columns, '') + ',ISNULL(dbo.FNARemoveTrailingZero(benchmark_table.' + ISNULL(item, '') + '), dbo.FNARemoveTrailingZero(physical_table.' + ISNULL(item, '') + ')) ' + ISNULL(item, '')
 					FROM dbo.SplitCommaSeperatedValues(@unique_columns)scsv
-					INNER JOIN INFORMATION_SCHEMA.COLUMNS c ON c.TABLE_NAME = @tbl_name
+					INNER JOIN INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON c.TABLE_NAME = @tbl_name
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE = 'numeric'	
 
 					SELECT @select_unique_columns = ISNULL(@select_unique_columns, '') + ',ISNULL(benchmark_table.' + ISNULL(item, '') + ',physical_table.' + ISNULL(item, '') + ') ' + ISNULL(item, '')
 					FROM dbo.SplitCommaSeperatedValues(@unique_columns) scsv
-					INNER JOIN INFORMATION_SCHEMA.COLUMNS c ON c.TABLE_NAME = @tbl_name
+					INNER JOIN INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON c.TABLE_NAME = @tbl_name
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE  <> 'numeric'
 
@@ -729,7 +729,7 @@ BEGIN
 							CAST(dbo.FNARemoveTrailingZero(physical_table.' + ISNULL(item, '') + ') AS VARCHAR(100))
 						END [' + ISNULL(REPLACE(REPLACE(item, '[', ''), ']', ''), '') + '_new]'
 					FROM dbo.SplitCommaSeperatedValues(@compare_columns) scsv
-					INNER JOIN INFORMATION_SCHEMA.COLUMNS c ON c.TABLE_NAME = @tbl_name
+					INNER JOIN INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON c.TABLE_NAME = @tbl_name
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE = 'numeric'	
 
@@ -751,20 +751,20 @@ BEGIN
 									''</span>'')
 						END [' + ISNULL(REPLACE(REPLACE(item, '[', ''), ']', ''), '') + '_new]'
 					FROM dbo.SplitCommaSeperatedValues(@compare_columns) scsv
-					INNER JOIN INFORMATION_SCHEMA.COLUMNS c ON c.TABLE_NAME = @tbl_name
+					INNER JOIN INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON c.TABLE_NAME = @tbl_name
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE  <> 'numeric'
 			
 
 					SELECT @display_column_name = ISNULL(@display_column_name, '') + ', benchmark_table.' + ISNULL(item, '') + ' ' + ISNULL(item, '') + ' ,physical_table.' + ISNULL(item, '') + ' [' + ISNULL(REPLACE(REPLACE(item, '[', ''), ']', ''), '') + '_new]'
 					FROM dbo.SplitCommaSeperatedValues(@display_columns) scsv
-					INNER JOIN INFORMATION_SCHEMA.COLUMNS c ON c.TABLE_NAME = @tbl_name
+					INNER JOIN INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON c.TABLE_NAME = @tbl_name
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE  <> 'numeric'			
 					
 					SELECT @display_column_name = ISNULL(@display_column_name, '') + ', dbo.FNARemoveTrailingZero(benchmark_table.' + ISNULL(item, '') + ') ' + ISNULL(item, '') + ' , dbo.FNARemoveTrailingZero(physical_table.' + ISNULL(item, '') + ') [' + ISNULL(REPLACE(REPLACE(item, '[', ''), ']', ''), '') + '_new]'
 					FROM dbo.SplitCommaSeperatedValues(@display_columns) scsv
-					INNER JOIN INFORMATION_SCHEMA.COLUMNS c ON c.TABLE_NAME = @tbl_name
+					INNER JOIN INFORMATION_SCHEMA.COLUMNS c WITH(NOLOCK) ON c.TABLE_NAME = @tbl_name
 						AND scsv.item = QUOTENAME(c.COLUMN_NAME)	--TODO: Better handling of quotenames
 						AND c.DATA_TYPE = 'numeric'	
 				END

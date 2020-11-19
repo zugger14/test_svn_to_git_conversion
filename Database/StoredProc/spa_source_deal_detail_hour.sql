@@ -345,7 +345,7 @@ BEGIN
 		
 		--EXEC('SELECT  * FROM ' + @column_lists_table)
 		SELECT @columns_names = STUFF((SELECT DISTINCT ', [' + name + ']' 
-								FROM tempdb.sys.columns 
+								FROM tempdb.sys.columns WITH(NOLOCK)
 								WHERE OBJECT_ID = OBJECT_ID('tempdb..##test')
 									AND name NOT IN (
 									'Deal ID'
@@ -624,7 +624,7 @@ BEGIN
 		EXEC(@sql_hr)
 
 		SELECT @columns_names = STUFF((SELECT DISTINCT ', [' + name + ']' 
-								FROM tempdb.sys.columns 
+								FROM tempdb.sys.columns WITH(NOLOCK)
 								WHERE OBJECT_ID = OBJECT_ID('tempdb..##test_1')
 									AND name NOT IN (
 									'Deal ID'

@@ -309,7 +309,7 @@ BEGIN
 	EXEC('SELECT TOP 1 * INTO adiha_process.dbo.' + @temp_process_table  + ' FROM ' + @connection_string)
 	
 	SET @sql = 'SELECT ''' + ISNULL(cast(@relation_alias as varchar(10)) + ''' +''.', '' ) + ''' + ''['' + COLUMN_NAME + '']'' [column_name]
-                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS                
+                FROM   adiha_process.INFORMATION_SCHEMA.COLUMNS  WITH(NOLOCK)              
                 WHERE  TABLE_NAME = ''' + @temp_process_table + ''' ORDER BY COLUMN_NAME'
     --PRINT(@sql)
     EXEC(@sql)

@@ -105,14 +105,14 @@ DECLARE @name varchar(1000)
 --select COL_LENGTH('#tmp_dff','Reason')
 
 --Removed columns added by import script.
-IF EXISTS (SELECT * FROM TempDB.INFORMATION_SCHEMA.COLUMNS WHERE  TABLE_NAME like '%#tmp_dff%' and COLUMN_NAME = 'import_file_name' )
+IF EXISTS (SELECT * FROM TempDB.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK) WHERE  TABLE_NAME like '%#tmp_dff%' and COLUMN_NAME = 'import_file_name' )
 ALTER TABLE #tmp_dff DROP COLUMN import_file_name
 
-IF EXISTS (SELECT * FROM TempDB.INFORMATION_SCHEMA.COLUMNS WHERE  TABLE_NAME like '%#tmp_dff%' and COLUMN_NAME = 'source_system_id' )
+IF EXISTS (SELECT * FROM TempDB.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK) WHERE  TABLE_NAME like '%#tmp_dff%' and COLUMN_NAME = 'source_system_id' )
 ALTER TABLE #tmp_dff DROP COLUMN source_system_id
 
 --RPS UPLOAD
-IF EXISTS (SELECT * FROM TempDB.INFORMATION_SCHEMA.COLUMNS WHERE  TABLE_NAME like '%#tmp_dff%' and COLUMN_NAME = 'retirement_type' )
+IF EXISTS (SELECT * FROM TempDB.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK) WHERE  TABLE_NAME like '%#tmp_dff%' and COLUMN_NAME = 'retirement_type' )
 BEGIN
 	
 	SELECT  @start_ts = isnull(min(create_ts),GETDATE()) from import_data_files_audit where process_id = @process_id
@@ -160,19 +160,19 @@ BEGIN
 	ALTER TABLE #tmp_dff ADD [state] VARCHAR(100) 
 
 	--DECLARE @name varchar(1000), @name_with_case varchar(8000), @name_with_datatype varchar(8000), @name_state varchar(1000)
-	select @name = ISNULL(@name,'') + CASE WHEN @name is null THEN '' ELSE ',' END + '[' + name+ ']' from tempdb.sys.columns where object_id =
+	select @name = ISNULL(@name,'') + CASE WHEN @name is null THEN '' ELSE ',' END + '[' + name+ ']' from tempdb.sys.columns WITH(NOLOCK) where object_id =
 	object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','Compliance Year','tier','state', 'temp_id')
 	
-	select @name_with_td2 = ISNULL(@name_with_td2,'') + CASE WHEN @name_with_td2 is null THEN '' ELSE ',' END + 'td.[' + name+ ']' from tempdb.sys.columns where object_id =
+	select @name_with_td2 = ISNULL(@name_with_td2,'') + CASE WHEN @name_with_td2 is null THEN '' ELSE ',' END + 'td.[' + name+ ']' from tempdb.sys.columns WITH(NOLOCK) where object_id =
 	object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','Compliance Year','tier','state', 'temp_id')
 
-	select @name_with_max2 = ISNULL(@name_with_max2,'') + CASE WHEN @name_with_max2 is null THEN '' ELSE ',' END + 'MAX([' + name+ '])' from tempdb.sys.columns where object_id =
+	select @name_with_max2 = ISNULL(@name_with_max2,'') + CASE WHEN @name_with_max2 is null THEN '' ELSE ',' END + 'MAX([' + name+ '])' from tempdb.sys.columns WITH(NOLOCK) where object_id =
 	object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','Compliance Year','tier','state', 'temp_id')
 
-	select @name_with_case = ISNULL(@name_with_case,'') + CASE WHEN @name_with_case is null THEN '' ELSE ',' END + ' CASE WHEN ' + '[' + name + ']'+ '= ''No'' THEN ' + '['+ name + '] ELSE ''' + name + ''' END ' from tempdb.sys.columns where object_id =
+	select @name_with_case = ISNULL(@name_with_case,'') + CASE WHEN @name_with_case is null THEN '' ELSE ',' END + ' CASE WHEN ' + '[' + name + ']'+ '= ''No'' THEN ' + '['+ name + '] ELSE ''' + name + ''' END ' from tempdb.sys.columns WITH(NOLOCK) where object_id =
 	object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to', 'Compliance Year','tier','state', 'temp_id')
 	
-	select @name_with_datatype = ISNULL(@name_with_datatype,'') + CASE WHEN @name_with_datatype is null THEN '' ELSE ';' END + 'ALTER TABLE #tmp_dff4 ADD [' + name + ']' + ' VARCHAR(100) ' from tempdb.sys.columns where object_id =
+	select @name_with_datatype = ISNULL(@name_with_datatype,'') + CASE WHEN @name_with_datatype is null THEN '' ELSE ';' END + 'ALTER TABLE #tmp_dff4 ADD [' + name + ']' + ' VARCHAR(100) ' from tempdb.sys.columns WITH(NOLOCK) where object_id =
      object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to', 'Compliance Year','tier','state', 'temp_id')
 
 
@@ -1281,7 +1281,7 @@ BEGIN
 		 @status = @error_code
 		 
 END -- SOLD/TRANSFER UPLOAD
-ELSE IF EXISTS (SELECT * FROM TempDB.INFORMATION_SCHEMA.COLUMNS WHERE  TABLE_NAME like '%#tmp_dff%' and COLUMN_NAME = 'Transferor' )
+ELSE IF EXISTS (SELECT * FROM TempDB.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK) WHERE  TABLE_NAME like '%#tmp_dff%' and COLUMN_NAME = 'Transferor' )
 
 BEGIN
 	
@@ -1916,28 +1916,28 @@ ALTER TABLE #tmp_dff ADD  [cert to] VARCHAR(1000)
 --DECLARE @temp_dff_name VARCHAR(1000), @temp_dff_name_with_case VARCHAR(1000)
 DECLARE @name_state_no VARCHAR(MAX), @name_with_max VARCHAR(1000), @name_with_td VARCHAR(1000)
 DECLARE @temp_name varchar(8000)
-select @name = ISNULL(@name,'') + CASE WHEN @name is null THEN '' ELSE ',' END + '[' + name+ ']' from tempdb.sys.columns where object_id =
+select @name = ISNULL(@name,'') + CASE WHEN @name is null THEN '' ELSE ',' END + '[' + name+ ']' from tempdb.sys.columns WITH(NOLOCK) where object_id =
 object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','temp_id', 'State')
 
-select @name_with_td = ISNULL(@name_with_td,'') + CASE WHEN @name_with_td is null THEN '' ELSE ',' END + 'td.[' + name+ ']' from tempdb.sys.columns where object_id =
+select @name_with_td = ISNULL(@name_with_td,'') + CASE WHEN @name_with_td is null THEN '' ELSE ',' END + 'td.[' + name+ ']' from tempdb.sys.columns WITH(NOLOCK) where object_id =
 object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','temp_id', 'State')
 
-select @name_with_max = ISNULL(@name_with_max,'') + CASE WHEN @name_with_max is null THEN '' ELSE ',' END + 'MAX([' + name+ '])' from tempdb.sys.columns where object_id =
+select @name_with_max = ISNULL(@name_with_max,'') + CASE WHEN @name_with_max is null THEN '' ELSE ',' END + 'MAX([' + name+ '])' from tempdb.sys.columns WITH(NOLOCK) where object_id =
 object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','temp_id', 'State')
 
-select @temp_name = ISNULL(@temp_name,'') + CASE WHEN @temp_name is null THEN '' ELSE ' OR ' END + ' td.[' + name+ ']=@state' from tempdb.sys.columns where object_id =
+select @temp_name = ISNULL(@temp_name,'') + CASE WHEN @temp_name is null THEN '' ELSE ' OR ' END + ' td.[' + name+ ']=@state' from tempdb.sys.columns WITH(NOLOCK) where object_id =
 object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','temp_id')
 
 --select @temp_dff_name = ISNULL(@temp_dff_name,'') + CASE WHEN @temp_dff_name is null THEN '' ELSE ',' END + '[' + name+ ']' from tempdb.sys.columns where object_id =
 --object_id('tempdb..#temp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','temp_id', 'state')
 
-select @name_with_case = ISNULL(@name_with_case,'') + CASE WHEN @name_with_case is null THEN '' ELSE ',' END + ' CASE WHEN ' + '[' + name + ']'+ '= ''No'' THEN ' + '['+ name + '] ELSE ''' + name + ''' END ' from tempdb.sys.columns where object_id =
+select @name_with_case = ISNULL(@name_with_case,'') + CASE WHEN @name_with_case is null THEN '' ELSE ',' END + ' CASE WHEN ' + '[' + name + ']'+ '= ''No'' THEN ' + '['+ name + '] ELSE ''' + name + ''' END ' from tempdb.sys.columns WITH(NOLOCK) where object_id =
 object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','temp_id', 'State')
 
 --select @temp_dff_name_with_case = ISNULL(@temp_dff_name_with_case,'') + CASE WHEN @temp_dff_name_with_case is null THEN '' ELSE ',' END + ' CASE WHEN ' + '[' + name + ']'+ '= ''No'' THEN ' + '['+ name + '] ELSE ''' + name + ''' END ' from tempdb.sys.columns where object_id =
 --object_id('tempdb..#temp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','temp_id','state')
 
-select @name_with_datatype = ISNULL(@name_with_datatype,'') + CASE WHEN @name_with_datatype is null THEN '' ELSE ';' END + 'ALTER TABLE #tmp_dff3 ADD [' + name + ']' + ' VARCHAR(100) ' from tempdb.sys.columns where object_id =
+select @name_with_datatype = ISNULL(@name_with_datatype,'') + CASE WHEN @name_with_datatype is null THEN '' ELSE ';' END + 'ALTER TABLE #tmp_dff3 ADD [' + name + ']' + ' VARCHAR(100) ' from tempdb.sys.columns WITH(NOLOCK) where object_id =
 object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','temp_id', 'State')
 
 
@@ -1978,7 +1978,7 @@ exec(@sql)
 
 
 select @name_state_no = ISNULL(@name_state_no,'') + CASE WHEN @name_state_no is null THEN '' ELSE ' OR ' END + '['+ name + ']  = t.name  '
- from tempdb.sys.columns  where object_id =
+ from tempdb.sys.columns WITH(NOLOCK)  where object_id =
 object_id('tempdb..#tmp_dff') and name not in ('generator','monthly term','volume','cert from','cert to','temp_id','state')
 
 
@@ -5518,7 +5518,7 @@ BEGIN TRY
 			
 			SET @sql = 'DECLARE @name_state VARCHAR(MAX)
 			select  @name_state  =  ISNULL(@name_state,'''') + CASE WHEN @name_state is null THEN '''' ELSE '','' END + name from 
-			tempdb.sys.columns t
+			tempdb.sys.columns t  WITH(NOLOCK)
 			inner join #tmp_dff td ON '+@name_state_no + ' where object_id =
 			object_id(''tempdb..#tmp_dff'') and name not in (''generator'',''monthly term'',''volume'',''cert from'',''cert to'',''temp_id'',''state'')
 			IF OBJECT_ID(''tempdb..##global_name_state'') IS NOT NULL

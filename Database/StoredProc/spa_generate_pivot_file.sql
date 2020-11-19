@@ -244,7 +244,7 @@ BEGIN
 	declare @output_table1_column_count int
 
 	select @output_table1_column_count = count(*)
-	from adiha_process.INFORMATION_SCHEMA.COLUMNS
+	from adiha_process.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK) 
 	WHERE table_catalog = 'adiha_process' and table_name = replace(@output_table1, 'adiha_process.dbo.','')
 
 	SET @SQL = '

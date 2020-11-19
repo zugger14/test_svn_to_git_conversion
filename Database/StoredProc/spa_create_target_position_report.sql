@@ -121,7 +121,7 @@ begin
 			--	select @temptablename
 			--select * from adiha_process.sys.columns where [object_id]=object_id(@temptablename) and [name]<>'ROWID' ORDER BY column_id
 
-			select @sql_stmt=@sql_stmt+',['+[name]+']' from adiha_process.sys.columns where [object_id]=object_id(@temptablename) and [name]<>'ROWID' ORDER BY column_id
+			select @sql_stmt=@sql_stmt+',['+[name]+']' from adiha_process.sys.columns WITH(NOLOCK) where [object_id]=object_id(@temptablename) and [name]<>'ROWID' ORDER BY column_id
 			SET @sql_stmt=SUBSTRING(@sql_stmt,2,LEN(@sql_stmt))
 			
 			set @sql_stmt='select '+@sql_stmt +'

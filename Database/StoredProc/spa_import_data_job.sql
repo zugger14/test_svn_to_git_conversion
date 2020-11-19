@@ -127,7 +127,7 @@ SET @run_start_time = GETDATE()
 --exec('select * into adiha_process.dbo.ccc from '+@temp_table_name)
 --return
 EXEC('
-if not exists(select 1 from adiha_process.sys.columns where [name]=''temp_id'' and [object_id]=object_id('''+@temp_table_name+'''))
+if not exists(select 1 from adiha_process.sys.columns WITH(NOLOCK) where [name]=''temp_id'' and [object_id]=object_id('''+@temp_table_name+'''))
 alter table '+ @temp_table_name+' add temp_id int identity')
 EXEC spa_print 'start [spa_import_data_job]'
 
@@ -2208,8 +2208,8 @@ BEGIN
 	DECLARE @pos_index_name		VARCHAR(128)
 	SET @pos_index_name = 'IX_AP_sourceDealDetailEssent'+ @process_id 
 	
-	EXEC('IF EXISTS (SELECT * FROM adiha_process.sys.indexes i
-			INNER JOIN adiha_process.sys.objects o ON i.object_id = o.object_id
+	EXEC('IF EXISTS (SELECT * FROM adiha_process.sys.indexes i WITH(NOLOCK)
+			INNER JOIN adiha_process.sys.objects o WITH(NOLOCK) ON i.object_id = o.object_id
 			WHERE o.type = ''U'' AND ''adiha_process.dbo.'' + o.name = ''' + @temp_table_name + '''
 			AND i.name = N''' + @pos_index_name + ''')
 			DROP INDEX ' + @pos_index_name + ' ON ' + @temp_table_name)
@@ -3825,16 +3825,16 @@ ELSE
 	EXEC spa_print @sql1
 	EXEC(@sql1)
 	
-	EXEC('IF EXISTS (SELECT * FROM adiha_process.sys.indexes i
-		INNER JOIN adiha_process.sys.objects o ON i.object_id = o.object_id
+	EXEC('IF EXISTS (SELECT * FROM adiha_process.sys.indexes i WITH(NOLOCK)
+		INNER JOIN adiha_process.sys.objects o WITH(NOLOCK) ON i.object_id = o.object_id
 		WHERE o.type = ''U'' AND ''adiha_process.dbo.'' + o.name = ''' + @temp_table_name + '''
 		AND i.name = N''idx_2' + @process_id + ''')
 		DROP INDEX idx_2' + @process_id + ' ON ' + @temp_table_name)
 
 	EXEC('CREATE INDEX idx_2'+@process_id+' ON ' + @temp_table_name +' (temp_id)')
 
-	EXEC('IF EXISTS (SELECT * FROM adiha_process.sys.indexes i
-	INNER JOIN adiha_process.sys.objects o ON i.object_id = o.object_id
+	EXEC('IF EXISTS (SELECT * FROM adiha_process.sys.indexes i WITH(NOLOCK)
+	INNER JOIN adiha_process.sys.objects o WITH(NOLOCK) ON i.object_id = o.object_id
 	WHERE o.type = ''U'' AND ''adiha_process.dbo.'' + o.name = ''' + @temp_table_name + '''
 	AND i.name = N''idx_3' + @process_id + ''')
 	DROP INDEX idx_3' + @process_id + ' ON ' + @temp_table_name)

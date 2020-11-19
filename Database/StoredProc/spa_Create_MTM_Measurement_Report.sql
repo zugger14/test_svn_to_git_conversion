@@ -114,7 +114,7 @@ BEGIN
 			SET @sql_stmt = ''
 
 			SELECT @sql_stmt = @sql_stmt + ',[' + [name] + ']' 
-			FROM adiha_process.sys.columns 
+			FROM adiha_process.sys.columns WITH(NOLOCK)
 			WHERE [OBJECT_ID] = OBJECT_ID(@temptablename) 
 				AND [name] <> 'ROWID' 
 			ORDER BY column_id

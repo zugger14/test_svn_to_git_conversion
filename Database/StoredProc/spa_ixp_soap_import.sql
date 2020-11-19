@@ -73,8 +73,8 @@ BEGIN
     END
     
     SELECT @column_lists = COALESCE(@column_lists + ',', '') + c.name
-    FROM adiha_process.sys.columns c
-    INNER JOIN adiha_process.sys.objects o ON  c.object_id = o.object_id    
+    FROM adiha_process.sys.columns c WITH(NOLOCK)
+    INNER JOIN adiha_process.sys.objects o WITH(NOLOCK) ON  c.object_id = o.object_id    
     LEFT JOIN (
            SELECT REPLACE(REPLACE(REPLACE(iidm.source_column_name, SUBSTRING(iidm.source_column_name, 0, CHARINDEX('.', iidm.source_column_name)+1), ''), '[', ''), ']', '') [column_name]
            FROM  ixp_import_data_mapping iidm
@@ -131,8 +131,8 @@ BEGIN
 		SELECT @new_process_table = table_name FROM #temp_soap_table_name
 		
 		SELECT @column_lists = COALESCE(@column_lists + ',', '') + '['+c.name+']'
-		FROM adiha_process.sys.columns c
-		INNER JOIN adiha_process.sys.objects o ON  c.object_id = o.object_id 
+		FROM adiha_process.sys.columns c WITH(NOLOCK)
+		INNER JOIN adiha_process.sys.objects o WITH(NOLOCK) ON  c.object_id = o.object_id 
 		WHERE o.[name] = REPLACE(@process_table, 'adiha_process.dbo.', '')
 		
 		SET @sql = 'INSERT INTO ' + @new_process_table + '(' + @column_lists + ')

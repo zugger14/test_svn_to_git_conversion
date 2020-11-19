@@ -77,7 +77,7 @@ BEGIN
 	  --retrieves first and 2nd column only as (value_id,code) and drops the temp table.  
 	  SET @cols = '';  
 	  SELECT  @cols = @cols + CASE WHEN column_id = 1 THEN name + ' as value_id, ' ELSE name + ' as code' END  
-	  FROM adiha_process.sys.columns  
+	  FROM adiha_process.sys.columns WITH(NOLOCK) 
 	  WHERE OBJECT_ID = OBJECT_ID(@temptablename) AND column_id IN ( 1, 2 );  
 	  
 	  EXEC ( 'SELECT ' + @cols + ' FROM ' + @temptablename + ' ' + @order_by ) ;     

@@ -261,7 +261,7 @@ CREATE TABLE [#temp_summary1](
 				        
 EXEC ('IF NOT EXISTS(
  		   SELECT 1
- 		   FROM   adiha_process.sys.columns
+ 		   FROM   adiha_process.sys.columns WITH(NOLOCK)
  		   WHERE  [name] = ''temp_id''
  				  AND [object_id] = OBJECT_ID(''' + @import_temp_table_name + ''')
  		)
@@ -5567,7 +5567,7 @@ IF @table_name = 'ixp_import_rec_meters'
 BEGIN
 	EXEC ('IF NOT EXISTS(
  		   SELECT 1
- 		   FROM   adiha_process.sys.tables
+ 		   FROM   adiha_process.sys.tables WITH(NOLOCK)
  		   WHERE  [name] =  REPLACE(''' + @final_stg_table + ''',''adiha_process.dbo.'','''')
  				  AND [type] = ''U''
  		)
@@ -17458,7 +17458,7 @@ BEGIN
 	--#### Build Index on temporary Table
 	EXEC('IF NOT EXISTS (
  	             SELECT OBJECT_NAME(OBJECT_ID)
- 	             FROM   adiha_process.sys.indexes
+ 	             FROM   adiha_process.sys.indexes WITH(NOLOCK)
  	             WHERE  NAME = ''ix_spc_tmp1' +  ''' AND OBJECT_ID = OBJECT_ID('''+@import_temp_table_name+''')
  	         )
  	      BEGIN
@@ -17553,7 +17553,7 @@ BEGIN
  	EXEC ('
 		IF NOT EXISTS(
  			SELECT 1
- 			FROM adiha_process.sys.tables
+ 			FROM adiha_process.sys.tables WITH(NOLOCK)
  			WHERE [name] =  REPLACE(''' + @final_stg_table + ''',''adiha_process.dbo.'','''')
 				AND [type] = ''U''
  		)
@@ -20619,7 +20619,7 @@ BEGIN
  	
  	EXEC('IF NOT EXISTS (
  	             SELECT OBJECT_NAME(OBJECT_ID)
- 	             FROM   adiha_process.sys.indexes
+ 	             FROM   adiha_process.sys.indexes WITH(NOLOCK)
  	             WHERE  NAME = ''idx_2' + @process_id + ''' AND OBJECT_ID = OBJECT_ID('''+@import_temp_table_name+''')
  	         )
  	      BEGIN
@@ -20628,7 +20628,7 @@ BEGIN
  	)
  	EXEC('IF NOT EXISTS (
  	             SELECT OBJECT_NAME(OBJECT_ID)
- 	             FROM   adiha_process.sys.indexes
+ 	             FROM   adiha_process.sys.indexes WITH(NOLOCK)
  	             WHERE  NAME = ''idx_3' + @process_id + ''' AND OBJECT_ID = OBJECT_ID('''+@import_temp_table_name+''')
  	         )
  	      BEGIN
@@ -27449,12 +27449,12 @@ BEGIN
 			ON a.delivery_date = dd.user_date
 	')	
 
-	EXEC('IF NOT EXISTS(SELECT 1 FROM adiha_process.sys.columns WHERE [name] = N''certificate_from_part'' AND [object_id] = OBJECT_ID(N''' + @import_temp_table_name + '''))
+	EXEC('IF NOT EXISTS(SELECT 1 FROM adiha_process.sys.columns WITH(NOLOCK) WHERE [name] = N''certificate_from_part'' AND [object_id] = OBJECT_ID(N''' + @import_temp_table_name + '''))
 		BEGIN
 			ALTER TABLE ' +  @import_temp_table_name + ' ADD certificate_from_part NVARCHAR(500)
 		END
 
-		IF NOT EXISTS(SELECT 1 FROM adiha_process.sys.columns WHERE [name] = N''certificate_to_part'' AND [object_id] = OBJECT_ID(N''' + @import_temp_table_name + '''))
+		IF NOT EXISTS(SELECT 1 FROM adiha_process.sys.columns WITH(NOLOCK) WHERE [name] = N''certificate_to_part'' AND [object_id] = OBJECT_ID(N''' + @import_temp_table_name + '''))
 		BEGIN
 			ALTER TABLE ' +  @import_temp_table_name + ' ADD certificate_to_part NVARCHAR(500)
 		END
@@ -27691,12 +27691,12 @@ BEGIN
 	@jurisdiction_id = @cs_jurisdiction_id, @tier_id = @cs_tier_id,
 	@call_from = 'import'
 
-	EXEC('IF NOT EXISTS(SELECT 1 FROM adiha_process.sys.columns WHERE [name] = N''certificate_from_part'' AND [object_id] = OBJECT_ID(N''' + @prod_view_process_table + '''))
+	EXEC('IF NOT EXISTS(SELECT 1 FROM adiha_process.sys.columns WITH(NOLOCK) WHERE [name] = N''certificate_from_part'' AND [object_id] = OBJECT_ID(N''' + @prod_view_process_table + '''))
 		BEGIN
 			ALTER TABLE ' +  @prod_view_process_table + ' ADD certificate_from_part NVARCHAR(500)
 		END
 
-		IF NOT EXISTS(SELECT 1 FROM adiha_process.sys.columns WHERE [name] = N''certificate_to_part'' AND [object_id] = OBJECT_ID(N''' + @prod_view_process_table + '''))
+		IF NOT EXISTS(SELECT 1 FROM adiha_process.sys.columns WITH(NOLOCK)  WHERE [name] = N''certificate_to_part'' AND [object_id] = OBJECT_ID(N''' + @prod_view_process_table + '''))
 		BEGIN
 			ALTER TABLE ' +  @prod_view_process_table + ' ADD certificate_to_part NVARCHAR(500)
 		END
@@ -29330,12 +29330,12 @@ BEGIN
 			SELECT @deal_table = process_table_name FROM #process_table
 			
 			-- Adding columns which may be hidden in template
-			SET @sql = 'IF NOT EXISTS(SELECT * FROM sys.columns WHERE [name] = N''d_curve_id'' AND [object_id] = OBJECT_ID(N''' + STUFF(@deal_table, 1, 18, '') + '''))
+			SET @sql = 'IF NOT EXISTS(SELECT * FROM sys.columns WITH(NOLOCK) WHERE [name] = N''d_curve_id'' AND [object_id] = OBJECT_ID(N''' + STUFF(@deal_table, 1, 18, '') + '''))
 						BEGIN
 							ALTER TABLE ' +  @deal_table + ' ADD d_curve_id INT NULL
 						END
 
-						IF NOT EXISTS(SELECT * FROM sys.columns WHERE [name] = N''d_settlement_date'' AND [object_id] = OBJECT_ID(N''' + STUFF(@deal_table, 1, 18, '') + '''))
+						IF NOT EXISTS(SELECT * FROM sys.columns WITH(NOLOCK) WHERE [name] = N''d_settlement_date'' AND [object_id] = OBJECT_ID(N''' + STUFF(@deal_table, 1, 18, '') + '''))
 						BEGIN
 							ALTER TABLE ' +  @deal_table + ' ADD d_settlement_date DATETIME NULL
 						END
@@ -35701,12 +35701,12 @@ BEGIN
 		--rename first column to 'id' and second column to 'value', so that can be used on join condition confidently. :START
 		DECLARE @col_id NVARCHAR(500),@col_value NVARCHAR(500)
 		SELECT TOP 1 @col_id =  [name]
-		FROM tempdb.sys.columns 
+		FROM tempdb.sys.columns WITH(NOLOCK)
 		WHERE object_id = object_id('tempdb..#tmp1') 
 		ORDER BY column_id ASC
 
 		SELECT TOP 1 @col_value =  [name]
-		FROM tempdb.sys.columns 
+		FROM tempdb.sys.columns  WITH(NOLOCK) 
 		WHERE object_id = object_id('tempdb..#tmp1') and [name] <> @col_id
 		ORDER BY column_id ASC
 
@@ -36867,13 +36867,13 @@ BEGIN
 			SET @gmv_col_value = NUll 
 
 			SELECT TOP 1 @gmv_col_id =  [name]
-			FROM tempdb.sys.columns 
+			FROM tempdb.sys.columns  WITH(NOLOCK) 
 			WHERE object_id = object_id('tempdb..#gmv_udf') 
 			ORDER BY column_id ASC
 
 
 			SELECT TOP 1 @gmv_col_value =  [name]
-			FROM tempdb.sys.columns 
+			FROM tempdb.sys.columns  WITH(NOLOCK) 
 			WHERE object_id = object_id('tempdb..#gmv_udf') and [name] <> @gmv_col_id
 			ORDER BY column_id ASC
 
@@ -37231,7 +37231,7 @@ BEGIN
  	EXEC ('
 		IF NOT EXISTS(
  			SELECT 1
- 			FROM adiha_process.sys.tables
+ 			FROM adiha_process.sys.tables WITH(NOLOCK) 
  			WHERE [name] =  REPLACE(''' + @final_stg_table + ''',''adiha_process.dbo.'','''')
 				AND [type] = ''U''
  		)

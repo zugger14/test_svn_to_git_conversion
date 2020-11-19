@@ -61,7 +61,7 @@ IF @process_id IS NULL
 BEGIN
 	INSERT INTO #temp1 (table_name)
 	SELECT [name]
-	FROM adiha_process.dbo.sysobjects so
+	FROM adiha_process.dbo.sysobjects so WITH(NOLOCK)
 		left join #except_tables et on so.[name] like et.[item]+'%'
 	WHERE xtype = 'u'
 		AND dbo.FNAGetSQLStandardDate(crdate) <= @sel_date
@@ -72,7 +72,7 @@ ELSE
 BEGIN
 	INSERT INTO #temp1 (table_name)
 	SELECT [name]
-	FROM adiha_process.dbo.sysobjects so
+	FROM adiha_process.dbo.sysobjects so WITH(NOLOCK)
 		left join #except_tables et on so.[name] like et.[item]+'%'
 
 	WHERE xtype = 'u'

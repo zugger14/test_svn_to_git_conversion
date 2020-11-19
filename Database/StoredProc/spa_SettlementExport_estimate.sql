@@ -257,7 +257,7 @@ SELECT @table_name = 'SAP_estimate_'+@user+'_'+@process_id
 
 IF @flag ='s' or @flag = 'z'
 BEGIN
-EXEC('IF EXISTS(SELECT 1 FROM adiha_process.sys.tables WHERE  name =  '+''''+@table_name+''')
+EXEC('IF EXISTS(SELECT 1 FROM adiha_process.sys.tables WITH(NOLOCK) WHERE  name =  '+''''+@table_name+''')
 			DROP TABLE '+@process_table )
 
 	CREATE TABLE #refresh_grid

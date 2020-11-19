@@ -1869,7 +1869,7 @@ BEGIN
 
 	CREATE TABLE #column_types(column_name VARCHAR(100) COLLATE DATABASE_DEFAULT)
 	set @power_dashboard=dbo.FNAProcessTableName('power_dashboard', @db_user, @process_id)
-	SET @st='INSERT INTO #column_types SELECT  column_name  FROM adiha_process.INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='''+REPLACE(@power_dashboard,'adiha_process.dbo.','')+''' AND  data_type=''float'''
+	SET @st='INSERT INTO #column_types SELECT  column_name  FROM adiha_process.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK) WHERE TABLE_NAME='''+REPLACE(@power_dashboard,'adiha_process.dbo.','')+''' AND  data_type=''float'''
 	EXEC(@st)
 		
 	select @column_list=isnull(@column_list+',','')+ '['+column_name +']' from #column_types a

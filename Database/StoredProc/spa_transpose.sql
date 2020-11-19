@@ -37,8 +37,8 @@ IF @is_adiha_table = 1
 BEGIN
     INSERT INTO @cols
     SELECT c.Name AS col
-    FROM adiha_process.dbo.sysobjects o
-	INNER JOIN adiha_process.dbo.syscolumns c ON  o.id = c.id
+    FROM adiha_process.dbo.sysobjects o WITH(NOLOCK)
+	INNER JOIN adiha_process.dbo.syscolumns c WITH(NOLOCK) ON  o.id = c.id
     WHERE o.NAME = @TableName
 	ORDER BY c.colorder
 END
@@ -46,7 +46,7 @@ ELSE
 BEGIN
     INSERT INTO @cols
     SELECT COLUMN_NAME AS col
-    FROM INFORMATION_SCHEMA.COLUMNS
+    FROM INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK)
     WHERE TABLE_NAME = @TableName
 END
  

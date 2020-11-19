@@ -3986,7 +3986,7 @@ BEGIN TRY
  		
  		INSERT INTO #detail_xml_columns(column_name, data_type)
  		SELECT COLUMN_NAME, DATA_TYPE
- 		FROM adiha_process.INFORMATION_SCHEMA.COLUMNS
+ 		FROM adiha_process.INFORMATION_SCHEMA.COLUMNS WITH(NOLOCK)
  		WHERE TABLE_NAME = @detail_table_name
  		
  		IF OBJECT_ID('tempdb..#field_template_detail') IS NOT NULL

@@ -186,8 +186,8 @@ BEGIN
 		IF @average = 'l'
 		BEGIN	
 			SELECT @heading_labels = COALESCE(@heading_labels + ',[' + c.name + ']', '[' + c.name + ']') 
-			FROM adiha_process.sys.columns c
-			INNER JOIN adiha_process.sys.tables t ON t.[object_id] = c.[object_id]
+			FROM adiha_process.sys.columns c WITH(NOLOCK)
+			INNER JOIN adiha_process.sys.tables t WITH(NOLOCK) ON t.[object_id] = c.[object_id]
 			WHERE t.name = 'paging_maintain_price_curve_' + @user_login_id + '_' + @process_id_paging
 			AND column_id > 1
 			
@@ -202,8 +202,8 @@ BEGIN
 			--ORDER BY clause was not necessary in SQL SERVER 2008(Hour and min was always selected first)
 			--but in SQL SERVER 2012 ORDER BY clause is mendetory to selec hour and min first. 
 			SELECT @heading_labels = COALESCE(@heading_labels + ',[' + c.name + ']', '[' + c.name + ']') 
-			FROM adiha_process.sys.columns c
-			INNER JOIN adiha_process.sys.tables t ON t.[object_id] = c.[object_id]
+			FROM adiha_process.sys.columns c WITH(NOLOCK)
+			INNER JOIN adiha_process.sys.tables t WITH(NOLOCK) ON t.[object_id] = c.[object_id]
 			WHERE t.name = 'paging_maintain_price_curve_' + @user_login_id + '_' + @process_id_paging
 			AND ((column_id > 3 AND ISNULL(@average,'')<>'a') OR (column_id > 2 AND ISNULL(@average,'')='a'))	
 			ORDER BY (CASE WHEN c.name IN ('HOUR', 'MIN') THEN 1 ELSE 2 END), c.name ASC

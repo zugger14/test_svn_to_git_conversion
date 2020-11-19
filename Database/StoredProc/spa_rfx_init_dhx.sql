@@ -456,7 +456,7 @@ set nocount on
 		END
 
 		declare cur_del_process_tables cursor for
-		select name from [adiha_process].sys.tables where name like '%' + @process_id
+		select name from [adiha_process].sys.tables WITH(NOLOCK) where name like '%' + @process_id
 		
 		open cur_del_process_tables
 

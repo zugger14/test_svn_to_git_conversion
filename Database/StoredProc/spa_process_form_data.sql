@@ -123,8 +123,8 @@ BEGIN TRY
 			WHERE application_function_id = @function_id
 
 			SELECT @bit_colums = ISNULL(@bit_colums + ', ', '') + mcol.COLUMN_NAME + ' = IIF( ' + mcol.COLUMN_NAME + ' = ''y'' OR ' + mcol.COLUMN_NAME + ' = ''1'', 1 , 0)'
-			FROM INFORMATION_SCHEMA.COLUMNS mcol
-			INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS acol WITH (NOLOCK) ON mcol.COLUMN_NAME = acol.COLUMN_NAME
+			FROM INFORMATION_SCHEMA.COLUMNS mcol WITH(NOLOCK)
+			INNER JOIN adiha_process.INFORMATION_SCHEMA.COLUMNS acol WITH(NOLOCK) ON mcol.COLUMN_NAME = acol.COLUMN_NAME
 				AND acol.TABLE_NAME = REPLACE(@xml_table_name, 'adiha_process.dbo.', '')
 			WHERE mcol.TABLE_NAME = @tbl_name
 				AND mcol.DATA_TYPE = 'bit'
@@ -367,8 +367,8 @@ BEGIN TRY
 		END
 
 		SELECT @col_list = COALESCE(@col_list + N',', N'') + QUOTENAME(c.name) 
-		FROM adiha_process.dbo.sysobjects o
-		INNER JOIN adiha_process.dbo.syscolumns c ON o.id = c.id
+		FROM adiha_process.dbo.sysobjects o WITH(NOLOCK)
+		INNER JOIN adiha_process.dbo.syscolumns c WITH(NOLOCK) ON o.id = c.id
 			AND o.xtype = 'U'
 		WHERE o.name = REPLACE(@xml_table_name, 'adiha_process.dbo.', '')
 
@@ -431,8 +431,8 @@ BEGIN TRY
 		-- Insert Grid Data	
 		SET @col_list = NULL
 		SELECT @col_list = coalesce(@col_list+N',', N'') + quotename(c.name) 
-		FROM adiha_process.dbo.sysobjects o
-		INNER JOIN adiha_process.dbo.syscolumns c ON o.id = c.id
+		FROM adiha_process.dbo.sysobjects o WITH(NOLOCK)
+		INNER JOIN adiha_process.dbo.syscolumns c WITH(NOLOCK) ON o.id = c.id
 			AND o.xtype = 'U'
 		WHERE o.name = REPLACE(@grid_xml_table_name, 'adiha_process.dbo.', '')
 			AND c.name <> 'grid_id'

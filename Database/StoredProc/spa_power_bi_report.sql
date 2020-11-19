@@ -238,7 +238,7 @@ BEGIN
 		DECLARE @cmd1 varchar(4000)
 		DECLARE cmds1 CURSOR FOR
 		SELECT ''drop table adiha_process.dbo.['' + Table_Name + '']''
-		FROM adiha_process.INFORMATION_SCHEMA.TABLES
+		FROM adiha_process.INFORMATION_SCHEMA.TABLES WITH (NOLOCK)
 		WHERE Table_Name LIKE ''%' + @process_id + '''
 
 		OPEN cmds1
@@ -376,7 +376,7 @@ begin
 					DECLARE @cmd' + @param_tablix_id + ' varchar(4000)
 					DECLARE cmds' + @param_tablix_id + ' CURSOR FOR
 					SELECT ''drop table adiha_process.dbo.['' + Table_Name + '']''
-					FROM adiha_process.INFORMATION_SCHEMA.TABLES
+					FROM adiha_process.INFORMATION_SCHEMA.TABLES WITH (NOLOCK)
 					WHERE Table_Name LIKE ''%' + @process_table_name_item + '''
 
 					OPEN cmds' + @param_tablix_id + '

@@ -72,7 +72,7 @@ BEGIN
 			--	select @temptablename
 			--select * from adiha_process.sys.columns where [object_id]=object_id(@temptablename) and [name]<>'ROWID' ORDER BY column_id
 
-			SELECT @sql_stmt=@sql_stmt+',['+[name]+']' FROM adiha_process.sys.columns WHERE [OBJECT_ID]=OBJECT_ID(@temptablename) AND [name]<>'ROWID' ORDER BY column_id
+			SELECT @sql_stmt=@sql_stmt+',['+[name]+']' FROM adiha_process.sys.columns WITH(NOLOCK) WHERE [OBJECT_ID]=OBJECT_ID(@temptablename) AND [name]<>'ROWID' ORDER BY column_id
 			SET @sql_stmt=SUBSTRING(@sql_stmt,2,LEN(@sql_stmt))
 			
 			SET @sql_stmt='select '+@sql_stmt +'
