@@ -1226,7 +1226,7 @@
             + "', @minor_location='" + location_id + "', @process_id='" + process_id_gbl + "', @reschedule='" + reschedule + "'";
         
         if (loc_type == 'Storage') {
-            exec_call = "EXEC spa_storage_position_report @book_entity_id=" + (book_id == 'NULL' ? 'NULL' : "'" + book_id + "'") + ", @location_id='" + location_id + "', @term_start='" + flow_date_from + "', @term_end='" + flow_date_to + "', @uom=" + param_uom_id + ", @call_from='Optimization'";
+            exec_call = "EXEC spa_storage_position_report @book_entity_id=" + (book_id == 'NULL' ? 'NULL' : "'" + book_id + "'") + ", @location_id='" + location_id + "', @term_start='" + flow_date_from + "', @term_end='" + flow_date_to + "', @uom=" + param_uom_id + ", @call_from='Optimization'" + ", @round=" + round;
              
         }
         exec_call = exec_call + '&rnd=' + round;

@@ -60,7 +60,8 @@ CREATE PROC [dbo].[spa_storage_position_report]
 	@page_no INT = NULL,
 	@is_pivot char = NULL,
 	@volume_conversion INT = NULL,
-	@counterparty_id VARCHAR(5000) = NULL
+	@counterparty_id VARCHAR(5000) = NULL,
+	@round TINYINT = 18
 	
 AS
 SET NOCOUNT ON
@@ -91,23 +92,15 @@ SET NOCOUNT ON
 	@is_pivot char = NULL,
 	@volume_conversion INT = NULL,
 	@counterparty_id VARCHAR(5000) = NULL,
-	@sub_book_id VARCHAR(MAX) = NULL
+	@sub_book_id VARCHAR(MAX) = NULL,
+	@round TINYINT = 18
 
 	/* for link reports within std report */
 	--select @commodity_id=50, @drill_location=2794, @term_start='2018-07-01', @term_end='2018-07-31' ,@drill_term='2018-07-24',@drill_type='NULL',@drill_contract_id=10317,@deal_type='w'
 
 	/* for main std report */
-	select @commodity_id=NULL
-	,@location_id='2892'
-	,@term_start='2025-07-01'
-	,@term_end='2025-07-01'
-	,@uom=1158
-	,@drill_location=null
-	,@drill_term=null
-	,@drill_contract_id=null
-	,@deal_type=NULL
-	,@call_from='Optimization'
-	
+	select @location_id='2887',@term_start='2020-01-01',@term_end='2020-01-01',@uom=1158,@drill_location=2887,@drill_term='2020-01-01',@drill_contract_id=8358,@round=18
+	--select @location_id='2887', @term_start='2020-01-01', @term_end='2020-01-01', @uom=1158, @call_from='Optimization'
 	-- 2892, '2025-07-01', '2025-07-01',1158,NULL,NULL,NULL,NULL,NULL,'Optimization'
 	--select @commodity_id=50,@location_id=2842,@term_start='2018-02-01', @term_end='2018-02-01',@uom=6,@call_from = 'Optimization'
 	
@@ -171,6 +164,10 @@ DECLARE @fields VARCHAR(1000)
 
 SET @font_tag_start = '<font color=#0000ff><b><i>'
 SET @font_tag_end = '</b></i></font>'
+
+SET @round = ISNULL(@round, 18)
+DECLARE @format_round VARCHAR(5) = 'N' + CAST(@round AS VARCHAR(2))
+
 
 --DECLARE @INTernal_deal_subtype_value_id VARCHAR(30)
 --SET @INTernal_deal_subtype_value_id='Transportation'
@@ -293,17 +290,17 @@ BEGIN
 		[Location]  VARCHAR(250) COLLATE DATABASE_DEFAULT,
 		[Index]  VARCHAR(250) COLLATE DATABASE_DEFAULT,
 		[Date] DATETIME,
-		[Injection] FLOAT,
-		[Withdrawal] FLOAT,
-		[Daily Average Balance] FLOAT,
+		[Injection] NUMERIC(38, 20),
+		[Withdrawal] NUMERIC(38, 20),
+		[Daily Average Balance] NUMERIC(38, 20),
 		[UOM]  VARCHAR(250) COLLATE DATABASE_DEFAULT,
 		source_deal_header_id INT,
 		contract_id INT,	
 		[contract_name] VARCHAR(100) COLLATE DATABASE_DEFAULT,
-		[Injection_amt] FLOAT,
-		[Withdrawal_amt] FLOAT,
+		[Injection_amt] NUMERIC(38, 20),
+		[Withdrawal_amt] NUMERIC(38, 20),
 		row_id INT IDENTITY(1, 1)	
-		,fixed_price 	FLOAT 
+		,fixed_price 	NUMERIC(38, 20) 
 		,conversion_factor FLOAT
 	)
 	--internal_deal_type_value_id
@@ -615,13 +612,13 @@ BEGIN
 				[Location] VARCHAR(250) COLLATE DATABASE_DEFAULT ,
 				[Contract] VARCHAR(250) COLLATE DATABASE_DEFAULT ,
 				[Term]	   VARCHAR(5000) COLLATE DATABASE_DEFAULT ,
-				[Injection] NUMERIC(30, 2) ,
-				InjectionAmount NUMERIC(30, 2) ,
-				[Withdrawal] NUMERIC(30, 2) ,
-				[WithdrawalAmount] NUMERIC(30, 2) ,
-				[WACOG] NUMERIC(30, 2) , 
-				[Balance] NUMERIC(30, 2),
-				[BalanceAmount] NUMERIC(30, 2),
+				[Injection] NUMERIC(38, 20) ,
+				InjectionAmount NUMERIC(38, 20) ,
+				[Withdrawal] NUMERIC(38, 20) ,
+				[WithdrawalAmount] NUMERIC(38, 20) ,
+				[WACOG] NUMERIC(38, 20) , 
+				[Balance] NUMERIC(38, 20),
+				[BalanceAmount] NUMERIC(38, 20),
 				[UOM]  VARCHAR(250) COLLATE DATABASE_DEFAULT ,
 				rowid INT IDENTITY(1,1),
 				location_id INT,
@@ -654,7 +651,7 @@ BEGIN
 					ELSE 
 				  		CONVERT(VARCHAR(10), a.[Date], 120) 
 					END
-				+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL')+ ',NULL,NULL',
+				+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL')+ ',NULL,NULL' + '&rnd=' + CAST(@round AS VARCHAR(10)),
 				CASE WHEN a.[Date] = '1900-01-01' 
 					THEN '<' +dbo.fnadateformat(@term_start) 
 				WHEN a.[Date] <= @term_end AND @call_from = 'STORAGE_GRID'	
@@ -670,10 +667,10 @@ BEGIN
 					CONVERT(VARCHAR(10), a.[Date], 120) 
 				END 
 			END Term,  
-			ROUND(SUM(a.[Injection]), 2) [Injection],
-			ROUND(SUM(a.injection_amt), 2)  InjectionAmount,
-			ROUND(SUM(a.[Withdrawal]), 2) [Withdrawal],
-			ROUND(SUM(a.[Withdrawal_amt]), 2) [WithdrawalAmount],
+			ROUND(SUM(a.[Injection]), @round) [Injection],
+			ROUND(SUM(a.injection_amt), @round)  InjectionAmount,
+			ROUND(SUM(a.[Withdrawal]), @round) [Withdrawal],
+			ROUND(SUM(a.[Withdrawal_amt]), @round) [WithdrawalAmount],
 			null  WACOG,
 			SUM(a.[Daily Average Balance]) [Balance],
 			CAST(SUM(a.[Withdrawal_amt] + a.injection_amt) AS NUMERIC(30, 2)) [BalanceAmount] ,
@@ -681,23 +678,13 @@ BEGIN
 			MAX(a.location_id) location_id 
 			,MAX(a.[Date])  term_date
 			,MAX(a.[conversion_factor]) conversion_factor
-		FROM #temp a 
-		--OUTER APPLY (
-		--		SELECT top(1) term 
-		--		FROM dbo.calcprocess_storage_wacog 
-		--		WHERE location_id = a.location_id 
-		--			AND term < @term_start 
-		--			AND ISNULL(contract_id,-1) = ISNULL(a.contract_id ,-1) 
-		--			AND a.[Date] = '1900-01-01'
-		--			ORDER BY term DESC
-		--) tm
-		--LEFT JOIN dbo.calcprocess_storage_wacog wa
-		--	ON wa.location_id = a.location_id 
-		--	AND wa.term = ISNULL(tm.term, a.[date]) 
-		--	AND ISNULL(wa.contract_id, -1) = ISNULL(a.contract_id, -1) 
+		FROM #temp a 		
 		GROUP BY a.[Location], a.[contract_name], a.[Date]
 		ORDER BY a.[Location], a.[contract_name], ISNULL(a.[Date], '9999-01-01')
+
+		
 	END 
+
 
 	IF @call_from = 'Optimization'
 	BEGIN
@@ -709,8 +696,8 @@ BEGIN
 							[Withdrawal] [With Vol],
 							[WithdrawalAmount] [With Amt],
 							WACOG,
-							ROUND(b.[Balance], 2) [Daily Balance], 
-							ROUND(b.[BalanceAmount], 2) [Inventory Value],
+							ROUND(b.[Balance], ' + CAST(@round AS VARCHAR(10)) + ') [Daily Balance], 
+							ROUND(b.[BalanceAmount], ' + CAST(@round AS VARCHAR(10)) + ') [Inventory Value],
 							[UOM]
 							'
 
@@ -725,7 +712,7 @@ BEGIN
 		) rg
 		OUTER APPLY(
 			SELECT SUM([Injection] - [Withdrawal]) [Balance],
-				ROUND(SUM(BalanceAmount), 2) BalanceAmount 
+				SUM(BalanceAmount) BalanceAmount 
 			FROM #tmp_rpt_data 
 			WHERE rowid <= a.rowid 
 				AND rowid BETWEEN rg.from_id 
@@ -746,12 +733,12 @@ BEGIN
 				[Contract] VARCHAR(250) COLLATE DATABASE_DEFAULT ,
 				[Term]	   VARCHAR(2000) COLLATE DATABASE_DEFAULT ,
 				[Injection]	VARCHAR(2000) COLLATE DATABASE_DEFAULT ,
-				InjectionAmount NUMERIC(30, 2) ,
+				InjectionAmount NUMERIC(38, 20) ,
 				[Withdrawal] VARCHAR(2000) COLLATE DATABASE_DEFAULT ,
-				[WithdrawalAmount] NUMERIC(30, 2) ,
-				[WACOG] NUMERIC(30, 2) , 
-				[Balance] NUMERIC(30, 2),
-				[BalanceAmount] NUMERIC(30, 2),
+				[WithdrawalAmount] NUMERIC(38, 20) ,
+				[WACOG] NUMERIC(38, 20) ,
+				[Balance] NUMERIC(38, 20) ,
+				[BalanceAmount] NUMERIC(38, 20) ,
 				[UOM]  VARCHAR(250) COLLATE DATABASE_DEFAULT ,
 				rowid INT IDENTITY(1,1),
 				location_id INT,
@@ -815,19 +802,19 @@ BEGIN
 				)  [Term],  
 				[dbo].[FNAHyperHTML](@spa + CAST(MAX(a.location_id) AS VARCHAR(30)) + ','''
 					+ CASE WHEN a.[Date] = '1900-01-01' THEN '<' + CONVERT(VARCHAR(10), @term_start, 120) ELSE CONVERT(VARCHAR(10), a.[Date], 120) END
-					+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL') + ',''i'',NULL',
-					ROUND(CONVERT(NUMERIC(38,2), SUM(a.[Injection]) ), 2) , NULL)  
+					+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL') + ',''i'',NULL' + '&rnd=' + CAST(@round AS VARCHAR(10)),
+					FORMAT(SUM(a.[Injection]), @format_round) , NULL)  
 				  [Injection],
-				ROUND(SUM(uv.Injection), 2)  InjectionAmount,
+				SUM(uv.Injection) InjectionAmount,
 				[dbo].[FNAHyperHTML](@spa + CAST(MAX(a.location_id) AS VARCHAR(30)) + ','''
 					+ CASE WHEN a.[Date] = '1900-01-01' THEN '<' + CONVERT(VARCHAR(10), @term_start, 120) ELSE CONVERT(VARCHAR(10), a.[Date], 120) END
 					+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL') + ',''w'',NULL',
-					CONVERT(NUMERIC(38,2), SUM(a.[Withdrawal])) , NULL) [Withdrawal],
-				ROUND(SUM(uv.Withdrawal), 2) [WithdrawalAmount],
-				ROUND(AVG(uv.fixed_price), 4) WACOG,--ROUND(SUM(wa.wacog), 4)  WACOG,
+					FORMAT(SUM(a.[Withdrawal]), @format_round) , NULL) [Withdrawal],
+				FORMAT(SUM(uv.Withdrawal), @format_round) [WithdrawalAmount],
+				FORMAT(AVG(uv.fixed_price), @format_round) WACOG,--ROUND(SUM(wa.wacog), 4)  WACOG,
 				--SUM(a.[Daily Average Balance]) [Balance],
 				--CASE WHEN SUM(ISNULL(deal_volume, 0)) = 0 THEN NULL ELSE SUM(ISNULL(deal_volume, 0)) END [Balance],
-				ROUND(CONVERT(NUMERIC(38,2), ABS(SUM(a.[Injection])) - ABS(SUM(a.[Withdrawal]))), 2) [Balance],
+				ABS(SUM(a.[Injection])) - ABS(SUM(a.[Withdrawal])) [Balance],
 				--CAST(SUM(a.[Withdrawal_amt] + a.injection_amt) AS NUMERIC(30, 2)) [BalanceAmount] ,
 				CASE WHEN SUM(deal_volume * ISNULL(uv.fixed_price, 1)) = 0 THEN NULL ELSE SUM(deal_volume * ISNULL(uv.fixed_price, 1)) END BalanceAmount,
 				MAX(a.[UOM]) [UOM]
@@ -848,7 +835,7 @@ BEGIN
 			WHERE a.[Date] <> '1900-01-01'
 			GROUP BY a.[Location], a.[contract_name], a.[Date]
 			ORDER BY a.[Location], a.[contract_name], cast(ISNULL(a.[Date], '9999-01-01') as datetime)
-			--return
+
 			IF @call_from = 'STORAGE_GRID'
 			BEGIN
 				SET @fields = '
@@ -869,12 +856,12 @@ BEGIN
 							  [Contract],
 							  Term, 
 							  [Injection] [Inj Vol],
-							  [InjectionAmount] [Inj Amt],
+							  FORMAT([InjectionAmount], ''' + @format_round + ''') [Inj Amt],
 							  [Withdrawal] [With Vol],
-							  [WithdrawalAmount] [With Amt],
-							  WACOG,
-							  ROUND(b.[Balance], 2) [Daily Balance], 
-							  ROUND(b.[BalanceAmount], 2) [Inventory Value],
+							  FORMAT([WithdrawalAmount], ''' + @format_round + ''') [With Amt],
+							  FORMAT([WACOG], ''' + @format_round + ''') [WACOG],
+							  FORMAT(b.[Balance], ''' + @format_round + ''') [Daily Balance], 
+							  FORMAT(b.[BalanceAmount], ''' + @format_round + ''') [Inventory Value],
 							  [UOM]
 							  '
 			END
