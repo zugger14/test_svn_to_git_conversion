@@ -73,455 +73,904 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_term_start VARCHAR(10) 
+
 		, @_term_end VARCHAR(10)
+
 		, @_sub_book_id VARCHAR(MAX)
+
 		, @_template_id VARCHAR(MAX)
+
 		, @_buy_sell VARCHAR(MAX)
+
 		, @_destination_deal_id VARCHAR(MAX)
+
 		, @_process_id VARCHAR(100)	
+
 		, @_location_id VARCHAR(MAX)
+
 		, @_deal_type_id VARCHAR(50)
+
 		
 
+
+
 ----select * from source_system_book_map where logical_name = ''Storage 2''
+
 ----what is the usages of process id?
 
+
+
 IF ''@term_start'' <> ''NULL''
+
 	SET @_term_start = ''@term_start''
+
 	
+
 IF ''@term_end'' <> ''NULL''
+
 	SET @_term_end = ''@term_end''
+
 	
+
 IF ''@sub_book_id'' <> ''NULL''
+
 	SET @_sub_book_id = ''@sub_book_id''
+
 	
+
 IF ''@template_id'' <> ''NULL''
+
 	SET @_template_id = ''@template_id''
+
 	
+
 IF ''@buy_sell'' <> ''NULL''
+
 	SET @_buy_sell = ''@buy_sell''
+
 			
+
 IF ''@destination_deal_id'' <> ''NULL''
+
 	SET @_destination_deal_id = ''@destination_deal_id''
+
    
+
 IF ''@location_id'' <> ''NULL''
+
     SET @_location_id = ''@location_id''
 
+
+
 IF ''@deal_type_id'' <> ''NULL''
+
     SET @_deal_type_id = ''@deal_type_id''
 
 
+
+
+
 --SELECT @_term_start = ''2020-09-01''
+
 --	, @_term_end = ''2020-09-02''
+
 --	, @_sub_book_id = ''178''
+
 --	, @_buy_sell = ''s''
+
 --	, @_destination_deal_id = ''withdraw 123''
+
 --	, @_template_id = null
+
 --	, @_location_id = null
+
 --	, @_deal_type_id = 1171
 
+
+
 IF @_process_id IS NULL
+
     SET @_process_id = dbo.FNAGETNEWID()
 
+
+
 DECLARE @_user_name NVARCHAR(MAX)
+
 	, @_generic_mapping_values NVARCHAR(MAX)
+
 	, @_sql NVARCHAR(MAX)
+
+
 
 SET @_user_name = dbo.FNADBUser() 
 
+
+
 --Collect position 
+
 DECLARE @_dst_group_value_id INT 
 
+
+
 SELECT @_dst_group_value_id = tz.dst_group_value_id	--102201
+
 FROM adiha_default_codes_values adcv
+
 INNER JOIN time_zones tz ON tz.timezone_id = adcv.var_value
+
 WHERE adcv.default_code_id = 36
 
+
+
 DROP TABLE IF EXISTS #position_deals
+
 					
+
 SELECT sdh.source_deal_header_id
+
 	, sdd.source_deal_detail_id
+
 	, sdd.term_start
+
 	, sdd.term_end
+
 	, sdd.curve_id
+
 	, sdd.location_id
+
 	, @_destination_deal_id deal_id_to_process
+
 	, sdh.template_id
+
 	, sdd.fixed_price sdd_fixed_price
+
 INTO #position_deals
+
 FROM source_deal_header sdh
+
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+
 INNER JOIN dbo.SplitCommaSeperatedValues(@_sub_book_id) i ON i.item = sdh.sub_book				
+
 LEFT JOIN SplitCommaSeperatedValues(@_location_id) tl ON tl.item = sdd.location_id
+
 WHERE sdd.leg = 1				
+
 	AND sdh.header_buy_sell_flag = ISNULL(NULLIF(@_buy_sell,''''), ''b'')
+
 	AND sdh.template_id = ISNULL(NULLIF(@_template_id,''''), sdh.template_id)
+
 	AND sdh.source_deal_type_id = ISNULL(NULLIF(@_deal_type_id,''''), sdh.source_deal_type_id)
+
 	AND sdh.internal_portfolio_id IS NULL
+
 	AND (tl.item IS NOT NULL OR ISNULL(NULLIF(@_location_id,''''), -1) = -1)
-	--AND sdd.term_start >=  CAST(@_term_start as DATE)
-	--AND sdd.term_end <= ISNULL( CAST(NULLIF(@_term_end,'''') as DATE), sdd.term_end)
---	AND sdh.internal_desk_id = 17302 
+
+	AND sdh.deal_status NOT IN (5607)
+
+
 
 --select * from #position_deals
+
 --return
+
 	--Collect deals to update pfc curve.
+
 	DROP TABLE IF EXISTS #process_deals
 
+
+
 	SELECT @_destination_deal_id deal_id
+
 	INTO #process_deals
+
 			
+
 	IF OBJECT_ID(N''tempdb..#mv90_dst'') IS NOT NULL
+
 	DROP TABLE #mv90_dst
 
+
+
 	SELECT [year]
+
 		, [date]
+
 		, [hour]
+
 	INTO #mv90_dst
+
 	FROM mv90_dst
+
 	WHERE insert_delete = ''i''
+
 		AND dst_group_value_id = @_dst_group_value_id  
+
+
 
 	DROP TABLE IF EXISTS  #temp_position
 
+
+
 	SELECT source_deal_header_id
+
 		, source_deal_detail_id
+
 		, term_start
+
 		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, dst.hour , cast(substring(upv.hr,3,2) AS INT)) Hr
+
 		, [period]
+
 		, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
+
 		, val volume
+
 		, granularity
+
 		, deal_id_to_process
+
 		, sdd_fixed_price
+
 	INTO #temp_position
+
 	FROM (
+
 		SELECT rhpd.source_deal_header_id
+
 			, d.source_deal_detail_id
+
  			, rhpd.term_start
+
 			, hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
+
 			, rhpd.[period]
+
 			, rhpd.granularity	
+
 			, d.deal_id_to_process
+
 			, d.sdd_fixed_price
+
 		FROM #position_deals d
+
 		INNER JOIN report_hourly_position_deal	rhpd ON rhpd.source_deal_header_id = d.source_deal_header_id
+
 			AND rhpd.term_start BETWEEN d.term_start AND d.term_end
+
 			AND rhpd.term_start BETWEEN @_term_start AND @_term_end
+
 			AND ISNULL(rhpd.location_id, -1) = ISNULL(d.location_id, -1)
+
 			AND rhpd.curve_id = d.curve_id
+
 			) rs
+
 		UNPIVOT
+
 			(val for Hr IN (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25)	
+
 	) upv
+
 	OUTER APPLY(SELECT dst.date,dst.[hour]
+
 		FROM #mv90_dst dst 
+
 		WHERE dst.date = upv.term_start
+
 		GROUP BY dst.date,dst.[hour]
+
 		) dst
+
 	UNION
+
 		SELECT source_deal_header_id
+
 		, source_deal_detail_id
+
 		, term_start
+
 		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, dst.hour , cast(substring(upv.hr,3,2) AS INT)) Hr
+
 		, [period]
+
 		, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
+
 		, val volume
+
 		, granularity
+
 		, deal_id_to_process
+
 		, sdd_fixed_price
+
 	FROM (
+
 		SELECT rhpd.source_deal_header_id
+
 			, d.source_deal_detail_id
+
  			, rhpd.term_start
+
 			, hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
+
 			, rhpd.[period]
+
 			, rhpd.granularity	
+
 			, d.deal_id_to_process
+
 			, d.sdd_fixed_price
+
 	FROM #position_deals d
+
 		INNER JOIN report_hourly_position_profile rhpd ON rhpd.source_deal_header_id = d.source_deal_header_id
+
 			AND rhpd.term_start BETWEEN d.term_start AND d.term_end
+
 			AND rhpd.term_start BETWEEN @_term_start AND @_term_end
+
 			AND ISNULL(rhpd.location_id, -1) = ISNULL(d.location_id, -1)
+
 			AND rhpd.curve_id = d.curve_id
+
 			) rs
+
 		UNPIVOT
+
 			(val for Hr IN (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25)	
+
 	) upv
+
 	OUTER APPLY(SELECT dst.date,dst.[hour]
+
 		FROM #mv90_dst dst 
+
 		WHERE dst.date = upv.term_start
+
 		GROUP BY dst.date,dst.[hour]
+
 		) dst
+
 	CREATE INDEX indx_udt_tp ON #temp_position (source_deal_detail_id,term_start,hr,[period])
+
 					
+
+
 
 	DROP TABLE IF EXISTS #source_deal_detail_hour
+
 	CREATE TABLE #source_deal_detail_hour(source_deal_detail_id INT
+
 		, term_date DATETIME
+
 		, hr INT
+
 		, [period] INT
+
 		, is_dst BIT
+
 		, volume NUMERIC(30,20)
+
 		, sddh_price FLOAT
+
 	)
 
+
+
 	INSERT INTO #source_deal_detail_hour
+
 	SELECT sddh.source_deal_detail_id
+
 		,sddh.term_date
+
 		, CAST(LEFT(sddh.hr,2) AS INT) hr
+
 		, CAST(RIGHT(sddh.hr,2) AS INT) [period]
+
 		, sddh.is_dst						
+
 		, sddh.volume
+
 		, sddh.price 					
+
 	FROM #position_deals pd
+
 	INNER JOIN source_deal_detail_hour sddh ON sddh.source_deal_detail_id = pd.source_deal_detail_id
+
 			
+
 					
+
 	DECLARE @_import_rule_id INT
+
 		, @_temp_process_table NVARCHAR(100)
+
 		, @_path NVARCHAR(1000)
+
 		, @_stg_withdrawal_template_id INT
+
 	--Hardcoded for withdrawal template as per requested.
+
 	SELECT @_stg_withdrawal_template_id = template_id FROM source_deal_header_template WHERE template_name = ''Storage Withdrawal''
 
+
+
 	SELECT @_path = document_path + ''temp_Note''  FROM connection_string
+
 	SELECT @_import_rule_id = ixp_rules_id FROM ixp_rules
+
 	WHERE ixp_rule_hash = ''A796978B_665C_46DA_9606_38FA73747158'' --shaped volume
 
+
+
 	SET @_temp_process_table = ''adiha_process.dbo.storage_st_position_'' + @_process_id
+
 	EXEC(
+
 			''DROP TABLE IF EXISTS '' + @_temp_process_table + ''
+
 			CREATE TABLE '' + @_temp_process_table + ''([Deal Ref ID] NVARCHAR(600),	[Term Date] NVARCHAR(20),	[Hour] NVARCHAR(2),	[Minute] NVARCHAR(2)
+
 				,	[Is DST] NVARCHAR(1)
+
 				,	[Leg] NVARCHAR(2)
+
 				,	[Volume] FLOAT
+
 				,	[Price] FLOAT
+
 				,	[Actual Volume] FLOAT
+
 				,	[Schedule Volume] FLOAT
+
 			)'')
 
+
+
 	SET @_sql = ''	
+
 			SELECT pd.deal_id
+
 				, tp.term_start
+
 				, tp.hr
+
 				, tp.period
+
 				, tp.is_dst
+
 				, 1 leg
+
 				, tp.volume
+
 				, IIF( pd.template_id = '' + CAST(@_stg_withdrawal_template_id AS NVARCHAR(20)) + '', ISNULL(csw.wacog,0)
+
 					, ISNULL(sddh.sddh_price, sdd.fixed_price)) price
+
 				, ABS(tp.volume) * IIF( pd.template_id = '' + CAST(@_stg_withdrawal_template_id AS NVARCHAR(20)) + ''
+
 										, ISNULL(csw.wacog,0)
+
 										,ISNULL(sddh.sddh_price, sdd.fixed_price))
+
 					amount
+
 			INTO #final_resultset
+
 			FROM #temp_position tp
+
 			INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = tp.source_deal_detail_id
+
 			INNER JOIN source_deal_header pd on pd.deal_id = tp.deal_id_to_process				
+
 			OUTER APPLY(SELECT MAX(csw.term) term ,csw.location_id,csw.contract_id
+
 				FROM source_deal_detail sd 
+
 				INNER JOIN calcprocess_storage_wacog csw ON csw.term < tp.term_start
+
 					AND csw.location_id = sd.location_id
+
 					AND csw.contract_id = pd.contract_id
+
 				WHERE sd.source_deal_header_id = pd.source_deal_header_id
+
 					AND tp.term_start BETWEEN sd.term_start AND sd.term_end
+
 				GROUP BY csw.location_id, csw.contract_id
+
 			) mx_wacog
+
 			LEFT JOIN calcprocess_storage_wacog csw ON csw.term = mx_wacog.term
+
 				AND csw.location_id = mx_wacog.location_id
+
 				AND csw.contract_id = mx_wacog.contract_id	
+
 			LEFT JOIN #source_deal_detail_hour sddh ON sddh.source_deal_detail_id = tp.source_deal_detail_id
+
 				AND sddh.term_date = tp.term_start
+
 				AND sddh.hr = tp.hr
+
 				AND sddh.period = tp.period
+
 				AND sddh.is_dst = tp.is_dst					
+
 			WHERE tp.hr IS NOT NULL
+
 										
+
 			INSERT INTO '' + @_temp_process_table + ''([Deal Ref ID], [Term Date], [Hour], [Minute],[Is DST], [Leg], [Volume], [PRICE])
+
 			SELECT deal_id
+
 				, term_start
+
 				, hr
+
 				, period
+
 				, is_dst
+
 				, 1
+
 				, ABS(SUM(volume)) volume
+
 				, SUM(amount)/IIF(ABS(SUM(volume)) = 0 ,1, ABS(SUM(volume)))
+
 			FROM #final_resultset 
+
 			GROUP BY term_start
+
 				, hr
+
 				, period
+
 				, is_dst
+
 				, deal_id
+
 			''
+
 					
+
 	EXEC(@_sql)
+
 							
+
 	
+
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result 
+
+
 
 CREATE TABLE #tmp_result (
 
+
+
 	[errorcode]			NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
+
 
 	[module]			NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
 
+
+
 	[area]				NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
+
 
 	[status]			NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
 
+
+
 	[message]			NVARCHAR(1000) COLLATE DATABASE_DEFAULT ,
+
+
 
 	[recommendation]	NVARCHAR(200) COLLATE DATABASE_DEFAULT 
 
+
+
 )
 
+
+
 --select @_temp_process_table
+
 --exec(''select * from '' + @_temp_process_table)
+
 --return
+
+
+
 
 
 DECLARE @_err_msg NVARCHAR(200) = ''No source deals found to process.''
 
+
+
 --Skip to delete source position if source deals are not found.			
+
 IF EXISTS(SELECT 1 FROM #position_deals)
+
 BEGIN
+
 	DROP TABLE IF EXISTS #dest_sddh
+
 	CREATE TABLE #dest_sddh(source_deal_header_id INT, deal_id NVARCHAR(400), source_deal_detail_id INT, term_date DATETIME, hr VARCHAR(5), is_dst BIT)
 
+
+
 	INSERT INTO #dest_sddh(source_deal_header_id, deal_id, source_deal_detail_id, term_date, hr, is_dst)
+
 	select sdh.source_deal_header_id, sdh.deal_id, sddh.source_deal_detail_id, sddh.term_date, sddh.hr, sddh.is_dst
+
 	from source_deal_header sdh
+
 	INNER JOIN #process_deals pd ON pd.deal_id = sdh.deal_id
+
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+
 	INNER JOIN source_deal_detail_hour sddh ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+
 	where 1 = 1
+
 		AND sddh.term_date BETWEEN @_term_start AND @_term_end
-		
-	DROP TABLE IF EXISTS #deleted_dest_deal	
-	CREATE TABLE #deleted_dest_deal(source_deal_detail_id INT)
+
 		
 
+	DROP TABLE IF EXISTS #deleted_dest_deal	
+
+	CREATE TABLE #deleted_dest_deal(source_deal_detail_id INT)
+
+		
+
+
+
 	SET @_sql = ''
+
 			--SELECT sddh.source_deal_detail_id
+
 			DELETE sddh
+
 			OUTPUT DELETED.source_deal_detail_id
+
 			INTO #deleted_dest_deal(source_deal_detail_id)
+
 			FROM #dest_sddh dest
+
 			INNER JOIN source_deal_detail_hour sddh ON sddh.source_deal_detail_id = dest.source_deal_detail_id
+
 				AND sddh.term_date= dest.term_date
+
 				AND sddh.hr= dest.hr
+
 				AND sddh.is_dst= dest.is_dst
+
 			LEFT JOIN '' + @_temp_process_table + '' src On src.[Deal Ref ID] = dest.deal_id AND src.[Term Date] = dest.term_date
+
 			WHERE src.[Deal Ref ID] IS NULL''
+
 	--select @_sql
+
 	EXEC(@_sql)
+
 	--return
 
 
+
+
+
 	DROP TABLE IF EXISTS #calc_position_deal
+
 	CREATE TABLE #calc_position_deal(source_deal_header_id INT, source_deal_detail_id INT)
 
+
+
 	INSERT INTO #calc_position_deal 
+
 	SELECT DISTINCT sdh.source_deal_header_id, sdd.source_deal_detail_id 
+
 	FROM #deleted_dest_deal d
+
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = d.source_deal_detail_id
+
 	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
 
+
+
 	IF EXISTS(SELECT 1 FROM #calc_position_deal)
+
 	BEGIN
+
 		--Run postion calc.	
+
 		SET @_err_msg = ''Position not found for all terms. Destination deal position recalculated accordingly.''
 
+
+
 		DECLARE @_after_insert_process_table NVARCHAR(200), @_job_name   NVARCHAR(300), @_jobs_process_id NVARCHAR(50) = dbo.FNAGETNewID()
+
 		SET @_after_insert_process_table = dbo.FNAProcessTableName(''report_position'', @_user_name, @_jobs_process_id)
+
 		EXEC (''CREATE TABLE '' + @_after_insert_process_table + ''( source_deal_header_id INT, source_deal_detail_id INT)'')
+
 		
+
 		SET @_sql = ''INSERT INTO '' + @_after_insert_process_table + ''(source_deal_header_id, source_deal_detail_id) 
+
 					SELECT source_deal_header_id, source_deal_detail_id
+
 					FROM  #calc_position_deal
+
 					''
+
 					--select @_sql
+
 		EXEC (@_sql)
+
 		
+
 		SET @_sql = '' spa_calc_deal_position_breakdown NULL,'''''' + @_jobs_process_id+ ''''''''
 
+
+
 		SET @_job_name = ''storage_st_jobs_'' + @_jobs_process_id
+
  		
+
 		EXEC spa_run_sp_as_job @_job_name, @_sql, ''spa_calc_deal_position_breakdown'', @_user_name
+
 	END
+
 END
 
+
+
 SET @_sql = ''IF EXISTS(select 1 from '' + @_temp_process_table + '')
+
 	BEGIN
+
 		EXEC spa_ixp_rules  @flag=''''t''''
+
 							, @process_id = '''''' + @_process_id + ''''''
+
 							, @ixp_rules_id = '''''' +  CAST(@_import_rule_id AS VARCHAR(10)) + ''''''
+
 							, @run_table = '''''' +  @_temp_process_table + ''''''
+
 							, @source = 21400
+
 							, @execute_in_queue = 0
 
+
+
 	END
+
 	ELSE
+
 	SELECT ''''Error'''', ''''Data Import'''', ''''Run Process'''', ''''error'''', '''''' + @_err_msg + '''''',''''''''
+
 ''
 
+
+
 INSERT INTO #tmp_result (errorcode, module, area, [status], [message], recommendation) 
+
 EXEC(@_sql)
+
+
+
+
 
 
 
 declare @_debug_tbl VARCHAR(200) = ''adiha_process.dbo.storage_st_process_'' + replace(convert(varchar, getdate(),101),''/'','''') + replace(convert(varchar, getdate(),108),'':'','''')
+
 --select @_debug_tbl
 
+
+
 SET @_sql = ''
+
 SELECT 
+
     CAST('''''' + @_term_start + '''''' AS DATE) term_start,
+
 	CAST('''''' + @_term_end + '''''' AS DATE) term_end,	
+
 	'''''' + @_sub_book_id + '''''' sub_book_id,
+
 	'''''' + @_template_id + '''''' template_id,
+
 	'''''' + @_buy_sell + '''''' buy_sell,
+
 	'''''' + @_destination_deal_id + '''''' destination_deal_id,
+
 	'''''' + @_location_id + '''''' location_id,
+
 	'''''' + @_deal_type_id + '''''' deal_type_id,
+
 	'''''' + @_temp_process_table + '''''' temp_process_table,
+
 	'''''' + REPLACE(@_sql,'''''''','''''''''''') + '''''' exec_stmt,
+
     [status],
+
 	[errorcode],
+
 	[module],
+
 	[area],
+
 	[message],
+
 	[recommendation]
+
 INTO '' + @_debug_tbl + ''
+
 FROM #tmp_result''
+
+
 
 EXEC(@_sql)
 
 
+
+
+
 SELECT 
+
     CAST(@_term_start AS DATE) term_start,
+
 	CAST(@_term_end AS DATE) term_end,
+
 	
+
 	''@sub_id'' sub_id,
+
 	''@stra_id'' stra_id,
+
 	''@book_id'' book_id,
+
 	@_sub_book_id sub_book_id,
+
 	@_template_id template_id,
+
 	@_buy_sell buy_sell,
+
 	@_destination_deal_id destination_deal_id,
+
 	@_location_id location_id, 
+
 	@_deal_type_id deal_type_id,
+
     [status],
+
 	[errorcode],
+
 	[module],
+
 	[area],
+
 	[message],
+
 	[recommendation]
+
+
 
 --[__batch_report__] 
 
+
+
 FROM #tmp_result
+
+
+
+
 
 
 
