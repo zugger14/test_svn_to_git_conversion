@@ -1219,7 +1219,7 @@
         
         var flow_date_from = $('#filter_set_hidden').attr('flow_date_from');
         var flow_date_to = $('#filter_set_hidden').attr('flow_date_to');
-        var round = (granularity == '982' ? 2 : 3 );
+        var round = (granularity == '982' ? 4 : 3 );
         var param_uom_id = (uom == '' ? 'NULL' : uom);
         var exec_call = "EXEC "+SPA_FLOW_OPTIMIZATION_SP+" @flag='p', @uom=" + param_uom_id + ", @flow_date_from='" + flow_date_from 
             + "',  @flow_date_to='" + flow_date_to 
