@@ -161,12 +161,18 @@ declare @flag CHAR(50),
 	
 EXEC dbo.spa_drop_all_temp_table
 
-EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar';
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
-	select	@flag = 's2'
-		, @process_id = '8B614E8F_AEE4_41C4_86E0_DC7211A8B42C112'
-		, @xml_manual_vol = '<Root><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="18" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="19" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="20" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="21" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="22" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="23" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/><PSRecordset from_loc_id="2927" to_loc_id="2852" path_id="313" contract_id="8379" hour="24" received="18.000000000" delivered="18.000000" path_rmdq="982.000000000"/></Root>'
-		, @call_from = 'flow_auto'
+	select	@flag='s1'
+,@process_id='0946A213_4F2D_4A9E_B275_44FE94590E7C'
+,@delivery_path='310'
+,@contract_id='8333'
+,@flow_date_from='2020-01-01'
+,@granularity='982'
+,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24'
+,@from_location='2852'
+,@to_location='2887'
+,@round=4
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -4054,25 +4060,26 @@ BEGIN
 
 							 AS NUMERIC(38,20))) AS VARCHAR(100)) 
 				WHEN ''Fuel'' THEN CAST(cd.loss_factor AS VARCHAR(100))
-				WHEN ''Rec'' THEN dbo.FNARemoveTrailingZero(ROUND
-																	(ISNULL
-																		(	cd.received,
-																			[dbo].[FNAGetGasSupplyDemandVol](supply_pos.position, demand_pos.position, IIF(to_loc_grp_name = ''storage'', ''storage_injection'', ''''))
-																			
-																		)
-																		, ' + CAST(@round AS VARCHAR(10)) + '
-																	)
-																)
+				WHEN ''Rec'' THEN	CAST(
+										CAST(
+											ISNULL(cd.received,
+												[dbo].[FNAGetGasSupplyDemandVol](supply_pos.position, demand_pos.position, IIF(to_loc_grp_name = ''storage'', ''storage_injection'', ''''))
+											) 
+											AS NUMERIC(20, ' + CAST(@round AS VARCHAR(10)) + ')
+										)
+										AS VARCHAR(50)
+									)
+																
 
-				WHEN ''Del'' THEN dbo.FNARemoveTrailingZero(ROUND
-																	(ISNULL
-																		(   cd.delivered,
-																			[dbo].[FNAGetGasSupplyDemandVol](supply_pos.position, demand_pos.position, IIF(to_loc_grp_name = ''storage'', ''storage_injection'', ''''))
-																			
-																		)
-																		, ' + CAST(@round AS VARCHAR(10)) + '
-																	)
-																)
+				WHEN ''Del'' THEN	CAST(
+										CAST(
+											ISNULL(cd.delivered,
+												[dbo].[FNAGetGasSupplyDemandVol](supply_pos.position, demand_pos.position, IIF(to_loc_grp_name = ''storage'', ''storage_injection'', ''''))
+											) 
+											AS NUMERIC(20, ' + CAST(@round AS VARCHAR(10)) + ')
+										)
+										AS VARCHAR(50)
+									)
 				ELSE NULL END [value]
 			
 		FROM ' + @contractwise_detail_mdq_hourly + ' cd

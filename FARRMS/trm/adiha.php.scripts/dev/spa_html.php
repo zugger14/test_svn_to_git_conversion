@@ -755,6 +755,16 @@ $build_exec_code = [];
                         $clm_sub_total = array("Sub-total", "", "", "", "", "", "", "", "", "", "");
                         $sub_total_clm = 0;
                     }
+                } elseif (strpos($sql, "spa_storage_position_report") != false) {
+                    $report_name = "spa_storage_position_report ";
+                    
+                    if ($fields == 11) {
+                        $clm_total = array("Total", "", "", "", "", "", "", "", "", "", ""); 
+                        $clm_total_format = array("N", "N", "N", "$." . str_replace("'", "", $round_no), "$." . str_replace("'", "", $round_no), "$." . str_replace("'", "", $round_no), "$." . str_replace("'", "", $round_no), "N", "$." . str_replace("'", "", $round_no), "$." . str_replace("'", "", $round_no), "N");
+                        $report_total_clm_start = -1;
+                        $clm_sub_total = array("Sub-total", "", "", "", "", "", "", "", "", "", "");
+                        $sub_total_clm = -1;
+                    }
                 } else if (strpos($sql, "spa_storage_position_report_sw") != false) {
                     if ($fields == 15) {
                         $report_name = "spa_storage_position_report_sw";
