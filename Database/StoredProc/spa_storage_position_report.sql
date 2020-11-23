@@ -924,8 +924,8 @@ BEGIN
 				a.[Location],
 				dbo.fnadateformat(ISNULL(NULLif(a.[Date], ''''), sdh.entire_term_start)) [Date]  ,
 				a.Counterparty
-				,ROUND(' + CASE @deal_type WHEN 'a' THEN ' udf_val.[Ending Balance] * -1' when 'i' then ' a.[Injection]' when 'w' then ' a.[Withdrawal]' END + ', 2) Volume,
-				ROUND(' + CASE @deal_type WHEN 'i' then 'wa.deal_price' when 'a' then  'a.fixed_price' else 'tm.wacog' end+',4) Price
+				,ROUND(' + CASE @deal_type WHEN 'a' THEN ' udf_val.[Ending Balance] * -1' when 'i' then ' a.[Injection]' when 'w' then ' a.[Withdrawal]' END + ', ' + CAST(@round AS VARCHAR(10)) + ') Volume,
+				ROUND(' + CASE @deal_type WHEN 'i' then 'wa.deal_price' when 'a' then  'a.fixed_price' else 'tm.wacog' end+', ' + CAST(@round AS VARCHAR(10)) + ') Price
 				, a.[UOM]
 				' + @str_batch_table + '
 			FROM #temp a
