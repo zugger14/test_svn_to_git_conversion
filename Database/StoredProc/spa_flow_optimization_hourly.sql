@@ -4065,7 +4065,7 @@ BEGIN
 											ISNULL(cd.received,
 												[dbo].[FNAGetGasSupplyDemandVol](supply_pos.position, demand_pos.position, IIF(to_loc_grp_name = ''storage'', ''storage_injection'', ''''))
 											) 
-											AS NUMERIC(20, ' + CAST(@round AS VARCHAR(10)) + ')
+											AS NUMERIC(38, ' + CAST(@round AS VARCHAR(10)) + ')
 										)
 										AS VARCHAR(50)
 									)
@@ -4076,7 +4076,7 @@ BEGIN
 											ISNULL(cd.delivered,
 												[dbo].[FNAGetGasSupplyDemandVol](supply_pos.position, demand_pos.position, IIF(to_loc_grp_name = ''storage'', ''storage_injection'', ''''))
 											) 
-											AS NUMERIC(20, ' + CAST(@round AS VARCHAR(10)) + ')
+											AS NUMERIC(38, ' + CAST(@round AS VARCHAR(10)) + ')
 										)
 										AS VARCHAR(50)
 									)
