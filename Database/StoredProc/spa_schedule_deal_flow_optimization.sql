@@ -5134,8 +5134,8 @@ BEGIN -- Insert/Update Deal data
 		, u.[udf_template_id]
 		, CASE uddft.field_id
 			WHEN -5614 THEN CAST((p.leg1_volume - p.leg2_volume) / p.leg1_volume AS VARCHAR)	 -- loss_factor
-			WHEN @delivery_path_id THEN CAST(CAST(ISNULL(p.single_path_id, p.path_id) AS NUMERIC(38,20)) AS VARCHAR)
-			WHEN @grp_delivery_path_id THEN CASE WHEN p.group_path = 'y' THEN CAST(CAST(p.path_id AS NUMERIC(38,20)) AS VARCHAR) ELSE NULL END
+			WHEN @delivery_path_id THEN CAST(ISNULL(p.single_path_id, p.path_id) AS VARCHAR)
+			WHEN @grp_delivery_path_id THEN CASE WHEN p.group_path = 'y' THEN CAST(p.path_id AS VARCHAR) ELSE NULL END
 			ELSE u.udf_value
 		 END
 		, dbo.fnadbuser()
@@ -5164,8 +5164,8 @@ BEGIN -- Insert/Update Deal data
 		,u.[udf_template_id]
 		, CASE uddft.field_id
 			WHEN -5614 THEN CAST((p.leg1_volume-p.leg2_volume) / p.leg1_volume AS VARCHAR)	 -- loss_factor
-			WHEN @delivery_path_id THEN CAST(CAST(ISNULL(p.single_path_id,p.path_id) AS NUMERIC(38,20)) AS VARCHAR)
-			WHEN @grp_delivery_path_id THEN CASE WHEN p.group_path='y' THEN CAST(CAST(p.path_id AS NUMERIC(38,20)) AS VARCHAR) ELSE NULL END
+			WHEN @delivery_path_id THEN CAST(ISNULL(p.single_path_id,p.path_id) AS VARCHAR)
+			WHEN @grp_delivery_path_id THEN CASE WHEN p.group_path='y' THEN CAST(p.path_id AS VARCHAR) ELSE NULL END
 			ELSE u.udf_value
 		END		
 	FROM #tmp_vol_split_deal_final_grp p
