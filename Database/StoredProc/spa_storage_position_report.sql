@@ -53,6 +53,7 @@ CREATE PROC [dbo].[spa_storage_position_report]
 	@drill_contract_id INT = NULL, ---i=injection,w=withdraw
 	@deal_type VARCHAR(MAX) = NULL,
 	@call_from VARCHAR(50) = NULL,
+	@round TINYINT = 18,
 	@batch_process_id VARCHAR(250) = NULL,
 	@batch_report_param VARCHAR(500) = NULL, 
 	@enable_paging INT = 0,		--'1' = enable, '0' = disable
@@ -60,8 +61,7 @@ CREATE PROC [dbo].[spa_storage_position_report]
 	@page_no INT = NULL,
 	@is_pivot char = NULL,
 	@volume_conversion INT = NULL,
-	@counterparty_id VARCHAR(5000) = NULL,
-	@round TINYINT = 18
+	@counterparty_id VARCHAR(5000) = NULL
 	
 AS
 SET NOCOUNT ON
@@ -651,7 +651,7 @@ BEGIN
 					ELSE 
 				  		CONVERT(VARCHAR(10), a.[Date], 120) 
 					END
-				+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL')+ ',NULL,NULL' + '&rnd=' + CAST(@round AS VARCHAR(10)),
+				+ ''',NULL,' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL')+ ',NULL,NULL,' + CAST(@round AS VARCHAR(10)) + '&rnd=' + CAST(@round AS VARCHAR(10)),
 				CASE WHEN a.[Date] = '1900-01-01' 
 					THEN '<' +dbo.fnadateformat(@term_start) 
 				WHEN a.[Date] <= @term_end AND @call_from = 'STORAGE_GRID'	
@@ -793,7 +793,7 @@ BEGIN
 									THEN '<' + CONVERT(VARCHAR(10), @term_start, 120) 
 									ELSE CONVERT(VARCHAR(10), a.[Date], 120)
 								END
-							+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL') + ',NULL,NULL'
+							+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL') + ',NULL,NULL,' + CAST(@round AS VARCHAR(10)) + '&rnd=' + CAST(@round AS VARCHAR(10))
 					)
 					, CASE WHEN a.[Date] = '1900-01-01' THEN '<' + dbo.fnadateformat(@term_start) 
 							ELSE dbo.fnadateformat(a.[Date]) 
@@ -802,13 +802,13 @@ BEGIN
 				)  [Term],  
 				[dbo].[FNAHyperHTML](@spa + CAST(MAX(a.location_id) AS VARCHAR(30)) + ','''
 					+ CASE WHEN a.[Date] = '1900-01-01' THEN '<' + CONVERT(VARCHAR(10), @term_start, 120) ELSE CONVERT(VARCHAR(10), a.[Date], 120) END
-					+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL') + ',''i'',NULL' + '&rnd=' + CAST(@round AS VARCHAR(10)),
+					+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL') + ',''i'',NULL,' + CAST(@round AS VARCHAR(10)) + '&rnd=' + CAST(@round AS VARCHAR(10)),
 					FORMAT(SUM(a.[Injection]), @format_round) , NULL)  
 				  [Injection],
 				SUM(uv.Injection) InjectionAmount,
 				[dbo].[FNAHyperHTML](@spa + CAST(MAX(a.location_id) AS VARCHAR(30)) + ','''
 					+ CASE WHEN a.[Date] = '1900-01-01' THEN '<' + CONVERT(VARCHAR(10), @term_start, 120) ELSE CONVERT(VARCHAR(10), a.[Date], 120) END
-					+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL') + ',''w'',NULL',
+					+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL') + ',''w'',NULL,' + CAST(@round AS VARCHAR(10)) + '&rnd=' + CAST(@round AS VARCHAR(10)),
 					FORMAT(SUM(a.[Withdrawal]), @format_round) , NULL) [Withdrawal],
 				FORMAT(SUM(uv.Withdrawal), @format_round) [WithdrawalAmount],
 				FORMAT(AVG(uv.fixed_price), @format_round) WACOG,--ROUND(SUM(wa.wacog), 4)  WACOG,

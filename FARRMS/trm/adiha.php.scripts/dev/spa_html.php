@@ -755,12 +755,27 @@ $build_exec_code = [];
                         $clm_sub_total = array("Sub-total", "", "", "", "", "", "", "", "", "", "");
                         $sub_total_clm = 0;
                     }
-                } elseif (strpos($sql, "spa_storage_position_report") != false) {
+                } else if (strpos($sql, "spa_storage_position_report_sw") != false) {
+                    if ($fields == 15) {
+                        $report_name = "spa_storage_position_report_sw";
+                        $clm_total = array("Total", "", "", "", "", "", "", "", "$.2", "$.2", "", "", "", "", "");
+                        $clm_total_format = array("N", "N", "N", "N", "N", "N", "N", "N", "$.2", "$.2", "N", "N", "N", "N", "N");
+                        $report_total_clm_start = 1;
+                        $clm_sub_total = '';//array("Sub-total", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
+                        $sub_total_clm = -1;
+                    }
+				} elseif (strpos($sql, "spa_storage_position_report") != false) {
                     $report_name = "spa_storage_position_report ";
-                    
+					//if call from optimization (level 0) set format as number with rounding parmeterized, else drill reports (level 1) will have link on inj/with vol column hence column format set to "N" [Note: if report column data is link which is text, "$.N" will give issue, hence use "N"]
+                    if ($arrayR[18] == "'Optimization'") {
+						$col_frmat_inj_with_vol_col = "$." . str_replace("'", "", $round_no);
+					} else {
+						$col_frmat_inj_with_vol_col = "N";
+					}
+					
                     if ($fields == 11) {
                         $clm_total = array("Total", "", "", "", "", "", "", "", "", "", ""); 
-                        $clm_total_format = array("N", "N", "N", "$." . str_replace("'", "", $round_no), "$." . str_replace("'", "", $round_no), "$." . str_replace("'", "", $round_no), "$." . str_replace("'", "", $round_no), "N", "$." . str_replace("'", "", $round_no), "$." . str_replace("'", "", $round_no), "N");
+                        $clm_total_format = array("N", "N", "N", $col_frmat_inj_with_vol_col, "$." . str_replace("'", "", $round_no), $col_frmat_inj_with_vol_col, "$." . str_replace("'", "", $round_no), "N", "$." . str_replace("'", "", $round_no), "$." . str_replace("'", "", $round_no), "N");
                         $report_total_clm_start = -1;
                         $clm_sub_total = array("Sub-total", "", "", "", "", "", "", "", "", "", "");
                         $sub_total_clm = -1;
@@ -771,16 +786,7 @@ $build_exec_code = [];
                         $clm_sub_total = array("Sub-total", "", "", "", "", "", "", "");
                         $sub_total_clm = -1;
                     }
-                } else if (strpos($sql, "spa_storage_position_report_sw") != false) {
-                    if ($fields == 15) {
-                        $report_name = "spa_storage_position_report_sw";
-                        $clm_total = array("Total", "", "", "", "", "", "", "", "$.2", "$.2", "", "", "", "", "");
-                        $clm_total_format = array("N", "N", "N", "N", "N", "N", "N", "N", "$.2", "$.2", "N", "N", "N", "N", "N");
-                        $report_total_clm_start = 1;
-                        $clm_sub_total = '';//array("Sub-total", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
-                        $sub_total_clm = -1;
-                    }
-				} else if (strpos($sql, "spa_flow_optimization_hourly") != false) { //position report for flow optimization hourly grid
+                } else if (strpos($sql, "spa_flow_optimization_hourly") != false) { //position report for flow optimization hourly grid
 					$report_name = 'spa_flow_optimization_hourly';
 					if ($fields == 33) { 
 						$clm_total = array("Total", "", "", "", "", "", "", ""
