@@ -31,9 +31,34 @@
         $return_value1 = readXMLURL($grid_sp);
         $col_list = $return_value1[0][2];
         $label_list = $return_value1[0][3];
+
+        $rights_storage_rate_schedule_add_save = '20008901';
+        $rights_storage_rate_schedule_delete = '20008902';
+        $rights_charge_type_add_save = '20008904';
+        $rights_charge_type_delete = '20008905';
+
+        list (
+            $has_rights_storage_rate_schedule_add_save,
+            $has_rights_storage_rate_schedule_delete,
+            $has_rights_charge_type_add_save,
+            $has_rights_charge_type_delete
+
+        ) = build_security_rights(
+
+            $rights_storage_rate_schedule_add_save,
+            $rights_storage_rate_schedule_delete,
+            $rights_charge_type_add_save,
+            $rights_charge_type_delete
+
+        )
     ?>
 <body>
 <script type="text/javascript">
+    var has_rights_storage_rate_schedule_add_save = <?php echo(($has_rights_storage_rate_schedule_add_save) ? $rights_storage_rate_schedule_add_save : '0');?>;
+    var has_rights_storage_rate_schedule_delete = <?php echo(($has_rights_storage_rate_schedule_delete) ? $rights_storage_rate_schedule_delete : '0');?>;
+    var has_rights_charge_type_add_save = <?php echo(($has_rights_charge_type_add_save) ? $rights_charge_type_add_save : '0');?>;
+    var has_rights_charge_type_delete = <?php echo(($has_rights_charge_type_delete) ? $rights_charge_type_delete : '0');?>;
+
     /*This is to decresase the layout size cell  in the standard form*/ 
     name_space.post_form_load = function(win, tab_id) {
         var object_id = (tab_id.indexOf("tab_") != -1) ? tab_id.replace("tab_", "") : tab_id;       
@@ -264,6 +289,19 @@
             get_loaded_grid();
         }
 
+        if(!has_rights_storage_rate_schedule_add_save){
+            name_space.menu.setItemDisabled('add');
+        }
+        if(!has_rights_storage_rate_schedule_delete){
+            name_space.menu.setItemDisabled('delete');
+        }
+
+        name_space.grid.attachEvent("onRowSelect",function(rowId,cellIndex){
+            if(!has_rights_storage_rate_schedule_delete){
+                name_space.menu.setItemDisabled('delete');
+            }
+        });
+
         name_space.grid_activities = function() {
             var tab_id = name_space.tabbar.getActiveTab();
 
@@ -275,9 +313,21 @@
             var detail_tabs = tab_obj.getAllTabs();
             var id = detail_tabs.toString().split('_')[2];
              
+            if(!has_rights_storage_rate_schedule_add_save){
+                name_space.tabbar.cells(tab_id).getAttachedToolbar().disableItem('save');
+            }
             $.each(detail_tabs, function(index,value) {
                 layout_obj = tab_obj.cells(value).getAttachedObject();
                 layout_obj.cells("a").setHeight(100);
+                if(!has_rights_charge_type_add_save){
+                    layout_obj.cells('b').getAttachedMenu().setItemDisabled('add');
+                    layout_obj.cells('c').getAttachedMenu().setItemDisabled('add');
+                }
+
+                if(!has_rights_charge_type_delete){
+                    layout_obj.cells('b').getAttachedMenu().setItemDisabled('delete');
+                    layout_obj.cells('c').getAttachedMenu().setItemDisabled('delete');
+                }
                 layout_obj.forEachItem(function(cell) {
                     attached_obj = cell.getAttachedObject();
                     
@@ -402,6 +452,10 @@
                                 win_formula_id.setModal(true);
                                 win_formula_id.attachURL(src, false);
                             }
+                            
+                            if(!has_rights_charge_type_delete){
+                                layout_obj.cells('b').getAttachedMenu().setItemDisabled('delete');
+                            }
                         });
                         
                         grid_name_c = "variable_charge_" + object_id + ".grid_" + id;
@@ -425,6 +479,10 @@
                                 win_formula_id.centerOnScreen();
                                 win_formula_id.setModal(true);
                                 win_formula_id.attachURL(src, false);
+                            }
+                            
+                            if(!has_rights_charge_type_delete){
+                                layout_obj.cells('c').getAttachedMenu().setItemDisabled('delete');
                             }
                         });                        
                     }                                       
