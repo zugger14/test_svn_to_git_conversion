@@ -4979,7 +4979,7 @@ BEGIN -- Insert/Update Deal data
 		IF @call_from <> 'flow_auto'
 		BEGIN
 		SET @sql = 'UPDATE sddh
-					SET volume ' + CASE WHEN @reschedule = 1 THEN '=' ELSE '+=' END + ' CASE WHEN idd.leg = 1 THEN cdmh.received ELSE cdmh.delivered END 
+					SET volume = ' + CASE WHEN @reschedule = 1 THEN '' ELSE ' ISNULL(volume, 0) + ' END + ' CASE WHEN idd.leg = 1 THEN cdmh.received ELSE cdmh.delivered END 
 				FROM #inserted_deal_detail idd
 				INNER JOIN ' + @contract_detail_hourly + ' cdmh
 					ON idd.term_start = cdmh.term_start

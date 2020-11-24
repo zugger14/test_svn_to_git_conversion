@@ -1779,7 +1779,8 @@ BEGIN
 		, bk.book [book]
 		, NULL [from_deal]
 		, NULL [to_deal]
-		, sdh.description1 [nom_group]
+		, NULL [nom_group]
+		-- , sdh.description1 [nom_group]
 		, COALESCE(TRY_CONVERT(INT, sdv_pr.code), TRY_CONVERT(INT, sdh.description2), 168) [priority]
 		, sdh.counterparty_id
 		, sdh.contract_id
