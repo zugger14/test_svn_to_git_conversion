@@ -567,7 +567,7 @@ BEGIN
 		FROM	cached_curves_value s inner join 
 				cached_curves cc on cc.ROWID = s.Master_ROWID 		
 		WHERE	pricing_option=@pricing_option and term BETWEEN @Delivery_from AND @Delivery_to
-				AND value_type='s'	AND  term <= @settle_date
+				AND value_type='s'	AND  as_of_date <= @as_of_date
 								
 		--delete all forward values			
 		DELETE 	cached_curves_value 
@@ -585,7 +585,7 @@ BEGIN
 				cached_curves cc on cc.ROWID = s.Master_ROWID left join 
 				#curve_ids c on c.only_curve_id = cc.curve_id 		
 		WHERE	pricing_option=@pricing_option and term BETWEEN @Delivery_from AND @Delivery_to
-				AND value_type='s'	AND  term <= @settle_date
+				AND value_type='s'	AND  as_of_date <= @as_of_date
 				AND c.only_curve_id IS NOT NULL
 				
 		--delete all forward values			
@@ -613,7 +613,10 @@ BEGIN
 		SELECT cv.curve_id,convert(varchar(8),cv.maturity_date,120)+'01' lag_month, avg(cv.curve_value) curve_value 
 			, avg(cv.bid_value) bid_value, avg(cv.ask_value) ask_value,min(cv.maturity_date_fx) maturity_date_fx, MIN(cv.value_type) value_type
 		FROM #curve_value cv 
-		group by cv.curve_id ,convert(varchar(8),cv.maturity_date,120)+'01'--,cv.maturity_date_fx
+		group by cv.value_type,cv.curve_id ,convert(varchar(8),cv.maturity_date,120)+'01'--,cv.maturity_date_fx
+
+
+	
 			
 		CREATE TABLE #lag_term_curve_value(ROWID INT,strip_month_from INT ,lag_months INT ,strip_month_to INT ,curve_id INT ,delivery_month DATETIME ,lag_month DATETIME
 			,cv_value FLOAT, fx_value FLOAT	,bid_value FLOAT,ask_value FLOAT,bid_ask_value FLOAT, value_type VARCHAR(1) COLLATE DATABASE_DEFAULT)
@@ -677,7 +680,7 @@ BEGIN
 	    	
 		set @st='
 			insert into dbo.cached_curves_value (Master_ROWID,value_type,term,pricing_option,org_mid_value,as_of_date,curve_source_id,curve_value,bid_ask_curve_value,org_ask_value ,org_bid_value ,org_fx_value,create_ts)	
-			select v.rowid, case when delivery_month>'''+CONVERT(varchar(10),@settle_date,120)+''' then ''f'' else ''s'' end value_type,
+			select v.rowid,v.value_type value_type,
 			delivery_month,'+ cast(@pricing_option AS VARCHAR) +' pricing_option
 			,avg(v.cv_value) org_curve_value,'''+CONVERT(varchar(10),@as_of_date,120)+''' as_of_date,'+cast(@curve_source_id AS varchar)+' curve_source_id,'
 			+ CASE @pricing_option when 1 THEN '
@@ -701,7 +704,7 @@ BEGIN
 				,avg(v.ask_value) org_ask_value ,avg(v.bid_value) org_bid_value ,avg(v.fx_value) org_fx_value,getdate() create_ts
 			from #lag_term_curve_value v INNER JOIN cached_curves cc ON v.rowid=cc.rowid
 			where delivery_month BETWEEN ''' + convert(varchar(10),@Delivery_from,120) + ''' AND ''' + convert(varchar(10), @Delivery_to, 120) + '''
-			group by v.rowid,v.delivery_month,index_round_value,fx_round_value,total_round_value,cc.bid_ask_round_value
+			group by v.rowid,v.delivery_month,index_round_value,fx_round_value,total_round_value,cc.bid_ask_round_value,v.value_type
 		'
 		
 		EXEC spa_print @st
