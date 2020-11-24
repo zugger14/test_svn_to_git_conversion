@@ -3051,7 +3051,7 @@ BEGIN
         	LEFT JOIN source_minor_location sml ON sml.source_minor_location_id = tdd.location_id
         	LEFT JOIN static_data_value sdv_cntry ON sdv_cntry.value_id = sml.country
         	LEFT JOIN source_remit_non_standard srns ON td.source_deal_header_id = srns.source_deal_header_id
-        		AND srns.acer_submission_status IN (39501, 39502)--Submitted Deals on ACER
+        		AND srns.acer_submission_status = 39502 --Submitted Deals on ACER
         	LEFT JOIN static_data_value sdv_deal_status ON sdv_deal_status.value_id = td.deal_status
         	LEFT JOIN #temp_vol_final2 tvf ON td.source_deal_header_id = tvf.source_deal_header_id
         	LEFT JOIN source_uom tsu ON tvf.notional_quantity_unit = tsu.source_uom_id
@@ -3451,7 +3451,7 @@ BEGIN
 				LEFT JOIN time_zones tz ON tz.TIMEZONE_ID = sml.time_zone
 				LEFT JOIN static_data_value sdv_cntry ON sdv_cntry.value_id = sml.country
 				LEFT JOIN source_remit_standard src_remit ON td.source_deal_header_id=src_remit.source_deal_header_id 
-					AND src_remit.acer_submission_status IN (39501,39502)
+					AND src_remit.acer_submission_status = 39502
 				LEFT JOIN static_data_value sdv_deal_status ON sdv_deal_status.value_id = td.deal_status
 				LEFT JOIN #temp_vol_final2 tvf ON td.source_deal_header_id=tvf.source_deal_header_id
 				LEFT JOIN source_uom tsu ON tvf.notional_quantity_unit=tsu.source_uom_id
@@ -3807,7 +3807,7 @@ BEGIN
 				   [last_trading_date_and_time] = NULL,
 				   [transaction_timestamp] = CONVERT(VARCHAR(10), CAST(MAX(gmv_rid.[date]) AS DATETIME),126) + 'T' + MAX(gmv_rid.[time]), --This field should indicate the date each MP confirms the price and the quantity for the delivery period.
 				   [unique_transaction_id] = td.source_deal_header_id,
-				   [linked_transaction_id] = NULL,
+				   [linked_transaction_id] = td.source_deal_header_id,
 				   [linked_order_id] = NULL,
 				   [voice_brokered] = NULL,
 				   [Price] = CASE WHEN MAX(ts.volume) <> 0 THEN ABS(ROUND(MAX(ts.settlement_amount)/MAX(ts.volume), 5)) ELSE 0 END,---amount divided by volume
@@ -4542,7 +4542,6 @@ BEGIN
 			-- 42 is hardcoded length defined in excel uti generation logic
 			UPDATE srns
 			SET srns.unique_transaction_id = LEFT(srns.Hash_of_concatenated_values + REPLICATE('E', 42), 42) + RIGHT('00000' + CAST(srns.progressive_number AS VARCHAR), 3)
-			    ,srns.linked_transaction_id = IIF(@report_type = 39405, LEFT(srns.Hash_of_concatenated_values + REPLICATE('E', 42), 42) + RIGHT('00000' + CAST(srns.progressive_number AS VARCHAR), 3),linked_transaction_id)
 			FROM source_remit_standard srns
 			INNER JOIN #temp_strHash ts ON srns.source_deal_header_id = ts.source_deal_header_id
 			WHERE srns.process_id = @process_id
@@ -4789,9 +4788,9 @@ BEGIN
 
 			SELECT @process_id = dbo.FNAGETNEWID()
 					SELECT @user_name  = dbo.FNAdbuser()
-					SELECT @file_name = 'ECM_Remit_Feedback_' + CONVERT(VARCHAR(30), GETDATE(),112) + REPLACE(CONVERT(VARCHAR(30), GETDATE(),108),':','') + '.csv'
+					SELECT @file_name = 'Remit_Feedback_' + CONVERT(VARCHAR(30), GETDATE(),112) + REPLACE(CONVERT(VARCHAR(30), GETDATE(),108),':','') + '.csv'
 
-					SELECT @process_table = dbo.FNAProcessTableName('ecm_remit_feedback_', dbo.FNADBUser(), @process_id) 
+					SELECT @process_table = dbo.FNAProcessTableName('remit_feedback_', dbo.FNADBUser(), @process_id) 
 					SELECT @server_location = document_path
 					FROM connection_string 
 					SELECT @full_file_path = @server_location + '\temp_Note\' + @file_name
@@ -4810,21 +4809,21 @@ BEGIN
 					BEGIN
 						EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@output_result OUTPUT
 						INSERT INTO source_system_data_import_status (process_id, code, module, source, type, description)
-						SELECT @process_id, temp.[status], 'ECM Remit Feedback', 'ECM Remit Feedback', temp.[status], temp.error_description + ' ' + ISNULL(temp.error_details,'') + ' ' + ISNULL(temp.comment,'')
+						SELECT @process_id, temp.[status], 'Remit Feedback', 'Remit Feedback', temp.[status], temp.error_description + ' ' + ISNULL(temp.error_details,'') + ' ' + ISNULL(temp.comment,'')
 						FROM #temp_remit_xml_data temp
 						WHERE [status] IN ('Accepted','Rejected_Content')
 						SELECT @url = '../../adiha.php.scripts/dev/spa_html.php?__user_name__=' + @user_name + '&spa=exec spa_get_import_process_status ''' + @process_id + ''','''+@user_name+''''
-						SELECT @desc_success = 'ECM Remit Feedback captured with error. <a target="_blank" href="' + @url + '">Click here.</a>'
+						SELECT @desc_success = 'Remit Feedback captured with error. <a target="_blank" href="' + @url + '">Click here.</a>'
 					END
 					ELSE
 					BEGIN
 						EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@output_result OUTPUT
-						SET @desc_success = 'ECM Remit Feedback captured successfully.<br>'
+						SET @desc_success = 'Remit Feedback captured successfully.<br>'
 											+  '<b>Response :</b> ' + 'Success'
 					END
 
 					INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type)
-					SELECT DISTINCT au.user_login_id, 'ECM Remit Feedback' , ISNULL(@desc_success, 'Description is null'), NULL, NULL, 's',NULL, NULL,@process_id,NULL
+					SELECT DISTINCT au.user_login_id, 'Remit Feedback' , ISNULL(@desc_success, 'Description is null'), NULL, NULL, 's',NULL, NULL,@process_id,NULL
 					FROM dbo.application_role_user aru
 					INNER JOIN dbo.application_security_role asr ON aru.role_id = asr.role_id 
 					INNER JOIN dbo.application_users au ON aru.user_login_id = au.user_login_id
@@ -4841,10 +4840,10 @@ BEGIN
 							active_flag,
 							attachment_file_name
 						)		
-					SELECT DB_NAME() + ': ECM Remit Feedback',
+					SELECT DB_NAME() + ': Remit Feedback',
 						'Dear <b>' + MAX(au.user_l_name) + '</b><br><br>
 
-						 ECM Remit Feedback has been captured. Please check the Summary Report attachement in mail.',
+						 Remit Feedback has been captured. Please check the Summary Report attached in email.',
 						'noreply@pioneersolutionsglobal.com',
 						au.user_emal_add,
 						'n',

@@ -1203,7 +1203,7 @@ BEGIN
 				SELECT DB_NAME() + ': ECM Feedback',
 					'Dear <b>' + MAX(au.user_l_name) + '</b><br><br>
 
-					 ECM Feedback has been captured. Please check the Summary Report attachement in mail.',
+					 ECM Feedback has been captured. Please check the Summary Report attached in email.',
 					'noreply@pioneersolutionsglobal.com',
 					au.user_emal_add,
 					'n',
@@ -1518,7 +1518,7 @@ BEGIN
 		SELECT DB_NAME() + ': ECM Remit ACK Feedback',
 			'Dear <b>' + MAX(au.user_l_name) + '</b><br><br>
 
-			 ECM Remit ACK Feedback has been captured. Please check the Summary Report attachement in mail.',
+			 ECM Remit ACK Feedback has been captured. Please check the Summary Report attached in email.',
 			'noreply@pioneersolutionsglobal.com',
 			au.user_emal_add,
 			'n',
