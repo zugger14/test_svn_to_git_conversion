@@ -63,7 +63,7 @@ SELECT
 	m.source_deal_detail_id,
 	m.rowid
 	,g.curve_id physical_curve_id
-	,g.location_id
+	,null location_id
 	,g.commodity_id 
 	,g.counterparty_id
 	,g.trader_id
@@ -80,6 +80,6 @@ SELECT
 	,ssbm.source_system_book_id4
 	,ssbm.fas_book_id
 FROM [dbo].[report_hourly_position_breakdown_main] m
- left join dbo.position_report_group_map g on g.rowid=m.rowid
-left join dbo.source_system_book_map ssbm on ssbm.book_deal_type_map_id=g.subbook_id
+	left join dbo.position_report_group_map g on g.rowid=m.rowid
+	left join dbo.source_system_book_map ssbm on ssbm.book_deal_type_map_id=g.subbook_id
 GO
