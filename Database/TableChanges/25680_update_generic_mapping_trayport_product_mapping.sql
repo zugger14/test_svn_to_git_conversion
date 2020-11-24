@@ -361,7 +361,7 @@ IF NOT EXISTS (
 BEGIN
     INSERT INTO user_defined_fields_template (field_name, Field_label, Field_type, data_type, is_required, sql_string, udf_type, sequence, field_size, field_id)
     SELECT iose.value_id,
-           'UOM',
+           'Position UOM',
            'd',
            'int',
            'n',
