@@ -12,10 +12,10 @@ BEGIN TRY
 			inserted_paramset_id int null
 
 		)
-		IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='DFD68A36_033A_40B7_8393_8FB8A695074D')
+		IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='F0F8AF71_EC8F_4047_8D08_7E4B73E52852')
 		BEGIN
 			declare @report_id_to_delete int
-			select @report_id_to_delete = report_id from report where report_hash = 'DFD68A36_033A_40B7_8393_8FB8A695074D'
+			select @report_id_to_delete = report_id from report where report_hash = 'F0F8AF71_EC8F_4047_8D08_7E4B73E52852'
 
 			insert into #paramset_map(deleted_paramset_id, paramset_hash)
 			select rp.report_paramset_id, rp.paramset_hash
@@ -32,11 +32,11 @@ BEGIN TRY
 
 		declare @report_copy_name varchar(200)
 		
-		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'EOD - Calc Cache Curve')
+		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'EOD - Calc Cache Curve-Annual Curves')
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'EOD - Calc Cache Curve' [name], 'dev_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, 'DFD68A36_033A_40B7_8393_8FB8A695074D' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'EOD - Calc Cache Curve-Annual Curves' [name], 'dev_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, 'F0F8AF71_EC8F_4047_8D08_7E4B73E52852' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
@@ -63,7 +63,7 @@ BEGIN TRY
 	
 	SELECT @report_id_data_source_dest = report_id
 	FROM report r
-	WHERE r.[name] = 'EOD - Calc Cache Curve'
+	WHERE r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 
 	IF NOT EXISTS (SELECT 1 
 	           FROM data_source 
@@ -95,16 +95,16 @@ ELSE
 	SELECT @_curve_ids = COALESCE(@_curve_ids + '','', '''') + CAST(cc.curve_id AS VARCHAR(100))
 	FROM cached_curves cc
 	INNER JOIN source_price_curve_def spcd on spcd.source_curve_def_id=cc.curve_id
-	and spcd.Granularity=980
+	and spcd.Granularity=993
 	--INNER JOIN static_data_value sdv on spcd.index_group=sdv.value_id
 	--WHERE spcd.formula_id IS NOT NULL and sdv.code=''Partner''
---select * from source_price_curve_def where Granularity=980 source_curve_def_id=103
---SELECT CONVERT(VARCHAR(10), DATEADD(YEAR, DATEDIFF(YEAR, 0,  ''2020-11-23''), 0), 120)
+--select * from source_price_curve_def where source_curve_def_id=103
+--SELECT CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0,  ''2020-11-23''), 0), 120)
 --SELECT DATEADD(month, DATEDIFF(month, 0, @mydate), 0)
---SELECT @_tenor_to = CONVERT(VARCHAR(10), CAST(YEAR(DATEADD(YEAR, 0, @_as_of_date)) AS VARCHAR(4)) + ''-12-31 23:00:00.000'' , 120)
+--SELECT @_tenor_to = CONVERT(VARCHAR(10), CAST(YEAR(DATEADD(YEAR, 5, @_as_of_date)) AS VARCHAR(4)) + ''-12-31 23:00:00.000'' , 120)
 
 SELECT @_delivery_from = CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0,  @_as_of_date), 0), 120)
-SELECT @_delivery_to = CONVERT(VARCHAR(10), DATEADD(YEAR, DATEDIFF(YEAR, 0,  @_as_of_date)+2, -1), 120)
+SELECT @_delivery_to = CONVERT(VARCHAR(10), DATEADD(YEAR, DATEDIFF(YEAR, 0,  @_as_of_date)+5, 0), 120)
 
 
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result
@@ -353,6 +353,40 @@ WHERE 1=1', report_id = @report_id_data_source_dest,
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
 	           WHERE ds.[name] = 'Calc Cache Curve'
+	            AND dsc.name =  'process_id'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Process Id'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Calc Cache Curve'
+			AND dsc.name =  'process_id'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'process_id' AS [name], 'Process Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Calc Cache Curve'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Calc Cache Curve'
 	            AND dsc.name =  'curve_ids'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -455,40 +489,6 @@ WHERE 1=1', report_id = @report_id_data_source_dest,
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
 	           WHERE ds.[name] = 'Calc Cache Curve'
-	            AND dsc.name =  'process_id'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Process Id'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Calc Cache Curve'
-			AND dsc.name =  'process_id'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'process_id' AS [name], 'Process Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Calc Cache Curve'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Calc Cache Curve'
 	            AND dsc.name =  'as_of_date'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -553,31 +553,31 @@ COMMIT TRAN
 		
 
 	INSERT INTO report_page(report_id, [name], report_hash, width, height)
-	SELECT @report_id_dest AS report_id, 'EOD - Calc Cache Curve' [name], 'DFD68A36_033A_40B7_8393_8FB8A695074D' report_hash, 11.5 width,5.5 height
+	SELECT @report_id_dest AS report_id, 'EOD - Calc Cache Curve-Annual Curves' [name], 'F0F8AF71_EC8F_4047_8D08_7E4B73E52852' report_hash, 11.5 width,5.5 height
 	
 
 		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
-		SELECT TOP 1 rpage.report_page_id, 'EOD - Calc Cache Curve', '2721D46D_B775_4661_B788_7620CCA00121', 2,'','','.xlsx',',', 
+		SELECT TOP 1 rpage.report_page_id, 'EOD - Calc Cache Curve-Annual Curves', '05C15C52_11F0_44EF_B28D_B16EBECC8FD3', 2,'','','.xlsx',',', 
 		-100000,'n','n',0	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
-			on rpage.[name] = 'EOD - Calc Cache Curve'
+			on rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 		ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 	
 
 		INSERT INTO report_dataset_paramset(paramset_id, root_dataset_id, where_part, advance_mode)
 		SELECT TOP 1 rp.report_paramset_id AS paramset_id, rd.report_dataset_id AS root_dataset_id, NULL AS where_part, 0
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Calc Cache Curve'
+			ON rp.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = @report_id_dest
 			AND rd.[alias] = 'ccc'
@@ -585,15 +585,43 @@ COMMIT TRAN
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'EOD - Calc Cache Curve-Annual Curves'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'ccc'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'ccc'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Calc Cache Curve' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'process_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Calc Cache Curve'
+			ON rp.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'ccc'
@@ -616,12 +644,12 @@ COMMIT TRAN
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Calc Cache Curve'
+			ON rp.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'ccc'
@@ -644,12 +672,12 @@ COMMIT TRAN
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Calc Cache Curve'
+			ON rp.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'ccc'
@@ -669,43 +697,15 @@ COMMIT TRAN
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Calc Cache Curve'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'ccc'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'ccc'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Calc Cache Curve' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'process_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, 'Pricing Index' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Calc Cache Curve'
+			ON rp.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'ccc'
@@ -727,10 +727,10 @@ COMMIT TRAN
 		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'EOD _ Calc Cache Curve_tablix' [name], '4' width, '2.6666666666666665' height, '0' [top], '0' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
-		ON rpage.[name] = 'EOD - Calc Cache Curve'
+		ON rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id 
 			AND rd.[alias] = 'ccc' 
@@ -747,10 +747,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'ccc' 	
 		INNER JOIN data_source ds 
@@ -769,10 +769,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'ccc' 	
 		INNER JOIN data_source ds 
@@ -791,10 +791,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'ccc' 	
 		INNER JOIN data_source ds 
@@ -813,10 +813,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'ccc' 	
 		INNER JOIN data_source ds 
@@ -835,10 +835,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'ccc' 	
 		INNER JOIN data_source ds 
@@ -857,10 +857,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Calc Cache Curve'
+			AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'ccc' 	
 		INNER JOIN data_source ds 
@@ -882,10 +882,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Calc Cache Curve'
+		AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Calc Cache Curve' 	
 		INNER JOIN data_source_column dsc 
@@ -910,10 +910,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Calc Cache Curve'
+		AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Calc Cache Curve' 	
 		INNER JOIN data_source_column dsc 
@@ -938,10 +938,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Calc Cache Curve'
+		AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Calc Cache Curve' 	
 		INNER JOIN data_source_column dsc 
@@ -966,10 +966,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Calc Cache Curve'
+		AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Calc Cache Curve' 	
 		INNER JOIN data_source_column dsc 
@@ -994,10 +994,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Calc Cache Curve'
+		AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Calc Cache Curve' 	
 		INNER JOIN data_source_column dsc 
@@ -1022,10 +1022,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Calc Cache Curve_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Calc Cache Curve'
+		AND rpage.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Calc Cache Curve'
+			AND r.[name] = 'EOD - Calc Cache Curve-Annual Curves'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Calc Cache Curve' 	
 		INNER JOIN data_source_column dsc 
