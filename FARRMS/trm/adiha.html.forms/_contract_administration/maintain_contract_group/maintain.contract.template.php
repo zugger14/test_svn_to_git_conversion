@@ -1,337 +1,31 @@
 <?php
+
 /**
-* Maintain contract template screen
-* @copyright Pioneer Solutions
-*/
+ * Maintain contract template screen
+ * @copyright Pioneer Solutions
+ */
 ?>
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-        <?php require('../../../adiha.php.scripts/components/include.file.v3.php'); ?>
-    </head>
-    <?php
-    require('../../../adiha.html.forms/_setup/manage_documents/manage.documents.button.php');
 
-    $call_from = get_sanitized_value($_GET['call_from'] ?? 'standard');
-    $contract_id = get_sanitized_value($_GET['contract_id'] ?? '');
-    $call_from_combo = get_sanitized_value($_GET['call_from_combo'] ?? '');
-    $grid_type = 'g';
-    $rights_contract_lock = '0';
-    $rights_contract_unlock = '0';
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <?php require('../../../adiha.php.scripts/components/include.file.v3.php'); ?>
 
-    if ($call_from == 'standard') {
-        $function_id = 10211200;
-        $rights_contract_copy = 10211210;
-        $rights_contract_privilege = 10211220;
-        $rights_contract_delete = 10211211;
-        $rights_contract_lock = 10211225;
-        $rights_contract_unlock = 10211226;
-        $template_name = 'contract_group';
-        $tree_grid_name = "contract_group";
-        $tree_grid_spa = "EXEC  spa_contract_trees 's'";
-    } else if ($call_from == 'nonstandard') {
-        $function_id = 10211300;
-        $rights_contract_copy = 10211310;
-        $rights_contract_privilege = 10211320;
-        $rights_contract_delete = 10211311;
-        $rights_contract_lock = 10211325;
-        $rights_contract_unlock = 10211326;
-        $template_name = 'contract_group_non_standard';
-        $tree_grid_name = "contract_group";
-        $tree_grid_spa = "EXEC  spa_contract_trees 'n'";
-    } else if ($call_from == 'transportation') {
-        $function_id = 10211400;
-        $rights_contract_copy = 10211410;
-        $rights_contract_privilege = 10211420;
-        $rights_contract_delete = 10211411;
-        $template_name = 'contract_group_transportation';
-        $tree_grid_name = "transportation_contract_grid";
-        $tree_grid_spa = "EXEC  spa_contract_trees 't'";
-        $grid_type = 't';
-    } else if ($call_from == 'storage') {
-        $function_id = 20008200;
-        $rights_contract_copy = 20008200;
-        $rights_contract_privilege = 20008200;
-        $rights_contract_delete = 20008200;
-        $template_name = 'contract_group_storage';
-        $tree_grid_name = "storage_contract_grid";
-        $tree_grid_spa = "EXEC  spa_contract_trees 'v'";
-        $grid_type = 't';
-    }
-
-    $rights_contract_document = 10102900;
-    $rights_contract_charge_type_ui = 10211416;
-    $rights_contract_charge_type_delete = 10211417;
-    $rights_contract_gl_code = 10211418;
-    $rights_contract_formula_ui = 10211431;
-    $rights_contract_charge_type_copy = 10211416;
-    $rights_contract_delievery_path = 10161100;
-    
-    list (
-        $has_rights_contract_copy,
-        $has_rights_contract_document,
-        $has_rights_contract_charge_type_ui,
-        $has_rights_contract_charge_type_delete,
-        $has_rights_contract_gl_code,
-        $has_rights_contract_formula_ui,
-        $has_rights_contract_charge_type_copy,
-        $has_rights_contract_delievery_path,
-        $has_rights_contract_privilege,
-        $has_rights_contract_delete,
-        $has_rights_contract_lock,
-        $has_rights_contract_unlock
-    ) = build_security_rights(
-        $rights_contract_copy, 
-        $rights_contract_document, 
-        $rights_contract_charge_type_ui, 
-        $rights_contract_charge_type_delete, 
-        $rights_contract_gl_code, 
-        $rights_contract_formula_ui, 
-        $rights_contract_charge_type_copy,
-        $rights_contract_delievery_path,
-        $rights_contract_privilege,
-        $rights_contract_delete,
-        $rights_contract_lock,
-        $rights_contract_unlock
-    );
-    /* Use of standard form */
-    /* START */
-    $form_namespace = 'contract_group';
-    $form_obj = new AdihaStandardForm($form_namespace, $function_id);
-    $form_obj->define_grid($tree_grid_name, $tree_grid_spa, $grid_type);
-    $form_obj->define_layout_width(490);
-    $form_obj->enable_multiple_select();
-    $form_obj->add_privilege_menu($has_rights_contract_privilege);
-    $form_obj->define_custom_functions('save_contract', 'load_contract', 'delete_tree');
-    $form_obj->enable_grid_pivot();
-    echo $form_obj->init_form('Contracts', 'Contract Details', $contract_id);
-
-    if ($has_rights_contract_copy) {
-        $copy_status = 'false';
-    } else {
-        $copy_status = 'true';
-    }
-
-    echo "contract_group.menu.addNewChild('t1', 1, 'copy', 'Copy'," . 'true' . ",'copy.gif', 'copy_dis.gif');";
-    if ($call_from == 'standard' || $call_from == 'nonstandard') {
-        echo "contract_group.menu.addNewChild('process', 4, 'lock', 'Lock'," . 'true' . ",'lock.gif', 'lock_dis.gif');";
-        echo "contract_group.menu.addNewChild('process', 5, 'unlock', 'Unlock'," . 'true' . ",'unlock.gif', 'unlock_dis.gif');";
-    }
-    echo $form_obj->close_form();
-    /* END */
-
-    /* Using grid table for contract component */
-    /* START */
-    $table_name = 'contract_component';
-    $grid_def = "EXEC spa_adiha_grid 's', '" . $table_name . "'";
-    $def = readXMLURL2($grid_def);
-    $grid_id = $def[0]['grid_id'];
-    $table_name = $def[0]['grid_name'];
-    $grid_columns = $def[0]['column_name_list'];
-    $grid_col_labels = $def[0]['column_label_list'];
-    $grid_col_types = $def[0]['column_type_list'];
-    $sql_string = trim($def[0]['sql_stmt']);
-    $grid_set_visibility = $def[0]['set_visibility'];
-    $grid_column_width = $def[0]['column_width'];
-    $grid_col_sorting = $def[0]['sorting_preference'];
-    $grid_column_width = '';
-    $pieces = explode(",", $grid_columns);
-    
-    for ($x = 1; $x <= count($pieces); $x++) {
-        if ($x != 1) {
-            $grid_column_width .=',';
-        }
-        $grid_column_width .='*';
-    }
-
-    if ($def[0]['dropdown_columns'] != 'NULL' && $def[0]['dropdown_columns'] != '') {
-        $combo_fields = explode(",", $def[0]['dropdown_columns']);
-    }
-
-    // ## Below Block for combo fields is example of bad coding, loading combos in uneditable grid
-    $html_string = '';
-    foreach ($combo_fields as $combo_column) {
-        $column_def = "EXEC spa_adiha_grid @flag='t', @grid_name = '" . $table_name . "', @column_name='" . $combo_column . "'";
-        $column_data = readXMLURL2($column_def);
-        $html_string .= 'var colIndex_object_id= contract_group["contract_component_grid_object_id"].getColIndexById("' . $combo_column . '");';
-        $html_string .= 'var column_object_' . $combo_column . '_object_id' . ' = contract_group["contract_component_grid_object_id"].getColumnCombo(colIndex_object_id);';
-        $html_string .= 'column_object_' . $combo_column . '_object_id' . '.enableFilteringMode(true);';
-        // Fixed calling load function with empty combo json
-        if ($column_data[0]['json_string'] != '') {
-            $html_string .= 'column_object_' . $combo_column . '_object_id' . '.load(' . $column_data[0]['json_string'] . ');';
-        }
-    }
-    /* END */
-    /* Using grid table for contract price tab. */
-    /* START */
-    $table_name1 = 'source_price_curve_def';
-    $grid_def1 = "EXEC spa_adiha_grid 's', '" . $table_name1 . "'";
-    $def1 = readXMLURL2($grid_def1);
-    $grid_id1 = $def1[0]['grid_id'];
-    $table_name1 = $def1[0]['grid_name'];
-    $grid_columns1 = $def1[0]['column_name_list'];
-    $grid_col_labels1 = $def1[0]['column_label_list'];
-    $grid_col_types1 = $def1[0]['column_type_list'];
-    $grid_col_align = $def1[0]['column_alignment'];
-    $sql_string1 = trim($def1[0]['sql_stmt']);
-    $grid_set_visibility1 = $def1[0]['set_visibility'];
-    $grid_column_width1 = $def1[0]['column_width'];
-    $grid_col_sorting = $def[0]['sorting_preference'];
-    $grid_column_width1 = '';
-    $pieces = explode(",", $grid_columns1);
-    
-    for ($x = 1; $x <= count($pieces); $x++) {
-        if ($x != 1) {
-            $grid_column_width1 .=',';
-        }
-        $grid_column_width1 .='*';
-    }
-    
-    if ($def1[0]['dropdown_columns'] != 'NULL' && $def1[0]['dropdown_columns'] != '') {
-        $combo_fields1 = explode(",", $def1[0]['dropdown_columns']);
-    }
-
-    $html_string1 = '';
-    foreach ($combo_fields1 as $combo_column1) {
-        $column_def1 = "EXEC spa_adiha_grid @flag='t', @grid_name = '" . $table_name1 . "', @column_name='" . $combo_column1 . "'";
-        $column_data1 = readXMLURL2($column_def1);
-        $html_string1 .= 'var colIndex_object_id= contract_group["contract_price_grid_object_id"].getColIndexById("' . $combo_column1 . '");';
-        $html_string1 .= 'var column_object_' . $combo_column1 . '_object_id' . ' = contract_group["contract_price_grid_object_id"].getColumnCombo(colIndex_object_id);';
-        $html_string1 .= 'column_object_' . $combo_column1 . '_object_id' . '.enableFilteringMode(true);';
-        $html_string1 .= 'column_object_' . $combo_column1 . '_object_id' . '.load(' . $column_data1[0]['json_string'] . ');';
-    }
-    /* END */
-
-    /* JSON for grid toolbar */
-    /* START */
-    $button_grid_charge_json = '[
-                                {id:"t1", text:"Edit", img:"edit.gif", imgdis:"edit_dis.gif", items:[
-                                    {id:"add", text:"Add", img:"new.gif", imgdis:"new_dis.gif", title: "Add",enabled:"' . $has_rights_contract_charge_type_ui . '"},
-                                    {id:"delete", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete",enabled:"' . 'false' . '"},
-                                    {id:"copy", text:"Copy", img:"copy.gif", imgdis:"copy_dis.gif", title: "Copy",enabled:"' . 'false' . '"}
-                                ]},
-                                {id:"gl_code", text:"GL Code", img:"gl_code.gif", imgdis:"gl_code_dis.gif", title: "GL Code",enabled:"false"},
-                                {id:"t2", text:"Export", img:"export.gif",imgdis:"export_dis.gif",items:[
-                                    {id:"excel", text:"Excel", img:"excel.gif", imgdis:"excel_dis.gif", title: "Excel"},
-                                    {id:"pdf", text:"PDF", img:"pdf.gif", imgdis:"pdf_dis.gif", title: "PDF"}
-                                ]},
-                                {id:"t3", text:"Template", img:"export.gif",imgdis:"export_dis.gif",items:[
-                                    {id:"download_template", text:"Download Template", img:"excel.gif", imgdis:"excel_dis.gif", title: "Download Template"},
-                                    {id:"upload_template", text:"Upload Template", img:"excel.gif", imgdis:"pdf_dis.gif", title: "Upload Template"}
-                                ]}
-                                ]';
-
-    /* END */
-
-    /* JSON for formula toolbar */
-    /* START */
-    $button_grid_formula_json = '[
-                                {id:"t1", text:"Edit", img:"edit.gif", imgdis:"edit_dis.gif", items:[
-                                    {id:"add", text:"Add", img:"new.gif", imgdis:"new_dis.gif", title: "Add",enabled:"' . $has_rights_contract_formula_ui . '"},
-                                    {id:"delete", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete",enabled:"' . $has_rights_contract_formula_ui . '"}
-                                ]},
-                                {id:"save", text:"Save", img:"save.gif", imgdis:"save_dis.gif", title: "Save",enabled:"' . $has_rights_contract_formula_ui . '"},
-                                {id:"additional", text:"Additional", img:"additional.gif", imgdis:"additional_dis.gif", title: "Additional"}
-                                ]';
-    /* END */
-    /* JSON for contract price grid toolbar */
-    /* START */
-    $button_pricegrid_formula_json = '[
-                                {id:"t1", text:"Edit", img:"edit.gif", items:[
-                                    {id:"add", text:"Add", img:"new.gif", imgdis:"new_dis.gif", title: "Add"},
-                                    {id:"delete", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete",enabled:0}
-                                ]},
-                                {id:"t2", text:"Export", img:"export.gif", items:[
-                                    {id:"excel", text:"Excel", img:"excel.gif", imgdis:"excel_dis.gif", title: "Excel"},
-                                    {id:"pdf", text:"PDF", img:"pdf.gif", imgdis:"pdf_dis.gif", title: "PDF"}
-                                ]}
-                                ]';
-    
-    $button_pricefees_json = '[
-                                {id:"t1", text:"Edit", img:"edit.gif", items:[
-                                    {id:"add", text:"Add", img:"new.gif", imgdis:"new_dis.gif", title: "Add"},
-                                    {id:"delete", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete",enabled:0},
-                                    {id:"add_charges", text:"Add Multiple", img:"new.gif", imgdis:"new_dis.gif", title: "Add Multiple"}
-                                ]},
-                                {id:"t2", text:"Export", img:"export.gif", items:[
-                                    {id:"excel", text:"Excel", img:"excel.gif", imgdis:"excel_dis.gif", title: "Excel"},
-                                    {id:"pdf", text:"PDF", img:"pdf.gif", imgdis:"pdf_dis.gif", title: "PDF"}
-                                ]}
-                                ]';
-    /* END */
-    /* DataView Structure */
-    /* START */
-    $dataview_name = 'dataview_formula';
-    $template = "<div class='select_button' onclick='select_clicked(#formula_id#,#row#,#nested_idd#,#formula_group_id#);'></div><div><div><div><div><span> #row# </span><span></span><span> #description_1# </span></div><div><span> Formula: </span><span> #formula# </span></div><div><span>Granularity: </span><span> #granularity# </span><span>, Show Value As: </span><span> #volume# </span><span style='display:none;'> Nested ID: </span><span style='display:none;'> #nested_id# </span><span style='display:none;'> Formula Group ID: </span><span style='display:none;'> #formula_group_id# </span></div></div></div></div>";
-    $tooltip = "<b>#formula#</b>";
-
-    $category_name = 'Contract';
-    $category_sql = "SELECT value_id FROM static_data_value WHERE type_id = 25 AND code = '" . $category_name . "'";
-    $category_data = readXMLURL2($category_sql);
-    /* END */
-
-    if ($call_from == 'transportation') {
-        $form_sql = "EXEC spa_create_application_ui_json @flag='j', @application_function_id='" . $function_id . "', @template_name='contract_group_transportation', @parse_xml='<Root><PSRecordset contract_id=" . '"NULL"' ."></PSRecordset></Root>'";
-    } else if ($call_from == 'storage') {
-        $form_sql = "EXEC spa_create_application_ui_json @flag='j', @application_function_id='" . $function_id . "', @template_name='contract_group_storage', @parse_xml='<Root><PSRecordset contract_id=" . '"NULL"' ."></PSRecordset></Root>'";
-    } else if ($call_from == 'nonstandard') {
-        $form_sql = "EXEC spa_create_application_ui_json @flag='j', @application_function_id='" . $function_id . "', @template_name='contract_group_non_standard', @parse_xml='<Root><PSRecordset contract_id=" . '"NULL"' ."></PSRecordset></Root>'";
-    } else if ($call_from == 'standard') {
-        $form_sql = "EXEC spa_create_application_ui_json @flag='j', @application_function_id='" . $function_id . "', @template_name='contract_group', @parse_xml='<Root><PSRecordset contract_id=" . '"NULL"' ."></PSRecordset></Root>'";
-    }
-
-    $form_data = array();
-
-    if ($form_sql != '') {
-        $form_data = readXMLURL2($form_sql);
-    }
-
-    $grid_definition = array();
-
-    if (is_array($form_data) && sizeof($form_data) > 0) {
-        foreach ($form_data as $data) {
-            // Grid data collection
-            $grid_json = array();
-            $pre = strpos($data['grid_json'], '[');
-            if ($pre === false) {
-                $data['grid_json'] = '[' . $data['grid_json'] . ']';
-            }
-
-            $grid_json = json_decode($data['grid_json'], true);
-            foreach ($grid_json as $grid) {
-                if ($grid['grid_id'] == '' || $grid['grid_id'] == null) { continue; }
-                if ($grid['grid_id'] != 'FORM') {
-                    $grid_def = "EXEC spa_adiha_grid 's', '" . $grid['grid_id'] . "'";
-                    $def = readXMLURL2($grid_def);
-
-                    $it = new RecursiveIteratorIterator(new RecursiveArrayIterator($def));
-                    $l = iterator_to_array($it, true);
-
-                    array_push($grid_definition, $l);
-                }
-            }
-        }
-    }
-    $grid_definition_json = json_encode($grid_definition);
-    ?>
-    <body>
-        <div id="layoutObj"></div>
-        <!-- will used as windows viewport -->
-        <div id="winVP" style="display: none;"></div>
-    </body>
     <style type="text/css">
-        html, body {
+        html,
+        body {
             width: 100%;
             height: 100%;
             margin: 0px;
             overflow: hidden;
         }
-        .dhx_item_editor{
-            width:210px;
-            height:113px;
+
+        .dhx_item_editor {
+            width: 210px;
+            height: 113px;
         }
 
         img.book_icon {
@@ -349,27 +43,355 @@
             padding-top: 4px;
         }
     </style>
+
+</head>
+
+<body>
+    <?php
+        require('../../../adiha.html.forms/_setup/manage_documents/manage.documents.button.php');
+
+        $call_from = get_sanitized_value($_GET['call_from'] ?? 'standard');
+        $contract_id = get_sanitized_value($_GET['contract_id'] ?? '');
+        $call_from_combo = get_sanitized_value($_GET['call_from_combo'] ?? '');
+        $grid_type = 'g';
+        $rights_contract_lock = '0';
+        $rights_contract_unlock = '0';
+
+        $rights_contract_document = 10102900;
+        $rights_contract_charge_type_ui = 10211416;
+        $rights_contract_charge_type_delete = 10211417;
+        $rights_contract_gl_code = 10211418;
+        $rights_contract_formula_ui = 10211431;
+        $rights_contract_charge_type_copy = 10211416;
+        $rights_contract_delievery_path = 10161100;
+
+        if ($call_from == 'standard') {
+            $function_id = 10211200;
+            $rights_contract_copy = 10211210;
+            $rights_contract_iu = 10211210;
+            $rights_contract_privilege = 10211220;
+            $rights_contract_delete = 10211211;
+            $rights_contract_lock = 10211225;
+            $rights_contract_unlock = 10211226;
+            $template_name = 'contract_group';
+            $tree_grid_name = "contract_group";
+            $tree_grid_spa = "EXEC  spa_contract_trees 's'";
+        } else if ($call_from == 'nonstandard') {
+            $function_id = 10211300;
+            $rights_contract_copy = 10211310;
+            $rights_contract_iu = 10211310;
+            $rights_contract_privilege = 10211320;
+            $rights_contract_delete = 10211311;
+            $rights_contract_lock = 10211325;
+            $rights_contract_unlock = 10211326;
+            $rights_contract_charge_type_ui = 10211416;
+            $rights_contract_charge_type_delete = 10211417;
+            $template_name = 'contract_group_non_standard';
+            $tree_grid_name = "contract_group";
+            $tree_grid_spa = "EXEC  spa_contract_trees 'n'";
+        } else if ($call_from == 'transportation') {
+            $function_id = 10211400;
+            $rights_contract_copy = 10211410;
+            $rights_contract_iu = 10211410;
+            $rights_contract_privilege = 10211420;
+            $rights_contract_delete = 10211411;
+            $template_name = 'contract_group_transportation';
+            $tree_grid_name = "transportation_contract_grid";
+            $tree_grid_spa = "EXEC  spa_contract_trees 't'";
+            $grid_type = 't';
+        } else if ($call_from == 'storage') {
+            $function_id = 20008200;
+            $rights_contract_copy = 20008200;
+            $rights_contract_iu = 20008201;
+            $rights_contract_delete = 20008202;
+            $rights_contract_privilege = 20008203;
+            $rights_contract_charge_type_ui = 20008205;
+            $rights_contract_charge_type_delete = 20008206;
+            $template_name = 'contract_group_storage';
+            $tree_grid_name = "storage_contract_grid";
+            $tree_grid_spa = "EXEC  spa_contract_trees 'v'";
+            $grid_type = 't';
+        }
+
+        list(
+            $has_rights_contract_iu,
+            $has_rights_contract_copy,
+            $has_rights_contract_document,
+            $has_rights_contract_charge_type_ui,
+            $has_rights_contract_charge_type_delete,
+            $has_rights_contract_gl_code,
+            $has_rights_contract_formula_ui,
+            $has_rights_contract_charge_type_copy,
+            $has_rights_contract_delievery_path,
+            $has_rights_contract_privilege,
+            $has_rights_contract_delete,
+            $has_rights_contract_lock,
+            $has_rights_contract_unlock
+        ) = build_security_rights(
+            $rights_contract_iu,
+            $rights_contract_copy,
+            $rights_contract_document,
+            $rights_contract_charge_type_ui,
+            $rights_contract_charge_type_delete,
+            $rights_contract_gl_code,
+            $rights_contract_formula_ui,
+            $rights_contract_charge_type_copy,
+            $rights_contract_delievery_path,
+            $rights_contract_privilege,
+            $rights_contract_delete,
+            $rights_contract_lock,
+            $rights_contract_unlock
+        );
+        /* Use of standard form */
+        /* START */
+        $form_namespace = 'contract_group';
+        $form_obj = new AdihaStandardForm($form_namespace, $function_id);
+        $form_obj->define_grid($tree_grid_name, $tree_grid_spa, $grid_type);
+        $form_obj->define_layout_width(490);
+        $form_obj->enable_multiple_select();
+        $form_obj->add_privilege_menu($has_rights_contract_privilege);
+        $form_obj->define_custom_functions('save_contract', 'load_contract', 'delete_tree');
+        $form_obj->enable_grid_pivot();
+        echo $form_obj->init_form('Contracts', 'Contract Details', $contract_id);
+
+        if ($has_rights_contract_copy) {
+            $copy_status = 'false';
+        } else {
+            $copy_status = 'true';
+        }
+
+        echo "contract_group.menu.addNewChild('t1', 1, 'copy', 'Copy'," . 'true' . ",'copy.gif', 'copy_dis.gif');";
+        if (!$has_rights_contract_iu)
+            echo "contract_group.menu.setItemDisabled('add')";
+        if ($call_from == 'standard' || $call_from == 'nonstandard') {
+            echo "contract_group.menu.addNewChild('process', 4, 'lock', 'Lock'," . 'true' . ",'lock.gif', 'lock_dis.gif');";
+            echo "contract_group.menu.addNewChild('process', 5, 'unlock', 'Unlock'," . 'true' . ",'unlock.gif', 'unlock_dis.gif');";
+        }
+        echo $form_obj->close_form();
+        /* END */
+
+        /* Using grid table for contract component */
+        /* START */
+        $table_name = 'contract_component';
+        $grid_def = "EXEC spa_adiha_grid 's', '" . $table_name . "'";
+        $def = readXMLURL2($grid_def);
+        $grid_id = $def[0]['grid_id'];
+        $table_name = $def[0]['grid_name'];
+        $grid_columns = $def[0]['column_name_list'];
+        $grid_col_labels = $def[0]['column_label_list'];
+        $grid_col_types = $def[0]['column_type_list'];
+        $sql_string = trim($def[0]['sql_stmt']);
+        $grid_set_visibility = $def[0]['set_visibility'];
+        $grid_column_width = $def[0]['column_width'];
+        $grid_col_sorting = $def[0]['sorting_preference'];
+        $grid_column_width = '';
+        $pieces = explode(",", $grid_columns);
+
+        for ($x = 1; $x <= count($pieces); $x++) {
+            if ($x != 1) {
+                $grid_column_width .= ',';
+            }
+            $grid_column_width .= '*';
+        }
+
+        if ($def[0]['dropdown_columns'] != 'NULL' && $def[0]['dropdown_columns'] != '') {
+            $combo_fields = explode(",", $def[0]['dropdown_columns']);
+        }
+
+        // ## Below Block for combo fields is example of bad coding, loading combos in uneditable grid
+        $html_string = '';
+        foreach ($combo_fields as $combo_column) {
+            $column_def = "EXEC spa_adiha_grid @flag='t', @grid_name = '" . $table_name . "', @column_name='" . $combo_column . "'";
+            $column_data = readXMLURL2($column_def);
+            $html_string .= 'var colIndex_object_id= contract_group["contract_component_grid_object_id"].getColIndexById("' . $combo_column . '");';
+            $html_string .= 'var column_object_' . $combo_column . '_object_id' . ' = contract_group["contract_component_grid_object_id"].getColumnCombo(colIndex_object_id);';
+            $html_string .= 'column_object_' . $combo_column . '_object_id' . '.enableFilteringMode(true);';
+            // Fixed calling load function with empty combo json
+            if ($column_data[0]['json_string'] != '') {
+                $html_string .= 'column_object_' . $combo_column . '_object_id' . '.load(' . $column_data[0]['json_string'] . ');';
+            }
+        }
+        /* END */
+        /* Using grid table for contract price tab. */
+        /* START */
+        $table_name1 = 'source_price_curve_def';
+        $grid_def1 = "EXEC spa_adiha_grid 's', '" . $table_name1 . "'";
+        $def1 = readXMLURL2($grid_def1);
+        $grid_id1 = $def1[0]['grid_id'];
+        $table_name1 = $def1[0]['grid_name'];
+        $grid_columns1 = $def1[0]['column_name_list'];
+        $grid_col_labels1 = $def1[0]['column_label_list'];
+        $grid_col_types1 = $def1[0]['column_type_list'];
+        $grid_col_align = $def1[0]['column_alignment'];
+        $sql_string1 = trim($def1[0]['sql_stmt']);
+        $grid_set_visibility1 = $def1[0]['set_visibility'];
+        $grid_column_width1 = $def1[0]['column_width'];
+        $grid_col_sorting = $def[0]['sorting_preference'];
+        $grid_column_width1 = '';
+        $pieces = explode(",", $grid_columns1);
+
+        for ($x = 1; $x <= count($pieces); $x++) {
+            if ($x != 1) {
+                $grid_column_width1 .= ',';
+            }
+            $grid_column_width1 .= '*';
+        }
+
+        if ($def1[0]['dropdown_columns'] != 'NULL' && $def1[0]['dropdown_columns'] != '') {
+            $combo_fields1 = explode(",", $def1[0]['dropdown_columns']);
+        }
+
+        $html_string1 = '';
+        foreach ($combo_fields1 as $combo_column1) {
+            $column_def1 = "EXEC spa_adiha_grid @flag='t', @grid_name = '" . $table_name1 . "', @column_name='" . $combo_column1 . "'";
+            $column_data1 = readXMLURL2($column_def1);
+            $html_string1 .= 'var colIndex_object_id= contract_group["contract_price_grid_object_id"].getColIndexById("' . $combo_column1 . '");';
+            $html_string1 .= 'var column_object_' . $combo_column1 . '_object_id' . ' = contract_group["contract_price_grid_object_id"].getColumnCombo(colIndex_object_id);';
+            $html_string1 .= 'column_object_' . $combo_column1 . '_object_id' . '.enableFilteringMode(true);';
+            $html_string1 .= 'column_object_' . $combo_column1 . '_object_id' . '.load(' . $column_data1[0]['json_string'] . ');';
+        }
+        /* END */
+
+        /* JSON for grid toolbar */
+        /* START */
+        $button_grid_charge_json = '[
+            {id:"t1", text:"Edit", img:"edit.gif", imgdis:"edit_dis.gif", items:[
+                {id:"add", text:"Add", img:"new.gif", imgdis:"new_dis.gif", title: "Add",enabled:"false"},
+                {id:"delete", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete",enabled:"' . 'false' . '"},
+                {id:"copy", text:"Copy", img:"copy.gif", imgdis:"copy_dis.gif", title: "Copy",enabled:"' . 'false' . '"}
+            ]},
+            {id:"gl_code", text:"GL Code", img:"gl_code.gif", imgdis:"gl_code_dis.gif", title: "GL Code",enabled:"false"},
+            {id:"t2", text:"Export", img:"export.gif",imgdis:"export_dis.gif",items:[
+                {id:"excel", text:"Excel", img:"excel.gif", imgdis:"excel_dis.gif", title: "Excel"},
+                {id:"pdf", text:"PDF", img:"pdf.gif", imgdis:"pdf_dis.gif", title: "PDF"}
+            ]},
+            {id:"t3", text:"Template", img:"export.gif",imgdis:"export_dis.gif",items:[
+                {id:"download_template", text:"Download Template", img:"excel.gif", imgdis:"excel_dis.gif", title: "Download Template"},
+                {id:"upload_template", text:"Upload Template", img:"excel.gif", imgdis:"pdf_dis.gif", title: "Upload Template"}
+            ]}
+        ]';
+
+        /* END */
+
+        /* JSON for formula toolbar */
+        /* START */
+        $button_grid_formula_json = '[
+            {id:"t1", text:"Edit", img:"edit.gif", imgdis:"edit_dis.gif", items:[
+                {id:"add", text:"Add", img:"new.gif", imgdis:"new_dis.gif", title: "Add",enabled:"' . $has_rights_contract_formula_ui . '"},
+                {id:"delete", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete",enabled:"' . $has_rights_contract_formula_ui . '"}
+            ]},
+            {id:"save", text:"Save", img:"save.gif", imgdis:"save_dis.gif", title: "Save",enabled:"' . $has_rights_contract_formula_ui . '"},
+            {id:"additional", text:"Additional", img:"additional.gif", imgdis:"additional_dis.gif", title: "Additional"}
+        ]';
+        /* END */
+        /* JSON for contract price grid toolbar */
+        /* START */
+        $button_pricegrid_formula_json = '[
+            {id:"t1", text:"Edit", img:"edit.gif", items:[
+                {id:"add", text:"Add", img:"new.gif", imgdis:"new_dis.gif", title: "Add"},
+                {id:"delete", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete",enabled:0}
+            ]},
+            {id:"t2", text:"Export", img:"export.gif", items:[
+                {id:"excel", text:"Excel", img:"excel.gif", imgdis:"excel_dis.gif", title: "Excel"},
+                {id:"pdf", text:"PDF", img:"pdf.gif", imgdis:"pdf_dis.gif", title: "PDF"}
+            ]}
+        ]';
+
+        $button_pricefees_json = '[
+            {id:"t1", text:"Edit", img:"edit.gif", items:[
+                {id:"add", text:"Add", img:"new.gif", imgdis:"new_dis.gif", title: "Add"},
+                {id:"delete", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete",enabled:0},
+                {id:"add_charges", text:"Add Multiple", img:"new.gif", imgdis:"new_dis.gif", title: "Add Multiple"}
+            ]},
+            {id:"t2", text:"Export", img:"export.gif", items:[
+                {id:"excel", text:"Excel", img:"excel.gif", imgdis:"excel_dis.gif", title: "Excel"},
+                {id:"pdf", text:"PDF", img:"pdf.gif", imgdis:"pdf_dis.gif", title: "PDF"}
+            ]}
+        ]';
+        /* END */
+        /* DataView Structure */
+        /* START */
+        $dataview_name = 'dataview_formula';
+        $template = "<div class='select_button' onclick='select_clicked(#formula_id#,#row#,#nested_idd#,#formula_group_id#);'></div><div><div><div><div><span> #row# </span><span></span><span> #description_1# </span></div><div><span> Formula: </span><span> #formula# </span></div><div><span>Granularity: </span><span> #granularity# </span><span>, Show Value As: </span><span> #volume# </span><span style='display:none;'> Nested ID: </span><span style='display:none;'> #nested_id# </span><span style='display:none;'> Formula Group ID: </span><span style='display:none;'> #formula_group_id# </span></div></div></div></div>";
+        $tooltip = "<b>#formula#</b>";
+
+        $category_name = 'Contract';
+        $category_sql = "SELECT value_id FROM static_data_value WHERE type_id = 25 AND code = '" . $category_name . "'";
+        $category_data = readXMLURL2($category_sql);
+        /* END */
+
+        if ($call_from == 'transportation') {
+            $form_sql = "EXEC spa_create_application_ui_json @flag='j', @application_function_id='" . $function_id . "', @template_name='contract_group_transportation', @parse_xml='<Root><PSRecordset contract_id=" . '"NULL"' . "></PSRecordset></Root>'";
+        } else if ($call_from == 'storage') {
+            $form_sql = "EXEC spa_create_application_ui_json @flag='j', @application_function_id='" . $function_id . "', @template_name='contract_group_storage', @parse_xml='<Root><PSRecordset contract_id=" . '"NULL"' . "></PSRecordset></Root>'";
+        } else if ($call_from == 'nonstandard') {
+            $form_sql = "EXEC spa_create_application_ui_json @flag='j', @application_function_id='" . $function_id . "', @template_name='contract_group_non_standard', @parse_xml='<Root><PSRecordset contract_id=" . '"NULL"' . "></PSRecordset></Root>'";
+        } else if ($call_from == 'standard') {
+            $form_sql = "EXEC spa_create_application_ui_json @flag='j', @application_function_id='" . $function_id . "', @template_name='contract_group', @parse_xml='<Root><PSRecordset contract_id=" . '"NULL"' . "></PSRecordset></Root>'";
+        }
+
+        $form_data = array();
+
+        if ($form_sql != '') {
+            $form_data = readXMLURL2($form_sql);
+        }
+
+        $grid_definition = array();
+
+        if (is_array($form_data) && sizeof($form_data) > 0) {
+            foreach ($form_data as $data) {
+                // Grid data collection
+                $grid_json = array();
+                $pre = strpos($data['grid_json'], '[');
+                if ($pre === false) {
+                    $data['grid_json'] = '[' . $data['grid_json'] . ']';
+                }
+
+                $grid_json = json_decode($data['grid_json'], true);
+                foreach ($grid_json as $grid) {
+                    if ($grid['grid_id'] == '' || $grid['grid_id'] == null) {
+                        continue;
+                    }
+                    if ($grid['grid_id'] != 'FORM') {
+                        $grid_def = "EXEC spa_adiha_grid 's', '" . $grid['grid_id'] . "'";
+                        $def = readXMLURL2($grid_def);
+
+                        $it = new RecursiveIteratorIterator(new RecursiveArrayIterator($def));
+                        $l = iterator_to_array($it, true);
+
+                        array_push($grid_definition, $l);
+                    }
+                }
+            }
+        }
+        $grid_definition_json = json_encode($grid_definition);
+    ?>
+
+    <div id="layoutObj"></div>
+    <!-- will used as windows viewport -->
+    <div id="winVP" style="display: none;"></div>
+
     <script type="text/javascript">
-        var category_id = '<?php echo $category_data[0]['value_id'];?>';
+        var category_id = '<?php echo $category_data[0]['value_id']; ?>';
         var php_script_loc_ajax = "<?php echo $app_php_script_loc; ?>";
         var combo_string = '<?php echo $html_string; ?>';
         var combo_string1 = '<?php echo $html_string1; ?>';
-        var grid_toolbar_json =<?php echo $button_grid_charge_json; ?>;
-        var formula_toolbar_json =<?php echo $button_grid_formula_json; ?>;
-        var contractprice_toolbar_json =<?php echo $button_pricegrid_formula_json; ?>;
+        var grid_toolbar_json = <?php echo $button_grid_charge_json; ?>;
+        var formula_toolbar_json = <?php echo $button_grid_formula_json; ?>;
+        var contractprice_toolbar_json = <?php echo $button_pricegrid_formula_json; ?>;
         var button_pricefees_json = <?php echo $button_pricefees_json; ?>;
         dhxWins = new dhtmlXWindows();
         var function_id = "<?php echo $function_id; ?>";
         var currentdate = new Date();
         var popup_window;
-        var has_rights_contract_copy =<?php echo ($has_rights_contract_copy) ? $has_rights_contract_copy : '0'; ?>;
-        var has_rights_contract_document =<?php echo ($has_rights_contract_document) ? $has_rights_contract_document : '0'; ?>;
-        var has_rights_contract_formula_ui =<?php echo ($has_rights_contract_formula_ui) ? $has_rights_contract_formula_ui : '0'; ?>;
-        var has_rights_contract_charge_type_ui =<?php echo ($has_rights_contract_charge_type_ui) ? $has_rights_contract_charge_type_ui : '0'; ?>;
-        var has_rights_contract_charge_type_delete =<?php echo ($has_rights_contract_charge_type_delete) ? $has_rights_contract_charge_type_delete : '0'; ?>;
-        var has_rights_contract_charge_type_copy =<?php echo ($has_rights_contract_charge_type_copy) ? $has_rights_contract_charge_type_copy : '0'; ?>;
-        var has_rights_contract_delievery_path =<?php echo ($has_rights_contract_delievery_path) ? $has_rights_contract_delievery_path : '0'; ?>;
-        var has_rights_contract_privilege =<?php echo ($has_rights_contract_privilege) ? $has_rights_contract_privilege : '0'; ?>;
+        var has_rights_contract_copy = <?php echo ($has_rights_contract_copy) ? $has_rights_contract_copy : '0'; ?>;
+        var has_rights_contract_document = <?php echo ($has_rights_contract_document) ? $has_rights_contract_document : '0'; ?>;
+        var has_rights_contract_formula_ui = <?php echo ($has_rights_contract_formula_ui) ? $has_rights_contract_formula_ui : '0'; ?>;
+        var has_rights_contract_charge_type_ui = <?php echo ($has_rights_contract_charge_type_ui) ? $has_rights_contract_charge_type_ui : '0'; ?>;
+        var has_rights_contract_charge_type_delete = <?php echo ($has_rights_contract_charge_type_delete) ? $has_rights_contract_charge_type_delete : '0'; ?>;
+        var has_rights_contract_charge_type_copy = <?php echo ($has_rights_contract_charge_type_copy) ? $has_rights_contract_charge_type_copy : '0'; ?>;
+        var has_rights_contract_delievery_path = <?php echo ($has_rights_contract_delievery_path) ? $has_rights_contract_delievery_path : '0'; ?>;
+        var has_rights_contract_privilege = <?php echo ($has_rights_contract_privilege) ? $has_rights_contract_privilege : '0'; ?>;
         var has_rights_contract_delete = <?php echo ($has_rights_contract_delete) ? $has_rights_contract_delete : '0'; ?>;
         var has_rights_contract_lock = <?php echo ($has_rights_contract_lock) ? $has_rights_contract_lock : '0'; ?>;
         var has_rights_contract_unlock = <?php echo ($has_rights_contract_unlock) ? $has_rights_contract_unlock : '0'; ?>;
@@ -379,15 +401,18 @@
         var get_contract_name;
         var app_php_script_loc = '<?php echo $app_php_script_loc; ?>';
         var call_from_combo = '<?php echo $call_from_combo; ?>';
-        
+
         var grid_definition_json = <?php echo $grid_definition_json; ?>;
         contract_group.grid_dropdowns = {};
-        
+
         $(function() {
-			contract_group.grid.attachEvent("onRowSelect", function(id, ind) {
+            contract_group.grid.attachEvent("onRowSelect", function(id, ind) {
                 var selected_row = contract_group.grid.getSelectedRowId();
                 if (has_rights_contract_delete)
                     contract_group.menu.setItemEnabled('delete');
+                else
+                    contract_group.menu.setItemDisabled('delete');
+
                 if (has_rights_contract_copy && selected_row.indexOf(',') == -1)
                     contract_group.menu.setItemEnabled('copy');
                 else
@@ -395,13 +420,13 @@
 
                 var selected_row = contract_group.grid.getSelectedRowId();
                 if (selected_row.indexOf(',') == -1) {
-                    contract_id = contract_group.grid.cells(selected_row, contract_group.grid.getColIndexById('contract_id')).getValue(); 
+                    contract_id = contract_group.grid.cells(selected_row, contract_group.grid.getColIndexById('contract_id')).getValue();
                     var param = {
-                                    "action": '[spa_contract_group]',
-                                    "flag": 'f',
-                                    "contract_id": contract_id
-                                };
-                    adiha_post_data('return_array', param, '', '', 'refresh_islock_callback'); 
+                        "action": '[spa_contract_group]',
+                        "flag": 'f',
+                        "contract_id": contract_id
+                    };
+                    adiha_post_data('return_array', param, '', '', 'refresh_islock_callback');
                 } else {
                     if (contract_group.menu.getItemType('lock') != null)
                         contract_group.menu.setItemDisabled('lock');
@@ -409,13 +434,13 @@
                         contract_group.menu.setItemDisabled('unlock');
                 }
             });
-            
+
             load_workflow_status();
         });
-    
-        function refresh_islock_callback(result) { 
-            if(result.length == 0) return;
-            if(result[0][0] == 'y'){
+
+        function refresh_islock_callback(result) {
+            if (result.length == 0) return;
+            if (result[0][0] == 'y') {
                 if (contract_group.menu.getItemType('lock') != null)
                     contract_group.menu.setItemDisabled('lock');
                 if (has_rights_contract_unlock && contract_group.menu.getItemType('unlock') != null) {
@@ -430,14 +455,14 @@
             }
             return;
         }
-        
+
         function add_privilege_button() {
             contract_group.menu.attachEvent('onClick', function(id) {
                 var selected_row = contract_group.grid.getSelectedRowId();
                 if (selected_row = null) selected_row = 0;
                 var call_from = '<?php echo $call_from; ?>';
                 var col_name = '';
-                
+
                 if (call_from == 'standard') {
                     col_name = 'contract_id';
                 } else if (call_from == 'nonstandard') {
@@ -445,16 +470,16 @@
                 } else if (call_from == 'transportation') {
                     col_name = 'contract_id_show';
                 }
-                
+
                 if (id == 'privilege') {
                     var selected_row = contract_group.grid.getSelectedRowId();
                     var selected_row_arr = selected_row.split(',');
-                    var value_id = ''; 
+                    var value_id = '';
                     var type_id = '';
                     var value_col_index = contract_group.grid.getColIndexById(col_name);
-                    value_id = contract_group.grid.cells(selected_row_arr[0], value_col_index).getValue(); 
-                    type_id = contract_group.grid.cells(selected_row_arr[0], contract_group.grid.getColIndexById('type_id')).getValue(); 
-                    for(i = 1; i < selected_row_arr.length; i++) {
+                    value_id = contract_group.grid.cells(selected_row_arr[0], value_col_index).getValue();
+                    type_id = contract_group.grid.cells(selected_row_arr[0], contract_group.grid.getColIndexById('type_id')).getValue();
+                    for (i = 1; i < selected_row_arr.length; i++) {
                         value_id = value_id + "," + contract_group.grid.cells(selected_row_arr[i], value_col_index).getValue();
                         type_id = type_id + "," + contract_group.grid.cells(selected_row_arr[i], contract_group.grid.getColIndexById("type_id")).getValue();
                     }
@@ -463,7 +488,7 @@
                     var selected_row = 0;
                     var call_from = '<?php echo $call_from; ?>';
                     var group_label = '';
-                    
+
                     if (call_from == 'standard') {
                         group_label = 4016;
                     } else if (call_from == 'nonstandard') {
@@ -471,15 +496,20 @@
                     } else if (call_from == 'transportation') {
                         group_label = 4074;
                     }
-                    
+
                     confirm_messagebox('Are you sure you want to Deactivate?', function() {
-                        var data = {'action': 'spa_static_data_privilege', 'type_id': group_label, 'flag' : 'd', 'call_from': 1};
+                        var data = {
+                            'action': 'spa_static_data_privilege',
+                            'type_id': group_label,
+                            'flag': 'd',
+                            'call_from': 1
+                        };
                         adiha_post_data('return_array', data, '', '', 'contract_group.deactivate_callback');
                     });
-                } else if (id == 'activate') {                                      
-                    var value_id = contract_group.grid.cells(0, contract_group.grid.getColIndexById(col_name)).getValue();                     
+                } else if (id == 'activate') {
+                    var value_id = contract_group.grid.cells(0, contract_group.grid.getColIndexById(col_name)).getValue();
                     var type_id = '';
-                    
+
                     if (call_from == 'standard') {
                         type_id = 4016;
                     } else if (call_from == 'nonstandard') {
@@ -487,11 +517,17 @@
                     } else if (call_from == 'transportation') {
                         type_id = 4074;
                     }
-                    
+
                     confirm_messagebox('Are you sure you want to Activate?', function() {
-                        var data = {'action': 'spa_static_data_privilege', 'type_id': type_id, 'flag' : 'a', 'call_from': 1, 'value_id': value_id};
+                        var data = {
+                            'action': 'spa_static_data_privilege',
+                            'type_id': type_id,
+                            'flag': 'a',
+                            'call_from': 1,
+                            'value_id': value_id
+                        };
                         adiha_post_data('return_array', data, '', '', 'contract_group.activate_callback');
-                    });                         
+                    });
                 }
             });
         }
@@ -503,7 +539,7 @@
 
             var storage_asset_id = 0;
             var counterparty_id = 0;
-            $.each(detail_tabs, function(index,value) {
+            $.each(detail_tabs, function(index, value) {
                 var tab_name = inner_tab_obj.tabs(value).getText();
                 if (tab_name == 'General') {
                     var form_data = inner_tab_obj.tabs(value).getAttachedObject().cells("a").getAttachedObject().getFormData();
@@ -512,9 +548,9 @@
                     return false;
                 }
             });
-            
+
             var contract_id = (tab_id.indexOf("tab_") != -1) ? tab_id.replace("tab_", "") : tab_id;
-            
+
             var open_credit_file_popup = new dhtmlXPopup();
             win_text = 'Storage Asset';
             param = '../../_scheduling_delivery/gas/virtual_storage/virtual.storage.php?contract_id=' + contract_id + '&storage_asset_id=' + storage_asset_id + '&counterparty_id=' + counterparty_id;
@@ -552,16 +588,16 @@
                         break;
                     case "documents":
                         var tab_id = contract_group.tabbar.getActiveTab();
-                        contract_group.open_document(tab_id,'contract_window');
+                        contract_group.open_document(tab_id, 'contract_window');
                         break;
                     case "storage_asset":
                         var tab_id = contract_group.tabbar.getActiveTab();
                         contract_group.open_storage_asset(tab_id);
                         break;
-					case "contract_reminder":
+                    case "contract_reminder":
                         var tab_id = contract_group.tabbar.getActiveTab();
                         contract_group.alert_reminders(tab_id);
-						break;
+                        break;
                     default:
                         break;
                 }
@@ -628,7 +664,7 @@
                     } else if (call_from == 'transportation') {
                         flag = 't';
                     }
-                    
+
                     var pivot_exec_spa = {
                         "action": "spa_contract_trees",
                         "flag": flag
@@ -646,9 +682,9 @@
          * @param {type} value
          * @returns {String}
          */
-		 
-		var label_delivery_path = get_locale_value("Delivery Path");
-				
+
+        var label_delivery_path = get_locale_value("Delivery Path");
+
         open_delivery_hyperlink = function(name, value) {
             return '<a href="#" id= "delievery_open" onclick="contract_group.open_delievery_path(id)"> ' + label_delivery_path + '</a>';
         }
@@ -659,22 +695,22 @@
          * @param {type} value
          * @returns {String}
          */
-		var label_buyback_sellback = get_locale_value("Buyback/Sellback")
+        var label_buyback_sellback = get_locale_value("Buyback/Sellback")
         open_generic_mapping_hyperlink = function(name, value) {
-            return '<a href="#" id= "generic_mapping_link" onclick="contract_group.open_generic_mapping(id)">'+label_buyback_sellback+'</a>';
+            return '<a href="#" id= "generic_mapping_link" onclick="contract_group.open_generic_mapping(id)">' + label_buyback_sellback + '</a>';
         }
-        
+
         /*
          * To open pop up UI for generic mapping.
          * @param {type} name
          * @param {type} value
          * @returns {String}
          */
-		var label_settlement_rule_mapping = get_locale_value("Settlement Rule Mapping");
+        var label_settlement_rule_mapping = get_locale_value("Settlement Rule Mapping");
         open_generic_mapping_hyperlink = function(name, value) {
-            return '<a href="#" id= "generic_mapping_link" onclick="contract_group.open_generic_mapping(id)">'+ label_settlement_rule_mapping +'</a>';
+            return '<a href="#" id= "generic_mapping_link" onclick="contract_group.open_generic_mapping(id)">' + label_settlement_rule_mapping + '</a>';
         }
-        
+
         /*
          * To open delievery path in transportation contract.
          * @param {type} id
@@ -687,8 +723,7 @@
             if (!contract_id) {
                 show_messagebox('No data selected for hyperlink.');
                 return false;
-            }
-            else if(!has_rights_contract_delievery_path){
+            } else if (!has_rights_contract_delievery_path) {
                 show_messagebox('You do not have privilege to access the hyperlink.');
                 return false;
             }
@@ -720,11 +755,11 @@
             if (!contract_id) {
                 show_messagebox('No data selected for hyperlink.');
                 return false;
-            } else if(!has_rights_contract_delievery_path){
+            } else if (!has_rights_contract_delievery_path) {
                 show_messagebox('You do not have privilege to access the hyperlink.');
                 return false;
             }
-            
+
             win_text = 'Generic Mapping';
             param = '../../_setup/common_mapping/common_mapping.php?primary_column_value=' + contract_id + '&function_ids=10211400';
             width = 380;
@@ -739,7 +774,7 @@
             new_win.maximize();
             new_win.attachURL(param, false, true);
         }
-        
+
         /*
          * Unload window that is used in popUP.
          * @param {type} win_type
@@ -756,12 +791,12 @@
         contract_group.check_privilege_callback = function(result) {
             // Disable Save button if disabled privilege
             privilege_status = result[0]['privilege_status'];
-            
+
             if (privilege_status == 'false') {
                 contract_group.tabbar
                     .cells(contract_group.tabbar.getActiveTab())
                     .getAttachedToolbar()
-                    .disableItem('save'); 
+                    .disableItem('save');
             }
         }
         /*END to open pop up UI for delievery path.*/
@@ -775,10 +810,9 @@
          */
         contract_group.load_contract = function(win, full_id) {
             var object_id = (full_id.indexOf("tab_") != -1) ? full_id.replace("tab_", "") : full_id;
-            
+
             /*JSON FOR inner layout*/
-            var inner_tab_layout_jsob = [
-                {
+            var inner_tab_layout_jsob = [{
                     id: "a",
                     text: "Contracts",
                     header: false,
@@ -795,8 +829,13 @@
                     fix_size: [true, null]
                 }
             ];
-            contract_group["inner_tab_layout_" + object_id] = win.attachLayout({pattern: "2E", cells: inner_tab_layout_jsob});
-            contract_group["inner_grid_layout_" + object_id] = contract_group["inner_tab_layout_" + object_id].cells("b").attachLayout({pattern: "2U"});
+            contract_group["inner_tab_layout_" + object_id] = win.attachLayout({
+                pattern: "2E",
+                cells: inner_tab_layout_jsob
+            });
+            contract_group["inner_grid_layout_" + object_id] = contract_group["inner_tab_layout_" + object_id].cells("b").attachLayout({
+                pattern: "2U"
+            });
 
             /*Attaching status bar for grid pagination*/
             contract_group["inner_grid_layout_" + object_id].cells('a').attachStatusBar({
@@ -821,7 +860,7 @@
             var pg_area = 'pagingAreaGrid_b_' + object_id;
             contract_group["contract_component_grid_" + object_id] = contract_group["inner_grid_layout_" + object_id].cells('a').attachGrid();
             contract_group["contract_component_grid_" + object_id].setImagePath("<?php echo $image_path; ?>dhxtoolbar_web/");
-            contract_group["contract_component_grid_" + object_id].setHeader("<?php echo $grid_col_labels; ?>",null,["text-align:left;","text-align:left;","text-align:right;"]);
+            contract_group["contract_component_grid_" + object_id].setHeader("<?php echo $grid_col_labels; ?>", null, ["text-align:left;", "text-align:left;", "text-align:right;"]);
             contract_group["contract_component_grid_" + object_id].setColumnIds("<?php echo $grid_columns; ?>");
             contract_group["contract_component_grid_" + object_id].setColSorting("<?php echo $grid_col_sorting; ?>");
             contract_group["contract_component_grid_" + object_id].setColTypes("<?php echo $grid_col_types; ?>");
@@ -842,8 +881,8 @@
                         contract_charge_type_id = form_obj.getItemValue('contract_charge_type_id');
                     }
                 });
-                
-                if (contract_charge_type_id == '' || function_id == '10211400') { 
+
+                if (contract_charge_type_id == '' || function_id == '10211400') {
                     var layout_obj = contract_group["inner_grid_layout_" + object_id].cells('b').getAttachedObject();
                     if (layout_obj instanceof dhtmlXDataView) {
                         contract_group["dataview_formula_" + object_id].stopEdit();
@@ -876,7 +915,8 @@
                     j++;
                 }
                 grid_xml += '</Root>';
-                data = {"action": "spa_contract_group_detail_UI",
+                data = {
+                    "action": "spa_contract_group_detail_UI",
                     "flag": "v",
                     "xml": grid_xml
                 };
@@ -892,12 +932,12 @@
             contract_group["contract_component_grid_" + object_id].setUserData("", "contract_mode_xml", "");
             contract_group["contract_component_grid_" + object_id].setUserData("", "contract_mode_xml", "");
             contract_group["contract_component_grid_" + object_id].setUserData("", "contract_name_store", "");
-            
+
             /*Getting tab and form JSON from backend to bind in the main tabbar.*/
             /*START*/
             grid_function_name = <?php echo $function_id; ?>;
             template_name = 'contract_group';
-            
+
             var additional_data = {
                 "action": "spa_create_application_ui_json",
                 "flag": "j",
@@ -918,11 +958,11 @@
             contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("save");
             contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("additional");
             /*END*/
-            
+
             //To collapse the contract component and formula.
             if (function_id != 10211300)
                 contract_group["inner_tab_layout_" + object_id].cells("b").collapse();
-            
+
             if (contract_group.tabbar.cells("tab_" + object_id)) {
                 toolbar_obj = contract_group.tabbar.cells("tab_" + object_id).getAttachedToolbar();
             }
@@ -935,29 +975,29 @@
             var object_id = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
             var result_length = result.length;
             var tab_json = '';
-            
+
             if (contract_group.tabbar.cells(active_tab_id) != null) {
                 toolbar_obj = contract_group.tabbar.cells(active_tab_id).getAttachedToolbar();
                 add_manage_document_button(object_id, toolbar_obj, 1); // changed to 1 to enable documents button in default
-                
+
                 var call_from = '<?php echo $call_from; ?>';
                 if (call_from == 'storage') {
                     toolbar_obj.addButton('storage_asset', 2, 'Storage Asset', 'doc.gif', 'doc_dis.gif');
                 }
-				toolbar_obj.addButton('contract_reminder', 3, 'Alerts', 'alert.png', 'alert_dis.png');
+                toolbar_obj.addButton('contract_reminder', 3, 'Alerts', 'alert.png', 'alert_dis.png');
             }
-            
+
             for (var i = 0; i < result_length; i++) {
                 if (i > 0)
                     tab_json = tab_json + ",";
                 tab_json = tab_json + (result[i][1]);
             }
-            
+
             tab_json = '{tabs: [' + tab_json + ']}';
             contract_group["contract_tabs_" + object_id] = contract_group.tabbar.cells(active_tab_id).tabbar[object_id] = contract_group["inner_tab_layout_" + object_id].cells("a").attachTabbar();
             contract_group["contract_tabs_" + object_id].loadStruct(tab_json);
             var form_code_xml = ' contract_group.form_validation_status=0;';
-            
+
             var grid_no = 0;
             for (var j = 0; j < result_length; j++) {
                 tab_id = 'detail_tab_' + result[j][0];
@@ -966,7 +1006,7 @@
 
                 contract_group["contract_tabs_layout_" + object_id + "_" + tab_id] = contract_group["contract_tabs_" + object_id].cells(tab_id).attachLayout("1C");
                 contract_group["contract_tabs_layout_" + object_id + "_" + tab_id].cells("a").hideHeader();
-                if (result[j][2]) {//loads form
+                if (result[j][2]) { //loads form
                     contract_group["contract_form_" + result[j][0]] = contract_group["contract_tabs_layout_" + object_id + "_" + tab_id].cells("a").attachForm();
 
                     contract_group["contract_form_" + result[j][0]].loadStruct(result[j][2], function() {
@@ -979,7 +1019,7 @@
                                 if (contract_group.tabbar.cells("tab_" + object_id) != null) {
                                     var toolbar_obj = contract_group.tabbar.cells("tab_" + object_id).getAttachedToolbar();
                                     var form_obj = contract_group["contract_form_" + result[j][0]];
-                                    
+
                                     if (form_obj.getFormData()['storage_asset_id'] == '') {
                                         toolbar_obj.disableItem('storage_asset');
                                     } else {
@@ -1001,7 +1041,7 @@
                             }
 
                             if (function_id == '10211400') {
-                                reload_contract_component('');  
+                                reload_contract_component('');
                             } else {
                                 var check = contract_group["contract_form_" + result[0][0]].isItemChecked('is_lock');
                                 if (check) {
@@ -1013,7 +1053,7 @@
                                 }
 
                                 var id = contract_group["contract_form_" + result[j][0]].getItemValue('contract_charge_type_id');
-                                reload_contract_component(id);  
+                                reload_contract_component(id);
                             }
                         }
                     });
@@ -1021,22 +1061,22 @@
                     if (j == 0) {
                         var contract_mode_value = contract_group["contract_form_" + result[j][0]].getItemValue("contract_id");
                         contract_group["contract_component_grid_" + object_id].setUserData("", "contract_mode_xml", contract_mode_value);
-                        
-                        contract_group["contract_form_" + result[j][0]].attachEvent("onChange", function (name, value) {
+
+                        contract_group["contract_form_" + result[j][0]].attachEvent("onChange", function(name, value) {
                             if (name == 'contract_charge_type_id') {
-                                reload_contract_component(value);   
+                                reload_contract_component(value);
                                 var contract_mode_value = contract_group["contract_form_" + result[0][0]].getItemValue("contract_id");
                                 contract_group["contract_component_grid_" + object_id].setUserData("", "contract_mode_xml", contract_mode_value);
                                 contract_group["dataview_formula_" + object_id].clearAll();
                             }
                         });
                     }
-                } else {//loads grid.[Not dyanmic, its static code block.]
+                } else { //loads grid.[Not dyanmic, its static code block.]
                     if (!check_form_status) {
                         var grid_name = grid_definition_json[grid_no]["grid_name"];
                         var grid_label = JSON.parse(result[j][4]);
                         grid_label = grid_label['grid_label'];
-                        
+
                         var index = tab_id + "_" + grid_name + "_" + object_id;
                         if (grid_name == 'transportation_contract_location') {
                             var location_index = index;
@@ -1044,25 +1084,25 @@
                         contract_group["contract_price_toolbar_grid_" + index] = contract_group["contract_tabs_layout_" + object_id + "_" + tab_id].cells("a").attachMenu();
                         contract_group["contract_tabs_layout_" + object_id + "_" + tab_id].cells("a").attachStatusBar({
                             height: 30,
-                            text: '<div id="pagingAreaGrid_' +  grid_name + '_' + object_id + '"></div>'
+                            text: '<div id="pagingAreaGrid_' + grid_name + '_' + object_id + '"></div>'
                         });
-                        
+
                         var pagination_div_name = 'pagingAreaGrid_' + grid_name + '_' + object_id;
-                        
+
                         contract_group["contract_price_toolbar_grid_" + index].setIconsPath(js_image_path + "dhxmenu_web/");
                         if (grid_name == 'contract_fees') {
                             contract_group["contract_price_toolbar_grid_" + index].loadStruct(button_pricefees_json);
                         } else {
                             contract_group["contract_price_toolbar_grid_" + index].loadStruct(contractprice_toolbar_json);
                         }
-                        
+
                         contract_group["contract_price_toolbar_grid_" + index].attachEvent('onClick', contract_group.grd_price_toolbar_click);
 
-                        if (function_id == '10211400' && !has_rights_contract_copy) {// Only for transportation contract checking privilege.
+                        if (function_id == '10211400' && !has_rights_contract_copy) { // Only for transportation contract checking privilege.
                             contract_group["contract_price_toolbar_grid_" + index].setItemDisabled('add');
                             contract_group["contract_price_toolbar_grid_" + index].setItemDisabled('delete');
                         }
-                        
+
                         var grid_obj = 'contract_group["contract_price_grid_' + index + '"]';
                         contract_group["contract_price_grid_" + index] = contract_group["contract_tabs_layout_" + object_id + "_" + tab_id].cells("a").attachGrid();
                         contract_group["contract_price_grid_" + index].setImagePath("<?php echo $image_path; ?>dhxtoolbar_web/");
@@ -1082,18 +1122,18 @@
                         contract_group["contract_price_grid_" + index].enableMultiselect(true);
                         contract_group["contract_price_grid_" + index].enableColumnMove(true);
                         contract_group["contract_price_grid_" + index].enableValidation(true);
-                        contract_group["contract_price_grid_" + index].setColValidators(grid_definition_json[grid_no]["validation_rule"]); 
+                        contract_group["contract_price_grid_" + index].setColValidators(grid_definition_json[grid_no]["validation_rule"]);
                         contract_group["contract_price_grid_" + index].setUserData("", "grid_id", grid_name);
                         contract_group["contract_price_grid_" + index].setUserData("", "grid_label", grid_label);
                         contract_group["contract_price_grid_" + index].setUserData("", "grid_obj", grid_obj);
                         contract_group["contract_price_grid_" + index].init();
                         contract_group["contract_price_grid_" + index].enableHeaderMenu();
-                        contract_group["contract_price_grid_" + index].enableColumnAutoSize(true); 
-                        contract_group["contract_price_grid_" + index].loadOrderFromCookie(grid_name); 
-                        contract_group["contract_price_grid_" + index].loadHiddenColumnsFromCookie(grid_name); 
-                        contract_group["contract_price_grid_" + index].enableOrderSaving(grid_name); 
+                        contract_group["contract_price_grid_" + index].enableColumnAutoSize(true);
+                        contract_group["contract_price_grid_" + index].loadOrderFromCookie(grid_name);
+                        contract_group["contract_price_grid_" + index].loadHiddenColumnsFromCookie(grid_name);
+                        contract_group["contract_price_grid_" + index].enableOrderSaving(grid_name);
                         contract_group["contract_price_grid_" + index].enableAutoHiddenColumnsSaving(grid_name);
-                        
+
                         contract_group["contract_price_grid_" + index].attachEvent("onRowSelect", function(id, ind) {
                             var active_tab_id = contract_group.tabbar.getActiveTab();
                             var object_id = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
@@ -1103,13 +1143,13 @@
                                 menu_obj.setItemEnabled('delete');
                             }
                         });
-                        
+
                         contract_group["contract_price_grid_" + index].attachEvent("onValidationError", function(id, ind, value) {
                             var active_tab_id = contract_group.tabbar.getActiveTab();
                             var object_id = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
                             var detail_active_tab = contract_group["contract_tabs_" + object_id].getActiveTab();
                             var grid_obj = contract_group["contract_tabs_layout_" + object_id + "_" + detail_active_tab].cells("a").getAttachedObject();
-                            
+
                             var message = "Invalid Data";
                             grid_obj.cells(id, ind).setAttribute("validation", message);
                             return true;
@@ -1123,14 +1163,14 @@
                             grid_obj.cells(id, ind).setAttribute("validation", "");
                             return true;
                         });
-                        
+
                         var sql_stmt = grid_definition_json[grid_no]["sql_stmt"];
                         var spa_url = sql_stmt.replace("<ID>", object_id);
-                        
+
                         var param = {
                             "sql": spa_url
                         };
-                        
+
                         param = $.param(param);
                         var param_url = js_data_collector_url + "&" + param;
 
@@ -1144,16 +1184,22 @@
                             var dropdown_columns = grid_definition_json[grid_no]["dropdown_columns"].split(',');
                             contract_group["contract_price_grid_" + index].setUserData("", "dropdown_loaded", 0);
                             var dropdown_length = dropdown_columns.length;
-                            
+
                             _.each(dropdown_columns, function(item) {
                                 var col_index = contract_group["contract_price_grid_" + index].getColIndexById(item);
                                 contract_group.grid_dropdowns[item + '_' + object_id] = contract_group["contract_price_grid_" + index].getColumnCombo(col_index);
                                 contract_group.grid_dropdowns[item + '_' + object_id].enableFilteringMode(true);
-        
-                                var cm_param = {"action": "spa_adiha_grid", "flag": "t", "grid_name": grid_definition_json[grid_no]["grid_name"], "column_name": item, "call_from": "grid"};
+
+                                var cm_param = {
+                                    "action": "spa_adiha_grid",
+                                    "flag": "t",
+                                    "grid_name": grid_definition_json[grid_no]["grid_name"],
+                                    "column_name": item,
+                                    "call_from": "grid"
+                                };
                                 cm_param = $.param(cm_param);
                                 var url = js_dropdown_connector_url + '&' + cm_param;
-                                
+
                                 /**
                                  * To Handle Grid data loading before dropdown load causing ID showing issue 
                                  */
@@ -1175,7 +1221,7 @@
                         } else {
                             contract_group["contract_price_grid_" + index].loadXML(param_url);
                         }
-                        
+
                         grid_no++;
                     }
                 }
@@ -1194,29 +1240,29 @@
                 if (selected_row != null) {
                     var col_index = contract_group.grid.getColIndexById("is_privilege_active");
                     var privilege_active = contract_group.grid.cells(selected_row, col_index).getValue();
-                    var p_type_id = contract_group.grid.cells(selected_row, contract_group.grid.getColIndexById('type_id')).getValue(); 
+                    var p_type_id = contract_group.grid.cells(selected_row, contract_group.grid.getColIndexById('type_id')).getValue();
                     // Privilege Check to disable/enable save button
                     if (privilege_active == 1) {
                         data = {
-                                    "action": "spa_static_data_privilege",
-                                    "flag": 'c',
-                                    "type_id": p_type_id,
-                                    "value_id": object_id
-                               };
+                            "action": "spa_static_data_privilege",
+                            "flag": 'c',
+                            "type_id": p_type_id,
+                            "value_id": object_id
+                        };
                         adiha_post_data("", data, "", "", "contract_group.check_privilege_callback");
                     }
                 }
             }
             //Checking privileges.
-            
+
             contract_group.tabbar.cells(active_tab_id).progressOff();
         }
         /*END*/
-        
+
         reload_contract_component = function(contract_template_id) {
             var active_tab_id = contract_group.tabbar.getActiveTab();
             var object_id = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
-            
+
             if (contract_template_id != '') {
                 contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('add');
                 contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('t1');
@@ -1245,7 +1291,11 @@
                     }
                 });
             } else {
-                contract_group["contract_toolbar_grid_" + object_id].setItemEnabled('add');
+                if (has_rights_contract_charge_type_ui)
+                    contract_group["contract_toolbar_grid_" + object_id].setItemEnabled('add');
+                else
+                    contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('add');
+
                 contract_group["contract_toolbar_grid_" + object_id].setItemEnabled('t1');
                 contract_group["contract_component_grid_" + object_id].clearAll();
                 var find = 'object_id';
@@ -1276,15 +1326,15 @@
 
                 });
             }
-            
+
             contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("t1");
             contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("save");
             contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("additional");
-            
+
             contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('delete');
             contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('copy');
             contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('gl_code');
-            
+
             /*
             contract_group["contract_component_grid_" + object_id].attachEvent("onRowSelect", function(){
                 alert(contract_template_id);
@@ -1294,7 +1344,7 @@
             });
             */
         }
-        
+
         /****************************************************END of Triggers when the tree is double clicked.********************************************/
         /*********************************************************GRID******************************************************/
         /*****************************************************END OF GRID***************************************************/
@@ -1306,20 +1356,20 @@
             var active_tab_id = contract_group.tabbar.getActiveTab();
             var object_id = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
             var contract_component_store = new Array();
-            if (id == 'add') {//when add is clicked.
+            if (id == 'add') { //when add is clicked.
                 var RowsNum = contract_group["contract_component_grid_" + object_id].getRowsNum();
                 RowsNum = RowsNum + 1;
-                param = 'charge.type.php?contract_id=' + object_id + '&mode=i&count=' + RowsNum + '&is_pop=true&right='+ has_rights_contract_charge_type_ui;
+                param = 'charge.type.php?contract_id=' + object_id + '&mode=i&count=' + RowsNum + '&is_pop=true&right=' + has_rights_contract_charge_type_ui;
                 var is_win = dhxWins.isWindow('w3');
                 if (is_win == true) {
                     w3.close();
-                }                
+                }
                 w3 = dhxWins.createWindow("w3", 520, 100, 565, 550);
                 w3.center();
                 w3.setText("Charge Type Detail");
                 w3.setModal(true);
                 w3.attachURL(param, false, true);
-            } else if (id == 'delete') {//when is delete is clicked
+            } else if (id == 'delete') { //when is delete is clicked
                 var selectedId = contract_group["contract_component_grid_" + object_id].getSelectedRowId();
                 if (!selectedId) {
                     var message = get_message('VALIDATE_DATA');
@@ -1346,7 +1396,7 @@
                     adiha_post_data('confirm', data, '', '', 'contract_group.delete_charge_callback');
 
                 }
-            } else if (id == 'save') {//when is save is clicked.
+            } else if (id == 'save') { //when is save is clicked.
                 var grid_xml = '<Root>';
                 var i = 1;
                 var save_validation_status = 1;
@@ -1369,8 +1419,7 @@
                     contract_component_store.push(contract_component);
                     if (contract_detail_id) {
                         grid_xml = grid_xml + '<GridUpdate contract_id=' + '"' + object_id + '"' + ' contract_detail_id=' + '"' + contract_detail_id + '"' + ' contract_component=' + '"' + contract_component + '"' + ' sequence_order=' + '"' + i + '"' + '></GridUpdate>';
-                    }
-                    else {
+                    } else {
                         grid_xml = grid_xml + '<GridInsert contract_id=' + '"' + object_id + '"' + ' contract_detail_id=' + '"NULL"' + ' contract_component=' + '"' + contract_component + '"' + ' sequence_order=' + '"' + i + '"' + '></GridInsert>';
                     }
                     i++;
@@ -1388,17 +1437,19 @@
                     adiha_post_data('alert', data, '', '', '');
                     var str = "<?php echo $sql_string; ?>";
                     var spa_url = str.replace("<ID>", object_id);
-                    sp_url = {"sp_string": spa_url};
+                    sp_url = {
+                        "sp_string": spa_url
+                    };
                     result = adiha_post_data("return_data", sp_url, "", "", "contract_group.refresh_contract_component_grid_callback");
                 }
-            } else if (id == 'gl_code') {//when gl code mapping is clicked.
+            } else if (id == 'gl_code') { //when gl code mapping is clicked.
                 var grid_data = contract_group["contract_component_grid_" + object_id].getSelectedRowId();
                 if (!grid_data) {
                     var message = get_message('VALIDATE_DATA');
                     show_messagebox(message);
                     return false;
                 }
-                param = 'gl.code.php?contract_detail_id=' + grid_data + '&is_pop=true&checked_status='+checked_status;
+                param = 'gl.code.php?contract_detail_id=' + grid_data + '&is_pop=true&checked_status=' + checked_status;
                 var is_win = dhxWins.isWindow('w2');
                 if (is_win == true) {
                     contract_group.w2.close();
@@ -1408,16 +1459,16 @@
                 contract_group.w2.setText("GL Code Mapping");
                 contract_group.w2.setModal(true);
                 contract_group.w2.attachURL(param, false, true);
-            } else if (id == 'edit') {//when edit is clicked.
+            } else if (id == 'edit') { //when edit is clicked.
 
                 var grid_data = contract_group["contract_component_grid_" + object_id].getSelectedRowId();
                 var type = contract_group["contract_component_grid_" + object_id].cells(grid_data, 1).getValue();
-                param = 'charge.type.php?contract_detail_id=' + grid_data + '&contract_id=' + object_id + '&type=' + type + '&mode=u&is_pop=true&right='+ has_rights_contract_charge_type_ui + '&lock_status='+ checked_status;
+                param = 'charge.type.php?contract_detail_id=' + grid_data + '&contract_id=' + object_id + '&type=' + type + '&mode=u&is_pop=true&right=' + has_rights_contract_charge_type_ui + '&lock_status=' + checked_status;
                 //alert(param)
                 var is_win = dhxWins.isWindow('w5');
                 if (is_win == true) {
                     w5.close();
-                }                
+                }
                 w5 = dhxWins.createWindow("w5", 520, 100, 565, 550);
                 w5.center();
                 w5.setText("Charge Type Detail");
@@ -1440,10 +1491,10 @@
                     contract_group.charge_type_post_callback();
                     return true;
                 });
-            } else if (id == 'copy') {//when copy is clicked.
+            } else if (id == 'copy') { //when copy is clicked.
                 var grid_data = contract_group["contract_component_grid_" + object_id].getSelectedRowId();
                 var type = contract_group["contract_component_grid_" + object_id].cells(grid_data, 1).getValue();
-                param = 'charge.type.php?contract_detail_id=' + grid_data + '&contract_id=' + object_id + '&type=' + type + '&mode=c&is_pop=true&right='+ has_rights_contract_charge_type_ui;
+                param = 'charge.type.php?contract_detail_id=' + grid_data + '&contract_id=' + object_id + '&type=' + type + '&mode=c&is_pop=true&right=' + has_rights_contract_charge_type_ui;
                 var is_win = dhxWins.isWindow('w5');
                 if (is_win == true) {
                     w5.close();
@@ -1458,14 +1509,14 @@
                 contract_group["contract_component_grid_" + object_id].toPDF(php_script_loc_ajax + 'components/lib/adiha_dhtmlx/grid-pdf-php/generate.php');
             } else if (id == 'download_template') {
                 var data = {
-                    "action"                : "spa_excel_addin_settlement_process",
-                    "flag"                  : "D",
-                    "contract_id"           : object_id
+                    "action": "spa_excel_addin_settlement_process",
+                    "flag": "D",
+                    "contract_id": object_id
                 };
                 var additional_data = {
                     "type": 'return_array'
                 };
-                
+
                 data = $.param(data) + "&" + $.param(additional_data);
                 $.ajax({
                     type: "POST",
@@ -1474,10 +1525,10 @@
                     async: true,
                     data: data,
                     success: function(data) {
-                        var status =  data.json[0][0];
+                        var status = data.json[0][0];
                         var file_name = data.json[0][1];
                         if (status == 'success') {
-                           window.location = app_php_script_loc + 'force_download.php?path=dev/shared_docs/temp_Note/'+ file_name;
+                            window.location = app_php_script_loc + 'force_download.php?path=dev/shared_docs/temp_Note/' + file_name;
                         } else {
                             show_messagebox('Issue while downloading file.');
                         }
@@ -1486,7 +1537,7 @@
                 });
             } else if (id == 'upload_template') {
                 var tab_id = contract_group.tabbar.getActiveTab();
-                contract_group.open_document(tab_id,'contract_window_template');
+                contract_group.open_document(tab_id, 'contract_window_template');
             }
         }
         /*END*/
@@ -1494,18 +1545,20 @@
          * Delete charge grid callback
          * @param {type} result
          * @returns {undefined}         */
-        
+
         contract_group.delete_charge_callback = function(result) {
             var active_tab_id = contract_group.tabbar.getActiveTab();
             var object_id = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
-            if(contract_group["dataview_formula_" + object_id])
-            contract_group["dataview_formula_" + object_id].clearAll();
+            if (contract_group["dataview_formula_" + object_id])
+                contract_group["dataview_formula_" + object_id].clearAll();
             contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("t1");
             contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("save");
             contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("additional");
             var str = "<?php echo $sql_string; ?>";
             var spa_url = str.replace("<ID>", object_id);
-            sp_url = {"sp_string": spa_url};
+            sp_url = {
+                "sp_string": spa_url
+            };
             result = adiha_post_data("return_data", sp_url, "", "", "contract_group.refresh_contract_component_grid_callback");
         }
         /*
@@ -1543,8 +1596,8 @@
             var detail_active_tab = contract_group["contract_tabs_" + object_id].getActiveTab();
             var grid_obj = contract_group["contract_tabs_layout_" + object_id + "_" + detail_active_tab].cells("a").getAttachedObject();
             var menu_obj = contract_group["contract_tabs_layout_" + object_id + "_" + detail_active_tab].cells("a").getAttachedMenu();
-            
-            if (id == 'add') {//when add is clicked.
+
+            if (id == 'add') { //when add is clicked.
                 var new_id = (new Date()).valueOf();
                 new_id = new_id + '_grid';
                 grid_obj.addRow(new_id, "");
@@ -1553,11 +1606,11 @@
                     menu_obj.setItemEnabled('delete');
                 }
                 grid_obj.forEachRow(function(row) {
-                    grid_obj.forEachCell(row, function(cellObj, ind){
+                    grid_obj.forEachCell(row, function(cellObj, ind) {
                         grid_obj.validateCell(row, ind)
                     });
                 });
-            } else if (id == 'delete') {//when is delete is clicked
+            } else if (id == 'delete') { //when is delete is clicked
                 var selectedId = grid_obj.getSelectedRowId();
                 if (!selectedId) {
                     var message = get_message('VALIDATE_DATA');
@@ -1568,24 +1621,24 @@
                     var deleted_xml = grid_obj.getUserData("", "pricegrid_delete_xml");
                     var del_array = new Array();
                     del_array = (selectedId.indexOf(",") != -1) ? selectedId.split(",") : selectedId.split();
-                    
-                    
+
+
                     $.each(del_array, function(index, value) {
                         if ((grid_obj.cells(value, 0).getValue() != "") || (grid_obj.getUserData(value, "row_status") != "")) {
                             grid_xml += '<GridRow ';
                             for (var cellIndex = 0; cellIndex < grid_obj.getColumnsNum(); cellIndex++) {
                                 grid_xml += grid_obj.getColumnId(cellIndex) + '= "' + grid_obj.cells(value, cellIndex).getValue() + '" ';
                             }
-                            
+
                             grid_xml += '></GridRow>';
                         }
                         grid_obj.deleteRow(value);
                     });
                     if (deleted_xml)
                         grid_xml = grid_xml + deleted_xml;
-                        
+
                     grid_obj.setUserData("", "pricegrid_delete_xml", grid_xml);
-                    
+
                     menu_obj.setItemDisabled('delete');
                 }
             } else if (id == 'excel') {
@@ -1594,7 +1647,7 @@
                 grid_obj.toPDF(php_script_loc_ajax + 'components/lib/adiha_dhtmlx/grid-pdf-php/generate.php');
             } else if (id == 'add_charges') {
                 open_product_charges_browse(grid_obj);
-            } 
+            }
         }
         /*END*/
         /***********************************************END of Contract Price Toolbar grid************************************************/
@@ -1614,16 +1667,22 @@
             var selectedId = contract_group["contract_component_grid_" + object_id].getSelectedRowId();
             var contract_type = contract_group["contract_component_grid_" + object_id].cells(selectedId, 0).getValue();
             var flat_fee = contract_group["contract_component_grid_" + object_id].cells(selectedId, 2).getValue();
-        
-            if(has_rights_contract_charge_type_delete && !checked_status)
+
+            if (has_rights_contract_charge_type_delete && !checked_status)
                 contract_group["contract_toolbar_grid_" + object_id].setItemEnabled('delete');
-            if(has_rights_contract_charge_type_copy && !checked_status)
+            else
+                contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('delete');
+
+            if (has_rights_contract_charge_type_copy && !checked_status)
                 contract_group["contract_toolbar_grid_" + object_id].setItemEnabled('copy');
+            else
+                contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('copy');
+
             // if(!checked_status)
             contract_group["contract_toolbar_grid_" + object_id].setItemEnabled('gl_code');
             contract_group["contract_toolbar_formula_" + object_id].setItemDisabled('save'); // For case dataview switched from excel to formula
             contract_group["inner_grid_layout_" + object_id].cells('b').progressOff(); // Close loader icon for case dataview switched from excel to formula
-            if (contract_type != 'Formula' && contract_type!= 'Excel') {
+            if (contract_type != 'Formula' && contract_type != 'Excel') {
                 contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("t1");
                 contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("additional");
                 contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("save");
@@ -1636,7 +1695,7 @@
                 }
                 var selectedId = contract_group["contract_component_grid_" + object_id].getSelectedRowId();
                 var ind = contract_group["contract_component_grid_" + object_id].getSelectedCellIndex();
-                var n = selectedId.indexOf("_grid");//To check if the dataview is inserted new or updated old id.
+                var n = selectedId.indexOf("_grid"); //To check if the dataview is inserted new or updated old id.
                 return false;
             } else if ((contract_type == 'Formula') && (flat_fee)) {
                 contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("t1");
@@ -1651,7 +1710,7 @@
                 }
                 var selectedId = contract_group["contract_component_grid_" + object_id].getSelectedRowId();
                 var ind = contract_group["contract_component_grid_" + object_id].getSelectedCellIndex();
-                var n = selectedId.indexOf("_grid");//To check if the dataview is inserted new or updated old id.
+                var n = selectedId.indexOf("_grid"); //To check if the dataview is inserted new or updated old id.
                 return false;
             } else {
                 layout_obj = contract_group["inner_grid_layout_" + object_id].cells('b').getAttachedObject();
@@ -1659,41 +1718,40 @@
                     contract_group["dataview_formula_" + object_id].stopEdit();
                     contract_group["dataview_formula_" + object_id].clearAll();
                 }
-                if(!checked_status)
+                if (!checked_status)
                     contract_group["contract_toolbar_formula_" + object_id].setItemEnabled("t1");
-                
-                    if (contract_type == 'Formula') {
-                    contract_group["dataview_formula_" + object_id] = contract_group["inner_grid_layout_" + object_id].cells('b').attachDataView(
-                            {
-                                edit: true,
-                                type: {
-                                    template: "<?php echo $template; ?>",
-                                    template_edit: "<textarea class='dhx_item_editor' bind='obj.description_1'>",
-                                    padding: 10,
-                                    height: 60,
-                                    width: 800,
-                                },
-                                tooltip: {
-                                    template: "<?php echo $tooltip; ?>"
-                                },
-                                drag: true,
-                                select: true,
-                            });
+
+                if (contract_type == 'Formula') {
+                    contract_group["dataview_formula_" + object_id] = contract_group["inner_grid_layout_" + object_id].cells('b').attachDataView({
+                        edit: true,
+                        type: {
+                            template: "<?php echo $template; ?>",
+                            template_edit: "<textarea class='dhx_item_editor' bind='obj.description_1'>",
+                            padding: 10,
+                            height: 60,
+                            width: 800,
+                        },
+                        tooltip: {
+                            template: "<?php echo $tooltip; ?>"
+                        },
+                        drag: true,
+                        select: true,
+                    });
                     contract_group["dataview_formula_" + object_id].attachEvent("oneditkeypress", contract_group.item_clicked);
                     contract_group["dataview_formula_" + object_id].attachEvent("onAfterDrop", contract_group.item_moved);
                     contract_group["dataview_formula_" + object_id].attachEvent("onAfterSelect", contract_group.item_selected);
                     var selectedId = contract_group["contract_component_grid_" + object_id].getSelectedRowId();
                     var ind = contract_group["contract_component_grid_" + object_id].getSelectedCellIndex();
-                    var n = selectedId.indexOf("_grid");//To check if the dataview is inserted new or updated old id.
-                    
+                    var n = selectedId.indexOf("_grid"); //To check if the dataview is inserted new or updated old id.
+
                     var contract_charge_type_id = ''
-                    contract_group["contract_tabs_" + object_id].forEachTab(function(tab){
+                    contract_group["contract_tabs_" + object_id].forEachTab(function(tab) {
                         if (tab.getText() == 'General') {
                             var form_obj = tab.getAttachedObject().cells("a").getAttachedObject();
                             contract_charge_type_id = form_obj.getItemValue('contract_charge_type_id');
                         }
                     });
-                    
+
                     if (selectedId && n < 0 && contract_charge_type_id == '') {
                         var selectedId = contract_group["contract_component_grid_" + object_id].getSelectedRowId();
                         var ind = contract_group["contract_component_grid_" + object_id].getSelectedCellIndex();
@@ -1706,14 +1764,13 @@
 
                     }
 
-                    
+
                     if (n < 0) {
                         contract_group["contract_toolbar_formula_" + object_id].setItemEnabled("add");
                         //contract_group["contract_toolbar_formula_" + object_id].setItemEnabled("save");
                         contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("additional");
                         contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("delete");
-                    }
-                    else {
+                    } else {
                         contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("t1");
                         contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("save");
                         contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("additional");
@@ -1727,15 +1784,15 @@
                     if (!has_rights_contract_formula_ui) {
                         contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("delete");
                     }
-                    
+
                     var contract_charge_type_id = ''
-                    contract_group["contract_tabs_" + object_id].forEachTab(function(tab){
-                    if (tab.getText() == 'General') {
+                    contract_group["contract_tabs_" + object_id].forEachTab(function(tab) {
+                        if (tab.getText() == 'General') {
                             var form_obj = tab.getAttachedObject().cells("a").getAttachedObject();
                             contract_charge_type_id = form_obj.getItemValue('contract_charge_type_id');
-                    }
+                        }
                     });
-                    
+
                     if (contract_charge_type_id != '' && function_id != '10211400') {
                         contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("t1");
                         contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('gl_code');
@@ -1748,23 +1805,23 @@
                     contract_group["dataview_formula_excel_engine" + object_id].setColumnIds('data_component_detail_id,data_component_id,granularity,value,user_defined_function,formula_id');
                     contract_group["dataview_formula_excel_engine" + object_id].setColTypes('ro,combo,combo,combo,ro,ro');
                     contract_group["dataview_formula_excel_engine" + object_id].setInitWidths('100,130,130,130,400,100');
-                    contract_group["dataview_formula_excel_engine" + object_id].enableEditEvents(true,true,false,false);
+                    contract_group["dataview_formula_excel_engine" + object_id].enableEditEvents(true, true, false, false);
                     contract_group["dataview_formula_excel_engine" + object_id].enableValidation(true);
                     contract_group["dataview_formula_excel_engine" + object_id].setColValidators("ValidNumeric");
                     contract_group["dataview_formula_excel_engine" + object_id].init();
                     contract_group["dataview_formula_excel_engine" + object_id].enableMultiselect(true);
                     contract_group["dataview_formula_excel_engine" + object_id].setColumnsVisibility('true,false,false,false,false,true');
-                
+
                     var grid_obj = contract_group["dataview_formula_excel_engine" + object_id];
                     selectedId = contract_group["contract_component_grid_" + object_id].getSelectedRowId();
-                    var is_inserted = selectedId.indexOf("_grid");//To check if the grid is inserted new or updated old id.
-                    grid_obj.attachEvent("onValidationError",function(id,ind,value){
+                    var is_inserted = selectedId.indexOf("_grid"); //To check if the grid is inserted new or updated old id.
+                    grid_obj.attachEvent("onValidationError", function(id, ind, value) {
                         var message = "Invalid Data";
-                        grid_obj.cells(id,ind).setAttribute("validation", message);
+                        grid_obj.cells(id, ind).setAttribute("validation", message);
                         return true;
                     });
-                    grid_obj.attachEvent("onValidationCorrect",function(id,ind,value){
-                        grid_obj.cells(id,ind).setAttribute("validation", "");
+                    grid_obj.attachEvent("onValidationCorrect", function(id, ind, value) {
+                        grid_obj.cells(id, ind).setAttribute("validation", "");
                         return true;
                     });
 
@@ -1778,25 +1835,25 @@
 
 
 
-                    grid_obj.attachEvent("onRowDblClicked", function(rId,cInd){
-                        var selected_data_component = grid_obj.cells(rId,col_data_component_id).getValue().split('_');
-                        var formula_id = grid_obj.cells(rId,col_formula_id).getValue();
-                        formula_id = (formula_id == '')?undefined:formula_id;
+                    grid_obj.attachEvent("onRowDblClicked", function(rId, cInd) {
+                        var selected_data_component = grid_obj.cells(rId, col_data_component_id).getValue().split('_');
+                        var formula_id = grid_obj.cells(rId, col_formula_id).getValue();
+                        formula_id = (formula_id == '') ? undefined : formula_id;
                         if (cInd == col_user_defined_function && selected_data_component[1] == 107303) {
-                            select_clicked(formula_id,1,undefined,undefined);
+                            select_clicked(formula_id, 1, undefined, undefined);
                         }
                     });
 
-                    grid_obj.attachEvent("onRowSelect", function(rId,cInd){
+                    grid_obj.attachEvent("onRowSelect", function(rId, cInd) {
                         contract_group["contract_toolbar_formula_" + object_id].setItemEnabled("delete");
                     });
 
                     var combo_price = [];
                     var combo_meter = [];
                     cm_param = {
-                        "action"                : "spa_getAllMeter",
-                        "flag"                  : "s",
-                        "has_blank_option"      : "false"
+                        "action": "spa_getAllMeter",
+                        "flag": "s",
+                        "has_blank_option": "false"
                     };
 
 
@@ -1804,29 +1861,29 @@
                     var url = js_dropdown_connector_url + '&' + cm_param;
                     $.ajax({
                         url: url,
-                        success: function(data){
+                        success: function(data) {
                             combo_meter = data;
                         }
                     });
 
                     cm_param = {
-                        "action"                : "spa_source_price_curve_def_maintain",
-                        "flag"                  : "l",
-                        "has_blank_option"      : "false"
+                        "action": "spa_source_price_curve_def_maintain",
+                        "flag": "l",
+                        "has_blank_option": "false"
                     };
 
                     cm_param = $.param(cm_param);
                     url = js_dropdown_connector_url + '&' + cm_param;
                     $.ajax({
                         url: url,
-                        success: function(data){
+                        success: function(data) {
                             combo_price = data;
                         }
                     });
 
-                    cmb_data_component.attachEvent("onChange", function(value, text,id,default_value) {
+                    cmb_data_component.attachEvent("onChange", function(value, text, id, default_value) {
                         if (value) {
-                            var array_data_component_id  = value.split('_');
+                            var array_data_component_id = value.split('_');
                             var data_component_id = array_data_component_id[1];
                             var row_id = '';
                             if (id && id != '' && id != undefined) {
@@ -1834,14 +1891,14 @@
                             } else {
                                 row_id = grid_obj.getSelectedRowId();
                             }
-                            var cmb_value = grid_obj.cells(row_id,col_value).getCellCombo();
+                            var cmb_value = grid_obj.cells(row_id, col_value).getCellCombo();
                             switch (data_component_id) {
                                 case '107300': // Meter
                                 case '107302': // Price
-                                    grid_obj.cells(row_id,col_value).setDisabled(false);
-                                    grid_obj.cells(row_id,col_user_defined_function).setDisabled(true);
-                                    grid_obj.cells(row_id,col_user_defined_function).setValue('');
-                                    grid_obj.cells(row_id,col_value).setValue('');
+                                    grid_obj.cells(row_id, col_value).setDisabled(false);
+                                    grid_obj.cells(row_id, col_user_defined_function).setDisabled(true);
+                                    grid_obj.cells(row_id, col_user_defined_function).setValue('');
+                                    grid_obj.cells(row_id, col_value).setValue('');
                                     var combo_option = [];
                                     if (data_component_id == '107300') {
                                         combo_option = combo_meter;
@@ -1850,43 +1907,42 @@
                                     }
                                     cmb_value.load(combo_option, function() {
                                         if (default_value && default_value != undefined) {
-                                            grid_obj.cells(row_id,col_value).setValue(default_value);
+                                            grid_obj.cells(row_id, col_value).setValue(default_value);
                                         }
                                     });
 
                                     break;
                                 case '107301': // Deal
-                                    grid_obj.cells(row_id,col_value).setDisabled(true);
-                                    grid_obj.cells(row_id,col_user_defined_function).setDisabled(true);
-                                    grid_obj.cells(row_id,col_user_defined_function).setValue('');
-                                    grid_obj.cells(row_id,col_value).setValue('');
+                                    grid_obj.cells(row_id, col_value).setDisabled(true);
+                                    grid_obj.cells(row_id, col_user_defined_function).setDisabled(true);
+                                    grid_obj.cells(row_id, col_user_defined_function).setValue('');
+                                    grid_obj.cells(row_id, col_value).setValue('');
                                     break;
                                 case '107303':
                                     //UDSQL
-                                    grid_obj.cells(row_id,col_value).setValue('');
-                                    grid_obj.cells(row_id,col_value).setDisabled(true);
-                                    grid_obj.cells(row_id,col_user_defined_function).setDisabled(false);
+                                    grid_obj.cells(row_id, col_value).setValue('');
+                                    grid_obj.cells(row_id, col_value).setDisabled(true);
+                                    grid_obj.cells(row_id, col_user_defined_function).setDisabled(false);
                                     break;
                             }
                         }
                     });
 
                     cm_param = {
-                        "action"                : "spa_data_component",
-                        "flag"                  : "c",
-                        "has_blank_option"  : "false"
+                        "action": "spa_data_component",
+                        "flag": "c",
+                        "has_blank_option": "false"
                     };
                     var cm_param_data_component_id = $.param(cm_param);
                     url = js_dropdown_connector_url + '&' + cm_param_data_component_id;
-                    cmb_data_component.load(url, function() {
-                    });
+                    cmb_data_component.load(url, function() {});
 
                     var cm_param = {
-                        "action"                : "spa_StaticDataValues",
-                        "flag"                  : "h",
-                        "type_id"                : "978",
-                        "license_not_to_static_value_id" : "",
-                        "has_blank_option"  : "true"
+                        "action": "spa_StaticDataValues",
+                        "flag": "h",
+                        "type_id": "978",
+                        "license_not_to_static_value_id": "",
+                        "has_blank_option": "true"
                     };
                     var cm_param_granularity = $.param(cm_param);
                     url = js_dropdown_connector_url + '&' + cm_param_granularity;
@@ -1967,15 +2023,14 @@
             var active_tab_id = contract_group.tabbar.getActiveTab();
             var object_id = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
             var dataview_object = contract_group["dataview_formula_" + object_id];
-            if(!checked_status)
-            contract_group["contract_toolbar_formula_" + object_id].setItemEnabled("save");
-            if(has_rights_contract_formula_ui){
-            contract_group["contract_toolbar_formula_" + object_id].setItemEnabled("delete");
+            if (!checked_status)
+                contract_group["contract_toolbar_formula_" + object_id].setItemEnabled("save");
+            if (has_rights_contract_formula_ui) {
+                contract_group["contract_toolbar_formula_" + object_id].setItemEnabled("delete");
             }
             if (dataview_object.item(id).nested_id) {
                 contract_group["contract_toolbar_formula_" + object_id].setItemEnabled("additional");
-            }
-            else {
+            } else {
                 contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("additional");
             }
             if (!has_rights_contract_formula_ui) {
@@ -2023,17 +2078,17 @@
          * @param [string] formula_id of the formula.
          * @return [opens up formula builder screen.]
          */
-        function select_clicked(formula_id,row,nested_id,formula_group_id) {
+        function select_clicked(formula_id, row, nested_id, formula_group_id) {
             if (!has_rights_contract_formula_ui)
                 return;
             if (typeof formula_id === "undefined")
                 formula_id = 'NULL';
             var g = isNaN(formula_group_id);
-            if(g)
+            if (g)
                 formula_group_id = 'NULL';
             if (typeof nested_id === "undefined")
                 nested_id = 'NULL';
-            param = '../../_setup/formula_builder/formula.editor.php?formula_id=' + formula_id +'&formula_group_id='+formula_group_id+'&sequence_number='+row+'&formula_nested_id='+nested_id+'&call_from=other&is_pop=true&checked_status='+checked_status;
+            param = '../../_setup/formula_builder/formula.editor.php?formula_id=' + formula_id + '&formula_group_id=' + formula_group_id + '&sequence_number=' + row + '&formula_nested_id=' + nested_id + '&call_from=other&is_pop=true&checked_status=' + checked_status;
             var is_win = dhxWins.isWindow('w1');
             if (is_win == true) {
                 w1.close();
@@ -2071,22 +2126,22 @@
                     dataview_object.item(id).formula = formula_value;
                     dataview_object.refresh(id);
                 }
-            } else if (contract_type == 'Excel'){
+            } else if (contract_type == 'Excel') {
                 var grid_obj = contract_group["dataview_formula_excel_engine" + object_id];
                 var row_id = grid_obj.getSelectedRowId();
                 var col_user_defined_function = grid_obj.getColIndexById('user_defined_function');
                 var col_formula_id = grid_obj.getColIndexById('formula_id');
                 if (return_value[0] == 'Remove') {
                     formula_group_id = 'undefined';
-                    grid_obj.cells(row_id,col_user_defined_function).setValue('');
-                    grid_obj.cells(row_id,col_formula_id).setValue('');
+                    grid_obj.cells(row_id, col_user_defined_function).setValue('');
+                    grid_obj.cells(row_id, col_formula_id).setValue('');
                     grid_obj.cells(row_id, col_user_defined_function).cell.wasChanged = true;
                 } else {
                     formula_group_id = return_value[0];
                     formula_value = return_value[1];
                     formula_value = formula_value.replace(/</g, "&lt;");
-                    grid_obj.cells(row_id,col_user_defined_function).setValue(formula_value);
-                    grid_obj.cells(row_id,col_formula_id).setValue(formula_group_id);
+                    grid_obj.cells(row_id, col_user_defined_function).setValue(formula_value);
+                    grid_obj.cells(row_id, col_formula_id).setValue(formula_group_id);
                     grid_obj.cells(row_id, col_user_defined_function).cell.wasChanged = true;
                 }
             }
@@ -2194,14 +2249,14 @@
                             }
                         });
 
-                        contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("delete"); 
+                        contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("delete");
                         break;
                     case 'additional':
                         //when additional is clicked.
                         var dataview_object = contract_group["dataview_formula_" + object_id];
                         var id = dataview_object.getSelected();
                         var nested_id = dataview_object.item(id).nested_id
-                        param = 'formula.additional.php?id=' + nested_id + '&is_pop=true&checked_status='+checked_status;
+                        param = 'formula.additional.php?id=' + nested_id + '&is_pop=true&checked_status=' + checked_status;
                         var is_win = dhxWins.isWindow('contract_group.w4');
                         if (is_win == true) {
                             contract_group.w4.close();
@@ -2223,7 +2278,7 @@
                     case 'add':
                         contract_group["contract_toolbar_formula_" + object_id].setItemEnabled("save");
                         var newId = (new Date()).valueOf();
-                        grid_obj.addRow(newId,'');
+                        grid_obj.addRow(newId, '');
                         grid_obj.selectRowById(newId);
                         // var shift_item_row_cmb = Setup_What_If_criteria["scenario_grid_" + active_object_id].cells(rId,Setup_What_If_criteria["scenario_grid_" + active_object_id].getColIndexById('shift_item')).getCellCombo();
                         break;
@@ -2237,14 +2292,14 @@
                             show_messagebox('No changes in Grid.');
                             return;
                         }
-                        var validation_status = contract_group.validate_excel_grid(grid_obj,'Data Component');
+                        var validation_status = contract_group.validate_excel_grid(grid_obj, 'Data Component');
                         if (!validation_status)
                             return;
                         var grid_xml = '<GridXML>';
                         $.each(changed_ids, function(index, value) {
                             grid_xml += '<GridRow ';
                             grid_xml += 'contract_group_detail_id' + '="' + contract_group_detail_id + '" ';
-                            for(var cellIndex = 0; cellIndex < grid_obj.getColumnsNum(); cellIndex++){
+                            for (var cellIndex = 0; cellIndex < grid_obj.getColumnsNum(); cellIndex++) {
                                 var column_id = grid_obj.getColumnId(cellIndex);
                                 var cell_value = grid_obj.cells(value, cellIndex).getValue();
                                 if (column_id == 'data_component_id') {
@@ -2259,9 +2314,10 @@
                         });
                         grid_xml += '</GridXML>';
                         // console.log(grid_xml);
-                        data = {'action' : 'spa_data_component',
-                            'flag' : 's',
-                            'xml' : grid_xml
+                        data = {
+                            'action': 'spa_data_component',
+                            'flag': 's',
+                            'xml': grid_xml
                         };
 
                         adiha_post_data("return_array", data, '', '', 'contract_group.dataview_formula_grid_callback');
@@ -2280,9 +2336,9 @@
                             confirm_messagebox('Are you sure you want to delete?', function() {
                                 data_component_detail_ids = data_component_detail_ids.toString();
                                 data = {
-                                    'action' : 'spa_data_component',
-                                    'flag' : 'd',
-                                    'data_component_detail_id' : data_component_detail_ids
+                                    'action': 'spa_data_component',
+                                    'flag': 'd',
+                                    'data_component_detail_id': data_component_detail_ids
                                 };
                                 adiha_post_data("return_array", data, '', '', 'contract_group.dataview_formula_grid_callback');
                             });
@@ -2317,7 +2373,7 @@
                 };
                 contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("additional");
                 //contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("t1");
-                contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("save");                
+                contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("save");
                 adiha_post_data('return_array', data, '', '', ' contract_group.build_formula_dataview', false);
             }
 
@@ -2335,7 +2391,7 @@
                 contract_id = contract_group["contract_component_grid_" + object_id].getUserData("", "contract_mode_xml");
             else
                 contract_id = 'NULL';
-            
+
             contract_group["form_validate_status" + object_id] = 0;
 
             var detail_tabs = contract_group["contract_tabs_" + object_id].getAllTabs();
@@ -2348,27 +2404,27 @@
                 var valid_status = 1;
                 var fees_dublicate_check = 0;
                 var price_dublicate_check = 0;
-                
+
                 $.each(detail_tabs, function(index, value) {
                     layout_obj = contract_group["contract_tabs_layout_" + object_id + "_" + value].cells("a").getAttachedObject();
                     attached_obj = layout_obj;
-                    
+
                     if (layout_obj instanceof dhtmlXForm) {
                         var status = validate_form(attached_obj);
-                        form_status = form_status && status; 
+                        form_status = form_status && status;
                         if (tabsCount == 1 && !status) {
-                        first_err_tab = "";
+                            first_err_tab = "";
                         } else if ((!first_err_tab) && !status) {
                             first_err_tab = contract_group["contract_tabs_" + object_id].cells(value);
                         }
                         if (!status) {
                             valid_status = 0;
-                        }                            
-                            
+                        }
+
                         data = layout_obj.getFormData();
                         for (var a in data) {
                             field_label = a;
-                            if(field_label == 'storage_asset_id'){
+                            if (field_label == 'storage_asset_id') {
                                 contract_group["contract_component_grid_" + object_id].setUserData("", "storage_asset_id", data[a]);
                             }
                             if (field_label == 'contract_name') {
@@ -2376,21 +2432,20 @@
                                 get_contract_name = data[a];
                             }
                             if (field_label == 'term_start') {
-                                term_start_validate = layout_obj.getItemValue(a, true);                                         
+                                term_start_validate = layout_obj.getItemValue(a, true);
                             }
-                            
+
                             if (field_label == 'term_end') {
                                 term_end_validate = layout_obj.getItemValue(a, true);
                             }
-                            
+
                             if (field_label == 'update_ts') {
                                 field_value = currentdate;
                             }
                             //field_value = data[a];
                             if (layout_obj.getItemType(a) == "calendar") {
                                 field_value = layout_obj.getItemValue(a, true);
-                            }
-                            else {
+                            } else {
                                 field_value = data[a];
                             }
                             if (field_label == 'contract_desc') {
@@ -2401,32 +2456,32 @@
                                 if (data[a] == '')
                                     field_value = contract_group["contract_component_grid_" + object_id].getUserData("", "contract_name_store");
                             }
-                            if (field_label == 'source_system_id') {                                
+                            if (field_label == 'source_system_id') {
                                 if (data[a] == '' || data[a] == 'null')
                                     field_value = '';
-                            }                                                        
+                            }
                             if (!field_value)
                                 field_value = 'null';
                             form_xml += " " + field_label + "=\"" + field_value + "\"";
                         }
                     }
-                    
+
                     if (term_start_validate > term_end_validate) {
                         var message = get_message('VALIDATE_DATE');
                         show_messagebox(message);
                         progressoff();
                         return;
                     }
-                        
+
                     if (layout_obj instanceof dhtmlXGridObject) {
                         attached_obj.clearSelection();
-                        grid_label = attached_obj.getUserData("", "grid_label");                              
-                                                                        
+                        grid_label = attached_obj.getUserData("", "grid_label");
+
                         var ids = attached_obj.getChangedRows(true);
                         grid_id = attached_obj.getUserData("", "grid_id");
-                         
+
                         deleted_xml = attached_obj.getUserData("", "pricegrid_delete_xml");
-                         
+
                         if (deleted_xml != null && deleted_xml != "") {
                             grid_xml += "<GridDelete grid_id=\"" + grid_id + "\" grid_label=\"" + grid_label + "\">";
                             grid_xml += deleted_xml;
@@ -2437,7 +2492,7 @@
                                 delete_grid_name += "," + grid_label
                             }
                         };
-                        
+
                         if (ids != "") {
                             attached_obj.setSerializationLevel(false, false, true, true, true, true);
                             var grid_status = contract_group.validate_form_grid(attached_obj, grid_label);
@@ -2445,32 +2500,32 @@
                                 contract_group["contract_tabs_" + object_id].cells(value).setActive();
                                 valid_status = 0;
                             };
-                            
+
                             if (grid_label == 'Contract Fees') {
                                 var fee_product_charge_arr = new Array();
-                                
+
                                 attached_obj.forEachRow(function(id) {
-                                    var fees_product_charge =  attached_obj.cells(id, 2).getValue() + '+' + attached_obj.cells(id, 3).getValue() + '+' + attached_obj.cells(id, 4).getValue(4);
+                                    var fees_product_charge = attached_obj.cells(id, 2).getValue() + '+' + attached_obj.cells(id, 3).getValue() + '+' + attached_obj.cells(id, 4).getValue(4);
                                     if (fee_product_charge_arr.indexOf(fees_product_charge) > -1) {
                                         valid_status = 0;
                                         fees_dublicate_check = 1;
                                     }
-                                    
+
                                     fee_product_charge_arr.push(fees_product_charge);
                                 });
                             }
-                            
+
                             if (grid_label == 'Price') {
                                 var price_val_arr = new Array();
 
                                 attached_obj.forEachRow(function(id) {
-                                    var price_val =  attached_obj.cells(id, 2).getValue() + '+' + attached_obj.cells(id, 7).getValue();
-                                    
+                                    var price_val = attached_obj.cells(id, 2).getValue() + '+' + attached_obj.cells(id, 7).getValue();
+
                                     if (price_val_arr.indexOf(price_val) > -1) {
                                         valid_status = 0;
                                         price_dublicate_check = 1;
                                     }
-                                    
+
                                     price_val_arr.push(price_val);
                                 });
                             }
@@ -2506,10 +2561,10 @@
                             grid_xml += "</Grid>";
                         } else {
                             //valid_status = 0;
-                        }                        
+                        }
                     }
                 });
-                
+
                 form_xml += "></FormXML>";
                 grid_xml += "</GridGroup>";
                 var xml = "<Root function_id=\"" + function_id + "\">";
@@ -2517,30 +2572,33 @@
                 xml += grid_xml;
                 xml += "</Root>";
                 xml = xml.replace(/'/g, "\"");
-                
+
                 if (fees_dublicate_check == 1) {
                     show_messagebox('The combination of product type, charge and effective date should be unique in Fees.');
                     return;
                 }
-                
+
                 if (price_dublicate_check == 1) {
                     show_messagebox('The combination of product type and effective date should be unique in Price.');
                     return;
                 }
-                
+
                 if (valid_status) {
                     contract_group.tabbar.tabs(tab_id).getAttachedToolbar().disableItem('save');
                     var contract_id = contract_group["contract_component_grid_" + object_id].getUserData("", "contract_mode_xml");
-                    data = {"action": "spa_process_form_data", "xml":xml}
+                    data = {
+                        "action": "spa_process_form_data",
+                        "xml": xml
+                    }
                     if (delete_grid_name != "") {
-                        var del_msg =  "Some data has been deleted from " + delete_grid_name + " grid. Are you sure you want to save?";
+                        var del_msg = "Some data has been deleted from " + delete_grid_name + " grid. Are you sure you want to save?";
                         result = adiha_post_data("alert", data, "", "", "contract_group.post_callback", "", del_msg);
                     } else {
                         result = adiha_post_data("alert", data, "", "", "contract_group.post_callback");
                     }
                     delete_grid_name = "";
                     deleted_xml = attached_obj.setUserData("", "pricegrid_delete_xml", "");
-                } 
+                }
 
                 if (!form_status) {
                     generate_error_message(first_err_tab);
@@ -2548,14 +2606,14 @@
             }
         }
 
-        contract_group.after_refresh_price_grid = function(result){
+        contract_group.after_refresh_price_grid = function(result) {
             var json_data = JSON.parse(result);
 
             data = {
                 "action": "spa_counterparty_contract_address",
-                "flag":'y',
+                "flag": 'y',
                 "counterparty_id": json_data[0].counterparty_id,
-                "contract_id" : json_data[0].contract_id
+                "contract_id": json_data[0].contract_id
             };
             adiha_post_data('return_json', data, '', '', 'contract_group.save_counterparty_contract_callback', false);
         }
@@ -2567,23 +2625,23 @@
             if (has_rights_contract_copy) {
                 contract_group.tabbar.tabs(contract_group.tabbar.getActiveTab()).getAttachedToolbar().enableItem('save');
             }
-            
+
             if (result[0].errorcode == 'Success') {
                 var contract_id = result[0].recommendation;
-				var contract_workflow = contract_id;
-                
+                var contract_workflow = contract_id;
+
                 if (function_id == '20008200') {
                     var active_tab_id = contract_group.tabbar.getActiveTab();
                     var object_id = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
                     var storage_asset_id = contract_group["contract_component_grid_" + object_id].getUserData("", "storage_asset_id");
-                    
+
                     data = {
                         "action": "spa_storage_assets",
-                        "flag":'n',
-                        "storage_asset_id":storage_asset_id,
-                        "agreement" : result[0].recommendation
+                        "flag": 'n',
+                        "storage_asset_id": storage_asset_id,
+                        "agreement": result[0].recommendation
                     };
-                    adiha_post_data('return_json', data, '', '', 'contract_group.after_refresh_price_grid', false);                    
+                    adiha_post_data('return_json', data, '', '', 'contract_group.after_refresh_price_grid', false);
                 } else {
                     //Added this block as the alert is triggered from spa_contract_group_detail when contract_id is not for Standard Contract
                     if ((function_id == '10211200' && contract_id == null) || function_id != '10211200') {
@@ -2592,7 +2650,13 @@
                             contract_workflow = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
                         }
                         //Trigger Workflow
-                        var data = {"action": "spa_contract_group_detail_UI", "flag": "a","contract_id":contract_workflow, "module_id":"20603", "event_id":"20568"};
+                        var data = {
+                            "action": "spa_contract_group_detail_UI",
+                            "flag": "a",
+                            "contract_id": contract_workflow,
+                            "module_id": "20603",
+                            "event_id": "20568"
+                        };
                         adiha_post_data("return_json", data, "", "", "");
                     }
                 }
@@ -2606,7 +2670,7 @@
                         tab_text.push(0, contract_id);
                     }
                     contract_group.tabbar.tabs(tab_id).setText(tab_text[1]);
-                    
+
                     if (function_id == '10211200') {
                         data = {
                             "action": "spa_contract_group_detail",
@@ -2639,20 +2703,32 @@
          */
         contract_group.copy_contract = function(object_id) {
             var object_id = (object_id.indexOf("tab_") != -1) ? object_id.replace("tab_", "") : object_id;
-            data = {"action": "spa_contract_group", "flag": "c", "contract_id": object_id};
+            data = {
+                "action": "spa_contract_group",
+                "flag": "c",
+                "contract_id": object_id
+            };
             result = adiha_post_data("confirm", data, "", "", "contract_group.callback_copy_contract", "", "Are you sure you want to copy?");
         }
 
         contract_group.lock_contract = function(object_id) {
             var object_id = (object_id.indexOf("tab_") != -1) ? object_id.replace("tab_", "") : object_id;
-            data = {"action": "spa_contract_group", "flag": "g", "contract_id": object_id};
+            data = {
+                "action": "spa_contract_group",
+                "flag": "g",
+                "contract_id": object_id
+            };
             result = adiha_post_data("confirm", data, "", "", "contract_group.callback_lock_contract", "", "Are you sure you want to lock?");
         }
 
         contract_group.unlock_contract = function(object_id) {
             var object_id = (object_id.indexOf("tab_") != -1) ? object_id.replace("tab_", "") : object_id;
             //alert(object_id);
-            data = {"action": "spa_contract_group", "flag": "h", "contract_id": object_id};
+            data = {
+                "action": "spa_contract_group",
+                "flag": "h",
+                "contract_id": object_id
+            };
             result = adiha_post_data("confirm", data, "", "", "contract_group.callback_lock_contract", "", "Are you sure you want to unlock?");
         }
 
@@ -2660,7 +2736,7 @@
          * Open document
          * @param {type} tab_id
          * @returns {undefined}         */
-        contract_group.open_document = function(object_id,call_from) {
+        contract_group.open_document = function(object_id, call_from) {
             var object_id = (object_id.indexOf("tab_") != -1) ? object_id.replace("tab_", "") : object_id;
             param = '../../_setup/manage_documents/manage.documents.php?call_from=' + call_from + '&notes_category=' + category_id + '&notes_object_id=' + object_id + '&is_pop=true';
             var is_win = dhxWins.isWindow('w11');
@@ -2686,7 +2762,13 @@
         contract_group.callback_copy_contract = function(result) {
             var contract_id = result[0].recommendation;
             //Trigger Workflow
-            data = {"action": "spa_contract_group_detail_UI", "flag": "a","contract_id":contract_id, "module_id":"20603", "event_id":"20568"};
+            data = {
+                "action": "spa_contract_group_detail_UI",
+                "flag": "a",
+                "contract_id": contract_id,
+                "module_id": "20603",
+                "event_id": "20568"
+            };
             adiha_post_data("alert", data, "", "", "");
 
             var spa_url = "<?php echo $tree_grid_spa; ?>";
@@ -2730,7 +2812,7 @@
             contract_group["inner_tab_layout_" + object_id].dhxWins.window('b').centerOnScreen();
 
         }
-        /*END*/ 
+        /*END*/
         contract_group.charge_type_post_callback = function(result) {
             var active_tab_id = contract_group.tabbar.getActiveTab();
             var object_id = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
@@ -2746,7 +2828,7 @@
             contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('copy');
             contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('delete');
             contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('gl_code');
-            
+
             var str = "<?php echo $sql_string; ?>";
             var spa_url = str.replace("<ID>", object_id);
             var additional_data1 = {
@@ -2811,8 +2893,7 @@
                 contract_component_store.push(contract_component);
                 if (contract_detail_id) {
                     grid_xml = grid_xml + '<GridUpdate contract_id=' + '"' + object_id + '"' + ' contract_detail_id=' + '"' + contract_detail_id + '"' + ' contract_component=' + '"' + contract_component + '"' + ' sequence_order=' + '"' + i + '"' + '></GridUpdate>';
-                }
-                else {
+                } else {
                     grid_xml = grid_xml + '<GridInsert contract_id=' + '"' + object_id + '"' + ' contract_detail_id=' + '"NULL"' + ' contract_component=' + '"' + contract_component + '"' + ' sequence_order=' + '"' + i + '"' + '></GridInsert>';
                 }
                 i++;
@@ -2830,7 +2911,9 @@
                 adiha_post_data('alert', data, '', '', '');
                 var str = "<?php echo $sql_string; ?>";
                 var spa_url = str.replace("<ID>", object_id);
-                sp_url = {"sp_string": spa_url};
+                sp_url = {
+                    "sp_string": spa_url
+                };
                 result = adiha_post_data("return_data", sp_url, "", "", "contract_group.refresh_contract_component_grid_callback");
             }
         }
@@ -2855,7 +2938,7 @@
                 id += contract_group.grid.cells(selectedId, contract_id_index).getValue();
             }
             id = id.replace(/^,/, '');
-            
+
             var success_message = get_message('DELETE_SUCCESS');
             var error_message = get_message('DELETE_FAILED');
 
@@ -2881,7 +2964,7 @@
                 } else {
                     sel_id_array.push(contract_group.grid.cells(selectedId, 0).getValue());
                 }
-                
+
                 //clsoe the tab if the contract is deleted from the grid.
                 var ids = contract_group.tabbar.getAllTabs();
                 if (ids) {
@@ -2938,9 +3021,9 @@
                     return '<b>End Date</b> should be greater than <b>Start Date.</b>'
             }
         }
-                        
+
         function disable_item(status) { // Only for standard and non standard contract.
-            var tab_id = contract_group.tabbar.getActiveTab();  
+            var tab_id = contract_group.tabbar.getActiveTab();
             var win = contract_group.tabbar.cells(tab_id).getAttachedToolbar();
             var object_id = (tab_id.indexOf("tab_") != -1) ? tab_id.replace("tab_", "") : tab_id;
 
@@ -2954,16 +3037,24 @@
                 contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("additional");
                 contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("save");
             } else {
-                if (has_rights_contract_copy && ( typeof privilege_status == 'undefined' || privilege_status == 'true')) // Only for standard and non standard.
+                if (has_rights_contract_copy && (typeof privilege_status == 'undefined' || privilege_status == 'true')) // Only for standard and non standard.
                     win.enableItem("save");
-                
-                contract_group["contract_toolbar_grid_" + object_id].setItemEnabled('add');
-                contract_group["contract_toolbar_grid_" + object_id].setItemEnabled('delete');
+
+                if (has_rights_contract_charge_type_ui)
+                    contract_group["contract_toolbar_grid_" + object_id].setItemEnabled('add');
+                else
+                    contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('add');
+
+                if (has_rights_contract_charge_type_delete)
+                    contract_group["contract_toolbar_grid_" + object_id].setItemEnabled('delete');
+                else
+                    contract_group["contract_toolbar_grid_" + object_id].setItemDisabled('delete');
+
                 contract_group["contract_toolbar_grid_" + object_id].setItemEnabled('gl_code');
             }
         }
 
-        function disable_menu_item () {
+        function disable_menu_item() {
             if (contract_group.menu.getItemType('unlock') != null)
                 contract_group.menu.setItemDisabled('unlock');
             if (contract_group.menu.getItemType('lock') != null)
@@ -2982,83 +3073,98 @@
             win.setText("Charges");
             win.centerOnScreen();
             win.setModal(true);
-            
+
             var browse_layout = browse_window.window('w1').attachLayout({
                 pattern: "2E",
-                cells: [
-                    {id: "a", text: "Product", height: 100, header: false},
-                    {id: "b", text: "Charge Type", header:false}
+                cells: [{
+                        id: "a",
+                        text: "Product",
+                        height: 100,
+                        header: false
+                    },
+                    {
+                        id: "b",
+                        text: "Charge Type",
+                        header: false
+                    }
                 ]
             });
-            
-            var toolbar_json = [{id:"save", type:"button", img:"save.gif", imgdis:"save_dis.gif", text:"Ok", title:"Ok"}];
+
+            var toolbar_json = [{
+                id: "save",
+                type: "button",
+                img: "save.gif",
+                imgdis: "save_dis.gif",
+                text: "Ok",
+                title: "Ok"
+            }];
             var toolbar_obj = browse_layout.cells('a').attachToolbar();
             toolbar_obj.setIconsPath(js_image_path + '/dhxtoolbar_web/');
             toolbar_obj.loadStruct(toolbar_json);
-            toolbar_obj.attachEvent("onClick", function(id){
+            toolbar_obj.attachEvent("onClick", function(id) {
                 var selected_row = browse_grid.getSelectedRowId();
                 if (selected_row == null) {
                     show_messagebox('Please select any charge.');
-                    return;             
+                    return;
                 }
-                
+
                 var selected_row_arr = selected_row.split(',');
                 for (cnt = 0; cnt < selected_row_arr.length; cnt++) {
                     var product = form_obj.getItemValue('product_type');
-                    var value_id = browse_grid.cells(selected_row_arr[cnt],0).getValue();
+                    var value_id = browse_grid.cells(selected_row_arr[cnt], 0).getValue();
                     var newId = (new Date()).valueOf();
-                    grid_obj.addRow(newId,['','',product,value_id,'','']);
+                    grid_obj.addRow(newId, ['', '', product, value_id, '', '']);
                 }
                 win.close();
-            }); 
-            
-            browse_grid =  browse_layout.cells('b').attachGrid();
+            });
+
+            browse_grid = browse_layout.cells('b').attachGrid();
             browse_grid.setImagePath(js_image_path + '/dhxtoolbar_web/');
-            browse_grid.setHeader('ID,Charges'); 
-            browse_grid.setColAlign('left,left'); 
+            browse_grid.setHeader('ID,Charges');
+            browse_grid.setColAlign('left,left');
             browse_grid.setColumnIds('id,id_item');
-            browse_grid.setColTypes('ro,ro'); 
-            browse_grid.setInitWidths('175,220'); 
-            browse_grid.setColSorting('int,str'); 
-            browse_grid.attachHeader('#text_filter,#text_filter'); 
-            browse_grid.enableMultiselect(true); 
-            browse_grid.init(); 
-            browse_grid.setColumnsVisibility('false,false'); 
-            
+            browse_grid.setColTypes('ro,ro');
+            browse_grid.setInitWidths('175,220');
+            browse_grid.setColSorting('int,str');
+            browse_grid.attachHeader('#text_filter,#text_filter');
+            browse_grid.enableMultiselect(true);
+            browse_grid.init();
+            browse_grid.setColumnsVisibility('false,false');
+
             var sql_param = {
-                    "sql":"EXEC('SELECT field_name, Field_label FROM user_defined_fields_template WHERE internal_field_type = 18730')",
-                    "grid_type":"g"
-                };
-            
+                "sql": "EXEC('SELECT field_name, Field_label FROM user_defined_fields_template WHERE internal_field_type = 18730')",
+                "grid_type": "g"
+            };
+
             sql_param = $.param(sql_param);
             var sql_url = js_data_collector_url + "&" + sql_param;
             browse_grid.load(sql_url);
-            
-            
+
+
             var form_json = [{
-                                type: 'block',
-                                blockOffset: ui_settings['block_offset'],
-                                list: [{
-                                    'type': 'combo',
-                                    'name': 'product_type',
-                                    'label': 'Product',
-                                    'position': 'label-top',
-                                    'inputWidth': ui_settings['field_size'],
-                                    'labelWidth': 'auto',
-                                    'offsetLeft':ui_settings['offset_left'],
-                                    'filtering': true,
-                                    'tooltip': 'Product',
-                                    'options': '',
-                                }]
-                            }];
-            
-            var form_obj = browse_layout.cells('a').attachForm();           
+                type: 'block',
+                blockOffset: ui_settings['block_offset'],
+                list: [{
+                    'type': 'combo',
+                    'name': 'product_type',
+                    'label': 'Product',
+                    'position': 'label-top',
+                    'inputWidth': ui_settings['field_size'],
+                    'labelWidth': 'auto',
+                    'offsetLeft': ui_settings['offset_left'],
+                    'filtering': true,
+                    'tooltip': 'Product',
+                    'options': '',
+                }]
+            }];
+
+            var form_obj = browse_layout.cells('a').attachForm();
             form_obj.load(form_json, function() {
-                 var cm_param = {
-                            "action": "('SELECT value_id, code FROM static_data_value WHERE type_id = 101100')", 
-                            "call_from": "form",
-                            "has_blank_option": false
-                        };
+                var cm_param = {
+                    "action": "('SELECT value_id, code FROM static_data_value WHERE type_id = 101100')",
+                    "call_from": "form",
+                    "has_blank_option": false
+                };
 
                 cm_param = $.param(cm_param);
                 var url = js_dropdown_connector_url + '&' + cm_param;
@@ -3068,26 +3174,26 @@
                 });
             });
         }
-        
+
         load_workflow_status = function() {
             contract_group.menu.addNewSibling('process', 'reports', 'Reports', false, 'report.gif', 'report_dis.gif');
             contract_group.menu.addNewChild('reports', '0', 'workflow_status', 'Workflow Status', true, 'report.gif', 'report_dis.gif');
             contract_group.menu.addNewChild('reports', '1', 'report_manager', 'Report Manager', true, 'report.gif', 'report_dis.gif');
-            
-            contract_group.grid.attachEvent("onRowSelect",function(rowId,cellIndex){
+
+            contract_group.grid.attachEvent("onRowSelect", function(rowId, cellIndex) {
                 contract_group.menu.setItemEnabled('workflow_status');
             });
 
-            contract_group.grid.attachEvent("onSelectStateChanged",function(rowId,cellIndex){
-				if (rowId != null) {		
-					if (rowId.indexOf(",") == -1) contract_group.menu.setItemEnabled('report_manager');
-				}
+            contract_group.grid.attachEvent("onSelectStateChanged", function(rowId, cellIndex) {
+                if (rowId != null) {
+                    if (rowId.indexOf(",") == -1) contract_group.menu.setItemEnabled('report_manager');
+                }
             });
-            
-            load_report_menu ('contract_group.menu', 'report_manager', 2, -104704)
 
-            contract_group.menu.attachEvent("onClick", function(id, zoneId, cas){
-                if(id == 'workflow_status') {
+            load_report_menu('contract_group.menu', 'report_manager', 2, -104704)
+
+            contract_group.menu.attachEvent("onClick", function(id, zoneId, cas) {
+                if (id == 'workflow_status') {
                     var r_id = contract_group.grid.getSelectedRowId();
                     if (!r_id) {
                         show_messagebox('Please select a contract.');
@@ -3109,17 +3215,17 @@
                     workflow_report_win.maximize();
 
                     var filter_string;
-                    if (function_id == "10211400" || function_id == "20008200"){
-                    	filter_string = 'Contract ID = <i>' + contract_group.grid.getColumnValues(1) +  '</i>,  Contract = <i>' + contract_group.grid.getColumnValues(0) + '</i>';
+                    if (function_id == "10211400" || function_id == "20008200") {
+                        filter_string = 'Contract ID = <i>' + contract_group.grid.getColumnValues(1) + '</i>,  Contract = <i>' + contract_group.grid.getColumnValues(0) + '</i>';
                     } else {
-                    	filter_string = 'Contract ID = <i>' + contract_group.grid.getColumnValues(0) +  '</i>,  Contract = <i>' + contract_group.grid.getColumnValues(1) + '</i>';
+                        filter_string = 'Contract ID = <i>' + contract_group.grid.getColumnValues(0) + '</i>,  Contract = <i>' + contract_group.grid.getColumnValues(1) + '</i>';
                     }
 
                     var process_table_xml = 'contract_id:' + selected_ids;
                     var page_url = js_php_path + '../adiha.html.forms/_compliance_management/setup_rule_workflow/workflow.report.php?filter_id=' + selected_ids + '&source_column=contract_id&module_id=20603&process_table_xml=' + process_table_xml + '&filter_string=' + filter_string;
                     workflow_report_win.attachURL(page_url, false, null);
                 } else if (id.indexOf("report_manager_") != -1 && id != 'report_manager') {
-					var str_len = id.length;
+                    var str_len = id.length;
                     var report_param_id = id.substring(15, str_len);
                     var selected_ct_ids;
                     if (function_id == "10211400" || function_id == "20008200") {
@@ -3127,71 +3233,77 @@
                     } else {
                         selected_ct_ids = contract_group.grid.getColumnValues(0);
                     }
-                   
+
                     var param_filter_xml = '<Root><FormXML param_name="source_id" param_value="' + selected_ct_ids + '"></FormXML></Root>';
-                    
+
                     show_view_report(report_param_id, param_filter_xml, -104704)
                 }
             });
-        }        
-        
-        contract_group.validate_excel_grid = function(attached_obj,grid_label) {
+        }
+
+        contract_group.validate_excel_grid = function(attached_obj, grid_label) {
             var status = true;
             var col_data_component_id = attached_obj.getColIndexById('data_component_id');
             var col_value = attached_obj.getColIndexById('value');
             var col_user_defined_function = attached_obj.getColIndexById('user_defined_function');
             var col_formula_id = attached_obj.getColIndexById('formula_id');
             var col_granularity = attached_obj.getColIndexById('granularity');
-            for (var i = 0;i < attached_obj.getRowsNum();i++){
+            for (var i = 0; i < attached_obj.getRowsNum(); i++) {
                 var row_id = attached_obj.getRowId(i);
-                for (var j = 0;j < attached_obj.getColumnsNum();j++){
-                    var validation_message = attached_obj.cells(row_id,j).getAttribute("validation");
+                for (var j = 0; j < attached_obj.getColumnsNum(); j++) {
+                    var validation_message = attached_obj.cells(row_id, j).getAttribute("validation");
                     //alert(validation_message)
                     var column_text = attached_obj.getColLabel(j);
                     var column_id_by_index = attached_obj.getColumnId(j);
-                    if(validation_message != "" && validation_message != undefined){
-                        error_message = "Data Error in <b>"+grid_label+"</b> grid. Please check the data in column <b>"+column_text+"</b> and re-run.";
+                    if (validation_message != "" && validation_message != undefined) {
+                        error_message = "Data Error in <b>" + grid_label + "</b> grid. Please check the data in column <b>" + column_text + "</b> and re-run.";
                         show_messagebox(error_message);
-                        status = false; break;
+                        status = false;
+                        break;
                     }
-                    if (column_id_by_index == 'data_component_id' && (attached_obj.cells(row_id,j).getValue() == '' || attached_obj.cells(row_id,j).getValue() == undefined)) {
-                        error_message = "Data Error in <b>"+grid_label+"</b> grid. Please check the data in column <b>"+column_text+"</b> and re-run.";
+                    if (column_id_by_index == 'data_component_id' && (attached_obj.cells(row_id, j).getValue() == '' || attached_obj.cells(row_id, j).getValue() == undefined)) {
+                        error_message = "Data Error in <b>" + grid_label + "</b> grid. Please check the data in column <b>" + column_text + "</b> and re-run.";
                         show_messagebox(error_message);
-                        status = false; break;
+                        status = false;
+                        break;
                     } else if (column_id_by_index == 'data_component_id') {
-                        var value_array = attached_obj.cells(row_id,j).getValue().split('_');
+                        var value_array = attached_obj.cells(row_id, j).getValue().split('_');
                         switch (value_array[1]) {
                             case '107300': // Meter
                             case '107302': // Price
-                                var value = attached_obj.cells(row_id,col_value).getValue();
+                                var value = attached_obj.cells(row_id, col_value).getValue();
                                 if (value == '' || value == undefined) {
                                     column_text = attached_obj.getColLabel(col_value);
-                                    error_message = "Data Error in <b>"+grid_label+"</b> grid. Please check the data in column <b>"+column_text+"</b> and re-run.";
+                                    error_message = "Data Error in <b>" + grid_label + "</b> grid. Please check the data in column <b>" + column_text + "</b> and re-run.";
                                     show_messagebox(error_message);
-                                    status = false; break;
-                }
+                                    status = false;
+                                    break;
+                                }
                                 break;
                             case '107301': //Deal
 
                                 break;
                             case '107303': // UDSQL
-                                var value = attached_obj.cells(row_id,col_formula_id).getValue();
+                                var value = attached_obj.cells(row_id, col_formula_id).getValue();
                                 if (value == '' || value == undefined) {
                                     column_text = attached_obj.getColLabel(col_user_defined_function);
-                                    error_message = "Data Error in <b>"+grid_label+"</b> grid. Please check the data in column <b>"+column_text+"</b> and re-run.";
+                                    error_message = "Data Error in <b>" + grid_label + "</b> grid. Please check the data in column <b>" + column_text + "</b> and re-run.";
                                     show_messagebox(error_message);
-                                    status = false; break;
+                                    status = false;
+                                    break;
                                 }
                                 break;
                         }
                     }
                 }
-                if(validation_message != "" && validation_message != undefined){ break;}
+                if (validation_message != "" && validation_message != undefined) {
+                    break;
+                }
             }
             return status;
         }
 
-        contract_group.dataview_formula_grid_callback = function (result) {
+        contract_group.dataview_formula_grid_callback = function(result) {
             if (result[0][0] == 'Success') {
                 contract_group.refresh_dataview_formula_grid();
                 success_call(result[0][4]);
@@ -3210,28 +3322,28 @@
                 "action": "spa_data_component",
                 "flag": "g",
                 "contract_group_detail_id": selectedId,
-                "grid_type":"g"
+                "grid_type": "g"
             };
 
             sql_param = $.param(sql_param);
             var sql_url = js_data_collector_url + "&" + sql_param;
-            grid_obj.clearAndLoad(sql_url,function () {
+            grid_obj.clearAndLoad(sql_url, function() {
                 var col_data_component_id = grid_obj.getColIndexById('data_component_id');
                 var col_value = grid_obj.getColIndexById('value');
                 var cmb_data_component = grid_obj.getColumnCombo(col_data_component_id);
-                grid_obj.forEachRow(function(row_id){
-                   var data_component_id = grid_obj.cells(row_id,col_data_component_id).getValue();
-                   var value = grid_obj.cells(row_id,col_value).getValue();
-                    cmb_data_component.callEvent("onChange", [data_component_id, '',row_id,value]);
+                grid_obj.forEachRow(function(row_id) {
+                    var data_component_id = grid_obj.cells(row_id, col_data_component_id).getValue();
+                    var value = grid_obj.cells(row_id, col_value).getValue();
+                    cmb_data_component.callEvent("onChange", [data_component_id, '', row_id, value]);
                 });
                 contract_group["inner_grid_layout_" + object_id].cells('b').progressOff();
                 contract_group["contract_toolbar_formula_" + object_id].setItemEnabled("save");
                 contract_group["contract_toolbar_formula_" + object_id].setItemDisabled("delete");
             });
         }
-		
-		contract_group.alert_reminders = function(object_id) {
-			var object_id = (object_id.indexOf("tab_") != -1) ? object_id.replace("tab_", "") : object_id;
+
+        contract_group.alert_reminders = function(object_id) {
+            var object_id = (object_id.indexOf("tab_") != -1) ? object_id.replace("tab_", "") : object_id;
             param = '../../_compliance_management/setup_alerts/setup.alerts.reminder.php?module_id=20603&source_id=' + object_id;
             var is_win = dhxWins.isWindow('w11');
             if (is_win == true) {
@@ -3242,6 +3354,8 @@
             w11.setModal(true);
             w11.maximize();
             w11.attachURL(param, false, true);
-		}
+        }
     </script>
+</body>
+
 </html>
