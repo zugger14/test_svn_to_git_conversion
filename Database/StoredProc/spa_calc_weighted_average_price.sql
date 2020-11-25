@@ -461,6 +461,10 @@ BEGIN
 	END
 END
 
+SELECT @min_term = MIN(CAST(term_start AS DATE))
+	, @max_term = MAX(CAST(term_end AS DATE)) 
+FROM #deal_max_term src
+
 --Collect deals either from file, generic mapping
 IF OBJECT_ID(N'tempdb..#collect_deals') IS NOT NULL
 DROP TABLE #collect_deals
@@ -497,8 +501,9 @@ OUTER APPLY (
 ) lnk_deal
 INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = dmt.source_deal_header_id OR sdh.source_deal_header_id = lnk_deal.source_deal_header_id
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
-	AND sdd.term_start BETWEEN dmt.term_start  AND dmt.term_end
-
+	--AND (sdd.term_start BETWEEN dmt.term_start  AND dmt.term_end --daily
+	--	AND (dmt.term_start BETWEEN sdd.term_start  AND sdd.term_end OR dmt.term_end BETWEEN sdd.term_start  AND sdd.term_end)
+	--	)
 CREATE INDEX indx_collect_deals_ps ON #collect_deals(source_deal_header_id, term_start, term_end)
 --select 'total collect deals' , count(1) FROM #collect_deals
 --return
@@ -573,6 +578,7 @@ SELECT rhpd.source_deal_header_id
 	FROM #collect_deals d
 	INNER JOIN report_hourly_position_deal	rhpd ON rhpd.source_deal_header_id = d.source_deal_header_id
 		AND rhpd.term_start BETWEEN d.term_start AND d.term_end
+		AND rhpd.term_start BETWEEN @min_term AND @max_term
 		AND ISNULL(rhpd.location_id, -1) = ISNULL(d.location_id, -1)
 		AND rhpd.curve_id = d.curve_id
 		) rs
@@ -606,6 +612,7 @@ FROM (
 	FROM #collect_deals d
 	INNER JOIN report_hourly_position_profile rhpd ON rhpd.source_deal_header_id = d.source_deal_header_id
 		AND rhpd.term_start BETWEEN d.term_start AND d.term_end
+		AND rhpd.term_start BETWEEN @min_term AND @max_term
 		AND ISNULL(rhpd.location_id, -1) = ISNULL(d.location_id, -1)
 		AND rhpd.curve_id = d.curve_id
 		) rs
@@ -634,6 +641,7 @@ SELECT sddh.source_deal_detail_id,sddh.term_date
 INTO #source_deal_detail_hour
 FROM #collect_deals cd
 INNER JOIN source_deal_detail_hour sddh ON sddh.source_deal_detail_id = cd.source_deal_detail_id
+	AND sddh.term_date BETWEEN @min_term AND @max_term
 WHERE cd.internal_desk_id = 17302
 
 CREATE INDEX indx_udt_sddh ON #source_deal_detail_hour (source_deal_detail_id,term_date,hr,[period])
