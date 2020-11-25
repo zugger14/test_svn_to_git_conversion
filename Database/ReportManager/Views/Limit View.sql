@@ -160,7 +160,7 @@ SET @_sql = ''
 
 		'''''' + CASE @_show_exception WHEN ''y'' THEN ''Yes'' ELSE ''No'' END + '''''' AS [show_exception],
 
-		min_limit_value,
+		CASE WHEN TRY_CAST(min_limit_value AS Float) IS NULL THEN CAST(min_limit_value AS NVARCHAR) ELSE dbo.FNANumberFormat(min_limit_value,''''n'''') END min_limit_value,
 
 		MinLimitExceed
 
@@ -168,7 +168,7 @@ SET @_sql = ''
 
 	FROM #temp_limit_report tlr
 
-	WHERE 1 = 1  and tlr.TotalValue <> ''''0'''' '' +
+	WHERE 1 = 1  and tlr.TotalValue <> ''''0.00'''' '' +
 
 	CASE
 

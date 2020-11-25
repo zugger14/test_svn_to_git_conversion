@@ -1048,7 +1048,7 @@ SET @sql_str = CASE WHEN OBJECT_ID('tempdb..#temp_limit_report') IS NOT NULL THE
 			 WHEN li.limit_type = 1597 THEN NULL
 		ELSE ' 
 		  + CASE WHEN ISNULL(@deal_level, 'n') = 'n' THEN ' 
-				CASE WHEN (ISNULL(ml.limit_value, 0) - ISNULL(liv.total_value, 0)) < (ISNULL(liv.total_value, 0) - ISNULL(ml.min_limit_value, 0)) THEN 
+				CASE WHEN (ISNULL(ml.limit_value, 0) - ISNULL(liv.total_value, 0)) < (ISNULL(liv.total_value, 0) - ISNULL(ml.min_limit_value, 0)) OR ml.min_limit_value IS NULL THEN 
 				(ISNULL(ml.limit_value, 0) - ISNULL(liv.total_value, 0)) ELSE (ISNULL(liv.total_value, 0) - ISNULL(ml.min_limit_value, 0)) END ' 
 			ELSE '(ISNULL(ml.limit_value, 0) - ISNULL(liv.total_value, 0))' END + '
 		END [Available / Exceed Value],
@@ -1069,7 +1069,7 @@ SET @sql_str = CASE WHEN OBJECT_ID('tempdb..#temp_limit_report') IS NOT NULL THE
 			WHEN li.limit_type = 1597 THEN
 				CASE WHEN (liv.value2 > ml.limit_percentage OR liv.value2 < (-1*ml.limit_percentage) ) OR (liv.total_value > ml.limit_value OR liv.total_value < (-1*ml.limit_value) )
 				THEN ''Yes'' ELSE ''No'' END
-			WHEN li.limit_type IN (1580,1584,1596,1599,1588) AND 1 = ' + CASE WHEN ISNULL(@deal_level, 'n') = 'n' THEN '1' ELSE '2' END + ' THEN	
+			WHEN li.limit_type IN (1584,1596,1599,1588) AND 1 = ' + CASE WHEN ISNULL(@deal_level, 'n') = 'n' THEN '1' ELSE '2' END + ' THEN	
 				CASE WHEN (ISNULL(liv.total_value, 0) >= ISNULL(ml.limit_value, 0))
 				THEN ''Yes'' ELSE ''No'' END
 		ELSE
