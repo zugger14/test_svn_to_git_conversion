@@ -109,7 +109,7 @@ select
 	, @target_uom = 1158
 	, @reschedule = 0
 	, @granularity = 982
-	, @receipt_deals_id =-1
+	, @receipt_deals_id  = -1 
 	, @delivery_deals_id = 104935
 
 
@@ -3838,7 +3838,7 @@ BEGIN --Data Prepararion
 			p.single_path_id,p.path_id group_path_id
 			,sdh.[description1]
 			,sdh.[description2]
-			,COALESCE(od.contract_id, sdh.[contract_id],-1) [contract_id]
+			,COALESCE(sdh.[contract_id],-1) [contract_id]
 			,p.leg1_loc_id
 			,p.leg2_loc_id
 			,sdh.deal_id
@@ -3856,12 +3856,6 @@ BEGIN --Data Prepararion
 		INNER JOIN source_deal_header sdh
 			ON sdh.source_deal_header_id = sdd.source_deal_header_id
 			AND p.first_dom = sdh.entire_term_start
-		INNER JOIN optimizer_detail od
-			ON od.source_deal_header_id = sdh.source_deal_header_id
-			AND COALESCE(p.single_contract_id,p.contract_id) = sdh.contract_id
-		INNER JOIN delivery_path dp1
-			ON dp1.path_id = od.single_path_id
-			AND dp1.from_location = dp.from_location
 		INNER JOIN static_data_value sdv
 			ON sdv.value_id = sdh.internal_portfolio_id 
 			AND sdv.type_id = 39800	
@@ -3875,7 +3869,7 @@ BEGIN --Data Prepararion
 			p.single_path_id,p.path_id group_path_id
 			,sdh.[description1]
 			,sdh.[description2]
-			,COALESCE(od.contract_id, sdh.[contract_id],-1) [contract_id]
+			,COALESCE(sdh.[contract_id],-1) [contract_id]
 			,p.leg1_loc_id
 			,p.leg2_loc_id
 			,sdh.deal_id
@@ -3893,12 +3887,6 @@ BEGIN --Data Prepararion
 		INNER JOIN source_deal_header sdh
 			ON sdh.source_deal_header_id = sdd.source_deal_header_id
 			AND p.first_dom = sdh.entire_term_start
-		INNER JOIN optimizer_detail od
-			ON od.source_deal_header_id = sdh.source_deal_header_id
-			AND COALESCE(p.single_contract_id,p.contract_id) = sdh.contract_id
-		INNER JOIN delivery_path dp1
-			ON dp1.path_id = od.single_path_id
-			AND dp1.to_location = dp.to_location
 		INNER JOIN static_data_value sdv
 			ON sdv.value_id = sdh.internal_portfolio_id 
 			AND sdv.type_id = 39800	
