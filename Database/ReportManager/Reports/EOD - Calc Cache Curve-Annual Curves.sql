@@ -104,7 +104,7 @@ ELSE
 --SELECT @_tenor_to = CONVERT(VARCHAR(10), CAST(YEAR(DATEADD(YEAR, 5, @_as_of_date)) AS VARCHAR(4)) + ''-12-31 23:00:00.000'' , 120)
 
 SELECT @_delivery_from = CONVERT(VARCHAR(10), DATEADD(MONTH, DATEDIFF(MONTH, 0,  @_as_of_date), 0), 120)
-SELECT @_delivery_to = CONVERT(VARCHAR(10), DATEADD(YEAR, DATEDIFF(YEAR, 0,  @_as_of_date)+5, 0), 120)
+SELECT @_delivery_to = CONVERT(VARCHAR(10), DATEADD(YEAR, DATEDIFF(YEAR, 0,  @_as_of_date)+6, -1), 120)
 
 
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result
