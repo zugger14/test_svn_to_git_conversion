@@ -3045,4 +3045,5 @@ EXEC dbo.spa_position_report @_summary_option = @_summary_option,
 	END CATCH
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
-		DROP TABLE #data_source_column
+		DROP TABLE #data_source_column	
+	

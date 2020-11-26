@@ -32,7 +32,7 @@ BEGIN TRY
 
 		declare @report_copy_name varchar(200)
 		
-		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'Monthly Position Extract report - new')
+		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'Monthly Position Extract Report - New')
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
