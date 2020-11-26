@@ -18197,7 +18197,7 @@ insert into #calc_status values(@process_id,
 
 IF @calc_mtm_attribute = 1
 	AND @calc_type <> 'w'
-	AND @count_fail = 0
+	--AND @count_fail = 0
 BEGIN
 	EXEC [spa_pnl_explain_wrapper] @_as_of_date_from = NULL
 		,@_as_of_date_to = @as_of_date
