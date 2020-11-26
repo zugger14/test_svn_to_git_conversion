@@ -35,18 +35,13 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Standard Limit View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sql VARCHAR(MAX),
-
 	@_as_of_date DATETIME, 
-
 	@_LimitFor VARCHAR(MAX), 
-
 	@_show_exception CHAR(1), 
-
 	@_LimitType VARCHAR(MAX), 
-
 	@_limit_group_id VARCHAR(MAX),
-
-	@_LimitExceed CHAR(1)
+	@_LimitExceed CHAR(1),
+	@_exception  CHAR(1)
 
 IF ''@as_of_date'' <> ''NULL''
 
@@ -69,12 +64,12 @@ IF ''@LimitType'' <> ''NULL''
 	SET @_LimitType = ''@LimitType''
 
 IF ''@show_exception'' <> ''NULL''
-
 	SET @_show_exception = ''y''
-
 ELSE
-
 	SET @_show_exception = ''n''
+
+IF ''@exception'' <> ''NULL''
+	SET @_exception = ''@exception''
 
 IF OBJECT_ID(N''tempdb..#temp_limit_report'') IS NOT NULL
 
@@ -162,8 +157,8 @@ SET @_sql = ''
 
 		CASE WHEN TRY_CAST(min_limit_value AS Float) IS NULL THEN CAST(min_limit_value AS NVARCHAR) ELSE dbo.FNANumberFormat(min_limit_value,''''n'''') END min_limit_value,
 
-		MinLimitExceed
-
+		MinLimitExceed,
+		CASE WHEN MinLimitExceed = ''''yes'''' OR LimitExceed = ''''yes'''' THEN ''''Yes'''' else ''''No'''' END Exceed
 	--[__batch_report__]
 
 	FROM #temp_limit_report tlr
@@ -194,7 +189,9 @@ SET @_sql = ''
 
 	END
 
-EXEC(@_sql)', report_id = @report_id_data_source_dest,
+EXEC(@_sql)
+
+', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
 	WHERE [name] = 'Limit View'
@@ -739,6 +736,40 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'MinLimitExceed' AS [name], 'Minlimitexceed' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Limit View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Limit View'
+	            AND dsc.name =  'Exceed'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Exceed'
+			   , reqd_param = NULL, widget_id = 2, datatype_id = 5, param_data_source = 'select ''Yes'' as value, ''Yes'' as label union all' + CHAR(10) + 'select ''No'' as value, ''No'' as label', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Limit View'
+			AND dsc.name =  'Exceed'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'Exceed' AS [name], 'Exceed' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 5 AS datatype_id, 'select ''Yes'' as value, ''Yes'' as label union all' + CHAR(10) + 'select ''No'' as value, ''No'' as label' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Limit View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
