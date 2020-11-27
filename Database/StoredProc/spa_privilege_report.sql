@@ -205,8 +205,8 @@ BEGIN
 				,ISNULL(portfolio_hierarchy.entity_name,''ALL'') as [Entity Name]
 				' + @str_batch_table + '
 				FROM  application_functions 
-				INNER JOIN  #role_privilege priv ON application_functions.function_id = 
-					COALESCE(priv.function_id6,priv.function_id5,priv.function_id4,priv.function_id3,priv.function_id2,priv.function_id1)
+				LEFT JOIN  #role_privilege priv ON application_functions.function_id = 
+					COALESCE(priv.function_id7,priv.function_id6,priv.function_id5,priv.function_id4,priv.function_id3,priv.function_id2,priv.function_id1)
 				LEFT JOIN dbo.FNAApplicationFunctionsHierarchy(' + CAST(@product_id AS NVARCHAR(8)) +') aft ON aft.function_id = application_functions.function_id
 				INNER JOIN	application_functional_users on application_functions.function_id=application_functional_users.function_id 
 				INNER JOIN application_security_role on application_security_role.role_id=application_functional_users.role_id

@@ -251,7 +251,11 @@
         switch(args) {
             case 'save':
                 var book_id_concat = get_selected_book_structure();
-                var trees_id = select_privilege.original_tree.getAllChecked();
+                // var trees_id = select_privilege.original_tree.getAllChecked();
+                
+                var trees_id_partially_checked = select_privilege.original_tree.getAllPartiallyChecked();
+                var trees_id_checked = select_privilege.original_tree.getAllChecked();
+
                 var role_id = '<?php echo $default_role_id; ?>';
                 
                 /*if(book_id_concat == '' ){
@@ -260,18 +264,27 @@
                 }
                 */
                 //Remove nodes with child
-                var splited_value = trees_id.split(",");
+                var splited_value_partially_checked = trees_id_partially_checked.split(",");
+                var splited_value_checked = trees_id_checked.split(",");
+
                 var checked_value = new Array();
-                for(var i = 0; i < splited_value.length; i++) {
-                    var has_child = select_privilege.original_tree.hasChildren(splited_value[i]);
-                    if(has_child == 0) {
-                        var func_id = splited_value[i].split("_");
+                for(var i = 0; i < splited_value_partially_checked.length; i++) {
+                //     var has_child = select_privilege.original_tree.hasChildren(splited_value_partially_checked[i]);
+                //     //if(has_child == 0) {
+                        var func_id = splited_value_partially_checked[i].split("_");
                         checked_value.push(func_id[0]);
-                    }
+                   // }
+                }
+                for(var i = 0; i < splited_value_checked.length; i++) {
+                  //  var has_child = select_privilege.original_tree.hasChildren(splited_value_checked[i]);
+                    //if(has_child == 0) {
+                        var func_id_checked = splited_value_checked[i].split("_");
+                        checked_value.push(func_id_checked[0]);
+                   // }
                 }
                 
                 var trees_id_concat = checked_value.join();
-                if (trees_id == 'NULL' || trees_id == '') {
+                if (trees_id_partially_checked == 'NULL' || trees_id_partially_checked == '') {
                     dhtmlx.alert({
                          title: "Alert",
                          type: "alert",

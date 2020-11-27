@@ -339,6 +339,17 @@ BEGIN
 	BEGIN TRY
 		BEGIN TRAN
 
+		IF OBJECT_ID('tempdb..#temp') IS NOT NULL
+			DROP TABLE #temp
+
+		SELECT DISTINCT af2.function_id
+		INTO #temp
+		FROM application_functional_users afu
+		INNER JOIN application_functions af ON afu.function_id = af.function_id
+		INNER JOIN application_functions af2 ON af2.function_id = af.func_ref_id
+		INNER JOIN dbo.SplitCommaSeperatedValues(@functional_user_id) s ON afu.functional_users_id = s.item
+		--select * from #temp
+
 		--For delete privilege from role
 		IF @functional_user_id IS NOT NULL AND @login_id IS NULL
 		BEGIN
@@ -484,8 +495,23 @@ BEGIN
 		                WHERE ISNULL(role_id, -1) = (CASE WHEN @role_user_flag = 'r' THEN @role_id ELSE ISNULL(role_id, -1) END)
 							AND ISNULL(login_id, '-1') = (CASE WHEN @role_user_flag = 'u' THEN @login_id ELSE ISNULL(login_id, '-1') END))						
 		
-		
-		
+		--delete parent if there are no child privileges
+		DELETE afux FROM application_functional_users afux
+		INNER JOIN #temp t1 ON t1.function_id = afux.function_id
+		WHERE t1.function_id NOT IN (
+			SELECT DISTINCT afu.function_id
+			FROM application_functional_users afu
+			INNER JOIN #temp t ON t.function_id = afu.function_id
+			INNER JOIN application_functions af ON af.func_ref_id = afu.function_id
+			INNER JOIN application_functional_users a ON a.function_id = af.function_id
+			WHERE ISNULL(afu.role_id, -1) = (CASE WHEN @role_user_flag = 'r' THEN @role_id ELSE ISNULL(afu.role_id, -1) END)
+				AND ISNULL(a.role_id, -1) = (CASE WHEN @role_user_flag = 'r' THEN @role_id ELSE ISNULL(a.role_id, -1) END)
+				AND ISNULL(afu.login_id, '-1') = (CASE WHEN @role_user_flag = 'u' THEN @login_id ELSE ISNULL(afu.login_id, '-1') END)
+				AND ISNULL(a.login_id, '-1') = (CASE WHEN @role_user_flag = 'u' THEN @login_id ELSE ISNULL(a.login_id, '-1') END)
+				
+		) -- has child
+			AND ISNULL(afux.role_id, -1) = (CASE WHEN @role_user_flag = 'r' THEN @role_id ELSE ISNULL(afux.role_id, -1) END)
+			AND ISNULL(afux.login_id, '-1') = (CASE WHEN @role_user_flag = 'u' THEN @login_id ELSE ISNULL(afux.login_id, '-1') END)
 
 		COMMIT TRAN
 		
