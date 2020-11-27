@@ -5168,7 +5168,7 @@ create index indx_mv90_dst on #mv90_dst (dst_group_value_id,[date],insert_delete
 
 -- taking next date from maturity date's price for supporting gas hour (commodity_id=-1)
 select distinct tc.source_curve_def_id, tc.as_of_date, tc.Assessment_curve_type_value_id,
-		tc.curve_source_value_id, convert(varchar(10),tc.maturity_date,120) maturity_date
+		tc.curve_source_value_id, cast(dateadd(day,1,tc.maturity_date) as date) maturity_date
 		, tc.pnl_as_of_date, tc.curve_granularity
 into #list_need_next_maturity_date_price --  select * from #list_need_next_maturity_date_price
 from #temp_curves tc
@@ -5190,10 +5190,10 @@ from #list_need_next_maturity_date_price tc
 outer apply
 (
 	select max(as_of_date) as_of_date from source_price_curve where  source_curve_def_id=tc.source_curve_def_id
-	and  convert(varchar(10),dateadd(day,1,tc.maturity_date),120)=convert(varchar(10),maturity_date,120)
+	and   cast(maturity_date as date)=tc.maturity_date
 ) aod
 inner join source_price_curve spc on spc.as_of_date=case when @calc_type='s' then aod.as_of_date else tc.as_of_date end and spc.source_curve_def_id=tc.source_curve_def_id
-	AND  convert(varchar(10),dateadd(day,1,tc.maturity_date),120)=convert(varchar(10),spc.maturity_date,120)
+	AND  cast(spc.maturity_date as date)=tc.maturity_date
 	
 update tc set maturity_date= dateadd(hour,-6,maturity_date)
  from #temp_curves tc inner join source_price_curve_def spcd on tc.source_curve_def_id=spcd.source_curve_def_id
