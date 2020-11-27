@@ -2606,29 +2606,25 @@ BEGIN
 			END
 			ELSE
 				BEGIN
-				EXEC('
-					IF COL_LENGTH(''' + @deal_update_detail + ''', ''deal_volume'') IS NOT NULL
-					BEGIN
-					;WITH [vbp] AS (
-						SELECT sddh.source_deal_detail_id [detail_id],
-							sddh.volume * sddh.price [vol_by_price]
-						FROM ' + @deal_update_detail + ' a
-						INNER JOIN source_deal_detail_hour sddh ON sddh.source_deal_detail_id = a.source_deal_detail_id
-					)
-					UPDATE a
-					SET a.deal_volume = vol_prc.volume
-					FROM ' + @deal_update_detail + ' a
-					INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = a.source_deal_detail_id
-					OUTER APPLY (
-						SELECT AVG(sddh.volume) [volume],
-							AVG(sddh.price) [price],
-							SUM(sddh.volume) [sum_volume],
-							SUM(v.vol_by_price) [sum_vpb]
-						FROM source_deal_detail_hour sddh
-						INNER JOIN [vbp] v ON v.detail_id = sdd.source_deal_detail_id
-						WHERE sddh.source_deal_detail_id = sdd.source_deal_detail_id
-					) vol_prc
-					END')
+					EXEC('
+							IF COL_LENGTH(''' + @deal_update_detail + ''', ''deal_volume'') IS NOT NULL
+							BEGIN
+								;WITH [vbp] AS (
+												SELECT sdd.source_deal_detail_id, AVG(sddh.volume) volume
+												FROM ' + @deal_update_detail + ' a
+												INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = a.source_deal_detail_id
+												LEFT JOIN source_deal_detail_hour sddh
+													ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+												GROUP BY sdd.source_deal_detail_id
+								)
+
+								UPDATE a
+								SET a.deal_volume = v.volume
+								FROM ' + @deal_update_detail + ' a
+								INNER JOIN [vbp] v ON v.source_deal_detail_id = a.source_deal_detail_id
+
+							END
+					')
 				END
 				EXEC('
 				IF COL_LENGTH(''' + @deal_update_detail + ''', ''deal_volume_uom_id'') IS NOT NULL
@@ -2646,30 +2642,24 @@ BEGIN
 				BEGIN
 					SET @fixed_price_column_name = ''fixed_price''
 				END
-				
+
 				DECLARE @sql VARCHAR(MAX) = ''
-					;WITH [vbp] AS (
-						SELECT sddh.source_deal_detail_id [detail_id],
-							sddh.volume * sddh.price [vol_by_price]
+				;WITH [vbp] AS (
+						SELECT sdd.source_deal_detail_id, COALESCE(SUM(sddh.volume * sddh.price)/IIF(SUM(sddh.volume) = 0, 1, SUM(sddh.volume)), MAX(sdd.fixed_price)) fixed_price
 						FROM ' + @deal_update_detail + ' a
-						INNER JOIN source_deal_detail_hour sddh ON sddh.source_deal_detail_id = a.source_deal_detail_id
-					)
-					UPDATE a
-					SET a.'' + @fixed_price_column_name + '' = COALESCE(vol_prc.sum_vpb/IIF(vol_prc.sum_volume = 0, 1, vol_prc.sum_volume), sdd.fixed_price)
-					FROM ' + @deal_update_detail + ' a
-					INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = a.source_deal_detail_id
-					OUTER APPLY (
-						SELECT AVG(sddh.volume) [volume],
-							AVG(sddh.price) [price],
-							SUM(sddh.volume) [sum_volume],
-							SUM(v.vol_by_price) [sum_vpb]
-						FROM source_deal_detail_hour sddh
-						INNER JOIN [vbp] v ON v.detail_id = sdd.source_deal_detail_id
-						WHERE sddh.source_deal_detail_id = sdd.source_deal_detail_id
-					) vol_prc
+						INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = a.source_deal_detail_id
+						LEFT JOIN source_deal_detail_hour sddh
+							ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+						GROUP BY sdd.source_deal_detail_id
+				)
+
+				UPDATE a
+				SET a.'' + @fixed_price_column_name + '' = v.fixed_price
+				FROM ' + @deal_update_detail + ' a
+				INNER JOIN [vbp] v ON v.source_deal_detail_id = a.source_deal_detail_id
 				''
 				EXEC (@sql)     
-		   ')
+			')
 		END
 		
 	END
