@@ -3556,16 +3556,16 @@ EXEC(@sql)
 		,MAX(to_loc)to_loc	
 		,MAX(from_rank)	from_rank
 		,MAX(to_rank)	to_rank
-		,SUM(CAST(received AS INT))	received
-		,SUM(CAST(delivered AS INT))	delivered
-		,MAX(mdq)	mdq
-		,MAX(rmdq)	rmdq
-		,MAX(total_sch_volume)	total_sch_volume
+		,dbo.FNARemoveTrailingZero(ROUND(SUM(CAST(received AS FLOAT)), 0)) received
+		,dbo.FNARemoveTrailingZero(ROUND(SUM(CAST(delivered AS FLOAT)), 0))	delivered
+		,dbo.FNARemoveTrailingZero(ROUND(MAX(mdq), 0))	mdq
+		,dbo.FNARemoveTrailingZero(ROUND(MAX(rmdq), 0))	rmdq
+		,dbo.FNARemoveTrailingZero(ROUND(MAX(total_sch_volume), 0))	total_sch_volume
 		,MAX(path_exists)path_exists	
 		,MAX(path_name)	path_name
-		,SUM(CAST(path_mdq AS INT))	path_mdq
-		,SUM(CAST(path_rmdq AS INT))	path_rmdq
-		,SUM(CAST(path_ormdq AS INT))	path_ormdq
+		,dbo.FNARemoveTrailingZero(ROUND(SUM(CAST(path_mdq AS FLOAT)), 0))	path_mdq
+		,dbo.FNARemoveTrailingZero(ROUND(SUM(CAST(path_rmdq AS FLOAT)), 0))	path_rmdq
+		,dbo.FNARemoveTrailingZero(ROUND(SUM(CAST(path_ormdq AS FLOAT)), 0))	path_ormdq
 		,MAX(from_loc_grp_id)	from_loc_grp_id
 		,MAX(from_loc_grp_name)	from_loc_grp_name
 		,MAX(to_loc_grp_id)	to_loc_grp_id
