@@ -80,7 +80,7 @@ SET @_sql =
 	      ELSE NULL 
 	  END [buy_sell]
 	, CONCAT(MONTH(MAX(sids.prod_date_from)), ''''/'''', YEAR(MAX(sids.prod_date_from))) month_year
-	, CONCAT(CASE WHEN MAX(scom.commodity_id) = ''''Power'''' THEN ''''Strom'''' WHEN MAX(scom.commodity_id) = ''''GAS'''' THEN ''''Gas'''' ELSE '''''''' END,CASE  
+	, CONCAT(CASE WHEN MAX(scom.commodity_id) = ''''Power'''' THEN ''''Strom'''' WHEN MAX(scom.commodity_id) = ''''GAS'''' THEN ''''Gas'''' ELSE MAX(scom.commodity_id) END,CASE  
 		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''s'''' AND MAX(si.invoice_type) = ''''i'''' THEN  ''''Verkauf''''  
 		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''b'''' AND MAX(si.invoice_type) = ''''i''''  THEN  ''''Kauf'''' 
 		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''s'''' AND MAX(si.invoice_type) = ''''r''''  THEN  ''''Verkauf''''
@@ -92,7 +92,7 @@ SET @_sql =
 	, MAX(cg.contract_name)  contract_name
 	, CAST(null AS VARCHAR(20)) barcode 
 	, MAX(sdv_ct.code) no_roc
-	, CASE WHEN MAX(scom.commodity_id) = ''''Power'''' THEN ''''Strom'''' WHEN MAX(scom.commodity_id) = ''''GAS'''' THEN ''''Gas'''' ELSE '''''''' END product
+	, CASE WHEN MAX(scom.commodity_id) = ''''Power'''' THEN ''''Strom'''' WHEN MAX(scom.commodity_id) = ''''GAS'''' THEN ''''Gas'''' ELSE MAX(scom.commodity_id) END product
 	, CAST(null AS VARCHAR(20)) netting
 	, CAST(null AS VARCHAR(20)) document
 	, MAX(scom.source_commodity_id) commodity_id
