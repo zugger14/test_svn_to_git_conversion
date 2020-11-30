@@ -24437,10 +24437,12 @@ BEGIN
 		[import_file_name] NVARCHAR(500) COLLATE DATABASE_DEFAULT,
 		[granularity] NVARCHAR(10) COLLATE DATABASE_DEFAULT,
 		[source_system_id] NVARCHAR(10) COLLATE DATABASE_DEFAULT
+		,temp_id int,
+		ixp_source_unique_id int
 	)
 	
-	EXEC('INSERT INTO #temp_table_shaped ([deal_id], [term_date], [hr], [minute],[is_dst], [Volume], [actual_volume], [schedule_volume], [Price], [Leg], [import_file_name], [source_system_id])
-		  SELECT a.[deal_id], a.[term_date], a.[hr], a.[minute], a.[is_dst], a.[Volume], a.[actual_volume], a.[schedule_volume], a.[Price], a.[Leg], a.[import_file_name], a.[source_system_id]
+	EXEC('INSERT INTO #temp_table_shaped ([deal_id], [term_date], [hr], [minute],[is_dst], [Volume], [actual_volume], [schedule_volume], [Price], [Leg], [import_file_name], [source_system_id],temp_id,ixp_source_unique_id)
+		  SELECT a.[deal_id], a.[term_date], a.[hr], a.[minute], a.[is_dst], a.[Volume], a.[actual_volume], a.[schedule_volume], a.[Price], a.[Leg], a.[import_file_name], a.[source_system_id],a.temp_id,a.ixp_source_unique_id
 		  FROM ' + @import_temp_table_name + ' a 
 		  LEFT JOIN #error_status ON a.temp_id = #error_status.temp_id
  		  WHERE #error_status.temp_id IS NULL
@@ -24478,22 +24480,40 @@ BEGIN
 	FROM #temp_table_shaped t
 	WHERE granularity IN ('Daily')
 
-	EXEC('DELETE FROM ' + @import_temp_table_name)
+	EXEC('DROP TABLE ' + @import_temp_table_name)
 	
-	EXEC('INSERT INTO ' + @import_temp_table_name + ' ([deal_id], [term_date], [hr], [minute], [is_dst], [Volume], [actual_volume], [schedule_volume], [Price], [Leg], [import_file_name], [source_system_id])
+	print '
 		  SELECT [deal_id], [term_date], 
-			  CASE WHEN CHARINDEX('':'', [hr])<0 THEN CAST([hr] AS NVARCHAR(20)) + '':00'' 
-			       ELSE [hr] 
-			  END [hr], 
+			case when [hr]=''3B'' then ''3:00'' else [hr] end [hr], 
 		      [minute],
 			  [is_dst],
 			  [Volume],
 			  [actual_volume],
 			  [schedule_volume],
-			  [Price],
+			  nullif(try_cast(price as numeric(28,10)),0) price ,
 			  [Leg],
 			  [import_file_name],
-			  [source_system_id]
+			  [source_system_id],temp_id,ixp_source_unique_id
+		INTO ' + @import_temp_table_name + '
+	 FROM #temp_table_shaped
+	'
+
+
+
+
+	EXEC('
+		  SELECT [deal_id], [term_date], 
+			case when [hr]=''3B'' then ''3:00'' else [hr] end [hr], 
+		      [minute],
+			  [is_dst],
+			  [Volume],
+			  [actual_volume],
+			  [schedule_volume],
+			  nullif(try_cast(price as numeric(28,10)),0) price ,
+			  [Leg],
+			  [import_file_name],
+			  [source_system_id],temp_id,ixp_source_unique_id
+		INTO ' + @import_temp_table_name + '
 		FROM #temp_table_shaped
 	')
 	--Trigger End	
@@ -24574,11 +24594,6 @@ BEGIN
  	-- @start_ts selected from create_ts when the job was run by  spa_interface_adaptor_job
  	SELECT @start_ts = ISNULL(MIN(create_ts),GETDATE()) FROM import_data_files_audit WHERE process_id = @process_id
  	
- 	SET @sql = 'UPDATE ' + @import_temp_table_name + ' SET hr = 3 WHERE hr = ''3B'''  
- 	EXEC (@sql)  
- 	  
- 	SET @sql = 'UPDATE ' + @import_temp_table_name + ' SET price = NULL WHERE price = ''0''' 
- 	EXEC (@sql)
  	
  	--store unique deal_ids whose source_deal_header_id is not given
  	CREATE TABLE #tmp_unique_deals (
@@ -24816,6 +24831,29 @@ BEGIN
      --PRINT ('13')
     
      --SELECT * INTO #hour_block_term FROM hour_block_term WHERE term_date BETWEEN @min_date AND @max_date 
+	 
+    
+SELECT DISTINCT COALESCE(spcd.block_define_id,sdh.block_define_id,@baseload_block_define_id) block_define_id,tz.dst_group_value_id
+into #flt_hbt
+FROM (select distinct deal_detail_id from #tmp_second_table) tst
+    INNER JOIN source_deal_detail sdd ON tst.deal_detail_id = sdd.source_deal_detail_id
+    LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
+    INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+    left JOIN vwDealTimezone tz on tz.source_deal_header_id = sdd.source_deal_header_id
+    AND tz.curve_id = ISNULL(sdd.curve_id, -1) AND tz.location_id = ISNULL(sdd.location_id, -1)
+
+
+
+SELECT hbt.*
+INTO #hour_block_term
+FROM hour_block_term hbt
+INNER JOIN #flt_hbt sdd ON hbt.block_define_id = sdd.block_define_id
+AND hbt.dst_group_value_id = sdd.dst_group_value_id
+WHERE term_date BETWEEN @min_date AND @max_date
+
+
+
+/*
  	SELECT hbt.* 
  	INTO #hour_block_term 
 	FROM  hour_block_term hbt
@@ -24837,7 +24875,7 @@ BEGIN
      ) sdd ON hbt.block_type = sdd.block_type AND hbt.block_define_id = sdd.block_define_id
 	 AND hbt.dst_group_value_id = sdd.dst_group_value_id
     WHERE term_date BETWEEN @min_date AND @max_date 
-     
+*/     
  	--PRINT ('14')
  	CREATE NONCLUSTERED INDEX IX_TERM_DATE_HBT ON #hour_block_term (term_date)
 	 	
