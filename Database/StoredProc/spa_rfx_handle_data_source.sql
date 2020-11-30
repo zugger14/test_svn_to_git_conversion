@@ -210,21 +210,24 @@ BEGIN TRY
 		DECLARE @continue_loop BIT =1
 		DECLARE @data_source_tsql1 VARCHAR(MAX)
 
-		DECLARE db_cursor CURSOR FOR 
+		IF OBJECT_ID (N'tempdb..#from_index_new') IS NOT NULL  
+		DROP TABLE 	#from_index_new
 
-			SELECT from_loc 
-			FROM #from_index 
-			ORDER BY  from_loc DESC
+		SELECT from_loc, ROW_NUMBER() OVER (ORDER BY from_loc) row_num 
+		INTO #from_index_new
+		FROM #from_index
 
-		OPEN db_cursor  
-		FETCH NEXT FROM db_cursor INTO @from_index  
-		
-		WHILE @@FETCH_STATUS = 0  AND @continue_loop = 1
-		BEGIN  
-			BEGIN TRY
+		DECLARE @max_id INT, @counter INT = 1
+		SELECT @max_id = MAX(row_num) FROM #from_index_new
 
-				SET @data_source_tsql1 = @data_source_tsql
 	
+		WHILE(@Counter IS NOT NULL AND @Counter <= @max_id)
+		BEGIN
+		BEGIN TRY
+			SELECT @from_index = from_loc FROM #from_index_new WHERE row_num = @Counter
+
+			SET @data_source_tsql1 = @data_source_tsql
+
 				SET @data_source_tsql1 = CAST('' AS VARCHAR(MAX)) 
 										+  SUBSTRING(@data_source_tsql1, 0, @from_index) + ' INTO ' + @sql_batch_table + ' ' 
 										+  SUBSTRING(@data_source_tsql1, @from_index, LEN(@data_source_tsql1))
@@ -274,12 +277,8 @@ BEGIN TRY
 				END
 			
 			END CATCH
-
-			FETCH NEXT FROM db_cursor INTO @from_index 
+			SET @Counter  = @Counter  + 1
 		END 
-
-		CLOSE db_cursor  
-		DEALLOCATE db_cursor 
 	END
 END TRY
 BEGIN CATCH
