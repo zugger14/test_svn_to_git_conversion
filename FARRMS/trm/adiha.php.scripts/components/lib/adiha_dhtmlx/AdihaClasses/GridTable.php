@@ -67,6 +67,9 @@ class GridTable extends AdihaGrid {
         $this->numeric_fields = $def[0]['numeric_fields'];
         $this->date_fields = $def[0]['date_fields'];
         $this->dummy_grid = $dummy_grid;
+        $this->enable_server_side_paging = $def[0][enable_server_side_paging];
+        $this->id_field = $def[0][id_field];
+        $this->order_seq_direction = $def[0][order_seq_direction];
         $this->rounding_values = $def[0]['rounding_values'];
         
         if ($def[0]['dropdown_columns'] != 'NULL' && $def[0]['dropdown_columns'] != '')
@@ -98,6 +101,8 @@ class GridTable extends AdihaGrid {
         
         if (!$this->dummy_grid)
             $return_string .= $this->enable_column_move('', 'y');
+
+        if ($this->enable_server_side_paging) $this->connector_enabled = true;
 
         if ($split == 'y') {
             $column_array = explode(',', $this->grid_columns);
@@ -199,6 +204,7 @@ class GridTable extends AdihaGrid {
      * @return String                        JS to load grid data
      */
     public function load_grid_data($sp_grid = '', $id = '', $auto_adjust = false, $callback_funtion = '', $farrms_product_id = '10000000',$application_field_id = '', $key_prefix = '', $key_suffix = '') {
+        $this->selected_id = $selected_id;
         if ($sp_grid != '' && $sp_grid != 'NULL') {
             $this->sql_string = $sp_grid;
             return AdihaGrid::load_grid_data($sp_grid, $this->grid_type, $this->grouping_column, $auto_adjust, $callback_funtion,$key_prefix,$key_suffix);

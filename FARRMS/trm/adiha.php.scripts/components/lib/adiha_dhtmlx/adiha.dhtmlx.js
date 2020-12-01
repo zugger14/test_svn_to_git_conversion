@@ -3049,8 +3049,20 @@ dhtmlXLayoutCell.prototype.collapse = function() {
 
 /* 
  *  DHTMLX library function
+ *  Override to get event object to differntiate Click vs. Ctrl+Click
+    in data browser when server side paging is implemented.
+ *  Implementation is done in generic.browser.php.
+ *  Please update the code in that page as well when upgrading DHTMLX library. 
+
+dhtmlXGridObject.prototype._doClick = function(ev) {
+    ...
+    }
+*/
+
+/* 
+ *  DHTMLX library function
  *  Override to show child nodes while searching parent node in tree grid inline filter
- */
+*/
 dhtmlXGridObject.prototype._filterTreeA = function(g, q) {
     if (q == "") {
         return

@@ -19,6 +19,16 @@
     $enable_grid_multi_select = $_GET['enable_grid_multi_select'] ?? '1';
 	$single_selected_fields = $_GET['single_selected_fields'] ?? '';
     $fields_arr = explode(',', $single_selected_fields);
+    $grid_definition_sql = "EXEC spa_adiha_grid @flag='s', @grid_name = '" . $grid_name . "'";
+    $grid_definition = readXMLURL2($grid_definition_sql);   
+    $column_list = $grid_definition[0]["column_name_list"];
+    $numeric_fields = $grid_definition[0]["numeric_fields"];
+    $date_fields = $grid_definition[0]["date_fields"];
+    $sql_stmt = $grid_definition[0]["sql_stmt"];
+    $enable_server_side_paging = $grid_definition[0]["enable_server_side_paging"];
+    $id_field = $grid_definition[0]["id_field"];
+    $order_seq_direction = $grid_definition[0]["order_seq_direction"];
+    $dependent_field = $grid_definition[0]["dependent_field"]; 
     
 	if ($grid_name == 'book') {
 		$layout_json = '[
@@ -97,7 +107,7 @@
     } else {
         echo $generic_browse_layout_obj->attach_status_bar("a", true);
         echo $generic_browse_layout_obj->attach_grid_cell($grid_name, 'a');
-        $acc_grid = new GridTable($grid_name);
+        $acc_grid = new GridTable($grid_name, $sql_String);
         echo $acc_grid->init_grid_table($grid_name, $namespace);
         echo $acc_grid->set_search_filter(true);
 
@@ -111,9 +121,19 @@
             echo $acc_grid->enable_multi_select();
         }
         
-        
-        echo $acc_grid->return_init();
-        echo $acc_grid->load_grid_data('', $id, '', 'generic_browser_grid_select','',$application_field_id);
+        if ($enable_server_side_paging == 1) {
+            echo $acc_grid->enable_connector();
+            echo $acc_grid->set_search_filter(true); 
+            echo $acc_grid->return_init();
+            echo $acc_grid->enable_paging(100, 'pagingArea_a', 'true');
+            echo $acc_grid->attach_event('', 'onPaging', 'generic_browser_grid_select');
+
+        } else { 
+            echo $acc_grid->set_search_filter(true);            
+            echo $acc_grid->return_init();
+            echo $acc_grid->load_grid_data('', $id, '', 'generic_browser_grid_select','',$application_field_id);
+        }
+
         echo $acc_grid->attach_event('', 'onSelectStateChanged', 'grid_row_on_click');
         echo $acc_grid->attach_event('', 'onBeforeSelect', 'grid_before_select');
         //echo $acc_grid->enable_paging(100, 'pagingArea_a', 'true');
@@ -138,11 +158,31 @@
         var allow_sub_book_check = '<?php echo $allow_sub_book_check;?>';
         var function_id = '<?php echo $function_id;?>';
 
+        var column_list = '<?php echo $column_list; ?>';
+        var numeric_fields = '<?php echo $numeric_fields; ?>';
+        var date_fields = '<?php echo $date_fields; ?>';
+        var sql_stmt = "<?php echo $sql_stmt; ?>";
+        var grid_name = '<?php echo $grid_name; ?>';
+        var enable_server_side_paging = '<?php echo $enable_server_side_paging; ?>';   
+        var order_seq_direction = '<?php echo $order_seq_direction; ?>';
+        var id_field = '<?php echo $id_field; ?>';
+        var dependent_id ;//= '<?php echo $dependent_id; ?>';
+        var dependent_field = '<?php echo $dependent_field; ?>';
+        /*For server side paging we need to maintain Ids and Labels arrays since previous selection is not retained when filtering or going to other page */
+        var data_browser_ids = {};
+        var data_browser_labels = {};
+        var form_name = '<?php echo $form_name; ?>';
+        var browse = '<?php echo $browse_name; ?>';
+
         $(function() {
-            var form_name = '<?php echo $form_name; ?>';
-            var grid_name = '<?php echo $grid_name; ?>';
-            var browse = '<?php echo $browse_name; ?>';
-            
+            if (enable_server_side_paging == 1) {
+                dny_refresh_grids(sql_stmt);   
+            }            
+
+            if (grid_name != 'book') { 
+                register_custom_grid_click_event(); 
+            }
+
             if (call_from != 'report_manager') {
                 
                 if (grid_name == 'book') {
@@ -230,6 +270,58 @@
                 generic_browse.generic_browse_layout.cells('a').getAttachedObject().enableMultiselect(true);
             }
         });
+
+        //Override grid click event action.
+        function register_custom_grid_click_event() {
+            var grid_obj = generic_browse.generic_browse_layout.cells('a').getAttachedObject();
+
+            /*
+            This is DHTMLX library function with few custom changes, which are marked. The usual way to override library function is to 
+            add prototype function in adiha.dhtmlx.js. But it didn't work for _doClick in grid as it was defined in the grid object itself, not via prototype. So we are overriding the function from the grid object itself by re-defining the same function.
+
+            ASSUMPTION: adiha.dhtmlx.js is included after dhtmlx.js in components.file.php.
+            */
+            grid_obj._doClick = function(ev) {
+                var selMethod = 0;       
+                var el = this.getFirstParentOfType(_isIE ? ev.srcElement : ev.target, "TD");
+                if (!el || !el.parentNode || !el.parentNode.idd) {
+                    return
+                }
+                var fl = true;
+                if (this.markedCells) {
+                    var markMethod = 0;
+                    if (ev.shiftKey || ev.metaKey) {
+                        markMethod = 1
+                    }
+                    if (ev.ctrlKey) {
+                        markMethod = 2
+                    }
+                    this.doMark(el, markMethod);
+                    return true
+                }
+                if (this.selMultiRows != false) {
+                    if (ev.shiftKey && this.row != null && this.selectedRows.length) {
+                        selMethod = 1
+                    }
+                    if (ev.ctrlKey || ev.metaKey) {
+                        selMethod = 2
+                    }
+                }
+
+                
+                /****************Pioneer Change START**************/
+                /*
+                Create a variable to capture click event object, which holds
+                information of key press (e.g. Ctrl+Click vs. Click).
+                This is required later to differentiate Click vs Ctrl+Click action.
+                */
+                this._clickEvent = ev;
+                /****************Pioneer Change END**************/
+
+                return this.doClick(el, fl, selMethod, false)
+            };
+        }
+
         /**
          * [Set Ok button disabled/enabled onCheck book structure nodes]
          */
@@ -246,13 +338,49 @@
          * [Set Ok button disabled/enabled onCheck book structure nodes]
          */
         function grid_row_on_click(){
-            var obj = generic_browse.generic_browse_layout.cells('a').getAttachedObject();
-            var selected_row = obj.getSelectedRowId();
+            var obj = this;
+            var selected_rows_csv = this.getSelectedRowId();
+            var selected_row_arr = [];
+            var row_index = null;
+            var row_value = null;
+
+            if (enable_server_side_paging == 1) {
+                /*reset the array to blank if ctrl is not clicked*/
+                if (this._clickEvent && this._clickEvent.ctrlKey == false) {
+                    data_browser_ids = {};
+                    data_browser_labels = {};
+                }
+
+                if (selected_rows_csv != null) {
+                    selected_row_arr = selected_rows_csv.split(',');
+                }
+
+                //grid will loop for all loaded pages
+                this.forEachRow(function(id) {
+                    row_index = obj.getRowIndex(id);
+                    row_value = obj.cellByIndex(row_index, 1).getValue();
+
+                    if (selected_row_arr.indexOf(id) > -1) {
+                        data_browser_ids[id] = null;
+                        data_browser_labels['"' + row_value + '"'] = null;
+                    } else {
+                        delete data_browser_ids[id];
+                        delete data_browser_labels['"' + row_value + '"'];
+                    }
+                });   
+                //Checked if data_browser_ids is empty or not since while filtering selected row ids are lost 
+                if (jQuery.isEmptyObject(data_browser_ids) == false) {
+                    generic_browse.generic_browser_toolbar.enableItem('ok');
+                } else {
+                    generic_browse.generic_browser_toolbar.disableItem('ok');
+                }
             
-            if (selected_row != null) {
-                generic_browse.generic_browser_toolbar.enableItem('ok');
             } else {
-                generic_browse.generic_browser_toolbar.disableItem('ok');
+                if (selected_rows_csv != null) {
+                    generic_browse.generic_browser_toolbar.enableItem('ok');
+                } else {
+                    generic_browse.generic_browser_toolbar.disableItem('ok');
+                }
             }
         }
         
@@ -270,82 +398,120 @@
                 return true;
             }
         }
+        
         /**
-         *
+         * This function is called after grid is loaded (e.g. page chagne, filter, refresh).
+         Retains (shows as selected) previously selected values.
          */
         function generic_browser_grid_select() {
             var form_name = '<?php echo $form_name; ?>';
             var browse = '<?php echo $browse_name; ?>';
-            
-            if (call_from != 'report_manager' && call_from != 'grid_browser') {
-                eval('var my_form = parent.' + form_name + '.getForm();');
+            var grid_row_id;
+            var grid_row_value;
+            var previously_selected_labels;
+            var previously_selected_ids;
 
+            if (call_from != 'report_manager' && call_from != "grid_browser") {
+                eval('var my_form = parent.' + form_name + '.getForm();');
                 var browse_field = browse.replace("label_", "");
-				var label_name = my_form.getItemValue(browse);
-                var selected_id = my_form.getItemValue(browse_field);
+				previously_selected_labels = my_form.getItemValue(browse);
+                previously_selected_ids = my_form.getItemValue(browse_field);
             } else {
-                var selected_id = '<?php echo $_POST['selected_id'] ?? '' ?>';
-                var label_name = '<?php echo $_POST['selected_label'] ?? '' ?>';
+                previously_selected_ids = '<?php echo $_POST['selected_id'] ?>';
+                previously_selected_labels = '<?php echo $_POST['selected_label'] ?>';
             }
-            
-            selected_id = selected_id.split(",");
-            label_name = unescapeXML(label_name);
-            label_name = label_name.split(",");
             
             var grid_obj = generic_browse.generic_browse_layout.cells('a').getAttachedObject();
 
-            grid_obj.forEachRow(function(id){
-				var a = grid_obj.cells(id, 0).getValue();
-				var b = grid_obj.cells(id, 1).getValue();
-                if (selected_id.indexOf(a) > -1 && label_name.indexOf(unescapeXML(b)) > -1){
-                    grid_obj.selectRow(id, true, true, true);
+            if (enable_server_side_paging == 0) {
+                grid_obj.forEachRow(function(id){
+                    var a = grid_obj.cells(id, 0).getValue();
+                    var b = grid_obj.cells(id, 1).getValue();
+                    if (selected_id.indexOf(a) > -1 && label_name.indexOf(unescapeXML(b)) > -1){
+                        grid_obj.selectRow(id, true, true, true);
+                    }
+                });
+            } else {
+                var pre_selected_row_ids_array = previously_selected_ids.split(',');
+                var pre_selected_label_array = previously_selected_labels.split(',');
+                
+                /* Populate previously selected values in Ids and Labels arrays 
+                in UPDATE MODE as we need retain previous selection 
+                and make new changes in it.
+                */
+                if (pre_selected_row_ids_array != '' && jQuery.isEmptyObject(data_browser_ids) == true ) {
+                    
+                    for (i = 0; i < pre_selected_row_ids_array.length; i++ ) {
+                        data_browser_ids[pre_selected_row_ids_array[i]] = null
+                    }
+
+                    for (i = 0; i < pre_selected_label_array.length; i++ ) {
+                        data_browser_labels['"' + unescapeXML(pre_selected_label_array[i]) + '"'] = null
+                    }
                 }
-            });
+
+                var current_selected_id_arr = Object.keys(data_browser_ids) ;
+                var current_selected_label_name = Object.keys(data_browser_labels) ;
+                current_selected_label_name = current_selected_label_name.toString(); 
+                grid_obj.forEachRow(function(id) {
+                    /*Here id returns Id of the data of grid rows*/
+                    grid_row_id = grid_obj.cells(id, 0).getValue();
+                    grid_row_value = grid_obj.cells(id, 1).getValue();
+
+                    if (current_selected_id_arr.indexOf(grid_row_id) > -1 
+                        && unescapeXML(current_selected_label_name).indexOf(unescapeXML(grid_row_value)) > -1) {
+                        grid_obj.selectRow(grid_obj.getRowIndex(id), true, true, false)
+                    }
+                });
+            }
         }
         
         function generic_browser_grid_click() {
             var obj = generic_browse.generic_browse_layout.cells('a').getAttachedObject();
-            var selected_row = obj.getSelectedRowId();
+            var selected_rows_csv = obj.getSelectedRowId();
             
             var form_name = '<?php echo $form_name; ?>';
             var browse = '<?php echo $browse_name; ?>';
             var input_id = browse.replace("label_", "");
             var input_label = browse.replace("browse_", "label_");
 
-            if (selected_row == null) {
+            if (selected_rows_csv == null) {
                 var selected_row_arr = new Array();
             } else {
-                var selected_row_arr = selected_row.split(',');
+                var selected_row_arr = selected_rows_csv.split(',');
             }
             
             var selected_id_arr = new Array();
             var selected_value_arr = new Array();
-            var selected_formula = new Array();
 
-            for (var cnt = 0; cnt < selected_row_arr.length; cnt++) {
-                var grid_name = '<?php echo $grid_name; ?>';
-                var selected_id = obj.cells(selected_row_arr[cnt], '0').getValue();
-                var selected_value = obj.cells(selected_row_arr[cnt], '1').getValue();
-                var formula_details = (grid_name == 'formula_editor') ? obj.cells(selected_row_arr[cnt], '3').getValue() : '';
+            if (enable_server_side_paging == 0) {
+                for (var cnt = 0; cnt < selected_row_arr.length; cnt++) {
+                    var selected_id = obj.cells(selected_row_arr[cnt], '0').getValue();
+                    var selected_value = obj.cells(selected_row_arr[cnt], '1').getValue();
 
-                selected_id_arr.push(selected_id);
-                selected_value_arr.push(selected_value);
-                selected_formula.push(formula_details); 
+                    selected_id_arr.push(selected_id);
+                    selected_value_arr.push(selected_value);
+                }
+                selected_id_arr = selected_id_arr.join(',');
+                selected_value_arr = selected_value_arr.join(',')
+            } else {
+                selected_id_arr = Object.keys(data_browser_ids) ;
+                selected_value_arr = Object.keys(data_browser_labels);
+                selected_value_arr = selected_value_arr.toString();
+                selected_value_arr = selected_value_arr.replace(/"/g, '');
             }
             
             if (call_from == 'report_manager') {
-                parent.set_browser_value(selected_id_arr.join(','), selected_value_arr.join(','));
+                parent.set_browser_value(selected_id_arr, selected_value_arr);
             } else if (call_from == 'grid_browser') {
                 parent.new_browse.new_browse_value = {"value": selected_id_arr, "text": unescapeXML(selected_value_arr.join(','))}
                 parent.new_browse.close();
                 return;
             } else {
                 eval('var my_form = parent.'+form_name+'.getForm()');
-                my_form.setItemValue(input_id, selected_id_arr.join(','));
-                my_form.setItemValue(input_label, unescapeXML(selected_value_arr.join(',')));
-
-                if (grid_name == 'formula_editor') 
-                    parent.set_formula(unescapeXML(selected_formula.join(',')).replace(/\+/g, ' '));   
+                my_form.setItemValue(input_id, selected_id_arr);
+                my_form.setItemValue(input_label, unescapeXML(selected_value_arr));
+                window.parent.$('[name="' + input_label + '"]').trigger("change");  
                                 
                 my_form.setNote(input_id,{text:""});
             }
@@ -407,9 +573,50 @@
                 eval('parent.' + callback_function + '()');
             }            
             
-            //parent.new_browse.close();
-            // Changed window close() to hide() to fix issue in input field not clicking on browser close
-            parent.new_browse.setModal(false);
-            parent.new_browse.hide();
+            parent.new_browse.close();
+        }
+
+        /**
+         * [dny_refresh_grids Refresh Grid using connector - generate process table]
+         * @param  {[type]} sql_stmt [SQL Statement]
+         */
+        function dny_refresh_grids(sql_Stmt) {
+            if (call_from != 'grid_browser') {
+                eval('var my_form = parent.' + form_name + '.getForm()');
+                dependent_id = my_form.getItemValue(dependent_field);      
+                sql_Stmt = sql_Stmt.replace('<dependent_id>', dependent_id);
+            }
+            var grid_sp_param = {
+                "sp_string": sql_Stmt + ', @enable_grid_server_side_paging = 1'           
+            };
+
+            adiha_post_data("return", grid_sp_param, '', '', 'dny_refresh_callback');
+        }
+        
+        /**
+         * [dny_refresh_callback Refresh Grid using connector - use process table to refresh grid]
+         * @param  {[type]} sql_stmt [SQL Statement]
+         */
+        function dny_refresh_callback(result) {
+            if (result[0].process_table == '' || result[0].process_table == null) {
+                return;
+            }
+
+            var process_table = result[0].process_table;            
+          
+            var grid_obj = generic_browse.generic_browse_layout.cells('a').getAttachedObject();
+            
+            var sql_param = {
+                "process_table":process_table,
+                "text_field":column_list,
+                "id_field": id_field,
+                "date_fields":date_fields,
+                "numeric_fields":numeric_fields,
+                "sorting_fields":order_seq_direction
+            };
+            sql_param = $.param(sql_param);
+            var sql_url = js_php_path + 'grid.connector.php?' + sql_param;
+            
+            grid_obj.loadXML(sql_url, generic_browser_grid_select);
         }
     </script> 

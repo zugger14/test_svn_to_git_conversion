@@ -159,11 +159,14 @@ BEGIN
 		grouping_column		VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 		edit_permission		VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 		delete_permission	VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-		split_at			VARCHAR(200) COLLATE DATABASE_DEFAULT 
+		split_at			VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+		enable_server_side_paging VARCHAR(1) COLLATE DATABASE_DEFAULT,
+		dependent_field VARCHAR(200) COLLATE DATABASE_DEFAULT,
+		dependent_query VARCHAR(1000) COLLATE DATABASE_DEFAULT	
 	)
 
-	INSERT INTO #all_grids(grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission,split_at)
-	SELECT agd.grid_id, agd.grid_name,agd.fk_table,agd.fk_column,agd.load_sql,agd.grid_label,agd.grid_type,agd.grouping_column, agd.edit_permission, agd.delete_permission, agd.split_at
+	INSERT INTO #all_grids(grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission,split_at, enable_server_side_paging, dependent_field, dependent_query)
+	SELECT agd.grid_id, agd.grid_name,agd.fk_table,agd.fk_column,agd.load_sql,agd.grid_label,agd.grid_type,agd.grouping_column, agd.edit_permission, agd.delete_permission, agd.split_at, agd.enable_server_side_paging, agd.dependent_field, agd.dependent_query
 	FROM application_ui_template_fields AS autf2
 	INNER JOIN application_ui_template_group autg
 	ON autg.application_group_id = autf2.application_group_id
@@ -173,7 +176,7 @@ BEGIN
 	ON CAST(agd.grid_id AS VARCHAR(20)) = autf2.grid_id
 	WHERE aut.application_function_id = @function_id
 	UNION
-	SELECT agd.grid_id, agd.grid_name,agd.fk_table,agd.fk_column,agd.load_sql,agd.grid_label,agd.grid_type,agd.grouping_column, agd.edit_permission, agd.delete_permission, agd.split_at
+	SELECT agd.grid_id, agd.grid_name,agd.fk_table,agd.fk_column,agd.load_sql,agd.grid_label,agd.grid_type,agd.grouping_column, agd.edit_permission, agd.delete_permission, agd.split_at, agd.enable_server_side_paging, agd.dependent_field, agd.dependent_query
 	FROM application_ui_template_group autg
 	INNER JOIN application_ui_template AS aut
 	ON autg.application_ui_template_id = aut.application_ui_template_id
@@ -181,7 +184,7 @@ BEGIN
 	ON agd.grid_id = autg.application_grid_id
 	WHERE aut.application_function_id = @function_id
 	UNION
-	SELECT agd.grid_id, agd.grid_name,agd.fk_table,agd.fk_column,agd.load_sql,agd.grid_label,agd.grid_type,agd.grouping_column, agd.edit_permission, agd.delete_permission, agd.split_at
+	SELECT agd.grid_id, agd.grid_name,agd.fk_table,agd.fk_column,agd.load_sql,agd.grid_label,agd.grid_type,agd.grouping_column, agd.edit_permission, agd.delete_permission, agd.split_at, agd.enable_server_side_paging, agd.dependent_field, agd.dependent_query
 	FROM application_ui_layout_grid AS aulg
 	INNER JOIN application_ui_template_group autg
 	ON autg.application_group_id = aulg.group_id
@@ -210,7 +213,10 @@ BEGIN
 			is_new				VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 			edit_permission		VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 			delete_permission	VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-			split_at			VARCHAR(200) COLLATE DATABASE_DEFAULT  
+			split_at			VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+			enable_server_side_paging VARCHAR(1) COLLATE DATABASE_DEFAULT,
+			dependent_field VARCHAR(200) COLLATE DATABASE_DEFAULT,
+			dependent_query VARCHAR(1000) COLLATE DATABASE_DEFAULT	
 		) '
 	
 	IF EXISTS(SELECT 1 FROM #all_grids)
@@ -228,13 +234,16 @@ BEGIN
 		+ ISNULL('''' + grouping_column + '''', 'NULL') + ',' 
 		+ ISNULL('''' + edit_permission + '''', 'NULL') + ','
 		+ ISNULL('''' + delete_permission + '''', 'NULL') + ','
-		+ ISNULL('''' + CAST(split_at AS VARCHAR(10)) + '''', 'NULL')
+		+ ISNULL('''' + CAST(split_at AS VARCHAR(10)) + '''', 'NULL') + ','
+		+ ISNULL('''' + CAST(enable_server_side_paging AS VARCHAR(10)) + '''', 'NULL') + ','
+		+ ISNULL('''' + dependent_field + '''', 'NULL') + ','
+		+ ISNULL('''' + REPLACE(dependent_query, '''', '''''') + '''', 'NULL') 	
 		FROM #all_grids
 			
 		INSERT INTO #temp_final_query(final_query)
 		SELECT '	
 				
-		INSERT INTO #temp_all_grids(old_grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at)
+		INSERT INTO #temp_all_grids(old_grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at, enable_server_side_paging, dependent_field, dependent_query)
 		' + @select_statement + '
 				
 		UPDATE tag
@@ -250,8 +259,8 @@ BEGIN
 				
 		IF EXISTS(SELECT 1 FROM #temp_all_grids WHERE is_new LIKE ''y'')
 		BEGIN					
-			INSERT INTO adiha_grid_definition (grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at)
-			SELECT grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at
+			INSERT INTO adiha_grid_definition (grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at, enable_server_side_paging, dependent_field, dependent_query)
+			SELECT grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at, enable_server_side_paging, dependent_field, dependent_query
 			FROM #temp_all_grids
 			WHERE is_new LIKE ''y''
 				
@@ -270,7 +279,10 @@ BEGIN
 				grouping_column = tag.grouping_column,
 				edit_permission = tag.edit_permission,
 				delete_permission = tag.delete_permission,
-				split_at = tag.split_at
+				split_at = tag.split_at,
+				enable_server_side_paging = tag.enable_server_side_paging,
+				dependent_field = tag.dependent_field,
+				dependent_query = tag.dependent_query
 			FROM adiha_grid_definition AS agd
 			INNER JOIN #temp_all_grids AS tag
 			ON tag.new_grid_id = agd.grid_id
@@ -308,6 +320,7 @@ BEGIN
 		+ ISNULL('''' + agcd.sorting_preference  + '''', 'NULL') + ',' 
 		+ ISNULL('''' + agcd.validation_rule  + '''', 'NULL') + ','
 		+ ISNULL('''' + agcd.column_alignment  + '''', 'NULL') + ', '
+		+ ISNULL('''' + CAST(agcd.order_seq_direction AS VARCHAR(10)) + '''', 'NULL') + ','
 		+ ISNULL('''' + agcd.browser_grid_id + '''', 'NULL') + ','
 		+ ISNULL('''' + CAST(agcd.allow_multi_select AS VARCHAR(10)) + '''', 'NULL') + ','
 		+ ISNULL('''' + CAST(agcd.rounding AS VARCHAR(10)) + '''', 'NULL')
@@ -338,12 +351,13 @@ BEGIN
 			sorting_preference VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 			validation_rule	VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 			column_alignment VARCHAR(200) COLLATE DATABASE_DEFAULT,
+			order_seq_direction INT,
 			browser_grid_id VARCHAR(200) COLLATE DATABASE_DEFAULT,
 			allow_multi_select VARCHAR(200) COLLATE DATABASE_DEFAULT,
 			rounding VARCHAR(10) COLLATE DATABASE_DEFAULT
 		)
 
-		INSERT INTO #temp_all_grids_columns(old_grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
+		INSERT INTO #temp_all_grids_columns(old_grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, order_seq_direction, browser_grid_id, allow_multi_select, rounding)
 		' + @select_statement + '
 
 		UPDATE tagc
@@ -357,7 +371,7 @@ BEGIN
 		INNER JOIN #temp_all_grids tag
 		ON agcd.grid_id = tag.new_grid_id
 
-		INSERT INTO adiha_grid_columns_definition(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
+		INSERT INTO adiha_grid_columns_definition(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, order_seq_direction, browser_grid_id, allow_multi_select, rounding)
 		SELECT	tagc.new_grid_id,
 				tagc.column_name,
 				tagc.column_label,
@@ -374,6 +388,7 @@ BEGIN
 				tagc.sorting_preference,
 				tagc.validation_rule,
 				tagc.column_alignment,
+				tagc.order_seq_direction,
 				tagc.browser_grid_id,
 				tagc.allow_multi_select,
 				tagc.rounding
