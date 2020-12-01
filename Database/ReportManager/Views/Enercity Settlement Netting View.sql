@@ -192,60 +192,35 @@ IF ''@stmt_invoice_id'' <> ''NULL''
 
 --SET @_accounting_month = ''2019-04-01''
 
+
 SET @_sql = ''
 
 SELECT 
-
 	st_in.stmt_invoice_id,
-
 	MAX(sco.as_of_date) [as_of_date],
-
 	MAX(sco.as_of_date) [to_as_of_date],
-
 	MAX(si.prod_date_from) [prod_date_from],
-
 	MAX(si.prod_date_to) [prod_date_to],
-
 	si.invoice_date [settlement_date],
-
 	MAX(sc_si.counterparty_name) [counterparty_name],
-
 	MAX(sc_si.accounting_code) [counterparty_accounting_code],
-
 	MAX(sco.counterparty_id) [counterparty_id],
-
 	cg.contract_name [contract_name],
-
 	MAX(sco.contract_id) [contract_id],
-
 	MAX(charge_type.description) AS [charge_type],
-
 	sid.invoice_line_item_id [charge_type_id],
-
 	CAST(dbo.FNARemoveTrailingZeroes(ROUND(AVG(ISNULL(sco.settlement_volume, 0)), 2)) AS DECIMAL(10,2))  [volume],
-
 	MAX(su.uom_name) [uom],
-
 	AVG(sdd.deal_volume) [deal_volume],
-
 	AVG(sco.settlement_amount)  [settlement_amount],
-
 	ABS(AVG(sco.settlement_amount))  [amount],
-
 	MAX(cur.currency_name) [currency],
-
 	--CAST(dbo.FNARemoveTrailingZeroes(ROUND(MAX(sco.settlement_price), 2)) AS DECIMAL(10,2))  [price], 
-
 	ABS(CASE WHEN CAST(dbo.FNARemoveTrailingZeroes(ROUND(SUM(ISNULL(sco.settlement_volume, 0)), 2)) AS DECIMAL(10,2)) = 0 THEN 0 ELSE SUM(sco.settlement_amount)/ 
-
 	CAST(dbo.FNARemoveTrailingZeroes(ROUND(SUM(ISNULL(sco.settlement_volume, 0)), 2)) AS DECIMAL(10,2)) END) [price] ,
-
 	si.invoice_number [invoice_number],
-
 	CASE si.invoice_type WHEN ''''i'''' THEN ''''Invoice'''' WHEN ''''r'''' THEN ''''Remittance'''' ELSE ''''Netting'''' END [invoice_type],
-
 	MAX(sdv_is.code) [invoice_status],
-
 	MAX(si.invoice_note) [invoice_notes],
 
 	MAX(DATENAME(m,si.prod_date_from) +'''' ''''+ CAST(YEAR(si.prod_date_from) AS VARCHAR)) [invoice_subject],	
@@ -436,23 +411,23 @@ SELECT
 
 	MAX(sc.counterparty_desc) [counterparty_description],
 
-	MAX(ISNULL(cc_receivables.name, cc.cc_name)) [counterparty_contact],
+	ISNULL(MAX(cc_net.name),MAX(ISNULL(cc_receivables.name, cc.cc_name))) [counterparty_contact],
 
-	MAX(ISNULL(cc_receivables.address1, cc.cc_address1)) [counterparty_address1],
+	ISNULL(MAX(cc_net.address1), MAX(ISNULL(cc_receivables.address1, cc.cc_address1))) [counterparty_address1],
 
-	MAX(ISNULL(cc_receivables.address2, cc.cc_address2)) [counterparty_address2],
+	ISNULL(MAX(cc_net.address2),MAX(ISNULL(cc_receivables.address2, cc.cc_address2))) [counterparty_address2],
 
-	MAX(ISNULL(cc_receivables.city, cc.cc_city)) counterparty_city,
+	ISNULL(MAX(cc_net.city),MAX(ISNULL(cc_receivables.city, cc.cc_city))) counterparty_city,
 
-	MAX(sdv_state.code) counterparty_state,
+	ISNULL(MAX(sdv_net_state.code), MAX(sdv_state.code))counterparty_state,
 
-	MAX(ISNULL(cc_receivables.zip, cc.cc_zip)) counterparty_zip,
+	ISNULL(MAX(cc_net.zip), MAX(ISNULL(cc_receivables.zip, cc.cc_zip))) counterparty_zip,
 
-	MAX(cc.cc_phone) counterparty_phone,
+	ISNULL(MAX(cc_net.telephone), MAX(ISNULL(cc_receivables.telephone, cc.cc_phone)))  counterparty_phone,
 
-	MAX(cc.cc_email) counterparty_email,
+	ISNULL(MAX(cc_net.email),MAX(ISNULL(cc_receivables.email, cc.cc_email))) counterparty_email,
 
-	MAX(cc.cc_fax) counterparty_fax,
+	ISNULL(MAX(cc_net.fax),MAX(ISNULL(cc_receivables.fax, cc.cc_fax))) counterparty_fax,
 
 	MAX(fs_counterparty.counterparty_name) primary_counterparty,
 
@@ -514,9 +489,9 @@ MAX(sdv_p_state.code) primary_counterparty_state,
 
 	MAX(sco.accounting_month) AS show_accounting_month,
 
-	MAX(cc.cc_country_name) counterparty_country_name,
+	ISNULL(MAX(sdv_net_country.code),MAX(cc.cc_country_name)) counterparty_country_name,
 
-	MAX(cc.cc_region_name) counterparty_region_name,
+	ISNULL(MAX(sdv_net_region.description),MAX(cc.cc_region_name)) counterparty_region_name,
 
 	MAX(sec_sc.source_counterparty_id) secondary_counterparty_id,
 
@@ -619,8 +594,13 @@ OUTER APPLY (
 ) netting_contract
 
 LEFT JOIN contract_group cg ON cg.contract_id = ISNULL(netting_contract.contract, sco.contract_id)
-
-LEFT JOIN source_uom su ON su.source_uom_id = cg.volume_uom
+LEFT JOIN stmt_netting_group stng ON stng.netting_contract_id = cg.contract_id
+LEFT JOIN counterparty_contract_address ccs_net ON ccs_net.contract_id = stng.netting_contract_id
+LEFT JOIN counterparty_contacts cc_net ON  cc_net.counterparty_contact_id = ccs_net.receivables
+LEFT JOIN static_data_value sdv_net_state ON sdv_net_state.value_id = cc_net.state 
+LEFT JOIN static_data_value sdv_net_country ON sdv_net_country.value_id = cc_net.country
+LEFT JOIN static_data_value sdv_net_region ON sdv_net_region.value_id = cc_net.region
+LEFT JOIN source_uom su ON su.source_uom_id = isnull(cg.volume_uom, sco.uom_id)
 
 LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = sco.Counterparty_ID
 
@@ -954,7 +934,7 @@ LEFT JOIN source_commodity d_sc ON d_sc.source_commodity_id = sdh.commodity_id
 
 --OUTER APPLY(
 
---	SELECT gmv.clm10_value vat_type, gmv.clm3_value [counterparty_type], gmv.clm1_value [effective_date], gmv.clm2_value [region_id], r_sdv.code [region], gmv.clm4_value [commodity_id] , scm.commodity_name, NULLIF(gmv.clm12_value, '''''''') [vat_percentage] , gmv.clm13_value [vat_remarks] , gmv.clm8_value gvm_price
+--	SELECT gmv.clm10_value vat_type, gmv.clm3_value [counterparty_type], gmv.clm1_value [effective_date], gmv.clm2_value [region_id], r_sdv.code [region], gmv.clm4_value [commodity_id] , scm.commodity_name, NULLIF(abs(gmv.clm12_value), '''''''') [vat_percentage] , gmv.clm13_value [vat_remarks] , gmv.clm8_value gvm_price
 
 --	FROM generic_mapping_values gmv
 
@@ -983,8 +963,11 @@ OUTER APPLY (
 ) epa
 
 WHERE 1 = 1 
+
 AND charge_type.description not like ''''%Tax%''''
+
 AND charge_type.description not like ''''%VAT%''''
+
 
 '' 
 
@@ -1068,7 +1051,8 @@ CASE WHEN @_stmt_invoice_id IS NULL THEN '''' ELSE '' AND si.stmt_invoice_id IN(
 
 			sco.as_of_date, 
 
-			sco.accounting_month''
+			sco.accounting_month				
+			''
 
 SET @_sql4 = ''
 
@@ -1422,7 +1406,7 @@ SET @_sql7 = ''
 
 , MAX(cet.[commodity_energy_tax_value]) commodity_energy_tax_value
 
---[__batch_report__]
+INTO #tempt_last_finals
 
 FROM #temp_all_final taf 
 
@@ -1550,7 +1534,12 @@ OUTER APPLY (
 
 	) ppcv
 
-GROUP BY taf.source_deal_header_id, taf.stmt_invoice_id''
+GROUP BY taf.source_deal_header_id, taf.stmt_invoice_id
+
+SELECT stmt_invoice_id,	as_of_date,	to_as_of_date,	prod_date_from,	prod_date_to,	settlement_date,	counterparty_name,	counterparty_accounting_code,	counterparty_id,	contract_name,	contract_id,	charge_type,	charge_type_id,	volume,	uom,	deal_volume,	settlement_amount,	amount,	currency,	price,	invoice_number,	invoice_type,	invoice_status,	invoice_notes,	invoice_subject	cash_received,	cash_receive_variance_amount,	cash_received_date,	charge_type_alias,	receive_pay,	accounting_status,	invoice_date,	invoice_payment_date,	invoice_template,	lock_status,	source_deal_header_id,	payment_date_from,	payment_date_to,	pnl_line_item,	deal_reference,	Leg,	buy_sell,	invoicing_charge_type,	Payment_Dr_GL_Code,	Payment_Cr_GL_Code,	Payment_Dr_GL_Name,	Payment_Cr_GL_Name,	Debit_GL_Number,	Credit_GL_Number,	Debit_account_name,	Credit_account_name,	payment_status,	book,	strategy,	subsidary,	sub_book,	subsidiary_accounting_code,	strategy_accounting_code,	book_accounting_code,	sub_book_accounting_code,	location_name,	location_accounting_code,	location_group,	commodity,	commodity_accounting_code,	commodity_description,	accounting_receivable_id,	accounting_payable_id,	[index],	template_name,	deal_type_name,	trader,	country,	region,	term_start,	term_end,	term_start_year_month,	actual_forward,	term_quarter,	pnl_date,	physical_financial_flag,	invoice_id,	counterparty_description,	counterparty_contact,	counterparty_address1,	counterparty_address2,	counterparty_city,	counterparty_state,	counterparty_zip,	counterparty_phone,	counterparty_email,	counterparty_fax,	primary_counterparty,	primary_counterparty_description,	primary_counterparty_contact_name,	primary_counterparty_address1,	primary_counterparty_address2,	primary_counterparty_city,	primary_counterparty_state,	primary_counterparty_zip,	primary_counterparty_contact_telephone,	primary_counterparty_email_address,	primary_counterparty_fax,	primary_bank_name,	primary_account_name,	primary_account_no,	primary_iban,	primary_swift_no,	primary_reference,	internal_deal_subtype_value_id,	deal_date,	primary_counterparty_bank_address1,	primary_counterparty_bank_address2,	accounting_month,	accrual_or_final,	Deal_Charge_Type_ID	Deal_Charge_Type,	Calc_Type,	reversal_stmt_checkout_id,	show_accounting_month,	counterparty_country_name,	counterparty_region_name,	secondary_counterparty_id,	secondary_counterparty_name,	source_commodity_id,	commodity_name,	abs(vat_percentage) vat_percentage,	vat_remarks,	counterparty_external_value, secondary_cc_address1,	secondary_cc_address2,	secondary_cc_city,	Accrual_Final_Reversal,	update_ts_from,	update_ts_to,	create_ts_from,	create_ts_to,	primary_counterparty_country,	primary_counterparty_bank_currency_id,	primary_counterparty_bank_currency,	primary_counterparty_bank_currency_name, buyer_description,	total_volume,	net_total,	ABS(vat) vat,	case when settlement_amount <0 THEN -1* (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) else 1 * (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) end gross_total,	ABS(commodity_energy_tax_value) commodity_energy_tax_value
+--[__batch_report__] 
+
+FROM  #tempt_last_finals''
 
 EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_sql7)', report_id = @report_id_data_source_dest,
 	system_defined = '0'
@@ -1670,7 +1659,7 @@ EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Cash Received'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 3, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -1683,7 +1672,7 @@ EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'cash_received' AS [name], 'Cash Received' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 3 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'cash_received' AS [name], 'Cash Received' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Enercity Settlement Netting View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -2278,39 +2267,6 @@ EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'invoice_status' AS [name], 'Invoice Status' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 5 AS datatype_id, 'select value_id,code from  static_data_value where type_id=20700' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Enercity Settlement Netting View'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Enercity Settlement Netting View'
-	            AND dsc.name =  'invoice_subject'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Invoice Subject'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Enercity Settlement Netting View'
-			AND dsc.name =  'invoice_subject'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'invoice_subject' AS [name], 'Invoice Subject' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Enercity Settlement Netting View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -5168,7 +5124,7 @@ EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Deal Charge Type'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -5181,40 +5137,7 @@ EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'Deal_Charge_Type' AS [name], 'Deal Charge Type' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Enercity Settlement Netting View'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Enercity Settlement Netting View'
-	            AND dsc.name =  'Deal_Charge_Type_ID'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Deal Charge Type Id'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Enercity Settlement Netting View'
-			AND dsc.name =  'Deal_Charge_Type_ID'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'Deal_Charge_Type_ID' AS [name], 'Deal Charge Type Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'Deal_Charge_Type' AS [name], 'Deal Charge Type' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Enercity Settlement Netting View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)

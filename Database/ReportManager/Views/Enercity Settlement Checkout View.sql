@@ -90,7 +90,7 @@ DECLARE @_period_from VARCHAR(100)  --- not used
 
 DECLARE @_period_to VARCHAR(100) --- not used
 
-DECLARE @_stmt_invoice_id  VARCHAR(100) --= 507
+DECLARE @_stmt_invoice_id  VARCHAR(100) 
 
 DECLARE @_accrual_or_final  VARCHAR(100)
 
@@ -210,6 +210,14 @@ BEGIN
 
 END
 
+IF OBJECT_ID(''tempdb..#checkout_void'') IS NOT NULL
+
+BEGIN
+
+	DROP TABLE #checkout_void
+
+END
+
 DECLARE @_stmt_orignal_invoice_id VARCHAR(100)
 
 SET @_stmt_orignal_invoice_id = (select ISNULL(original_id_for_void,stmt_invoice_id)  from stmt_invoice where stmt_invoice_id = @_stmt_invoice_id)
@@ -228,27 +236,34 @@ CASE WHEN  original_id_for_void is not nULL then ''Voided'' else NULL end
 
 FROM  stmt_invoice  si where si.stmt_invoice_id = @_stmt_invoice_id
 
+
+Create table #checkout_void
+(stmt_checkout_id int , stmt_invoice_id int)
+
+Insert into #checkout_void
+SELECT a.stmt_checkout_id , stid.stmt_invoice_id FROM stmt_invoice si
+        INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
+        OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a
+		LEFT JOIN stmt_checkout stck ON stck.stmt_checkout_id = a.[stmt_checkout_id]
+		LEFT JOIN  source_deal_detail sdd on sdd.source_deal_detail_id = stck.source_deal_detail_id		
+        WHERE  si.stmt_invoice_id = @_stmt_invoice_id
+
+		
 Create table #stmt_cross_invoice
 
 (stmt_invoice_id int, stmt_checkout_id int, source_deal_header_id int)
 
 INSERT INTO #stmt_cross_invoice
-
+--INNER JOIN dbo.FNASplit(@_source_deal_header_id, '','') a ON a.item = sdh.source_deal_header_id
 SELECT si_b.stmt_invoice_id , a.[stmt_checkout_id], sdd.source_deal_header_id FROM stmt_invoice si
-
         INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
-
-        OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a
-
+		OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a
 		LEFT JOIN stmt_checkout stck ON stck.stmt_checkout_id = a.[stmt_checkout_id]
-
-        LEFT JOIN stmt_invoice_detail stid_b ON stid_b.description1 = a.[stmt_checkout_id]
-
+		LEFT JOIN #checkout_void cv ON cv.stmt_checkout_id = a.stmt_checkout_id
 		LEFT JOIN  source_deal_detail sdd on sdd.source_deal_detail_id = stck.source_deal_detail_id
-
-        INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = stid_b.stmt_invoice_id AND ISNULL(si_b.is_voided,''n'') = ISNULL(si.is_voided,''n'')
-
+		INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = cv.stmt_invoice_id AND ISNULL(si_b.is_voided,''n'') = ISNULL(si.is_voided,''n'')
         WHERE ISNULL(si_b.is_backing_sheet,''n'') = ''y'' and si.stmt_invoice_id = @_stmt_invoice_id
+
 
 IF NOT EXISTS(select 1 from #stmt_cross_invoice)
 
@@ -486,16 +501,16 @@ SELECT
 
 	MAX(ISNULL(cc_receivables.city, cc.cc_city)) counterparty_city,
 
-	MAX(sdv_state.code) counterparty_state,
+	MAX(sdv_state.description) counterparty_state,
 
 	MAX(ISNULL(cc_receivables.zip, cc.cc_zip)) counterparty_zip,
+	
+	 MAX(ISNULL(cc_receivables.telephone, cc.cc_phone))  counterparty_phone,
 
-	MAX(cc.cc_phone) counterparty_phone,
+	MAX(ISNULL(cc_receivables.email, cc.cc_email)) counterparty_email,
 
-	MAX(cc.cc_email) counterparty_email,
-
-	MAX(cc.cc_fax) counterparty_fax,
-
+	 MAX(ISNULL(cc_receivables.fax, cc.cc_fax)) counterparty_fax,
+	
 	MAX(fs_counterparty.counterparty_name) primary_counterparty,
 
 	MAX(fs_counterparty.counterparty_desc) primary_counterparty_description,
@@ -515,23 +530,14 @@ SELECT
 	MAX(ccs.telephone) primary_counterparty_contact_telephone,
 
 	MAX(ccs.email) primary_counterparty_email_address,
-
 	MAX(ccs.fax) primary_counterparty_fax,
-
 	MAX(cbi1.bank_name) AS primary_bank_name,
-
 	MAX(cbi1.accountname) AS primary_account_name,
-
 	MAX(cbi1.Account_no) AS primary_account_no,
-
 	MAX(cbi1.wire_ABA) AS primary_iban,
-
 	MAX(cbi1.ACH_ABA) AS primary_swift_no,
-
 	MAX(cbi1.reference) AS primary_reference,
-
 	MAX(sdh.internal_deal_subtype_value_id) internal_deal_subtype_value_id,
-
 ''
 
 SET @_sql1 = ''
@@ -556,9 +562,9 @@ SET @_sql1 = ''
 
 	MAX(sco.accounting_month) AS show_accounting_month,
 
-	MAX(cc.cc_country_name) counterparty_country_name,
-
-	MAX(cc.cc_region_name) counterparty_region_name,
+	MAX(ISNULL(sdv_cc_c.code, cc.cc_country_name)) counterparty_country_name,
+	
+	MAX(ISNULL(sdv_cc_r.description, cc.cc_region_name)) counterparty_region_name,
 
 	MAX(sec_sc.source_counterparty_id) secondary_counterparty_id,
 
@@ -650,7 +656,7 @@ OUTER APPLY (
 
 LEFT JOIN contract_group cg ON cg.contract_id = ISNULL(netting_contract.contract, sco.contract_id)
 
-LEFT JOIN source_uom su ON su.source_uom_id = cg.volume_uom
+LEFT JOIN source_uom su ON su.source_uom_id = isnull(cg.volume_uom, sco.uom_id)
 
 LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = sco.Counterparty_ID
 
@@ -795,17 +801,11 @@ LEFT JOIN static_data_value sdv_region ON  sdv_region.value_id = sml.region ''
 SET @_sql2 =''
 
 OUTER APPLY(
-
 	SELECT TOP 1 
-
 		CASE 
-
 			WHEN MONTH(sdd.term_start)< MONTH(
-
                 sco.as_of_date
-
                 ) 
-
 				AND YEAR(sdd.term_start)<= YEAR(sco.as_of_date) 
 
 				THEN '''' '''' + CAST(YEAR(sdd.term_start) AS VARCHAR) + ''''-YTD'''' 
@@ -865,7 +865,8 @@ outer apply ( select *  FROM  source_counterparty sec_sc where  sec_sc.source_co
 LEFT JOIN counterparty_contacts cc_payable ON cc_payable.counterparty_contact_id = ISNULL(cca.payables, sc_parent.payables)
 
 LEFT JOIN counterparty_contacts cc_receivables ON cc_receivables.counterparty_contact_id = ISNULL(cca.receivables, sc_parent.receivables)
-
+LEFT JOIN static_data_value sdv_cc_c ON sdv_cc_c.value_id = cc_receivables.country
+LEFT JOIN static_data_value sdv_cc_r ON sdv_cc_r.value_id = cc_receivables.region
 OUTER APPLY (
 
 	SELECT address1 [cc_address1]
@@ -1264,15 +1265,15 @@ SELECT
 
 	MAX(ISNULL(cc_receivables.city, cc.cc_city)) counterparty_city,
 
-	MAX(sdv_state.code) counterparty_state,
+	MAX(sdv_state.description) counterparty_state,
 
 	MAX(ISNULL(cc_receivables.zip, cc.cc_zip)) counterparty_zip,
 
-	MAX(cc.cc_phone) counterparty_phone,
+	MAX(ISNULL(cc_receivables.telephone, cc.cc_phone))  counterparty_phone,
 
-	MAX(cc.cc_email) counterparty_email,
+	MAX(ISNULL(cc_receivables.email, cc.cc_email)) counterparty_email,
 
-	MAX(cc.cc_fax) counterparty_fax,
+	 MAX(ISNULL(cc_receivables.fax, cc.cc_fax)) counterparty_fax,
 
 	MAX(fs_counterparty.counterparty_name) primary_counterparty,
 
@@ -1334,9 +1335,9 @@ SET @_sql1 = ''
 
 	MAX(sco.accounting_month) AS show_accounting_month,
 
-	MAX(cc.cc_country_name) counterparty_country_name,
+	MAX(ISNULL(sdv_cc_c.code, cc.cc_country_name)) counterparty_country_name,
 
-	MAX(cc.cc_region_name) counterparty_region_name,
+	ISNULL(MAX(sdv_cc_r.description), MAX(cc.cc_region_name)) counterparty_region_name,
 
 	MAX(sec_sc.source_counterparty_id) secondary_counterparty_id,
 
@@ -1430,7 +1431,7 @@ OUTER APPLY (
 
 LEFT JOIN contract_group cg ON cg.contract_id = ISNULL(netting_contract.contract, sco.contract_id)
 
-LEFT JOIN source_uom su ON su.source_uom_id = cg.volume_uom
+LEFT JOIN source_uom su ON su.source_uom_id = isnull(cg.volume_uom, sco.uom_id)
 
 LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = sco.Counterparty_ID
 
@@ -1641,7 +1642,8 @@ outer apply ( select *  FROM  source_counterparty sec_sc where  sec_sc.source_co
 LEFT JOIN counterparty_contacts cc_payable ON cc_payable.counterparty_contact_id = ISNULL(cca.payables, sc_parent.payables)
 
 LEFT JOIN counterparty_contacts cc_receivables ON cc_receivables.counterparty_contact_id = ISNULL(cca.receivables, sc_parent.receivables)
-
+LEFT JOIN static_data_value sdv_cc_c ON sdv_cc_c.value_id = cc_receivables.country
+LEFT JOIN static_data_value sdv_cc_r ON sdv_cc_r.value_id = cc_receivables.region
 OUTER APPLY (
 
 	SELECT address1 [cc_address1]
@@ -1892,7 +1894,8 @@ CASE WHEN @_source_deal_header_id IS NULL THEN '''' ELSE '' AND sdd.source_deal_
 
 			,svd_m.void_status
 
-			, svd_m.as_of_date''
+			, svd_m.as_of_date						
+			''
 
 SET @_sql4 = ''
 
@@ -2376,7 +2379,7 @@ OUTER APPLY (
 
 GROUP BY taf.source_deal_header_id 
 
-select stmt_invoice_id,	as_of_date,	to_as_of_date,	prod_date_from,	prod_date_to,	settlement_date,	counterparty_name,	counterparty_accounting_code,	counterparty_id,	contract_name,	contract_id,	charge_type,	charge_type_id,	volume,	uom,	deal_volume,	settlement_amount,	amount,	currency,	price,	invoice_number,	invoice_type,	invoice_status,	invoice_notes,	invoice_subject,	cash_received,	cash_receive_variance_amount,	cash_received_date,	charge_type_alias,	receive_pay,	accounting_status,	invoice_date,	invoice_payment_date,	invoice_template,	lock_status,	source_deal_header_id,	payment_date_from,	payment_date_to,	pnl_line_item,	deal_reference,	Leg	buy_sell,	invoicing_charge_type,	Payment_Dr_GL_Code,	Payment_Cr_GL_Code,	Payment_Dr_GL_Name,	Payment_Cr_GL_Name,	Debit_GL_Number,	Credit_GL_Number,	Debit_account_name,	Credit_account_name,	payment_status,	book,	strategy,	subsidary,	sub_book,	subsidiary_accounting_code,	strategy_accounting_code,	book_accounting_code,	sub_book_accounting_code,	location_name,	location_accounting_code,	location_group,	commodity,	commodity_accounting_code,	commodity_description,	accounting_receivable_id,	accounting_payable_id,	[index],	template_name,	deal_type_name,	trader,	country,	region,	term_start,	term_end,	term_start_year_month,	actual_forward, term_quarter,	pnl_date,	physical_financial_flag,	invoice_id,	counterparty_description,	counterparty_contact,	counterparty_address1,	counterparty_address2,	counterparty_city,	counterparty_state,	counterparty_zip,	counterparty_phone,	counterparty_email,	counterparty_fax,	primary_counterparty,	primary_counterparty_description,	primary_counterparty_contact_name,	primary_counterparty_address1,	primary_counterparty_address2,	primary_counterparty_city,	primary_counterparty_state,	primary_counterparty_zip,	primary_counterparty_contact_telephone,	primary_counterparty_email_address,	primary_counterparty_fax,	primary_bank_name,	primary_account_name,	primary_account_no,	primary_iban,	primary_swift_no,	primary_reference,	internal_deal_subtype_value_id	,deal_date,	primary_counterparty_bank_address1,	primary_counterparty_bank_address2,	accounting_month,	accrual_or_final,	Deal_Charge_Type_ID	Deal_Charge_Type,	Calc_Type,	reversal_stmt_checkout_id,	show_accounting_month,	counterparty_country_name,	counterparty_region_name,	secondary_counterparty_id,	secondary_counterparty_name,	source_commodity_id,	commodity_name,	vat_percentage,	vat_remarks,	counterparty_external_value,	secondary_cc_address1,	secondary_cc_address2,	secondary_cc_city,	Accrual_Final_Reversal,	update_ts_from,	update_ts_to,	create_ts_from,	create_ts_to,	primary_counterparty_country,	primary_counterparty_bank_currency_id,	primary_counterparty_bank_currency,	primary_counterparty_bank_currency_name,	total_volume,	net_total,	vat,( ISNULL(vat, 0) +gross_total + commodity_energy_tax_value) gross_total,	void_status,	commodity_energy_tax_value
+select stmt_invoice_id,	as_of_date,	to_as_of_date,	prod_date_from,	prod_date_to,	settlement_date,	counterparty_name,	counterparty_accounting_code,	counterparty_id,	contract_name,	contract_id,	charge_type,	charge_type_id,	volume,	uom,	deal_volume,	settlement_amount,	amount,	currency,	price,	invoice_number,	invoice_type,	invoice_status,	invoice_notes,	invoice_subject,	cash_received,	cash_receive_variance_amount,	cash_received_date,	charge_type_alias,	receive_pay,	accounting_status,	invoice_date,	invoice_payment_date,	invoice_template,	lock_status,	source_deal_header_id,	payment_date_from,	payment_date_to,	pnl_line_item,	deal_reference,	Leg	buy_sell,	invoicing_charge_type,	Payment_Dr_GL_Code,	Payment_Cr_GL_Code,	Payment_Dr_GL_Name,	Payment_Cr_GL_Name,	Debit_GL_Number,	Credit_GL_Number,	Debit_account_name,	Credit_account_name,	payment_status,	book,	strategy,	subsidary,	sub_book,	subsidiary_accounting_code,	strategy_accounting_code,	book_accounting_code,	sub_book_accounting_code,	location_name,	location_accounting_code,	location_group,	commodity,	commodity_accounting_code,	commodity_description,	accounting_receivable_id,	accounting_payable_id,	[index],	template_name,	deal_type_name,	trader,	country,	region,	term_start,	term_end,	term_start_year_month,	actual_forward, term_quarter,	pnl_date,	physical_financial_flag,	invoice_id,	counterparty_description,	counterparty_contact,	counterparty_address1,	counterparty_address2,	counterparty_city,	counterparty_state,	counterparty_zip,	counterparty_phone,	counterparty_email,	counterparty_fax,	primary_counterparty,	primary_counterparty_description,	primary_counterparty_contact_name,	primary_counterparty_address1,	primary_counterparty_address2,	primary_counterparty_city,	primary_counterparty_state,	primary_counterparty_zip,	primary_counterparty_contact_telephone,	primary_counterparty_email_address,	primary_counterparty_fax,	primary_bank_name,	primary_account_name,	primary_account_no,	primary_iban,	primary_swift_no,	primary_reference,	internal_deal_subtype_value_id	,deal_date,	primary_counterparty_bank_address1,	primary_counterparty_bank_address2,	accounting_month,	accrual_or_final,	Deal_Charge_Type_ID	Deal_Charge_Type,	Calc_Type,	reversal_stmt_checkout_id,	show_accounting_month,	counterparty_country_name,	counterparty_region_name,	secondary_counterparty_id,	secondary_counterparty_name,	source_commodity_id,	commodity_name,	abs(vat_percentage) vat_percentage,	vat_remarks,	counterparty_external_value,	secondary_cc_address1,	secondary_cc_address2,	secondary_cc_city,	Accrual_Final_Reversal,	update_ts_from,	update_ts_to,	create_ts_from,	create_ts_to,	primary_counterparty_country,	primary_counterparty_bank_currency_id,	primary_counterparty_bank_currency,	primary_counterparty_bank_currency_name,	total_volume,	net_total,	abs(vat) vat, case when settlement_amount <0 THEN -1* (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) else 1 * (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) end gross_total,	void_status,	abs(commodity_energy_tax_value) commodity_energy_tax_value
 
 --[__batch_report__]   
 
