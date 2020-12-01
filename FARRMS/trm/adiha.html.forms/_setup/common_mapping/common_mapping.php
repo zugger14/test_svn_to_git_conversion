@@ -795,9 +795,29 @@
             var has_combo_mapping = (array_combo_column.length > 0) ? 1 : 0;
             //for dropdown
             for (var i = 0; i < array_combo_column.length; i++) {
+            
                 var col_index = Generic_Mapping["grd_inner_obj_" + selected_item_id].getColIndexById(array_combo_column[i]);
                 var combo_obj = Generic_Mapping["grd_inner_obj_" + selected_item_id].getColumnCombo(col_index);
                 combo_obj.enableFilteringMode(true);
+
+            //Combo filter
+                combo_object_bind= {col_index1: col_index, grid_obj:  Generic_Mapping["grd_inner_obj_" + selected_item_id], this_obj:Generic_Mapping["grd_inner_obj_" + selected_item_id].getFilterElement(col_index)};
+                
+                Generic_Mapping["grd_inner_obj_" + selected_item_id].getFilterElement(col_index)._filter = function(){
+                   
+                    var input = this.this_obj.value; // gets the text of the filter input
+                    inner_combo_object_bind= {inner_col_index: this.col_index1, inner_grid_obj:this.grid_obj};                      
+                    return function(value, id){                                             
+                        var cell_combo_object = this.inner_grid_obj.getColumnCombo(this.inner_col_index);                                                    
+                        value =  (cell_combo_object.getOption(value))? cell_combo_object.getOption(value).text : value; 
+                        if (value.toLowerCase().indexOf(input.toLowerCase())!==-1){ 
+                            return true;
+                        }                            
+                        return false;
+                    }.bind(inner_combo_object_bind);
+                    
+                }.bind( combo_object_bind );
+            
                 var sql_stmt = array_combo_sql[i]; 
 
                 var data = {"action":"spa_generic_mapping_header", "flag":"n", "combo_sql_stmt":sql_stmt, "call_from":"grid"};
