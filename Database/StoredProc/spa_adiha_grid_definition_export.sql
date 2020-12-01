@@ -60,14 +60,11 @@ BEGIN
 		grouping_column		VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 		edit_permission		VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 		delete_permission	VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-		split_at			INT,
-		enable_server_side_paging INT,
-		dependent_field VARCHAR(200),
-		dependent_query VARCHAR(1000)
+		split_at			INT
 	)
 
-	INSERT INTO #all_grids(grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at, enable_server_side_paging, dependent_field, dependent_query)
-	SELECT agd.grid_id, agd.grid_name,agd.fk_table,agd.fk_column,agd.load_sql,agd.grid_label,agd.grid_type,agd.grouping_column, agd.edit_permission, agd.delete_permission, split_at, enable_server_side_paging, dependent_field, dependent_query
+	INSERT INTO #all_grids(grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission)
+	SELECT agd.grid_id, agd.grid_name,agd.fk_table,agd.fk_column,agd.load_sql,agd.grid_label,agd.grid_type,agd.grouping_column, agd.edit_permission, agd.delete_permission
 	FROM adiha_grid_definition AS agd
 	WHERE agd.grid_name = @grid_name
 	
@@ -90,10 +87,7 @@ BEGIN
 				edit_permission		VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 				delete_permission	VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 				is_new				VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-				split_at			INT	,
-				enable_server_side_paging INT,
-				dependent_field VARCHAR(200) COLLATE DATABASE_DEFAULT,
-				dependent_query VARCHAR(1000) COLLATE DATABASE_DEFAULT	
+				split_at			INT	
 			) '
 	
 	IF EXISTS(SELECT 1 FROM #all_grids)
@@ -111,17 +105,14 @@ BEGIN
 									+ ISNULL('''' + grouping_column + '''', 'NULL') + ',' 
 									+ ISNULL('''' + edit_permission + '''', 'NULL') + ','
 									+ ISNULL('''' + delete_permission + '''', 'NULL') + ','
-									+ ISNULL('''' + CAST(split_at AS VARCHAR(10)) + '''', 'NULL') + ','
-									+ ISNULL('''' + CAST(enable_server_side_paging AS VARCHAR(10)) + '''', 'NULL') + ','
-									+ ISNULL('''' + dependent_field + '''', 'NULL') + ','
-									+ ISNULL('''' + REPLACE(dependent_query, '''', '''''') + '''', 'NULL')					
+									+ ISNULL('''' + CAST(split_at AS VARCHAR(10)) + '''', 'NULL')							
 		FROM #all_grids
 			
 			
 		INSERT INTO #temp_final_query(final_query)
 		SELECT '	
 				
-			INSERT INTO #temp_all_grids(old_grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at, enable_server_side_paging, dependent_field, dependent_query)
+			INSERT INTO #temp_all_grids(old_grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at)
 			' + @select_statement + '
 				
 			UPDATE tag
@@ -138,8 +129,8 @@ BEGIN
 			IF EXISTS(SELECT 1 FROM #temp_all_grids WHERE is_new LIKE ''y'')
 			BEGIN
 					
-				INSERT INTO adiha_grid_definition (grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at, enable_server_side_paging, dependent_field, dependent_query)
-				SELECT grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at, enable_server_side_paging, dependent_field, dependent_query
+				INSERT INTO adiha_grid_definition (grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at)
+				SELECT grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at
 				FROM #temp_all_grids
 				WHERE is_new LIKE ''y''
 				
@@ -158,10 +149,7 @@ BEGIN
 					grouping_column = tag.grouping_column,
 					edit_permission = tag.edit_permission,
 					delete_permission = tag.delete_permission,
-					split_at = tag.split_at,
-					enable_server_side_paging = tag.enable_server_side_paging,
-					dependent_field = tag.dependent_field,
-					dependent_query = tag.dependent_query
+					split_at = tag.split_at
 				FROM adiha_grid_definition AS agd
 				INNER JOIN #temp_all_grids AS tag
 				ON tag.new_grid_id = agd.grid_id
@@ -202,10 +190,7 @@ BEGIN
 												+ ISNULL('''' + agcd.column_alignment  + '''', 'NULL') + ', '
                                                 + ISNULL('''' + agcd.browser_grid_id + '''', 'NULL') + ','
 												+ ISNULL('''' + CAST(agcd.allow_multi_select AS VARCHAR(10)) + '''', 'NULL') + ','
-												+ ISNULL('''' + CAST(agcd.rounding AS VARCHAR(20)) + '''', 'NULL') + ', '
-												+ ISNULL('''' + CAST(agcd.order_seq_direction AS VARCHAR(10)) + '''', 'NULL') + ','
-												+ ISNULL('''' + agcd.browser_grid_id + '''', 'NULL') + ','
-												+ ISNULL('''' + CAST(agcd.allow_multi_select AS VARCHAR(10)) + '''', 'NULL')
+												+ ISNULL('''' + CAST(agcd.rounding AS VARCHAR(20)) + '''', 'NULL')
 					FROM adiha_grid_columns_definition AS agcd
 					INNER JOIN #all_grids ag
 					ON ag.grid_id = agcd.grid_id
@@ -236,20 +221,19 @@ BEGIN
 								sorting_preference VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 								validation_rule VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 								column_alignment VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-								order_seq_direction INT,
 								browser_grid_id VARCHAR(200) COLLATE DATABASE_DEFAULT,
 								allow_multi_select CHAR(1) COLLATE DATABASE_DEFAULT,
 								rounding VARCHAR(20) COLLATE DATABASE_DEFAULT
 							)
 
-							INSERT INTO #temp_all_grids_columns(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, order_seq_direction, browser_grid_id, allow_multi_select, rounding)
+							INSERT INTO #temp_all_grids_columns(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
 							' + @select_statement + '
 
 							UPDATE tagc
 							SET tagc.grid_id = @grid_id
 							FROM #temp_all_grids_columns tagc
 
-							INSERT INTO adiha_grid_columns_definition(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, order_seq_direction, browser_grid_id, allow_multi_select, rounding)
+							INSERT INTO adiha_grid_columns_definition(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
 							SELECT	tagc.grid_id,
 									tagc.column_name,
 									tagc.column_label,
@@ -266,7 +250,6 @@ BEGIN
 									tagc.sorting_preference,
 									tagc.validation_rule,
 									tagc.column_alignment,
-									tagc.order_seq_direction,
 									tagc.browser_grid_id,
 									tagc.allow_multi_select,
 									tagc.rounding

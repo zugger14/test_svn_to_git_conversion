@@ -18,14 +18,7 @@
 		private $grid_type;
         private $column_type;
         private $columns_alignment;
-		public $connector_enabled = false;
-		protected $enable_server_side_paging = 0;
-        protected $grid_columns; 
-        public $numeric_fields; 
-        public $date_fields;
-        protected $order_seq_direction;
-        protected $id_field;
-        protected $selected_id;
+        public $connector_enabled = false;
 	
 		/**
 		 * Initialize the grid by calling grid object - to be used, when grid is used alone.
@@ -467,111 +460,37 @@
 			$this->grouping_column = $grouping_column;
 			$this->auto_adjust = $auto_adjust;
 			
-			$html_string = 'var column_index = ' . $this->grid_name . '.getColIndexById("' . $this->id_field . '");' . "\n";
-			
-			if (!$this->enable_server_side_paging) {
-				$html_string .= 'var sql_param = {' . "\n";
+			$html_string  = 'var sql_param = {' . "\n";
+	        $html_string .= '    "sql":"' . $grid_sp .'",' . "\n";
+	        $html_string .= '    "grid_type":"' . $grid_type . '",' . "\n";
+	        $html_string .= '    "key_prefix":"' . $key_prefix . '",' . "\n";
+	        $html_string .= '    "key_suffix":"' . $key_suffix . '"' . "\n";
 
-				$html_string .= '    "sql":"' . $grid_sp .'",' . "\n";
-				$html_string .= '    "grid_type":"' . $grid_type . '",' . "\n";
-				$html_string .= '    "key_prefix":"' . $key_prefix . '",' . "\n";
-				$html_string .= '    "key_suffix":"' . $key_suffix . '"' . "\n";
+	        if ($grid_type == 'tg') {
+	        	$html_string .= '    ,"grouping_column":"' . $grouping_column . '"' . "\n";
+	        }
+	        $html_string .= '};' . "\n";
 
-				if ($grid_type == 'tg') {
-					$html_string .= '    ,"grouping_column":"' . $grouping_column . '"' . "\n";
-				}
-				$html_string .= '};' . "\n";
-
-				$html_string .= 'sql_param = $.param(sql_param);' . "\n";
-				$html_string .= 'var sql_url = js_data_collector_url + "&" + sql_param;' . "\n";
-				//$html_string .= $this->grid_name . '.clearAll();' . "\n";
-				
-				if ($auto_adjust == true) {
-					$html_string .= $this->grid_name . '.load(sql_url, function() {' . "\n";
-					if ($auto_adjust) {
-					$html_string .= $this->adjust_column_widhts();
-					}
-					if ($callback_function != ''){
-						if ($this->selected_id != '') {
-							$html_string .= $this->grid_name . '.getFilterElement(column_index).value = '. $this->selected_id . ';'. "\n"; 
-							$html_string .= $this->grid_name . '.filterBy(column_index, '. $this->selected_id . ');'. "\n"; 
-						}
-
-						$html_string .= 'setTimeout(' . $callback_function . ', 1000);'. "\n";   
-					}
-					$html_string .= '});' . "\n";
-				} else {
-					if ($callback_function != ''){
-						$html_string .= $this->grid_name . '.load(sql_url, function() {' . "\n";
-						//filter the grid by the selected id
-						if ($this->selected_id != '') {
-							$html_string .= $this->grid_name . '.getFilterElement(column_index).value = '. $this->selected_id . ';'. "\n"; 
-							$html_string .= $this->grid_name . '.filterBy(column_index, '. $this->selected_id . ');'. "\n"; 
-						}
-						$html_string .= 'setTimeout(' . $callback_function . ', 1000);'. "\n"; 
-						$html_string .= '});' . "\n";  
-					} else {
-						$html_string .= $this->grid_name . '.load(sql_url);' . "\n";
-					}	        	
-				}
-			} else {
-				$html_string .= ' var grid_sp_param = {' . "\n";
-				$html_string .= '		"sp_string": "' . $grid_sp . ', @enable_grid_server_side_paging = 1" ' . "\n";        
-				$html_string .= ' };' . "\n";
-				$html_string .=	'url = js_php_path + "form_process.php" ; ' . "\n";
-        		$html_string .=	'grid_sp_param = $.param(grid_sp_param) ; ' . "\n";
-			    $html_string .= '$.ajax({ ' . "\n";
-				$html_string .=	'    type: "POST", ' . "\n";
-				$html_string .=	'    dataType: "json",' . "\n";
-				$html_string .=	'    url: url,' . "\n";
-				$html_string .=	'    async: true,' . "\n";
-				$html_string .=	'    data: grid_sp_param,' . "\n";
-				$html_string .=	'    success: function(data) {' . "\n";
-				$html_string .=	'            result = data["json"];' . "\n";
-				$html_string .=	'            if (result[0].process_table == "" || result[0].process_table == null) {' . "\n";
-				$html_string .=	'	            return;' . "\n";
-				$html_string .=	'			 }' . "\n";
-				$html_string .=	'	         var process_table = result[0].process_table;' . "\n";
-				$html_string .=	'	         var sql_param = {' . "\n";
-				$html_string .=	'	            "process_table":process_table,' . "\n";
-				$html_string .=	'	            "text_field": "' . $this->grid_columns . '",' . "\n";                 
-				$html_string .=	'	            "id_field": "' . $this->id_field . '",' . "\n";              
-				$html_string .=	'	            "date_fields":"' . $this->date_fields . '",' . "\n";                 
-				$html_string .=	'	            "numeric_fields":"' . $this->numeric_fields . '",' . "\n";                 
-				$html_string .=	'	            "sorting_fields":"' . $this->order_seq_direction . '"' . "\n";
-				$html_string .=	'	         };' . "\n";
-				$html_string .=	'	         sql_param = $.param(sql_param);' . "\n";
-				$html_string .=	'	         var sql_url = js_php_path + "grid.connector.php?" + sql_param;' . "\n";
-				
-				if ($auto_adjust == true) {
-		        	$html_string .= $this->grid_name . '.loadXML(sql_url, function() {' . "\n";
-	    	        $html_string .= $this->adjust_column_widhts();
-	    	        
-	    	        if ($callback_function != ''){
-	    	        	if ($this->selected_id != '') {
-							$html_string .= $this->grid_name . '.getFilterElement(column_index).value = '. $this->selected_id . ';'. "\n"; 
-							$html_string .= $this->grid_name . '.filterByAll();'. "\n"; 
-	    	           	}
-	    	           	$html_string .= 'setTimeout(' . $callback_function . ', 1000);'. "\n";    
-	    	        }
-	                $html_string .= '});' . "\n";
-		        } else {
-		        	if ($callback_function != '') {
-    	           		$html_string .= $this->grid_name . '.loadXML(sql_url, function() {' . "\n";
-	    	           	if ($this->selected_id != '') {
-		    	           	$html_string .= $this->grid_name . '.getFilterElement(column_index).value = '. $this->selected_id . ';'. "\n"; 
-							$html_string .= $this->grid_name . '.filterByAll();'. "\n"; 
-	    	           	}
-	    	           	$html_string .= 'setTimeout( '. $callback_function . ', 1000);'. "\n";     
-	    	           	$html_string .=	'});' . "\n";	 
-	    	        } else {
-	    	        	$html_string .= $this->grid_name . '.loadXML(sql_url);' . "\n";
-	    	        }	        	
-		        }	
+	        $html_string .= 'sql_param = $.param(sql_param);' . "\n";
+	        $html_string .= 'var sql_url = js_data_collector_url + "&" + sql_param;' . "\n";
+	        //$html_string .= $this->grid_name . '.clearAll();' . "\n";
 	        
-				$html_string .=	'   	}' . "\n";
-        		$html_string .=	'});' . "\n";	        					    			
-			}
+	        if ($auto_adjust == true) {
+	        	$html_string .= $this->grid_name . '.load(sql_url, function() {' . "\n";
+    	        if ($auto_adjust) {
+    	           $html_string .= $this->adjust_column_widhts();
+    	        }
+    	        if ($callback_function != ''){
+    	           $html_string .= 'eval('.$callback_function . '());';   
+    	        }
+                $html_string .= '});' . "\n";
+	        } else {
+	        	if ($callback_function != ''){
+    	           $html_string .= $this->grid_name . '.load(sql_url, ' . $callback_function . ');' . "\n"; 
+    	        } else {
+    	        	$html_string .= $this->grid_name . '.load(sql_url);' . "\n";
+    	        }	        	
+	        }
 	        
 	        return $html_string;
         }
@@ -713,139 +632,55 @@
                          };
              */
             $html_string =  ($use_grid_instance ? $this->grid_name : $this->name_space) . '.refresh_grid = function(sp_url, callback_function, filter_param) {'. "\n";
-			
-			//reset inline filter while refreshing grid when page is open from hyperlink  
-            if ($this->selected_id != '') {
-            	$html_string .= 'var column_index = ' . $this->grid_name . '.getColIndexById("' . $this->id_field . '");' . "\n";
-				$html_string .= $this->grid_name . '.getFilterElement(column_index).value = "";'. "\n"; 
-            }
+            $html_string .= ' if (sp_url == "" || sp_url == undefined) { '. "\n";
+			$html_string .= '	var sql_param = {' . "\n";
+	        $html_string .= '    	"sql":"' . $this->grid_sp .'",' . "\n";
+	        $html_string .= '    	"grid_type":"' . $this->grid_type . '"' . "\n";
 
-           	if (!$this->enable_server_side_paging) {
+	        if ($this->grid_type == 'tg') {
+	        	$html_string .= '    ,"grouping_column":"' . $this->grouping_column . '"' . "\n";
+	        }
+	        $html_string .= '		};' . "\n";
+			$html_string .= ' } else { '. "\n";
+			$html_string .= '		sql_param = sp_url; '. "\n";
+			$html_string .= ' };' . "\n";
+            $html_string .= ' if (filter_param != "" && filter_param != undefined) { ' . "\n";
+            $html_string .= '       var modified_sql = sql_param["sql"];
+                                    modified_sql += ", @xml=\'" + filter_param + "\'"
+                                    sql_param["sql"] = modified_sql; ' . "\n";
+            $html_string .= ' } ' . "\n";
+	        $html_string .= ' sql_param = $.param(sql_param);' . "\n";
+	        $html_string .= ' var sql_url = js_data_collector_url + "&" + sql_param;' . "\n";
+	        $html_string .= ' var grid_id = ' . $this->grid_name . '.getUserData("", "grid_id");' . "\n";
+	        $html_string .= ' var grid_obj = ' .	$this->grid_name . '.getUserData("", "grid_obj");' . "\n";
+	        $html_string .= ' var grid_label = ' .	$this->grid_name . '.getUserData("", "grid_label");' . "\n";
+	        $html_string .= 	$this->grid_name . '.clearAll();' . "\n";
 
-				$html_string .= ' if (sp_url == "" || sp_url == undefined) { '. "\n";
-				$html_string .= '	var sql_param = {' . "\n";
-				$html_string .= '    	"sql":"' . $this->grid_sp .'",' . "\n";
-				$html_string .= '    	"grid_type":"' . $this->grid_type . '"' . "\n";
-
-				if ($this->grid_type == 'tg') {
-					$html_string .= '    ,"grouping_column":"' . $this->grouping_column . '"' . "\n";
-				}
-				$html_string .= '		};' . "\n";
-				$html_string .= ' } else { '. "\n";
-				$html_string .= '		sql_param = sp_url; '. "\n";
-				$html_string .= ' };' . "\n";
-				$html_string .= ' if (filter_param != "" && filter_param != undefined) { ' . "\n";
-				$html_string .= '       var modified_sql = sql_param["sql"];
-										modified_sql += ", @xml=\'" + filter_param + "\'"
-										sql_param["sql"] = modified_sql; ' . "\n";
-				$html_string .= ' } ' . "\n";
-				$html_string .= ' sql_param = $.param(sql_param);' . "\n";
-				$html_string .= ' var sql_url = js_data_collector_url + "&" + sql_param;' . "\n";
-				$html_string .= ' var grid_id = ' . $this->grid_name . '.getUserData("", "grid_id");' . "\n";
-				$html_string .= ' var grid_obj = ' .	$this->grid_name . '.getUserData("", "grid_obj");' . "\n";
-				$html_string .= ' var grid_label = ' .	$this->grid_name . '.getUserData("", "grid_label");' . "\n";
-				$html_string .= 	$this->grid_name . '.clearAll();' . "\n";
-
-				$html_string .= ' if(grid_id != null) {' . "\n";
-				$html_string .= 	$this->grid_name . '.setUserData("", "grid_id", grid_id);' . "\n";
-				$html_string .= 	$this->grid_name . '.setUserData("", "grid_obj", grid_obj);' . "\n";
-				$html_string .= 	$this->grid_name . '.setUserData("", "grid_label", grid_label);' . "\n";
-				$html_string .= ' }' . "\n";
-				
-				if ($this->auto_adjust) {
-					$html_string .= $this->grid_name . '.load(sql_url, function() {' . "\n";
-					$html_string .= $this->adjust_column_widhts();
-					$html_string .= '	if (callback_function != "" && callback_function != undefined) {	' . "\n";
-					$html_string .= '		eval(callback_function ());' . "\n";  
-					$html_string .= '	}' . "\n";
-					$html_string .= '});' . "\n";
-				} else {
-					$html_string .= '	if (callback_function != "" && callback_function != undefined) {	' . "\n";	        	
-					//$html_string .= 		$this->grid_name . '.load(sql_url, callback_function);' . "\n";
-					$html_string .= 		$this->grid_name . '.load(sql_url, function() {' . "\n";
-					$html_string .=               $this->grid_name . '.filterByAll();' . "\n";  
-					$html_string .= '		eval(callback_function ());' . "\n";  
-					$html_string .= '       });' . "\n";
-					$html_string .= '	} else {' . "\n";
-					$html_string .= 		$this->grid_name . '.load(sql_url, function(){' . "\n";
-					$html_string .=               $this->grid_name . '.filterByAll();' . "\n";  
-					$html_string .= '       });' . "\n";
-					$html_string .= '	}' . "\n";
-				}
-			} else {
-	        	$html_string .= ' if (sp_url == "" || sp_url == undefined) {' . "\n";
-	        	$html_string .= '  	var grid_sp_param = {' . "\n";
-				$html_string .= '		"sp_string": "' . $this->grid_sp .' , @enable_grid_server_side_paging = 1 " ' . "\n";        
-				$html_string .= ' 	};' . "\n";
-				$html_string .= ' } else { '. "\n";
-				$html_string .=	'	var grid_sp_param = {' . "\n";
-				$html_string .= '		"sp_string": sp_url + ", @enable_grid_server_side_paging = 1"' . "\n";        
-				$html_string .= ' 	}; ' . "\n";    
-				$html_string .= '}' . "\n";   
-				$html_string .= ' if (filter_param != "" && filter_param != undefined) { ' . "\n";
-	            $html_string .= ' 	var modified_sql = ' . "\n";
-	            $html_string .= '	grid_sp_param["sp_string"];' . "\n";
-	            $html_string .= '   modified_sql += ", @xml=\'" + ' . "\n";
-	            $html_string .= '   filter_param + "\'"' . "\n";
-	            $html_string .= '   grid_sp_param["sp_string"] = modified_sql; ' . "\n";
-	            $html_string .= ' } ' . "\n"; 
-				$html_string .=	'url = js_php_path + "form_process.php" ; ' . "\n";
-        		$html_string .=	'grid_sp_param = $.param(grid_sp_param) ; ' . "\n";
-			    $html_string .= '$.ajax({ ' . "\n";
-				$html_string .=	'    type: "POST", ' . "\n";
-				$html_string .=	'    dataType: "json",' . "\n";
-				$html_string .=	'    url: url,' . "\n";
-				$html_string .=	'    async: true,' . "\n";
-				$html_string .=	'    data: grid_sp_param,' . "\n";
-				$html_string .=	'    success: function(data) {' . "\n";
-				$html_string .=	'            result = data["json"];' . "\n";
-				$html_string .=	'            if (result[0].process_table == "" || result[0].process_table == null) {' . "\n";
-				$html_string .=	'	            return;' . "\n";
-				$html_string .=	'			 }' . "\n";
-				$html_string .=	'	         var process_table = result[0].process_table;' . "\n";
-				$html_string .=	'	         var sql_param = {' . "\n";
-				$html_string .=	'	            "process_table":process_table,' . "\n";
-				$html_string .=	'	            "text_field": "' . $this->grid_columns . '",' . "\n";                 
-				$html_string .=	'	            "id_field": "' . $this->id_field . '",' . "\n";              
-				$html_string .=	'	            "date_fields":"' . $this->date_fields . '",' . "\n";                 
-				$html_string .=	'	            "numeric_fields":"' . $this->numeric_fields . '",' . "\n";                 
-				$html_string .=	'	            "sorting_fields":"' . $this->order_seq_direction . '"' . "\n";
-				$html_string .=	'	         };' . "\n";
-				$html_string .=	'	         sql_param = $.param(sql_param);' . "\n";
-				$html_string .=	'	         var sql_url = js_php_path + "grid.connector.php?" + sql_param;' . "\n";
-				$html_string .= ' 			 var grid_id = ' . $this->grid_name . '.getUserData("", "grid_id");' . "\n";
-		        $html_string .= ' 			 var grid_obj = ' .	$this->grid_name . '.getUserData("", "grid_obj");' . "\n";
-		        $html_string .= ' 			 var grid_label = ' .	$this->grid_name . '.getUserData("", "grid_label");' . "\n";
-		        $html_string .= 			 $this->grid_name . '.clearAll();' . "\n";
-
-		        $html_string .= ' 			if(grid_id != null) {' . "\n";
-		        $html_string .= 				$this->grid_name . '.setUserData("", "grid_id", grid_id);' . "\n";
-		        $html_string .= 				$this->grid_name . '.setUserData("", "grid_obj", grid_obj);' . "\n";
-		        $html_string .= 				$this->grid_name . '.setUserData("", "grid_label", grid_label);' . "\n";
-		        $html_string .= ' 			}' . "\n";
-
-		        if ($this->auto_adjust) {
-		        	$html_string .= $this->grid_name . '.loadXML(sql_url, function() {' . "\n";
-		        	$html_string .= $this->adjust_column_widhts();
-		        	$html_string .= '	if (callback_function != "" && callback_function != undefined) {	' . "\n";
-		        	$html_string .= '		eval(callback_function ());' . "\n";  
-		        	$html_string .= '	}' . "\n";
-		        	$html_string .= '});' . "\n";
-		        } else {
-		        	$html_string .= '	if (callback_function != "" && callback_function != undefined) {	' . "\n";	        	
-		        	$html_string .= 		$this->grid_name . '.loadXML(sql_url, function() {' . "\n";
-		        	$html_string .=               $this->grid_name . '.filterByAll();' . "\n";  
-		        	$html_string .= '		eval(callback_function ());' . "\n";  
-		        	$html_string .= '       });' . "\n";
-		        	$html_string .= '	} else {' . "\n";
-		        	$html_string .= 		$this->grid_name . '.loadXML(sql_url, function(){' . "\n";
-		        	$html_string .=               $this->grid_name . '.filterByAll();' . "\n";  
-		        	$html_string .= '       });' . "\n";
-		        	$html_string .= '	}' . "\n";
-		        }
-
-				$html_string .=	'   	}' . "\n";
-        		$html_string .=	'});' . "\n";
+	        $html_string .= ' if(grid_id != null) {' . "\n";
+	        $html_string .= 	$this->grid_name . '.setUserData("", "grid_id", grid_id);' . "\n";
+	        $html_string .= 	$this->grid_name . '.setUserData("", "grid_obj", grid_obj);' . "\n";
+	        $html_string .= 	$this->grid_name . '.setUserData("", "grid_label", grid_label);' . "\n";
+	        $html_string .= ' }' . "\n";
+	        
+	        if ($this->auto_adjust) {
+	        	$html_string .= $this->grid_name . '.load(sql_url, function() {' . "\n";
+	        	$html_string .= $this->adjust_column_widhts();
+	        	$html_string .= '	if (callback_function != "" && callback_function != undefined) {	' . "\n";
+	        	$html_string .= '		eval(callback_function ());' . "\n";  
+	        	$html_string .= '	}' . "\n";
+	        	$html_string .= '});' . "\n";
+	        } else {
+	        	$html_string .= '	if (callback_function != "" && callback_function != undefined) {	' . "\n";	        	
+	        	//$html_string .= 		$this->grid_name . '.load(sql_url, callback_function);' . "\n";
+	        	$html_string .= 		$this->grid_name . '.load(sql_url, function() {' . "\n";
+	        	$html_string .=               $this->grid_name . '.filterByAll();' . "\n";  
+	        	$html_string .= '		eval(callback_function ());' . "\n";  
+	        	$html_string .= '       });' . "\n";
+	        	$html_string .= '	} else {' . "\n";
+	        	$html_string .= 		$this->grid_name . '.load(sql_url, function(){' . "\n";
+	        	$html_string .=               $this->grid_name . '.filterByAll();' . "\n";  
+	        	$html_string .= '       });' . "\n";
+	        	$html_string .= '	}' . "\n";
 	        }
 
             $html_string .= '}'. "\n";
