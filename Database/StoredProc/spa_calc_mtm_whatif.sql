@@ -874,6 +874,15 @@ BEGIN TRY
 			
 			SET	@mtm_process_id = @process_id 
 			SET @i = @i + 1
+
+			--Filtered deals by tenor/term provided for MTM calculation
+			SET @sql_stmt = 'DELETE td 
+				FROM ' + @std_deal_table + ' td
+				INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
+				AND sdh.entire_term_start NOT BETWEEN ''' + CONVERT(VARCHAR, @term_start, 23) + ''' AND ''' + CONVERT(VARCHAR, @term_end, 23) + '''
+				AND sdh.entire_term_end  NOT BETWEEN ''' + CONVERT(VARCHAR, @term_start, 23) + ''' AND ''' + CONVERT(VARCHAR, @term_end, 23) + ''''
+
+			EXEC(@sql_stmt)
 			
 			IF @use_existing_values = 'y'
 			BEGIN
