@@ -1,6 +1,6 @@
 BEGIN TRY
 		BEGIN TRAN
-	
+		
 	declare @new_ds_alias varchar(10) = 'CIV'
 	/** IF DATA SOURCE ALIAS ALREADY EXISTS ON DESTINATION, RAISE ERROR **/
 	if exists(select top 1 1 from data_source where alias = 'CIV' and name <> 'Counterparty Information View')

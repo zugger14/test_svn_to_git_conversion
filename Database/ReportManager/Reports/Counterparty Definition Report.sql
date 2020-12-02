@@ -1,8 +1,7 @@
 BEGIN TRY
 		BEGIN TRAN
 
-		DECLARE @report_id_dest INT 
-	
+		DECLARE @report_id_dest INT 	
 
 		--RETAIN APPLICATION FILTER DETAILS START (PART1)
 		if object_id('tempdb..#paramset_map') is not null drop table #paramset_map
@@ -10,7 +9,6 @@ BEGIN TRY
 			deleted_paramset_id int null, 
 			paramset_hash varchar(36) COLLATE DATABASE_DEFAULT NULL, 
 			inserted_paramset_id int null
-
 		)
 		IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='00C6124E_355E_4FDB_834A_5A7E68D144AE')
 		BEGIN
