@@ -884,10 +884,11 @@
                 var grid_name = default_parm_values[col_id[0]][0][0];
                 var grid_label = column_label;
                 var function_id = 'NULL';
-                var callback_function = 'set_shipment_value';
+                var callback_function = '';
                 browse_window = new dhtmlXWindows();
 
                 if (grid_name == 'browse_view_shipment') {
+                    callback_function = 'set_shipment_value'; //callback function for shipment only
                     browser_data = {
                         read_only : true,
                         select_completed : callback_function,
@@ -899,6 +900,7 @@
                     var src = js_php_path + 'adiha.html.forms/_scheduling_delivery/scheduling_workbench/view.scheduling.workbench.php?form_name=' + form + '&parent_function_id=' + function_id;
                     var src = src.replace("adiha.php.scripts/", "");
                 } else {
+ 					
                     var src = js_php_path + 'components/lib/adiha_dhtmlx/generic.browser.php?form_name=' + form + '&browse_name=' + id + '&grid_name=' + grid_name + '&grid_label=' + grid_label + '&function_id=' + function_id + '&callback_function=' + callback_function + '&call_from=report_manager';
                 }
 
