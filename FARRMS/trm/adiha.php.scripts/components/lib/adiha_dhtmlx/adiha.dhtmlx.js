@@ -3961,6 +3961,7 @@ function eXcell_browser(cell) {
         var browser_name = GRID.getColLabel(CELL._cellIndex);
         var browser_grid_name = GRID.getUserData("", 'browse_' + GRID.getColumnId(CELL._cellIndex));
         var browser_grid_multi_select = GRID.getUserData("", 'browse_' + GRID.getColumnId(CELL._cellIndex) + "_multi_select");
+        var browser_grid_sql = GRID.getUserData("", 'browse_' + GRID.getColumnId(CELL._cellIndex) + "_sql");
 
         ___unload_browse_win_link_window_window();
 
@@ -3989,7 +3990,7 @@ function eXcell_browser(cell) {
             src = src.replace("adiha.php.scripts/", ""); 
         } else {            
             var src = js_php_path + 'components/lib/adiha_dhtmlx/generic.browser.php?call_from=grid_browser&enable_grid_multi_select=' + browser_grid_multi_select + '&';
-            src += 'browse_name=' + browser_grid_name + '&grid_name=' + browser_grid_name + '&grid_label=' + browser_name;
+            src += 'browse_name=' + browser_grid_name + '&grid_name=' + browser_grid_name + '&grid_label=' + browser_name + '&grid_sql=' + browser_grid_sql;
             params = {
                 "selected_id": this.val,
                 "selected_label": this.cell.innerText.trim()
@@ -4030,6 +4031,7 @@ dhtmlXGridObject.prototype.attachBrowser = function(h) {
         var a = h[k].split("->");
         this.setUserData("", "browse_" + k, a[0]);
         this.setUserData("", "browse_" + k + "_multi_select", (a[1] || 0));
+        this.setUserData("", "browse_" + k + "_sql", (a[2] || ''));
     }
 };
 

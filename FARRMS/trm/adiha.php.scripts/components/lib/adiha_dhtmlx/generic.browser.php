@@ -19,6 +19,8 @@
     $enable_grid_multi_select = $_GET['enable_grid_multi_select'] ?? '1';
 	$single_selected_fields = $_GET['single_selected_fields'] ?? '';
     $fields_arr = explode(',', $single_selected_fields);
+
+    $grid_sql = $_GET['grid_sql'] ?? '';
     
 	if ($grid_name == 'book') {
 		$layout_json = '[
@@ -113,7 +115,7 @@
         
         
         echo $acc_grid->return_init();
-        echo $acc_grid->load_grid_data('', $id, '', 'generic_browser_grid_select','',$application_field_id);
+        echo $acc_grid->load_grid_data($grid_sql, $id, '', 'generic_browser_grid_select','',$application_field_id);
         echo $acc_grid->attach_event('', 'onSelectStateChanged', 'grid_row_on_click');
         echo $acc_grid->attach_event('', 'onBeforeSelect', 'grid_before_select');
         //echo $acc_grid->enable_paging(100, 'pagingArea_a', 'true');
