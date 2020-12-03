@@ -379,7 +379,7 @@
 							{ id: "pivot_view", img: "pivot.gif", text: "Pivot Views", title: "Pivot Views"},
 							{ id: "rp", img: "pivot.gif", text: "Create and Edit Pivot", title: "Create and Edit Pivot"}
 						]},
-						{ id: "refresh_pivot", img: "refresh.gif", text: "-1", title: "Refresh Pivot"}
+						{ id: "refresh_pivot", img: "refresh.gif", text: "Refresh Pivot", title: "Refresh Pivot"}
                      ];
             }
             report_ui_template["report_toolbar_" + active_object_id].loadStruct(menu_json);
