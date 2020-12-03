@@ -2794,7 +2794,7 @@ $formula_form_data = '[
                     var term_frequency = '<?php echo $term_frequency;?>';
                     var new_term_end = dates.getTermEnd(term_start, term_frequency);
                     dealDetail.grid.cells(rId, term_end_index).setValue(new_term_end);
-                    dealDetail.load_shipper_dropdown(rId, 'term_start_end');
+                    dealDetail.load_shipper_browser(rId, 'term_start_end');
                 } else if (dates.compare(term_end, term_start) == -1) {
                     var term_start_label = dealDetail.grid.getColLabel(term_start_index);
                     var term_end_label = dealDetail.grid.getColLabel(term_end_index);
@@ -2859,7 +2859,7 @@ $formula_form_data = '[
                             dealDetail.grid.cells(rId, detail_commodity_id_index).setValue('');
                     });
                 }
-                dealDetail.load_shipper_dropdown(rId, 'location');
+                dealDetail.load_shipper_browser(rId, 'location');
             }  
 
             var detail_flag_index = dealDetail.grid.getColIndexById('detail_flag');
@@ -2922,7 +2922,7 @@ $formula_form_data = '[
                                                 dealDetail.grid.cells(element.id, cInd).setValue(nValue);
                                                 dealDetail.grid.cells(element.id, cInd).cell.wasChanged = true;
                                                 if (column_id == 'location_id') {
-                                                    dealDetail.load_shipper_dropdown(element.id, 'set_all_location');
+                                                    dealDetail.load_shipper_browser(element.id, 'set_all_location');
                                                 }                                                
                                             });
                                             return true;
@@ -2944,11 +2944,11 @@ $formula_form_data = '[
 
 
     /**
-     * [load_shipper_dropdown Load Shipper Code dropdown]
+     * [load_shipper_browser Load Shipper Code Browser]
      * @param  {[type]} row_id          [Grid Row ID]
      * @param  {[type]} call_from          [Function is called from many other functions so added for debugging purpose]
      */
-    dealDetail.load_shipper_dropdown = function(rId, call_from) {
+    dealDetail.load_shipper_browser = function(rId, call_from) {
         var shipper_code1_index = dealDetail.grid.getColIndexById('shipper_code1');
         var shipper_code2_index = dealDetail.grid.getColIndexById('shipper_code2');       
         var deal_id = '<?php echo $deal_id; ?>';
@@ -3000,48 +3000,29 @@ $formula_form_data = '[
         if (typeof buy_sell_index != 'undefined') buy_sell_flag = dealDetail.grid.cells(rId, buy_sell_index).getValue();
 
         if (shipper_code1_index) {
-            var shipper_code1_combo = dealDetail.grid.cells(rId, shipper_code1_index).getCellCombo();           
-            default_value_shipper1 = dealDetail.grid.cells(rId, shipper_code1_index).getValue();
-            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id,  "template_id": template_id, "counterparty_id": counterparty_id, "location_id": location_id,  "deal_fields": 'shipper_code1', "term_start": term_start, "default_value":default_value_shipper1, "contract_id" : contract_id, "buy_sell_flag" : buy_sell_flag};
-            cm_param = $.param(cm_param);
-            var url = js_dropdown_connector_url + '&' + cm_param;
-            dealDetail.grid.cells(rId, shipper_code1_index).setValue('');
-            shipper_code1_combo.clearAll();
-
-            if (child_rows == 0) {
-                shipper_code1_combo.enableFilteringMode(true);
-                shipper_code1_combo.load(url,function () {                
-                    shipper_code1_combo.forEachOption(function(option) {
-                        if (option.selected == true) {
-                            dealDetail.grid.cells(rId, shipper_code1_index).setValue(option.value);
-                        }
-                    }); 
-                    
-                }); 
-            }        
-                                 
+            var sql = "EXEC spa_deal_fields_mapping @flag = 's', @deal_id=" + deal_id 
+                + ", @template_id=" + template_id 
+                + ", @counterparty_id=" + counterparty_id 
+                + ", @location_id=" + location_id 
+                + ", @deal_fields='shipper_code1', @term_start='" + term_start + "'"
+                + ", @contract_id='" + contract_id + "'"
+                + ", @buy_sell_flag='" + buy_sell_flag + "'"
+                + ", @for_grid='y'";
+            var data = {"shipper_code1" : "browse_shipper_code->n->" + sql};
+            dealDetail.grid.attachBrowser(data);
         }
 
         if (shipper_code2_index) {
-            var shipper_code2_combo = dealDetail.grid.cells(rId, shipper_code2_index).getCellCombo();           
-            default_value_shipper2 = dealDetail.grid.cells(rId, shipper_code2_index).getValue();  
-            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id,  "template_id": template_id, "counterparty_id": counterparty_id, "location_id": location_id,  "deal_fields": 'shipper_code2', "term_start": term_start, "default_value":default_value_shipper2, "contract_id" : contract_id, "buy_sell_flag" : buy_sell_flag};
-            cm_param = $.param(cm_param);
-            var url = js_dropdown_connector_url + '&' + cm_param;
-            dealDetail.grid.cells(rId, shipper_code2_index).setValue('');
-            shipper_code2_combo.clearAll(); 
-
-            if (child_rows == 0) {     
-                shipper_code2_combo.enableFilteringMode(true);
-                shipper_code2_combo.load(url,function () {                
-                    shipper_code2_combo.forEachOption(function(options) { 
-                        if (options.selected == true) {
-                            dealDetail.grid.cells(rId, shipper_code2_index).setValue(options.value);
-                        }
-                    }); 
-                    
-                });   
-            }                   
+            var sql = "EXEC spa_deal_fields_mapping @flag = 's', @deal_id=" + deal_id 
+                + ", @template_id=" + template_id 
+                + ", @counterparty_id=" + counterparty_id 
+                + ", @location_id=" + location_id 
+                + ", @deal_fields='shipper_code2', @term_start='" + term_start + "'"
+                + ", @contract_id='" + contract_id + "'"
+                + ", @buy_sell_flag='" + buy_sell_flag + "'"
+                + ", @for_grid='y'";
+            var data = {"shipper_code2" : "browse_shipper_code->n->" + sql};
+            dealDetail.grid.attachBrowser(data);                 
         }
     }
 
@@ -3143,7 +3124,7 @@ $formula_form_data = '[
                         dealDetail.refresh_grid(data, function() {
                             dealDetail.deal_detail.cells("c").progressOff();
                             dealDetail.grid.forEachRow(function(id) {
-                                dealDetail.load_shipper_dropdown(id, 'refresh_confimation');
+                                dealDetail.load_shipper_browser(id, 'refresh_confimation');
                             });
                         });
                         dealDetail.grid.setUserData("", 'formula_id', 10211093);
@@ -3230,7 +3211,7 @@ $formula_form_data = '[
                                 if (location_id != '' && detail_commodity_id_index) {
                                     dealDetail.grid.callEvent("onEditCell", [2, id, col_index_location_id, location_id]);
                                 } else {
-                                    dealDetail.load_shipper_dropdown(id, 'refresh');
+                                    dealDetail.load_shipper_browser(id, 'refresh');
                                 }
                             });
                         }
@@ -4189,7 +4170,7 @@ $formula_form_data = '[
             }
 
             dealDetail.grid.addRow(new_id, values_array, 0 , null, null, true);
-            dealDetail.load_shipper_dropdown(new_id, 'term_add');
+            dealDetail.load_shipper_browser(new_id, 'term_add');
             ids_to_apply_price = 'NEW_' + new_id;
 
             var selected_row_id = dealDetail.grid.getSelectedRowId();
@@ -4295,7 +4276,7 @@ $formula_form_data = '[
         values_array[source_deal_detail_index] = "NEW_" + new_id;
         dealDetail.grid.addRow(new_id, values_array, 0 , null, null, true);
         dealDetail.grid.selectRowById(new_id);
-        dealDetail.load_shipper_dropdown(new_id, 'leg_add');
+        dealDetail.load_shipper_browser(new_id, 'leg_add');
         ids_to_apply_price = values_array[source_deal_detail_index];
         deal_price_data_process_id = (deal_price_data_process_id != '') ? deal_price_data_process_id : 'NULL';
         deal_provisional_price_data_process_id = (deal_provisional_price_data_process_id != '') ? deal_provisional_price_data_process_id : 'NULL';
@@ -5221,7 +5202,7 @@ $formula_form_data = '[
                         });                        
                     } else {
                         dealDetail.grid.forEachRow(function(id) {
-                            dealDetail.load_shipper_dropdown(id, 'refresh_after_save');
+                            dealDetail.load_shipper_browser(id, 'refresh_after_save');
                         });
                     }                 
                 });
@@ -5367,7 +5348,7 @@ $formula_form_data = '[
             dealDetail.shape_change(value);
         } else if (name == 'contract_id') {
             dealDetail.grid.forEachRow(function(id) {
-                dealDetail.load_shipper_dropdown(id, 'contract');
+                dealDetail.load_shipper_browser(id, 'contract');
             });
         } else if (name == 'sub_book') {
             if (value != '') {
@@ -5549,7 +5530,7 @@ $formula_form_data = '[
                 });
             }
             
-            dealDetail.load_shipper_dropdown(detail_row_id, 'term_change');
+            dealDetail.load_shipper_browser(detail_row_id, 'term_change');
         });
     }
 
@@ -5814,7 +5795,7 @@ $formula_form_data = '[
             location_combo.load(url);
 
             dealDetail.grid.forEachRow(function(id) {
-                dealDetail.load_shipper_dropdown(id, 'dependent_location');
+                dealDetail.load_shipper_browser(id, 'dependent_location');
             });
         }
 

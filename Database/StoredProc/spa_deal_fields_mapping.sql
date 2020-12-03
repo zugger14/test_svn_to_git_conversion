@@ -32,6 +32,7 @@ GO
 	@term_start : Term Start of Deal Detail
 	@contract_id : Contract Id of Deal
 	@buy_sell_flag : Detail Buy sell flag
+	@for_grid: Flag to load for browser field
 */ 
 
 CREATE PROCEDURE [dbo].[spa_deal_fields_mapping]
@@ -52,7 +53,8 @@ CREATE PROCEDURE [dbo].[spa_deal_fields_mapping]
 	@sub_book_id INT = NULL,
 	@term_start DATETIME = NULL,
 	@contract_id INT = NULL,
-	@buy_sell_flag NCHAR(1) = NULL
+	@buy_sell_flag NCHAR(1) = NULL,
+	@for_grid NCHAR(1) = NULL
 AS
 /*------------------Debug Section------------------
 DECLARE @flag NCHAR(1),
@@ -1225,6 +1227,16 @@ BEGIN
 	
 		IF @flag = 's'
 		BEGIN		
+			IF @for_grid = 'y'
+			BEGIN
+				SELECT [value], [text]
+				FROM #temp_combo 
+				where value <> ''
+				ORDER BY [text] ASC
+
+				return
+			END
+
 			IF CHARINDEX('[', @json, 0) <= 0
 				SET @json = '{"options":[' + @json + ']}'
 			ELSE

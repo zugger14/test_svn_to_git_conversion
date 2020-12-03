@@ -1986,6 +1986,63 @@ BEGIN
 	SELECT @max_detail_seq = MAX(seq_no)
 	FROM #field_template_collection
 	
+	-- Load default value on Shipper Code 1
+	--/*
+	IF OBJECT_ID('tempdb..#temp_default_shipper_code1') IS NOT NULL
+		DROP TABLE #temp_default_shipper_code1
+
+	CREATE TABLE #temp_default_shipper_code1 (
+		shipper_code_mapping_detail_id INT,
+		shipper_code VARCHAR(500)
+	)
+
+	IF @source_deal_header_id IS NOT NULL
+	BEGIN
+		INSERT INTO #temp_default_shipper_code1
+		SELECT scmd.shipper_code_mapping_detail_id,scmd.shipper_code1
+		FROM shipper_code_mapping_detail scmd
+		INNER JOIN source_deal_detail sdd ON sdd.shipper_code1 = scmd.shipper_code_mapping_detail_id
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+		WHERE sdh.source_deal_header_id = @source_deal_header_id
+	END
+	ELSE
+	BEGIN
+		INSERT INTO #temp_default_shipper_code1
+		SELECT scmd.shipper_code_mapping_detail_id,scmd.shipper_code1
+		FROM shipper_code_mapping_detail scmd
+		INNER JOIN source_deal_detail_template sddt ON sddt.shipper_code1 = scmd.shipper_code_mapping_detail_id
+		INNER JOIN source_deal_header_template sdht ON sdht.template_id = sddt.template_id
+		WHERE sdht.template_id = @template_id
+	END
+	--*/
+	-- Load default value on Shipper Code 2
+	IF OBJECT_ID('tempdb..#temp_default_shipper_code2') IS NOT NULL
+		DROP TABLE #temp_default_shipper_code2
+
+	CREATE TABLE #temp_default_shipper_code2 (
+		shipper_code_mapping_detail_id INT,
+		shipper_code VARCHAR(500)
+	)
+
+	IF @source_deal_header_id IS NOT NULL
+	BEGIN
+		INSERT INTO #temp_default_shipper_code2
+		SELECT scmd.shipper_code_mapping_detail_id,scmd.shipper_code 
+		FROM shipper_code_mapping_detail scmd
+		INNER JOIN source_deal_detail sdd ON sdd.shipper_code2 = scmd.shipper_code_mapping_detail_id
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+		WHERE sdh.source_deal_header_id = @source_deal_header_id
+	END
+	ELSE
+	BEGIN
+		INSERT INTO #temp_default_shipper_code2
+		SELECT scmd.shipper_code_mapping_detail_id,scmd.shipper_code 
+		FROM shipper_code_mapping_detail scmd
+		INNER JOIN source_deal_detail_template sddt ON sddt.shipper_code2 = scmd.shipper_code_mapping_detail_id
+		INNER JOIN source_deal_header_template sdht ON sdht.template_id = sddt.template_id
+		WHERE sdht.template_id = @template_id
+	END
+ 	
 	SELECT  
 	@field_detail = COALESCE(@field_detail + ',', '') + CAST(id AS NVARCHAR(150)) + ' NVARCHAR(MAX) ',
 	@field_temp_detail = CASE WHEN ft.udf_or_system = 'u' THEN @field_temp_detail ELSE COALESCE(@field_temp_detail + ',', '') + CASE WHEN field_type = 'a' THEN 'NULLIF(sdd.' + id + ',''1900-01-01 00:00:00.000'')' ELSE 'sdd.' + id END END,
@@ -3034,6 +3091,32 @@ BEGIN
 	END
 	ELSE
 	BEGIN
+	/*
+			# Added below logic to set value on browser fields.
+			# Values need to be on form : ID^Label
+			# location_id changes to shipper_code_mapping_detail_id^shipper_code i.e. 311^NCLB400125000000
+		*/
+		IF EXISTS (SELECT 1 FROM #temp_default_shipper_code1) AND COL_LENGTH(@deal_update_detail, N'shipper_code1') IS NOT NULL
+		BEGIN
+			EXEC('
+				UPDATE d
+				SET d.shipper_code1 = d.shipper_code1 + ''^'' + t.shipper_code
+				FROM ' + @deal_update_detail + ' d
+				LEFT JOIN #temp_default_shipper_code1 t
+					ON d.shipper_code1 = t.shipper_code_mapping_detail_id
+			')
+		END
+
+		IF EXISTS (SELECT 1 FROM #temp_default_shipper_code2) AND COL_LENGTH(@deal_update_detail, N'shipper_code2') IS NOT NULL
+		BEGIN
+			EXEC('
+				UPDATE d
+				SET d.shipper_code2 = d.shipper_code2 + ''^'' + t.shipper_code
+				FROM ' + @deal_update_detail + ' d
+				LEFT JOIN #temp_default_shipper_code2 t
+					ON d.shipper_code2 = t.shipper_code_mapping_detail_id
+			')
+		END
  		EXEC(@select_statement)
 	END
 END
