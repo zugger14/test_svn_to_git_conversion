@@ -21699,15 +21699,16 @@ BEGIN
 	--call auto adjust
 	IF @ixp_rule_hash = '1C668AFD_E3AE_4344_AF42_EB23F4BD8B59' --trayport import
 	BEGIN
-		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, create_user, create_ts, process_status)
+		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, create_user, create_ts, process_status, process_id)
 		SELECT DISTINCT tmp.source_deal_header_id,
 			   dbo.FNADBUser(),
 			   GETDATE(),
-			   1
+			   1,
+			   @process_id
 		FROM #tmp_second_table tmp
-		LEFT JOIN process_deal_alert_transfer_adjust pd
-			ON tmp.source_deal_header_id = pd.source_deal_header_id
-		WHERE pd.source_deal_header_id IS NULL
+		--LEFT JOIN process_deal_alert_transfer_adjust pd
+		--	ON tmp.source_deal_header_id = pd.source_deal_header_id
+		--WHERE pd.source_deal_header_id IS NULL
 	END
 
  	SET @pos_job_name =  'calc_position_breakdown_' + @process_id3
@@ -25114,16 +25115,16 @@ WHERE term_date BETWEEN @min_date AND @max_date
 	--call auto adjust
 	IF @ixp_rule_hash IN ('F224E702_7357_4EC5_BDE4_544D80D32E9D', '60D8CDF3_4A27_4776_8C79_F7597CD1EFE8', '30F320BA_815F_4DB7_9314_B037E84311B6')
 	BEGIN
-		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, create_user, create_ts, process_status)--, process_id)
+		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, create_user, create_ts, process_status, process_id)
 		SELECT DISTINCT tmp.source_deal_header_id,
 			   dbo.FNADBUser(),
 			   GETDATE(),
-			   1--,
-			   --@process_id4
+			   1,
+			   @process_id
 		FROM #tmp_second_table tmp
-		LEFT JOIN process_deal_alert_transfer_adjust pd
-			ON tmp.source_deal_header_id = pd.source_deal_header_id
-		WHERE pd.source_deal_header_id IS NULL
+		--LEFT JOIN process_deal_alert_transfer_adjust pd
+			--ON tmp.source_deal_header_id = pd.source_deal_header_id			
+		--WHERE pd.source_deal_header_id IS NULL
 	END
 
  	SET @pos_job_name4 =  'calc_position_breakdown_' + @process_id4
