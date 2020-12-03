@@ -4401,7 +4401,7 @@ BEGIN -- Insert/Update Deal data
 	SELECT DISTINCT
 		h.[source_system_id]
 		, @process_id + '____' + CAST(p.rowid AS VARCHAR)
-		, p.first_dom
+		, GETDATE() --p.first_dom
 		, h.[ext_deal_id]
 		, h.[physical_financial_flag]
 		, h.[structured_deal_id]

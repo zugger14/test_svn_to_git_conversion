@@ -99,8 +99,8 @@ BEGIN
 	SELECT CAST(d.to_loc_id AS INT ) [Id]
 	    , d.to_loc [Description]
 	    , CAST(d.to_rank AS INT) [Rank]
-	    , ISNULL(ABS(CAST(CASE WHEN MAX(sp.type) = ''i'' THEN 999999999 ELSE IIF(MAX(lpi.total_pos) > 0, 0, CAST(MAX(lpi.total_pos) AS FLOAT)) END AS FLOAT )), 0) [FixedPosition]
-	    , ISNULL(ABS(CAST(CASE WHEN MAX(sp.type) = ''i'' THEN 999999999 ELSE IIF(MAX(lpi.total_pos) > 0, 0, CAST(MAX(lpi.total_pos) AS FLOAT)) END  AS FLOAT )), 0) [Position]  
+	    , ISNULL(ABS(CAST(CASE WHEN MAX(sp.type) = ''i'' THEN 999999999 ELSE IIF(CAST(MAX(lpi.total_pos) AS FLOAT) > 0, 0, CAST(MAX(lpi.total_pos) AS FLOAT)) END AS FLOAT )), 0) [FixedPosition]
+	    , ISNULL(ABS(CAST(CASE WHEN MAX(sp.type) = ''i'' THEN 999999999 ELSE IIF(CAST(MAX(lpi.total_pos) AS FLOAT) > 0, 0, CAST(MAX(lpi.total_pos) AS FLOAT)) END  AS FLOAT )), 0) [Position]  
         , ISNULL(
 			IIF(MAX(d.granularity) = 982, MAX(s.to_max_injection) / 24, SUM(s.to_max_injection))
 		  , 999999999)  [max_injection]                   
