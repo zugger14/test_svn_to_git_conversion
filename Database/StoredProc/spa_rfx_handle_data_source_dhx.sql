@@ -142,11 +142,7 @@ END
 
 IF @batch_index > 0 OR @handle_single_line_sql = 1  OR  @view_index > 0 OR @view_result_identifier_index > 0
 BEGIN
-	IF ISNULL(@from_index, 0) = 0
-		RAISERROR (@error_msg, -- Message text.
-				   16, -- Severity.
-				   1 -- State.
-				   );
+	
 
 	--CONVENTION: report_dataset_<alias>_<username>_<datasource_process_id>
 	--this name is re-generated later
@@ -159,7 +155,11 @@ BEGIN
 	END
 	ELSE
 	BEGIN
-	
+		IF ISNULL(@from_index, 0) = 0
+			RAISERROR (@error_msg, -- Message text.
+					   16, -- Severity.
+					   1 -- State.
+					   );
 		--drop if the table already exists
 		EXEC('IF (OBJECT_ID(N''' + @sql_batch_table + ''', N''U'') IS NOT NULL) DROP TABLE ' + @sql_batch_table)
 
