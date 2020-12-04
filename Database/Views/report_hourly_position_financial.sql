@@ -100,7 +100,7 @@ SELECT
 	m.[granularity],
 	m.[source_deal_detail_id],
 	m.[rowid]
-	,g.curve_id
+	,m.financial_curve_id curve_id
 	,g.location_id
 	,g.commodity_id 
 	,g.counterparty_id

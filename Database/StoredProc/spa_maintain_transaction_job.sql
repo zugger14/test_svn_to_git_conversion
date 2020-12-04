@@ -47,7 +47,7 @@ drop table #tmp_header_deal_id
 drop table #tmp_position_breakdown
 declare @process_id varchar(50),@insert_type int,@partition_no int,@user_login_id varchar(30),@deal_delete varchar(1)
 drop table #source_deal_detail_hour
-select  @process_id='2347E021_4DA3_4386_8D37_6A00DAD6C7B8',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
+select  @process_id='ED8C2722_CB07_42EE_8972_D4841D92B2C4',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
 --report_position_farrms_admin_49AFBFA8_BC35_404B_8590_78F087008D35
 --TRUNCATE TABLE select * from adiha_process.dbo.report_position_farrms_admin_E5D1C26F_C332_4A0A_8082_F3936706EEA8
 --insert into adiha_process.dbo.report_position_farrms_admin_testing select 4100,'d'
@@ -376,7 +376,7 @@ BEGIN
 		,[create_user] [varchar](30) COLLATE DATABASE_DEFAULT NULL
 		,expiration_date DATETIME
 		,source_deal_detail_id int
-		,rowid int,granularity int,[period] int
+		,rowid int,granularity int,[period] int,financial_curve_id int
 	)
 
 	CREATE TABLE #report_hourly_position_financial_main_inserted (
@@ -413,7 +413,7 @@ BEGIN
 		,[create_user] [varchar](30) COLLATE DATABASE_DEFAULT NULL
 		,expiration_date DATETIME
 		,source_deal_detail_id int
-		,rowid int,granularity int,[period] int
+		,rowid int,granularity int,[period] int,financial_curve_id int
 	)
 END
 
@@ -563,10 +563,10 @@ BEGIN TRY
 			,-1*deleted.hr10,-1*deleted.hr11,-1*deleted.hr12,-1*deleted.hr13,-1*deleted.hr14,-1*deleted.hr15
 			,-1*deleted.hr16,-1*deleted.hr17,-1*deleted.hr18,-1*deleted.hr19,-1*deleted.hr20,-1*deleted.hr21
 			,-1*deleted.hr22,-1*deleted.hr23,-1*deleted.hr24,-1*deleted.hr25,deleted.create_ts,deleted.create_user,17402 delta_type 
-			,deleted.expiration_date,DELETED.period,DELETED.granularity,deleted.source_deal_detail_id,deleted.rowid
+			,deleted.expiration_date,DELETED.period,DELETED.granularity,deleted.source_deal_detail_id,deleted.rowid,deleted.financial_curve_id
 		into dbo.delta_report_hourly_position_financial_main(as_of_date,source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12
 			,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts
-			,create_user,delta_type,expiration_date,period,granularity,source_deal_detail_id,rowid)'
+			,create_user,delta_type,expiration_date,period,granularity,source_deal_detail_id,rowid,financial_curve_id)'
 		END 
 	+ ' FROM report_hourly_position_financial_main rhpd
 			INNER JOIN #tmp_header_deal_id_del d ON  rhpd.source_deal_detail_id = d.source_deal_detail_id ' 
@@ -2271,11 +2271,11 @@ BEGIN TRY
 		' output 
 			deleted.[source_deal_header_id],deleted.[term_start],deleted.[deal_date],deleted.[deal_volume_uom_id]
 			 ,deleted.[hr1],deleted.[hr2],deleted.[hr3],deleted.[hr4],deleted.[hr5],deleted.[hr6],deleted.[hr7],deleted.[hr8],deleted.[hr9],deleted.[hr10],deleted.[hr11],deleted.[hr12],deleted.[hr13],deleted.[hr14],deleted.[hr15],deleted.[hr16],deleted.[hr17],deleted.[hr18],deleted.[hr19],deleted.[hr20],deleted.[hr21],deleted.[hr22]
-			 ,deleted.[hr23],deleted.[hr24],deleted.[hr25],deleted.[create_ts] ,deleted.[create_user] ,deleted.source_deal_detail_id,deleted.rowid,deleted.granularity,deleted.[period]
+			 ,deleted.[hr23],deleted.[hr24],deleted.[hr25],deleted.[create_ts] ,deleted.[create_user] ,deleted.source_deal_detail_id,deleted.rowid,deleted.granularity,deleted.[period],deleted.financial_curve_id
 		into #report_hourly_position_financial_main_old([source_deal_header_id],[term_start],[deal_date],[deal_volume_uom_id]
 			 ,[hr1],[hr2],[hr3],[hr4],[hr5],[hr6],[hr7],[hr8],[hr9],[hr10],[hr11],[hr12],[hr13],[hr14],[hr15],[hr16],[hr17]
 			 ,[hr18],[hr19],[hr20],[hr21],[hr22]
-			 ,[hr23],[hr24],[hr25],[create_ts] ,[create_user],source_deal_detail_id,rowid,granularity,[period]) '
+			 ,[hr23],[hr24],[hr25],[create_ts] ,[create_user],source_deal_detail_id,rowid,granularity,[period],financial_curve_id) '
 			END + ' from report_hourly_position_financial_main s 
 			INNER JOIN #tmp_header_deal_id_del h ON s.source_deal_detail_id=h.source_deal_detail_id' -- where h.[action]=''u'''
 
@@ -2288,16 +2288,16 @@ BEGIN TRY
 		SET @st_sql = CASE WHEN isnull(@orginal_insert_type, 0) IN ( 111,222 ) THEN ''
 		ELSE 'insert  into dbo.[report_hourly_position_financial_main] 
 			( [source_deal_header_id],[term_start],[deal_date],[deal_volume_uom_id]
-			,[hr1],[hr2],[hr3],[hr4],[hr5],[hr6],[hr7],[hr8],[hr9],[hr10],[hr11],[hr12],[hr13],[hr14],[hr15],[hr16],[hr17],[hr18],[hr19],[hr20],[hr21],[hr22],[hr23],[hr24],[hr25],[create_ts],[create_user],source_deal_detail_id,rowid,granularity,[period])' 
+			,[hr1],[hr2],[hr3],[hr4],[hr5],[hr6],[hr7],[hr8],[hr9],[hr10],[hr11],[hr12],[hr13],[hr14],[hr15],[hr16],[hr17],[hr18],[hr19],[hr20],[hr21],[hr22],[hr23],[hr24],[hr25],[create_ts],[create_user],source_deal_detail_id,rowid,granularity,[period],financial_curve_id)' 
 			+ CASE WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
 				CASE WHEN EXISTS ( SELECT 1 FROM #report_hourly_position_financial_main_old ) THEN 
 			' 
 			output inserted.[source_deal_header_id],inserted.[term_start],inserted.[deal_date],inserted.[deal_volume_uom_id],inserted.[hr1],inserted.[hr2],inserted.[hr3],inserted.[hr4],inserted.[hr5],inserted.[hr6],inserted.[hr7],inserted.[hr8],inserted.[hr9],inserted.[hr10],inserted.[hr11],inserted.[hr12],inserted.[hr13],inserted.[hr14],inserted.[hr15],inserted.[hr16],inserted.[hr17],inserted.[hr18],inserted.[hr19],inserted.[hr20],inserted.[hr21],inserted.[hr22],inserted.[hr23],inserted.[hr24],inserted.[hr25],inserted.[create_ts],inserted.[create_user]
-			,inserted.source_deal_detail_id,inserted.rowid,inserted.granularity,inserted.[period]
+			,inserted.source_deal_detail_id,inserted.rowid,inserted.granularity,inserted.[period],inserted.financial_curve_id
 		into #report_hourly_position_financial_main_inserted 
 		 (source_deal_header_id,term_start,deal_date,deal_volume_uom_id
 		 ,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16
-		 ,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,source_deal_detail_id,rowid,granularity,[period])
+		 ,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,source_deal_detail_id,rowid,granularity,[period],financial_curve_id)
 		' ELSE '' END
 		END
 	END
@@ -2312,7 +2312,7 @@ BEGIN TRY
 				,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr19,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr20,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr21
 				,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr22,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr23,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr24,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr25
 			,getdate() [create_ts],''' 
-			+ @user_login_id + ''' [create_user],thdi.source_deal_detail_id,thdi.rowid,thdi.granularity,vol.[period] ' + @report_hourly_position_financial_main + '
+			+ @user_login_id + ''' [create_user],thdi.source_deal_detail_id,thdi.rowid,thdi.granularity,vol.[period],tft.curve_id ' + @report_hourly_position_financial_main + '
 		FROM  #tmp_header_deal_id thdi
 		INNER JOIN  #tmp_financial_term tft ON tft.source_deal_detail_id=thdi.source_deal_detail_id  and isnull(tft.hourly_volume_allocation,17601)=17605 -- and fixing<>4100
 		cross  apply (
@@ -2330,7 +2330,7 @@ BEGIN TRY
 			IF EXISTS ( SELECT 1 FROM #report_hourly_position_financial_main_old )
 			BEGIN
 				SET @st_sql = 
-				'insert into dbo.delta_report_hourly_position_financial_main (as_of_date,source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,delta_type,expiration_date,source_deal_detail_id,rowid,granularity,[period])
+				'insert into dbo.delta_report_hourly_position_financial_main (as_of_date,source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,delta_type,expiration_date,source_deal_detail_id,rowid,granularity,[period],financial_curve_id)
 				select getdate() as_of_date
 					,isnull(o.source_deal_header_id,n.source_deal_header_id),isnull(o.term_start,n.term_start),isnull(o.deal_date,n.deal_date),isnull(o.deal_volume_uom_id,n.deal_volume_uom_id),
 					isnull(n.hr1,0)-isnull(o.hr1,0) hr1,isnull(n.hr2,0)-isnull(o.hr2,0) hr2,isnull(n.hr3,0)-isnull(o.hr3,0) hr3,isnull(n.hr4,0)-isnull(o.hr4,0) hr4,isnull(n.hr5,0)-isnull(o.hr5,0) hr5,isnull(n.hr6,0)-isnull(o.hr6,0) hr6,isnull(n.hr7,0)-isnull(o.hr7,0) hr7,isnull(n.hr8,0)-isnull(o.hr8,0) hr8,isnull(n.hr9,0)-isnull(o.hr9,0) hr9,isnull(n.hr10,0)-isnull(o.hr10,0) hr10 ,isnull(n.hr11,0)-isnull(o.hr11,0) hr11
@@ -2338,7 +2338,7 @@ BEGIN TRY
 					,isnull(n.hr22,0)-isnull(o.hr22,0) hr22,isnull(n.hr23,0)-isnull(o.hr23,0) hr23,isnull(n.hr24,0)-isnull(o.hr24,0) hr24,isnull(n.hr25,0)-isnull(o.hr25,0) hr25
 					,isnull(o.create_ts,getdate()),isnull(o.create_user,dbo.fnadbuser()),' 
 			+ CASE WHEN ISNULL(@orginal_insert_type, 0) = 0 THEN '17404' ELSE '17403' END + 
-						' delta_type ,isnull(o.expiration_date,n.expiration_date),isnull(o.source_deal_detail_id,n.source_deal_detail_id),isnull(o.rowid,n.rowid),isnull(o.granularity,n.granularity),isnull(o.[period],n.[period])
+						' delta_type ,isnull(o.expiration_date,n.expiration_date),isnull(o.source_deal_detail_id,n.source_deal_detail_id),isnull(o.rowid,n.rowid),isnull(o.granularity,n.granularity),isnull(o.[period],n.[period],n.financial_curve_id)
 				from  #report_hourly_position_financial_main_old o full JOIN  #report_hourly_position_financial_main_inserted n
 					on 	o.source_deal_detail_id=n.source_deal_detail_id
 					 and isnull(o.curve_id,-1)=isnull(n.curve_id,-1) and ISNULL(o.location_id,-1)=ISNULL(n.location_id,-1) and  o.term_start=n.term_start 

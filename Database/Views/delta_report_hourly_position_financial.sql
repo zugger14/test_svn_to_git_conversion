@@ -103,7 +103,7 @@ SELECT
 	m.[granularity],
 	m.[source_deal_detail_id],
 	m.[rowid]
-	,g.curve_id
+	,m.financial_curve_id curve_id
 	,g.location_id
 	,g.commodity_id 
 	,g.counterparty_id
@@ -114,7 +114,7 @@ SELECT
 	,g.deal_type
 	,g.pricing_type
 	,g.internal_portfolio_id
-	,g.physical_financial_flag
+	,'f' physical_financial_flag
    	,ssbm.source_system_book_id1
 	,ssbm.source_system_book_id2
 	,ssbm.source_system_book_id3
