@@ -79,7 +79,8 @@ DECLARE
 				@batch_report_param VARCHAR(1000)=NULL,
 				@show_message_in_message_board CHAR(1)='y',
 				@calc_type CHAR(1) = 'r',
-				@criteria_id INT = NULL --it comes from whatif
+				@criteria_id INT = NULL, --it comes from whatif
+				@trigger_workflow NCHAR(1) = 'y'
 				--,@mtm_table_name  VARCHAR(200) = NULL,  --MTM process table for PFE - spa_calc_VAR_Simulation_job
 				--@pfe_table_name  VARCHAR(200) = NULL   --Used to return value for PFE -spa_calc_VAR_Simulation_job
 
@@ -1424,7 +1425,7 @@ IF @user_login_id IS NULL
 				MAX(book1.fas_subsidiary_id) fas_subsidiary_id,
 				book1.fas_strategy_id,
 				book1.fas_book_id, 
-				MAX(cca2.internal_counterparty_id) internal_counterparty_id,
+				MAX(ISNULL(cca2.internal_counterparty_id,fs1.counterparty_id)) internal_counterparty_id,
 				CASE WHEN MAX(cca1.offset_method) = 43501 THEN 
 				MAX(COALESCE(
 				(dbo.FNAInvoiceDueDate((ISNULL((a.term_start), GETDATE())), cca1.invoice_due_date, cca1.holiday_calendar_id, cca1.payment_days)),
@@ -2111,7 +2112,7 @@ IF @user_login_id IS NULL
                         END AS exp_type,
                 NULL invoice_due_date ,
                 '''+CAST(@as_of_date AS VARCHAR)+''' pnl_as_of_date,
-                cca1.internal_counterparty_id
+                ISNULL(cca1.internal_counterparty_id, fs1.counterparty_id) internal_counterparty_id
             FROM #cpty sc  
             INNER JOIN source_deal_header sdh ON sdh.counterparty_id = sc.source_counterparty_id 
 			INNER JOIN [deal_status_group] dsg ON dsg.status_value_id = ISNULL(sdh.deal_status,5604)
@@ -2226,7 +2227,7 @@ IF @user_login_id IS NULL
 				sdh.counterparty_id,
 				book1.hedge_type_value_id,
 				sdh.commodity_id,
-				cca1.internal_counterparty_id,
+				ISNULL(cca1.internal_counterparty_id, fs1.counterparty_id),
 				stc.accrual_or_final
 
             HAVING SUM(COALESCE(stc.settlement_amount, stc1.settlement_amount,0)) <> 0'
