@@ -38190,36 +38190,41 @@ BEGIN
 			AND a.is_active NOT IN (''y'', ''n'', ''yes'', ''no'')
      ')
 
-	EXEC(' 
+	EXEC (' 
 		INSERT INTO #error_status (temp_id, error_number, template_values, import_file_name, message_status, message_type, recommendation) 
 		SELECT t.temp_id, 
 			NULL, 
 			''Multiple data saved with default value as ''''YES'''' for the same effective data'', 
 			t.import_file_name,  
 			''Error'', ''Duplicate Data'', ''Please correct data and re-import.'' 
-		FROM   ' + @import_temp_table_name + ' t 
-		INNER JOIN (
+		FROM  ' + @import_temp_table_name + ' t 
+		INNER JOIN source_minor_location sml1
+			ON sml1.location_id = t.location
+		INNER JOIN source_counterparty sc
+			ON sc.counterparty_id = t.counterparty
+		inner join (
 			SELECT a.effective_date
 				, sml.source_minor_location_id
 				, a.shipper_code1_is_default
 				, a.is_default
+				, sc.source_counterparty_id
 			FROM ' + @import_temp_table_name + ' a
 			INNER JOIN source_minor_location sml
 				ON sml.location_id = a.location
+			INNER JOIN source_counterparty sc
+				ON sc.counterparty_id = a.counterparty
 			GROUP BY a.effective_date
 				, sml.source_minor_location_id
 				, a.shipper_code1_is_default
 				, a.is_default
+				, sc.source_counterparty_id
 			HAVING COUNT(*) > 1 
 				AND a.is_default IN (''y'',''yes'') 
 				AND a.shipper_code1_is_default IN (''y'',''yes'')
 		) b
-		INNER JOIN source_minor_location sml1
-			ON sml1.source_minor_location_id = b.source_minor_location_id
-		ON b.effective_date = t.effective_date
-			AND b.source_minor_location_id = sml1.source_minor_location_id
-			AND b.shipper_code1_is_default = t.shipper_code1_is_default
-			AND b.is_default = t.is_default
+			on b.source_minor_location_id = sml1.source_minor_location_id
+				AND b.source_counterparty_id = sc.source_counterparty_id
+				AND b.effective_date = t.effective_date
 	')
 
 	EXEC('  
