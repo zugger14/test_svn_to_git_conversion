@@ -274,9 +274,9 @@ WHERE sdd.leg = 1
 
 	SELECT [year]
 
-		, [date]
+		, DATEADD(DAY,-1,date) [date]
 
-		, [hour]
+		, [hour]+18 [hour]
 
 	INTO #mv90_dst
 
@@ -434,7 +434,15 @@ WHERE sdd.leg = 1
 
 	CREATE INDEX indx_udt_tp ON #temp_position (source_deal_detail_id,term_start,hr,[period])
 
-					
+	UPDATE a
+	SET volume = IIF(a.is_dst = 0, a.volume - rs.volume,a.volume) 
+	FROM #temp_position a
+	CROSS APPLY(SELECT source_deal_header_id,term_start,hr,volume 
+	FROM #temp_position b 
+	WHERE b.source_deal_header_id = a.source_deal_header_id
+		AND a.term_start = b.term_start
+		AND a.hr = b.hr
+		AND b.is_dst = 1) rs				
 
 
 
@@ -498,9 +506,10 @@ WHERE sdd.leg = 1
 
 	SELECT @_path = document_path + ''temp_Note''  FROM connection_string
 
-	SELECT @_import_rule_id = ixp_rules_id FROM ixp_rules
+	SELECT @_import_rule_id =  ixp_rules_id FROM ixp_rules
 
-	WHERE ixp_rule_hash = ''A796978B_665C_46DA_9606_38FA73747158'' --shaped volume
+	WHERE ixp_rule_hash --= ''A796978B_665C_46DA_9606_38FA73747158'' --shaped volume
+						= ''30F320BA_815F_4DB7_9314_B037E84311B6'' --Gas Hour Shaped Data
 
 
 

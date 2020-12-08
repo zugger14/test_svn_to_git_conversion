@@ -19,15 +19,14 @@ BEGIN
 			 
 			IF @old_ixp_rule_id IS NOT NULL 
 			BEGIN 
-				-- Added to preserve rule detail like folder location, FTP URL, username and password.
+				-- Added to preserve rule detail like folder location, File endpoint details.
 				IF OBJECT_ID('tempdb..#pre_ixp_import_data_source') IS NOT NULL
 					DROP TABLE #pre_ixp_import_data_source
 
 				SELECT rules_id
-					,folder_location
-					,ftp_url
-					,ftp_username
-					,ftp_password 
+					, folder_location
+					, file_transfer_endpoint_id
+					, remote_directory 
 				INTO #pre_ixp_import_data_source
 				FROM ixp_import_data_source 
 				WHERE rules_id = @old_ixp_rule_id
@@ -45,7 +44,13 @@ BEGIN
 					'Gas Hour Shaped Data' ,
 					'N' ,
 					NULL ,
-					'UPDATE [temp_process_table]
+					'DECLARE @set_process_id VARCHAR(40), @run_storage_process_table NVARCHAR(200)
+SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37)) 
+SET @run_storage_process_table = ''adiha_process.dbo.storage_st_position_''+ @set_process_id 
+IF OBJECT_ID(@run_storage_process_table) IS NULL
+BEGIN
+
+UPDATE [temp_process_table]
 SET [Term Date] = CONVERT(VARCHAR(10),dbo.FNAClientTosqlDate([Term Date]), 120)
 
 UPDATE a
@@ -88,7 +93,9 @@ INNER JOIN source_deal_detail sdd
 	AND sdd.leg = a.[Leg]
 LEFT JOIN source_price_curve_def spcd 
     ON spcd.source_curve_def_id = sdd.curve_id
-WHERE spcd.commodity_id = -1',
+WHERE spcd.commodity_id = -1
+
+END',
 					'IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
 	DROP TABLE 	#temp_trans_off
 
@@ -142,10 +149,10 @@ BEGIN
 		ON tto.source_deal_header_id = sdh.source_deal_header_id
 	INNER JOIN source_deal_detail sdd
 		ON sdd.source_deal_header_id = ISNULL(tto.transfer_deal_id, tto.offset_deal_id)
+		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
-		AND sddh.term_date BETWEEN sdd.term_start AND sdd.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
 
@@ -181,20 +188,22 @@ BEGIN
 	 FROM [temp_process_table] t
 	INNER JOIN source_deal_header sdh
 		ON sdh.deal_id = t.deal_id
-	INNER JOIN #temp_trans_off tto
-		ON tto.source_deal_header_id = sdh.source_deal_header_id
-	INNER JOIN source_deal_detail sdd
-		ON sdd.source_deal_header_id = tto.source_deal_header_id		
-	INNER JOIN source_deal_detail sdd_to
-		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
+	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id	
+		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
-		AND sddh.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
+INNER JOIN #temp_trans_off tto
+		ON tto.source_deal_header_id = sdh.source_deal_header_id		
+	INNER JOIN source_deal_detail sdd_to
+		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
+		AND t.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
+END
 
-
+IF EXISTS(SELECT 1 FROM #temp_inserted_sdd)	 
+BEGIN
 	UPDATE sdd
 		SET deal_volume = sub.volume, 
 			fixed_price = sub.price
@@ -221,11 +230,9 @@ BEGIN
 	EXEC (''CREATE TABLE '' + @after_insert_process_table + ''( source_deal_header_id INT)'')
 		
 	SET @sql = ''INSERT INTO '' + @after_insert_process_table + ''(source_deal_header_id) 
-				SELECT ISNULL(temp.transfer_deal_id, temp.offset_deal_id) [source_deal_header_id] 
-				FROM #temp_trans_off temp 
-				UNION ALL 
-				SELECT temp.source_deal_header_id [source_deal_header_id] 
-				FROM #temp_trans_off temp
+				SELECT DISTINCT source_deal_header_id 
+				FROM  #temp_inserted_sdd sdd
+				INNER JOIN source_deal_detail sdd1 ON sdd1.source_deal_detail_id = sdd.source_deal_detail_id
 				''
 	EXEC (@sql)
 		
@@ -272,7 +279,13 @@ ALTER COLUMN term_date VARCHAR(50)
 			SET ixp_rules_name = 'Gas Hour Shaped Data'
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
-				, before_insert_trigger = 'UPDATE [temp_process_table]
+				, before_insert_trigger = 'DECLARE @set_process_id VARCHAR(40), @run_storage_process_table NVARCHAR(200)
+SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37)) 
+SET @run_storage_process_table = ''adiha_process.dbo.storage_st_position_''+ @set_process_id 
+IF OBJECT_ID(@run_storage_process_table) IS NULL
+BEGIN
+
+UPDATE [temp_process_table]
 SET [Term Date] = CONVERT(VARCHAR(10),dbo.FNAClientTosqlDate([Term Date]), 120)
 
 UPDATE a
@@ -315,7 +328,9 @@ INNER JOIN source_deal_detail sdd
 	AND sdd.leg = a.[Leg]
 LEFT JOIN source_price_curve_def spcd 
     ON spcd.source_curve_def_id = sdd.curve_id
-WHERE spcd.commodity_id = -1'
+WHERE spcd.commodity_id = -1
+
+END'
 				, after_insert_trigger = 'IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
 	DROP TABLE 	#temp_trans_off
 
@@ -369,10 +384,10 @@ BEGIN
 		ON tto.source_deal_header_id = sdh.source_deal_header_id
 	INNER JOIN source_deal_detail sdd
 		ON sdd.source_deal_header_id = ISNULL(tto.transfer_deal_id, tto.offset_deal_id)
+		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
-		AND sddh.term_date BETWEEN sdd.term_start AND sdd.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
 
@@ -408,20 +423,22 @@ BEGIN
 	 FROM [temp_process_table] t
 	INNER JOIN source_deal_header sdh
 		ON sdh.deal_id = t.deal_id
-	INNER JOIN #temp_trans_off tto
-		ON tto.source_deal_header_id = sdh.source_deal_header_id
-	INNER JOIN source_deal_detail sdd
-		ON sdd.source_deal_header_id = tto.source_deal_header_id		
-	INNER JOIN source_deal_detail sdd_to
-		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
+	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id	
+		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
-		AND sddh.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
+INNER JOIN #temp_trans_off tto
+		ON tto.source_deal_header_id = sdh.source_deal_header_id		
+	INNER JOIN source_deal_detail sdd_to
+		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
+		AND t.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
+END
 
-
+IF EXISTS(SELECT 1 FROM #temp_inserted_sdd)	 
+BEGIN
 	UPDATE sdd
 		SET deal_volume = sub.volume, 
 			fixed_price = sub.price
@@ -448,11 +465,9 @@ BEGIN
 	EXEC (''CREATE TABLE '' + @after_insert_process_table + ''( source_deal_header_id INT)'')
 		
 	SET @sql = ''INSERT INTO '' + @after_insert_process_table + ''(source_deal_header_id) 
-				SELECT ISNULL(temp.transfer_deal_id, temp.offset_deal_id) [source_deal_header_id] 
-				FROM #temp_trans_off temp 
-				UNION ALL 
-				SELECT temp.source_deal_header_id [source_deal_header_id] 
-				FROM #temp_trans_off temp
+				SELECT DISTINCT source_deal_header_id 
+				FROM  #temp_inserted_sdd sdd
+				INNER JOIN source_deal_detail sdd1 ON sdd1.source_deal_detail_id = sdd.source_deal_detail_id
 				''
 	EXEC (@sql)
 		
@@ -491,11 +506,13 @@ INSERT INTO ixp_export_tables (ixp_rules_id, table_id, dependent_table_id, seque
 									LEFT JOIN ixp_tables dependent_table ON dependent_table.ixp_tables_name = NULL
 									WHERE it.ixp_tables_name = 'ixp_source_deal_detail_15min_template'
 									
-INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_string, data_source_location, destination_table, delimiter, source_system_id, data_source_alias, is_customized, customizing_query, is_header_less, no_of_columns, folder_location, custom_import, use_parameter, excel_sheet, ssis_package, soap_function_id, is_ftp, ftp_url, ftp_username, ftp_password, clr_function_id, ws_function_name, use_sftp, enable_email_import, send_email_import_reply)
+INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_string, data_source_location, destination_table, delimiter, source_system_id, data_source_alias, is_customized, customizing_query, is_header_less, no_of_columns, folder_location, custom_import, use_parameter
+					, excel_sheet, ssis_package, soap_function_id, clr_function_id, ws_function_name, enable_email_import
+					, send_email_import_reply, file_transfer_endpoint_id, remote_directory)
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-T-SQL01\shared_docs_TRMTracker_Release_Enercity\temp_Note\0',
+						   '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
@@ -510,15 +527,12 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   '',
 						   isc.ixp_ssis_configurations_id,
 						   isf.ixp_soap_functions_id,
-						   '0',
-						   '',
-						   '',
-						   0x01000000B2723A079D409A653F3C8CA8C5FF156AD03BC13049B0296E,
 						   icf.ixp_clr_functions_id,
 						   '', 
 						   '0',
 						   '0',
-						   '0'
+						   NULL,
+						   NULL
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
 					LEFT JOIN ixp_soap_functions isf ON isf.ixp_soap_functions_name = '' 
@@ -528,9 +542,8 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						BEGIN
 							UPDATE iids
 							SET folder_location = piids.folder_location
-								, ftp_url = piids.ftp_url
-								, ftp_username = piids.ftp_username
-								, ftp_password = piids.ftp_password
+								, file_transfer_endpoint_id = piids.file_transfer_endpoint_id
+								, remote_directory = piids.remote_directory
 							FROM ixp_import_data_source iids
 							INNER JOIN #pre_ixp_import_data_source piids 
 							ON iids.rules_id = piids.rules_id
@@ -601,3 +614,4 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
+		
