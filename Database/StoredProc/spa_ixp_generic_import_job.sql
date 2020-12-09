@@ -21236,7 +21236,7 @@ BEGIN
 
 	UPDATE  sdh1
 		SET deal_date = sdh.deal_date,
-		    counterparty_id = sdh.counterparty_id,
+		    --counterparty_id = sdh.counterparty_id,
 			contract_id = sdh.contract_id
 	OUTPUT INSERTED.source_deal_header_id INTO #temp_updated_transfer_deals(source_deal_header_id)
 	FROM  #temp_deal_header th
@@ -21294,7 +21294,7 @@ BEGIN
 		-- update offset deal
 		UPDATE  sdh1
 		SET deal_date = sdh.deal_date,
-		    counterparty_id = sdh.counterparty_id,
+		    --counterparty_id = sdh.counterparty_id,
 			contract_id = sdh.contract_id
 		OUTPUT INSERTED.source_deal_header_id INTO #temp_updated_transfer_deals(source_deal_header_id)
 		FROM  #temp_updated_transfer_deals t1
