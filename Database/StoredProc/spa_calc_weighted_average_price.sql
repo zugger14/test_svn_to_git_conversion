@@ -805,8 +805,8 @@ SET @sql = CAST('' AS NVARCHAR(MAX)) + N'
 			) delta_pfc_price
 		, IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) + org.original_volume total_volume
 		, IIF(NULLIF(src.uploaded_fixed_price,'''') IS NOT NULL, src.uploaded_fixed_price,
-			IIF( org.template_id = ' + CAST(@stg_withdrawal_template_id AS NVARCHAR(20)) + ', ISNULL(csw.wacog,0),
-			(org.original_volume*org.original_price 
+			IIF( org.template_id = ' + CAST(@stg_withdrawal_template_id AS NVARCHAR(20)) + ', NULL --ISNULL(csw.wacog,0)
+			,(org.original_volume*org.original_price 
 				+ IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) * spc.curve_value
 				)/CASE WHEN IIF(gmv.clm17_value = ''d'', src.uploaded_volume, src.uploaded_volume - org.original_volume) 
 					+ iif(nullIF(org.original_price,0) is null,0,org.original_volume) = 0 
@@ -877,16 +877,16 @@ SET @sql +=
 		AND spc.maturity_date = max_curve.maturity_date
 		AND spc.is_dst = max_curve.is_dst
 		AND spc.curve_source_value_id = 4500
-	OUTER APPLY( SELECT MAX(csw.term) term ,csw.location_id,csw.contract_id
-		FROM calcprocess_storage_wacog csw 
-		WHERE csw.term < org.term_start
-		AND csw.location_id = org.location_id
-		AND csw.contract_id = org.contract_id
-		GROUP BY csw.location_id, csw.contract_id
-	) mx_wacog
-	LEFT JOIN calcprocess_storage_wacog csw ON csw.term = mx_wacog.term
-		AND csw.location_id = mx_wacog.location_id
-		AND csw.contract_id = mx_wacog.contract_id
+	--OUTER APPLY( SELECT MAX(csw.term) term ,csw.location_id,csw.contract_id
+	--	FROM calcprocess_storage_wacog csw 
+	--	WHERE csw.term < org.term_start
+	--		AND csw.location_id = org.location_id
+	--		AND csw.contract_id = org.contract_id
+	--		GROUP BY csw.location_id, csw.contract_id
+	--) mx_wacog
+	--LEFT JOIN calcprocess_storage_wacog csw ON csw.term = mx_wacog.term
+	--	AND csw.location_id = mx_wacog.location_id
+	--	AND csw.contract_id = mx_wacog.contract_id
 	
 	'
 IF @debug_mode = 1
