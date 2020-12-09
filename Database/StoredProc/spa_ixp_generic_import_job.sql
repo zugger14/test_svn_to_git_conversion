@@ -21699,16 +21699,14 @@ BEGIN
 	--call auto adjust
 	IF @ixp_rule_hash = '1C668AFD_E3AE_4344_AF42_EB23F4BD8B59' --trayport import
 	BEGIN
-		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, create_user, create_ts, process_status, process_id)
-		SELECT DISTINCT tmp.source_deal_header_id,
-			   dbo.FNADBUser(),
-			   GETDATE(),
-			   1,
-			   @process_id
-		FROM #tmp_second_table tmp
-		--LEFT JOIN process_deal_alert_transfer_adjust pd
-		--	ON tmp.source_deal_header_id = pd.source_deal_header_id
-		--WHERE pd.source_deal_header_id IS NULL
+		EXEC(' INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, create_user, create_ts, process_status, process_id)
+			   SELECT DISTINCT source_deal_header_id,
+					  dbo.FNADBUser(),
+					  GETDATE(),
+					  1, 
+					  ''' + @process_id + '''
+			   FROM ' + @search_table
+		)
 	END
 
  	SET @pos_job_name =  'calc_position_breakdown_' + @process_id3
