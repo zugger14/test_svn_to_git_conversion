@@ -78,6 +78,13 @@ SET NOCOUNT ON
 		, @receipt_deals_id VARCHAR(200) = NULL
 		, @delivery_deals_id VARCHAR(200) = NULL
 
+
+--	2020-01-01 00:00:00.000	2020-01-01 00:00:00.000	DB9138AE_0ECD_4845_9081_3FED34C293FD	flow_auto	1158	0	982	-1	104935
+
+
+--exec spa_debug_helper N'EXEC sys.sp_set_session_context @key = N''DB_USER'', @value = ''dmanandhar'';EXEC spa_schedule_deal_flow_optimization  @flag=@P1,@box_ids=@P2,@flow_date_from=@P3,@flow_date_to=@P4,@sub=@P5,@str=@P6,@book=@P7,@sub_book=@P8,@contract_process_id=@P9,@from_priority=@P10,@to_priority=@P11,@call_from=@P12,@target_uom=@P13,@reschedule=@P14,@granularity=@P15',N'@P1 nvarchar(4000),@P2 nvarchar(4000),@P3 nvarchar(4000),@P4 nvarchar(4000),@P5 char(1),@P6 char(1),@P7 nvarchar(4000),@P8 char(1),@P9 nvarchar(4000),@P10 char(1),@P11 char(1),@P12 nvarchar(4000),@P13 nvarchar(4000),@P14 nvarchar(4000),@P15 nvarchar(4000)',N'i',N'2',N'2033-07-01',N'2033-07-01',NULL,NULL,N'60,164,165,167,166',NULL,N'D5C51485_A16D_4C94_B935_3AF34CB32F87',NULL,NULL,N'flow_opt',N'1158',N'0',N'982'
+
+--Sets session DB users 
 	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
 
 	--Sets contextinfo to debug mode so that spa_print will prints data
@@ -90,28 +97,27 @@ SET NOCOUNT ON
 	EXEC [spa_drop_all_temp_table] 
 	
 	-- SPA parameter values
+	-- SPA parameter values
+	
 
---	2020-01-01 00:00:00.000	2020-01-01 00:00:00.000	DB9138AE_0ECD_4845_9081_3FED34C293FD	flow_auto	1158	0	982	-1	104935
-
-select 
+select
 	@flag = 'i'
 	, @box_ids = '1'
-	, @flow_date_from = '2020-01-01'
-	, @flow_date_to = '2020-01-01'
+	, @flow_date_from = '2010-01-01'
+	, @flow_date_to =  '2010-01-01'
 	, @sub = NULL
 	, @str = NULL
 	, @book = NULL
 	, @sub_book = NULL
-	, @contract_process_id = 'DB9138AE_0ECD_4845_9081_3FED34C293FD'
+	, @contract_process_id = 'AA6C96D4_833D_4DBA_B043_B6360B5E746C'
 	, @from_priority = NULL
 	, @to_priority = NULL
 	, @call_from = 'flow_auto'
 	, @target_uom = 1158
-	, @reschedule = 0
+	, @reschedule = 1
 	, @granularity = 982
 	, @receipt_deals_id  = -1 
-	, @delivery_deals_id = 104935
-
+	, @delivery_deals_id  = 106492
 
 --transport_deal_id	deal_volume		up_down_stream	source_deal_header_id
 --219590				6014.00000000	U				219589
@@ -3771,7 +3777,7 @@ BEGIN --Data Prepararion
 		DELETE FROM #exclude_product_group
 		DECLARE @rec_del_deals VARCHAR(1000)
 
-		SET @rec_del_deals =   @receipt_deals_id + ',' + @delivery_deals_id
+		SET @rec_del_deals = ISNULL(@receipt_deals_id, '-1') + ',' + ISNULL(@delivery_deals_id, '-1')
 
 		INSERT INTO #exclude_product_group
 		SELECT DISTINCT sdv.code
@@ -3799,7 +3805,7 @@ BEGIN --Data Prepararion
 			, storage_deal_type 
 			, org_storage_deal_type
 		)
-		SELECT	DISTINCT sdh.source_deal_header_id ,
+		SELECT	DISTINCT  sdh.source_deal_header_id ,
 			p.single_path_id,p.path_id group_path_id
 			, sdh.[description1]
 			, sdh.[description2]
@@ -3830,6 +3836,15 @@ BEGIN --Data Prepararion
 			AND sdv.type_id = 39800	
 		INNER JOIN #exclude_product_group epg
 			ON epg.product_name = ISNULL(sdv.code, '-1')	
+		INNER JOIN user_defined_deal_fields uddf    
+			ON sdh.source_deal_header_id = uddf.source_deal_header_id
+		INNER JOIN user_defined_deal_fields_template uddft
+			ON sdh.template_id = uddft.template_id 
+			AND uddf.udf_template_id = uddft.udf_template_id    
+			AND uddft.field_label = 'From Deal'  
+		INNER JOIN dbo.SplitCommaSeperatedValues (@rec_del_deals) s-- (@rec_del_deals) s
+			ON uddf.udf_value = s.item
+			AND  s.item <> -1
 		WHERE p.storage_deal_type = 'n'		
 			AND sdh.source_deal_type_id = @transportation_deal_type_id --exclude transportation deal
 			--AND epg.product_name IS NULL
@@ -3861,6 +3876,15 @@ BEGIN --Data Prepararion
 			AND sdv.type_id = 39800	
 		INNER JOIN #exclude_product_group epg
 			ON epg.product_name = ISNULL(sdv.code, '-1')
+		INNER JOIN user_defined_deal_fields uddf    
+			ON sdh.source_deal_header_id = uddf.source_deal_header_id
+		INNER JOIN user_defined_deal_fields_template uddft
+			ON sdh.template_id = uddft.template_id 
+			AND uddf.udf_template_id = uddft.udf_template_id    
+			AND uddft.field_label = 'From Deal'  
+		INNER JOIN dbo.SplitCommaSeperatedValues (@rec_del_deals) s-- (@rec_del_deals) s
+			ON uddf.udf_value = s.item
+			AND  s.item <> -1
 		WHERE p.storage_deal_type = 'i'
 			AND sdh.deal_id LIKE 'INJC[_]%'
 			--AND epg.product_name IS NULL
@@ -3892,6 +3916,15 @@ BEGIN --Data Prepararion
 			AND sdv.type_id = 39800	
 		INNER JOIN #exclude_product_group epg
 			ON epg.product_name = ISNULL(sdv.code, '-1')
+		INNER JOIN user_defined_deal_fields uddf    
+			ON sdh.source_deal_header_id = uddf.source_deal_header_id
+		INNER JOIN user_defined_deal_fields_template uddft
+			ON sdh.template_id = uddft.template_id 
+			AND uddf.udf_template_id = uddft.udf_template_id    
+			AND uddft.field_label = 'From Deal'  
+		INNER JOIN dbo.SplitCommaSeperatedValues (@rec_del_deals) s-- (@rec_del_deals) s
+			ON uddf.udf_value = s.item
+			AND  s.item <> -1
 		WHERE 
 			p.storage_deal_type = 'w'
 			AND sdh.deal_id LIKE 'WTHD[_]%'
@@ -4013,7 +4046,7 @@ BEGIN --Data Prepararion
 			p.single_path_id,p.path_id group_path_id
 			,sdh.[description1]
 			,sdh.[description2]
-			,COALESCE(od.contract_id, sdh.[contract_id],-1) [contract_id]
+			,COALESCE(sdh.[contract_id],-1) [contract_id]
 			,p.leg1_loc_id
 			,p.leg2_loc_id
 			,sdh.deal_id
@@ -4031,11 +4064,14 @@ BEGIN --Data Prepararion
 		INNER JOIN source_deal_header sdh
 			ON sdh.source_deal_header_id = sdd.source_deal_header_id
 			AND p.first_dom = sdh.entire_term_start
-		LEFT JOIN optimizer_detail od
-			ON od.source_deal_header_id = sdh.source_deal_header_id
-			AND COALESCE(p.single_contract_id,p.contract_id) = sdh.contract_id
-		LEFT JOIN delivery_path dp1
-			ON dp1.path_id = od.single_path_id
+		INNER JOIN user_defined_deal_fields uddf   
+			ON uddf.source_deal_header_id = sdh.source_deal_header_id
+		INNER JOIN user_defined_deal_fields_template uddft
+    		ON sdh.template_id = uddft.template_id 
+    		AND uddf.udf_template_id = uddft.udf_template_id    
+    		AND uddft.field_label = 'Delivery Path'   
+		INNER JOIN delivery_path dp1
+			ON dp1.path_id = uddf.udf_value
 			AND dp1.from_location = dp.from_location
 		LEFT JOIN static_data_value sdv
 			ON sdv.value_id = sdh.internal_portfolio_id 
@@ -4050,7 +4086,7 @@ BEGIN --Data Prepararion
 			p.single_path_id,p.path_id group_path_id
 			,sdh.[description1]
 			,sdh.[description2]
-			,COALESCE(od.contract_id, sdh.[contract_id],-1) [contract_id]
+			,COALESCE(sdh.[contract_id],-1) [contract_id]
 			,p.leg1_loc_id
 			,p.leg2_loc_id
 			,sdh.deal_id
@@ -4068,32 +4104,36 @@ BEGIN --Data Prepararion
 		INNER JOIN source_deal_header sdh
 			ON sdh.source_deal_header_id = sdd.source_deal_header_id
 			AND p.first_dom = sdh.entire_term_start
-		LEFT JOIN optimizer_detail od
-			ON od.source_deal_header_id = sdh.source_deal_header_id
-			AND COALESCE(p.single_contract_id,p.contract_id) = sdh.contract_id
-		LEFT JOIN delivery_path dp1
-			ON dp1.path_id = od.single_path_id
+		INNER JOIN user_defined_deal_fields uddf   
+			ON uddf.source_deal_header_id = sdh.source_deal_header_id
+		INNER JOIN user_defined_deal_fields_template uddft
+    		ON sdh.template_id = uddft.template_id 
+    		AND uddf.udf_template_id = uddft.udf_template_id    
+    		AND uddft.field_label = 'Delivery Path'   
+		INNER JOIN delivery_path dp1
+			ON dp1.path_id = uddf.udf_value
 			AND dp1.to_location = dp.to_location
 		LEFT JOIN static_data_value sdv
 			ON sdv.value_id = sdh.internal_portfolio_id 
 			AND sdv.type_id = 39800	
 		LEFT JOIN #exclude_product_group epg
 			ON epg.product_name = ISNULL(sdv.code, '-1')
-		WHERE 
-		p.storage_deal_type = 'w'
+		WHERE p.storage_deal_type = 'w'
 			AND sdh.deal_id LIKE 'WTHD[_]%'
 			AND epg.product_name IS NULL
 				
 	END
 
 
-
-	
 END --Data Prepararion
+
+-- set transaction isolation level to read committed to detect parallel process of same deal by other process like import
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 
 IF EXISTS(SELECT 1 FROM  #collect_deals) --Checked Template deals 
 BEGIN
 BEGIN TRY
+	BEGIN TRAN
 	IF ISNULL(@reschedule, 0)  = 1 
 	BEGIN
 			
@@ -4229,9 +4269,68 @@ BEGIN
 	DELETE FROM #existing_deals
 END 
 
+DECLARE @product_group INT 
+
+--Below update query is only for making transaction isolation work
+--DO NOT REMOVE IT
+UPDATE	source_deal_header_template 
+SET update_ts = update_ts
+WHERE template_name = 'Transportation NG'
+
+-- Check if deals are already created by parallel processing of import files
+IF @reschedule = 0 and @call_from = 'flow_auto'
+BEGIN
+	
+	DECLARE @source_deal_header_id_auto INT
+
+	SET @source_deal_header_id_auto = ISNULL(NULLIF(@receipt_deals_id, -1),  NULLIF(@delivery_deals_id, -1))
+
+	IF @source_deal_header_id_auto IS NOT NULL
+	BEGIN
+
+		SELECT @product_group = internal_portfolio_id
+		FROM source_deal_header
+		WHERE source_deal_header_id = @source_deal_header_id_auto
+
+		IF EXISTS(
+			SELECT  sdh.source_deal_header_id
+			FROM user_defined_deal_fields uddf	
+			INNER JOIN source_deal_header sdh
+				ON sdh.source_deal_header_id = uddf.source_deal_header_id
+			INNER JOIN user_defined_deal_fields_template uddft
+				ON sdh.template_id = uddft.template_id 
+				AND uddf.udf_template_id = uddft.udf_template_id	
+				AND uddft.field_label = 'From Deal'
+			INNER JOIN source_deal_header_template sdht
+				ON sdht.template_id = sdh.template_id 
+			INNER JOIN source_deal_detail sdd
+				ON sdd.source_deal_header_id = sdh.source_deal_header_id
+			WHERE udf_value = CAST(@source_deal_header_id_auto AS VARCHAR(10))
+				AND sdht.template_name = 'Transportation NG'
+				AND sdh.internal_portfolio_id = @product_group
+			GROUP BY sdh.source_deal_header_id
+			HAVING MIN (sdd.term_start) BETWEEN @flow_date_from AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')		
+		)
+		BEGIN			
+
+			IF @@TRANCOUNT > 0
+				ROLLBACK;
+			
+			-- Saved -9999 in source_deal_header_id of process table to detect if schedule deal is already created.
+			SET @sql = 'INSERT INTO ' + @inserted_updated_deals + '
+				SELECT -9999,-9999'
+			
+			EXEC(@sql)
+
+			RETURN;
+		END
+	END
+END
+
+
 
 BEGIN -- Insert/Update Deal data 
---begin transaction t1;
+
 	INSERT INTO [dbo].[source_deal_header]
 		([source_system_id]
 		, [deal_id]
@@ -4449,7 +4548,7 @@ BEGIN -- Insert/Update Deal data
 		, h.[legal_entity]
 		, CASE @granularity WHEN 981 THEN 17300 WHEN 982 THEN 17302 ELSE 17300 END [internal_desk_id]
 		, h.[product_id]
-		, h.[internal_portfolio_id]
+		, ISNULL(@product_group, h.[internal_portfolio_id])
 		, h.[commodity_id]
 		, h.[reference]
 		, 'n' [deal_locked]
@@ -4604,7 +4703,7 @@ BEGIN -- Insert/Update Deal data
 	LEFT JOIN #tmp_header h 
 		ON i.source_deal_header_id = h.source_deal_header_id
 	WHERE h.source_deal_header_id IS NULL
-	
+
 	SET @sql = 'INSERT INTO ' + @inserted_updated_deals + '
 				SELECT source_deal_header_id,
 					is_insert
@@ -5142,6 +5241,33 @@ BEGIN -- Insert/Update Deal data
 	WHERE p.include_rec = 1
 		AND uddf.source_deal_header_id IS NULL
 		AND NOT EXISTS(SELECT TOP 1 1 FROM #existing_deals e1 WHERE e1.source_deal_header_id = th.[source_deal_header_id]) --excluding duplicate insert of existing deals udf where error caused for unique key constraint 'UC_user_defined_deal_fields_source_deal_header_id'
+	
+	IF @call_from = 'flow_auto'
+	BEGIN
+		UPDATE uddf
+			SET uddf.udf_value = ISNULL(NULLIF(@receipt_deals_id, -1),  NULLIF(@delivery_deals_id, -1))	
+		FROM #tmp_header ttd
+		INNER JOIN user_defined_deal_fields uddf
+			ON ttd.source_deal_header_id = uddf.source_deal_header_id
+		INNER JOIN source_deal_header sdh
+			ON sdh.source_deal_header_id = uddf.source_deal_header_id
+		INNER JOIN user_defined_deal_fields_template uddft
+			ON sdh.template_id = uddft.template_id 
+			AND uddf.udf_template_id = uddft.udf_template_id	
+			AND uddft.field_label = 'From Deal'
+		WHERE ttd.is_insert = 1
+
+		--		select ISNULL(NULLIF(@receipt_deals_id, -1),  NULLIF(@delivery_deals_id, -1))	'xxxxxxxxxxxxxxxxxxxxxxx', getdate() as 'time', uddf.source_deal_header_id
+		--FROM #tmp_header ttd
+		--INNER JOIN user_defined_deal_fields uddf
+		--	ON ttd.source_deal_header_id = uddf.source_deal_header_id
+		--INNER JOIN source_deal_header sdh
+		--	ON sdh.source_deal_header_id = uddf.source_deal_header_id
+		--INNER JOIN user_defined_deal_fields_template uddft
+		--	ON sdh.template_id = uddft.template_id 
+		--	AND uddf.udf_template_id = uddft.udf_template_id	
+		--	AND uddft.field_label = 'From Deal'
+	END
 
 	INSERT INTO #inserted_grp_path (
 		source_deal_header_id
@@ -6634,29 +6760,30 @@ EXEC spa_ErrorHandler 0
 	, 'Successfully saved transportation deal.'
 	, ''
 
+	commit
 END TRY
 BEGIN CATCH
 	--PRINT 'Catch Error:' + ERROR_MESSAGE()
-	
+	IF @@TRANCOUNT > 0
+		ROLLBACK
 	--delete junk deals	produced when error occured after inserting on deal header block. (mainly error occurs on inserting deal detail block)
+	
+	DECLARE @junk_deal_ids VARCHAR(2000)
+	SELECT @junk_deal_ids = COALESCE(@junk_deal_ids + ',', '') + CAST(sdh.source_deal_header_id AS VARCHAR(20))
+	FROM #tmp_header th
+	INNER JOIN source_deal_header sdh 
+		ON sdh.source_deal_header_id = th.source_deal_header_id
+	LEFT JOIN source_deal_detail sdd
+		ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	WHERE sdh.deal_id like '%[_][_]%'
+		AND sdd.source_deal_detail_id IS NULL
+
+	IF NULLIF(@junk_deal_ids, '') IS NOT NULL
 	BEGIN
-		DECLARE @junk_deal_ids VARCHAR(2000)
-		SELECT @junk_deal_ids = COALESCE(@junk_deal_ids + ',', '') + CAST(sdh.source_deal_header_id AS VARCHAR(20))
-		FROM #tmp_header th
-		INNER JOIN source_deal_header sdh 
-			ON sdh.source_deal_header_id = th.source_deal_header_id
-		LEFT JOIN source_deal_detail sdd
-			ON sdd.source_deal_header_id = sdh.source_deal_header_id
-		WHERE sdh.deal_id like '%[_][_]%'
-			AND sdd.source_deal_detail_id IS NULL
-
-		IF NULLIF(@junk_deal_ids, '') IS NOT NULL
-		BEGIN
-			EXEC spa_source_deal_header @flag='d', @deal_ids = @junk_deal_ids
-		END
-		
+		EXEC spa_source_deal_header @flag='d', @deal_ids = @junk_deal_ids
 	END
-
+		
+	
 	EXEC spa_ErrorHandler -1
 		, 'Flow Optimization'
 		, 'spa_schedule_deal_flow_optimization'

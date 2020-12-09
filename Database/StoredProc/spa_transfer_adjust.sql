@@ -47,7 +47,7 @@ EXEC [spa_drop_all_temp_table]
 
 -- DECLARE @source_deal_header_id INT = 108076
  
- DECLARE @source_deal_header_id INT = 115390  
+ DECLARE @source_deal_header_id INT = 106492  
 
 --DECLARE @source_deal_header_id INT = 104615 
 
@@ -195,8 +195,8 @@ CREATE TABLE #temp_updated_deals (
 
 CREATE TABLE #temp_transport_deal (
 	source_deal_header_id INT,
-	type VARCHAR(50) COLLATE DATABASE_DEFAULT,
-	flow_date DATETIME
+	type VARCHAR(50)  COLLATE DATABASE_DEFAULT NULL,
+	flow_date DATETIME NULL
 )
 		
 CREATE TABLE #temp_mdq_avail(dummy_column INT)
@@ -284,6 +284,29 @@ BEGIN
 			@process_id = @process_id
 
 		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
+
+		--START OF CHECK IF DEAL SAME DEAL UPDATED BY OTHER PROCESS
+		SET @sql = '
+			INSERT INTO #temp_transport_deal(source_deal_header_id)
+			SELECT source_deal_header_id 
+			FROM '+ @inserted_updated_deals + ' 
+			WHERE source_deal_header_id = -9999
+			'
+		EXEC(@sql)
+
+
+		IF EXISTS (SELECT 1 FROM  #temp_transport_deal WHERE source_deal_header_id = -9999) 
+		BEGIN
+			WAITFOR DELAY '00:00:15';
+
+			-- RESTART AUTO SCHEDULE AFTER 15 SECONDS OF IT IS RUNNING BY OTHER PROCESS
+			EXEC spa_transfer_adjust @source_deal_header_id
+
+			RETURN;
+		END
+
+		--END OF CHECK IF DEAL SAME DEAL UPDATED BY OTHER PROCESS
+
 
 		SET @sql = '
 			INSERT INTO #temp_transport_deal
@@ -458,17 +481,17 @@ BEGIN
 	WHERE type = 'Transport'
 
 
-	UPDATE uddf
-		SET uddf.udf_value = @source_deal_header_id	
-	FROM #temp_transport_deal ttd
-	INNER JOIN user_defined_deal_fields uddf
-		ON ttd.source_deal_header_id = uddf.source_deal_header_id
-	INNER JOIN source_deal_header sdh
-		ON sdh.source_deal_header_id = uddf.source_deal_header_id
-	INNER JOIN user_defined_deal_fields_template uddft
-		ON sdh.template_id = uddft.template_id 
-		AND uddf.udf_template_id = uddft.udf_template_id	
-		AND uddft.field_label = 'From Deal'
+	--UPDATE uddf
+	--	SET uddf.udf_value = @source_deal_header_id	
+	--FROM #temp_transport_deal ttd
+	--INNER JOIN user_defined_deal_fields uddf
+	--	ON ttd.source_deal_header_id = uddf.source_deal_header_id
+	--INNER JOIN source_deal_header sdh
+	--	ON sdh.source_deal_header_id = uddf.source_deal_header_id
+	--INNER JOIN user_defined_deal_fields_template uddft
+	--	ON sdh.template_id = uddft.template_id 
+	--	AND uddf.udf_template_id = uddft.udf_template_id	
+	--	AND uddft.field_label = 'From Deal'
 	
 	IF EXISTS(SELECT 1 FROM #temp_updated_deals)
 	BEGIN
@@ -490,8 +513,6 @@ BEGIN
 		EXEC spa_deal_insert_update_jobs 'i', @after_insert_process_table
 	
 	END
-
-
 	--IF @header_buy_sell_flag = 'b'
 	--BEGIN
 
@@ -702,6 +723,28 @@ BEGIN
 
 		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
 
+		--START OF CHECK IF DEAL SAME DEAL UPDATED BY OTHER PROCESS
+		SET @sql = '
+			INSERT INTO #temp_transport_deal(source_deal_header_id)
+			SELECT source_deal_header_id 
+			FROM '+ @inserted_updated_deals + ' 
+			WHERE source_deal_header_id = -9999
+			'
+		EXEC(@sql)
+
+
+		IF EXISTS (SELECT 1 FROM  #temp_transport_deal WHERE source_deal_header_id = -9999) 
+		BEGIN
+			WAITFOR DELAY '00:00:15';
+
+			-- RESTART AUTO SCHEDULE AFTER 15 SECONDS OF IT IS RUNNING BY OTHER PROCESS
+			EXEC spa_transfer_adjust @source_deal_header_id
+
+			RETURN;
+		END
+
+		--END OF CHECK IF DEAL SAME DEAL UPDATED BY OTHER PROCESS
+
 
 		SET @sql = '
 			INSERT INTO #temp_transport_deal
@@ -811,17 +854,17 @@ BEGIN
 	IF EXISTS(SELECT 1 FROM #temp_transport_deal WHERE type = 'Transport')	
 	BEGIN
 
-		UPDATE uddf
-			SET uddf.udf_value = @source_deal_header_id	
-		FROM #temp_transport_deal ttd
-		INNER JOIN user_defined_deal_fields uddf
-			ON ttd.source_deal_header_id = uddf.source_deal_header_id
-		INNER JOIN source_deal_header sdh
-			ON sdh.source_deal_header_id = uddf.source_deal_header_id
-		INNER JOIN user_defined_deal_fields_template uddft
-			ON sdh.template_id = uddft.template_id 
-			AND uddf.udf_template_id = uddft.udf_template_id	
-			AND uddft.field_label = 'From Deal' 
+		--UPDATE uddf
+		--	SET uddf.udf_value = @source_deal_header_id	
+		--FROM #temp_transport_deal ttd
+		--INNER JOIN user_defined_deal_fields uddf
+		--	ON ttd.source_deal_header_id = uddf.source_deal_header_id
+		--INNER JOIN source_deal_header sdh
+		--	ON sdh.source_deal_header_id = uddf.source_deal_header_id
+		--INNER JOIN user_defined_deal_fields_template uddft
+		--	ON sdh.template_id = uddft.template_id 
+		--	AND uddf.udf_template_id = uddft.udf_template_id	
+		--	AND uddft.field_label = 'From Deal' 
 
 		INSERT INTO #temp_volume
 		SELECT term_start
@@ -1239,6 +1282,30 @@ BEGIN
 
 		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
 
+
+		--START OF CHECK IF DEAL SAME DEAL UPDATED BY OTHER PROCESS
+		SET @sql = '
+			INSERT INTO #temp_transport_deal(source_deal_header_id)
+			SELECT source_deal_header_id 
+			FROM '+ @inserted_updated_deals + ' 
+			WHERE source_deal_header_id = -9999
+			'
+		EXEC(@sql)
+
+
+		IF EXISTS (SELECT 1 FROM  #temp_transport_deal WHERE source_deal_header_id = -9999) 
+		BEGIN
+			WAITFOR DELAY '00:00:15';
+
+			-- RESTART AUTO SCHEDULE AFTER 15 SECONDS OF IT IS RUNNING BY OTHER PROCESS
+			EXEC spa_transfer_adjust @source_deal_header_id
+
+			RETURN;
+		END
+
+		--END OF CHECK IF DEAL SAME DEAL UPDATED BY OTHER PROCESS
+
+
 		SET @sql = '
 			INSERT INTO #temp_transport_deal
 			SELECT sdh.source_deal_header_id 
@@ -1274,17 +1341,17 @@ BEGIN
 	WHERE udf_value <>  @source_deal_header_id
 
 
-	UPDATE uddf
-		SET uddf.udf_value = @source_deal_header_id	
-	FROM #temp_transport_deal ttd
-	INNER JOIN user_defined_deal_fields uddf
-		ON ttd.source_deal_header_id = uddf.source_deal_header_id
-	INNER JOIN source_deal_header sdh
-		ON sdh.source_deal_header_id = uddf.source_deal_header_id
-	INNER JOIN user_defined_deal_fields_template uddft
-		ON sdh.template_id = uddft.template_id 
-		AND uddf.udf_template_id = uddft.udf_template_id	
-		AND uddft.field_label = 'From Deal'
+	--UPDATE uddf
+	--	SET uddf.udf_value = @source_deal_header_id	
+	--FROM #temp_transport_deal ttd
+	--INNER JOIN user_defined_deal_fields uddf
+	--	ON ttd.source_deal_header_id = uddf.source_deal_header_id
+	--INNER JOIN source_deal_header sdh
+	--	ON sdh.source_deal_header_id = uddf.source_deal_header_id
+	--INNER JOIN user_defined_deal_fields_template uddft
+	--	ON sdh.template_id = uddft.template_id 
+	--	AND uddf.udf_template_id = uddft.udf_template_id	
+	--	AND uddft.field_label = 'From Deal'
 	
 	UPDATE sdh
 		SET sdh.deal_date = sdh_m.deal_date,
@@ -1545,8 +1612,32 @@ BEGIN
 			@transport_deal_id = @transport_deal_id,
 			@process_id = @process_id
 		
-			
+
 		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
+
+		
+		--START OF CHECK IF DEAL SAME DEAL UPDATED BY OTHER PROCESS
+		SET @sql = '
+			INSERT INTO #temp_transport_deal(source_deal_header_id)
+			SELECT source_deal_header_id 
+			FROM '+ @inserted_updated_deals + ' 
+			WHERE source_deal_header_id = -9999
+			'
+		EXEC(@sql)
+
+
+		IF EXISTS (SELECT 1 FROM  #temp_transport_deal WHERE source_deal_header_id = -9999) 
+		BEGIN
+			WAITFOR DELAY '00:00:15';
+
+			-- RESTART AUTO SCHEDULE AFTER 15 SECONDS OF IT IS RUNNING BY OTHER PROCESS
+			EXEC spa_transfer_adjust @source_deal_header_id
+
+			RETURN;
+		END
+
+		--END OF CHECK IF DEAL SAME DEAL UPDATED BY OTHER PROCESS
+
 
 		SET @sql = '
 			INSERT INTO #temp_transport_deal
@@ -1565,7 +1656,7 @@ BEGIN
 						AND internal_portfolio_id = ' + CAST(@product_group_id AS VARCHAR(10)) + 
 					')'
 		EXEC(@sql)
-			
+
 		SET @flow_date_from =  [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, 1, @flow_date_from), 'f')
 
 	END
@@ -1587,17 +1678,17 @@ BEGIN
 		ON ttd.source_deal_header_id = uddf.source_deal_header_id
 	WHERE udf_value <>  @source_deal_header_id
 	
-	UPDATE uddf
-		SET uddf.udf_value = @source_deal_header_id	
-	FROM #temp_transport_deal ttd
-	INNER JOIN user_defined_deal_fields uddf
-		ON ttd.source_deal_header_id = uddf.source_deal_header_id
-	INNER JOIN source_deal_header sdh
-		ON sdh.source_deal_header_id = uddf.source_deal_header_id
-	INNER JOIN user_defined_deal_fields_template uddft
-		ON sdh.template_id = uddft.template_id 
-		AND uddf.udf_template_id = uddft.udf_template_id	
-		AND uddft.field_label = 'From Deal' 
+	--UPDATE uddf
+	--	SET uddf.udf_value = @source_deal_header_id	
+	--FROM #temp_transport_deal ttd
+	--INNER JOIN user_defined_deal_fields uddf
+	--	ON ttd.source_deal_header_id = uddf.source_deal_header_id
+	--INNER JOIN source_deal_header sdh
+	--	ON sdh.source_deal_header_id = uddf.source_deal_header_id
+	--INNER JOIN user_defined_deal_fields_template uddft
+	--	ON sdh.template_id = uddft.template_id 
+	--	AND uddf.udf_template_id = uddft.udf_template_id	
+	--	AND uddft.field_label = 'From Deal' 
 
 	UPDATE sdh
 		SET sdh.deal_date = sdh_m.deal_date
