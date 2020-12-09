@@ -21738,19 +21738,18 @@ BEGIN
  	--PRINT('Source Deal Detail INSERT COMPLETED. Process took ' + dbo.FNACalculateTimestamp(@deal_detail_insert_batch_ts))
 	
 	--deal transfer starts(changed as per change in sp:referring issue id 31029)
-	EXEC('DECLARE @inserted_source_deal_header_id NVARCHAR(MAX)
-	
-		  SELECT @inserted_source_deal_header_id = STUFF(( SELECT  '', '' + CONVERT(NVARCHAR(38), source_deal_header_id)
+	DECLARE @inserted_source_deal_header_id NVARCHAR(MAX)
+
+	SELECT @inserted_source_deal_header_id = STUFF(( SELECT  ', ' + CONVERT(NVARCHAR(38), source_deal_header_id)
 													 FROM    ( SELECT DISTINCT 
 																	  source_deal_header_id
-													            FROM ' + @search_table + '
+													            FROM #inserted_deals
 													          ) x
 													 FOR
-													 XML PATH('''')
-											      ), 1, 2, '''') 
-		  
-		  EXEC spa_auto_transfer @source_deal_header_id = @inserted_source_deal_header_id
-	')
+													 XML PATH('')
+											      ), 1, 2, '') 
+
+	EXEC spa_auto_transfer @source_deal_header_id = @inserted_source_deal_header_id
 	--deal transfer ends
 
 END 
