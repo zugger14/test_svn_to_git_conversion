@@ -40,26 +40,26 @@ DECLARE @_sub_id VARCHAR(MAX) = NULL
 	, @_stra_id VARCHAR(MAX) = NULL
 	, @_book_id VARCHAR(MAX) = NULL
 	, @_sub_book_id VARCHAR(MAX) = NULL
-	, @_as_of_date VARCHAR(20) =NULL --''2020-11-13''
+	, @_as_of_date VARCHAR(20) =NULL--''2020-11-13''
 	, @_source_deal_header_id VARCHAR(1000) =NULL-- 104510 
 	, @_period_from VARCHAR(6) = NULL
 	, @_period_to VARCHAR(6) = NULL
 	, @_tenor_option VARCHAR(6) = NULL
 	, @_location_id VARCHAR(1000) = NULL
 	, @_curve_id VARCHAR(1000) = NULL
-	, @_commodity_id VARCHAR(8) = NULL
+	, @_commodity_id VARCHAR(250) = NULL
 	, @_deal_id VARCHAR(1000) = NULL
 	, @_location_group_id VARCHAR(1000) = NULL
 	, @_grid VARCHAR(1000) = NULL
 	, @_country VARCHAR(1000) = NULL
 	, @_region VARCHAR(1000) = NULL
 	, @_province VARCHAR(1000) = NULL
-	, @_station_id VARCHAR(1000) =NULL
-	, @_dam_id VARCHAR(1000) =NULL
-	, @_deal_status VARCHAR(8) = NULL
-	, @_confirm_status VARCHAR(8) = NULL
-	, @_profile VARCHAR(8) = NULL
-	, @_term_start VARCHAR(20) =NULL --''2021-01-01''
+	--, @_station_id VARCHAR(1000) =NULL
+	--, @_dam_id VARCHAR(1000) =NULL
+	, @_deal_status VARCHAR(250) = NULL
+	, @_confirm_status VARCHAR(250) = NULL
+	, @_profile VARCHAR(250) = NULL
+	, @_term_start VARCHAR(20) =NULL--''2021-01-01''
 	, @_term_end VARCHAR(20) =NULL--''2021-01-01''
 	, @_deal_type VARCHAR(8) = NULL
 	, @_deal_sub_type VARCHAR(8) = NULL
@@ -73,7 +73,7 @@ DECLARE @_sub_id VARCHAR(MAX) = NULL
 	, @_deal_date_from VARCHAR(20) = NULL
 	, @_deal_date_to VARCHAR(20) = NULL
 	, @_block_type_group_id VARCHAR(20) = NULL
-	, @_trader_id VARCHAR(20) = NULL
+	, @_trader_id VARCHAR(100) = NULL
 	, @_template_id VARCHAR(MAX) = NULL
 	, @_product_id VARCHAR(MAX) = NULL
 	, @_mkt_con_flag VARCHAR(MAX) = NULL
@@ -110,8 +110,7 @@ x02d: 15 Mins Position Report by Deal with Profile filter
 	, @_include_no_breakdown VARCHAR(1) = ''n''
 	, @_process_table VARCHAR(250) = ''<#PROCESS_TABLE#>''
 	, @_st VARCHAR(max)
-SELECT @_tenor_option = ''a''
-	,@_process_table = nullif(@_process_table, ''<#'' + ''PROCESS_TABLE'' + ''#>'')
+SELECT @_process_table = nullif(@_process_table, ''<#'' + ''PROCESS_TABLE'' + ''#>'')
 SET @_summary_option = nullif(isnull(@_summary_option, nullif(''@summary_option'', replace(''@_summary_option'', ''@_'', ''@''))), ''null'')
 SET @_sub_id = nullif(isnull(@_sub_id, nullif(''@sub_id'', replace(''@_sub_id'', ''@_'', ''@''))), ''null'')
 SET @_stra_id = nullif(isnull(@_stra_id, nullif(''@stra_id'', replace(''@_stra_id'', ''@_'', ''@''))), ''null'')
@@ -130,8 +129,8 @@ SET @_grid = nullif(isnull(@_grid, nullif(''@grid_id'', replace(''@_grid_id'', '
 SET @_country = nullif(isnull(@_country, nullif(''@country_id'', replace(''@_country_id'', ''@_'', ''@''))), ''null'')
 SET @_region = nullif(isnull(@_region, nullif(''@region_id'', replace(''@_region_id'', ''@_'', ''@''))), ''null'')
 SET @_province = nullif(isnull(@_province, nullif(''@province_id'', replace(''@_province_id'', ''@_'', ''@''))), ''null'')
-SET @_station_id = nullif(isnull(@_station_id, nullif(''@station_id'', replace(''@_station_id'', ''@_'', ''@''))), ''null'')
-SET @_dam_id = nullif(isnull(@_dam_id, nullif(''@dam_id'', replace(''@_dam_id'', ''@_'', ''@''))), ''null'')
+--SET @_station_id = nullif(isnull(@_station_id, nullif(''@station_id'', replace(''@_station_id'', ''@_'', ''@''))), ''null'')
+--SET @_dam_id = nullif(isnull(@_dam_id, nullif(''@dam_id'', replace(''@_dam_id'', ''@_'', ''@''))), ''null'')
 SET @_deal_status = nullif(isnull(@_deal_status, nullif(''@deal_status_id'', replace(''@_deal_status_id'', ''@_'', ''@''))), ''null'')
 SET @_confirm_status = nullif(isnull(@_confirm_status, nullif(''@confirm_status_id'', replace(''@_confirm_status_id'', ''@_'', ''@''))), ''null'')
 SET @_profile = nullif(isnull(@_profile, nullif(''@profile_id'', replace(''@_profile_id'', ''@_'', ''@''))), ''null'')
@@ -140,7 +139,7 @@ SET @_term_end = nullif(isnull(@_term_end, nullif(''@term_end'', replace(''@_ter
 SET @_deal_type = nullif(isnull(@_deal_type, nullif(''@deal_type'', replace(''@_deal_type'', ''@_'', ''@''))), ''null'')
 SET @_deal_sub_type = nullif(isnull(@_deal_sub_type, nullif(''@deal_sub_type_id'', replace(''@_deal_sub_type_id'', ''@_'', ''@''))), ''null'')
 SET @_buy_sell_flag = nullif(isnull(@_buy_sell_flag, nullif(''@buy_sell_flag'', replace(''@_buy_sell_flag'', ''@_'', ''@''))), ''null'')
-SET @_counterparty = nullif(isnull(@_counterparty, nullif(''@counterparty_id'', replace(''@_counterparty_id'', ''@_'', ''@''))), ''null'')
+SET @_counterparty = nullif(isnull(@_counterparty, nullif(''@counterparty'', replace(''@_counterparty'', ''@_'', ''@''))), ''null'')
 SET @_contract = nullif(isnull(@_contract, nullif(''@contract'', replace(''@_contract'', ''@_'', ''@''))), ''null'')
 SET @_hour_from = nullif(isnull(@_hour_from, nullif(''@hour_from'', replace(''@_hour_from'', ''@_'', ''@''))), ''null'')
 SET @_hour_to = nullif(isnull(@_hour_to, nullif(''@hour_to'', replace(''@_hour_to'', ''@_'', ''@''))), ''null'')
@@ -194,8 +193,8 @@ EXEC dbo.spa_position_report
 	, @_country = @_country
 	, @_region = @_region
 	, @_province = @_province
-	, @_station_id = @_station_id
-	, @_dam_id = @_dam_id
+	--, @_station_id = @_station_id
+	--, @_dam_id = @_dam_id
 	, @_deal_status = @_deal_status
 	, @_confirm_status = @_confirm_status
 	, @_profile = @_profile
@@ -556,7 +555,7 @@ EXEC dbo.spa_position_report
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Contract'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
+			   , reqd_param = NULL, widget_id = 7, datatype_id = 4, param_data_source = 'browse_contract_counterparty', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -569,7 +568,7 @@ EXEC dbo.spa_position_report
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'contract' AS [name], 'Contract' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'contract' AS [name], 'Contract' AS ALIAS, NULL AS reqd_param, 7 AS widget_id, 4 AS datatype_id, 'browse_contract_counterparty' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = '15 Mins Position by Book View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -622,7 +621,7 @@ EXEC dbo.spa_position_report
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Counterparty'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 7, datatype_id = 4, param_data_source = 'browse_counterparty', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -635,7 +634,7 @@ EXEC dbo.spa_position_report
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'counterparty' AS [name], 'Counterparty' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'counterparty' AS [name], 'Counterparty' AS ALIAS, NULL AS reqd_param, 7 AS widget_id, 4 AS datatype_id, 'browse_counterparty' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = '15 Mins Position by Book View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -853,7 +852,7 @@ EXEC dbo.spa_position_report
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Deal Type'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
+			   , reqd_param = NULL, widget_id = 2, datatype_id = 4, param_data_source = 'exec spa_source_deal_type_maintain ''x''', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -866,7 +865,7 @@ EXEC dbo.spa_position_report
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'deal_type' AS [name], 'Deal Type' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'deal_type' AS [name], 'Deal Type' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 4 AS datatype_id, 'exec spa_source_deal_type_maintain ''x''' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = '15 Mins Position by Book View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -900,72 +899,6 @@ EXEC dbo.spa_position_report
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'DST' AS [name], 'Dst' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = '15 Mins Position by Book View'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = '15 Mins Position by Book View'
-	            AND dsc.name =  'forecast_profile_id'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Forecast Profile Id'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = '15 Mins Position by Book View'
-			AND dsc.name =  'forecast_profile_id'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'forecast_profile_id' AS [name], 'Forecast Profile Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = '15 Mins Position by Book View'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = '15 Mins Position by Book View'
-	            AND dsc.name =  'formula_curve_id'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Formula Curve Id'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = '15 Mins Position by Book View'
-			AND dsc.name =  'formula_curve_id'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'formula_curve_id' AS [name], 'Formula Curve Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = '15 Mins Position by Book View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -2206,7 +2139,7 @@ EXEC dbo.spa_position_report
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Tenor Option'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+			   , reqd_param = NULL, widget_id = 2, datatype_id = 5, param_data_source = 'SELECT ''a'', ''Show All''' + CHAR(10) + 'UNION ALL ' + CHAR(10) + 'SELECT ''f'',''Forward''', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -2219,7 +2152,7 @@ EXEC dbo.spa_position_report
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'tenor_option' AS [name], 'Tenor Option' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'tenor_option' AS [name], 'Tenor Option' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 5 AS datatype_id, 'SELECT ''a'', ''Show All''' + CHAR(10) + 'UNION ALL ' + CHAR(10) + 'SELECT ''f'',''Forward''' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = '15 Mins Position by Book View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -3088,6 +3021,72 @@ EXEC dbo.spa_position_report
 	END 
 	
 	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = '15 Mins Position by Book View'
+	            AND dsc.name =  'MW_Position'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Mw Position'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 3, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = '15 Mins Position by Book View'
+			AND dsc.name =  'MW_Position'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'MW_Position' AS [name], 'Mw Position' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 3 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = '15 Mins Position by Book View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = '15 Mins Position by Book View'
+	            AND dsc.name =  'total_hours'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Total Hours'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = '15 Mins Position by Book View'
+			AND dsc.name =  'total_hours'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'total_hours' AS [name], 'Total Hours' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = '15 Mins Position by Book View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
 	DELETE dsc
 	FROM data_source_column dsc 
 	INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -3109,4 +3108,3 @@ EXEC dbo.spa_position_report
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
-	
