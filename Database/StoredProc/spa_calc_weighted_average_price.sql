@@ -92,8 +92,8 @@ DECLARE @dst_group_value_id INT
 	, @aggregation_level INT = 980
 	, @total_columns NVARCHAR(MAX)
 	, @granularity int 
-	, @min_term datetime 
-	, @max_term datetime
+	, @min_term varchar(10) 
+	, @max_term varchar(10)
 
 SELECT @dst_group_value_id = tz.dst_group_value_id	--102201
 FROM adiha_default_codes_values adcv
@@ -356,8 +356,8 @@ BEGIN
 		GROUP BY sdh.source_deal_header_id '
 	EXEC(@sql)
 
-	SELECT @min_term = MIN(CAST(term_start AS DATE))
-		, @max_term = MAX(CAST(term_end AS DATE)) 
+	SELECT @min_term = CONVERT(VARCHAR(10),MIN(term_start),120)
+		, @max_term =  CONVERT(VARCHAR(10),MAX(term_end),120) 
 		, @granularity = MAX(fp.granularity) 
 	FROM #deal_max_term src
 	INNER JOIN forecast_profile fp ON fp.external_id = src.profile_name
@@ -377,8 +377,8 @@ BEGIN
 
 		EXEC(@sql)
 
-		SELECT @min_term = MIN(CAST(term_start AS DATE))
-			, @max_term = MAX(CAST(term_end AS DATE)) 
+		SELECT @min_term = CONVERT(VARCHAR(10),MIN(term_start),120)
+			, @max_term =  CONVERT(VARCHAR(10),MAX(term_end),120) 
 			, @granularity = 982 
 		FROM #deal_max_term src
 		--INNER JOIN forecast_profile fp ON fp.external_id = src.profile_name
@@ -760,10 +760,11 @@ DROP TABLE #source_price_curve
 CREATE TABLE #source_price_curve(source_curve_def_id INT, maturity_date DATETIME, as_of_date DATETIME, is_dst INT, granularity INT)
 SET @sql = 'INSERT INTO #source_price_curve(source_curve_def_id,maturity_date,as_of_date,is_dst,granularity)
 	SELECT spc.source_curve_def_id, spc.maturity_date, MAX(spc.as_of_date) as_of_date, spc.is_dst,MAX(spcd.granularity) granularity
-	FROM #collect_deals d	
+	FROM (SELECT DISTINCT curve_id FROM  #collect_deals) d	
 	INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = d.curve_id
 	INNER JOIN source_price_curve spc ON  spc.source_curve_def_id = spcd.source_curve_def_id
 	WHERE spc.curve_source_value_id = 4500
+		AND spc.maturity_date BETWEEN ''' + @min_term + ''' AND ''' + @max_term + '''
 	GROUP BY spc.source_curve_def_id, spc.maturity_date, spc.is_dst
 	UNION
 	SELECT spc.source_curve_def_id, spc.maturity_date, MAX(spc.as_of_date) as_of_date, spc.is_dst,MAX(spcd.granularity) granularity
@@ -771,15 +772,18 @@ SET @sql = 'INSERT INTO #source_price_curve(source_curve_def_id,maturity_date,as
 	INNER JOIN source_price_curve_def spcd ON spcd.curve_id = d.[index]
 	INNER JOIN source_price_curve spc ON  spc.source_curve_def_id = spcd.source_curve_def_id
 	WHERE spc.curve_source_value_id = 4500
+			AND spc.maturity_date BETWEEN ''' + @min_term + ''' AND ''' + @max_term + '''
 	GROUP BY spc.source_curve_def_id, spc.maturity_date, spc.is_dst
 	UNION
 	SELECT spc.source_curve_def_id, spc.maturity_date, MAX(spc.as_of_date) as_of_date, spc.is_dst,MAX(spcd.granularity) granularity
 	FROM #generic_mapping_values gmv
 	INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = gmv.clm18_value
 	INNER JOIN source_price_curve spc ON  spc.source_curve_def_id = spcd.source_curve_def_id
+		AND spc.maturity_date BETWEEN ''' + @min_term + ''' AND ''' + @max_term + '''
 	WHERE spc.curve_source_value_id = 4500
 	GROUP BY spc.source_curve_def_id, spc.maturity_date, spc.is_dst
 	'
+
 
 EXEC(@sql)
 --select top 2 * from #source_price_curve where term_start='2021-01-01' and hr=1
