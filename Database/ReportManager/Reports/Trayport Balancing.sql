@@ -435,9 +435,9 @@ WHERE sdd.leg = 1
 	CREATE INDEX indx_udt_tp ON #temp_position (source_deal_detail_id,term_start,hr,[period])
 
 	UPDATE a
-	SET volume = IIF(a.is_dst = 0, a.volume - rs.volume,a.volume) 
-	FROM #temp_position a
-	CROSS APPLY(SELECT source_deal_header_id,term_start,hr,volume 
+SET volume = IIF(a.is_dst = 0, a.volume - rs.volume,a.volume) 
+FROM #temp_position a
+CROSS APPLY(SELECT source_deal_header_id,term_start,hr,volume 
 	FROM #temp_position b 
 	WHERE b.source_deal_header_id = a.source_deal_header_id
 		AND a.term_start = b.term_start
@@ -553,13 +553,13 @@ WHERE sdd.leg = 1
 
 				, tp.volume
 
-				, IIF( pd.template_id = '' + CAST(@_stg_withdrawal_template_id AS NVARCHAR(20)) + '', ISNULL(csw.wacog,0)
+				, IIF( pd.template_id = '' + CAST(@_stg_withdrawal_template_id AS NVARCHAR(20)) + '', NULL --ISNULL(csw.wacog,0)
 
 					, ISNULL(sddh.sddh_price, sdd.fixed_price)) price
 
 				, ABS(tp.volume) * IIF( pd.template_id = '' + CAST(@_stg_withdrawal_template_id AS NVARCHAR(20)) + ''
 
-										, ISNULL(csw.wacog,0)
+										, NULL --ISNULL(csw.wacog,0)
 
 										,ISNULL(sddh.sddh_price, sdd.fixed_price))
 
@@ -573,29 +573,29 @@ WHERE sdd.leg = 1
 
 			INNER JOIN source_deal_header pd on pd.deal_id = tp.deal_id_to_process				
 
-			OUTER APPLY(SELECT MAX(csw.term) term ,csw.location_id,csw.contract_id
+			--OUTER APPLY(SELECT MAX(csw.term) term ,csw.location_id,csw.contract_id
 
-				FROM source_deal_detail sd 
+			--	FROM source_deal_detail sd 
 
-				INNER JOIN calcprocess_storage_wacog csw ON csw.term < tp.term_start
+			--	INNER JOIN calcprocess_storage_wacog csw ON csw.term < tp.term_start
 
-					AND csw.location_id = sd.location_id
+			--		AND csw.location_id = sd.location_id
 
-					AND csw.contract_id = pd.contract_id
+			--		AND csw.contract_id = pd.contract_id
 
-				WHERE sd.source_deal_header_id = pd.source_deal_header_id
+			--	WHERE sd.source_deal_header_id = pd.source_deal_header_id
 
-					AND tp.term_start BETWEEN sd.term_start AND sd.term_end
+			--		AND tp.term_start BETWEEN sd.term_start AND sd.term_end
 
-				GROUP BY csw.location_id, csw.contract_id
+			--	GROUP BY csw.location_id, csw.contract_id
 
-			) mx_wacog
+			--) mx_wacog
 
-			LEFT JOIN calcprocess_storage_wacog csw ON csw.term = mx_wacog.term
+			--LEFT JOIN calcprocess_storage_wacog csw ON csw.term = mx_wacog.term
 
-				AND csw.location_id = mx_wacog.location_id
+			--	AND csw.location_id = mx_wacog.location_id
 
-				AND csw.contract_id = mx_wacog.contract_id	
+			--	AND csw.contract_id = mx_wacog.contract_id	
 
 			LEFT JOIN #source_deal_detail_hour sddh ON sddh.source_deal_detail_id = tp.source_deal_detail_id
 
