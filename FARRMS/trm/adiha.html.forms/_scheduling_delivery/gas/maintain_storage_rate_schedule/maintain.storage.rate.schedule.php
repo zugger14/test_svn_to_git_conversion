@@ -205,21 +205,22 @@
                     generate_error_message(first_err_tab);
                 }
                 if (valid_status == 1) {
+                    var all_rows = grid_obj.getAllRowIds()
+                    if ( all_rows !== '') {
+                        rate_or_formula = grid_obj.getAllRowIds().split(',').map(row_id => {
+                            var rate_val = grid_obj.cells(row_id ,8).getValue();
+                            var formula_val = grid_obj.cells(row_id ,11).getValue();
 
+                            return Boolean(rate_val) || Boolean(formula_val)
+                        }).reduce((final_state,current_state) => {
+                            return final_state && current_state;
+                        }, true);
 
-                    var rate_or_formula = grid_obj.getAllRowIds().split(',').map(row_id => {
-                        var rate_val = grid_obj.cells(row_id ,8).getValue();
-                        var formula_val = grid_obj.cells(row_id ,11).getValue();
-
-                        return Boolean(rate_val) || Boolean(formula_val)
-                    }).reduce((final_state,current_state) => {
-                        return final_state && current_state;
-                    }, true);
-
-                    if(!rate_or_formula){
-                        var grid_name = grid_obj.getUserData("", "grid_label");
-                        show_messagebox('Either <b>Rate</b> or <b>Formula</b> is required in <b>' + grid_name + '</b>.');
-                        return;
+                        if(!rate_or_formula){
+                            var grid_name = grid_obj.getUserData("", "grid_label");
+                            show_messagebox('Either <b>Rate</b> or <b>Formula</b> is required in <b>' + grid_name + '</b>.');
+                            return;
+                        }
                     }
 
                     win.getAttachedToolbar().disableItem('save');
