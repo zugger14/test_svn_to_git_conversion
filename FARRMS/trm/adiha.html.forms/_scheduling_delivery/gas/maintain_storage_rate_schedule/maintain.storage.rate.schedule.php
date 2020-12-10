@@ -115,16 +115,14 @@
                 var first_err_tab;
                 var first_err_tab;
                 var tabsCount = tab_obj.getNumberOfTabs();
-
-                got_rate = true;
-                got_formula = true;
-                grid_name = '';
+                var grid_obj;
 
                 $.each(detail_tabs, function (index, value) {
                     layout_obj = tab_obj.cells(value).getAttachedObject();
                     layout_obj.forEachItem(function (cell) {
                         attached_obj = cell.getAttachedObject();
                         if (attached_obj instanceof dhtmlXGridObject) {
+                            grid_obj = attached_obj;
                             attached_obj.clearSelection();
                             var ids = attached_obj.getChangedRows(true);
                             grid_id = attached_obj.getUserData("", "grid_id");
@@ -157,16 +155,6 @@
                                                 //Cannot use typeof because it returns string
                                                 grid_xml += " " + attached_obj.getColumnId(cellIndex) + '= "NULL"';
                                                 continue;
-                                            }
-
-                                            if(attached_obj.getColumnId(cellIndex) == 'formula_name' && attached_obj.cells(value, cellIndex).getValue() == '') {
-                                                got_formula = false;
-                                                grid_name = attached_obj.getUserData("", "grid_label");
-
-                                            }
-                                            if(attached_obj.getColumnId(cellIndex) == 'rate'  && attached_obj.cells(value, cellIndex).getValue() == '') {
-                                                got_rate = false;
-                                                grid_name = attached_obj.getUserData("", "grid_label");
                                             }
 
                                             grid_xml += " " + attached_obj.getColumnId(cellIndex) + '="' + attached_obj.cells(value, cellIndex).getValue() + '"';
@@ -218,7 +206,18 @@
                 }
                 if (valid_status == 1) {
 
-                    if(!(got_rate || got_formula)){
+
+                    var rate_or_formula = grid_obj.getAllRowIds().split(',').map(row_id => {
+                        var rate_val = grid_obj.cells(row_id ,8).getValue();
+                        var formula_val = grid_obj.cells(row_id ,11).getValue();
+
+                        return Boolean(rate_val) || Boolean(formula_val)
+                    }).reduce((final_state,current_state) => {
+                        return final_state && current_state;
+                    }, true);
+
+                    if(!rate_or_formula){
+                        var grid_name = grid_obj.getUserData("", "grid_label");
                         show_messagebox('Either <b>Rate</b> or <b>Formula</b> is required in <b>' + grid_name + '</b>.');
                         return;
                     }
