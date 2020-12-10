@@ -200,7 +200,7 @@
                 xml += form_xml;
                 xml += grid_xml;
                 xml += "</Root>";
-                xml = xml.replace(/'/g, "\"");
+                // xml = xml.replace(/'/g, "\"");
                 if (!form_status) {
                     generate_error_message(first_err_tab);
                 }
