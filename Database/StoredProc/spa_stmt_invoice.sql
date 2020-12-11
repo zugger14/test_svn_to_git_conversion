@@ -255,7 +255,7 @@ BEGIN
 				SET @sql += ' AND si.invoice_status = ' + CAST(@invoice_status AS VARCHAR(20)) + char(10) 
 
 			IF @acc_status IS NOT NULL AND @acc_status != ''
-				SET @sql += ' AND si.is_finalized = ''' + CAST(@acc_status AS VARCHAR(20)) + '''' + char(10)
+				SET @sql += ' AND ISNULL(si.is_finalized, ''n'') = ''' + CAST(@acc_status AS VARCHAR(20)) + '''' + char(10)
             
            IF @loc_status IS NOT NULL AND @loc_status != ''
 				SET @sql += ' AND ISNULL(si.is_locked,''n'') = ''' + CAST(@loc_status AS VARCHAR(20)) + '''' + char(10)
