@@ -287,7 +287,7 @@ IF EXISTS (
 		AND COLUMN_NAME = ''create_ts''
 )
 BEGIN
-	DELETE FROM source_system_data_import_status WHERE create_ts < @three_months
+	DELETE FROM source_system_data_import_status WHERE create_ts < @one_month
 END
 
 IF EXISTS (
@@ -297,7 +297,7 @@ IF EXISTS (
 		AND COLUMN_NAME = ''create_ts''
 )
 BEGIN
-	DELETE FROM source_system_data_import_status_detail WHERE create_ts < @three_months
+	DELETE FROM source_system_data_import_status_detail WHERE create_ts < @one_month
 END
 
 IF EXISTS (
