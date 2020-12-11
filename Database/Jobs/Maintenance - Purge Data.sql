@@ -197,7 +197,7 @@ IF EXISTS (
 		AND COLUMN_NAME = ''create_ts''
 )
 BEGIN
-	DELETE FROM message_board WHERE create_ts < @three_months
+	DELETE FROM message_board WHERE create_ts < @one_month
 END
 
 IF EXISTS (
