@@ -234,7 +234,10 @@
         var counterparty_type  = SettlementInvoice.filter_form.getItemValue('counterparty_type',true);
         // var counterparty_id  = SettlementInvoice.filter_form.getItemValue('counterparty_id',true);
         // var contract_id  = SettlementInvoice.filter_form.getItemValue('contract_id',true);
-        var invoice_type  = SettlementInvoice.filter_form.getItemValue('invoice_type',true);
+
+        var invoice_type_combo_obj  = SettlementInvoice.filter_form.getCombo('invoice_type');
+        invoice_type = invoice_type_combo_obj.getChecked().toString();
+
         var invoice_id  = SettlementInvoice.filter_form.getItemValue('invoice_id',true);
         var show_backing_sheets  = SettlementInvoice.filter_form.isItemChecked('individual_invoice');
 		if (show_backing_sheets == true) { show_backing_sheets = 'y'} else {show_backing_sheets = 'n'}
@@ -249,6 +252,7 @@
         
         var counterparty_combo_obj = SettlementInvoice.filter_form.getCombo('counterparty_id');
         counterparty_id = counterparty_combo_obj.getChecked().toString();
+        console.log(counterparty_id);
 
         var contract_combo_obj = SettlementInvoice.filter_form.getCombo('contract_id');
         contract_id = contract_combo_obj.getChecked().toString();

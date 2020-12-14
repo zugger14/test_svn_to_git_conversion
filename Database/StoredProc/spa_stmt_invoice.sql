@@ -70,7 +70,7 @@ CREATE PROCEDURE [dbo].[spa_stmt_invoice]
 	@counterparty_type CHAR(1) = NULL,
 	@counterparty_id NVARCHAR(1000) = NULL,
 	@contract_id VARCHAR(500) = NULL,
-	@invoice_type CHAR(1) = NULL,
+	@invoice_type VARCHAR(10) = NULL,
 	@invoice_id VARCHAR(100) = NULL, 
 	@show_backing_sheets CHAR(1) = NULL,
 	@commodity_id INT = NULL,
@@ -239,8 +239,8 @@ BEGIN
 			IF @contract_id IS NOT NULL AND @contract_id != ''
 				SET @sql += ' AND si.contract_id IN (' + @contract_id + ')' + char(10)
 
-			--IF @invoice_type IS NOT NULL AND @invoice_type != ''
-			--	SET @sql +=  ' AND si.invoice_type = ''' + @invoice_type + '''' + char(10)
+			IF @invoice_type IS NOT NULL AND @invoice_type != ''
+				SET @sql +=  ' AND si.invoice_type IN(''' + REPLACE(@invoice_type,',', ''',''') + ''')' + char(10)
 
 			IF @invoice_id IS NOT NULL AND @invoice_id != ''  
 				SET @sql += ' AND CAST(si.stmt_invoice_id AS VARCHAR) = ''' + CAST(@invoice_id AS VARCHAR(100))+'''' + char(10)
@@ -367,7 +367,8 @@ BEGIN
 				SET @sql +=  ' AND CASE WHEN a.invoice_type = ''Invoice'' THEN ''i''
 										WHEN a.invoice_type = ''Remittance'' THEN ''r''	
 										WHEN a.invoice_type = ''Netting'' THEN ''n'' 
-								END = ''' + @invoice_type + '''' + char(10)
+								END IN(''' + REPLACE(@invoice_type,',', ''',''') + ''')' + char(10)
+
 			EXEC(@sql)
 
 END
