@@ -180,7 +180,10 @@ END
 IF object_id('tempdb..#total_process_deals') IS NOT null
 	DROP TABLE  #total_process_deals
 
-create table #total_process_deals(source_deal_header_id int)
+CREATE TABLE #total_process_deals(
+	source_deal_header_id int,
+	source_deal_detail_id int
+)
 
 	
 
@@ -489,7 +492,10 @@ BEGIN
 		IF @@ROWCOUNT<1 and @exit=1
 			RETURN
 
-		exec('insert into #total_process_deals (source_deal_header_id) select distinct source_deal_header_id from '+@effected_deals ) 
+		EXEC('INSERT INTO #total_process_deals (source_deal_header_id, source_deal_detail_id) 
+			  SELECT DISTINCT source_deal_header_id, source_deal_detail_id 
+			  FROM ' + @effected_deals 
+		) 
 			
 			
 	END --else isnull(@call_from,0)IN (0,2)
@@ -781,6 +787,7 @@ begin
 
 	EXEC ('CREATE TABLE ' + @alert_process_table + ' (
        		source_deal_header_id  VARCHAR(500),
+			source_deal_detail_id  VARCHAR(500),
        		deal_date              DATETIME,
        		term_start             DATETIME,
        		counterparty_id        VARCHAR(100),
@@ -793,16 +800,22 @@ begin
 	SET @sql = 'INSERT INTO ' + @alert_process_table + '
 	(
 		source_deal_header_id,
+		source_deal_detail_id,
 		deal_date,
 		term_start,
 		counterparty_id
 	)
-	SELECT distinct sdh.source_deal_header_id,
+	SELECT DISTINCT sdh.source_deal_header_id,
+		sdd.source_deal_detail_id,
 		sdh.deal_date,
-		sdh.entire_term_start,
+		sdd.term_start,
 		sdh.counterparty_id
 	FROM   source_deal_header sdh 
-		inner join #total_process_deals tpd on sdh.source_deal_header_id=tpd.source_deal_header_id
+	INNER JOIN #total_process_deals tpd 
+		ON sdh.source_deal_header_id = tpd.source_deal_header_id
+	INNER JOIN source_deal_detail sdd 
+		ON sdd.source_deal_header_id = tpd.source_deal_header_id
+		AND sdd.source_deal_detail_id = tpd.source_deal_detail_id 
 	'
 
 	IF ISNULL(@call_from_2, '') <> 'alert' AND @trigger_workflow = 'y'
