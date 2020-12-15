@@ -822,7 +822,15 @@ begin
 	BEGIN
 		EXEC(@sql)
 		EXEC spa_print @sql
-		EXEC spa_register_event 20601, 20509, @alert_process_table, 1, @process_id
+			
+        DECLARE @job_name1 NVARCHAR(100)       
+			   
+        SET @job_name1 = 'alert_from_position_calc' + @process_id
+		SET @sql= 'spa_register_event 20601, 20509, ''' + @alert_process_table + ''', 1, ''' + @process_id + ''''
+     
+        EXEC spa_run_sp_as_job @job_name1, @sql, 'spa_register_event', @user_login_id    		
+		
+		--EXEC spa_register_event 20601, 20509, @alert_process_table, 1, @process_id
 	END
 end
 END TRY
