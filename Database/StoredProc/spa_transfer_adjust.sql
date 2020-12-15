@@ -19,8 +19,15 @@ GO
 
 --exec spa_transfer_adjust 101014
 
+
+--SET @deal_term_start = '2012-01-01'
+--SET @deal_term_end = '2012-01-01'
+
+
 CREATE PROCEDURE spa_transfer_adjust
 	@source_deal_header_id INT
+	,@term DATETIME = NULL
+	,@is_deal_created BIT = NULL OUTPUT
 AS
 
 /* DEBUG
@@ -47,7 +54,12 @@ EXEC [spa_drop_all_temp_table]
 
 -- DECLARE @source_deal_header_id INT = 108076
  
- DECLARE @source_deal_header_id INT = 106492  
+
+--EXEC [dbo].[spa_transfer_adjust] @source_deal_header_id = 120208, @term = '2010-06-16'
+
+DECLARE @source_deal_header_id INT = 120208  
+DECLARE @term DATETIME = '2010-06-16'
+DECLARE @is_deal_created BIT
 
 --DECLARE @source_deal_header_id INT = 104615 
 
@@ -120,9 +132,28 @@ BEGIN
 	SET @should_auto_path_calc = 1
 END
 
+
+
+
+--SET @deal_term_start = '2012-01-01'
+--SET @deal_term_end = '2012-01-01'
+
+IF @term IS NULL 
+BEGIN
+	SELECT  @deal_term_start = MIN(term_start)
+		, @deal_term_end = MAX(term_end)
+	FROM source_deal_detail 
+	WHERE source_Deal_header_id = @source_deal_header_id   --8407 -- @source_deal_header_id  
+	GROUP BY source_deal_header_id 
+END 
+ELSE 
+BEGIN
+	 SET @deal_term_start = @term
+	 SET @deal_term_end = @term
+END
+
+
 SELECT @deal_location_id = MIN(location_id)
-	, @deal_term_start = MIN(term_start)
-	, @deal_term_end = MAX(term_end)
 FROM source_deal_detail 
 WHERE source_Deal_header_id = @source_deal_header_id   --8407 -- @source_deal_header_id  
 GROUP BY source_deal_header_id 
@@ -691,8 +722,10 @@ BEGIN
 					WHERE udf_value = CAST(@source_deal_header_id AS NVARCHAR(10))
 						AND sdht.template_name = 'Transportation NG'
 						AND sdv.code = 'Complex-LTO'
+						AND YEAR(sdd.term_start) =  YEAR(@flow_date_from)
+						AND MONTH(sdd.term_start) =  MONTH(@flow_date_from)
 					GROUP BY sdh.source_deal_header_id
-					HAVING MIN (sdd.term_start) BETWEEN @flow_date_from AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')
+					-- HAVING MIN (sdd.term_start) BETWEEN @flow_date_from AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')
 
 					)
 		BEGIN
@@ -1250,9 +1283,11 @@ BEGIN
 							ON sdd.source_deal_header_id = sdh.source_deal_header_id
 						WHERE udf_value = CAST(@source_deal_header_id AS NVARCHAR(10))
 							AND sdht.template_name = 'Transportation NG'
-							AND sdv.code = 'Complex-ROD'
+							AND sdv.code = 'Complex-ROD'							
+							AND YEAR(sdd.term_start) =  YEAR(@flow_date_from)
+							AND MONTH(sdd.term_start) =  MONTH(@flow_date_from) 
 						GROUP BY sdh.source_deal_header_id
-						HAVING MIN (sdd.term_start) BETWEEN @flow_date_from AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')
+						-- HAVING MIN (sdd.term_start) BETWEEN @flow_date_from AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')
 						)
 			BEGIN
 				SET @reschedule = 1
@@ -1570,7 +1605,7 @@ BEGIN
 	SET @flow_date_from = @deal_term_start -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_start, 'f')
 	SET @flow_date_to = @deal_term_end -- [dbo].[FNAGetFirstLastDayOfMonth](@deal_term_end, 'f')
 
-	
+
 	WHILE (@flow_date_from <= @flow_date_to)
 	BEGIN
 		SET @process_id = dbo.FNAGetNewID()
@@ -1594,8 +1629,9 @@ BEGIN
 						WHERE udf_value = CAST(@source_deal_header_id AS NVARCHAR(10))
 							AND sdht.template_name = 'Transportation NG'
 							AND sdv.code = @product_group
-						GROUP BY sdh.source_deal_header_id
-						HAVING MIN (sdd.term_start) BETWEEN @flow_date_from AND [dbo].[FNAGetFirstLastDayOfMonth](@flow_date_from, 'l')		)
+							AND YEAR(sdd.term_start) =  YEAR(@flow_date_from)
+							AND MONTH(sdd.term_start) =  MONTH(@flow_date_from) 
+						GROUP BY sdh.source_deal_header_id	)
 		BEGIN
 			SET @reschedule = 1
 		END
@@ -1604,6 +1640,15 @@ BEGIN
 			SET @reschedule = 0
 		END
 
+
+		--	select 
+		--	 @source_deal_header_id,
+		--	 @reschedule,
+		--	 @flow_date_from,
+		--	@transport_deal_id,
+		--	@process_id
+		
+		--return;
 
 		EXEC [dbo].[spa_auto_deal_schedule]
 			@source_deal_header_id = @source_deal_header_id,
@@ -1821,3 +1866,7 @@ BEGIN
 	
 END
 
+IF EXISTS (SELECT 1 FROM #temp_transport_deal)
+BEGIN
+	SET @is_deal_created = 1
+END
