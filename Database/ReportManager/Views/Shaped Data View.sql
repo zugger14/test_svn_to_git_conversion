@@ -140,6 +140,10 @@ SET @_sql = ''
 				END [Term]
 			,LEFT(a.user_clm, 2) [Hour]
 			,ABS(sddh.is_dst) [DST]
+			,sdd.leg [Leg]
+			,'''''''' [Minute]
+			,'''''''' [Schedule Volume]
+			,'''''''' [Actual Volume]
 		--[__batch_report__]
 		FROM source_deal_header sdh
 		INNER JOIN #books books 
@@ -1048,6 +1052,142 @@ EXEC(@_sql)
 	
 	
 
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Shaped Data View'
+	            AND dsc.name =  'Actual Volume'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Actual Volume'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Shaped Data View'
+			AND dsc.name =  'Actual Volume'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'Actual Volume' AS [name], 'Actual Volume' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Shaped Data View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Shaped Data View'
+	            AND dsc.name =  'Leg'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Leg'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Shaped Data View'
+			AND dsc.name =  'Leg'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'Leg' AS [name], 'Leg' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Shaped Data View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Shaped Data View'
+	            AND dsc.name =  'Minute'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Minute'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Shaped Data View'
+			AND dsc.name =  'Minute'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'Minute' AS [name], 'Minute' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Shaped Data View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Shaped Data View'
+	            AND dsc.name =  'Schedule Volume'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Schedule Volume'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Shaped Data View'
+			AND dsc.name =  'Schedule Volume'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'Schedule Volume' AS [name], 'Schedule Volume' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Shaped Data View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
 	DELETE dsc
 	FROM data_source_column dsc 
 	INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -1069,5 +1209,4 @@ COMMIT TRAN
 	END CATCH
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
-		DROP TABLE #data_source_column	
-	
+		DROP TABLE #data_source_column
