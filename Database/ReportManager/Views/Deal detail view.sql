@@ -55,7 +55,7 @@ DECLARE @_deal_sub_type_type_id VARCHAR(500)
 DECLARE @_template_id VARCHAR(1000)
 DECLARE @_profile_id VARCHAR(1000)
 DECLARE @_commodity_id VARCHAR(1000)
-DECLARE @_source_deal_header_id VARCHAR(100)
+DECLARE @_source_deal_header_id VARCHAR(1000)
 DECLARE @_counterparty_type VARCHAR(MAX)
 DECLARE @_internal_counterparty VARCHAR(MAX)
 DECLARE @_pricing_period VARCHAR(MAX)
@@ -206,7 +206,7 @@ SET @_sql = ''
 	INNER JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.counterparty_id
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
 	WHERE 1 = 1 '' +
-		CASE WHEN @_source_deal_header_id IS NOT NULL THEN '' AND sdh.source_deal_header_id = '' + @_source_deal_header_id + '''' ELSE '''' END +
+		CASE WHEN @_source_deal_header_id IS NOT NULL THEN '' AND sdh.source_deal_header_id IN ('' + @_source_deal_header_id + '')'' ELSE '''' END +
 		CASE WHEN @_deal_id IS NOT NULL THEN '' AND sdh.deal_id = '''''' + @_deal_id + '''''''' ELSE '''' END +
 		CASE WHEN @_deal_date_from IS NOT NULL THEN '' AND sdh.deal_date >= '''''' + @_deal_date_from + '''''''' ELSE '''' END +
 		CASE WHEN @_deal_date_to IS NOT NULL THEN '' AND sdh.deal_date <= '''''' + @_deal_date_to + '''''''' ELSE '''' END +
@@ -7700,7 +7700,7 @@ WHERE ((sdh.deal_date <= CAST(@_as_of_date AS DATETIME) AND sdd.term_end >= CAST
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Shipment Status'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 1, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -7713,7 +7713,7 @@ WHERE ((sdh.deal_date <= CAST(@_as_of_date AS DATETIME) AND sdd.term_end >= CAST
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'shipment_status' AS [name], 'Shipment Status' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'shipment_status' AS [name], 'Shipment Status' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 1 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Deal Detail View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
