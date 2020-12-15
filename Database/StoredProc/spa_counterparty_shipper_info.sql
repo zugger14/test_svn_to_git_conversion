@@ -324,7 +324,7 @@ BEGIN
 					tscmd.is_default = 'y' 
 						OR tscmd.shipper_code1_is_default = 'y'
 				)
-				AND tscmd.shipper_code_mapping_detail_id <> scmd.shipper_code_mapping_detail_id
+				AND ISNULL(tscmd.shipper_code_mapping_detail_id, '') <> scmd.shipper_code_mapping_detail_id
 		)
 		BEGIN
 			EXEC spa_ErrorHandler 1
