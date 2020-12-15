@@ -9,10 +9,12 @@ BEGIN
     CREATE TABLE dbo.process_deal_alert_transfer_adjust
     (
 		source_deal_header_id INT,
+		source_deal_detail_id INT,
 		create_user	NVARCHAR(30),
 		create_ts	DATETIME,
 		process_status TINYINT NOT NULL,
-		error_description NVARCHAR(4000)
+		error_description NVARCHAR(200),
+		process_id NVARCHAR(4000)
     )   
 END
 ELSE
