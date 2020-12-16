@@ -38,6 +38,16 @@ BEGIN
 	FROM application_functional_users
 	WHERE login_id = @user_name
 		AND function_id = @function_id
+	UNION
+	SELECT entity_id,
+		   afu.role_id,
+		   login_id,
+		   function_id
+	FROM [application_role_user] aru
+	INNER JOIN application_functional_users afu
+		ON afu.role_id = aru.role_id
+	WHERE aru.user_login_id = @user_name
+		AND function_id = @function_id
 	
 	INSERT INTO @ssbm
 	SELECT DISTINCT
