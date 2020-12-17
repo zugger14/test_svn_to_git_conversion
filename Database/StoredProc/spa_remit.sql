@@ -2962,7 +2962,7 @@ BEGIN
 				[Type of code used in field 7] = NULL,
 				[Trading capacity of the market participant or counterparty in field 1] = 'P',
 				[Buy_sell_indicator] = CASE WHEN ROUND(MAX(tvf.total_notional_contract_quantity), 5) < 0 THEN CASE WHEN MAX(UPPER(td.header_buy_sell_flag)) = 'b' THEN 'S' WHEN MAX(UPPER(td.header_buy_sell_flag)) = 's' THEN 'B' END ELSE MAX(UPPER(td.header_buy_sell_flag)) END,
-				[Contract ID] = MAX(td.source_deal_header_id),
+				[Contract ID] = 'ENERCITY' + CAST(MAX(td.source_deal_header_id) AS VARCHAR(40)) ,
 				[Contract date] = MAX(td.deal_date),
 				[Contract type] = MAX(rs_contract_type.[Contract Type]),
 				[Energy commodity] = MAX(CASE WHEN (scom.commodity_name) IN ('ELectricity', 'Power') THEN 'EL' 
@@ -3807,7 +3807,7 @@ BEGIN
 				   [last_trading_date_and_time] = NULL,
 				   [transaction_timestamp] = CONVERT(VARCHAR(10), CAST(MAX(gmv_rid.[date]) AS DATETIME),126) + 'T' + MAX(gmv_rid.[time]), --This field should indicate the date each MP confirms the price and the quantity for the delivery period.
 				   [unique_transaction_id] = td.source_deal_header_id,
-				   [linked_transaction_id] = td.source_deal_header_id,
+				   [linked_transaction_id] = 'ENERCITY' + CAST(td.source_deal_header_id AS VARCHAR(40)),
 				   [linked_order_id] = NULL,
 				   [voice_brokered] = NULL,
 				   [Price] = CASE WHEN MAX(ts.volume) <> 0 THEN ABS(ROUND(MAX(ts.settlement_amount)/MAX(ts.volume), 5)) ELSE 0 END,---amount divided by volume
