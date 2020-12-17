@@ -13,7 +13,7 @@ BEGIN
 			BEGIN
 				SELECT @old_ixp_rule_id = ixp_rules_id
 			FROM ixp_rules ir
-			WHERE ir.ixp_rules_name = 'Generation Gas ST Forecast'
+			WHERE ir.ixp_rules_name = 'Generation_Gas_ST_Forecast'
 			END
 
 			 
@@ -41,7 +41,7 @@ BEGIN
 
 				INSERT INTO ixp_rules (ixp_rules_name, individuals_script_per_ojbect, limit_rows_to, before_insert_trigger, after_insert_trigger, import_export_flag, is_system_import, ixp_owner, ixp_category, is_active,ixp_rule_hash)
 				VALUES( 
-					'Generation Gas ST Forecast' ,
+					'Generation_Gas_ST_Forecast' ,
 					'N' ,
 					NULL ,
 					'
@@ -338,15 +338,14 @@ LEFT JOIN forecast_profile fp_buy
 	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-UNION ALL
+UNION
 SELECT 
-	fp_sell.external_id
+	IIF(cast(calc.[Volume] as numeric(38,20)) < 0.00, fp_buy.external_id, fp_sell.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    --, ABS(calc.[Volume])
-	,ABS(CAST(calc.[Volume] AS NUMERIC(38,20)))
+	, ''0.00''
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON calc.[Profile Name] = tp.[profile_name]
@@ -354,11 +353,11 @@ INNER JOIN #temp_position tp
 	AND calc.hour = tp.hr
 	AND ISNULL(calc.Minute,0) = tp.period
 	AND calc.[Is DST] = tp.is_dst
+LEFT JOIN forecast_profile fp_buy
+	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-WHERE cast(calc.[Volume] as numeric(38,20)) = 0.00
---cast(calc.[Volume] as numeric(38)) = 0.00
-UNION ALL
+UNION
 SELECT IIF(CAST(a.Volume AS NUMERIC(38,20)) >= 0.00, gm.dest_sell_profile, gm.dest_buy_profile) [profile name]
 	, a.Term
 	, a.[Hour]
@@ -396,7 +395,7 @@ WHERE tp.Term IS NULL
 AND gm_profile.source_profile1 IS NOT NULL',
 					NULL,
 					'i' ,
-					'n' ,
+					'y' ,
 					@admin_user ,
 					23502,
 					1,
@@ -421,7 +420,7 @@ AND gm_profile.source_profile1 IS NOT NULL',
 			
 			UPDATE
 			ixp_rules
-			SET ixp_rules_name = 'Generation Gas ST Forecast'
+			SET ixp_rules_name = 'Generation_Gas_ST_Forecast'
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
 				, before_insert_trigger = '
@@ -718,15 +717,14 @@ LEFT JOIN forecast_profile fp_buy
 	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-UNION ALL
+UNION
 SELECT 
-	fp_sell.external_id
+	IIF(cast(calc.[Volume] as numeric(38,20)) < 0.00, fp_buy.external_id, fp_sell.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    --, ABS(calc.[Volume])
-	,ABS(CAST(calc.[Volume] AS NUMERIC(38,20)))
+	, ''0.00''
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON calc.[Profile Name] = tp.[profile_name]
@@ -734,11 +732,11 @@ INNER JOIN #temp_position tp
 	AND calc.hour = tp.hr
 	AND ISNULL(calc.Minute,0) = tp.period
 	AND calc.[Is DST] = tp.is_dst
+LEFT JOIN forecast_profile fp_buy
+	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-WHERE cast(calc.[Volume] as numeric(38,20)) = 0.00
---cast(calc.[Volume] as numeric(38)) = 0.00
-UNION ALL
+UNION
 SELECT IIF(CAST(a.Volume AS NUMERIC(38,20)) >= 0.00, gm.dest_sell_profile, gm.dest_buy_profile) [profile name]
 	, a.Term
 	, a.[Hour]
@@ -778,7 +776,7 @@ AND gm_profile.source_profile1 IS NOT NULL'
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
 				, ixp_category = 23502
-				, is_system_import = 'n'
+				, is_system_import = 'y'
 				, is_active = 1
 			WHERE ixp_rules_id = @ixp_rules_id_new
 				
@@ -802,7 +800,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
+						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity_Test\temp_Note\0',
 						   NULL,
 						   ';',
 						   2,
@@ -821,8 +819,8 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   '', 
 						   '0',
 						   '0',
-						   '5',
-						   'Import2TRM/CONV_GEN_GAS_demand/Generation_gas_st_forecast/'
+						   NULL,
+						   NULL
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
 					LEFT JOIN ixp_soap_functions isf ON isf.ixp_soap_functions_name = '' 
@@ -881,4 +879,3 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-		
