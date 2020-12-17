@@ -3874,7 +3874,7 @@ BEGIN
 				   [Action type] = CASE WHEN @cancellation = '1' THEN 'E'---to cancel previously submitted report wtih action type= Error
 										WHEN MAX(sdv_deal_status.value_id) = 5607 AND MAX(src_remit.source_deal_header_id) IS NOT NULL THEN 'C'---Deal with cancelled status
 										WHEN MAX(src_remit.source_deal_header_id) IS NULL AND MAX(sdv_deal_status.value_id) <> 5607 THEN 'N'
-										WHEN MAX(src_remit.source_deal_header_id) IS NOT NULL AND MAX(sdv_deal_status.value_id) <> 5607 THEN 'M' 
+										WHEN MAX(src_remit.source_deal_header_id) IS NOT NULL AND MAX(sdv_deal_status.value_id) <> 5607 THEN 'N' --'M'
 										ELSE NULL
 								   END,
 				   report_type = @report_type,
