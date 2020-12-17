@@ -3939,6 +3939,8 @@ BEGIN
 											--AND CAST(gmv.clm2_value AS VARCHAR(10)) = CAST(civv.counterparty_id AS VARCHAR(10))
 											--AND CAST(gmv.clm1_value  AS VARCHAR(10))= CAST(civv.contract_id AS VARCHAR(10))
 								WHERE  gmh.mapping_name = 'Remit Invoice Date'
+								AND MONTH(CAST(gmv.clm3_value AS DATE)) = MONTH(DATEADD(month, 1, CAST(@create_date_from AS DATE)))
+								AND YEAR(CAST(gmv.clm3_value AS DATE)) = YEAR(DATEADD(month, 1, CAST(@create_date_from AS DATE)))
 							) gmv_rid
 			GROUP BY td.source_deal_header_id
         	
