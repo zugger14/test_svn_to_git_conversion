@@ -71,7 +71,7 @@ CREATE PROCEDURE [dbo].[spa_stmt_invoice]
 	@counterparty_id NVARCHAR(1000) = NULL,
 	@contract_id VARCHAR(500) = NULL,
 	@invoice_type VARCHAR(10) = NULL,
-	@invoice_id VARCHAR(100) = NULL, 
+	@invoice_id VARCHAR(MAX) = NULL, 
 	@show_backing_sheets CHAR(1) = NULL,
 	@commodity_id INT = NULL,
 	@invoice_status INT = NULL,
@@ -629,7 +629,7 @@ END
 
 ELSE IF @flag = 'f'
 BEGIN
-		DECLARE @spa VARCHAR(1000)
+		DECLARE @spa VARCHAR(MAX)
 		SET @batch_process_id = dbo.FNAGetNewID()
 		SET @job_name = 'stmt_invoice_finalize_job_' + @batch_process_id
 
