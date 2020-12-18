@@ -13,7 +13,7 @@ BEGIN
 			BEGIN
 				SELECT @old_ixp_rule_id = ixp_rules_id
 			FROM ixp_rules ir
-			WHERE ir.ixp_rules_name = 'Generation ST Forecast'
+			WHERE ir.ixp_rules_name = 'Generation ST Power Forecast'
 			END
 
 			 
@@ -41,7 +41,7 @@ BEGIN
 
 				INSERT INTO ixp_rules (ixp_rules_name, individuals_script_per_ojbect, limit_rows_to, before_insert_trigger, after_insert_trigger, import_export_flag, is_system_import, ixp_owner, ixp_category, is_active,ixp_rule_hash)
 				VALUES( 
-					'Generation ST Forecast' ,
+					'Generation ST Power Forecast' ,
 					'N' ,
 					NULL ,
 					'UPDATE a
@@ -487,7 +487,7 @@ AND gm_profile.source_profile1 IS NOT NULL',
 			
 			UPDATE
 			ixp_rules
-			SET ixp_rules_name = 'Generation ST Forecast'
+			SET ixp_rules_name = 'Generation ST Power Forecast'
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
 				, before_insert_trigger = 'UPDATE a
@@ -1013,4 +1013,3 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-		
