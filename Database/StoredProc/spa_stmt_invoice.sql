@@ -671,14 +671,14 @@ BEGIN
 		WHERE ISNULL(si_b.is_backing_sheet,'n') = 'y'
 
 		DELETE FROM #invoice_collection WHERE NULLIF(item,'') IS NULL
-
+		DECLARE @netting_id INT 
 		WHILE EXISTS(SELECT * FROM #invoice_collection) 
 		BEGIN
 			SELECT TOP(1) @id = item FROM #invoice_collection
 
 			SET @status = 1
-
-			DECLARE @netting_id INT 
+			SET @netting_id =  NULL
+			
 			SELECT @netting_id = 
 				CASE 
 					WHEN si.stmt_invoice_id > si1.stmt_invoice_id 
