@@ -239,8 +239,8 @@ BEGIN
 			IF @contract_id IS NOT NULL AND @contract_id != ''
 				SET @sql += ' AND si.contract_id IN (' + @contract_id + ')' + char(10)
 
-			IF @invoice_type IS NOT NULL AND @invoice_type != ''
-				SET @sql +=  ' AND si.invoice_type IN(''' + REPLACE(@invoice_type,',', ''',''') + ''')' + char(10)
+			--IF @invoice_type IS NOT NULL AND @invoice_type != ''
+			--	SET @sql +=  ' AND si.invoice_type IN(''' + REPLACE(@invoice_type,',', ''',''') + ''')' + char(10)
 
 			IF @invoice_id IS NOT NULL AND @invoice_id != ''  
 				SET @sql += ' AND CAST(si.stmt_invoice_id AS VARCHAR) = ''' + CAST(@invoice_id AS VARCHAR(100))+'''' + char(10)
