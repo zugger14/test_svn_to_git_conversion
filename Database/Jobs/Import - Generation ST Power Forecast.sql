@@ -1,24 +1,24 @@
 DECLARE @job_db_name NVARCHAR(250) = DB_NAME()
 DECLARE @job_owner NVARCHAR(100) = dbo.FNADBUser()
 DECLARE @job_category NVARCHAR(150) = N'Import'
-DECLARE @job_name NVARCHAR(500) = @job_db_name + N' - ' + @job_category + N' - Generation ST Forecast'
+DECLARE @job_name NVARCHAR(500) = @job_db_name + N' - ' + @job_category + N' - Generation ST Power Forecast'
 
 -- batch notification
 DECLARE @role_id INT , @csv_file_path VARCHAR(5000)
-IF NOT EXISTS(SELECT * FROM application_security_role WHERE role_name = 'Generation Import Notification ST')
+IF NOT EXISTS(SELECT * FROM application_security_role WHERE role_name = 'Enercity Operations')
 BEGIN
 	INSERT INTO application_security_role(role_name, role_description, role_type_value_id)
-	SELECT 'Generation Import Notification ST', 'Generation Import Notification ST', 2
+	SELECT 'Enercity Operations', 'Enercity Operations', 2
 END
 
-SELECT @role_id = role_id FROM application_security_role WHERE ROLE_NAME = 'Generation Import Notification ST'
+SELECT @role_id = role_id FROM application_security_role WHERE ROLE_NAME = 'Enercity Operations'
 SELECT @csv_file_path = document_path+'\temp_note' from connection_string
 
-IF NOT EXISTS(SELECT * FROM batch_process_notifications WHERE process_id = '@ef42e2330j03')
+IF NOT EXISTS(SELECT * FROM batch_process_notifications WHERE process_id = 'zef42e2330j03')
 BEGIN
 	INSERT INTO batch_process_notifications(role_id,process_id,notification_type,csv_file_path)
 	SELECT @role_id,
-		'@ef42e2330j03',
+		'zef42e2330j03',
 		752,
 		@csv_file_path			
 END
@@ -27,7 +27,7 @@ BEGIN
 	UPDATE batch_process_notifications
 	SET role_id = @role_id
 		, notification_type = 752
-	WHERE process_id = '@ef42e2330j03'
+	WHERE process_id = 'zef42e2330j03'
 END
 
 
@@ -68,7 +68,7 @@ DECLARE @command1 NVARCHAR(4000) = '
 			)
 		BEGIN
 			DECLARE @contextinfo varbinary(128)
-			SELECT @contextinfo = convert(varbinary(128),''farrms_admin'')
+			SELECT @contextinfo = convert(varbinary(128),''enercity_4442'')
 			
 			DECLARE @job_name NVARCHAR(1000) = ''$(ESCAPE_NONE(JOBNAME))''
 			EXEC sys.sp_set_session_context @key = N''JOB_NAME'', @value = @job_name;
@@ -80,7 +80,7 @@ DECLARE @command1 NVARCHAR(4000) = '
 			DECLARE @parameter NVARCHAR(MAX) = ''spa_ixp_rules @flag = ''''r'''',@ixp_rules_id = ''''''+CAST(@rules_id AS VARCHAR(50))+'''''',@server_path = ''''''+@server_path+'''''',@source = ''''21400'''',@enable_ftp = ''''1'''',@parameter_xml =		'''''''',@batch_process_id=''''PROCESS_ID:'''',@batch_report_param=''''spa_ixp_rules @flag = ''''''''r'''''''',@ixp_rules_id = ''''''''''+CAST(@rules_id AS VARCHAR(50))+'''''''''',@server_path =	''''''''''+@server_path+'''''''''',@source = ''''''''21400'''''''',@enable_ftp = ''''''''1'''''''',@parameter_xml =	 ''''''''''''''''''''''
 			
 		
-			EXEC spa_run_sp_with_dynamic_params @parameter, ''@ef42e2330j03'', NULL
+			EXEC spa_run_sp_with_dynamic_params @parameter, ''zef42e2330j03'', NULL
 		END
 		'
 	
@@ -138,8 +138,8 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'24X7',
 		@freq_recurrence_factor=0, 
 		@active_start_date=20200625, 
 		@active_end_date=99991231, 
-		@active_start_time=10000, 
-		@active_end_time=125900
+		@active_start_time=500, 
+		@active_end_time=235900
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 
 EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
