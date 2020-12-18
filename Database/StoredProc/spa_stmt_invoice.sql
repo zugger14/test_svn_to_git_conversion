@@ -670,9 +670,13 @@ BEGIN
 		INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = stid_b.stmt_invoice_id AND ISNULL(si_b.is_voided,'n') = ISNULL(si.is_voided,'n')
 		WHERE ISNULL(si_b.is_backing_sheet,'n') = 'y'
 
+		DELETE FROM #invoice_collection WHERE NULLIF(item,'') IS NULL
+
 		WHILE EXISTS(SELECT * FROM #invoice_collection) 
 		BEGIN
 			SELECT TOP(1) @id = item FROM #invoice_collection
+
+			SET @status = 1
 
 			DECLARE @netting_id INT 
 			SELECT @netting_id = 
