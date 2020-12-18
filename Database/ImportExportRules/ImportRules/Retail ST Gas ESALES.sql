@@ -1,4 +1,4 @@
- BEGIN 
+BEGIN 
 	BEGIN TRY 
 		BEGIN TRAN 
 		DECLARE @admin_user VARCHAR(100) =  dbo.FNAAppAdminID(), @old_ixp_rule_id INT
@@ -49,6 +49,7 @@ SET [Term] = CAST(dbo.FNAClientToSqlDate([Term]) AS DATE)
 FROM [temp_process_table] a
 
 DROP TABLE IF EXISTS [temp_process_table]_calc
+
 SELECT * INTO [temp_process_table]_calc
 FROM [temp_process_table]
 
@@ -124,6 +125,7 @@ GROUP BY sdh.source_deal_header_id, fp.external_id
 
 IF OBJECT_ID(N''tempdb..#collect_profiles'') IS NOT NULL
 	DROP TABLE #collect_profiles
+
 SELECT MIN(a.Term) term_start, MAX(a.Term) term_end, max(fp.external_id) profile_name, max(fp2.external_id) source_profile2
 	, MAX(gmv.dest_buy_profile) [dest_buy_profile], MAX(gmv.dest_sell_profile) [dest_sell_profile]
 	, MAX(IIF(a1.[Profile Name] IS NULL, fp.external_id,fp2.external_id)) [pair_profile]
@@ -371,7 +373,7 @@ LEFT JOIN (
 	AND tp.period = tpd.period
 
 UPDATE a
-SET [Volume] = CAST(a.Volume - (ABS(tp.position)) AS NUMERIC(38))
+SET [Volume] = CAST(a.Volume - (ABS(tp.position)) AS NUMERIC(38,20))
 FROM [temp_process_table]_calc a
 INNER JOIN #temp_position tp
 	ON (a.[profile Name] = tp.profile_name
@@ -395,12 +397,12 @@ INSERT INTO [temp_process_table](
     , [Volume]
 )
 SELECT 
-	IIF(cast(calc.[Volume] as numeric(38)) >= 0.00, fp_sell.external_id, fp_buy.external_id)
+	IIF(cast(calc.[Volume] as numeric(38,20)) >= 0.00, fp_sell.external_id, fp_buy.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(calc.[Volume])
+    , ABS(CAST(calc.[Volume] AS NUMERIC(38,20)))
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON (calc.[Profile Name] = tp.[profile_name]
@@ -415,12 +417,12 @@ LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
 UNION ALL
 SELECT 
-	fp_sell.external_id
+	IIF(cast(calc.[Volume] as numeric(38,20)) < 0.00, fp_sell.external_id, fp_buy.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(calc.[Volume])
+    , ''0.00''
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON (calc.[Profile Name] = tp.[profile_name]
@@ -429,16 +431,17 @@ INNER JOIN #temp_position tp
 	AND calc.hour = tp.hr
 	AND ISNULL(calc.Minute,0) = tp.period
 	AND calc.[Is DST] = tp.is_dst
+LEFT JOIN forecast_profile fp_buy
+	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-WHERE cast(calc.[Volume] as numeric(38)) = 0.00
 UNION ALL
-SELECT IIF(CAST(a.Volume AS NUMERIC(38)) > 0.00, gm.dest_sell_profile, gm.dest_buy_profile) [profile name]
+SELECT IIF(CAST(a.Volume AS NUMERIC(38,20)) > 0.00, gm.dest_sell_profile, gm.dest_buy_profile) [profile name]
 	, a.Term
 	, a.[Hour]
 	, a.[Minute]
 	, a.[Is DST]
-	, cast(ABS(a.[Volume]) as nvarchar)
+	, ABS(CAST(a.[Volume] AS NUMERIC(38,20)))
 FROM [temp_process_table] a
 LEFT JOIN #temp_position tp
 	ON (a.[Profile Name] = tp.profile_name
@@ -465,12 +468,11 @@ OUTER APPLY (
     		ON gmv.dest_buy_profile = fp_buy.profile_id
 		LEFT JOIN forecast_profile fp_sell
     		ON gmv.dest_sell_profile = fp_sell.profile_id
-		WHERE gmv.source_profile1 = fp.profile_id
+		WHERE gmv.source_profile1 = gm_profile.source_profile1
 		GROUP BY dest_buy_profile, dest_sell_profile
 	) gm
 WHERE tp.Term IS NULL
-AND gm_profile.source_profile1 IS NOT NULL
-',
+AND gm_profile.source_profile1 IS NOT NULL',
 					NULL,
 					'i' ,
 					'y' ,
@@ -506,6 +508,7 @@ SET [Term] = CAST(dbo.FNAClientToSqlDate([Term]) AS DATE)
 FROM [temp_process_table] a
 
 DROP TABLE IF EXISTS [temp_process_table]_calc
+
 SELECT * INTO [temp_process_table]_calc
 FROM [temp_process_table]
 
@@ -581,6 +584,7 @@ GROUP BY sdh.source_deal_header_id, fp.external_id
 
 IF OBJECT_ID(N''tempdb..#collect_profiles'') IS NOT NULL
 	DROP TABLE #collect_profiles
+
 SELECT MIN(a.Term) term_start, MAX(a.Term) term_end, max(fp.external_id) profile_name, max(fp2.external_id) source_profile2
 	, MAX(gmv.dest_buy_profile) [dest_buy_profile], MAX(gmv.dest_sell_profile) [dest_sell_profile]
 	, MAX(IIF(a1.[Profile Name] IS NULL, fp.external_id,fp2.external_id)) [pair_profile]
@@ -828,7 +832,7 @@ LEFT JOIN (
 	AND tp.period = tpd.period
 
 UPDATE a
-SET [Volume] = CAST(a.Volume - (ABS(tp.position)) AS NUMERIC(38))
+SET [Volume] = CAST(a.Volume - (ABS(tp.position)) AS NUMERIC(38,20))
 FROM [temp_process_table]_calc a
 INNER JOIN #temp_position tp
 	ON (a.[profile Name] = tp.profile_name
@@ -852,12 +856,12 @@ INSERT INTO [temp_process_table](
     , [Volume]
 )
 SELECT 
-	IIF(cast(calc.[Volume] as numeric(38)) >= 0.00, fp_sell.external_id, fp_buy.external_id)
+	IIF(cast(calc.[Volume] as numeric(38,20)) >= 0.00, fp_sell.external_id, fp_buy.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(calc.[Volume])
+    , ABS(CAST(calc.[Volume] AS NUMERIC(38,20)))
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON (calc.[Profile Name] = tp.[profile_name]
@@ -872,12 +876,12 @@ LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
 UNION ALL
 SELECT 
-	fp_sell.external_id
+	IIF(cast(calc.[Volume] as numeric(38,20)) < 0.00, fp_sell.external_id, fp_buy.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(calc.[Volume])
+    , ''0.00''
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON (calc.[Profile Name] = tp.[profile_name]
@@ -886,16 +890,17 @@ INNER JOIN #temp_position tp
 	AND calc.hour = tp.hr
 	AND ISNULL(calc.Minute,0) = tp.period
 	AND calc.[Is DST] = tp.is_dst
+LEFT JOIN forecast_profile fp_buy
+	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-WHERE cast(calc.[Volume] as numeric(38)) = 0.00
 UNION ALL
-SELECT IIF(CAST(a.Volume AS NUMERIC(38)) > 0.00, gm.dest_sell_profile, gm.dest_buy_profile) [profile name]
+SELECT IIF(CAST(a.Volume AS NUMERIC(38,20)) > 0.00, gm.dest_sell_profile, gm.dest_buy_profile) [profile name]
 	, a.Term
 	, a.[Hour]
 	, a.[Minute]
 	, a.[Is DST]
-	, cast(ABS(a.[Volume]) as nvarchar)
+	, ABS(CAST(a.[Volume] AS NUMERIC(38,20)))
 FROM [temp_process_table] a
 LEFT JOIN #temp_position tp
 	ON (a.[Profile Name] = tp.profile_name
@@ -922,12 +927,11 @@ OUTER APPLY (
     		ON gmv.dest_buy_profile = fp_buy.profile_id
 		LEFT JOIN forecast_profile fp_sell
     		ON gmv.dest_sell_profile = fp_sell.profile_id
-		WHERE gmv.source_profile1 = fp.profile_id
+		WHERE gmv.source_profile1 = gm_profile.source_profile1
 		GROUP BY dest_buy_profile, dest_sell_profile
 	) gm
 WHERE tp.Term IS NULL
-AND gm_profile.source_profile1 IS NOT NULL
-'
+AND gm_profile.source_profile1 IS NOT NULL'
 				, after_insert_trigger = NULL
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
@@ -956,7 +960,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
+						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity_Test\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
@@ -1035,4 +1039,3 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-		
