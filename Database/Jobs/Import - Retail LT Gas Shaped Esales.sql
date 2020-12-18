@@ -131,7 +131,7 @@ EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 
 EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Weekdays-9 to 5', 
-		@enabled=1, 
+		@enabled=0, 
 		@freq_type=8, 
 		@freq_interval=62, 
 		@freq_subday_type=4, 
