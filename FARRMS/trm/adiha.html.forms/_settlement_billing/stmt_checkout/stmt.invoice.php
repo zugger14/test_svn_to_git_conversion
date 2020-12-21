@@ -636,14 +636,14 @@
                 is_locked.push(locked_status);
             });
 
-            if (is_parent === true) {
-                dhtmlx.alert({
-                    title:"Alert",
-                    type:"alert",
-                    text:"Please select child item only."
-                });
-                return;
-            }
+            // if (is_parent === true) {
+            //     dhtmlx.alert({
+            //         title:"Alert",
+            //         type:"alert",
+            //         text:"Please select child item only."
+            //     });
+            //     return;
+            // }
 
             if (acc_status.find('Finalized') !== false) {
                 dhtmlx.alert({
