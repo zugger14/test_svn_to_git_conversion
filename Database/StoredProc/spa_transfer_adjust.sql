@@ -57,8 +57,8 @@ EXEC [spa_drop_all_temp_table]
 
 --EXEC [dbo].[spa_transfer_adjust] @source_deal_header_id = 120208, @term = '2010-06-16'
 
-DECLARE @source_deal_header_id INT = 106500  
-DECLARE @term DATETIME = '2004-09-01'
+DECLARE @source_deal_header_id INT = 106493  
+DECLARE @term DATETIME = '2010-01-01'
 DECLARE @is_deal_created BIT
 
 --DECLARE @source_deal_header_id INT = 104615 
@@ -1081,7 +1081,7 @@ BEGIN
 			WHERE pmh.is_complex = 'y' 
 				 AND sdd.leg = 1
 				 AND NULLIF(sddh.volume, 0) IS NOT NULL
-				 AND pmh.term_date BETWEEN @deal_term_start and @deal_term_end
+				 AND pmh.term_start BETWEEN @deal_term_start and @deal_term_end
 
 			GROUP BY  sdd.source_deal_detail_id
 				, pmh.term_start
@@ -1109,7 +1109,7 @@ BEGIN
 			WHERE pmh.is_complex = 'y' 
 				 AND sdd.leg = 2
 				 AND NULLIF(sddh.volume, 0) IS NOT NULL
-				 AND pmh.term_date BETWEEN @deal_term_start and @deal_term_end
+				 AND pmh.term_start BETWEEN @deal_term_start and @deal_term_end
 			GROUP BY  sdd.source_deal_detail_id
 				, pmh.term_start
 				, pmh.hour
