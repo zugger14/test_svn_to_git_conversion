@@ -389,14 +389,14 @@
                     data_relation_ixp.data_relation.hideItem('delimiter');
                     data_relation_ixp.data_relation.hideItem('is_header_less');
 					data_relation_ixp.data_relation.showItem('advance_option');
-					data_relation_ixp.data_relation.showItem('configued_data_source');
+                    data_relation_ixp.data_relation.showItem('configued_data_source');
                 });
                 data_relation_ixp.data_relation.attachEvent("onFileRemove",function(realName,serverName){
                     data_relation_ixp.data_relation.setItemValue("file_upload_status", 0);
 					data_relation_ixp.data_relation.hideItem('delimiter');
                     data_relation_ixp.data_relation.hideItem('is_header_less');
 					data_relation_ixp.data_relation.showItem('advance_option');
-					data_relation_ixp.data_relation.showItem('configued_data_source');
+                    data_relation_ixp.data_relation.showItem('configued_data_source');
                });
                 data_relation_ixp.data_relation.attachEvent("onUploadFail", function(realName) {
                     show_messagebox("Could not upload the file. Please check the format."); 
@@ -449,6 +449,7 @@
                 var process_id = new_proccess_id;
                 var rules_id = "<?php echo $rules_id; ?>";
                 if (id == 'ok') {
+                    data_relation_ixp.toolbar_save.disableItem('ok');
 					var configued_data_source = data_relation_ixp.data_relation.getItemValue('configued_data_source');
 					if (configued_data_source == -1) {
 						var enable_ftp = 1;
@@ -719,6 +720,7 @@
                         }
                         else {
                             data_relation_ixp.new_layout.progressOff();
+                            data_relation_ixp.toolbar_save.enableItem('ok');
                             if(data['status']=='Success'){
                                 success_call(data['message']);
                             } else {
