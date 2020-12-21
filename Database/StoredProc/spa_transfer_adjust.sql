@@ -57,8 +57,8 @@ EXEC [spa_drop_all_temp_table]
 
 --EXEC [dbo].[spa_transfer_adjust] @source_deal_header_id = 120208, @term = '2010-06-16'
 
-DECLARE @source_deal_header_id INT = 120208  
-DECLARE @term DATETIME = '2010-06-16'
+DECLARE @source_deal_header_id INT = 106500  
+DECLARE @term DATETIME = '2004-09-01'
 DECLARE @is_deal_created BIT
 
 --DECLARE @source_deal_header_id INT = 104615 
@@ -641,6 +641,7 @@ BEGIN
 				ON tvc.term_date = pmh.term_start	
 				AND RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00'  = tvc.hr
 			WHERE pmh.is_complex = 'y'
+				AND  pmh.term_start BETWEEN  @deal_term_start AND @deal_term_end
 
 			INSERT INTO #temp_updated_deals(source_deal_header_id)
 			SELECT @capacity_deal_id
@@ -1049,11 +1050,6 @@ BEGIN
 			WHERE sdd.source_deal_header_id = @capacity_deal_id
 			AND sddh.term_date BETWEEN @deal_term_start and @deal_term_end
 
-
-
-			
-
-
 			INSERT INTO source_deal_detail_hour 
 			(
 				source_deal_detail_id
@@ -1085,6 +1081,8 @@ BEGIN
 			WHERE pmh.is_complex = 'y' 
 				 AND sdd.leg = 1
 				 AND NULLIF(sddh.volume, 0) IS NOT NULL
+				 AND pmh.term_date BETWEEN @deal_term_start and @deal_term_end
+
 			GROUP BY  sdd.source_deal_detail_id
 				, pmh.term_start
 				, pmh.hour
@@ -1111,6 +1109,7 @@ BEGIN
 			WHERE pmh.is_complex = 'y' 
 				 AND sdd.leg = 2
 				 AND NULLIF(sddh.volume, 0) IS NOT NULL
+				 AND pmh.term_date BETWEEN @deal_term_start and @deal_term_end
 			GROUP BY  sdd.source_deal_detail_id
 				, pmh.term_start
 				, pmh.hour
@@ -1195,6 +1194,7 @@ BEGIN
 			WHERE  --sdd_m.source_deal_header_id = 102283 AND --@source_deal_header_id
 				 NULLIF(sddh_m.volume, 0) IS NOT NULL
 				AND sdd.source_deal_header_id =  @capacity_deal_id
+				AND sddh_m.term_date BETWEEN @deal_term_start and @deal_term_end
 			GROUP BY sdd.source_deal_detail_id,
 				sddh_m.term_date,
 				sddh_m.hr
@@ -1305,8 +1305,9 @@ BEGIN
 		--	@flow_date_from,
 		--	@transport_deal_id,
 		--	@process_id
+		--	return;
 
-
+		
 			
 		EXEC [dbo].[spa_auto_deal_schedule]
 			@source_deal_header_id = @source_deal_header_id,
@@ -1517,9 +1518,6 @@ BEGIN
 		WHERE sdd.source_deal_header_id = @capacity_deal_id
 		AND sddh.term_date BETWEEN @deal_term_start and @deal_term_end
 
-
-		
-
 		INSERT INTO source_deal_detail_hour (
 						source_deal_detail_id
 						, term_date
@@ -1544,6 +1542,7 @@ BEGIN
 		WHERE --sdd_m.source_deal_header_id = 102283 AND --@source_deal_header_id
 			NULLIF(sddh_m.volume, 0) IS NOT NULL
 			AND sdd.source_deal_header_id =  @capacity_deal_id
+			AND sddh_m.term_date BETWEEN @deal_term_start and @deal_term_end
 		GROUP BY sdd.source_deal_detail_id,
 			sddh_m.term_date,
 			sddh_m.hr
