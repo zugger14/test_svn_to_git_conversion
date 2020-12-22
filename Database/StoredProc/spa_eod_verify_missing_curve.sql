@@ -289,11 +289,24 @@ BEGIN
 		
 	IF @granularity = 'HOUR' AND @check_dst = 'y'
 	BEGIN
+		--add is_dst data with 'i'
 		UPDATE tmd
 		SET is_dst = 1
 		FROM #temp_maturity_date tmd
 		INNER JOIN mv90_DST md ON tmd.maturity_date = DATEADD(hh, [hour] - 1, md.date) 
 		WHERE  md.insert_delete = 'i'
+		
+		INSERT INTO #temp_maturity_date(source_curve_def_id, maturity_date, is_dst)
+		SELECT source_curve_def_id, maturity_date, 0 is_dst
+		FROM #temp_maturity_date tmd
+		INNER JOIN mv90_DST md ON tmd.maturity_date = DATEADD(hh, [hour] - 1, md.date) 
+		WHERE  md.insert_delete = 'i'
+
+		--delete is_dst data with d
+		DELETE tmd
+		FROM #temp_maturity_date tmd
+		INNER JOIN mv90_DST md ON tmd.maturity_date = DATEADD(hh, [hour] - 1, md.date) 
+		WHERE  md.insert_delete = 'd'
 	END
 
 	SET @sql = 'INSERT INTO #temp_avail_maturity_date (source_curve_def_id, as_of_date, maturity_date, is_dst)
@@ -305,10 +318,19 @@ BEGIN
 				INNER JOIN source_price_curve spc ON spcd.source_curve_def_id = spc.source_curve_def_id ' + 
 				CASE WHEN @flag = 'CHECK' THEN  '
 				OUTER APPLY(
-					SELECT MAX(as_of_date) min_as_of_date FROM source_price_curve spc1 WHERE spc1.source_curve_def_id = spcd.source_curve_def_id AND spcd.effective_date = ''y'' AND spc1.as_of_date < ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
+					SELECT MAX(as_of_date) min_as_of_date 
+					FROM source_price_curve spc1 
+					WHERE spc1.source_curve_def_id = spcd.source_curve_def_id 
+					AND spcd.effective_date = ''y'' 
+					AND spc1.maturity_date = spc.maturity_date	
+					AND spc1.as_of_date < ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
 				) spc_min_as_of_date
 				OUTER APPLY(
-					SELECT as_of_date original_as_of_date FROM source_price_curve spc1 WHERE spc1.source_curve_def_id = spcd.source_curve_def_id AND spc1.as_of_date = ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''	
+					SELECT as_of_date original_as_of_date 
+					FROM source_price_curve spc1 
+					WHERE spc1.source_curve_def_id = spcd.source_curve_def_id 
+					AND spc1.maturity_date = spc.maturity_date	
+					AND spc1.as_of_date = ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''	
 				) spc_actual_as_of_date '
 				ELSE '' END + '
 				WHERE spc.maturity_date BETWEEN ''' + CONVERT(VARCHAR(200), @maturity_date_start, 121) + ''' AND ''' + CONVERT(VARCHAR(200), @maturity_date_end, 121) + ''' 
