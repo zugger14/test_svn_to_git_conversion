@@ -7,7 +7,7 @@ CREATE FUNCTION dbo.FNAGetPipeSeparatedBookStructure (
 )
 RETURNS @ssbm TABLE (
 	sub_book_id INT,
-	book_structure VARCHAR(MAX) NOT NULL
+	book_structure NVARCHAR(MAX) NOT NULL
 )
 AS
 /*-----------Debug Section------------
