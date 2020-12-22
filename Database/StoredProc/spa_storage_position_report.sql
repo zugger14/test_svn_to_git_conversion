@@ -97,27 +97,15 @@ SET NOCOUNT ON
 
 	/* for link reports within std report */
 	--select @commodity_id=50, @drill_location=2794, @term_start='2018-07-01', @term_end='2018-07-31' ,@drill_term='2018-07-24',@drill_type='NULL',@drill_contract_id=10317,@deal_type='w'
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'enercity_4429';
+
+EXEC dbo.spa_drop_all_temp_table
 
 	/* for main std report */
-	select @location_id='2887',@term_start='2020-01-01',@term_end='2020-01-01',@uom=1158,@drill_location=2887,@drill_term='2020-01-01',@drill_contract_id=8358,@round=18
-	--select @location_id='2887', @term_start='2020-01-01', @term_end='2020-01-01', @uom=1158, @call_from='Optimization'
-	-- 2892, '2025-07-01', '2025-07-01',1158,NULL,NULL,NULL,NULL,NULL,'Optimization'
-	--select @commodity_id=50,@location_id=2842,@term_start='2018-02-01', @term_end='2018-02-01',@uom=6,@call_from = 'Optimization'
+	select  @location_id = '9,10,11,12,13,14,33,34,35,36,37,38', @term_start = '2020-10-02 00:00:00.000',@term_end = '2020-10-02 00:00:00.000', @uom = '1159', @volume_conversion = '1159', @call_from='optimization'
 	
-	IF OBJECT_ID('tempdb..#books') IS NOT NULL
-	DROP TABLE #books
-	IF OBJECT_ID('tempdb..#temp') IS NOT NULL
-	DROP TABLE #temp
-	IF OBJECT_ID('tempdb..#tmp_rpt_data') IS NOT NULL
-	DROP TABLE #tmp_rpt_data
-	IF OBJECT_ID('tempdb..#tmp_rpt_data1') IS NOT NULL
-	DROP TABLE #tmp_rpt_data1
-
-	declare @s varbinary(128) = cast('debug_mode_on' as varbinary(128)) set context_info @s
 
    --*/
-
-   --EXEC spa_storage_position_report NULL,NULL,NULL,50,NULL,NULL,'2842','2018-02-01','2018-02-01',6,2842,'2018-02-01','NULL',12434,NULL,NULL
 
   
 /*******************************************1st Paging Batch START**********************************************/
@@ -189,7 +177,7 @@ SET @spa = 'EXEC spa_storage_position_report '
 	
 BEGIN
 	---###########Declare Variables
-	DECLARE @Sql_SELECT VARCHAR(8000)
+	DECLARE @Sql_SELECT VARCHAR(MAX), @Sql_WHERE VARCHAR(MAX)
 	DECLARE @location_group VARCHAR(30)
 			--,@exclude_INT_deal_sub_types VARCHAR(30)
 			,@deal_type_storage VARCHAR(30)	
@@ -257,7 +245,7 @@ BEGIN
 	
 	--####### create temporary tables for SELECTed hierarchy
 	CREATE TABLE #books (fas_book_id INT, sub_book_id INT, source_system_book_id1 INT, source_system_book_id2 INT, source_system_book_id3 INT, source_system_book_id4 INT)
-
+	--print 'Declarations E: ' + convert(VARCHAR(50),getdate() ,21)
 	SET @Sql_SELECT =        
 		'INSERT INTO  #books
 		 SELECT distinct 
@@ -281,7 +269,18 @@ BEGIN
 
 	----######## Get the require output
 	--PRIOR BALANCE
-	--print 'temp1 start: ' + convert(VARCHAR(50),getdate() ,21)
+	--print 'books E: ' + convert(VARCHAR(50),getdate() ,21)
+
+	DROP TABLE IF EXISTS #deal_term_breakdown_stg
+	CREATE TABLE #deal_term_breakdown_stg (
+		[source_deal_detail_id] INT,
+		[term_start] DATETIME,
+		[term_frequency] CHAR(1),
+		[source_deal_header_id] INT,
+		[location_id] INT,
+		[volume_mult] INT
+	)
+
 	CREATE TABLE #temp (
 		counterparty_id VARCHAR(250) COLLATE DATABASE_DEFAULT,
 		location_id INT,
@@ -305,6 +304,69 @@ BEGIN
 	)
 	--internal_deal_type_value_id
 	SET @Sql_SELECT='
+	INSERT INTO #deal_term_breakdown_stg ([source_deal_detail_id], [term_start], [term_frequency], [source_deal_header_id], [location_id], [volume_mult])
+	SELECT sdd.source_deal_detail_id, ISNULL(term_bk.term_start, sdd.term_start) [term_start], sdh.term_frequency, sdh.[source_deal_header_id], sdd.location_id, hbt.volume_mult
+	FROM #books b 
+	INNER JOIN source_deal_header sdh 
+		ON sdh.source_system_book_id1 = b.source_system_book_id1 
+		AND sdh.source_system_book_id2 = b.source_system_book_id2
+		AND sdh.source_system_book_id3 = b.source_system_book_id3
+		AND sdh.source_system_book_id4 = b.source_system_book_id4
+	INNER JOIN source_deal_detail sdd 
+		ON sdd.source_deal_header_id=sdh.source_deal_header_id
+	INNER JOIN source_minor_location ml 
+		ON ml.source_minor_location_id=sdd.location_id
+	LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id=sdd.curve_id
+	LEFT JOIN general_assest_info_virtual_storage gaivs on gaivs.storage_location = sdd.location_id
+		and gaivs.agreement = sdh.contract_id 
+		and gaivs.source_counterparty_id = sdh.counterparty_id
+	outer apply (
+		select tb.term_start
+		from dbo.FNATermBreakdown(''d'', sdd.term_start, sdd.term_end) tb
+		where sdh.term_frequency = ''m''
+
+	) term_bk
+	INNER JOIN dbo.vwDealTimezone tz (NOLOCK) 
+		ON sdd.source_deal_header_id = tz.source_deal_header_id
+		AND tz.curve_id = ISNULL(sdd.curve_id,-1)
+		AND tz.location_id = ISNULL(sdd.location_id, -1)
+	LEFT JOIN hour_block_term hbt (NOLOCK) 
+		ON hbt.term_date = ISNULL(term_bk.term_start, sdd.term_start)
+		AND hbt.block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id, -10000298)
+		AND hbt.dst_group_value_id = tz.dst_group_value_id
+	WHERE 1=1 '
+		+ ' AND sdd.term_start <= ''' + CAST(@term_end AS VARCHAR(30)) + ''''	
+		+ ' AND sdh.template_id = CASE WHEN ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + ' THEN sdh.template_id ELSE ' + ISNULL(@imb_actualization, '-1') + ' END'
+		+ case @deal_type 
+			when 'a' then ' AND sdh.template_id IN ( ' + @deal_template_includes + ')' --term link report, storage inventory deals
+			when 'i' then ' AND ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''y'') = ''y'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''n'') = ''n''))'
+				+ ' AND sdh.template_id = ' + @storage_inj_template_id --injection volume link report, injection deals
+			when 'W' then ' AND ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''n'') = ''n'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''y'') = ''y''))'
+				+ ' AND sdh.template_id = ' + @storage_with_template_id --withdrawal volume link report, withdrawal deals
+			else ' AND sdh.template_id NOT IN ( ' + @deal_template_excludes + ')' 
+		  end + 
+		+ CASE WHEN @commodity_id IS NOT NULL THEN ' AND spcd.commodity_id=' + CAST(@commodity_id AS VARCHAR(30)) ELSE '' END
+		+ CASE WHEN @curve_id IS NOT NULL THEN ' AND sdd.curve_id=' + CAST(@curve_id AS VARCHAR(30)) ELSE '' END
+		+ CASE WHEN @contract_id IS NOT NULL THEN ' AND sdh.contract_id=' + CAST(@contract_id AS VARCHAR(30)) ELSE '' END
+		--+ CASE WHEN @location_id IS NOT NULL THEN ' AND ((sdd.location_id IN (' + @location_id + ') AND ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + '))' ELSE '' END
+		+ CASE WHEN @location_id IS NOT NULL THEN '
+			AND (
+				sdd.location_id IN (' + @location_id + ')' + 
+				IIF(@call_from = 'STORAGE_GRID'
+					, ' OR sdh.template_id = ' + ISNULL(@imb_actualization, '-1')
+					, ' AND ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10))
+				) 
+			+ ')' ELSE '' 
+		END
+		+ CASE WHEN ISNULL(@drill_location,'') <>'' THEN ' AND sdh.contract_id' 
+		+ CASE WHEN ISNULL(@drill_contract_id, '') = '' THEN ' IS NULL ' ELSE '=' + CAST(@drill_contract_id AS VARCHAR(30)) END ELSE '' END		
+		+ ' AND isnull(sdh.source_deal_type_id, -1) = iif(isnull(nullif(gaivs.include_non_standard_deals, ''''), ''n'') = ''n'',' + @deal_type_storage + ', isnull(sdh.source_deal_type_id, -1))'
+
+
+	EXEC (@Sql_SELECT)
+	--   select * from #deal_term_breakdown_stg
+	--print '#deal_term_breakdown_stg E: ' + convert(VARCHAR(50),getdate() ,21)	
+	SET @Sql_SELECT = '
 	INSERT INTO #temp (
 		counterparty_id,
 		sdd.location_id,
@@ -335,7 +397,7 @@ BEGIN
 					WHEN ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''n'') = ''y'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''n'') = ''n'')) 
 						THEN (IIF(sdh.internal_desk_id = 17302, sddh.[hourly_vol], sdd.deal_volume) * 
 							CASE  
-								WHEN sdd.deal_volume_frequency = ''h'' AND sdh.internal_desk_id <> 17302 THEN hbt.volume_mult 
+								WHEN sdd.deal_volume_frequency = ''h'' AND sdh.internal_desk_id <> 17302 THEN term_bk.volume_mult 
 								WHEN sdd.deal_volume_frequency = ''m'' AND sdh.internal_desk_id <> 17302 THEN 1.0/DAY(EOMONTH(sdd.term_start)) 
 								ELSE 1 
 							END
@@ -346,7 +408,7 @@ BEGIN
 					WHEN ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''n'') = ''n'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''n'') = ''y'')) 
 						THEN (IIF(sdh.internal_desk_id = 17302, sddh.[hourly_vol], sdd.deal_volume) * 
 							CASE  
-								WHEN sdd.deal_volume_frequency = ''h'' AND sdh.internal_desk_id <> 17302 THEN hbt.volume_mult 
+								WHEN sdd.deal_volume_frequency = ''h'' AND sdh.internal_desk_id <> 17302 THEN term_bk.volume_mult 
 								WHEN sdd.deal_volume_frequency = ''m'' AND sdh.internal_desk_id <> 17302 THEN 1.0/DAY(EOMONTH(sdd.term_start)) 
 								ELSE 1 
 							END
@@ -367,38 +429,40 @@ BEGIN
 		AND sdh.source_system_book_id4 = b.source_system_book_id4
 	INNER JOIN source_deal_detail sdd 
 		ON sdd.source_deal_header_id=sdh.source_deal_header_id
+	INNER JOIN #deal_term_breakdown_stg term_bk
+		ON term_bk.source_deal_detail_id = sdd.source_deal_detail_id
+		and term_bk.[source_deal_header_id] = sdd.[source_deal_header_id]
+		and term_bk.[location_id] = sdd.[location_id]
 	INNER JOIN source_counterparty sc 
 		ON sc.source_counterparty_id = sdh.counterparty_id
 	INNER JOIN source_minor_location ml 
 		ON ml.source_minor_location_id=sdd.location_id
-		--AND ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + '
 	LEFT JOIN general_assest_info_virtual_storage gaivs on gaivs.storage_location = sdd.location_id
 		and gaivs.agreement = sdh.contract_id 
 		and gaivs.source_counterparty_id = sdh.counterparty_id
-	OUTER APPLY
-	( SELECT MAX(as_of_date) as_of_date FROM source_deal_settlement WHERE source_deal_header_id=sdh.source_deal_header_id 
-		AND term_start=sdd.term_start AND leg=sdd.leg ) mx
-	LEFT JOIN   source_deal_settlement sds ON sds.source_deal_header_id=sdh.source_deal_header_id 
+	OUTER APPLY ( 
+		SELECT TOP 1 sds1.as_of_date [as_of_date] 
+		FROM source_deal_settlement sds1
+		WHERE sds1.source_deal_header_id = sdh.source_deal_header_id 
+			AND sds1.term_start = sdd.term_start 
+			AND sds1.leg = sdd.leg 
+		ORDER BY sds1.as_of_date DESC
+	) mx
+	LEFT JOIN   source_deal_settlement sds (NOLOCK) ON sds.source_deal_header_id=sdh.source_deal_header_id 
 		AND sds.term_start=sdd.term_start AND sds.leg=sdd.leg	AND sds.as_of_date=mx.as_of_date
 	LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id=sdd.curve_id
 	LEFT JOIN source_uom su ON su.source_uom_id=sdd.deal_volume_uom_id
 	LEFT JOIN contract_group  cg ON cg.contract_id=sdh.contract_id
-	outer apply (
-		select tb.term_start
-		--from dbo.FNATermBreakdown(''d'', sdd.term_start, dbo.FNAGetFirstLastDayOfMonth(sdd.term_start,''l'')) tb
-		from dbo.FNATermBreakdown(''d'', sdd.term_start, sdd.term_end) tb
-		where sdh.term_frequency = ''m''
-	) term_bk
-	inner join dbo.vwDealTimezone tz on sdd.source_deal_header_id=tz.source_deal_header_id
-		and tz.curve_id=isnull(sdd.curve_id,-1)  and tz.location_id=isnull(sdd.location_id,-1)
-	left join hour_block_term hbt with (nolock) on hbt.term_date = isnull(term_bk.term_start,sdd.term_start)
-		AND hbt.block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id, ' + cast(@block_define_id_base_load as varchar(10)) + ')
-		and hbt.dst_group_value_id = tz.dst_group_value_id
+	--inner join dbo.vwDealTimezone tz with (NOLOCK) on sdd.source_deal_header_id=tz.source_deal_header_id
+	--	and tz.curve_id=isnull(sdd.curve_id,-1)  and tz.location_id=isnull(sdd.location_id,-1)
+	--left join hour_block_term hbt with (NOLOCK) on hbt.term_date = isnull(term_bk.term_start,sdd.term_start)
+	--	AND hbt.block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id, ' + cast(@block_define_id_base_load as varchar(10)) + ')
+	--	and hbt.dst_group_value_id = tz.dst_group_value_id
 	LEFT JOIN rec_volume_unit_conversion rvuc 
 		ON rvuc.to_source_uom_id = ' + IIF(@volume_conversion IS NULL,'rvuc.to_source_uom_id',CAST(@volume_conversion AS VARCHAR(10))) + ' AND rvuc.from_source_uom_id = sdd.deal_volume_uom_id
 	OUTER APPLY (
 		SELECT SUM(sddh1.volume) [hourly_vol]
-		FROM source_deal_detail_hour sddh1 
+		FROM source_deal_detail_hour sddh1 with (NOLOCK)
 		WHERE sddh1.source_deal_detail_id = sdd.source_deal_detail_id
 	) sddh
 	'
@@ -406,7 +470,7 @@ BEGIN
 			INNER JOIN dbo.SplitCommaSeperatedValues(''' + @counterparty_id + ''') tc
 				ON tc.item = sdh.counterparty_id
 			' ELSE ' ' END 				
-	SET @Sql_SELECT += 'WHERE 1=1 '
+	SET @Sql_WHERE = 'WHERE 1=1 '
 		+ ' AND ISNULL(term_bk.term_start, sdd.term_start) < ''' + CAST(@term_start AS VARCHAR(30)) + ''''	
 		+ ' AND sdh.template_id = CASE WHEN ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + ' THEN sdh.template_id ELSE ' + ISNULL(@imb_actualization, '-1') + ' END'
 		+ case @deal_type 
@@ -420,7 +484,6 @@ BEGIN
 		+ CASE WHEN @commodity_id IS NOT NULL THEN ' AND spcd.commodity_id=' + CAST(@commodity_id AS VARCHAR(30)) ELSE '' END
 		+ CASE WHEN @curve_id IS NOT NULL THEN ' AND sdd.curve_id=' + CAST(@curve_id AS VARCHAR(30)) ELSE '' END
 		+ CASE WHEN @contract_id IS NOT NULL THEN ' AND sdh.contract_id=' + CAST(@contract_id AS VARCHAR(30)) ELSE '' END
-		--+ CASE WHEN @location_id IS NOT NULL THEN ' AND ((sdd.location_id IN (' + @location_id + ') AND ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + '))' ELSE '' END
 		+ CASE WHEN @location_id IS NOT NULL THEN '
 			AND (
 				sdd.location_id IN (' + @location_id + ')' + 
@@ -437,11 +500,13 @@ BEGIN
 		+ ' GROUP BY ml.location_name,ISNULL(cg.contract_name,'''') ,sdd.location_id' 
 		+ CASE WHEN @drill_location IS NULL THEN '' ELSE ', sdh.source_deal_header_id' END
 	
-	exec spa_print @Sql_SELECT
+	SET @Sql_SELECT = @Sql_SELECT + @Sql_WHERE
+
+	--PRINT @Sql_SELECT
 	EXEC(@Sql_SELECT)
 
 
-	--print 'temp1 end: ' + convert(VARCHAR(50),getdate() ,21)
+	--print 'term < E: ' + convert(VARCHAR(50),getdate() ,21)
 	
 
 	--CURRENT PERIOD								  
@@ -480,7 +545,7 @@ BEGIN
 							,IIF(sdh.internal_desk_id = 17302, sddh.[hourly_vol], sdd.deal_volume)
 							,0) * 
 						CASE  
-							WHEN sdd.deal_volume_frequency = ''h'' AND sdh.internal_desk_id <> 17302 THEN hbt.volume_mult 
+							WHEN sdd.deal_volume_frequency = ''h'' AND sdh.internal_desk_id <> 17302 THEN term_bk.volume_mult 
 							WHEN sdd.deal_volume_frequency = ''m'' AND sdh.internal_desk_id <> 17302 THEN 1.0/DAY(EOMONTH(sdd.term_start)) 
 							ELSE 1 
 						END
@@ -494,14 +559,13 @@ BEGIN
 							,IIF(sdh.internal_desk_id = 17302, sddh.[hourly_vol], sdd.deal_volume)
 							,0) * 
 						CASE  
-							WHEN sdd.deal_volume_frequency = ''h'' AND sdh.internal_desk_id <> 17302 THEN hbt.volume_mult 
+							WHEN sdd.deal_volume_frequency = ''h'' AND sdh.internal_desk_id <> 17302 THEN term_bk.volume_mult 
 							WHEN sdd.deal_volume_frequency = ''m'' AND sdh.internal_desk_id <> 17302 THEN 1.0/DAY(EOMONTH(sdd.term_start)) 
 							ELSE 1 
 						END
 						) 
 				ELSE 0 
 			END) AS [Withdrawal],
-		--' + CASE WHEN @drill_location IS NULL THEN 'NULL' ELSE 'MAX(CASE WHEN buy_sell_flag=''b'' THEN -1 ELSE 1 END * coalesce(sdd.ending_balance,actual_volume, total_volume,sdd.deal_volume))' END + ' [Daily Average Balance],
 		NULL [Daily Average Balance],
 		MAX(su.uom_name) [UOM]  ' + CASE WHEN @drill_location IS NULL THEN '' ELSE ',sdh.source_deal_header_id' END + ',
 		MAX(sdh.contract_id) contract_id, 
@@ -518,43 +582,38 @@ BEGIN
 		AND sdh.source_system_book_id3 = b.source_system_book_id3
 		AND sdh.source_system_book_id4 = b.source_system_book_id4
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	INNER JOIN #deal_term_breakdown_stg term_bk
+		ON term_bk.source_deal_detail_id = sdd.source_deal_detail_id
 	INNER JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.counterparty_id
 	INNER JOIN source_minor_location ml ON ml.source_minor_location_id = sdd.location_id
-		--AND ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + '
 	inner join source_deal_header_template sdht on sdht.template_id = sdh.template_id
 	LEFT JOIN general_assest_info_virtual_storage gaivs on gaivs.storage_location = sdd.location_id
 		and gaivs.agreement = sdh.contract_id and gaivs.source_counterparty_id = sdh.counterparty_id
-	OUTER APPLY( 
-		SELECT MAX(as_of_date) as_of_date 
-		FROM source_deal_settlement 
-		WHERE source_deal_header_id = sdh.source_deal_header_id 
-			AND term_start = sdd.term_start 
-			AND leg = sdd.leg
+	OUTER APPLY ( 
+		SELECT TOP 1 sds1.as_of_date [as_of_date] 
+		FROM source_deal_settlement sds1
+		WHERE sds1.source_deal_header_id = sdh.source_deal_header_id 
+			AND sds1.term_start = sdd.term_start 
+			AND sds1.leg = sdd.leg 
+		ORDER BY sds1.as_of_date DESC
 	) mx
-	LEFT JOIN source_deal_settlement sds ON sds.source_deal_header_id = sdh.source_deal_header_id 
+	LEFT JOIN source_deal_settlement sds with (nolock) ON sds.source_deal_header_id = sdh.source_deal_header_id 
 		AND sds.term_start = sdd.term_start 
 		AND sds.leg = sdd.leg	
 		AND sds.as_of_date = mx.as_of_date		
 	LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
 	LEFT JOIN source_uom su	ON su.source_uom_id = ISNULL(sdd.position_uom, sdd.deal_volume_uom_id)
 	LEFT JOIN contract_group cg ON cg.contract_id = sdh.contract_id
-	outer apply (
-		select tb.term_start
-		from dbo.FNATermBreakdown(''d'', iif(sdd.term_start>= ''' + CAST(@term_start AS VARCHAR(30)) + ''', sdd.term_start, ''' + CAST(@term_start AS VARCHAR(30)) + '''), ''' + cast(@term_end as varchar(50)) + ''') tb
-		--from dbo.FNATermBreakdown(''d'',  sdd.term_start, ''' + cast(@term_end as varchar(50)) + ''') tb
-
-				--where sdh.term_frequency = ''m''
-	) term_bk
-	inner join dbo.vwDealTimezone tz on sdd.source_deal_header_id=tz.source_deal_header_id
-		and tz.curve_id=isnull(sdd.curve_id,-1)  and tz.location_id=isnull(sdd.location_id,-1)
-	left join hour_block_term hbt with (nolock) on hbt.term_date = isnull(term_bk.term_start,sdd.term_start)
-		AND hbt.block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id, ' + cast(@block_define_id_base_load as varchar(10)) + ')
-		and hbt.dst_group_value_id = tz.dst_group_value_id
+	--inner join dbo.vwDealTimezone tz with (nolock) on sdd.source_deal_header_id=tz.source_deal_header_id
+	--	and tz.curve_id=isnull(sdd.curve_id,-1)  and tz.location_id=isnull(sdd.location_id,-1)
+	--left join hour_block_term hbt with (nolock) on hbt.term_date = isnull(term_bk.term_start,sdd.term_start)
+	--	AND hbt.block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id, ' + cast(@block_define_id_base_load as varchar(10)) + ')
+	--	and hbt.dst_group_value_id = tz.dst_group_value_id
 	LEFT JOIN rec_volume_unit_conversion rvuc 
 		ON rvuc.to_source_uom_id = ' + IIF(@volume_conversion IS NULL,'rvuc.to_source_uom_id',CAST(@volume_conversion AS VARCHAR(10))) + ' AND rvuc.from_source_uom_id = sdd.deal_volume_uom_id
 	OUTER APPLY (
 		SELECT SUM(sddh1.volume) [hourly_vol]
-		FROM source_deal_detail_hour sddh1 
+		FROM source_deal_detail_hour sddh1 with (nolock)
 		WHERE sddh1.source_deal_detail_id = sdd.source_deal_detail_id
 	) sddh
 	'
@@ -564,7 +623,7 @@ BEGIN
 			' ELSE ' ' END 				
 	SET @Sql_SELECT += '
 	WHERE 1 = 1'
-		+ ' AND ISNULL(term_bk.term_start, sdd.term_start) BETWEEN ''' + CAST(@term_start AS VARCHAR(30)) + ''' AND ''' + CAST(@term_end AS VARCHAR(30)) + ''''				 
+		+ ' AND term_bk.term_start BETWEEN ''' + CAST(@term_start AS VARCHAR(30)) + ''' AND ''' + CAST(@term_end AS VARCHAR(30)) + ''''				 
 		+ ' AND sdh.template_id = CASE WHEN ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + ' THEN sdh.template_id ELSE ' + ISNULL(@imb_actualization, '-1') + ' END'
 		+ case @deal_type 
 			when 'a' then ' AND sdht.template_id IN ( ' + @deal_template_includes + ')' --term link report, storage inventory deals
@@ -598,9 +657,9 @@ BEGIN
 		--+ CASE WHEN @drill_location IS NULL THEN '' ELSE ', sdh.source_deal_header_id' END
 
 
-	exec spa_print @Sql_SELECT
+	--print @Sql_SELECT
 	EXEC(@Sql_SELECT)
-	--print 'temp2 start: ' + convert(VARCHAR(50),getdate() ,21)
+	--print 'term = E: ' + convert(VARCHAR(50),getdate() ,21)
 	
 	--- Now out the result showing the rolling SUM
 	--collect udfs
@@ -684,7 +743,7 @@ BEGIN
 
 		
 	END 
-
+	--print '#tmp_rpt_data E: ' + convert(VARCHAR(50),getdate() ,21)
 
 	IF @call_from = 'Optimization'
 	BEGIN
@@ -720,7 +779,7 @@ BEGIN
 		)  b '
 		--print(@Sql_SELECT)			
 		EXEC(@Sql_SELECT)
-		--print 'final data end: ' + convert(VARCHAR(50),getdate() ,21)
+		--print 'final data E: ' + convert(VARCHAR(50),getdate() ,21)
 	END
 	ELSE
 	BEGIN
@@ -997,3 +1056,4 @@ END
 /*******************************************2nd Paging Batch END**********************************************/
  
 GO
+-------------------------------

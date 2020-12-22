@@ -161,18 +161,20 @@ declare @flag CHAR(50),
 	
 EXEC dbo.spa_drop_all_temp_table
 
-EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'enercity_4429';
 
-	select	@flag='s1'
-,@process_id='0946A213_4F2D_4A9E_B275_44FE94590E7C'
-,@delivery_path='310'
-,@contract_id='8333'
-,@flow_date_from='2020-01-01'
+	select	@flag='c'
+,@flow_date_from='2020-11-11'
+,@flow_date_to='2020-11-11'
+,@from_location='38,36,35,34,33'
+,@to_location='38,36,35,34,33'
+,@path_priority='-31400'
+,@opt_objective='38301'
+,@uom='1159'
+,@process_id='E9F55C82_C058_4485_A33B_502256235452'
+,@reschedule='0'
 ,@granularity='982'
 ,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24'
-,@from_location='2852'
-,@to_location='2887'
-,@round=4
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -432,6 +434,7 @@ BEGIN
 
 			IF @flag = 'c' OR @call_from = 'single_match'
 			BEGIN
+				--print 'DETAIL TERM BREAKDOWN #source_deal_header S: ' + convert(VARCHAR(50),getdate() ,21)
 				IF NULLIF(@receipt_deals_id,'') IS NOT NULL
 				BEGIN
 					INSERT INTO #source_deal_header
@@ -467,7 +470,7 @@ BEGIN
 						AND (ISNULL(@reschedule, 0) = 0 OR (ISNULL(sdh.internal_deal_type_value_id, -1) <> @transportation_deal_type_value_id AND sdh.template_id <> @transportation_template_id))
 						AND sdh.deal_status <> @deal_status_void
 				END 
-
+				--print 'DETAIL TERM BREAKDOWN #source_deal_header Rec: ' + convert(VARCHAR(50),getdate() ,21)
 				IF NULLIF(@delivery_deals_id,'') IS NOT NULL
 				BEGIN
 					INSERT INTO #source_deal_header
@@ -506,9 +509,13 @@ BEGIN
 					GROUP BY sdh.source_deal_header_id ,sdh.template_id,sdh.source_system_book_id1,sdh.source_system_book_id2,sdh.source_system_book_id3,sdh.source_system_book_id4 ,sdh.internal_deal_type_value_id, sdh.term_frequency   
 				END 
 			END
-
+			--print 'DETAIL TERM BREAKDOWN #source_deal_header Del: ' + convert(VARCHAR(50),getdate() ,21)
+			
 			INSERT INTO #deal_term_breakdown(source_deal_detail_id,term_start,term_end,proxy_record,location_id,source_deal_header_id,curve_id)
-			SELECT source_deal_detail_id,tm.term_start,tm.term_end,scsv.proxy_record,dd.location_id,MAX(dd.source_deal_header_id),MAX(dd.curve_id)
+			
+			SELECT source_deal_detail_id,tm.[term_start], tm.[term_start] [term_end],scsv.proxy_record,dd.location_id,MAX(dd.source_deal_header_id),MAX(dd.curve_id)
+
+			--select dd.*
 			from source_deal_detail dd (nolock)
 			INNER JOIN #source_deal_header sdh (NOLOCK) ON sdh.source_deal_header_id = dd.source_deal_header_id
 			INNER JOIN #books bk ON bk.source_system_book_id1 = sdh.source_system_book_id1
@@ -534,20 +541,26 @@ BEGIN
 				--OR (@flag = 'p' AND sml.proxy_location_id IN (SELECT item FROM dbo.SplitCommaSeperatedValues(@minor_location)) AND sml.is_aggregate = 'y')
 			) scsv
 			OUTER APPLY (
-				SELECT DATEADD(DAY, n - 1, dd.term_start) term_start, DATEADD(DAY, n - 1, dd.term_start) term_end  
-				FROM seq 
-				WHERE dd.term_end >= DATEADD(DAY, n - 1, dd.term_start) --AND dd.term_start <> dd.term_end
-					AND (
-						(@flow_date_from BETWEEN dd.term_start AND dd.term_end) 
-						OR (ISNULL(@flow_date_to, @flow_date_from) BETWEEN dd.term_start AND dd.term_end)
-					)
-					--AND dd.term_start BETWEEN 
-					--	CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) 
-					--	ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
-					AND dd.physical_financial_flag='p'
+				--SELECT DATEADD(DAY, n - 1, dd.term_start) term_start, DATEADD(DAY, n - 1, dd.term_start) term_end  
+				--FROM seq 
+				--WHERE dd.term_end >= DATEADD(DAY, n - 1, dd.term_start) --AND dd.term_start <> dd.term_end
+				--	AND (
+				--		(@flow_date_from BETWEEN dd.term_start AND dd.term_end) 
+				--		OR (ISNULL(@flow_date_to, @flow_date_from) BETWEEN dd.term_start AND dd.term_end)
+				--	)
+				--	--AND dd.term_start BETWEEN 
+				--	--	CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) 
+				--	--	ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
+				--	AND dd.physical_financial_flag='p'
+
+					select c.[sql_date_value] [term_start]--, c.[sql_date_value] [sql_date_value]
+					from date_details c
+					where c.[sql_date_value] between dd.term_start and dd.term_end
+						and c.[sql_date_value] between @flow_date_from and @flow_date_to
+						and dd.physical_financial_flag='p'
 			) tm
 			LEFT JOIN optimizer_header oh ON oh.transport_deal_id = dd.source_deal_header_id
-			WHERE  tm.term_start BETWEEN @flow_date_from 
+			WHERE  tm.[term_start] BETWEEN @flow_date_from 
 				AND ISNULL(@flow_date_to_temp,@flow_date_from)
 				AND dd.physical_financial_flag='p'
 				AND dd.Leg=	CASE WHEN (ISNULL(@reschedule, 0) = 0 OR @flag = 'c') THEN dd.Leg
@@ -564,16 +577,18 @@ BEGIN
 								END
 							END
 				AND (ISNULL(oh.group_path_id, -1) <> -99 OR ISNULL(@reschedule, 0) = 0)
-			GROUP BY source_deal_detail_id,tm.term_start,tm.term_end,scsv.proxy_record,dd.location_id
+			GROUP BY source_deal_detail_id,tm.[term_start],scsv.proxy_record,dd.location_id
+
+			--print 'DETAIL TERM BREAKDOWN Mid: ' + convert(VARCHAR(50),getdate() ,21)
+			
 			UNION
-			SELECT source_deal_detail_id,tm.term_start,tm.term_end,scsv.proxy_record,dd.location_id,MAX(dd.source_deal_header_id),MAX(dd.curve_id)
+			SELECT source_deal_detail_id,tm.[term_start], tm.[term_start] [term_end],scsv.proxy_record,dd.location_id,MAX(dd.source_deal_header_id),MAX(dd.curve_id)
 			from source_deal_detail dd (nolock)
 			INNER JOIN source_deal_header sdh (NOLOCK) ON sdh.source_deal_header_id = dd.source_deal_header_id
 				AND (
 					(@flow_date_from BETWEEN dd.term_start AND dd.term_end) 
 					OR (ISNULL(@flow_date_to, @flow_date_from) BETWEEN dd.term_start AND dd.term_end)
 				)
-				--AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from) -- NOT required condition AS tm.term_start IS needed to filter
 				AND dd.physical_financial_flag='p'
 				AND sdh.deal_status <> @deal_status_void
 			INNER JOIN #books bk ON bk.source_system_book_id1 = sdh.source_system_book_id1
@@ -614,18 +629,24 @@ BEGIN
 			) scsv
 			INNER JOIN dbo.SplitCommaSeperatedValues(@commodity) com ON com.item = sdh.commodity_id
 			OUTER APPLY (
-				SELECT DATEADD(DAY, n - 1, dd.term_start) term_start, DATEADD(DAY, n - 1, dd.term_start) term_end  
-				FROM seq 
-				WHERE dd.term_end >= DATEADD(DAY, n - 1, dd.term_start) --AND dd.term_start <> dd.term_end
-					--AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
-					AND (
-						(@flow_date_from BETWEEN dd.term_start AND dd.term_end) 
-						OR (ISNULL(@flow_date_to, @flow_date_from) BETWEEN dd.term_start AND dd.term_end)
-					)
-					AND dd.physical_financial_flag='p'
+				--SELECT DATEADD(DAY, n - 1, dd.term_start) term_start, DATEADD(DAY, n - 1, dd.term_start) term_end  
+				--FROM seq 
+				--WHERE dd.term_end >= DATEADD(DAY, n - 1, dd.term_start) --AND dd.term_start <> dd.term_end
+				--	--AND dd.term_start BETWEEN CASE WHEN sdh.term_frequency = 'm' THEN DATEADD(m, DATEDIFF(m, 0, @flow_date_from), 0) ELSE @flow_date_from END  AND ISNULL(@flow_date_to_temp,@flow_date_from)
+				--	AND (
+				--		(@flow_date_from BETWEEN dd.term_start AND dd.term_end) 
+				--		OR (ISNULL(@flow_date_to, @flow_date_from) BETWEEN dd.term_start AND dd.term_end)
+				--	)
+				--	AND dd.physical_financial_flag='p'
+
+					select c.[sql_date_value] [term_start]--, c.[sql_date_value] [sql_date_value]
+					from date_details c
+					where c.[sql_date_value] between dd.term_start and dd.term_end
+						and c.[sql_date_value] between @flow_date_from and @flow_date_to
+						and dd.physical_financial_flag='p'
 			) tm
 			LEFT JOIN optimizer_header oh ON oh.transport_deal_id = dd.source_deal_header_id
-			WHERE  tm.term_start BETWEEN @flow_date_from 
+			WHERE  tm.[term_start] BETWEEN @flow_date_from 
 				AND ISNULL(@flow_date_to_temp,@flow_date_from)
 				AND dd.physical_financial_flag='p'
 				AND dd.Leg=	CASE WHEN (ISNULL(@reschedule, 0) = 0 OR @flag = 'c') THEN dd.Leg
@@ -640,7 +661,7 @@ BEGIN
 								END
 							END
 				AND (ISNULL(oh.group_path_id, -1) <> -99 OR ISNULL(@reschedule, 0) = 0)
-			GROUP BY source_deal_detail_id,tm.term_start,tm.term_end,scsv.proxy_record,dd.location_id
+			GROUP BY source_deal_detail_id,tm.[term_start],scsv.proxy_record,dd.location_id
 			--print 'DETAIL TERM BREAKDOWN END: ' + convert(VARCHAR(50),getdate() ,21)
 		END
 	END
@@ -891,7 +912,7 @@ BEGIN
 	BEGIN
 		--HOURLY POSITION CALC START
 		BEGIN
-			
+			--print 'HOURLY POSITION CALC S: ' + convert(VARCHAR(50),getdate() ,21)
 			IF OBJECT_ID(@hourly_pos_info,'U') IS NOT NULL
 				EXEC('DROP TABLE ' + @hourly_pos_info)
 			SET @sql = '
@@ -937,11 +958,12 @@ BEGIN
 					, MAX(rhpd.hr24) [hr24]
 					, MAX(rhpd.hr25) [hr25]
 	
-				FROM report_hourly_position_deal rhpd
+				FROM report_hourly_position_deal rhpd (NOLOCK)
 				INNER JOIN #deal_term_breakdown dtb ON dtb.source_deal_header_id = rhpd.source_deal_header_id
 					AND dtb.location_id = rhpd.location_id
 					AND dtb.term_start = rhpd.term_start
 					AND dtb.curve_id = rhpd.curve_id
+					AND dtb.source_deal_detail_id = rhpd.source_deal_detail_id
 				INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = rhpd.source_deal_header_id
 				INNER JOIN source_deal_type sdt ON sdt.source_deal_type_id = sdh.source_deal_type_id
 					AND sdt.source_deal_type_name NOT LIKE ''Capacity%''
@@ -983,11 +1005,12 @@ BEGIN
 					, MAX(rhpp.hr24) [hr24]
 					, MAX(rhpp.hr25) [hr25]
 	
-				FROM report_hourly_position_profile rhpp
+				FROM report_hourly_position_profile rhpp (NOLOCK)
 				INNER JOIN #deal_term_breakdown dtb ON dtb.source_deal_header_id = rhpp.source_deal_header_id
 					AND dtb.location_id = rhpp.location_id
 					AND dtb.term_start = rhpp.term_start
 					AND dtb.curve_id = rhpp.curve_id
+					AND dtb.source_deal_detail_id = rhpp.source_deal_detail_id
 				INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = rhpp.source_deal_header_id
 				INNER JOIN source_deal_type sdt ON sdt.source_deal_type_id = sdh.source_deal_type_id
 					AND sdt.source_deal_type_name NOT LIKE ''Capacity%''
@@ -1814,6 +1837,7 @@ BEGIN
 	FROM source_deal_detail sdd (nolock)
 	INNER JOIN #deal_term_breakdown dtb (NOLOCK) ON dtb.source_deal_detail_id = sdd.source_deal_detail_id 
 		AND sdd.physical_financial_flag =''p''
+		AND dtb.source_deal_header_id = sdd.source_deal_header_id
 	CROSS APPLY (
 		SELECT DISTINCT s.item, NULL is_proxy
 		FROM dbo.SplitCommaSeperatedValues(''' + ISNULL(@all_location, '') + ''') s 
@@ -1843,14 +1867,14 @@ BEGIN
 		AND rvuc.from_source_uom_id = sdd.deal_volume_uom_id
 	OUTER APPLY ( 
 		SELECT SUM(volume) vol 
-		FROM source_deal_detail_hour 
+		FROM source_deal_detail_hour (NOLOCK)
 		WHERE source_deal_detail_id = sdd.source_deal_detail_id 
 			AND term_date = dtb.term_start 
 			AND sdd.deal_volume_frequency = ''t''
 	) sddh
 	OUTER APPLY (
 		SELECT SUM(hp.position) [position]
-		FROM ' + @hourly_pos_info + ' hp 
+		FROM ' + @hourly_pos_info + ' hp (NOLOCK)
 		WHERE hp.source_deal_header_id = sdd.source_deal_header_id
 			AND hp.term_start = dtb.term_start
 			AND hp.location_id = sdd.location_id
@@ -2048,7 +2072,7 @@ BEGIN
 	LEFT JOIN #tmp_loss_factor lf 
 		ON lf.path_id = coalesce(dp.path_id,dp_proxy_from.path_id,dp_child_proxy_from.path_id,dp_proxy_to.path_id,dp_child_proxy_to.path_id,dp_proxy_from_to.path_id,dp_child_proxy_from_to.path_id)
 		and lf.contract_id = coalesce(spath.contract_id, contract_level.contract_id, dp.CONTRACT)
-
+--print '@flag = ''c'', #tmp_solver_decisions E: ' + convert(varchar(50),getdate() ,21)
 	UPDATE t 
 	SET storage_asset_id = a.general_assest_id
 	from #tmp_solver_decisions t
@@ -2199,7 +2223,7 @@ BEGIN
 		  
 	INTO #tmp_filtered_data --select * from #tmp_filtered_data
 	from #tmp_solver_decisions a --select * from #tmp_solver_decisions
-	
+	--print '@flag = ''c'', #tmp_filtered_data E: ' + convert(varchar(50),getdate() ,21)
 	SET @sql = '
 	IF OBJECT_ID(''' + @contractwise_detail_mdq + ''') IS NOT NULL
 	DROP TABLE ' + @contractwise_detail_mdq + '
@@ -2237,7 +2261,7 @@ BEGIN
 	--select * from ' + @contractwise_detail_mdq + '
 	'
 	EXEC(@sql)
-
+--print '@flag = ''c'', @contractwise_detail_mdq E: ' + convert(varchar(50),getdate() ,21)
 	--keep fresh table values for data just after refresh, to dump this value on contractwise_detail_mdq before solver run. (added due to issue: continoulsy decrement of prmdq value on multiple times solver run)
 	EXEC('
 	IF OBJECT_ID(''' + @contractwise_detail_mdq_fresh + ''') IS NOT NULL
@@ -2246,6 +2270,7 @@ BEGIN
 	--select * from ' + @contractwise_detail_mdq_fresh + '
 	')
 	
+--print '@flag = ''c'', @contractwise_detail_mdq_fresh E: ' + convert(varchar(50),getdate() ,21)
 
 	--store path wise capacity deals hourly mdq (not used for now)
 	/*
@@ -2278,7 +2303,7 @@ BEGIN
 		, SUM(IIF(sdh.header_buy_sell_flag = 's', -1, 1) * sddh.volume) [hourly_mdq]
 		--,sdh.source_deal_header_id
 	INTO #loc_wise_capacity_hourly_mdq
-	FROM source_deal_detail_hour sddh
+	FROM source_deal_detail_hour sddh (NOLOCK)
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = sddh.source_deal_detail_id
 	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
 	INNER JOIN source_deal_type sdt ON sdt.source_deal_type_id = sdh.source_deal_type_id
@@ -2292,6 +2317,7 @@ BEGIN
 
 	--select @child_proxy_from,@child_proxy_to
 	--select * from #loc_wise_capacity_hourly_mdq order by 1,2,3  select * from #tmp_filtered_data 
+--print '@flag = ''c'', #loc_wise_capacity_hourly_mdq E: ' + convert(varchar(50),getdate() ,21)
 
 	--store path mdq information prior Ffor performance optimization
 	BEGIN
@@ -2305,7 +2331,7 @@ BEGIN
 			) a
 		OUTER APPLY [dbo].[FNAGetPathMDQHourly](a.path_id, @flow_date_from, @flow_date_from, '') b
 	END
-
+--print '@flag = ''c'', #path_mdq_info E: ' + convert(varchar(50),getdate() ,21)
 	--create hourly table
 	SET @sql = '
 	IF OBJECT_ID(''' + @contractwise_detail_mdq_hourly + ''') IS NOT NULL
@@ -2328,52 +2354,13 @@ BEGIN
 		, t.[path_name]
 		, t.[group_path]
 
-		--, t.path_mdq + 
-		--	CASE 
-		--		WHEN ISNULL(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from) IS NOT NULL 
-		--				AND ISNULL(lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to) IS NOT NULL --if both capacity deal available; storage and non storage case
-					
-		--			THEN IIF(
-		--				ISNULL(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from) < ISNULL(lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to)
-		--				, ISNULL(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from)
-		--				, ISNULL(lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to)
-		--				)
-				
-		--		WHEN t.[from_loc_grp_name] = ''storage'' OR t.[to_loc_grp_name] = ''storage'' --if storage case; one side not available
-		--			THEN COALESCE(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from, lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to, 0)
-				
-		--		WHEN t.[from_loc_grp_name] <> ''storage'' AND t.[to_loc_grp_name] <> ''storage'' --if non storage case; one side not available
-		--			THEN 0
-		--	END
-		--  [path_mdq]
-		--, t.path_mdq + 
-		--	CASE 
-		--		WHEN ISNULL(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from) IS NOT NULL 
-		--				AND ISNULL(lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to) IS NOT NULL --if both capacity deal available; storage and non storage case
-					
-		--			THEN IIF(
-		--				ISNULL(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from) < ISNULL(lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to)
-		--				, ISNULL(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from)
-		--				, ISNULL(lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to)
-		--				)
-				
-		--		WHEN t.[from_loc_grp_name] = ''storage'' OR t.[to_loc_grp_name] = ''storage'' --if storage case; one side not available
-		--			THEN COALESCE(lwchm_from.hourly_mdq, cap_mdq_child_proxy_from.cap_mdq_from, lwchm_to.hourly_mdq, cap_mdq_child_proxy_to.cap_mdq_to, 0)
-				
-		--		WHEN t.[from_loc_grp_name] <> ''storage'' AND t.[to_loc_grp_name] <> ''storage'' --if non storage case; one side not available
-		--			THEN 0
-		--	END
-		--	- ISNULL(sch.hourly_vol, 0)
-		--  [path_rmdq]
-
 		, path_mdq_info.mdq [path_mdq]
 		, path_mdq_info.rmdq [path_rmdq]
 		, t.[contract_id]
 		, t.[contract_name]
 		, t.[mdq]
 		, t.[rmdq]
-		--, ISNULL(sch.hourly_vol, 0) [total_sch_volume]
-
+		
 		, ISNULL(path_mdq_info.used_mdq, 0) [total_sch_volume]
 		, t.[loss_factor]
 		, t.[priority]
@@ -2440,7 +2427,7 @@ BEGIN
 		DROP TABLE ' + @contractwise_detail_mdq_hourly_fresh + '
 	SELECT * INTO ' + @contractwise_detail_mdq_hourly_fresh + ' FROM ' + @contractwise_detail_mdq_hourly + '
 	')
-
+--print '@flag = ''c'', contractwise PT E: ' + convert(varchar(50),getdate() ,21)
 	
 	--For storage constraint
 	SET @sql = '
@@ -2500,9 +2487,6 @@ BEGIN
 				INNER JOIN ' + @storage_position + ' sp
 					ON sp.location_id = g.storage_location
 					and sp.type = sr.type
-				--WHERE   (sp.position/ (g.storage_capacity * case when g.volumn_uom = 1209 then 1000000 else 1 end) * 100) >= ISNULL(gas_in_storage_perc_from, 0)
-				--		AND (sp.position/ (g.storage_capacity * case when g.volumn_uom = 1209 then 1000000 else 1 end) * 100) <= gas_in_storage_perc_to
-				--		AND sp.location_id = cdmf.to_loc_id
 				where sp.position between
 					CASE WHEN coalesce(sr.inventory_level_from, sr.inventory_level_to) IS NOT NULL THEN coalesce(sr.inventory_level_from,sr.inventory_level_to-1, 0) ELSE (isnull(sr.gas_in_storage_perc_from, -100) / 100.0 * g.storage_capacity * CASE WHEN g.volumn_uom = 1209 THEN 1000000 ELSE 1 END) END
 					AND CASE WHEN coalesce(sr.inventory_level_from, sr.inventory_level_to) IS NOT NULL THEN isnull(sr.inventory_level_to, sp.position + 1) ELSE (sr.gas_in_storage_perc_to / 100.0 * g.storage_capacity * CASE WHEN g.volumn_uom = 1209 THEN 1000000 ELSE 1 END) END
@@ -2551,9 +2535,6 @@ BEGIN
 				INNER JOIN ' + @storage_position + ' sp
 					ON sp.location_id = g.storage_location
 					and sp.type = sr.type
-				--WHERE   (sp.position/ (g.storage_capacity * case when g.volumn_uom = 1209 then 1000000 else 1 end) * 100) >= ISNULL(gas_in_storage_perc_from, 0)
-				--		AND (sp.position/ (g.storage_capacity * case when g.volumn_uom = 1209 then 1000000 else 1 end) * 100) <= gas_in_storage_perc_to
-				--		AND sp.location_id = cdmf.from_loc_id	
 				where sp.position between
 					CASE WHEN coalesce(sr.inventory_level_from, sr.inventory_level_to) IS NOT NULL THEN coalesce(sr.inventory_level_from,sr.inventory_level_to-1, 0) ELSE (isnull(sr.gas_in_storage_perc_from, -100) / 100.0 * g.storage_capacity * CASE WHEN g.volumn_uom = 1209 THEN 1000000 ELSE 1 END) END
 					AND CASE WHEN coalesce(sr.inventory_level_from, sr.inventory_level_to) IS NOT NULL THEN isnull(sr.inventory_level_to, sp.position + 1) ELSE (sr.gas_in_storage_perc_to / 100.0 * g.storage_capacity * CASE WHEN g.volumn_uom = 1209 THEN 1000000 ELSE 1 END) END
@@ -2685,7 +2666,7 @@ BEGIN
 	'
 	--print(@sql)
 	EXEC(@sql)
-
+	--print '@flag = ''c'', final: ' + convert(varchar(50),getdate() ,21)
 END
 
 ELSE IF @flag = 'r' --run solver
