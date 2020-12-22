@@ -96,7 +96,20 @@ LEFT JOIN source_price_curve_def spcd
 WHERE spcd.commodity_id = -1
 
 END',
-					'IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
+					' DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
+IF OBJECT_ID (N''tempdb..#tmp_second_table'') IS NOT NULL 
+BEGIN
+		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
+		SELECT DISTINCT tmp.source_deal_header_id,
+			   tmp.deal_detail_id,
+			   dbo.FNADBUser(),
+			   GETDATE(),
+			   1,
+			   @_process_id
+		FROM #tmp_second_table tmp
+END
+
+IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
 	DROP TABLE 	#temp_trans_off
 
 IF OBJECT_ID (N''tempdb..#temp_inserted_sdd'') IS NOT NULL  
@@ -218,9 +231,7 @@ BEGIN
     	GROUP BY sddh.source_deal_detail_id
 	) sub
 	ON sub.source_deal_detail_id = sdd.source_deal_detail_id
-
-
-	DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
+	   	
 	DECLARE @user_name VARCHAR(100) = dbo.FNADBUser()
 	DECLARE @job_name VARCHAR(MAX)
 	DECLARE @sql NVARCHAR(MAX)
@@ -246,9 +257,6 @@ END
 
 ALTER TABLE  [temp_process_table] 
 ALTER COLUMN term_date VARCHAR(50)
-
-
-
 ',
 					'i' ,
 					'y' ,
@@ -331,7 +339,20 @@ LEFT JOIN source_price_curve_def spcd
 WHERE spcd.commodity_id = -1
 
 END'
-				, after_insert_trigger = 'IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
+				, after_insert_trigger = ' DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
+IF OBJECT_ID (N''tempdb..#tmp_second_table'') IS NOT NULL 
+BEGIN
+		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
+		SELECT DISTINCT tmp.source_deal_header_id,
+			   tmp.deal_detail_id,
+			   dbo.FNADBUser(),
+			   GETDATE(),
+			   1,
+			   @_process_id
+		FROM #tmp_second_table tmp
+END
+
+IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
 	DROP TABLE 	#temp_trans_off
 
 IF OBJECT_ID (N''tempdb..#temp_inserted_sdd'') IS NOT NULL  
@@ -453,9 +474,7 @@ BEGIN
     	GROUP BY sddh.source_deal_detail_id
 	) sub
 	ON sub.source_deal_detail_id = sdd.source_deal_detail_id
-
-
-	DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
+	   	
 	DECLARE @user_name VARCHAR(100) = dbo.FNADBUser()
 	DECLARE @job_name VARCHAR(MAX)
 	DECLARE @sql NVARCHAR(MAX)
@@ -481,9 +500,6 @@ END
 
 ALTER TABLE  [temp_process_table] 
 ALTER COLUMN term_date VARCHAR(50)
-
-
-
 '
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
@@ -614,4 +630,3 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-		

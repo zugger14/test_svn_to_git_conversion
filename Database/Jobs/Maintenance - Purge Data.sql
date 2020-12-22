@@ -449,6 +449,16 @@ BEGIN
 	END
 END
 
+IF EXISTS (
+	SELECT 1
+	FROM INFORMATION_SCHEMA.COLUMNS
+	WHERE TABLE_NAME = ''process_deal_alert_transfer_adjust''
+		AND COLUMN_NAME = ''create_ts''
+)
+BEGIN
+	DELETE FROM process_deal_alert_transfer_adjust WHERE create_ts < @one_week
+END
+
 '
 
 BEGIN TRANSACTION

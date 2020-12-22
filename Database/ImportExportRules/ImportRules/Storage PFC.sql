@@ -119,7 +119,20 @@ EXEC(''
 		AND ISNULL(a.[Minute],0) = rs.[period]
 		AND a.[is dst] = rs.is_dst
 	'')',
-					'IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
+					'  DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
+IF OBJECT_ID (N''tempdb..#tmp_second_table'') IS NOT NULL 
+begin
+		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
+		SELECT DISTINCT tmp.source_deal_header_id,
+			   tmp.deal_detail_id,
+			   dbo.FNADBUser(),
+			   GETDATE(),
+			   1,
+			   @_process_id
+		FROM #tmp_second_table tmp
+end
+
+IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
 	DROP TABLE 	#temp_trans_off
 
 IF OBJECT_ID (N''tempdb..#temp_inserted_sdd'') IS NOT NULL  
@@ -227,7 +240,7 @@ END
 
 
 
-DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
+
 DECLARE @user_name VARCHAR(100) = dbo.FNADBUser()
 DECLARE @job_name VARCHAR(MAX)
 DECLARE @sql NVARCHAR(MAX)
@@ -295,9 +308,6 @@ END
 
 ALTER TABLE  [temp_process_table] 
 ALTER COLUMN term_date VARCHAR(50)
-
-
-
 ',
 					'i' ,
 					'n' ,
@@ -403,7 +413,20 @@ EXEC(''
 		AND ISNULL(a.[Minute],0) = rs.[period]
 		AND a.[is dst] = rs.is_dst
 	'')'
-				, after_insert_trigger = 'IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
+				, after_insert_trigger = '  DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
+IF OBJECT_ID (N''tempdb..#tmp_second_table'') IS NOT NULL 
+begin
+		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
+		SELECT DISTINCT tmp.source_deal_header_id,
+			   tmp.deal_detail_id,
+			   dbo.FNADBUser(),
+			   GETDATE(),
+			   1,
+			   @_process_id
+		FROM #tmp_second_table tmp
+end
+
+IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
 	DROP TABLE 	#temp_trans_off
 
 IF OBJECT_ID (N''tempdb..#temp_inserted_sdd'') IS NOT NULL  
@@ -511,7 +534,7 @@ END
 
 
 
-DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
+
 DECLARE @user_name VARCHAR(100) = dbo.FNADBUser()
 DECLARE @job_name VARCHAR(MAX)
 DECLARE @sql NVARCHAR(MAX)
@@ -579,9 +602,6 @@ END
 
 ALTER TABLE  [temp_process_table] 
 ALTER COLUMN term_date VARCHAR(50)
-
-
-
 '
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
