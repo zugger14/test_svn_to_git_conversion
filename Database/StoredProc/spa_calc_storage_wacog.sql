@@ -174,7 +174,12 @@ DECLARE @Sql_Select VARCHAR(8000),
 		,@currency_id int
 		,@include_non_standard_deals char(1)
 		,@schedule_base_volume_commodity_id VARCHAR(1000)
-DECLARE @wacog_value_with_option NUMERIC(38,18) ,@first_term_date DATE		
+DECLARE @wacog_value_with_option NUMERIC(38,18) ,@first_term_date DATE
+
+--Fetched from Storage WACOG Option Configuration
+DECLARE	@storage_wacog_option VARCHAR(2)
+select @storage_wacog_option = var_value from adiha_default_codes_values where default_code_id = 212
+SELECT @storage_wacog_option = ISNULL(@storage_wacog_option, '1')
 
 select   @schedule_base_volume_commodity_id = isnull(@schedule_base_volume_commodity_id+',','')+ cast(source_commodity_id as varchar)
  from source_commodity where commodity_name in ('Natural Gas','Gas') -- not ticket volume
@@ -490,7 +495,7 @@ BEGIN TRY
 			,max(sdd.multiplier),max(sdd.volume_multiplier2)
 			--,case when max(mgd.source_deal_detail_id) is null then max(sdd.deal_volume_frequency) else ''d'' end deal_volume_frequency
 			,max(sdd.deal_volume_frequency)  deal_volume_frequency
-			,max(coalesce(td.net_quantity,td.gross_quantity, mgd.bookout_split_volume,sdd.actual_volume,sdd.schedule_volume, sdd.total_volume))
+			,max(coalesce(td.net_quantity,td.gross_quantity, mgd.bookout_split_volume,sdd.actual_volume,sdd.schedule_volume, CASE WHEN sdd.deal_volume < 0 AND sdd.total_volume >=0 THEN -1 ELSE 1 END * sdd.total_volume)) --made total_volume negative when deal_volume is also negative
 			,cast(sdd.term_start as date) term_start
 			,cast(sdd.term_end as date) term_end
 			--,cast(isnull(td.movement_date_time,sdd.term_start) as date) term_start
@@ -789,8 +794,20 @@ BEGIN TRY
 			
 	        UPDATE ti
 	        SET    prior_inventory_vol = ob.total_inventory_vol,
-	               prior_inventory_amt = ob.total_inventory_amt,
-	               prior_wacog = case when ti.commodity_id in(SELECT * FROM dbo.SplitCommaSeperatedValues(@schedule_base_volume_commodity_id))  then ob.wacog else NULLIF(ob2.wacog,0) end
+	               prior_inventory_amt = CASE WHEN @storage_wacog_option = '3' THEN 
+												CASE WHEN ob.total_inventory_vol IS NOT NULL THEN 
+														ob.total_inventory_vol * ob.wacog
+												ELSE 0 END
+										ELSE ob.total_inventory_amt END,
+				   -- if option 3
+				   -- then if prio inv vol is not NULL then prior inv vol * prior_wacog ELSE 0 END
+				   -- else total_inventory_amt END
+	               prior_wacog = case when @storage_wacog_option = '2'  
+						THEN NULLIF(ob2.wacog,0) 
+					else 
+						ob.wacog 
+					end
+
 	        FROM   #tmp_inventory ti
 				CROSS APPLY
 				(
@@ -863,36 +880,71 @@ BEGIN TRY
 	        
 	        UPDATE #tmp_inventory
 	        SET    current_inventory_vol = ISNULL(inj_deal_total_volume, 0) -ISNULL(wth_deal_total_volume, 0),
-	               current_inventory_amt = inj_inventory_amt -(
-	                   ISNULL(wth_deal_total_volume2, 0) *
-	                   CASE ISNULL(@accounting_type, 45400)
-	                        WHEN 45401 THEN fifo_price
-								WHEN 45402 THEN lifo_price
-	                        WHEN 45400 THEN ISNULL(prior_wacog, 0)
-						   END
-					   ),
-					   wth_inventory_amt =  (
-												ISNULL(wth_deal_total_volume2, 0) *
-											   CASE ISNULL(@accounting_type, 45400)
+	               current_inventory_amt = CASE WHEN @storage_wacog_option = '3' THEN inj_inventory_amt
+												ELSE 				   
+												inj_inventory_amt -(
+											   ISNULL(wth_deal_total_volume2, 0) *
+												CASE ISNULL(@accounting_type, 45400)
 													WHEN 45401 THEN fifo_price
 														WHEN 45402 THEN lifo_price
 													WHEN 45400 THEN ISNULL(prior_wacog, 0)
-												END
-											) 
+												   END
+											   )
+											  END 
 		
-	
+			
+
 	        UPDATE #tmp_inventory
 	        SET    total_inventory_vol = ISNULL(prior_inventory_vol, 0) + ISNULL(current_inventory_vol, 0),
 	               total_inventory_amt = ISNULL(prior_inventory_amt, 0) + ISNULL(current_inventory_amt, 0),
-	               wacog = case when commodity_id in(SELECT * FROM dbo.SplitCommaSeperatedValues(@schedule_base_volume_commodity_id)) then 
-				    isnull(ABS(
+	               wacog = case when @storage_wacog_option = '1' then 
+					isnull(ABS(
 	                   (
 	                       ISNULL(prior_inventory_amt, 0) + ISNULL(current_inventory_amt, 0)
 	                   ) / NULLIF(
 	                       ISNULL(prior_inventory_vol, 0) + ISNULL(current_inventory_vol, 0), 0
 	                   )
-	               ),0) else prior_wacog  end
-				  
+	               ),0) 
+				   when @storage_wacog_option = '2' then
+						prior_wacog
+					else
+					isnull(ABS(
+	                   (
+	                       ISNULL(prior_inventory_amt, 0) + ISNULL(current_inventory_amt, 0)
+	                   ) / NULLIF(
+	                       ISNULL(prior_inventory_vol, 0) + ISNULL(inj_deal_total_volume, 0), 0
+	                   )
+	               ),0)
+					end
+			
+			-- used for negative wacog_price and storage_wacog_option 3 & prior_inventory_volume is 0
+			select ti.location_id,ti.commodity_id,ti.term_start,spc.curve_value price
+			into #neg_wacog_price -- select * from #neg_wacog_price
+			from 
+			( select distinct location_id,commodity_id,term_start from	#tmp_inventory )ti 
+			left join location_price_index lpi 
+				ON ti.location_id= lpi.location_id AND lpi.commodity_id = ti.commodity_id
+			left join source_minor_location sml
+				ON ti.location_id= sml.source_minor_location_id 
+			outer apply
+			(
+			select min(maturity_date) maturity_date from source_price_curve where source_curve_def_id=isnull(lpi.curve_id,sml.term_pricing_index)
+				and as_of_date=@as_of_date
+				--and maturity_date>=convert(varchar(8),ti.term_start,120)+'01'
+				and maturity_date>=ti.term_start
+			) mx_term
+			inner join source_price_curve spc on spc.source_curve_def_id=isnull(lpi.curve_id,sml.term_pricing_index)
+				and spc.as_of_date=@as_of_date
+				and spc.maturity_date>=mx_term.maturity_date
+
+			-- storage_wacog_option 3 & prior_inventory_volume is 0
+			update	ti set 
+				wacog=w.price
+			from #tmp_inventory ti
+				inner join  #neg_wacog_price w on  ti.location_id=w.location_id 
+					and ti.commodity_id=w.commodity_id and ti.term_start=w.term_start 
+			where ti.prior_inventory_vol <= 0 AND @storage_wacog_option = '3'
+
 	         --update for first time data entry for the storage.
 			UPDATE ti
 				SET ti.wacog = ti.inj_inventory_amt/nullif(ti.inj_deal_total_volume,0)
@@ -913,38 +965,33 @@ BEGIN TRY
 				WHERE ob2.data_exists IS NULL
 					and ti.inj_inventory_amt/nullif(ti.inj_deal_total_volume,0) is not null
 
-			-- select * from #tmp_inventory
-
-			select ti.location_id,ti.commodity_id,ti.term_start,spc.curve_value price
-			into #neg_wacog_price -- select * from #neg_wacog_price
-			from 
-			( select distinct location_id,commodity_id,term_start from	#tmp_inventory )ti 
-			left join location_price_index lpi 
-				ON ti.location_id= lpi.location_id AND lpi.commodity_id = ti.commodity_id
-			left join source_minor_location sml
-				ON ti.location_id= sml.source_minor_location_id 
-			outer apply
-			(
-			select min(maturity_date) maturity_date from source_price_curve where source_curve_def_id=isnull(lpi.curve_id,sml.term_pricing_index)
-				and as_of_date=@as_of_date
-				--and maturity_date>=convert(varchar(8),ti.term_start,120)+'01'
-				and maturity_date>=ti.term_start
-			) mx_term
-			inner join source_price_curve spc on spc.source_curve_def_id=isnull(lpi.curve_id,sml.term_pricing_index)
-				and spc.as_of_date=@as_of_date
-				and spc.maturity_date>=mx_term.maturity_date
-
+			-- update wth_inventory_amt 
+			UPDATE #tmp_inventory
+				SET    wth_inventory_amt =  ISNULL(wth_deal_total_volume2, 0) * ISNULL(case when @storage_wacog_option IN ('1','2') then prior_wacog else wacog end, 0)
+			
+			
+			-- negative wacog 		
 			update	ti set 
-				prior_inventory_amt=w.price*ti.prior_inventory_vol,
-				current_inventory_amt=w.price*ti.current_inventory_vol,
-				total_inventory_amt=w.price*ti.total_inventory_vol,
+				prior_inventory_amt = CASE WHEN @storage_wacog_option = '3' THEN 
+												ti.prior_wacog * ISNULL(ti.prior_inventory_vol,0)
+										ELSE w.price*ti.prior_inventory_vol END,
+				current_inventory_amt = CASE WHEN @storage_wacog_option = '3' THEN 
+												w.price*ISNULL(ti.inj_deal_total_volume, 0)
+										ELSE w.price*ti.current_inventory_vol END,
+				total_inventory_amt=CASE WHEN @storage_wacog_option = '3' THEN 
+												ti.prior_wacog * ISNULL(ti.prior_inventory_vol,0) + w.price*ISNULL(ti.inj_deal_total_volume, 0)
+										ELSE w.price*ti.total_inventory_vol END,
 				wacog=w.price,
 				inj_inventory_amt=w.price*ISNULL(ti.inj_deal_total_volume, 0)
 				,wth_inventory_amt=w.price*ISNULL(ti.wth_deal_total_volume, 0)
 			from #tmp_inventory ti
 				inner join  #neg_wacog_price w on  ti.location_id=w.location_id 
 					and ti.commodity_id=w.commodity_id and ti.term_start=w.term_start 
-			where ti.total_inventory_vol<0
+			where 
+			(@storage_wacog_option <> '3' AND ti.total_inventory_vol<0)
+			OR
+			(@storage_wacog_option = '3'
+			AND (ti.prior_wacog * ISNULL(ti.prior_inventory_vol,0) + w.price*ISNULL(ti.inj_deal_total_volume, 0)) < 0)
 
 	        -- End calculating  inventoy and wacog
 
@@ -1613,7 +1660,7 @@ BEGIN TRY
 					CASE WHEN sdd.term_start <=dateadd(day,case when @as_of_date=eomonth(@as_of_date) then 1 else 0 end, @as_of_date) then
 						csw.wacog
 						when sdd.term_start = @as_of_date+1 then 
-						case when sdh.commodity_id in(SELECT * FROM dbo.SplitCommaSeperatedValues(@schedule_base_volume_commodity_id)) then 
+						case when @storage_wacog_option IN ('1','3') then 
 							case when csw.term <sdd.term_start  then csw.total_inventory_amt/nullif(csw.total_inventory_vol,0)
 							else csw.prior_inventory_amt/nullif(csw.prior_inventory_vol,0) end
 						else csw.wacog end

@@ -46,7 +46,7 @@ BEGIN
 		FROM dbo.calcprocess_storage_wacog
 		WHERE 1 <> 1
 			OR (
-				(@wacog_option = 110500 AND term < @term AND location_id = @location_id AND ISNULL(contract_id, -1) = ISNULL(@contract_id, -1)) OR --Prior Day
+				(@wacog_option = 110500 AND term <= @term AND location_id = @location_id AND ISNULL(contract_id, -1) = ISNULL(@contract_id, -1)) OR --Prior Day
 				(@wacog_option = 110501 AND CONVERT(VARCHAR(7), term, 120) = CONVERT(VARCHAR(7), DATEADD(MONTH, DATEDIFF(MONTH, -1, @term) - 1, -1), 120) AND location_id = @location_id AND ISNULL(contract_id, -1) = ISNULL(@contract_id, -1)) OR --Prior Month
 				(@wacog_option = 110502 AND CONVERT(VARCHAR(7), term, 120) = CONVERT(VARCHAR(7), @term, 120) AND location_id = @location_id AND ISNULL(contract_id, -1) = ISNULL(@contract_id, -1)) --Current Month
 			)
