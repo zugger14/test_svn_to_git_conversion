@@ -350,7 +350,7 @@ BEGIN
 									,tmp.is_locked
 							FROM #temp_all_invoice tmp
 							INNER JOIN (
-								SELECT	CAST(MAX(tmp.stmt_invoice_id) AS INT) * -1 [stmt_invoice_id],
+							SELECT	MAX(CAST(tmp.stmt_invoice_id AS INT)) * -1 [stmt_invoice_id],
 										SUM(CAST(amount AS NUMERIC(32,20))) amount,
 										''Netting'' [invoice_type]
 								FROM #temp_all_invoice tmp
