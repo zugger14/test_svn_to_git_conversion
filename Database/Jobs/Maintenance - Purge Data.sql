@@ -456,7 +456,7 @@ IF EXISTS (
 		AND COLUMN_NAME = ''create_ts''
 )
 BEGIN
-	DELETE FROM process_deal_alert_transfer_adjust WHERE create_ts < @one_week
+	DELETE FROM process_deal_alert_transfer_adjust WHERE create_ts < @five_days
 END
 
 '
