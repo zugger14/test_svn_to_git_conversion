@@ -1,7 +1,7 @@
 DECLARE @job_db_name NVARCHAR(250) = DB_NAME()
 DECLARE @job_owner NVARCHAR(100) = dbo.FNADBUser()
 DECLARE @job_category NVARCHAR(150) = N'Import'
-DECLARE @job_name NVARCHAR(500) = @job_db_name + N' - ' + @job_category + N' - Shaped Volume'
+DECLARE @job_name NVARCHAR(500) = @job_db_name + N' - ' + @job_category + N' - Shaped Volume Power'
 
 -- batch notification
 DECLARE @role_id INT , @csv_file_path VARCHAR(5000)
@@ -14,7 +14,7 @@ END
 SELECT @role_id = role_id FROM application_security_role WHERE ROLE_NAME = 'Enercity Operations'
 SELECT @csv_file_path = document_path+'\temp_note' from connection_string
 
-IF NOT EXISTS(SELECT * FROM batch_process_notifications WHERE process_id = 'zef42e2330j')
+IF NOT EXISTS(SELECT * FROM batch_process_notifications WHERE process_id = 'zef42e2330j11')
 BEGIN
 	INSERT INTO batch_process_notifications(role_id,process_id,notification_type,csv_file_path)
 	SELECT @role_id,
