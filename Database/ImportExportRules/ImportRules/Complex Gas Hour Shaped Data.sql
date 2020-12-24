@@ -88,18 +88,10 @@ INNER JOIN source_deal_detail sdd
 LEFT JOIN source_price_curve_def spcd 
     ON spcd.source_curve_def_id = sdd.curve_id
 WHERE spcd.commodity_id = -1',
-					'   DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
-IF OBJECT_ID (N''tempdb..#tmp_second_table'') IS NOT NULL 
-begin
-		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
-		SELECT DISTINCT tmp.source_deal_header_id,
-			   tmp.deal_detail_id,
-			   dbo.FNADBUser(),
-			   GETDATE(),
-			   1,
-			   @_process_id
-		FROM #tmp_second_table tmp
-end
+					'--DECLARE @set_process_id NVARCHAR(40) 
+--SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37)) 
+
+--EXEC spa_transfer_adjust_wrapper @set_process_id
 
 IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
 	DROP TABLE 	#temp_trans_off
@@ -154,10 +146,10 @@ BEGIN
 		ON tto.source_deal_header_id = sdh.source_deal_header_id
 	INNER JOIN source_deal_detail sdd
 		ON sdd.source_deal_header_id = ISNULL(tto.transfer_deal_id, tto.offset_deal_id)
-		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
+		AND sddh.term_date BETWEEN sdd.term_start AND sdd.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
 
@@ -193,22 +185,20 @@ BEGIN
 	 FROM [temp_process_table] t
 	INNER JOIN source_deal_header sdh
 		ON sdh.deal_id = t.deal_id
-	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id	
-		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
+	INNER JOIN #temp_trans_off tto
+		ON tto.source_deal_header_id = sdh.source_deal_header_id
+	INNER JOIN source_deal_detail sdd
+		ON sdd.source_deal_header_id = tto.source_deal_header_id		
+	INNER JOIN source_deal_detail sdd_to
+		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
+		AND sddh.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
-INNER JOIN #temp_trans_off tto
-		ON tto.source_deal_header_id = sdh.source_deal_header_id		
-	INNER JOIN source_deal_detail sdd_to
-		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
-		AND t.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
-END
 
-IF EXISTS(SELECT 1 FROM #temp_inserted_sdd)	 
-BEGIN
+
 	UPDATE sdd
 		SET deal_volume = sub.volume, 
 			fixed_price = sub.price
@@ -224,6 +214,8 @@ BEGIN
 	) sub
 	ON sub.source_deal_detail_id = sdd.source_deal_detail_id
 
+
+	DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
 	DECLARE @user_name VARCHAR(100) = dbo.FNADBUser()
 	DECLARE @job_name VARCHAR(MAX)
 	DECLARE @sql NVARCHAR(MAX)
@@ -233,9 +225,11 @@ BEGIN
 	EXEC (''CREATE TABLE '' + @after_insert_process_table + ''( source_deal_header_id INT)'')
 		
 	SET @sql = ''INSERT INTO '' + @after_insert_process_table + ''(source_deal_header_id) 
-				SELECT DISTINCT source_deal_header_id 
-				FROM  #temp_inserted_sdd sdd
-				INNER JOIN source_deal_detail sdd1 ON sdd1.source_deal_detail_id = sdd.source_deal_detail_id
+				SELECT ISNULL(temp.transfer_deal_id, temp.offset_deal_id) [source_deal_header_id] 
+				FROM #temp_trans_off temp 
+				UNION ALL 
+				SELECT temp.source_deal_header_id [source_deal_header_id] 
+				FROM #temp_trans_off temp
 				''
 	EXEC (@sql)
 		
@@ -248,8 +242,7 @@ BEGIN
 END
 
 ALTER TABLE  [temp_process_table] 
-ALTER COLUMN term_date VARCHAR(50)
-',
+ALTER COLUMN term_date VARCHAR(50)',
 					'i' ,
 					'n' ,
 					@admin_user ,
@@ -323,18 +316,10 @@ INNER JOIN source_deal_detail sdd
 LEFT JOIN source_price_curve_def spcd 
     ON spcd.source_curve_def_id = sdd.curve_id
 WHERE spcd.commodity_id = -1'
-				, after_insert_trigger = '   DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
-IF OBJECT_ID (N''tempdb..#tmp_second_table'') IS NOT NULL 
-begin
-		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
-		SELECT DISTINCT tmp.source_deal_header_id,
-			   tmp.deal_detail_id,
-			   dbo.FNADBUser(),
-			   GETDATE(),
-			   1,
-			   @_process_id
-		FROM #tmp_second_table tmp
-end
+				, after_insert_trigger = '--DECLARE @set_process_id NVARCHAR(40) 
+--SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37)) 
+
+--EXEC spa_transfer_adjust_wrapper @set_process_id
 
 IF OBJECT_ID (N''tempdb..#temp_trans_off'') IS NOT NULL  
 	DROP TABLE 	#temp_trans_off
@@ -389,10 +374,10 @@ BEGIN
 		ON tto.source_deal_header_id = sdh.source_deal_header_id
 	INNER JOIN source_deal_detail sdd
 		ON sdd.source_deal_header_id = ISNULL(tto.transfer_deal_id, tto.offset_deal_id)
-		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
+		AND sddh.term_date BETWEEN sdd.term_start AND sdd.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
 
@@ -428,22 +413,20 @@ BEGIN
 	 FROM [temp_process_table] t
 	INNER JOIN source_deal_header sdh
 		ON sdh.deal_id = t.deal_id
-	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id	
-		AND t.term_date BETWEEN sdd.term_start AND sdd.term_end
+	INNER JOIN #temp_trans_off tto
+		ON tto.source_deal_header_id = sdh.source_deal_header_id
+	INNER JOIN source_deal_detail sdd
+		ON sdd.source_deal_header_id = tto.source_deal_header_id		
+	INNER JOIN source_deal_detail sdd_to
+		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
 	INNER JOIN source_deal_detail_hour sddh
 		ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		AND sddh.term_date = t.term_date
+		AND sddh.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
 		AND t.hr =  RIGHT(''0''+ CAST(LEFT(sddh.hr, 2) - 1 AS VARCHAR(3)) , 2) + '':'' + RIGHT(sddh.hr, 2)
 		AND t.is_dst = sddh.is_dst
-INNER JOIN #temp_trans_off tto
-		ON tto.source_deal_header_id = sdh.source_deal_header_id		
-	INNER JOIN source_deal_detail sdd_to
-		ON sdd_to.source_deal_header_id = ISNULL(tto.transfer_deal_id , tto.offset_deal_id)
-		AND t.term_date BETWEEN sdd_to.term_start AND sdd_to.term_end
-END
 
-IF EXISTS(SELECT 1 FROM #temp_inserted_sdd)	 
-BEGIN
+
 	UPDATE sdd
 		SET deal_volume = sub.volume, 
 			fixed_price = sub.price
@@ -459,6 +442,8 @@ BEGIN
 	) sub
 	ON sub.source_deal_detail_id = sdd.source_deal_detail_id
 
+
+	DECLARE @_process_id NVARCHAR(500) = dbo.FNAGetNewID()
 	DECLARE @user_name VARCHAR(100) = dbo.FNADBUser()
 	DECLARE @job_name VARCHAR(MAX)
 	DECLARE @sql NVARCHAR(MAX)
@@ -468,9 +453,11 @@ BEGIN
 	EXEC (''CREATE TABLE '' + @after_insert_process_table + ''( source_deal_header_id INT)'')
 		
 	SET @sql = ''INSERT INTO '' + @after_insert_process_table + ''(source_deal_header_id) 
-				SELECT DISTINCT source_deal_header_id 
-				FROM  #temp_inserted_sdd sdd
-				INNER JOIN source_deal_detail sdd1 ON sdd1.source_deal_detail_id = sdd.source_deal_detail_id
+				SELECT ISNULL(temp.transfer_deal_id, temp.offset_deal_id) [source_deal_header_id] 
+				FROM #temp_trans_off temp 
+				UNION ALL 
+				SELECT temp.source_deal_header_id [source_deal_header_id] 
+				FROM #temp_trans_off temp
 				''
 	EXEC (@sql)
 		
@@ -483,8 +470,7 @@ BEGIN
 END
 
 ALTER TABLE  [temp_process_table] 
-ALTER COLUMN term_date VARCHAR(50)
-'
+ALTER COLUMN term_date VARCHAR(50)'
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
 				, ixp_category = 23502
@@ -512,7 +498,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
+						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
