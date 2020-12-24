@@ -132,13 +132,13 @@ SET @_sql = ''
 				ELSE ''''''''
 			END [Detail Buy/Sell]
 			,sddh.volume
-			,sddh.price
+			,ISNULL(sddh.price, sdd.fixed_price) [Price]
 			,sml.location_name [Location]
 			,spcd.curve_id [Index]
 			,case when LEFT(a.user_clm, 2) <= 6 THEN DATEADD(DD, 1, sddh.term_date)
 				ELSE sddh.term_date 
 				END [Term]
-			,LEFT(a.user_clm, 2) [Hour]
+			,IIF(sdd.deal_volume_frequency = ''''d'''', NULL, LEFT(a.user_clm, 2)) [Hour]
 			,ABS(sddh.is_dst) [DST]
 			,sdd.leg [Leg]
 			,'''''''' [Minute]
@@ -206,7 +206,7 @@ EXEC(@_sql)
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
 	           WHERE ds.[name] = 'Shaped Data View'
-	            AND dsc.name =  'price'
+	            AND dsc.name =  'Price'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
 		UPDATE dsc  
@@ -216,7 +216,7 @@ EXEC(@_sql)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
 		WHERE ds.[name] = 'Shaped Data View'
-			AND dsc.name =  'price'
+			AND dsc.name =  'Price'
 			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
 	END	
 	ELSE
@@ -224,7 +224,7 @@ EXEC(@_sql)
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'price' AS [name], 'Price' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 3 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'Price' AS [name], 'Price' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 3 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Shaped Data View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
