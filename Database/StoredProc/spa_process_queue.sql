@@ -209,9 +209,12 @@ BEGIN
 			END
 		END
 
+		DECLARE @queue_job_name_temp VARCHAR(1000) = 'Process Queue Import'
+		--	While checking job existence include db name with job Eg. TRMTracker_Enercity_UAT - Process Queue Import 
+		--	but this same name cannot be passed for spa_run_sp_as_job since it will add db name again error will be thrown same job existence
 		IF NOT EXISTS(SELECT job_id FROM msdb.dbo.sysjobs_view WHERE name = @queue_job_name)
 		BEGIN
-			EXEC spa_run_sp_as_job @queue_job_name, @queue_job_query, 'ProcessQueue', @user_name
+			EXEC spa_run_sp_as_job @queue_job_name_temp, @queue_job_query, 'ProcessQueue', @user_name
 		END
 		ELSE IF NOT EXISTS (
 			SELECT 1

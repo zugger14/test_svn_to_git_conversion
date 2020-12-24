@@ -210,7 +210,6 @@ DECLARE @user_name              NVARCHAR(100)
 
 IF @execute_in_queue IS NULL
 BEGIN
-	SET @execute_in_queue = 1
 	SELECT @execute_in_queue = ISNULL(var_value,1) FROM adiha_default_codes adc
 	INNER JOIN adiha_default_codes_values adcv ON adc.default_code_id = adcv.default_code_id
 	WHERE adc.default_code_id = 203
@@ -2799,7 +2798,7 @@ BEGIN
 										 )
 								
 									-- for debugging purpose only
-									IF @run_in_debug_mode = 'y' OR @count_tables > 1 
+									IF (ISNULL(@execute_in_queue, 0) = 0 AND (@run_in_debug_mode = 'y' OR @count_tables > 1)) 
 									BEGIN
 										EXEC(@sql)
 									END
