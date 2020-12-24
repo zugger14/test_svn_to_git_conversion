@@ -25111,7 +25111,7 @@ WHERE term_date BETWEEN @min_date AND @max_date
  				SELECT distinct  t.source_deal_header_id, ''i'',t.deal_detail_id
  				FROM #tmp_second_table t
   		       '
- 	EXEC(@sql)`
+ 	EXEC(@sql)
  	
 	--call auto adjust(this part couldnot be handled in trigger as it created unexpected behaviour after position calculation)
 	IF @ixp_rule_hash IN ('F224E702_7357_4EC5_BDE4_544D80D32E9D', '60D8CDF3_4A27_4776_8C79_F7597CD1EFE8', '30F320BA_815F_4DB7_9314_B037E84311B6')
