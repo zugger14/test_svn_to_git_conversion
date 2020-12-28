@@ -2224,8 +2224,13 @@
 						var i = 0;
 						var agg_val = new Array();
 						var graph_type_arr = new Array();
-						var vals_selector = $("." + subopts.active_tab.toString() + " .pvtVals");
-						
+						var vals_selector;
+						if (subopts.active_tab == null) {
+							vals_selector = $(".pvtVals");
+						} else {
+							vals_selector = $("." + subopts.active_tab.toString() + " .pvtVals");
+						}
+
 						vals_selector.each(function() { //changed as previous way was causing issue when pivot view was open in multiple tab at once
 							var __this = $(this);
 							var agg = $("select.pvtAggregator", $(this));
