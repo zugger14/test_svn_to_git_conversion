@@ -133,7 +133,9 @@
                             rendererName: renderer_type,
                             onRefresh: function(config) {
                             	expand_pivot_view();
-                            }
+                            },
+                            active_tab: active_tab_id.split()
+
                         };
                     } else if(renderer_type == 'CrossTab Table' && (col_lists.detail_columns != '' || col_lists.cols_columns != ''|| col_lists.rows_columns != '')) { //for crosstab
                         cols = col_lists.cols_columns;
@@ -157,7 +159,8 @@
                             graphType:graph_type,
                             onRefresh: function(config) {
                             	expand_pivot_view();
-                            }
+                            },
+                            active_tab: active_tab_id.split()
                         };
                         //console.log(param_obj);
                     }
@@ -184,7 +187,8 @@
                             graphType:graph_type,
                             onRefresh: function(config) {
                             	expand_pivot_view();
-                            }
+                            },
+                            active_tab: active_tab_id.split()
                         };
                     }
                     

@@ -2189,7 +2189,8 @@
 							aggregatorName: [],
 							vals: [],
 							aggregator: [],
-							graphType: []
+							graphType: [],
+							active_tab: []
 						};
 
 						vals = [];
@@ -2204,6 +2205,7 @@
 						});
 
 						subopts.renderer = opts.renderers[renderer.val()];
+						subopts.active_tab = opts.active_tab;
 
 						//remove all other aggregators if not crosstab table
 						// if (renderer.val() != 'CrossTab Table') {
@@ -2222,9 +2224,9 @@
 						var i = 0;
 						var agg_val = new Array();
 						var graph_type_arr = new Array();
-
-							
-						$(".pvtVals").each(function() {
+						var vals_selector = $("." + subopts.active_tab.toString() + " .pvtVals");
+						
+						vals_selector.each(function() { //changed as previous way was causing issue when pivot view was open in multiple tab at once
 							var __this = $(this);
 							var agg = $("select.pvtAggregator", $(this));
 							var current_val = '';
