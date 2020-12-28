@@ -507,7 +507,7 @@ BEGIN
 		       ,tbl.is_dst
 		FROM #temp_missing_maturity_date tmmd
 		CROSS APPLY (
-			SELECT TOP 1 as_of_date, curve_source_value_id, curve_value ,bid_value ,ask_value ,is_dst, Assessment_curve_type_value_id
+			SELECT TOP 1 as_of_date, curve_source_value_id, curve_value ,bid_value ,ask_value ,tmmd.is_dst, Assessment_curve_type_value_id
 			FROM source_price_curve
 			WHERE maturity_date = tmmd.maturity_date
 			AND source_curve_def_id = tmmd.source_curve_def_id
