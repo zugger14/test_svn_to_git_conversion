@@ -3188,7 +3188,8 @@ BEGIN TRY
 			CAST(contractual_volume AS VARCHAR(50)) AS contractual_volume,
 			CAST(physical_financial_flag AS VARCHAR(50)) AS physical_financial_flag,
 			CAST(price_uom_id AS VARCHAR(50)) AS price_uom_id,
-			CAST(profile_id AS VARCHAR(50)) AS profile_id
+			CAST(profile_id AS VARCHAR(50)) AS profile_id,
+			CAST(fixed_price AS VARCHAR(50)) AS fixed_price
 		FROM source_deal_detail
 		WHERE source_deal_header_id = @source_deal_header_id
 	)
@@ -3201,7 +3202,7 @@ BEGIN TRY
 			location_id, deal_volume, deal_volume_uom_id, deal_volume_frequency, position_uom,
 			multiplier, volume_multiplier2, price_multiplier, fixed_float_leg, buy_sell_flag,
 			standard_yearly_volume, formula_curve_id, formula_id, contractual_volume,
-			physical_financial_flag, price_uom_id, profile_id
+			physical_financial_flag, price_uom_id, profile_id, fixed_price
 		)
 	) unp
 	ORDER BY unp.[column] ASC
@@ -6068,7 +6069,8 @@ BEGIN TRY
 			CAST(contractual_volume AS VARCHAR(50)) AS contractual_volume,
 			CAST(physical_financial_flag AS VARCHAR(50)) AS physical_financial_flag,
 			CAST(price_uom_id AS VARCHAR(50)) AS price_uom_id,
-			CAST(profile_id AS VARCHAR(50)) AS profile_id
+			CAST(profile_id AS VARCHAR(50)) AS profile_id,
+			CAST(fixed_price AS VARCHAR(50)) AS fixed_price
 		FROM source_deal_detail
 		WHERE source_deal_header_id = @source_deal_header_id
 	)
@@ -6081,7 +6083,7 @@ BEGIN TRY
 			location_id, deal_volume, deal_volume_uom_id, deal_volume_frequency, position_uom,
 			multiplier, volume_multiplier2, price_multiplier, fixed_float_leg, buy_sell_flag,
 			standard_yearly_volume, formula_curve_id, formula_id, contractual_volume,
-			physical_financial_flag, price_uom_id, profile_id
+			physical_financial_flag, price_uom_id, profile_id, fixed_price
 		)
 	) unp
 	ORDER BY unp.[column] ASC
