@@ -359,6 +359,7 @@ BEGIN
                                 INNER JOIN stmt_invoice si ON si.stmt_invoice_id = tmp.stmt_invoice_id
 								WHERE COALESCE(cca.netting_statement,cg.netting_statement,''n'') = ''y''
 								AND ISNULL(si.is_voided,''n'') <> ''v''
+								GROUP BY counterparty, contract, date_from
                                 HAVING COUNT(tmp.stmt_invoice_id) > 1
 							) nett ON nett.stmt_invoice_id = tmp.stmt_invoice_id * -1
 						) a WHERE 1 = 1
