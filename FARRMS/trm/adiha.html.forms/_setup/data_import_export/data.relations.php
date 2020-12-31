@@ -723,6 +723,9 @@
                             data_relation_ixp.toolbar_save.enableItem('ok');
                             if(data['status']=='Success'){
                                 success_call(data['message']);
+                                setTimeout(function(){
+                                    parent.data_ixp.new_run_win.close();
+                                }, 1500);
                             } else {
                                 show_messagebox(data['message']);    
                             }
