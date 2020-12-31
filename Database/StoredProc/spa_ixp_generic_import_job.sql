@@ -21701,14 +21701,25 @@ BEGIN
 	BEGIN
 		EXEC(' INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
 			   SELECT DISTINCT source_deal_header_id,
-					  sdd.deal_detail_id,
+					  tmp.deal_detail_id,
 					  dbo.FNADBUser(),
 					  GETDATE(),
 					  1, 
 					  ''' + @process_id + '''
 			   FROM ' + @search_table + ' tmp
 			   INNER JOIN source_deal_detail sdd
-				   ON tmp.source_deal_header_id = sdd.source_deal_header_id
+				   ON sdd.source_deal_detail_id = tmp.deal_detail_id
+			   CROSS APPLY(
+							--get min term
+							SELECT sdd1.source_deal_header_id
+								 , MIN(sdd1.term_start) term_start
+							FROM source_deal_detail sdd1
+							WHERE sdd1.source_deal_header_id = sdd.source_deal_header_id
+							GROUP BY sdd1.source_deal_header_id
+								 , YEAR(sdd1.term_start)
+								 , MONTH(sdd1.term_start)
+			   ) sub
+			   WHERE sdd.term_start = sub.term_start
 		')
 	END
 
@@ -24486,25 +24497,6 @@ BEGIN
 
 	EXEC('DROP TABLE ' + @import_temp_table_name)
 	
-	print '
-		  SELECT [deal_id], [term_date], 
-			case when [hr]=''3B'' then ''3:00'' else [hr] end [hr], 
-		      [minute],
-			  [is_dst],
-			  [Volume],
-			  [actual_volume],
-			  [schedule_volume],
-			  nullif(try_cast(price as numeric(28,10)),0) price ,
-			  [Leg],
-			  [import_file_name],
-			  [source_system_id],temp_id,ixp_source_unique_id
-		INTO ' + @import_temp_table_name + '
-	 FROM #temp_table_shaped
-	'
-
-
-
-
 	EXEC('
 		  SELECT [deal_id], [term_date], 
 			case when [hr]=''3B'' then ''3:00'' else [hr] end [hr], 
@@ -25118,15 +25110,37 @@ WHERE term_date BETWEEN @min_date AND @max_date
 	BEGIN
 		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
 		SELECT DISTINCT tmp.source_deal_header_id,
-			   tmp.deal_detail_id,
+			   tmp.deal_detail_id deal_detail_id,
 			   dbo.FNADBUser(),
 			   GETDATE(),
 			   1,
 			   @process_id
 		FROM #tmp_second_table tmp
-		--LEFT JOIN process_deal_alert_transfer_adjust pd
-			--ON tmp.source_deal_header_id = pd.source_deal_header_id			
-		--WHERE pd.source_deal_header_id IS NULL
+		INNER JOIN source_deal_detail sdd
+			ON sdd.source_deal_detail_id = tmp.deal_detail_id
+		CROSS APPLY(
+					--get min term
+					SELECT sdd1.source_deal_header_id
+						 , MIN(sdd1.term_start) term_start
+					FROM source_deal_detail sdd1
+					WHERE sdd1.source_deal_header_id = sdd.source_deal_header_id
+					GROUP BY sdd1.source_deal_header_id
+						 , YEAR(sdd1.term_start)
+						 , MONTH(sdd1.term_start)
+		) sub
+		WHERE sdd.term_start = sub.term_start
+
+		--INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
+		--SELECT tmp.source_deal_header_id,
+		--	   MIN(tmp.deal_detail_id) deal_detail_id,
+		--	   dbo.FNADBUser(),
+		--	   GETDATE(),
+		--	   1,
+		--	   @process_id
+		--FROM #tmp_second_table tmp
+		--INNER JOIN source_deal_detail sdd
+		--	ON sdd.source_deal_detail_id = tmp.deal_detail_id
+		--GROUP BY tmp.source_deal_header_id, YEAR(sdd.term_start), MONTH(sdd.term_start)		
 	END
 
  	SET @pos_job_name4 =  'calc_position_breakdown_' + @process_id4
