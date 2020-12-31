@@ -422,7 +422,7 @@ SELECT
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(CAST(calc.[Volume] AS NUMERIC(38,20)))
+    , ''0.00''
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON (calc.[Profile Name] = tp.[profile_name]
@@ -881,7 +881,7 @@ SELECT
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(CAST(calc.[Volume] AS NUMERIC(38,20)))
+    , ''0.00''
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON (calc.[Profile Name] = tp.[profile_name]
