@@ -269,11 +269,16 @@ BEGIN
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20011200','invoicing_charge_type_id','invoicing_charge_type_id','Invoice Line Item','combo','char','h','y','EXEC spa_staticdatavalues @flag=''h'', @type_id=10019',NULL,'y','y','','n','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL,NULL)
-
+						
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20011200','counterparty_entity_type','counterparty_entity_type','Counterparty Entity Type','combo','char','h','y','EXEC spa_staticdatavalues @flag=''h'', @type_id=10020',NULL,'n','n','','n','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL,NULL)
+						
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
+			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
+			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
+			VALUES('20011200','contract_category','contract_category','Contract Category','combo','char','h','y','EXEC spa_staticdatavalues @flag=''h'', @type_id=114700',NULL,'n','n','','n','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL,NULL)
 						
 		END 
 	
@@ -394,34 +399,35 @@ BEGIN
 					
 		INSERT INTO #temp_old_template_fields(old_field_id, old_group_id, old_application_ui_field_id, old_fieldset_id, group_name, ui_field_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, udf_field_name, position, dependent_field, dependent_query, old_grid_id, validation_message, load_child_without_parent)
 		
-		SELECT 76781,11062,75913,NULL,'General','',NULL,NULL,NULL,NULL,NULL,NULL,'settings',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76782,11062,75914,NULL,'General','view_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76783,11062,75925,NULL,'General','invoice_status',NULL,'2',NULL,NULL,NULL,NULL,'combo',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76784,11062,75915,NULL,'General','book_structure',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'3',NULL,NULL,NULL,NULL,NULL,NULL,'book',NULL,NULL UNION ALL 
-		SELECT 76785,11062,75916,NULL,'General','delivery_month',NULL,NULL,NULL,NULL,'y',NULL,'calendar',NULL,'8',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76786,11062,75917,NULL,'General','date_from',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'9',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76787,11062,75918,NULL,'General','date_to',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76788,11062,75920,NULL,'General','counterparty_id',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'6',NULL,NULL,NULL,NULL,NULL,NULL,'browse_counterparty',NULL,NULL UNION ALL 
-		SELECT 76789,11062,75921,NULL,'General','contract_id',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'7',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76790,11062,75922,NULL,'General','charge_type',NULL,NULL,'m',NULL,'y',NULL,'combo',NULL,'6',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76791,11062,75923,NULL,'General','commodity_group',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76792,11062,75924,NULL,'General','commodity',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'12',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76793,11062,75926,NULL,'General','buy_sell',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'13',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76794,11062,75927,NULL,'General','payable_receivable',NULL,NULL,'m',NULL,'y',NULL,'combo',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76795,11062,75928,NULL,'General','deal_type',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76796,11062,75929,NULL,'General','match_group_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'12',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76797,11062,75930,NULL,'General','shipment_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'13',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76798,11062,75931,NULL,'General','ticket_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76799,11062,75932,NULL,'General','deal_id',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76800,11062,75933,NULL,'General','reference_id',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'16',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76801,11062,75934,NULL,'General','rounding',NULL,NULL,NULL,NULL,'y',NULL,'combo',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76802,11062,75935,NULL,'General','prior_period',NULL,NULL,NULL,NULL,NULL,NULL,'checkbox',NULL,'20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76803,11062,75919,NULL,'General','counterparty_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'4',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76804,11062,75936,NULL,'General','deal_charge_type_id',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'18',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76805,11062,75937,NULL,'General','invoicing_charge_type_id',NULL,NULL,'m',NULL,'y',NULL,'combo',NULL,'19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL
-		SELECT 76806,11063,75938,NULL,'General','counterparty_entity_type',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'5',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+		SELECT 77129,11091,76254,NULL,'General','',NULL,NULL,NULL,NULL,NULL,NULL,'settings',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77130,11091,76255,NULL,'General','view_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77131,11091,76266,NULL,'General','invoice_status',NULL,'2',NULL,NULL,NULL,NULL,'combo',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77132,11091,76256,NULL,'General','book_structure',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'3',NULL,NULL,NULL,NULL,NULL,NULL,'book',NULL,NULL UNION ALL 
+		SELECT 77133,11091,76257,NULL,'General','delivery_month',NULL,NULL,NULL,NULL,'y',NULL,'calendar',NULL,'9',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77134,11091,76258,NULL,'General','date_from',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77135,11091,76259,NULL,'General','date_to',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77136,11091,76261,NULL,'General','counterparty_id',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'6',NULL,NULL,NULL,NULL,NULL,NULL,'browse_counterparty',NULL,NULL UNION ALL 
+		SELECT 77137,11091,76262,NULL,'General','contract_id',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'8',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77138,11091,76263,NULL,'General','charge_type',NULL,NULL,'m',NULL,'y',NULL,'combo',NULL,'6',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77139,11091,76264,NULL,'General','commodity_group',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'12',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77140,11091,76265,NULL,'General','commodity',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'13',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77141,11091,76267,NULL,'General','buy_sell',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77142,11091,76268,NULL,'General','payable_receivable',NULL,NULL,'m',NULL,'y',NULL,'combo',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77143,11091,76269,NULL,'General','deal_type',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77144,11091,76270,NULL,'General','match_group_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'13',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77145,11091,76271,NULL,'General','shipment_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77146,11091,76272,NULL,'General','ticket_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77147,11091,76273,NULL,'General','deal_id',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'16',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77148,11091,76274,NULL,'General','reference_id',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77149,11091,76275,NULL,'General','rounding',NULL,NULL,NULL,NULL,'y',NULL,'combo',NULL,'18',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77150,11091,76276,NULL,'General','prior_period',NULL,NULL,NULL,NULL,NULL,NULL,'checkbox',NULL,'21',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77151,11091,76260,NULL,'General','counterparty_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'4',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77152,11091,76277,NULL,'General','deal_charge_type_id',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77153,11091,76278,NULL,'General','invoicing_charge_type_id',NULL,NULL,'m',NULL,'y',NULL,'combo',NULL,'20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77154,11091,76279,NULL,'General','counterparty_entity_type',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'5',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77155,11091,76280,NULL,'General','contract_category',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'7',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
 				
-		UPDATE otf 
+		UPDATE otf
 		SET otf.new_group_id = ntg.new_id
 		FROM #temp_old_template_fields otf
 		INNER JOIN #temp_new_template_group ntg ON otf.group_name = ntg.group_name
@@ -521,7 +527,7 @@ BEGIN
 		)	
 					
 		INSERT INTO #temp_old_ui_layout(old_layout_grid_id, old_group_id, group_name, layout_cell, old_grid_id, grid_name, sequence, num_column, cell_height,grid_object_name,grid_object_unique_column)
-		SELECT 9503,11062,'General','a','FORM',NULL,1,NULL,NULL,NULL,NULL
+		SELECT 9536,11091,'General','a','FORM',NULL,1,NULL,NULL,NULL,NULL
 				
 		UPDATE oul
 		SET oul.new_group_id = ntg.new_id

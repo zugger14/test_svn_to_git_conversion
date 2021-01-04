@@ -648,6 +648,10 @@
             var counterparty_entity_type_obj = settlement_checkout.settlement_checkout_form.getCombo('counterparty_entity_type');
             var counterparty_entity_type = counterparty_entity_type_obj.getChecked('counterparty_entity_type');
             counterparty_entity_type = counterparty_entity_type.toString();
+
+            var contract_category_obj = settlement_checkout.settlement_checkout_form.getCombo('contract_category');
+            var contract_category = contract_category_obj.getChecked('contract_category');
+            contract_category = contract_category.toString();
             
             var match_group_id = settlement_checkout.settlement_checkout_form.getItemValue('match_group_id');
             var shipment_id = settlement_checkout.settlement_checkout_form.getItemValue('shipment_id');
@@ -697,7 +701,8 @@
                 "accounting_date": accounting_month,
                 "counterparty_type": counterparty_type,
                 "deal_charge_type_id": deal_charge_type_id,
-                "counterparty_entity_type" : counterparty_entity_type
+                "counterparty_entity_type" : counterparty_entity_type,
+                "contract_category" : contract_category
 
             };
             
@@ -731,6 +736,7 @@
                                             + "',@counterparty_type='" + counterparty_type + 
                                             + "',@deal_charge_type_id='" + deal_charge_type_id +
                                             + "',@counterparty_entity_type='" + counterparty_entity_type +
+                                            + "',@contract_category='" + contract_category +
                                             "'";
             
             
