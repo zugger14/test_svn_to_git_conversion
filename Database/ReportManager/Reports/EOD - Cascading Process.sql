@@ -83,14 +83,13 @@ DECLARE @_as_of_date VARCHAR(10)  = ''@as_of_date''
 DECLARE @_process_id VARCHAR(100) = ''@process_id''  
 DECLARE @_flag VARCHAR(100) = ''cascade''  
 DECLARE @_sql VARCHAR(MAX)  
-		
+
 IF ''@process_id'' <> ''NULL''
 	SET @_process_id = ''@process_id''
 ELSE    
 	SET @_process_id = dbo.FNAGETNewID()    
 
 SET @_msg_process_table = dbo.FNAProcessTableName(''msg_process_table'', dbo.fnadbUser(), @_process_id)
-
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result 
 
 CREATE TABLE #tmp_result (
@@ -103,80 +102,48 @@ CREATE TABLE #tmp_result (
 )
 
 DECLARE @_source_deal_header_ids VARCHAR(MAX)
-
- 
-
 -- collect deals
-
 SET @_source_deal_header_ids = STUFF((
-
 										SELECT DISTINCT '','' + CAST(sdd.source_deal_header_id AS VARCHAR(100))
-
 										FROM generic_mapping_header gmh
-
 										INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id
-
 										INNER JOIN source_deal_detail sdd ON sdd.curve_id = gmv.clm2_value  
-
 										INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
-
 										INNER JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.counterparty_id 
-										
 										INNER JOIN source_deal_type sdt on sdt.source_deal_type_id = sdh.source_deal_type_id
-
+										INNER JOIN source_deal_header_template sdht ON sdht.template_id = sdh.template_id
 										LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
 										WHERE gmh.mapping_name =  ''Cascading'' 
 										    AND sdt.deal_type_id = ''Future''
 											AND sc.counterparty_id = ''EEX''
 											AND TRY_CAST(gmv.clm2_value AS INT) IS NOT NULL
-
 											AND TRY_CAST(gmv.clm11_value AS DATETIME) =  @_as_of_date--''2019-12-27''
-
+											AND sdht.template_name IN (''physical cascade'', ''cascade'')
 											AND (sdd.term_start > TRY_CAST(gmv.clm11_value AS DATETIME) AND sdd.term_start <= DATEADD(MONTH, CASE TRY_CAST(gmv.clm9_value AS INT) WHEN 1 THEN 12 WHEN 2 THEN 3 WHEN 3 THEN 6 END, TRY_CAST(gmv.clm11_value AS DATETIME)) )
 									GROUP BY sdd.source_deal_header_id
-
 									FOR XML PATH('''')
-
 								), 1, 1, '''')
 
 SET @_sql = '' IF OBJECT_ID('''''' + @_msg_process_table + '''''') IS NOT NULL
 			DROP TABLE '' + @_msg_process_table
 EXEC(@_sql)
-EXEC dbo.spa_cascade_deal @_source_deal_header_ids, @_as_of_date, @_msg_process_table, @_flag 
 
+EXEC dbo.spa_cascade_deal @_source_deal_header_ids, @_as_of_date, @_msg_process_table, @_flag 
 SET @_sql = '' INSERT INTO #tmp_result (errorcode, module, area, [status], [message], recommendation) 
 				SELECT errorcode, module, area, [status], [message], recommendation FROM '' + @_msg_process_table
-
 EXEC(@_sql)
 
 SELECT  
-
     @_as_of_date as_of_date,
-
     @_process_id process_id,    
-
     [status],
-
 	[errorcode],
-
 	[module],
-
 	[area],
-
 	[message],
-
 	[recommendation]
-
 --[__batch_report__] 
-
 FROM #tmp_result
-
- 
-
- 
-
-
-
 ', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
