@@ -644,6 +644,10 @@
             var deal_charge_type_id_obj = settlement_checkout.settlement_checkout_form.getCombo('deal_charge_type_id');
             var deal_charge_type_id = deal_charge_type_id_obj.getChecked('deal_charge_type_id');
             deal_charge_type_id = deal_charge_type_id.toString();
+
+            var counterparty_entity_type_obj = settlement_checkout.settlement_checkout_form.getCombo('counterparty_entity_type');
+            var counterparty_entity_type = counterparty_entity_type_obj.getChecked('counterparty_entity_type');
+            counterparty_entity_type = counterparty_entity_type.toString();
             
             var match_group_id = settlement_checkout.settlement_checkout_form.getItemValue('match_group_id');
             var shipment_id = settlement_checkout.settlement_checkout_form.getItemValue('shipment_id');
@@ -692,7 +696,8 @@
                 "prior_period": prior_period,
                 "accounting_date": accounting_month,
                 "counterparty_type": counterparty_type,
-                "deal_charge_type_id": deal_charge_type_id
+                "deal_charge_type_id": deal_charge_type_id,
+                "counterparty_entity_type" : counterparty_entity_type
 
             };
             
@@ -724,7 +729,9 @@
                                             + "',@prior_period='" + prior_period 
                                             + "',@view_type='" + view_type + 
                                             + "',@counterparty_type='" + counterparty_type + 
-                                            + "',@deal_charge_type_id='" + deal_charge_type_id + "'";
+                                            + "',@deal_charge_type_id='" + deal_charge_type_id +
+                                            + "',@counterparty_entity_type='" + counterparty_entity_type +
+                                            "'";
             
             
             grid_param = $.param(grid_param);
