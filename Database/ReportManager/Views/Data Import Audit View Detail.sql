@@ -52,12 +52,14 @@ IF OBJECT_ID(''tempdb..#temp_data_audit_report'') IS NOT NULL
 DROP TABLE #temp_data_audit_report
 CREATE TABLE #temp_data_audit_report(
       [Rule] VARCHAR(50) COLLATE DATABASE_DEFAULT
-    , [As of Date] VARCHAR(20) COLLATE DATABASE_DEFAULT
-    , [Status] VARCHAR(200) COLLATE DATABASE_DEFAULT
+    , [As of Date] date 
+	, [Status] VARCHAR(200) COLLATE DATABASE_DEFAULT
     , [Elapsed Time (Seconds)] INT 
     , [Process ID] VARCHAR(1000) COLLATE DATABASE_DEFAULT
     , [Import User] VARCHAR(200) COLLATE DATABASE_DEFAULT
     , [Import Time] DATETIME
+	, [Create TS Date] VARCHAR(20) COLLATE DATABASE_DEFAULT
+	, [Create TS Time] VARCHAR(20) COLLATE DATABASE_DEFAULT
 )
 INSERT INTO #temp_data_audit_report
 EXEC spa_ixp_data_audit_report 
@@ -73,6 +75,7 @@ EXEC spa_ixp_data_audit_report
 , null
 , null
 DECLARE @_sql VARCHAR(2000)
+
 SET @_sql = ''SELECT  
    [Rule]
  , [As of Date]
@@ -81,8 +84,8 @@ SET @_sql = ''SELECT
  , [Import Time]
  , ssps.create_ts [Import_completed_time]
 ,'''''' + ISNULL(@_ixp_rules, '''') + '''''' [ixp_rules_id]
-, [Import Time] [start_date]
-, ssps.create_ts [end_date]
+,  CAST(concat(dbo.FNAUserDateFormat([Create TS Date], dbo.FNADBUser()),'''' '''',CONVERT(time(0),[Create TS Date])) AS varchar(50)) [start_date]
+,  CAST(concat(dbo.FNAUserDateFormat(ssps.create_ts,dbo.FNADBUser()),'''' '''', (convert(varchar(8),ssps.create_ts, 108))) as varchar(50)) [end_date]
 ,  [Import User] [import_user]
 ,  [Rule] [ixp_rules]
 , ssps.description
@@ -113,7 +116,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'As Of Date'
-			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 4, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 6, datatype_id = 2, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 4, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -126,7 +129,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'As of Date' AS [name], 'As Of Date' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'As of Date' AS [name], 'As Of Date' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 2 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Data Import Audit View Detail'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -249,7 +252,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'End Date'
-			   , reqd_param = NULL, widget_id = 6, datatype_id = 2, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 4, key_column = 0, required_filter = 0
+			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -262,7 +265,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'end_date' AS [name], 'End Date' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 2 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'end_date' AS [name], 'End Date' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Data Import Audit View Detail'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -453,7 +456,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Start Date'
-			   , reqd_param = NULL, widget_id = 6, datatype_id = 2, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 4, key_column = 0, required_filter = 0
+			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -466,7 +469,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'start_date' AS [name], 'Start Date' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 2 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'start_date' AS [name], 'Start Date' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Data Import Audit View Detail'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
