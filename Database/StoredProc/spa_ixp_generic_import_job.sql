@@ -25110,25 +25110,24 @@ WHERE term_date BETWEEN @min_date AND @max_date
 	BEGIN
 		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
 		SELECT DISTINCT tmp.source_deal_header_id,
-			   tmp.deal_detail_id deal_detail_id,
+			   tmp.deal_detail_id,
 			   dbo.FNADBUser(),
 			   GETDATE(),
 			   1,
-			   @process_id
+			   @process_id		
 		FROM #tmp_second_table tmp
-		INNER JOIN source_deal_detail sdd
-			ON sdd.source_deal_detail_id = tmp.deal_detail_id
 		CROSS APPLY(
 					--get min term
-					SELECT sdd1.source_deal_header_id
-						 , MIN(sdd1.term_start) term_start
-					FROM source_deal_detail sdd1
-					WHERE sdd1.source_deal_header_id = sdd.source_deal_header_id
-					GROUP BY sdd1.source_deal_header_id
-						 , YEAR(sdd1.term_start)
-						 , MONTH(sdd1.term_start)
+					SELECT tmp1.source_deal_header_id
+						 , MIN(tmp1.term_date) term_date
+					FROM #tmp_second_table tmp1
+					WHERE tmp1.source_deal_header_id = tmp.source_deal_header_id
+					GROUP BY tmp1.source_deal_header_id
+						 , YEAR(tmp1.term_date)
+						 , MONTH(tmp1.term_date)
 		) sub
-		WHERE sdd.term_start = sub.term_start
+		WHERE tmp.term_date = sub.term_date
+			And tmp.source_deal_header_id = sub.source_deal_header_id
 
 		--INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
 		--SELECT tmp.source_deal_header_id,
