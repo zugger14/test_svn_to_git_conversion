@@ -723,9 +723,10 @@
                             data_relation_ixp.toolbar_save.enableItem('ok');
                             if(data['status']=='Success'){
                                 success_call(data['message']);
+                                data_relation_ixp.data_relation.disableItem('data_source_location');
                                 setTimeout(function(){
                                     parent.data_ixp.new_run_win.close();
-                                }, 1500);
+                                }, 1000);
                             } else {
                                 show_messagebox(data['message']);    
                             }
