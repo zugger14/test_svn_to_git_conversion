@@ -33,625 +33,317 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Standard At Risk View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sql NVARCHAR(MAX),
-
 	@_as_of_date_from DATETIME,  
-
 	@_as_of_date_to DATETIME,
-
 	@_criteria_id VARCHAR(1000),
-
 	@_recent_date DATETIME,
-
 	@_measure INT,
-
 	@_measure_id VARCHAR(MAX),
-
 	@_marginal_var CHAR(1) = ''n'',
-
 	@_back_testing CHAR(1) = ''n'',
-
 	@_id_count INT
-
 IF ''@as_of_date_from'' <> ''NULL''
-
     SET @_as_of_date_from = ''@as_of_date_from''
-
 IF ''@as_of_date_to'' <> ''NULL''
-
     SET @_as_of_date_to = ''@as_of_date_to''
-
 IF ''@criteria_id'' <> ''NULL''
-
     SET @_criteria_id = ''@criteria_id''
-
 IF ''@marginal_var'' <> ''NULL''
-
     SET @_marginal_var = ''@marginal_var''
-
 IF ''@back_testing'' <> ''NULL''
-
     SET @_back_testing = ''@back_testing''
-
 IF ''@measure_id'' <> ''NULL''
-
     SET @_measure_id = ''@measure_id''
-
 IF OBJECT_ID(N''tempdb..#tmp_criteria_ids'') IS NOT NULL
-
 DROP TABLE #tmp_criteria_ids
-
 SELECT item AS criteria_id INTO #tmp_criteria_ids FROM dbo.FNASplit(@_criteria_id, '','')
-
 SELECT @_id_count = COUNT(criteria_id) FROM #tmp_criteria_ids
-
 IF @_criteria_id IS NOT NULL AND @_id_count = 1
-
 BEGIN
-
 	SELECT @_measure = measure FROM var_measurement_criteria_detail WHERE id = @_criteria_id
-
 	IF @_measure = 17355
-
 		SELECT @_recent_date = MAX(as_of_date) FROM pfe_results WHERE criteria_id = @_criteria_id
-
 	ELSE 
-
 		SELECT @_recent_date = MAX(as_of_date) FROM var_results WHERE var_criteria_id = @_criteria_id
-
 END
-
 ELSE
-
 BEGIN
-
 	IF ISNULL(@_marginal_var, ''n'')  = ''n''
-
 	BEGIN
-
 		IF @_id_count < 1
-
 			SELECT @_recent_date = MAX(as_of_date) 
-
 			FROM var_results
-
 		ELSE
-
 			SELECT @_recent_date = MAX(vr.as_of_date) 
-
 			FROM var_results vr
-
 			INNER JOIN #tmp_criteria_ids tci ON vr.var_criteria_id = tci.criteria_id
-
 	END
-
 	ELSE
-
 	BEGIN
-
 		IF @_id_count < 1
-
 			SELECT @_recent_date = MAX(vr.as_of_date) 
-
 			FROM var_measurement_criteria_detail vmcd
-
 			INNER JOIN var_results vr ON vr.var_criteria_id = vmcd.id
-
 				AND vmcd.var_approach = 1520
-
 		ELSE
-
 			SELECT @_recent_date = MAX(vr.as_of_date) 
-
 			FROM var_measurement_criteria_detail vmcd
-
 			INNER JOIN var_results vr ON vr.var_criteria_id = vmcd.id
-
 			INNER JOIN #tmp_criteria_ids tci ON vr.var_criteria_id = tci.criteria_id
-
 				AND vmcd.var_approach = 1520
-
 	END
-
 END
-
 IF @_as_of_date_from IS NULL
-
 	SET @_as_of_date_from = @_recent_date
-
 IF @_as_of_date_to IS NULL
-
 	SET @_as_of_date_to = @_as_of_date_from
-
 IF OBJECT_ID(N''tempdb..#tmp_var_pfe_results'') IS NOT NULL
-
     DROP TABLE #tmp_var_pfe_results 
-
 CREATE TABLE #tmp_var_pfe_results(	
-
 	category_id INT,
-
 	category_name NVARCHAR(50) COLLATE DATABASE_DEFAULT,
-
 	criteria VARCHAR(200) COLLATE DATABASE_DEFAULT,
-
 	to_as_of_date DATETIME,
-
 	as_of_date DATETIME,
-
 	term DATETIME,
-
 	term_day VARCHAR(10) COLLATE DATABASE_DEFAULT,
-
 	term_month VARCHAR(10) COLLATE DATABASE_DEFAULT,
-
 	term_month_name VARCHAR(15) COLLATE DATABASE_DEFAULT,
-
 	term_year VARCHAR(10) COLLATE DATABASE_DEFAULT,
-
 	term_year_month VARCHAR(10) COLLATE DATABASE_DEFAULT,
-
 	measure_id INT,
-
 	measure NVARCHAR(10) COLLATE DATABASE_DEFAULT,
-
 	approach NVARCHAR(100) COLLATE DATABASE_DEFAULT,
-
 	confidence_interval NVARCHAR(10) COLLATE DATABASE_DEFAULT,
-
 	mtm_cashflow_earnings NUMERIC(36, 2),
-
 	at_risk_value NUMERIC(36, 2),
-
 	risk_value NUMERIC(36, 2),
-
 	currency_name VARCHAR(10) COLLATE DATABASE_DEFAULT,
-
 	VaRI NUMERIC(36, 2),
-
 	RAROC NUMERIC(36, 2),
-
 	RAROC_I NUMERIC(36, 2),
-
 	VaRC NUMERIC(36, 2),
-
 	mtm_value_C NUMERIC(36, 2),
-
 	mtm_value_I NUMERIC(36, 2),
-
 	criteria_id INT,
-
 	counterparty_id INT,
-
 	curve_id INT,
-
 	curve_name VARCHAR(100) COLLATE DATABASE_DEFAULT,
-
 	risk_bucket_name VARCHAR(100) COLLATE DATABASE_DEFAULT,
-
 	MVaR FLOAT,
-
 	CVaR FLOAT
-
 )
-
 IF ISNULL(@_marginal_var, ''n'')  = ''n''
-
 BEGIN
-
 	SET @_sql =''INSERT INTO #tmp_var_pfe_results
-
 		SELECT 
-
 			MAX(vmcd.category) AS category_id,
-
 			sdv_portfolio.code AS category_name,         
-
 			vmcd.name [criteria],         
-
 			CONVERT(VARCHAR(10), vr.as_of_date, 120) [to_as_of_date],         
-
 			CONVERT(VARCHAR(10), vr.as_of_date, 120) [as_of_date],
-
 			NULL AS [Term],         
-
 			NULL AS term_day,        
-
 			NULL AS term_month,         
-
 			NULL AS term_month_name,         
-
 			NULL AS term_year,         
-
 			NULL AS term_year_month,         
-
 			MAX(vmcd.measure) [measure_id],         
-
 			MAX(sdv_measure.code) [measure],         
-
 			MAX(sdv_var_aprh.code) [approach],        
-
 			MAX(sdv_confidence_inter.code) [confidence_interval],         
-
 			ROUND(SUM(CASE vmcd.var_approach WHEN 1520 THEN mv.mtm_value ELSE mvs.mtm_value END), 2) AS [mtm_cashflow_earnings],  
-
 			ROUND(MAX(vr.[VaR]),2) AS [at_risk_value],  
-
 			ROUND(MAX(vr.[VaR]), 2) AS risk_value,    
-
 			MAX(sc.currency_name) [currency_name],         
-
 			ROUND(MAX(case when sdv_measure.code <> ''''VaR'''' then NULL else vr.VaRI end), 2) [VaRI],
-
 			ROUND(MAX(vr.RAROC1), 2) [RAROC%],         
-
 			ROUND(MAX(CASE WHEN sdv_measure.code <> ''''VAR'''' THEN NULL ELSE vr.RAROC2 END), 2) [RAROC_I%],         
-
 			ROUND(MAX(CASE WHEN sdv_measure.code <> ''''VAR'''' THEN NULL ELSE vr.VaRC END), 2) [VaRC],         
-
 			ROUND(SUM(CASE WHEN sdv_measure.code <> ''''VAR'''' THEN NULL ELSE CASE WHEN vmcd.var_approach = 1520 THEN mv.mtm_value_C ELSE mvs.mtm_value_C END END), 2) [mtm_value_C],         
-
 			ROUND(SUM(CASE WHEN sdv_measure.code <> ''''VAR'''' THEN NULL ELSE CASE WHEN vmcd.var_approach = 1520 THEN mv.mtm_value_I ELSE mvs.mtm_value_I END END), 2) [mtm_value_I],        
-
 			MAX(vmcd.id) [criteria_id],
-
 			NULL counterparty_id,
-
 			NULL curve_id,
-
 			NULL curve_name,
-
 			NULL risk_bucket_name,
-
 			NULL MVaR,
-
 			NULL CVaR 
-
 		FROM var_results vr         
-
 		INNER JOIN var_measurement_criteria_detail vmcd ON  vmcd.id = vr.var_criteria_id                  
-
 		OUTER APPLY(SELECT SUM(mv.MTM_value) [mtm_value], 
-
 							SUM(mv.MTM_value_C)[mtm_value_C],
-
 							SUM(mv.MTM_value_I) mtm_value_I 
-
 					FROM marginal_var mv 
-
 					WHERE vmcd.id = mv.var_criteria_id 
-
 					AND vr.as_of_date=mv.as_of_date 
-
 					AND vmcd.var_approach=1520) mv    
-
 		OUTER APPLY(SELECT SUM(mvs.MTM_value) [mtm_value], 
-
 							SUM(mvs.MTM_value_C)[mtm_value_C],
-
 							SUM(mvs.MTM_value_I) mtm_value_I 
-
 					FROM mtm_var_simulation mvs 
-
 					WHERE vmcd.id = mvs.var_criteria_id 
-
 					AND vr.as_of_date=mvs.as_of_date 
-
 					AND vmcd.var_approach<>1520) mvs             
-
 		LEFT JOIN static_data_value sdv_measure ON  sdv_measure.[value_id] = vmcd.measure         
-
 		LEFT JOIN source_currency sc ON  sc.source_currency_id = vr.currency_id         
-
 		LEFT JOIN static_data_value sdv_var_aprh ON  sdv_var_aprh.[value_id] = vmcd.var_approach         
-
 		LEFT JOIN static_data_value sdv_confidence_inter ON  sdv_confidence_inter.[value_id] = vmcd.confidence_interval         
-
 		LEFT JOIN static_data_value sdv_portfolio ON sdv_portfolio.value_id = vmcd.category  
-
 		WHERE 1=1 AND '' 
-
 		+ CASE WHEN @_as_of_date_to IS NULL THEN 
-
 			''vr.as_of_date = '''''' + CAST(@_as_of_date_from AS VARCHAR) + ''''''''
-
 		ELSE 
-
 			''vr.as_of_date >= '''''' + CAST(@_as_of_date_from AS VARCHAR) + '''''' AND vr.as_of_date <= '''''' + CAST(@_as_of_date_to AS VARCHAR) + ''''''  ''
-
 		END 
-
 		+ CASE WHEN @_criteria_id IS NOT NULL THEN '' AND vmcd.id IN('' + @_criteria_id + '')'' ELSE '''' END +
-
 		+ CASE WHEN ISNULL(@_back_testing, ''n'') = ''y'' THEN '' AND vmcd.var_approach = 1520 '' ELSE '''' END +
-
 		+ CASE WHEN @_measure_id IS NOT NULL THEN '' AND vmcd.measure IN('' + @_measure_id + '')'' + '''' ELSE '''' END +
-
 		'' GROUP BY  vmcd.name,  vr.as_of_date,  sdv_portfolio.code''
-
 		EXEC (@_sql)
-
 		IF ISNULL(@_back_testing, ''n'') = ''n''
-
 		BEGIN
-
 			SET @_sql = ''INSERT INTO #tmp_var_pfe_results(category_id, category_name, criteria, to_as_of_date, as_of_date, measure, currency_name, at_risk_value, risk_value, mtm_cashflow_earnings, criteria_id, measure_id, approach, counterparty_id)
-
 				SELECT
-
 					vmcd.category AS category_id,
-
 					sdv_portfolio.code AS category_name,
-
 					pr.criteria_name, 
-
 					CONVERT(VARCHAR(10), pr.as_of_date, 120),
-
 					CONVERT(VARCHAR(10), pr.as_of_date, 120),
-
 					sdv_measure.code,
-
 					sc.currency_name,
-
 					ROUND((pr.pfe+pr.current_exposure),2) AS [PFE],
-
 					ROUND((pr.pfe+pr.current_exposure), 2) AS risk_value,
-
 					ROUND(pr.current_exposure, 2) AS current_exposure,
-
 					pr.criteria_id,
-
 					vmcd.measure,
-
 					sdv_var_aprh.code,
-
 					pr.counterparty_id
-
 				FROM pfe_results pr
-
 				INNER JOIN var_measurement_criteria_detail vmcd ON  vmcd.id = pr.criteria_id
-
 				LEFT JOIN static_data_value sdv_measure ON  sdv_measure.value_id = vmcd.measure
-
 				LEFT JOIN static_data_value sdv_var_aprh ON  sdv_var_aprh.value_id = vmcd.var_approach  
-
 				LEFT JOIN static_data_value sdv ON sdv.value_id = pr.measurement_approach
-
 				LEFT JOIN static_data_value sdv1 ON sdv1.value_id = pr.confidence_interval
-
 				LEFT JOIN source_currency sc ON  sc.source_currency_id = pr.currency_id
-
 				LEFT JOIN static_data_value sdv_portfolio ON sdv_portfolio.value_id = vmcd.category 	
-
 				WHERE 1 = 1''
-
 				+ CASE WHEN @_measure_id IS NOT NULL THEN '' AND vmcd.measure IN('' + @_measure_id + '')'' ELSE '''' END
-
 				IF @_criteria_id IS NOT NULL
-
 					SET @_sql = @_sql + '' AND pr.criteria_id IN('' + @_criteria_id + '')''
-
 				IF @_as_of_date_to IS NULL
-
 					SET @_sql = @_sql + '' AND pr.as_of_date = '''''' + CAST(@_as_of_date_from AS VARCHAR) + ''''''''
-
 				ELSE
-
 					SET @_sql = @_sql + '' AND pr.as_of_date >= '''''' + CAST(@_as_of_date_from AS VARCHAR) + '''''' AND pr.as_of_date <= '''''' + CAST(@_as_of_date_to AS VARCHAR) + ''''''''
-
 			EXEC (@_sql)
-
 		END
-
 END
-
 ELSE
-
 BEGIN
-
 	SET @_sql =''INSERT INTO #tmp_var_pfe_results
-
 		SELECT 
-
 			vmcd.category AS category_id,
-
 			sdv_portfolio.code AS category_name,        
-
 			vmcd.name [criteria],         
-
 			CONVERT(VARCHAR(10), vr.as_of_date, 120) [to_as_of_date],         
-
 			CONVERT(VARCHAR(10), vr.as_of_date, 120) [as_of_date],
-
 			mv1.term AS [Term],         
-
 			DAY(mv1.term) [term_day],        
-
 			MONTH(mv1.term) [term_month],         
-
 			DATENAME(m, mv1.term) [term_month_name],         
-
 			YEAR(mv1.term) [term_year],         
-
 			CAST(YEAR(mv1.term) AS VARCHAR(5)) + ''''-'''' + RIGHT(''''0'''' + CAST(MONTH(mv1.term) AS VARCHAR(2)), 2) [term_year_month],         
-
 			vmcd.measure [measure_id],         
-
 			sdv_measure.code [measure],         
-
 			sdv_var_aprh.code [approach],        
-
 			sdv_confidence_inter.code [confidence_interval],         
-
 			mv1.mtm_value AS [mtm_cashflow_earnings],  
-
 			ROUND(vr.[VaR], 2) AS [at_risk_value],  
-
 			ROUND(vr.[VaR], 2) AS risk_value,    
-
 			sc.currency_name [currency_name],         
-
 			ROUND(vr.VaRI, 2) [VaRI],
-
 			ROUND(vr.RAROC1, 2) [RAROC%],         
-
 			ROUND(vr.RAROC2, 2) [RAROC_I%],         
-
 			ROUND(vr.VaRC, 2) [VaRC],         
-
 			ROUND(mv1.mtm_value_C, 2) [mtm_value_C],         
-
 			ROUND(mv1.mtm_value_I, 2) [mtm_value_I],        
-
 			vmcd.id [criteria_id],
-
 			NULL counterparty_id,
-
 			mv1.curve_id curve_id,
-
 			spcd.curve_name curve_name,
-
 			spcd1.curve_name risk_bucket_name,
-
 			mv1.MVaR,
-
 			(mv1.MVaR*mv1.mtm_value) AS CVaR 
-
 		FROM var_measurement_criteria_detail vmcd           
-
 		INNER JOIN var_results vr ON  vmcd.id = vr.var_criteria_id                  
-
 		INNER JOIN marginal_var mv1 ON mv1.var_criteria_id = vmcd.id 
-
 			AND vr.as_of_date = mv1.as_of_date 
-
 		LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = mv1.curve_id
-
 		LEFT JOIN source_price_curve_def spcd1 ON spcd1.source_curve_def_id = spcd.risk_bucket_id                  
-
 		LEFT JOIN static_data_value sdv_measure ON  sdv_measure.[value_id] = vmcd.measure         
-
 		LEFT JOIN source_currency sc ON  sc.source_currency_id = vr.currency_id         
-
 		LEFT JOIN static_data_value sdv_var_aprh ON  sdv_var_aprh.[value_id] = vmcd.var_approach         
-
 		LEFT JOIN static_data_value sdv_confidence_inter ON  sdv_confidence_inter.[value_id] = vmcd.confidence_interval         
-
 		LEFT JOIN static_data_value sdv_portfolio ON sdv_portfolio.value_id = vmcd.category  
-
 		WHERE 1=1  AND '' 
-
 		+ CASE WHEN @_as_of_date_to IS NULL THEN 
-
 			''vr.as_of_date = '''''' + CAST(@_as_of_date_from AS VARCHAR) + ''''''''
-
 		ELSE 
-
 			''vr.as_of_date >= '''''' + CAST(@_as_of_date_from AS VARCHAR) + '''''' AND vr.as_of_date <= '''''' + CAST(@_as_of_date_to AS VARCHAR) + ''''''  ''
-
 		END 
-
 		+ CASE WHEN @_criteria_id IS NOT NULL THEN '' AND vmcd.id IN('' + @_criteria_id + '')'' ELSE '''' END
-
 		+ CASE WHEN @_measure_id IS NOT NULL THEN '' AND vmcd.measure IN('' + @_measure_id + '')'' ELSE '''' END
-
 		EXEC (@_sql)
-
 END		
-
 	SET @_sql = ''
-
 		SELECT
-
 			'''''' + ISNULL(@_marginal_var, ''n'') + '''''' AS marginal_var,
-
 			'''''' + ISNULL(@_back_testing, ''n'') + '''''' AS back_testing,
-
 			v1.category_id,
-
 			v1.category_name,
-
 			v1.criteria,
-
 			v1.to_as_of_date AS as_of_date_to,
-
 			v1.as_of_date AS as_of_date_from,
-
 			v1.term,
-
 			v1.term_day,
-
 			v1.term_month,
-
 			v1.term_month_name,
-
 			v1.term_year,
-
 			v1.term_year_month,
-
 			v1.measure_id,
-
 			v1.measure,
-
 			v1.approach,
-
 			v1.confidence_interval,
-
 			v1.mtm_cashflow_earnings,
-
 			'' + CASE WHEN ISNULL(@_back_testing, ''n'') = ''n'' THEN ''
-
 			CASE WHEN v1.measure = ''''PFE'''' THEN
-
 				[dbo].[FNAStandardReportHyperlink](''''PFE Report'''', ''''EXEC spa_get_VaR_report r,NULL,NULL, '''''''''''' + CONVERT(VARCHAR(10), v1.as_of_date, 120) + '''''''''''','''' + CAST(v1.criteria_id AS VARCHAR) + '''',NULL,NULL,NULL,'''' + CAST(v1.counterparty_id AS VARCHAR) + '''''''', v1.at_risk_value,NULL,NULL)
-
+			WHEN v1.measure = ''''VaR'''' THEN
+				CONCAT(''''<a target="_blank" href="../../_valuation_risk_analysis/showPlot/showPlot.php?var_criteria_id='''', CAST(v1.criteria_id AS VARCHAR), ''''&as_of_date='''', CONVERT(VARCHAR(10), v1.as_of_date, 120), ''''">'''', v1.at_risk_value, ''''</a>'''')
 			ELSE
-
-				v1.at_risk_value 
-
-			END '' ELSE ''v2.risk_value*-1'' END + '' AS at_risk_value,
-
+				CAST(v1.at_risk_value AS NVARCHAR(MAX))
+			END '' ELSE ''CAST(v2.risk_value*-1 AS NVARCHAR(MAX))'' END + '' AS at_risk_value,
 			v1.risk_value,
-
 			v1.currency_name,
-
 			v1.VaRI,
-
 			v1.RAROC,
-
 			v1.RAROC_I,
-
 			v1.VaRC,
-
 			v1.mtm_value_C,
-
 			v1.mtm_value_I,
-
 			v1.criteria_id,
-
 			v1.curve_id,
-
 			v1.curve_name,
-
 			v1.MVaR,
-
 			v1.CVaR,
-
 			'' + CASE WHEN ISNULL(@_back_testing, ''n'') = ''Y'' THEN ''CASE WHEN (v2.mtm_cashflow_earnings-v1.mtm_cashflow_earnings) < (v1.risk_value*-1) THEN ''''Exception'''' ELSE ''''Pass'''' END'' ELSE ''NULL'' END + '' AS [exception_pass],
-
 			'' + CASE WHEN ISNULL(@_back_testing, ''n'') = ''Y'' THEN ''v2.mtm_cashflow_earnings'' ELSE ''NULL'' END + '' AS mtm_cashflow_earnings_later,  
-
 			'' + CASE WHEN ISNULL(@_back_testing, ''n'') = ''Y'' THEN ''v1.mtm_cashflow_earnings'' ELSE ''NULL'' END + '' AS mtm_cashflow_earnings_prior, 
-
 			'' + CASE WHEN ISNULL(@_back_testing, ''n'') = ''Y'' THEN ''(v2.mtm_cashflow_earnings-v1.mtm_cashflow_earnings)'' ELSE ''NULL'' END + '' AS [daily_change_mtm]	
-
 		--[__batch_report__]	  
-
 		FROM '' + CASE WHEN ISNULL(@_back_testing, ''n'') = ''n'' THEN '' #tmp_var_pfe_results v1'' ELSE '' (SELECT ROW_NUMBER() OVER(ORDER BY to_as_of_date) row_id, * FROM #tmp_var_pfe_results) v1 
-
 		INNER JOIN (SELECT ROW_NUMBER() OVER(ORDER BY to_as_of_date) row_id, mtm_cashflow_earnings, to_as_of_date, criteria_id, risk_value FROM #tmp_var_pfe_results) v2 ON v1.row_id+1 = v2.row_id 
-
 			AND v1.criteria_id = v2.criteria_id'' END
-
 	EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 

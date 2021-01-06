@@ -3,7 +3,6 @@ BEGIN TRY
 
 		DECLARE @report_id_dest INT 
 	
-
 		--RETAIN APPLICATION FILTER DETAILS START (PART1)
 		if object_id('tempdb..#paramset_map') is not null drop table #paramset_map
 		create table #paramset_map (
@@ -29,20 +28,17 @@ BEGIN TRY
 		END
 		--RETAIN APPLICATION FILTER DETAILS END (PART1)
 		
-
 		declare @report_copy_name varchar(200)
 		
 		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'At Risk Report')
 		
-
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'At Risk Report' [name], 'farrms_admin' [owner], 1 is_system, 1 is_excel, 0 is_mobile, 'FDC8517D_AB7A_4465_ACBC_5E9535F7D154' report_hash, 'Standard At Risk Report' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'At Risk Report' [name], 'dev_admin' [owner], 1 is_system, 1 is_excel, 0 is_mobile, 'FDC8517D_AB7A_4465_ACBC_5E9535F7D154' report_hash, 'Standard At Risk Report' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Market Risk' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
 		
 		
-
 		INSERT INTO report_dataset (source_id, report_id, [alias], root_dataset_id, is_free_from, relationship_sql)
 		SELECT TOP 1 ds.data_source_id AS source_id, @report_id_dest AS report_id, 'ARV1' [alias], rd_root.report_dataset_id AS root_dataset_id,0 AS is_free_from, 'NULL' AS relationship_sql
 		FROM sys.objects o
@@ -51,14 +47,12 @@ BEGIN TRY
 		LEFT JOIN report_dataset rd_root ON rd_root.[alias] = NULL
 			AND rd_root.report_id = @report_id_dest		
 		
-
 	INSERT INTO report_page(report_id, [name], report_hash, width, height)
 	SELECT @report_id_dest AS report_id, 'At Risk Report' [name], 'FDC8517D_AB7A_4465_ACBC_5E9535F7D154' report_hash, 11.5 width,5.5 height
 	
-
 		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
 		SELECT TOP 1 rpage.report_page_id, 'At Risk Report', 'EF0FD2D0_5DB2_41F6_82BF_2C6BCD4D8221', 3,'','','.xlsx',',', 
-		-100000,'n','n',NULL	
+		-100000,'n','n',0	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 			on rpage.[name] = 'At Risk Report'
@@ -66,7 +60,6 @@ BEGIN TRY
 		ON r.report_id = rpage.report_id
 			AND r.[name] = 'At Risk Report'
 	
-
 		INSERT INTO report_dataset_paramset(paramset_id, root_dataset_id, where_part, advance_mode)
 		SELECT TOP 1 rp.report_paramset_id AS paramset_id, rd.report_dataset_id AS root_dataset_id, NULL AS where_part, 0
 		FROM sys.objects o
@@ -82,7 +75,6 @@ BEGIN TRY
 			ON rd.report_id = @report_id_dest
 			AND rd.[alias] = 'ARV1'
 	
-
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, 'At Risk Criteria' AS label
@@ -110,7 +102,6 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'criteria_id'	
 	
-
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, 'Measure' AS label
@@ -138,7 +129,6 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'measure_id'	
 	
-
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
@@ -166,7 +156,6 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'back_testing'	
 	
-
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
@@ -194,7 +183,6 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'marginal_var'	
 	
-
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
@@ -222,7 +210,6 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'as_of_date_from'	
 	
-
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
@@ -250,7 +237,6 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'as_of_date_to'	
 	
-
 		INSERT INTO report_page_tablix(page_id,root_dataset_id, [name], width, height, [top], [left], group_mode, border_style, page_break, type_id, cross_summary, no_header, export_table_name, is_global)
 		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'At Risk Report_tablix' [name], '7.12' width, '4' height, '0.13333333333333333' [top], '0.13333333333333333' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
 		FROM sys.objects o
@@ -263,7 +249,6 @@ BEGIN TRY
 			ON rd.report_id = r.report_id 
 			AND rd.[alias] = 'ARV1' 
 	
-
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -285,7 +270,6 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'At Risk View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'criteria' 
-
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -307,12 +291,11 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'At Risk View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'measure' 
-
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 3 column_order,NULL aggregation, NULL functions, 'At Risk value' [alias], 1 sortable, -1 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 3 column_order,NULL aggregation, NULL functions, 'At Risk value' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -329,7 +312,6 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'At Risk View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'at_risk_value' 
-
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -351,7 +333,6 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'At Risk View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'currency_name' 
-
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -373,7 +354,6 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'At Risk View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'mtm_cashflow_earnings' 
-
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -394,8 +374,7 @@ BEGIN TRY
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'At Risk View' 	
 		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'as_of_date_from' 
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'as_of_date_from'  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -422,8 +401,7 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'At Risk value' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -450,8 +428,7 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'At Risk Criteria' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -478,8 +455,7 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Measure' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -506,8 +482,7 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'MTM Cashflow Earnings' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -534,8 +509,7 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Currency' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -563,7 +537,6 @@ BEGIN TRY
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'As of Date' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
-
 		--RETAIN APPLICATION FILTER DETAILS START (PART2)
 		update pm
 		set inserted_paramset_id = rp.report_paramset_id
@@ -588,8 +561,7 @@ BEGIN TRY
 			where rpm.report_paramset_id = f.report_id
 		)
 		--RETAIN APPLICATION FILTER DETAILS END (PART2)
-	
-COMMIT 
+	COMMIT 
 
 END TRY
 BEGIN CATCH
