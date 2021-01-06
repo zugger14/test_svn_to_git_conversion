@@ -6503,3 +6503,44 @@ function getNumberFormat(num, num_type, reverse) {
     }
     return return_num;
 }
+
+/**
+ * Create a Canvas DIV Element for E-Charts.
+ * @param {DHTMLX Layout Cell Object} layout_cell_obj Layout Cell Object Used for attaching a Div for Graph.
+ * @return {HTML Element} A HTML Div Element for E-Charts Canvas, which is attached in the cell.
+ */
+function create_canvas_div(layout_cell_obj) {
+    // Extract Cell HTML
+    var graph_cell = layout_cell_obj.cell;
+    var existing_canvas_div, canvas_Div, final_canvas_div;
+
+    // Check if canvas is already created.
+    var canvas_div_elm_count = 0;
+    for (var idx = 0; idx < graph_cell.getElementsByClassName('dhx_cell_cont_layout')[0].children.length; idx++) {
+        var element = graph_cell.getElementsByClassName('dhx_cell_cont_layout')[0].children[idx];
+        if (element.id == 'canvas_div') {
+            existing_canvas_div = graph_cell.getElementsByClassName('dhx_cell_cont_layout')[0].children[idx];
+            canvas_div_elm_count++;
+        }
+    }
+
+    if (canvas_div_elm_count == 0) {
+        // Create a DIV Element
+        canvas_Div = document.createElement('div');
+        canvas_Div.id = 'canvas_div';
+        canvas_Div.style.position = 'absolute';
+        canvas_Div.style.top = '1px';
+        canvas_Div.style.bottom = '1px';
+        canvas_Div.style.right = '1px';
+        canvas_Div.style.left = '1px';
+
+        // If canvas div not created, then attach Canvas Div.
+        graph_cell.getElementsByClassName('dhx_cell_cont_layout')[0].insertAdjacentElement('afterBegin', canvas_Div);
+        final_canvas_div = canvas_Div;
+    } else {
+        // If canvas div is created, then return the existing Canvas Div.
+        final_canvas_div = existing_canvas_div;
+    }
+
+    return final_canvas_div;
+}

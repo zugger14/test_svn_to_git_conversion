@@ -494,6 +494,8 @@ $GLOBAL_VOLUME_ROUNDING = $global_volume_rounding = $farrms_client_configs['glob
 # Default rounding for grid columns of type amount
 $GLOBAL_AMOUNT_ROUNDING = $global_amount_rounding = $farrms_client_configs['global_amount_rounding'];
 
+$GRAPH_ECHARTS_LOCATION = $app_php_script_loc . 'components/lib/apache-echarts/echarts.min.js';
+
 global $farrms_module;
 ?>
 <script language="JavaScript" src="<?php echo $app_php_script_loc; ?>components/jQuery/jquery-1.11.1.js"></script>
