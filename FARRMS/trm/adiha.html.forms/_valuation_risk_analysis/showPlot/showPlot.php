@@ -34,16 +34,9 @@
 
     $(function() {
         show_plot.show_plot_layout.progressOn();
-        var canvas_Div = document.createElement('div');
-        canvas_Div.id = 'canvas_div';
-        canvas_Div.style.position = 'absolute';
-        canvas_Div.style.top = '10px';
-        canvas_Div.style.bottom = '10px';
-        canvas_Div.style.right = '10px';
-        canvas_Div.style.left = '10px';
-        canvas_Div.style.padding = '20px';
-        
-        show_plot.show_plot_layout.cells('a').cell.getElementsByClassName('dhx_cell_cont_layout')[0].insertAdjacentElement('afterBegin', canvas_Div);
+
+        var graph_cell = show_plot.show_plot_layout.cells('a');
+        var canvas_Div = create_canvas_div(graph_cell);
 
         var basic_info = {
             "action": "spa_var_plotting_data",
@@ -66,7 +59,7 @@
                 var day_var_y_axis = 2;
                 show_plot.show_plot_layout.progressOff();
 
-                var distChart = echarts.init(document.getElementById('canvas_div'));// getElementsByClassName('dhx_cell_cont_layout')[0]);
+                var distChart = echarts.init(canvas_Div);// getElementsByClassName('dhx_cell_cont_layout')[0]);
 
                 var option = {
                     animation: false,
@@ -86,18 +79,22 @@
                     yAxis: {
                         name: 'Probability Density',
                         nameLocation: 'middle',
-                        boundaryGap: true,
+                        splitNumber: 10,
                         scale: true,
+                        axisLine: {show: false},
+                        axisTick: {show: false},
                         nameTextStyle: {
                             fontWeight: 'bold',
                             fontSize: 15,
-                            padding: [0, 0, 20, 0]
+                            padding: [0, 0, 30, 0]
                         }
                     },
                     xAxis: {
                         name: basic_info_json[0]['x_title'] + ' (' + Intl.NumberFormat('en').format(basic_info_json[0]['mtm_avg']) + ')',
                         nameLocation: 'middle',
-                        boundaryGap: ['5%', '5%'],
+                        splitNumber: 10,
+                        min: Math.round(basic_info_json[0]['xmin']),
+                        max: Math.round(basic_info_json[0]['xmax']),
                         scale: true,
                         nameTextStyle: {
                             fontWeight: 'bold',
