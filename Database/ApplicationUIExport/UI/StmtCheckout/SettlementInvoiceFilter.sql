@@ -376,11 +376,16 @@ BEGIN
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20012201','invoice_number','invoice_number','Invoice Number','input','int','h','n',NULL,NULL,'n','n',NULL,'n','n',NULL,NULL,'n','n','n','n',NULL,NULL,NULL,NULL)
-
+						
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20012201','counterparty_entity_type','counterparty_entity_type','Counterparty Entity Type','combo','char','h','y','EXEC spa_staticdatavalues @flag=''h'', @type_id=10020',NULL,'n','n','','n','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL,NULL)
+
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
+			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
+			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
+			VALUES('20012201','contract_category','contract_category','Contract Category','combo','char','h','y','EXEC spa_staticdatavalues @flag=''h'', @type_id=114700',NULL,'n','n','','n','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL,NULL)
 						
 		END 
 	
@@ -463,8 +468,8 @@ BEGIN
 				
 		INSERT INTO #temp_old_template_fieldsets(old_fieldset_id, old_group_id, group_name, fieldset_name, className, is_disable, is_hidden, inputLeft, inputTop, label, offsetLeft, offsetTop, position, width, sequence, num_column)
 		
-								SELECT 4172,11077,'Filters','status','','n','n','500','500','Status',NULL,NULL,NULL,'500','2','3' UNION ALL 
-								SELECT 4173,11077,'Filters','date','','n','n','500','500','',NULL,NULL,NULL,NULL,'1','3'
+								SELECT 4178,11092,'Filters','status','','n','n','500','500','Status',NULL,NULL,NULL,'500','2','3' UNION ALL 
+								SELECT 4179,11092,'Filters','date','','n','n','500','500','',NULL,NULL,NULL,NULL,'1','3'
 				
 		UPDATE otfs
 		SET otfs.new_group_id = ntg.new_id
@@ -540,28 +545,29 @@ BEGIN
 					
 		INSERT INTO #temp_old_template_fields(old_field_id, old_group_id, old_application_ui_field_id, old_fieldset_id, group_name, ui_field_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, udf_field_name, position, dependent_field, dependent_query, old_grid_id, validation_message, load_child_without_parent)
 		
-		SELECT 76926,11077,76059,NULL,'Filters','',NULL,NULL,NULL,NULL,NULL,'150','settings',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76927,11077,76060,NULL,'Filters','prod_date_from',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76928,11077,76061,NULL,'Filters','prod_date_to',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76929,11077,76062,NULL,'Filters','settlement_date_from',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'3',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76930,11077,76063,NULL,'Filters','settlement_date_to',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'4',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76931,11077,76064,NULL,'Filters','payment_date_from',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'5',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76932,11077,76065,NULL,'Filters','payment_date_to',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'6',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76933,11077,76066,NULL,'Filters','accounting_month',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'7',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76934,11077,76067,NULL,'Filters','counterparty_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'8',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76935,11077,76068,NULL,'Filters','counterparty_id',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,'86',NULL,NULL UNION ALL 
-		SELECT 76936,11077,76069,NULL,'Filters','contract_id',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,'87',NULL,NULL UNION ALL 
-		SELECT 76937,11077,76070,NULL,'Filters','invoice_type',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'12',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76938,11077,76071,NULL,'Filters','invoice_id',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'13',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76939,11077,76072,NULL,'Filters','individual_invoice',NULL,NULL,NULL,NULL,NULL,NULL,'checkbox',NULL,'15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76940,11077,76073,NULL,'Filters','commodity',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'16',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76941,11077,76074,'4172','Filters','invoice_status',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76942,11077,76075,'4172','Filters','is_finalized',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'18',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76943,11077,76076,'4172','Filters','is_voided',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76944,11077,76078,'4172','Filters','is_locked',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'21',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76945,11077,76077,'4172','Filters','payment_status',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76946,11077,76079,NULL,'Filters','invoice_number',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL
-		SELECT 76947,11077,76080,NULL,'Filters','counterparty_entity_type',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'9',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+		SELECT 77156,11092,76281,NULL,'Filters','',NULL,NULL,NULL,NULL,NULL,'150','settings',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77157,11092,76282,NULL,'Filters','prod_date_from',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77158,11092,76283,NULL,'Filters','prod_date_to',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77159,11092,76284,NULL,'Filters','settlement_date_from',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'3',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77160,11092,76285,NULL,'Filters','settlement_date_to',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'4',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77161,11092,76286,NULL,'Filters','payment_date_from',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'5',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77162,11092,76287,NULL,'Filters','payment_date_to',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'6',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77163,11092,76288,NULL,'Filters','accounting_month',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'7',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77164,11092,76289,NULL,'Filters','counterparty_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'8',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77165,11092,76290,NULL,'Filters','counterparty_id',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,'86',NULL,NULL UNION ALL 
+		SELECT 77166,11092,76291,NULL,'Filters','contract_id',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'12',NULL,NULL,NULL,NULL,NULL,NULL,'87',NULL,NULL UNION ALL 
+		SELECT 77167,11092,76292,NULL,'Filters','invoice_type',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'13',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77168,11092,76293,NULL,'Filters','invoice_id',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77169,11092,76294,NULL,'Filters','individual_invoice',NULL,NULL,NULL,NULL,NULL,NULL,'checkbox',NULL,'16',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77170,11092,76295,NULL,'Filters','commodity',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77171,11092,76296,'4178','Filters','invoice_status',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'18',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77172,11092,76297,'4178','Filters','is_finalized',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77173,11092,76298,'4178','Filters','is_voided',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77174,11092,76300,'4178','Filters','is_locked',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'22',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77175,11092,76299,'4178','Filters','payment_status',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'21',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77176,11092,76301,NULL,'Filters','invoice_number',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77177,11092,76302,NULL,'Filters','counterparty_entity_type',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'9',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL
+		SELECT 77178,11092,76303,NULL,'Filters','contract_category',NULL,NULL,'m',NULL,NULL,NULL,'combo',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
 				
 		UPDATE otf
 		SET otf.new_group_id = ntg.new_id
@@ -663,7 +669,7 @@ BEGIN
 		)	
 					
 		INSERT INTO #temp_old_ui_layout(old_layout_grid_id, old_group_id, group_name, layout_cell, old_grid_id, grid_name, sequence, num_column, cell_height,grid_object_name,grid_object_unique_column)
-		SELECT 9520,11077,'Filters','a','FORM',NULL,1,NULL,NULL,NULL,NULL
+		SELECT 9537,11092,'Filters','a','FORM',NULL,1,NULL,NULL,NULL,NULL
 				
 		UPDATE oul
 		SET oul.new_group_id = ntg.new_id

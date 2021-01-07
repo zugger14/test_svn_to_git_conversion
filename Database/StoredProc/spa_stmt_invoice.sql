@@ -57,6 +57,7 @@ GO
 	@process_id : Process Id 
 	@group_by : Group result in deal/charge type e.t.c.
 	@counterparty_entity_type : Counterparty Entity Type
+	@contract_category : Contract Category
 	
  */
 
@@ -96,7 +97,8 @@ CREATE PROCEDURE [dbo].[spa_stmt_invoice]
 	@process_id VARCHAR(200) = NULL,
     @invoice_number VARCHAR(MAX) = NULL,
 	@group_by VARCHAR(20) = NULL,
-	@counterparty_entity_type NVARCHAR(MAX) = NULL
+	@counterparty_entity_type NVARCHAR(MAX) = NULL,
+	@contract_category NVARCHAR(MAX) = NULL
 
 AS
 
@@ -209,6 +211,7 @@ BEGIN
 			 + 'LEFT JOIN Contract_report_template crp_invoice ON crp_invoice.template_id = cg.invoice_report_template' + char(10)
 			 + 'LEFT JOIN Contract_report_template crp_remittance ON crp_remittance.template_id = cg.Contract_report_template' + char(10)
 			 + 'LEFT JOIN Contract_report_template crp_netting ON crp_netting.template_id = cg.netting_template' + char(10)
+			 + 'LEFT JOIN counterparty_contract_address cca ON cca.counterparty_id = sc.source_counterparty_id AND cca.contract_id = cg.contract_id ' + char(10)
 			 + 'LEFT JOIN contract_report_template crt ON  crt.template_id = si.invoice_template_id  ' + char(10)
 			 --+ 'LEFT JOIN netting_group ng ON  ng.netting_group_id = si.netting_invoice_id  ' + char(10)
 			  + 'WHERE  1 = 1 ' + char(10)
@@ -275,8 +278,10 @@ BEGIN
 				SET @sql += ' AND ISNULL(si.is_backing_sheet,''n'') = ''n''' 
 
 			IF @counterparty_entity_type IS NOT NULL AND @counterparty_entity_type != ''
-				SET @sql += ' AND sc.type_of_entity IN (' + @counterparty_entity_type + ')'  + char(10)	
+				SET @sql += ' AND sc.type_of_entity IN (' + @counterparty_entity_type + ')'  + char(10)
 
+			IF @contract_category IS NOT NULL AND @contract_category != ''
+				SET @sql += ' AND cca.contract_category IN (' + @contract_category + ')'  + char(10)	
 
 			SET @sql += ' ORDER BY sc.source_counterparty_id, cg.contract_id, dbo.FNADateFormat(si.as_of_date), dbo.FNADateFormat(si.prod_date_from)'
 
