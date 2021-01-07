@@ -7,13 +7,13 @@ BEGIN
 
 			
 			SELECT @old_ixp_rule_id = ixp_rules_id FROM ixp_rules ir 
-			WHERE ixp_rule_hash = '2EA2B3B5_265B_4BE2_B8EF_9705E4B8F679'
+			WHERE ixp_rule_hash = 'A668E7E6_0124_40D6_A861_9C8078B92B17'
 
 			if @old_ixp_rule_id IS NULL
 			BEGIN
 				SELECT @old_ixp_rule_id = ixp_rules_id
 			FROM ixp_rules ir
-			WHERE ir.ixp_rules_name = 'Retail ST Forecast SOPTIM Power'
+			WHERE ir.ixp_rules_name = 'Retail ST Power Forecast PMD'
 			END
 
 			 
@@ -41,7 +41,7 @@ BEGIN
 
 				INSERT INTO ixp_rules (ixp_rules_name, individuals_script_per_ojbect, limit_rows_to, before_insert_trigger, after_insert_trigger, import_export_flag, is_system_import, ixp_owner, ixp_category, is_active,ixp_rule_hash)
 				VALUES( 
-					'Retail ST Forecast SOPTIM Power' ,
+					'Retail ST Power Forecast PMD' ,
 					'N' ,
 					NULL ,
 					'UPDATE a
@@ -563,7 +563,7 @@ AND gm_profile.source_profile1 IS NOT NULL',
 					@admin_user ,
 					23502,
 					1,
-					'2EA2B3B5_265B_4BE2_B8EF_9705E4B8F679'
+					'A668E7E6_0124_40D6_A861_9C8078B92B17'
 					 )
 
 				SET @ixp_rules_id_new = SCOPE_IDENTITY()
@@ -584,7 +584,7 @@ AND gm_profile.source_profile1 IS NOT NULL',
 			
 			UPDATE
 			ixp_rules
-			SET ixp_rules_name = 'Retail ST Forecast SOPTIM Power'
+			SET ixp_rules_name = 'Retail ST Power Forecast PMD'
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
 				, before_insert_trigger = 'UPDATE a
@@ -1148,7 +1148,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   '0',
 						   '0',
 						   '5',
-						   'Import2TRM/RETAIL_Soptim/DEAL_Retail_ST_Forecast_POWER'
+						   'Import2TRM/RETAIL_Claudio/DEAL_Retail_ST_Forecast_PMD'
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
 					LEFT JOIN ixp_soap_functions isf ON isf.ixp_soap_functions_name = '' 
