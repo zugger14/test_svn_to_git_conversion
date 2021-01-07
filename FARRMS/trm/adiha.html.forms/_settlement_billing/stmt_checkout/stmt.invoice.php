@@ -252,10 +252,12 @@
         
         var counterparty_combo_obj = SettlementInvoice.filter_form.getCombo('counterparty_id');
         counterparty_id = counterparty_combo_obj.getChecked().toString();
-        console.log(counterparty_id);
 
         var contract_combo_obj = SettlementInvoice.filter_form.getCombo('contract_id');
         contract_id = contract_combo_obj.getChecked().toString();
+
+        var counterparty_entity_type_combo_obj = SettlementInvoice.filter_form.getCombo('counterparty_entity_type');
+        var counterparty_entity_type = counterparty_entity_type_combo_obj.getChecked().toString();
 
         if (delivery_date_to != '' && delivery_date_from != '' && delivery_date_from > delivery_date_to) {
                 show_messagebox('<strong>Delivery Date To </strong> should be greater than <strong> Delivery Date From.</strong>');
@@ -298,6 +300,7 @@
             "accounting_month"		: (accounting_month)?accounting_month:null,
             "pay_status"            : pay_status,
             "invoice_number"        : invoice_number,
+            "counterparty_entity_type" : counterparty_entity_type,
             "grid_type"             :"tg",
             "grouping_column"       :"counterparty,contract,invoice_number"
         };

@@ -56,6 +56,7 @@ GO
 	@send_option : send option
 	@process_id : Process Id 
 	@group_by : Group result in deal/charge type e.t.c.
+	@counterparty_entity_type : Counterparty Entity Type
 	
  */
 
@@ -94,7 +95,8 @@ CREATE PROCEDURE [dbo].[spa_stmt_invoice]
 	@pay_status CHAR(1) = NULL,
 	@process_id VARCHAR(200) = NULL,
     @invoice_number VARCHAR(MAX) = NULL,
-	@group_by VARCHAR(20) = NULL
+	@group_by VARCHAR(20) = NULL,
+	@counterparty_entity_type NVARCHAR(MAX) = NULL
 
 AS
 
@@ -271,6 +273,9 @@ BEGIN
 			
 			IF ISNULL(@show_backing_sheets,'n') = 'n'
 				SET @sql += ' AND ISNULL(si.is_backing_sheet,''n'') = ''n''' 
+
+			IF @counterparty_entity_type IS NOT NULL AND @counterparty_entity_type != ''
+				SET @sql += ' AND sc.type_of_entity IN (' + @counterparty_entity_type + ')'  + char(10)	
 
 
 			SET @sql += ' ORDER BY sc.source_counterparty_id, cg.contract_id, dbo.FNADateFormat(si.as_of_date), dbo.FNADateFormat(si.prod_date_from)'
