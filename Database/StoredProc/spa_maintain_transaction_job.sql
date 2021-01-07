@@ -47,7 +47,7 @@ drop table #tmp_header_deal_id
 drop table #tmp_position_breakdown
 declare @process_id varchar(50),@insert_type int,@partition_no int,@user_login_id varchar(30),@deal_delete varchar(1)
 drop table #source_deal_detail_hour
-select  @process_id='ED8C2722_CB07_42EE_8972_D4841D92B2C4',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
+select  @process_id='AD6804AF_C6E2_4156_80F0_1496A46AB442',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
 --report_position_farrms_admin_49AFBFA8_BC35_404B_8590_78F087008D35
 --TRUNCATE TABLE select * from adiha_process.dbo.report_position_farrms_admin_E5D1C26F_C332_4A0A_8082_F3936706EEA8
 --insert into adiha_process.dbo.report_position_farrms_admin_testing select 4100,'d'
@@ -62,7 +62,6 @@ SET CONTEXT_INFO @contextinfo
 	from source_deal_detail where source_deal_header_id=95679
 
 --*/
-
 
 
 
@@ -931,7 +930,7 @@ BEGIN TRY
 					AND (sdd.fixed_float_leg = ''t'')  AND ISNULL(sdh.product_id, 4101) <> 4100	
 					AND ((ISNULL(spcd.hourly_volume_allocation, 17601) IN (17603, 17604) 
 						  AND hg.exp_date IS NOT NULL) OR (ISNULL(spcd.hourly_volume_allocation,17601) in (17600,17601,17602,17605) OR sdd.physical_financial_flag = ''p'')
-						AND ISNULL(sdht.internal_deal_type_value_id,-1) NOT IN(21,20) --- Do not include nomination and schedule
+						) AND ISNULL(sdht.internal_deal_type_value_id,-1) NOT IN(21,20) --- Do not include nomination and schedule
 						and sdd.position_formula_id is null AND rhpd.source_deal_header_id IS NULL
 				GROUP BY sdh.source_deal_header_id,  hb.term_date,
 					ISNULL(h_grp.exp_date, hb.term_date), COALESCE(sdd.position_uom, spcd.display_uom_id, spcd.uom_id), thdi.source_deal_detail_id,thdi.rowid '
