@@ -639,19 +639,19 @@ update #formula_breakdown set [parent_nested_id]=arg1 WHERE func_name IN('ROW','
 
 UPDATE #formula_breakdown 
 SET 
-	func_name=replace(func_name,nchar(160),''),
-	arg1=replace(arg1,nchar(160),''),
-	arg2=replace(arg2,nchar(160),''),
-	arg3=replace(arg3,nchar(160),''),
-	arg4=replace(arg4,nchar(160),''),
-	arg5=replace(arg5,nchar(160),''),
-	arg6=replace(arg6,nchar(160),''),
-	arg7=replace(arg7,nchar(160),''),
-	arg8=replace(arg8,nchar(160),''),
-	arg9=replace(arg9,nchar(160),''),
-	arg10=replace(arg10,nchar(160),''),
-	arg11=replace(arg11,nchar(160),''),
-	arg12=replace(arg12,nchar(160),'')
+	func_name=nullif(replace(func_name,nchar(160),''),''),
+	arg1=nullif(replace(arg1,nchar(160),''),''),
+	arg2=nullif(replace(arg2,nchar(160),''),''),
+	arg3=nullif(replace(arg3,nchar(160),''),''),
+	arg4=nullif(replace(arg4,nchar(160),''),''),
+	arg5=nullif(replace(arg5,nchar(160),''),''),
+	arg6=nullif(replace(arg6,nchar(160),''),''),
+	arg7=nullif(replace(arg7,nchar(160),''),''),
+	arg8=nullif(replace(arg8,nchar(160),''),''),
+	arg9=nullif(replace(arg9,nchar(160),''),''),
+	arg10=nullif(replace(arg10,nchar(160),''),''),
+	arg11=nullif(replace(arg11,nchar(160),''),''),
+	arg12=nullif(replace(arg12,nchar(160),''),'')
 
 
 --/*

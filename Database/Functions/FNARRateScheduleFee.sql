@@ -24,19 +24,25 @@ CREATE FUNCTION [dbo].[FNARRateScheduleFee](@as_of_date DATETIME,@source_deal_he
 
 RETURNS FLOAT AS
 BEGIN
+
+/*
+--select [dbo].[FNARRateScheduleFee]('2020-01-31 00:00:00',120217,8433,50000429,'2020-01-13 00:00:00')
+declare @as_of_date DATETIME='2020-01-31 00:00:00'
+,@source_deal_header_id INT=120217,@contract_id INT=8433, @rate_type_id INT=50000429, @prod_date DATETIME='2020-01-13 00:00:00'
+begin
+--*/
+
 	DECLARE @rate_value FLOAT
 	,@rate_value1 FLOAT
 	,@rate_schedule INT
 
-	IF NULLIF(@source_deal_header_id, '') IS NOT NULL 
+	IF NULLIF(@contract_id, '') IS NOT NULL 
 	BEGIN
 		SELECT @contract_id = contract_id FROM source_deal_header WHERE source_deal_header_id = @source_deal_header_id
 	END
-
 	SET @prod_date = EOMONTH(@prod_date)
 
 	SELECT @rate_schedule = maintain_rate_schedule FROM contract_group WHERE contract_id = @contract_id
-
 	SELECT @rate_value = SUM(CAST(trs1.rate AS FLOAT))
 	FROM (
 		SELECT MAX(effective_date) effective_date
@@ -44,12 +50,12 @@ BEGIN
 			, rate_type_id
 		FROM transportation_rate_schedule trs
 		WHERE rate_type_id = @rate_type_id
-			AND rate_schedule_id = @rate_schedule
+			AND coalesce(rate_schedule_id,@rate_schedule,-1) = isnull(@rate_schedule,-1)
 			AND @prod_date >= ISNULL(effective_date, @prod_date)
 		GROUP BY rate_schedule_id, rate_type_id
 		) trs
 	INNER JOIN transportation_rate_schedule trs1 ON ISNULL(trs1.effective_date, '1990-01-01') = ISNULL(trs.effective_date, '1990-01-01')
-		AND trs1.rate_schedule_id = trs.rate_schedule_id
+		AND coalesce(trs1.rate_schedule_id,trs.rate_schedule_id,-1) = coalesce(trs.rate_schedule_id,-1)
 		AND trs1.rate_type_id = trs.rate_type_id
 
 	SELECT @rate_value1 = SUM(CAST(vc1.rate AS FLOAT))
@@ -59,13 +65,15 @@ BEGIN
 			, rate_type_id
 		FROM variable_charge
 		WHERE rate_type_id = @rate_type_id
-			AND rate_schedule_id = @rate_schedule
+			AND coalesce(rate_schedule_id,@rate_schedule,-1) = isnull(@rate_schedule,-1)
 			AND @prod_date >= ISNULL(effective_date, @prod_date)
 		GROUP BY rate_schedule_id, rate_type_id
 		) vc
 	INNER JOIN variable_charge vc1 ON ISNULL(vc1.effective_date, '1990-01-01') = ISNULL(vc.effective_date, '1990-01-01')
+	AND coalesce(vc1.rate_schedule_id,vc.rate_schedule_id,-1) = coalesce(vc.rate_schedule_id,-1)
 		AND vc1.rate_schedule_id = vc.rate_schedule_id
 		AND vc1.rate_type_id = vc.rate_type_id
+	--select @rate_value, @rate_value1
 
 	RETURN COALESCE(@rate_value, @rate_value1, 0)
 
