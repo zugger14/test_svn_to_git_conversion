@@ -13,7 +13,7 @@ BEGIN
 			BEGIN
 				SELECT @old_ixp_rule_id = ixp_rules_id
 			FROM ixp_rules ir
-			WHERE ir.ixp_rules_name = 'Retail ST Gas ESALES'
+			WHERE ir.ixp_rules_name = 'Retail ST Gas Forecast ESALES'
 			END
 
 			 
@@ -41,7 +41,7 @@ BEGIN
 
 				INSERT INTO ixp_rules (ixp_rules_name, individuals_script_per_ojbect, limit_rows_to, before_insert_trigger, after_insert_trigger, import_export_flag, is_system_import, ixp_owner, ixp_category, is_active,ixp_rule_hash)
 				VALUES( 
-					'Retail ST Gas ESALES' ,
+					'Retail ST Gas Forecast ESALES' ,
 					'N' ,
 					NULL ,
 					'UPDATE a
@@ -500,7 +500,7 @@ AND gm_profile.source_profile1 IS NOT NULL',
 			
 			UPDATE
 			ixp_rules
-			SET ixp_rules_name = 'Retail ST Gas ESALES'
+			SET ixp_rules_name = 'Retail ST Gas Forecast ESALES'
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
 				, before_insert_trigger = 'UPDATE a
