@@ -139,7 +139,7 @@ DECLARE @flag NVARCHAR(1000),
 		@header_prepay_xml NVARCHAR(MAX) = NULL,
 		@header_udt_grid NVARCHAR(MAX) = NULL
  
-	--Sets session DB users 
+		--Sets session DB users 
 	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
 
 	--Sets contextinfo to debug mode so that spa_print will prints data
@@ -151,28 +151,13 @@ DECLARE @flag NVARCHAR(1000),
 	--Drops all temp tables created in this scope.
 	EXEC [spa_drop_all_temp_table] 
 	
---exec spa_debug_helper N'EXEC sys.sp_set_session_context @key = N''DB_USER'', @value = ''dmanandhar'';EXEC spa_deal_update_new  
---@flag=@P1,@source_deal_header_id=@P2,@header_xml=@P3,@detail_xml=@P4,@pricing_process_id=@P5,@header_cost_xml=@P6,@deal_type_id=@P7,@pricing_type=@P8,@term_frequency=@P9,@shaped_process_id=@P10,@formula_process_id=@P11,@udf_process_id=@P12,@environment_process_id=@P13,@certificate_process_id=@P14,@deal_price_data_process_id=@P15,@deal_provisional_price_data_process_id=@P16,@header_prepay_xml=@P17',N'@P1 
---nvarchar(4000),@P2 nvarchar(4000),@P3 nvarchar(4000),@P4 char(1),@P5 char(1),@P6 nvarchar(4000),@P7 nvarchar(4000),@P8 nvarchar(4000),@P9 nvarchar(4000),@P10 char(1),@P11 nvarchar(4000),@P12 
---nvarchar(4000),@P13 nvarchar(4000),@P14 nvarchar(4000),@P15 nvarchar(4000),@P16 nvarchar(4000),@P17 char(1)',N's',N'7385',N'<Root><FormXML  UDF___-1495="" profile_granularity="982" 
---sub_book="82" header_buy_sell_flag="s" deal_id="Flow Deal for hour" deal_date="2019-09-25" counterparty_id="7712" trader_id="1183" contract_id="8196" entire_term_start="2019-11-11" entire_term_end="2019-11-11" term_frequency="m" broker_id="" UDF___1342="" block_define_id="" deal_status="5604" confirm_status_type="17200" deal_category_value_id="475" deal_locked="n" deal_reference_type_id="" reporting_group3="" UDF___3="161" reporting_group1="" reporting_group2="" reporting_group4="" template_id="2698" source_deal_type_id="1171" deal_sub_type_type_id="" internal_desk_id="17302" commodity_id="50" pricing_type="46704" physical_financial_flag="p" granularity_id="" internal_portfolio_id="" ext_deal_id="" reference="" close_reference_id="" confirmation_type="" confirmation_template="" counterparty_id2="" counterparty2_trader="" internal_counterparty="" description1="" description2="" description3="" description4="" pricing="" fx_conversion_market="" payment_term="" payment_days="" create_user="Sulav  Nepal" create_ts="2020-06-08 08:55:00" update_user="Dewanand  Manandhar" update_ts="2020-06-30 10:55:00"></FormXML></Root>',NULL,NULL,N'<GridXML><GridRow  seq_no="0"  cost_id="-1441" cost_name="Premium" internal_field_type_id="18722" internal_field_type="Option Premium" udf_value="" currency_id="" uom_id="" counterparty_id="" contract_id="" receive_pay="" udf_field_type="t" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days=""></GridRow><GridRow  seq_no="1"  cost_id="-1856" cost_name="Trans Fees" internal_field_type_id="18730" internal_field_type="Fees" udf_value="" currency_id="" uom_id="" counterparty_id="" contract_id="" receive_pay="" udf_field_type="t" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days=""></GridRow></GridXML>',N'1171',N'46704',N'm',NULL,N'20D953AF_608D_4BED_9624_D5E43990E0DF',N'A0910EA1_C68D_4EE7_81A8_1C50CA0D36ED',N'',N'',N'',N'',NULL
-
-
-	--Sets session DB users 
-	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
-
-	--Sets contextinfo to debug mode so that spa_print will prints data
-	--DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
-	SET CONTEXT_INFO @contextinfo
-
-	EXEC spa_print 'Use spa_print instead of PRINT statement in debug mode.'
-		
-	--Drops all temp tables created in this scope.
-	EXEC [spa_drop_all_temp_table] 
-	
 	-- SPA parameter values
-	SELECT @flag = 's', @source_deal_header_id = '8407', @header_xml = '<Root><FormXML  UDF___-1495="" sub_book="82" 
-header_buy_sell_flag="b" deal_id="COPY_8357_8407" deal_date="1980-09-25" counterparty_id="7712" trader_id="1183" contract_id="8196" entire_term_start="2000-11-01" entire_term_end="2000-11-30" term_frequency="m" broker_id="" UDF___1342="" block_define_id="" deal_status="5604" confirm_status_type="17200" deal_category_value_id="475" deal_locked="n" deal_reference_type_id="" UDF___3="158" reporting_group1="" reporting_group2="" reporting_group3="" reporting_group4="" reporting_group5="" template_id="2698" source_deal_type_id="1171" deal_sub_type_type_id="" internal_desk_id="17302" commodity_id="-1" pricing_type="46704" physical_financial_flag="p" granularity_id="" internal_portfolio_id="" profile_granularity="982" ext_deal_id="" reference="" close_reference_id="" confirmation_type="" confirmation_template="" counterparty_id2="" counterparty2_trader="" internal_counterparty="" description1="" description2="" description3="" description4="" pricing="" fx_conversion_market="" payment_term="" payment_days="" create_user="Sulav  Nepal" create_ts="2020-07-02 07:23:00" update_user="Sulav  Nepal" update_ts="2020-07-02 13:54:00"></FormXML></Root>', @detail_xml = NULL, @pricing_process_id = NULL, @header_cost_xml = '<GridXML><GridRow  seq_no="0"  cost_id="-1441" cost_name="Premium" internal_field_type_id="18722" internal_field_type="Option Premium" udf_value="" currency_id="" uom_id="" counterparty_id="" contract_id="" receive_pay="" udf_field_type="t" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days=""></GridRow><GridRow  seq_no="1"  cost_id="-1856" cost_name="Trans Fees" internal_field_type_id="18730" internal_field_type="Fees" udf_value="" currency_id="" uom_id="" counterparty_id="" contract_id="" receive_pay="" udf_field_type="t" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days=""></GridRow></GridXML>', @deal_type_id = '1171', @pricing_type = '46704', @term_frequency = 'm', @shaped_process_id = NULL, @formula_process_id = '33C4442F_F980_47A8_A670_1BBABDEB4052', @udf_process_id = 'FF478BC0_27EE_4D20_AD3A_804D07D43C65', @environment_process_id = '', @certificate_process_id = '', @deal_price_data_process_id = '', @deal_provisional_price_data_process_id = '', @header_prepay_xml = NULL
+	SELECT @flag = 's', @source_deal_header_id = '109972', @header_xml = '<Root><FormXML  sub_book="150" 
+header_buy_sell_flag="s" deal_id="Performance shaped_Xferred_108396_109972" deal_date="2019-12-31" counterparty_id="7717" trader_id="1162" contract_id="8191" entire_term_start="2020-01-01" 
+entire_term_end="2025-12-31" broker_id="" deal_status="5604" confirm_status_type="17200" deal_category_value_id="475" deal_locked="n" reporting_group1="" reporting_group2="" 
+reporting_group3="" reporting_group4="" reporting_group5="" UDF___3="" template_id="2784" source_deal_type_id="1171" deal_sub_type_type_id="2287" internal_desk_id="17302" commodity_id="-1" 
+pricing_type="46700" physical_financial_flag="p" granularity_id="" internal_portfolio_id="" clearing_counterparty_id="" UDF___1342="" UDF___1953="" UDF___1346="" UDF___1958="" UDF___1959="" 
+UDF___1974="" UDF___1975="" profile_granularity="982" ext_deal_id="Performance shaped_Offset_109972" reference="" close_reference_id="109971" confirmation_type="" confirmation_template="" counterparty_id2="" counterparty2_trader="" internal_counterparty="7717" description1="" description2="" description3="" description4="" UDF___1941="" pricing="" fx_conversion_market="" payment_term="" payment_days="" create_user="Anjan  Adhikari" create_ts="2020-11-26 06:10:00" update_user="Achyut  Khadka" update_ts="2021-01-08 05:53:00"></FormXML></Root>', @detail_xml = NULL, @pricing_process_id = NULL, @header_cost_xml = '<GridXML><GridRow  seq_no="0"  cost_id="265" cost_name="Commodity Energy Tax" internal_field_type_id="18745" internal_field_type="Energy Tax" udf_value="67" currency_id="" uom_id="" counterparty_id="" contract_id="" receive_pay="" udf_field_type="w" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days="" fixed_fx_rate=""></GridRow><GridRow  seq_no="1"  cost_id="263" cost_name="Positive Price Commodity VAT" internal_field_type_id="18744" internal_field_type="VAT" udf_value="65" currency_id="" uom_id="" counterparty_id="" contract_id="" receive_pay="" udf_field_type="w" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days="" fixed_fx_rate=""></GridRow><GridRow  seq_no="2"  cost_id="264" cost_name="Negative Price Commodity VAT" internal_field_type_id="18744" internal_field_type="VAT" udf_value="66" currency_id="" uom_id="" counterparty_id="" contract_id="" receive_pay="" udf_field_type="w" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days="" fixed_fx_rate=""></GridRow></GridXML>', @deal_type_id = '1171', @pricing_type = '46700', @term_frequency = 'd', @shaped_process_id = NULL, @formula_process_id = '27BBC05A_BF08_479E_BEC0_BF56DF99055D', @udf_process_id = '7D9DD90A_F1EC_4773_8F2B_2FF6B57DC443', @environment_process_id = '', @certificate_process_id = '', @deal_price_data_process_id = '', @deal_provisional_price_data_process_id = '', @header_prepay_xml = NULL, @header_udt_grid = '<GridGroup></GridGroup>'
 
 --**************************************/
  
@@ -3153,17 +3138,17 @@ BEGIN TRY
 		FROM source_deal_header
 		WHERE source_deal_header_id = @source_deal_header_id
 	)
-	SELECT unp.[column], unp.[value]
+	SELECT source_deal_header_id, unp.[column], unp.[value]
 	INTO #temp_pre_sdh
 	FROM temp_tbl tsdh
 	UNPIVOT (
 		[value] FOR [column] IN (
-			source_deal_header_id, physical_financial_flag, term_frequency, header_buy_sell_flag,
+			physical_financial_flag, term_frequency, header_buy_sell_flag,
 			block_define_id, source_deal_type_id, counterparty_id, close_reference_id, sub_book,
 			source_system_book_id1, source_system_book_id2, source_system_book_id3, source_system_book_id4
 		)
 	) unp
-	ORDER BY unp.[column] ASC
+	--ORDER BY unp.[column] ASC
 
 	-- Insert data of deal prior to modification
 	;WITH temp_tbl AS (
@@ -3193,19 +3178,19 @@ BEGIN TRY
 		FROM source_deal_detail
 		WHERE source_deal_header_id = @source_deal_header_id
 	)
-	SELECT unp.[column], unp.[value]
+	SELECT source_deal_detail_id, unp.[column], unp.[value]
 	INTO #temp_pre_sdd
 	FROM temp_tbl tsdh
 	UNPIVOT (
 		[value] FOR [column] IN (
-			source_deal_header_id, source_deal_detail_id, term_start, term_end, curve_id,
+			term_start, term_end, curve_id,
 			location_id, deal_volume, deal_volume_uom_id, deal_volume_frequency, position_uom,
 			multiplier, volume_multiplier2, price_multiplier, fixed_float_leg, buy_sell_flag,
 			standard_yearly_volume, formula_curve_id, formula_id, contractual_volume,
 			physical_financial_flag, price_uom_id, profile_id, fixed_price
 		)
 	) unp
-	ORDER BY unp.[column] ASC
+	--ORDER BY unp.[column] ASC
  		
 	IF OBJECT_ID('tempdb..#temp_updated_transfer_deals') IS NOT NULL
  		DROP TABLE #temp_updated_transfer_deals
@@ -3565,7 +3550,7 @@ BEGIN TRY
 
 			EXEC(' Insert into #temp_certi select source_certificate_number,insert_del from ' + @tablename_certi)
 		END
-			
+
 		 --  Update transfer/offset deal header when the deal is not fixation deal.
 		IF EXISTS (
 			SELECT close_reference_id
@@ -6034,17 +6019,17 @@ BEGIN TRY
 		FROM source_deal_header
 		WHERE source_deal_header_id = @source_deal_header_id
 	)
-	SELECT unp.[column], unp.[value]
+	SELECT source_deal_header_id, unp.[column], unp.[value]
 	INTO #temp_post_sdh
 	FROM temp_tbl tsdh
 	UNPIVOT (
 		[value] FOR [column] IN (
-			source_deal_header_id, physical_financial_flag, term_frequency, header_buy_sell_flag,
+			 physical_financial_flag, term_frequency, header_buy_sell_flag,
 			block_define_id, source_deal_type_id, counterparty_id, close_reference_id, sub_book,
 			source_system_book_id1, source_system_book_id2, source_system_book_id3, source_system_book_id4
 		)
 	) unp
-	ORDER BY unp.[column] ASC
+	--ORDER BY unp.[column] ASC
 
 	-- Insert data of deal after modification
 	;WITH temp_tbl AS (
@@ -6074,47 +6059,67 @@ BEGIN TRY
 		FROM source_deal_detail
 		WHERE source_deal_header_id = @source_deal_header_id
 	)
-	SELECT unp.[column], unp.[value]
+	SELECT  source_deal_detail_id, unp.[column], unp.[value]
 	INTO #temp_post_sdd
 	FROM temp_tbl tsdh
 	UNPIVOT (
 		[value] FOR [column] IN (
-			source_deal_header_id, source_deal_detail_id, term_start, term_end, curve_id,
+			 term_start, term_end, curve_id,
 			location_id, deal_volume, deal_volume_uom_id, deal_volume_frequency, position_uom,
 			multiplier, volume_multiplier2, price_multiplier, fixed_float_leg, buy_sell_flag,
 			standard_yearly_volume, formula_curve_id, formula_id, contractual_volume,
 			physical_financial_flag, price_uom_id, profile_id, fixed_price
 		)
 	) unp
-	ORDER BY unp.[column] ASC
+	--ORDER BY unp.[column] ASC
 	
 	DECLARE @calc_position CHAR(1) = 'n'
 	DECLARE @exclude_steps VARCHAR(30) = ''
 
 	-- Check if values of specific columns were changed in deal header
-	IF EXISTS (
-		SELECT 1
-		FROM #temp_post_sdh post
-		LEFT JOIN #temp_pre_sdh pre ON post.[column] = pre.[column]
-			AND post.[value] = pre.[value]
-		WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
-	)
-	BEGIN
-		SET @calc_position = 'y'
-	END
+	--IF EXISTS (
+	--	SELECT 1
+	--	FROM #temp_post_sdh post
+	--	LEFT JOIN #temp_pre_sdh pre 
+	--		ON post.source_deal_header_id = pre.source_deal_header_id		
+	--		AND post.[column] = pre.[column]
+	--		AND post.[value] = pre.[value]
+
+	--	WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
+	--)
+	--BEGIN
+	--	SET @calc_position = 'y'
+	--END
 	
 	-- Check if values of specific columns were changed in deal detail
-	IF EXISTS (
-		SELECT 1
-		FROM #temp_post_sdd post
-		LEFT JOIN #temp_pre_sdd pre ON post.[column] = pre.[column]
-			AND post.[value] = pre.[value]
-		WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
-	)
-	BEGIN
-		SET @calc_position = 'y'
-	END
+	--IF EXISTS (
+	--	SELECT 1
+	--	FROM #temp_post_sdd post
+	--	LEFT JOIN #temp_pre_sdd pre 
+	--		ON post.source_deal_detail_id = pre.source_deal_detail_id		
+	--		AND post.[column] = pre.[column]
+	--		AND post.[value] = pre.[value]
+	--	WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
+	--)
+	--BEGIN
+	--	SET @calc_position = 'y'
+	--END
 
+	SELECT @calc_position = IIF(COUNT(1) > 0 OR @calc_position = 'y', 'y', 'n')
+	FROM #temp_post_sdh post
+	LEFT JOIN #temp_pre_sdh pre 
+		ON post.source_deal_header_id = pre.source_deal_header_id		
+		AND post.[column] = pre.[column]
+		AND post.[value] = pre.[value]
+
+	SELECT @calc_position = IIF(COUNT(1) > 0 OR @calc_position = 'y', 'y', 'n')
+	FROM #temp_post_sdd post
+	LEFT JOIN #temp_pre_sdd pre 
+		ON post.source_deal_detail_id = pre.source_deal_detail_id		
+		AND post.[column] = pre.[column]
+		AND post.[value] = pre.[value]
+	WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
+	
 	-- Check if complex pricing process id is not null. If it is not null then something might have been changed.
 	IF NULLIF(@deal_price_data_process_id, '') IS NOT NULL
 	BEGIN
