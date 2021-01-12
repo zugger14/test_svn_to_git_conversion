@@ -2225,7 +2225,7 @@
 						var agg_val = new Array();
 						var graph_type_arr = new Array();
 						var vals_selector;
-						if (subopts.active_tab == null) {
+						if (subopts.active_tab.length == 0) {
 							vals_selector = $(".pvtVals");
 						} else {
 							vals_selector = $("." + subopts.active_tab.toString() + " .pvtVals");
