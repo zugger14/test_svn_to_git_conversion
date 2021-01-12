@@ -48,6 +48,8 @@ GO
 	@report_type		: Report Type
 	@report_paramset_id	: Report Paramset ID
 	@pivot_file_sql		: Query to generate pivot file
+	@paramset_id	: report_paramset_id from view report to process for pivot.
+	@component_id	: component_id (item_id i.e. tablix_id,chart_id,gauge_id,etc) of the report item.
 */
 CREATE PROCEDURE [dbo].[spa_pivot_report_view]
     @flag CHAR(1),
@@ -73,7 +75,9 @@ CREATE PROCEDURE [dbo].[spa_pivot_report_view]
 	@is_public BIT = NULL,
 	@report_type INT = NULL,
 	@report_paramset_id INT = NULL,
-	@pivot_file_sql VARCHAR(2000) = NULL
+	@pivot_file_sql VARCHAR(2000) = NULL,
+	@paramset_id			INT = NULL,
+	@component_id			 VARCHAR(500) = NULL
     
 AS
 SET NOCOUNT ON 
@@ -92,23 +96,116 @@ BEGIN
 	IF @flag = '1'
 	BEGIN
 		EXEC(@pivot_file_sql)
-		SET @pivot_cols_formatting_info = (
+		 
+			IF EXISTS(SELECT 1 FROM pivot_report_view_columns WHERE pivot_report_view_id = @view_id)
+			BEGIN
+			SET @pivot_cols_formatting_info = (
 			SELECT '' [id],
 				prvc.columns_name,
 				prvc.label,
-				prvc.render_as,
+					COALESCE(prvc.render_as,tbl.render_as) render_as,
 				prvc.date_format,
 				prvc.currency,
-				prvc.thou_sep,
-				prvc.rounding,
+					COALESCE(prvc.thou_sep, tbl.thousand_seperation) thou_sep,
+					CASE WHEN COALESCE(prvc.rounding, tbl.rounding) = '-1' AND COALESCE(prvc.render_as,tbl.render_as) IN ('a', 'v', 'n', 'r') 
+						 THEN CASE COALESCE(prvc.render_as,tbl.render_as) WHEN 'a' THEN tbl_rounding.amount_rounding
+																		  WHEN 'v' THEN tbl_rounding.volume_rounding
+																		  WHEN 'n' THEN tbl_rounding.number_rounding
+																		  WHEN 'r' THEN tbl_rounding.price_rounding
+						 ELSE COALESCE(prvc.rounding, tbl.rounding) END
+					ELSE COALESCE(prvc.rounding, tbl.rounding) END rounding,
 				prvc.neg_as_red
 			FROM pivot_report_view_columns prvc
+				OUTER APPLY (
+					SELECT CASE rtc.render_as  WHEN 0 THEN 't'
+											   WHEN 1 THEN 't'
+											   WHEN 2 THEN 'n'
+											   WHEN 3 THEN 'a'
+											   WHEN 4 THEN 'd'
+											   WHEN 5 THEN 'p'
+											   WHEN 6 THEN 't'
+											   WHEN 13 THEN 'r'
+											   WHEN 14 THEN 'v'
+							ELSE '' END render_as 
+						, CASE rtc.thousand_seperation WHEN 0 THEN '-1'
+													   WHEN 1 THEN 'y'
+													   WHEN 2 THEN 'n'
+						  END thousand_seperation
+						, rtc.rounding
+					FROM report_paramset rp
+					INNER JOIN report_page_tablix rpt ON  rpt.page_id = rp.page_id 
+					INNER JOIN report_tablix_column rtc
+						ON rtc.tablix_id = rpt.report_page_tablix_id
+					INNER JOIN data_source_column dsc
+						ON dsc.data_source_column_id = rtc.column_id
+					WHERE report_paramset_id = @paramset_id
+						AND rpt.report_page_tablix_id = @component_id
+						AND dsc.[alias] = prvc.columns_name
+				) tbl
+				OUTER APPLY( SELECT price_rounding,volume_rounding,amount_rounding,number_rounding
+							 FROM company_info
+				) tbl_rounding
 			WHERE prvc.pivot_report_view_id = @view_id
 			FOR JSON PATH
 			,INCLUDE_NULL_VALUES
-		)
-	END
-
+			)
+		END
+			ELSE
+			BEGIN		
+				SET @pivot_cols_formatting_info = ( 
+				SELECT '' [id],
+					tbl_column.columns_name,
+					tbl_column.columns_name [label],
+					tbl.render_as,
+					CASE WHEN tbl.rounding = '-1' AND tbl.render_as IN ('a', 'v', 'n', 'r') 
+						 THEN CASE tbl.render_as WHEN 'a' THEN tbl_rounding.amount_rounding
+																		  WHEN 'v' THEN tbl_rounding.volume_rounding
+																		  WHEN 'n' THEN tbl_rounding.number_rounding
+																		  WHEN 'r' THEN tbl_rounding.price_rounding
+						 ELSE tbl.rounding END
+					ELSE tbl.rounding END rounding,
+					tbl.thousand_seperation thou_sep
+				FROM   pivot_report_view prv
+				CROSS APPLY(
+					SELECT IIF(CHARINDEX('|',REPLACE(item,'||||','|')) = 0, REPLACE(item,'||||','|'),SUBSTRING(REPLACE(item,'||||','|'), CHARINDEX('|',REPLACE(item,'||||','|')) + 1 , LEN(REPLACE(item,'||||','|')))) columns_name
+					FROM dbo.FNASplit(prv.detail_fields,',')
+				) tbl_column
+				OUTER APPLY (
+					SELECT CASE rtc.render_as  WHEN 0 THEN 't'
+											   WHEN 1 THEN 't'
+											   WHEN 2 THEN 'n'
+											   WHEN 3 THEN 'a'
+											   WHEN 4 THEN 'd'
+											   WHEN 5 THEN 'p'
+											   WHEN 6 THEN 't'
+											   WHEN 13 THEN 'r'
+											   WHEN 14 THEN 'v'
+							ELSE '' END render_as 
+						, CASE rtc.thousand_seperation WHEN 0 THEN '-1'
+													   WHEN 1 THEN 'y'
+													   WHEN 2 THEN 'n'
+						  END thousand_seperation
+						, rtc.rounding
+					FROM report_paramset rp
+					INNER JOIN report_page_tablix rpt ON  rpt.page_id = rp.page_id 
+					INNER JOIN report_tablix_column rtc
+						ON rtc.tablix_id = rpt.report_page_tablix_id
+					INNER JOIN data_source_column dsc
+						ON dsc.data_source_column_id = rtc.column_id
+					WHERE report_paramset_id = @paramset_id
+						AND rpt.report_page_tablix_id = @component_id
+						AND dsc.[alias] = tbl_column.columns_name
+				) tbl
+				OUTER APPLY( SELECT price_rounding,volume_rounding,amount_rounding,number_rounding
+							 FROM company_info
+				) tbl_rounding
+				WHERE prv.pivot_report_view_id = @view_id
+				FOR JSON PATH
+				,INCLUDE_NULL_VALUES
+				)
+			END
+	   END
+		
     SELECT prv.row_fields,
            prv.columns_fields,
            prv.detail_fields,
@@ -675,8 +772,6 @@ END
 ELSE IF @flag = 'y'
 BEGIN
 	DECLARE @report_param_string VARCHAR(MAX)
-	DECLARE @paramset_id INT
-	DECLARE @component_id VARCHAR(500)
 	DECLARE @report_name VARCHAR(500)
 	DECLARE @has_view_permission CHAR(1) = 'n'
 	DECLARE @public CHAR(1)

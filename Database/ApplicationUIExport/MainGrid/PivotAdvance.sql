@@ -25,7 +25,7 @@ BEGIN
 				
 			INSERT INTO #temp_all_grids(old_grid_id, grid_name, fk_table, fk_column, load_sql, grid_label, grid_type, grouping_column, edit_permission, delete_permission, split_at)
 			
-									SELECT 305,'pivot_advance',NULL,NULL,NULL,'Advance','g',NULL,NULL,NULL,NULL
+									SELECT 295,'pivot_advance',NULL,NULL,NULL,'Advance','g',NULL,NULL,NULL,NULL
 				
 			UPDATE tag
 			SET tag.new_grid_id = agd.grid_id
@@ -79,7 +79,7 @@ BEGIN
 			
 
 							DELETE FROM adiha_grid_columns_definition WHERE grid_id = @grid_id
-															
+
 							IF OBJECT_ID('tempdb..#temp_all_grids_columns') IS NOT NULL
 								DROP TABLE #temp_all_grids_columns
 
@@ -99,16 +99,16 @@ BEGIN
 								column_width	VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 								sorting_preference VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 								validation_rule VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-								column_alignment VARCHAR(200) COLLATE DATABASE_DEFAULT 
-							)	
-				
-							INSERT INTO #temp_all_grids_columns(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment)
+								column_alignment VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+								browser_grid_id VARCHAR(200) COLLATE DATABASE_DEFAULT,
+								allow_multi_select CHAR(1) COLLATE DATABASE_DEFAULT,
+								rounding VARCHAR(20) COLLATE DATABASE_DEFAULT
+							)
+
+							INSERT INTO #temp_all_grids_columns(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
 							
-												SELECT 305,'id','ID','ro',NULL,'n','n','1','y',NULL,NULL,NULL,'80','str',NULL,'left' UNION ALL 
-												SELECT 305,'name','Name','ro',NULL,'n','n','2','n',NULL,NULL,NULL,'150','str',NULL,'left' UNION ALL 
-												SELECT 305,'label','Label','ed',NULL,'n','n','3','n',NULL,NULL,NULL,'150','str',NULL,'left' UNION ALL 
-												SELECT 305,'render_as','Render As','combo','SELECT ''c'' [id], ''Currency'' [name] UNION ALL SELECT ''d'', ''Date'' UNION ALL SELECT ''n'', ''Number'' UNION ALL SELECT ''p'', ''Percentage'' UNION ALL SELECT ''t'', ''Text'' UNION ALL SELECT ''h'', ''Hyperlink''','n','n','3','n',NULL,NULL,NULL,'150','str',NULL,'left' UNION ALL 
-												SELECT 305,'date_format','Date Format','combo','SELECT ''MM/dd/yyyy'' [id],''mm/dd/yyyy'' [name] UNION ALL 
+												SELECT 295,'render_as','Render As','combo','SELECT ''c'' [id], ''Currency'' [name] UNION ALL SELECT ''d'', ''Date'' UNION ALL SELECT ''n'', ''Number'' UNION SELECT ''a'', ''Amount'' UNION SELECT ''r'', ''Price'' UNION SELECT ''v'', ''Volume''  UNION ALL SELECT ''p'', ''Percentage'' UNION ALL SELECT ''t'', ''Text'' UNION ALL SELECT ''h'', ''Hyperlink''','n','n','3','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 295,'date_format','Date Format','combo','SELECT ''MM/dd/yyyy'' [id],''mm/dd/yyyy'' [name] UNION ALL 
 SELECT ''MM/dd/yyyy hh:mm'',''mm/dd/yyyy hh:mm'' UNION ALL 
 SELECT ''MM/dd/yyyy hh:mm:ss'',''mm/dd/yyyy hh:mm:ss'' UNION ALL 
 SELECT ''MM-dd-yyyy'',''mm-dd-yyyy'' UNION ALL 
@@ -124,20 +124,23 @@ SELECT ''dd.MM.yyyy'',''dd.mm.yyyy'' UNION ALL
 SELECT ''dd.MM.yyyy hh:mm'',''dd.mm.yyyy hh:mm'' UNION ALL 
 SELECT ''dd.MM.yyyy hh:mm:ss'',''dd.mm.yyyy hh:mm:ss'' UNION ALL 
 SELECT ''HH:mm:ss'',''Time'' UNION ALL 
-SELECT ''MMMM dd'',''Month Day'' ','n','n','4','n',NULL,NULL,NULL,'150','str',NULL,'left' UNION ALL 
-												SELECT 305,'currency','Currency','combo','SELECT ''$'' [id], ''$'' [name] UNION ALL 
+SELECT ''MMMM dd'',''Month Day'' ','n','n','4','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 295,'currency','Currency','combo','SELECT ''$'' [id], ''$'' [name] UNION ALL 
 	SELECT ''¥'', ''¥'' UNION ALL 
-	SELECT ''€'', ''€'' ','n','n','5','n',NULL,NULL,NULL,'150','str',NULL,'left' UNION ALL 
-												SELECT 305,'thou_sep','Thousand Separator','combo','SELECT ''y'' [id], ''Yes'' [name] UNION ALL 
-	SELECT ''n'', ''No''','n','n','6','n',NULL,NULL,NULL,'150','str',NULL,'left' UNION ALL 
-												SELECT 305,'rounding','Rounding','combo','SELECT n [id], n [name] FROM seq WHERE n<=20','n','n','7','n',NULL,NULL,NULL,'150','str',NULL,'left' UNION ALL 
-												SELECT 305,'neg_as_red','Format Negative','combo','SELECT ''a'' [id], ''Absolute'' [name] UNION ALL SELECT ''y'' [id], ''Red'' [name] ','n','n','8','n',NULL,NULL,NULL,'150','str',NULL,'left'
-							
+	SELECT ''€'', ''€'' ','n','n','5','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 295,'thou_sep','Thousand Separator','combo','SELECT ''y'' [id], ''Yes'' [name] UNION ALL 
+	SELECT ''n'', ''No'' UNION SELECT ''-1'', ''Global''','n','n','6','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 295,'rounding','Rounding','combo','SELECT n [id], CAST(n AS VARCHAR(10)) [name] FROM seq WHERE n<=20 UNION SELECT -1 , ''Global''','n','n','7','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 295,'neg_as_red','Format Negative','combo','SELECT ''a'' [id], ''Absolute'' [name] UNION ALL SELECT ''y'' [id], ''Red'' [name] ','n','n','8','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 295,'label','Label','ed',NULL,'n','n','3','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 295,'id','ID','ro',NULL,'n','n','1','y',NULL,NULL,NULL,'80','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 295,'name','Name','ro',NULL,'n','n','2','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL
+
 							UPDATE tagc
 							SET tagc.grid_id = @grid_id
 							FROM #temp_all_grids_columns tagc
-						
-							INSERT INTO adiha_grid_columns_definition(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment)
+
+							INSERT INTO adiha_grid_columns_definition(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
 							SELECT	tagc.grid_id,
 									tagc.column_name,
 									tagc.column_label,
@@ -153,7 +156,10 @@ SELECT ''MMMM dd'',''Month Day'' ','n','n','4','n',NULL,NULL,NULL,'150','str',NU
 									tagc.column_width,
 									tagc.sorting_preference,
 									tagc.validation_rule,
-									tagc.column_alignment
+									tagc.column_alignment,
+									tagc.browser_grid_id,
+									tagc.allow_multi_select,
+									tagc.rounding
 										
 							FROM #temp_all_grids_columns tagc
 					
@@ -172,4 +178,4 @@ COMMIT
 			IF OBJECT_ID('tempdb..#temp_all_grids_columns') IS NOT NULL
 				DROP TABLE #temp_all_grids_columns
 				
-		END
+		END 

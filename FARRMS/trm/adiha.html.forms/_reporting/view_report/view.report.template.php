@@ -1393,8 +1393,14 @@
 		}
 		
 		load_pivot_view = function(view_id) {
+            var active_tab_id = report_ui_template.report_ui_tabbar.getActiveTab();
+            var active_object_id = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
+            var frame_obj = report_ui_template["inner_tab_layout_" + active_object_id].cells('b').getFrame();
+            var params = frame_obj.contentWindow.report_parameter(false, 1);
+            var paramset_id = params.paramset_id;
+            var component_id = params.items_combined;
 			var sql = generate_pivot_sql();
-			var data_sql = {"action": "spa_pivot_report_view", "flag":'1', "view_id":view_id, "pivot_file_sql": sql}
+			var data_sql = {"action": "spa_pivot_report_view", "flag":'1', "view_id":view_id, "paramset_id":paramset_id, "component_id":component_id, "pivot_file_sql": sql}
 			adiha_post_data("return_array", data_sql, '', '', 'load_pivot_view_callback');
 		}
         
@@ -1549,7 +1555,7 @@
 					}
 				});
 			}
-			
+
 			var is_hyperlink = is_column_pivot_hyperlink(name);
 			if (start_format == 0 && is_hyperlink == true) {
 					render_as = 'h';
@@ -1565,28 +1571,31 @@
 			
 			if (start_format == 1) {
 				if (render_as != '') {
-					if (render_as == 'n' || render_as == 'p' || render_as == 'c') {
+					if (render_as == 'n' || render_as == 'p' || render_as == 'c' || render_as == 'a' || render_as == 'v' || render_as == 'r') {
 						
-						var sep = (thou_sep == '' || thou_sep == 'n') ? '' : ',';
+						var sep = (thou_sep == '' || thou_sep == 'n') ? '' : global_group_separator;
 
 						if (thou_sep != '' && rounding != '') {
-							var val1 = value;
+							var val1 = value.replace(',','');
 							var re = /,(?=[\d,]*\.\d{2}\b)/;
 							if (sep == '') {
 								val1 = val1.replace(re, '');							
 							}
-							return_val = $.number(val1, rounding, '.', sep);
+							return_val = $.number(val1, rounding, global_decimal_separator, sep);
 						} else if (rounding != '') {
-							return_val = $.number(value, rounding);
+                            var val1 = value.replace(',','');
+							return_val = $.number(val1, rounding, global_decimal_separator, sep);
 						} else if (thou_sep !== '') {
 							var val1 = value;
+                            var val1 = value.replace(',','');
 							var re = /,(?=[\d,]*\.\d{2}\b)/;
 							if (sep == '') {
 								val1 = val1.replace(re, '');
 							}
-							return_val = $.number(val1, '', '.', sep);
+							return_val = $.number(val1, '', global_decimal_separator, sep);
 						} else {
-							return_val = value;
+                            var val1 = value.replace(',','');
+							return_val = $.number(val1, '', global_decimal_separator, sep);
 						}
 						
 						value = value.toString();
