@@ -6654,15 +6654,19 @@ BEGIN
 	/**
 		position calc done without job. If job takes time, optimization grid will plot wrong values since position will not be available at that moment.
 	*/
-	EXEC [dbo].[spa_update_deal_total_volume] 
-		@source_deal_header_ids = @deal_ids
-		, @process_id = NULL
-		, @insert_type = 0
-		, @partition_no = NULL
-		, @user_login_id  = @user_name
-		, @insert_process_table = 'n'
-		, @call_from = 1
-		, @call_from_2 = NULL
+	--- Avoid position calculation while calling from auto schedule. The deal position is calculatuted from auto schedule.
+	IF NULLIF(@call_from, '')  <> 'flow_auto'
+	BEGIN
+		EXEC [dbo].[spa_update_deal_total_volume] 
+			@source_deal_header_ids = @deal_ids
+			, @process_id = NULL
+			, @insert_type = 0
+			, @partition_no = NULL
+			, @user_login_id  = @user_name
+			, @insert_process_table = 'n'
+			, @call_from = 1
+			, @call_from_2 = NULL
+	END
 	/*
 	DECLARE @spa VARCHAR(MAX)
 			, @job_name VARCHAR(150)
