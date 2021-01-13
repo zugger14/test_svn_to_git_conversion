@@ -25106,7 +25106,7 @@ WHERE term_date BETWEEN @min_date AND @max_date
  	EXEC(@sql)
  	
 	--call auto adjust(this part couldnot be handled in trigger as it created unexpected behaviour after position calculation)
-	IF @ixp_rule_hash IN ('F224E702_7357_4EC5_BDE4_544D80D32E9D', '60D8CDF3_4A27_4776_8C79_F7597CD1EFE8', '30F320BA_815F_4DB7_9314_B037E84311B6')
+	IF @ixp_rule_hash IN ('F224E702_7357_4EC5_BDE4_544D80D32E9D', '60D8CDF3_4A27_4776_8C79_F7597CD1EFE8', '30F320BA_815F_4DB7_9314_B037E84311B6', '1E52A721_3630_455C_9746_FB8519F7CBC4')
 	BEGIN
 		INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
 		SELECT DISTINCT tmp.source_deal_header_id,
