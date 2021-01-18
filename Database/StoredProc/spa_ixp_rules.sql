@@ -4115,6 +4115,11 @@ in case of Link Server if source file is not uploded connect link server defined
 		IF @data_source_id = 21402
 		SET @format_column_header_for_xml = 'y'
 		
+		-- to import batched files directly which has values enclosed with double quotes 
+		DECLARE @has_fields_enclosed_in_quotes NCHAR(1) = 'y'
+		IF @source_delimiter = ','
+			SET @has_fields_enclosed_in_quotes = 'n'
+
 		--spa_import_from_csv is used for file format csv,prn,txt etc.
 		EXEC spa_import_from_csv	
 			@csv_file_path = @full_file_path,
@@ -4122,7 +4127,7 @@ in case of Link Server if source file is not uploded connect link server defined
 			@delimeter = @source_delimiter,
 			@row_terminator = '\n',
 			@has_column_headers = @source_with_header,
-			@has_fields_enclosed_in_quotes = 'n',
+			@has_fields_enclosed_in_quotes = @has_fields_enclosed_in_quotes,
 			@include_filename = 'n',
 			@result = @source_data_download_status OUTPUT,
 			@format_column_header_for_xml = @format_column_header_for_xml
