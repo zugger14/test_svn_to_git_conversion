@@ -30,7 +30,7 @@ BEGIN TRY
 		
 		declare @report_copy_name varchar(200)
 		
-		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'Book Balancing')
+		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'book balancing')
 		
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
 		SELECT TOP 1 'Book Balancing' [name], 'dev_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, 'A48E12D0_3792_4A72_95BC_9507138D83FA' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
@@ -58,7 +58,7 @@ BEGIN TRY
 	
 	SELECT @report_id_data_source_dest = report_id
 	FROM report r
-	WHERE r.[name] = 'Book Balancing'
+	WHERE r.[name] = 'book balancing'
 	IF NOT EXISTS (SELECT 1 
 	           FROM data_source 
 	           WHERE [name] = 'position_formula'
@@ -73,745 +73,171 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + '--EXEC spa_drop_all_temp_table
-
-
-
-
-
-
-
 DECLARE @_sql NVARCHAR(MAX)
-
-
-
-
-
-
-
 DECLARE @_source_subbook_id VARCHAR(1000)
-
-
-
-
-
-
-
 DECLARE @_destination_subbook_id VARCHAR(1000)  
-
-
-
-
-
-
-
 DECLARE @_location_id VARCHAR(1000)
-
-
-
-
-
-
-
 DECLARE @_term_start DATETIME
-
-
-
-
-
-
-
 DECLARE @_term_end DATETIME
-
-
-
-
-
-
-
 DECLARE @_distination_deal NVARCHAR(200)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 IF ''@source_subbook_id'' <> ''NULL''
-
-
-
-
-
-
-
     SET @_source_subbook_id = ''@source_subbook_id''
-
-
-
-
-
-
-
 IF ''@destination_subbook_id'' <> ''NULL''
-
-
-
-
-
-
-
     SET @_destination_subbook_id = ''@destination_subbook_id''
-
-
-
-
-
-
-
 IF ''@location_id'' <> ''NULL''
-
-
-
-
-
-
-
     SET @_location_id = ''@location_id''
-
-
-
-
-
-
-
 IF ''@term_start'' <> ''NULL''
-
-
-
-
-
-
-
     SET @_term_start = ''@term_start''
-
-
-
-
-
-
-
 IF ''@term_end'' <> ''NULL''
-
-
-
-
-
-
-
     SET @_term_end = ''@term_end''
-
-
-
-
-
-
-
 IF ''@distination_deal'' <> ''NULL''
-
-
-
-
-
-
-
     SET @_distination_deal = ''@distination_deal''
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 --SET @_term_start = ''2025-06-01''
-
-
-
-
-
-
-
 --SET @_term_end = ''2025-06-30''
-
-
-
-
-
-
-
 --SET @_source_subbook_id = 180
-
-
-
-
-
-
-
 --SET @_destination_subbook_id = 181
-
-
-
-
-
-
-
 --SET @_distination_deal = ''Destination GPLL''
-
-
-
-
-
-
-
 --SET @_location_id = ''2852'' --GPLL
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SELECT item location_id
-
-
-
 INTO #temp_location
-
-
-
 FROM SplitCommaSeperatedValues(@_location_id)
 
-
-
-
-
-
-
 SELECT sdh.source_deal_header_id
-
-
-
 	, MAX(sdd.buy_sell_flag) header_buy_sell_flag 
-
-
-
 	, sdd.location_id location_id
-
-
-
 	, MIN(sdd.term_start) term_start
-
-
-
 	, MAX(sdd.term_end) term_end
-
-
-
 INTO #temp_source
-
-
-
 FROM source_deal_header sdh
-
-
-
 INNER JOIN source_system_book_map ssbm 
-
-
-
 	ON sdh.source_system_book_id1 = ssbm.source_system_book_id1 
-
-
-
 	AND sdh.source_system_book_id2 = ssbm.source_system_book_id2  
-
-
-
 	AND sdh.source_system_book_id3 = ssbm.source_system_book_id3  
-
-
-
 	AND sdh.source_system_book_id4 = ssbm.source_system_book_id4	
-
-
-
 INNER JOIN source_deal_header_template sdht
-
-
-
     ON sdht.template_id = sdh.template_id 
-
-
-
 INNER JOIN source_deal_detail sdd
-
-
-
 	ON sdh.source_deal_header_id = sdd.source_deal_header_id
-
-
-
 INNER JOIN #temp_location tl
-
-
-
 	ON tl.location_id = sdd.location_id
-
-
-
 INNER JOIN SplitCommaSeperatedValues(@_source_subbook_id) sb
-
-
-
 	ON sb.item = ssbm.book_deal_type_map_id
-
-
-
 WHERE sdht.template_name <> ''Physical_Bal''
-
 AND sdh.deal_status <> 5607
-
-
-
 GROUP BY sdh.source_deal_header_id, sdd.location_id
 
-
-
-
-
-
-
-
-
-
-
-DELETE FROM #temp_source 
-
-
-
-WHERE @_term_start NOT BETWEEN term_start AND term_end
-
-
-
-
-
-
+--DELETE FROM #temp_source 
+--WHERE @_term_start NOT BETWEEN term_start AND term_end
 
 CREATE TABLE #temp_destination (
-
-
-
 	source_deal_header_id INT
-
-
-
 	, header_buy_sell_flag CHAR(1) COLLATE DATABASE_DEFAULT 
-
-
-
 	, location_id INT
-
-
-
 	, term_start DATETIME
-
-
-
 	, term_end DATETIME
-
-
-
 )
 
-
-
-
-
-
-
-
-
-
-
 -- Inserts destination deals
-
-
-
 INSERT INTO #temp_destination
-
-
-
 SELECT sdh.source_deal_header_id
-
-
-
 	, MAX(sdd.buy_sell_flag) header_buy_sell_flag 
-
-
-
 	, MAX(sdd.location_id) location_id
-
-
-
 	, MIN(sdd.term_start) term_start
-
-
-
 	, MAX(sdd.term_end) term_end 
-
-
-
 FROM source_deal_header sdh
-
-
-
 INNER JOIN source_deal_detail sdd
-
-
-
 	ON sdh.source_deal_header_id = sdd.source_deal_header_id
-
-
-
 WHERE sdh.deal_id = @_distination_deal --''Destination GPLL''  -- 
-
-
-
 GROUP BY sdh.source_deal_header_id
-
-
-
-
-
-
 
 --Inserts offset deals
-
-
-
 INSERT INTO #temp_destination 
-
-
-
 SELECT  
-
-
-
 	sdh.source_deal_header_id
-
-
-
 	, MAX(sdd.buy_sell_flag) header_buy_sell_flag 
-
-
-
 	, MAX(sdd.location_id) location_id
-
-
-
 	, MIN(sdd.term_start) term_start
-
-
-
 	, MAX(sdd.term_end) term_end 
-
-
-
 FROM #temp_destination td
-
-
-
 INNER JOIN source_deal_header sdh
-
-
-
 	ON td.source_deal_header_id = sdh.close_reference_id
-
-
-
 INNER JOIN source_deal_detail sdd
-
-
-
 	ON sdh.source_deal_header_id = sdd.source_deal_header_id
-
-
-
 GROUP BY sdh.source_deal_header_id
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SELECT sub.term_start, s.location_id,
-
-
-
 	SUM(ISNULL(sub.hr1, 0)) [01:00],
-
-
-
 	SUM(ISNULL(sub.hr2, 0)) [02:00],
-
-
-
 	SUM(ISNULL(sub.hr3, 0)) [03:00],
-
-
-
 	SUM(ISNULL(sub.hr4, 0)) [04:00],
-
-
-
 	SUM(ISNULL(sub.hr5, 0)) [05:00],
-
-
-
 	SUM(ISNULL(sub.hr6, 0)) [06:00],
-
-
-
 	SUM(ISNULL(sub.hr7, 0)) [07:00],
-
-
-
 	SUM(ISNULL(sub.hr8, 0)) [08:00],
-
-
-
 	SUM(ISNULL(sub.hr9, 0)) [09:00],
-
-
-
 	SUM(ISNULL(sub.hr10, 0)) [10:00],
-
-
-
 	SUM(ISNULL(sub.hr11, 0)) [11:00],
-
-
-
 	SUM(ISNULL(sub.hr12, 0)) [12:00],
-
-
-
 	SUM(ISNULL(sub.hr13, 0)) [13:00],
-
-
-
 	SUM(ISNULL(sub.hr14, 0)) [14:00],
-
-
-
 	SUM(ISNULL(sub.hr15, 0)) [15:00],
-
-
-
 	SUM(ISNULL(sub.hr16, 0)) [16:00],
-
-
-
 	SUM(ISNULL(sub.hr17, 0)) [17:00],
-
-
-
 	SUM(ISNULL(sub.hr18, 0)) [18:00],
-
-
-
 	SUM(ISNULL(sub.hr19, 0)) [19:00],
-
-
-
 	SUM(ISNULL(sub.hr20, 0)) [20:00],
-
-
-
 	SUM(ISNULL(sub.hr21, 0)) [21:00],
-
-
-
 	SUM(ISNULL(sub.hr22, 0)) [22:00],
-
-
-
 	SUM(ISNULL(sub.hr23, 0)) [23:00],
-
-
-
 	SUM(ISNULL(sub.hr24, 0)) [24:00],
 	SUM(ISNULL(sub.hr25, 0)) [25:00]
-
-
-
  INTO #temp_unpivot
-
-
-
-
-
-
-
 FROM #temp_source s
 
-
-
 INNER JOIN source_deal_detail sdd
-
-
-
 	ON s.source_deal_header_id = sdd.source_deal_header_id
 
-AND @_term_start >= sdd.term_start
+	AND sdd.term_end >= @_term_start
+	AND sdd.term_start <= @_term_end
+	--AND (
+	--		(
+	--			sdh.term_frequency = ''m''
+	--			AND sdd.term_end >= @_term_start
+	--			AND sdd.term_start<= @_term_end
+				
+	--		) OR
 
-AND @_term_end <= sdd.term_end
-
-	 --AND sdd.term_start BETWEEN @_term_start AND @_term_end
-
-
-
+	--		(
+	--			sdh.term_frequency = ''d''
+	--			AND sdd.term_start BETWEEN @_term_start AND @_term_end
+	--		)
+	--	)
 	AND s.location_id = sdd.location_id
-
-
-
 CROSS APPLY(
-
-
-
 		SELECT rhpd.source_deal_header_id, term_start, granularity
-
-
-
 			, hr1, hr2, hr3, hr4, hr5, hr6, hr7
-
-
-
 			, hr8, hr9, hr10, hr11, hr12, hr13
-
-
-
 			, hr14, hr15, hr16, hr17, hr18, hr19
-
-
-
 			, hr20, hr21, hr22, hr23, hr24, hr25
-
-
-
 		FROM report_hourly_position_deal_main rhpd
-
-
-
 		WHERE rhpd.term_start BETWEEN s.term_start AND s.term_end
-
-
-
 			AND rhpd.term_start BETWEEN @_term_start AND @_term_end
-
-
-
 			AND rhpd.source_deal_detail_id = sdd.source_deal_detail_id
-
-
-
 		UNION ALL
-
-
-
 		SELECT rhpp.source_deal_header_id, term_start, granularity
-
-
-
 			, hr1, hr2, hr3, hr4, hr5, hr6, hr7
-
-
-
 			, hr8, hr9, hr10, hr11, hr12, hr13
-
-
-
 			, hr14, hr15, hr16, hr17, hr18, hr19
-
-
-
 			, hr20, hr21, hr22, hr23, hr24, hr25
-
-
-
 		FROM report_hourly_position_profile_main rhpp
-
-
-
 		WHERE rhpp.term_start BETWEEN s.term_start AND s.term_end
-
-
-
 			AND rhpp.term_start BETWEEN @_term_start AND @_term_end
-
-
-
 			AND sdd.source_deal_detail_id = rhpp.source_deal_detail_id
-
-
-
 ) sub
-
-
-
 GROUP BY sub.term_start,s.location_id
-
-
 
 DECLARE @_dst_group_value_id INT 
 
@@ -831,82 +257,32 @@ FROM mv90_dst
 WHERE insert_delete = ''i''
 	AND dst_group_value_id = @_dst_group_value_id  
 	
-	SELECT unpvt.location_id
 
-
-
+SELECT unpvt.location_id
 	, unpvt.term_start term_date
 , IIF(cast(substring(unpvt.hr,1,2) AS INT) = 25, RIGHT(''0'' + dst.hour,2) + '':00'' , unpvt.hr) hr
 	, IIF(cast(substring(unpvt.hr,1,2) AS INT) = 25,1,0) is_dst
-
-
-
-
 	, unpvt.volume
-
-
-
 	, 982 granularity 
-
-
-
 INTO #temp_hourly_data_pre
-
-
-
 FROM (	SELECT * 
-
-
-
 		FROM #temp_unpivot
-
-
-
 ) a
-
-
-
 UNPIVOT
-
-
-
 	(
-
-
-
 		volume FOR hr IN (
-
-
-
 			[01:00],[02:00],[03:00],[04:00],[05:00],[06:00],
-
-
-
 			[07:00],[08:00],[09:00], [10:00],[11:00],[12:00],[13:00],				 
-
-
-
 			[14:00],[15:00],[16:00],[17:00], [18:00], [19:00], [20:00],
-
-
-
 			[21:00], [22:00],[23:00], [24:00], [25:00]
-
-
-
 		)
-
-
-
 	) unpvt
-
 OUTER APPLY(SELECT dst.date,dst.[hour]
 		FROM #mv90_dst dst 
 		WHERE dst.date = unpvt.term_start
 		GROUP BY dst.date,dst.[hour]
 		) dst
 	
-
 	UPDATE a
 	SET volume = IIF(a.is_dst = 0, a.volume - rs.volume,a.volume) 
 	FROM #temp_hourly_data_pre a
@@ -917,300 +293,89 @@ OUTER APPLY(SELECT dst.date,dst.[hour]
 			AND a.hr = b.hr
 			AND b.is_dst = 1) rs
 
-
-
 SELECT sdd.source_deal_header_id,
-
-
-
 	sdd.source_deal_detail_id,
-
-
-
 	thd.term_date,
-
-
-
 	thd.hr,
-
-
-
 	thd.is_dst,
-
-
-
 	thd.volume volume,
-
-
-
 	thd.granularity 
-
-
-
 INTO #temp_hourly_data
-
-
-
 FROM #temp_hourly_data_pre thd
-
-
-
 INNER JOIN #temp_destination td
-
-
-
 	ON thd.location_id = td.location_id
-
-
-
 	--- AND td.header_buy_sell_flag = IIF(thd.volume > 0, ''s'', ''b'')
-
-
-
 	AND thd.term_date BETWEEN td.term_start AND td.term_end
-
-
-
 INNER JOIN source_deal_detail sdd
-
-
-
 	ON sdd.source_deal_header_id = td.source_deal_header_id
-
-
-
 	AND thd.term_date BETWEEN sdd.term_start AND sdd.term_end
 
-
-
 DROP TABLE IF EXISTS #deleted_dest_deal	
-
-
-
 CREATE TABLE #deleted_dest_deal(source_deal_detail_id INT)
 
-
-
 DELETE sddh 
-
-
-
 OUTPUT DELETED.source_deal_detail_id
-
-
-
 INTO #deleted_dest_deal(source_deal_detail_id)
-
-
-
 FROM #temp_destination td
-
-
-
 INNER JOIN source_deal_detail sdd
-
-
-
 	ON td.source_deal_header_id = sdd.source_deal_header_id
-
-
-
 INNER JOIN source_deal_detail_hour sddh
-
-
-
 	ON sdd.source_deal_detail_id = sddh.source_deal_detail_id
-
-
-
 WHERE sddh.term_date BETWEEN @_term_start AND @_term_end
 
-
-
 INSERT INTO source_deal_detail_hour (
-
-
-
 	source_deal_detail_id,
-
-
-
 	term_date,
-
-
-
 	hr,
-
-
-
 	is_dst,
-
-
-
 	volume,
-
-
-
 	granularity
-
-
-
 )
-
-
-
 OUTPUT INSERTED.source_deal_detail_id
-
-
-
 INTO #deleted_dest_deal(source_deal_detail_id)
 
-
-
 SELECT 	source_deal_detail_id,
-
-
-
 	term_date,
-
-
-
 	hr,
-
-
-
 	is_dst,
-
-
-
 	volume,
-
-
-
 	granularity
-
-
-
 FROM #temp_hourly_data
 
-
-
 DECLARE @_job_process_id VARCHAR(200), @_job_name VARCHAR(500)
-
-
-
 DECLARE @_user_name NVARCHAR(200) = dbo.FNADBUser()
-
-
-
 DECLARE @_after_insert_process_table NVARCHAR(500)
-
-
-
 SET @_job_process_id = dbo.FNAGETNEWID()
-
-
-
 SET @_after_insert_process_table = dbo.FNAProcessTableName(''report_position'', @_user_name, @_job_process_id)
 
-
-
 IF OBJECT_ID(@_after_insert_process_table) IS NOT NULL
-
-
-
 BEGIN
-
-
-
 	EXEC(''DROP TABLE '' + @_after_insert_process_table)
-
-
-
 END
 
-
-
 EXEC (''CREATE TABLE '' + @_after_insert_process_table + ''( source_deal_header_id INT, source_deal_detail_id INT)'')
-
-
-
 SET @_sql = ''INSERT INTO '' + @_after_insert_process_table + ''(source_deal_header_id, source_deal_detail_id) 
-
-
-
 			SELECT DISTINCT sdh.source_deal_header_id, sdd.source_deal_detail_id 
-
-
-
 			FROM #deleted_dest_deal d
-
-
-
 			INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = d.source_deal_detail_id
-
-
-
 			INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
-
-
-
 			''
-
-
-
 EXEC (@_sql)
 
-
-
 SET @_sql = '' spa_calc_deal_position_breakdown NULL,'''''' + @_job_process_id+ ''''''''
-
-
-
 SET @_job_name = ''storage_st_jobs_'' + @_job_process_id
-
-
 
 EXEC spa_run_sp_as_job @_job_name, @_sql, ''spa_calc_deal_position_breakdown'', @_user_name
 
-
-
 SELECT @_source_subbook_id source_subbook_id,
-
-
-
 	   @_destination_subbook_id destination_subbook_id,  
-
-
-
 	   @_distination_deal distination_deal,
-
-
-
 	   @_location_id location_id,
-
-
-
 	   @_term_start term_start,
-
-
-
        @_term_end term_end
-
-
-
 --[__batch_report__] 
-
-
-
 FROM seq 
-
-
-
 WHERE n = 1
-
-
-
 ', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
@@ -1221,39 +386,6 @@ WHERE n = 1
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
 	CREATE TABLE #data_source_column(column_id INT)	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'position_formula'
-	            AND dsc.name =  'location_id'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Location ID'
-			   , reqd_param = NULL, widget_id = 9, datatype_id = 5, param_data_source = 'EXEC spa_source_minor_location ''o''', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 1
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'position_formula'
-			AND dsc.name =  'location_id'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'location_id' AS [name], 'Location ID' AS ALIAS, NULL AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'EXEC spa_source_minor_location ''o''' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 1 AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'position_formula'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -1277,6 +409,39 @@ WHERE n = 1
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'destination_subbook_id' AS [name], 'Destination Subbook Id' AS ALIAS, NULL AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'SELECT sub_book_id, book_structure FROM [dbo].[FNAGetPipeSeparatedBookStructure](10131000)' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'position_formula'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'position_formula'
+	            AND dsc.name =  'location_id'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Location ID'
+			   , reqd_param = NULL, widget_id = 9, datatype_id = 5, param_data_source = 'EXEC spa_source_minor_location ''o''', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 1
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'position_formula'
+			AND dsc.name =  'location_id'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'location_id' AS [name], 'Location ID' AS ALIAS, NULL AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'EXEC spa_source_minor_location ''o''' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 1 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'position_formula'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -1454,7 +619,7 @@ WHERE n = 1
 	
 		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
 		SELECT TOP 1 rpage.report_page_id, 'Position Formula', '8B01AA41_4F64_494D_A868_5A1864A8AB23', 3,'','','.xlsx',',', 
-		-100000,'n','n',0	
+		-100000,'y','n',0	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 			on rpage.[name] = 'Book Balancing'
