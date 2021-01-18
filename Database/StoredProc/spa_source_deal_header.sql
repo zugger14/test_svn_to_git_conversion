@@ -2194,6 +2194,9 @@ BEGIN
 		SET deal_status = @deal_status
 		FROM source_deal_header sdh
 		INNER JOIN dbo.SplitCommaSeperatedValues(@deal_ids) scsv ON sdh.source_deal_header_id = scsv.item
+
+		-- Update Deal Status in Position Tables
+		EXEC spa_update_rowid_position @deal_header_ids = @deal_ids
 		
 		--EXEC spa_insert_update_audit 'u', @deal_ids	
 		
