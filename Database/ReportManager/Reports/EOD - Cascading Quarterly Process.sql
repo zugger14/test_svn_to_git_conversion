@@ -12,10 +12,10 @@ BEGIN TRY
 			inserted_paramset_id int null
 
 		)
-		IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='88B2AA3C_5CD1_4CD1_9BE4_60553DB18B69')
+		IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='3B567593_40BF_4830_B690_13FE5DCC53A9')
 		BEGIN
 			declare @report_id_to_delete int
-			select @report_id_to_delete = report_id from report where report_hash = '88B2AA3C_5CD1_4CD1_9BE4_60553DB18B69'
+			select @report_id_to_delete = report_id from report where report_hash = '3B567593_40BF_4830_B690_13FE5DCC53A9'
 
 			insert into #paramset_map(deleted_paramset_id, paramset_hash)
 			select rp.report_paramset_id, rp.paramset_hash
@@ -32,11 +32,11 @@ BEGIN TRY
 
 		declare @report_copy_name varchar(200)
 		
-		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'EOD - Cascading Process')
+		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'EOD - Cascading Quarterly Process')
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'EOD - Cascading Process' [name], 'dev_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, '88B2AA3C_5CD1_4CD1_9BE4_60553DB18B69' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'EOD - Cascading Quarterly Process' [name], 'dev_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, '3B567593_40BF_4830_B690_13FE5DCC53A9' report_hash, 'EOD - Cascading Quarterly Process' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
@@ -63,7 +63,7 @@ BEGIN TRY
 	
 	SELECT @report_id_data_source_dest = report_id
 	FROM report r
-	WHERE r.[name] = 'EOD - Cascading Process'
+	WHERE r.[name] = 'EOD - Cascading Quarterly Process'
 
 	IF NOT EXISTS (SELECT 1 
 	           FROM data_source 
@@ -130,7 +130,7 @@ DECLARE @_source_deal_header_ids VARCHAR(MAX)
 
 SET @_source_deal_header_ids = STUFF((
 
-										SELECT '','' + CAST(sdd.source_deal_header_id AS VARCHAR(100))
+										SELECT DISTINCT '','' + CAST(sdd.source_deal_header_id AS VARCHAR(100))
 
 										FROM generic_mapping_header gmh
 
@@ -158,13 +158,10 @@ SET @_source_deal_header_ids = STUFF((
 
 											AND TRY_CAST(gmv.clm11_value AS DATETIME) =  @_as_of_date--''2019-12-27''
 
-											AND sdh.source_deal_header_id NOT IN (SELECT ext_deal_id FROM source_deal_header GROUP BY ext_deal_id) 
 											AND sdht.template_name IN (''physical cascade'', ''cascade'')
-
+											AND sdh.source_deal_header_id NOT IN (SELECT ext_deal_id FROM source_deal_header GROUP BY ext_deal_id)
 											AND (sdd.term_start > TRY_CAST(gmv.clm11_value AS DATETIME) 
-											AND sdd.term_start <= DATEADD(MONTH, CASE TRY_CAST(gmv.clm9_value AS INT) WHEN 1 THEN 12 
-																	--WHEN 2 THEN 3 
-																	WHEN 3 THEN 6 END, TRY_CAST(gmv.clm11_value AS DATETIME)) )
+											AND sdd.term_start <= DATEADD(MONTH, CASE TRY_CAST(gmv.clm9_value AS INT) WHEN 2 THEN 3  END, TRY_CAST(gmv.clm11_value AS DATETIME)) )
 
 									GROUP BY sdd.source_deal_header_id
 
@@ -532,31 +529,31 @@ COMMIT TRAN
 		
 
 	INSERT INTO report_page(report_id, [name], report_hash, width, height)
-	SELECT @report_id_dest AS report_id, 'EOD - Cascading Process' [name], '88B2AA3C_5CD1_4CD1_9BE4_60553DB18B69' report_hash, 11.5 width,5.5 height
+	SELECT @report_id_dest AS report_id, 'EOD - Cascading Quarterly Process' [name], '3B567593_40BF_4830_B690_13FE5DCC53A9' report_hash, 11.5 width,5.5 height
 	
 
 		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
-		SELECT TOP 1 rpage.report_page_id, 'EOD - Cascading Process', 'DBAD20F4_B25A_43BA_B684_A788B5649D63', 2,'','','.xlsx',',', 
+		SELECT TOP 1 rpage.report_page_id, 'EOD - Cascading Quarterly Process', 'EC59CB0E_2E91_4D50_AD3D_2A0BAD7AE8D0', 2,'','','.xlsx',',', 
 		-100000,'n','n',0	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
-			on rpage.[name] = 'EOD - Cascading Process'
+			on rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 		ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 	
 
 		INSERT INTO report_dataset_paramset(paramset_id, root_dataset_id, where_part, advance_mode)
 		SELECT TOP 1 rp.report_paramset_id AS paramset_id, rd.report_dataset_id AS root_dataset_id, NULL AS where_part, 0
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Cascading Process'
+			ON rp.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Cascading Process'
+			AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = @report_id_dest
 			AND rd.[alias] = 'eodcp'
@@ -567,12 +564,12 @@ COMMIT TRAN
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Cascading Process'
+			ON rp.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Cascading Process'
+			AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'eodcp'
@@ -595,12 +592,12 @@ COMMIT TRAN
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Cascading Process'
+			ON rp.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Cascading Process'
+			AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd_root 
 			ON rd_root.report_id = @report_id_dest 
 			AND rd_root.[alias] = 'eodcp'
@@ -622,10 +619,10 @@ COMMIT TRAN
 		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'EOD _ Cascading Process_tablix' [name], '5.373333333333333' width, '3.64' height, '0' [top], '0' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
-		ON rpage.[name] = 'EOD - Cascading Process'
+		ON rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id 
 			AND rd.[alias] = 'eodcp' 
@@ -642,10 +639,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Cascading Process'
+			AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'eodcp' 	
 		INNER JOIN data_source ds 
@@ -664,10 +661,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Cascading Process'
+			AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'eodcp' 	
 		INNER JOIN data_source ds 
@@ -686,10 +683,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Cascading Process'
+			AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'eodcp' 	
 		INNER JOIN data_source ds 
@@ -708,10 +705,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Cascading Process'
+			AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'eodcp' 	
 		INNER JOIN data_source ds 
@@ -730,10 +727,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Cascading Process'
+			AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'eodcp' 	
 		INNER JOIN data_source ds 
@@ -752,10 +749,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Cascading Process'
+			AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'eodcp' 	
 		INNER JOIN data_source ds 
@@ -774,10 +771,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Cascading Process'
+			AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'eodcp' 	
 		INNER JOIN data_source ds 
@@ -796,10 +793,10 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'EOD - Cascading Process'
+			AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = r.report_id AND rd.[alias] = 'eodcp' 	
 		INNER JOIN data_source ds 
@@ -821,10 +818,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Cascading Process'
+		AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'EOD - Cascading Process' 	
 		INNER JOIN data_source_column dsc 
@@ -849,10 +846,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Cascading Process'
+		AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'EOD - Cascading Process' 	
 		INNER JOIN data_source_column dsc 
@@ -877,10 +874,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Cascading Process'
+		AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'EOD - Cascading Process' 	
 		INNER JOIN data_source_column dsc 
@@ -905,10 +902,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Cascading Process'
+		AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'EOD - Cascading Process' 	
 		INNER JOIN data_source_column dsc 
@@ -933,10 +930,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Cascading Process'
+		AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'EOD - Cascading Process' 	
 		INNER JOIN data_source_column dsc 
@@ -961,10 +958,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Cascading Process'
+		AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'EOD - Cascading Process' 	
 		INNER JOIN data_source_column dsc 
@@ -989,10 +986,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Cascading Process'
+		AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'EOD - Cascading Process' 	
 		INNER JOIN data_source_column dsc 
@@ -1017,10 +1014,10 @@ COMMIT TRAN
 			ON  rpt.[name] = 'EOD _ Cascading Process_tablix'
 		INNER JOIN report_page rpage 
 			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'EOD - Cascading Process'
+		AND rpage.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN report r 
 			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'EOD - Cascading Process'
+			AND r.[name] = 'EOD - Cascading Quarterly Process'
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'EOD - Cascading Process' 	
 		INNER JOIN data_source_column dsc 
