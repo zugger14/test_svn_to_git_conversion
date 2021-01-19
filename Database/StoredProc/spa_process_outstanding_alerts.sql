@@ -319,7 +319,7 @@ BEGIN
 		DECLARE @msg NVARCHAR(1000) = @workflow_desc
 		
 		IF OBJECT_ID('tempdb..#splitted_process_table_mapping') IS NOT NULL DROP TABLE #splitted_process_table_mapping
-		CREATE TABLE #splitted_process_table_mapping (source_id INT, process_table_name NVARCHAR(1000) COLLATE DATABASE_DEFAULT , process_table_xml XML, attachment_file NVARCHAR(MAX) COLLATE DATABASE_DEFAULT , attachment_string NVARCHAR(MAX) COLLATE DATABASE_DEFAULT , [message] NVARCHAR(MAX) COLLATE DATABASE_DEFAULT , row_count INT, process_id NVARCHAR(200) COLLATE DATABASE_DEFAULT)
+		CREATE TABLE #splitted_process_table_mapping (source_id INT, process_table_name NVARCHAR(1000) COLLATE DATABASE_DEFAULT , attachment_file NVARCHAR(MAX) COLLATE DATABASE_DEFAULT , attachment_string NVARCHAR(MAX) COLLATE DATABASE_DEFAULT , [message] NVARCHAR(MAX) COLLATE DATABASE_DEFAULT , row_count INT, process_id NVARCHAR(200) COLLATE DATABASE_DEFAULT)
 		
 		DECLARE @automatic_proceed_msg NVARCHAR(1000) = NULL
 
@@ -421,11 +421,7 @@ BEGIN
 							temp.user_login_id
 							ELSE ''''
 						END,
-						temp.event_message_id,' +
-						CASE WHEN @primary_table IS NOT NULL AND @process_table IS NOT NULL THEN + '
-							CAST(ISNULL(stmp.process_table_xml,'''') AS NVARCHAR(MAX)) '
-							ELSE '''''' 
-						END + ',
+						temp.event_message_id, NULL,
 						CASE WHEN temp.approval_action_required = ''y'' THEN NULL ELSE 728 END,
 						''' + @workflow_process_id + ''',
 						' + CAST(@workflow_group_id AS NVARCHAR) + '
@@ -478,10 +474,10 @@ BEGIN
 		SELECT MAX(workflow_activity_id), user_login_id, source_id, wf_message FROM #temp_workflow_activities twa
 		GROUP BY user_login_id, wf_message, source_id
 
-		UPDATE wa
-		SET wa.[message] = REPLACE(wa.[message],'__source_id__', ISNULL(NULLIF(wa.source_id,''),0))
-		FROM #temp_workflow_activities tmp
-		INNER JOIN workflow_activities wa ON tmp.workflow_activity_id = wa.workflow_activity_id
+		--UPDATE wa
+		--SET wa.[message] = REPLACE(wa.[message],'__source_id__', ISNULL(NULLIF(wa.source_id,''),0))
+		--FROM #temp_workflow_activities tmp
+		--INNER JOIN workflow_activities wa ON tmp.workflow_activity_id = wa.workflow_activity_id
 
 		--DECLARE @activity_id INT = ISNULL(@@IDENTITY, -1)
 		DECLARE @activity_id INT
@@ -521,24 +517,24 @@ BEGIN
 							IF COL_LENGTH(''' + @sp_table_name + ''',''attachment_files'') IS NOT NULL 
 							BEGIN
 								UPDATE ' + @sp_table_name + ' SET attachment_files = NULL
-							END
+							END '
 							
-							DECLARE @xml_var_p XML
+							--DECLARE @xml_var_p XML
 			
-							SET @xml_var_p =  ' + CASE WHEN @sp_table_name IS NOT NULL THEN '
-								  (  SELECT *
+							--SET @xml_var_p =  ' + CASE WHEN @sp_table_name IS NOT NULL THEN '
+							--	  (  SELECT *
 
-									  FROM '+@sp_table_name+'
+							--		  FROM '+@sp_table_name+'
 
-									  FOR XML RAW, TYPE
-								  );
-								  ' 
-							ELSE ''''''
-							END + '
+							--		  FOR XML RAW, TYPE
+							--	  );
+							--	  ' 
+							--ELSE ''''''
+							--END + '
 
-							UPDATE #splitted_process_table_mapping
-							SET process_table_xml = @xml_var_p
-							WHERE source_id = ' + CAST(@sp_source_id AS NVARCHAR)
+							--UPDATE #splitted_process_table_mapping
+							--SET process_table_xml = @xml_var_p
+							--WHERE source_id = ' + CAST(@sp_source_id AS NVARCHAR)
 							EXEC spa_print @sql
 				EXEC(@sql)
 

@@ -874,7 +874,7 @@ ELSE IF @flag = 'd'
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
 				DECLARE @activity_event_trigger_id INT, @next_alert_id INT = NULL, @next_trigger_id INT, @current_status INT,@activity_message_id INT, @previous_status INT
-				DECLARE @next_process_id NVARCHAR(200), @next_process_table NVARCHAR(200), @source_column NVARCHAR(100),@XML_Process_data XML, @workflow_process_id NVARCHAR(100)
+				DECLARE @next_process_id NVARCHAR(200), @next_process_table NVARCHAR(200), @source_column NVARCHAR(100), @workflow_process_id NVARCHAR(100), @source_value_id NVARCHAR(100)
 				DECLARE @message_process_id NVARCHAR(200)
 				DECLARE @workflow_group_id INT
 				declare @next_notification_type NVARCHAR(1000) = null
@@ -885,23 +885,25 @@ ELSE IF @flag = 'd'
 						@previous_status = waa.control_prior_status,
 						@current_status = control_status,
 						@activity_message_id = event_message_id,
-						@source_column = source_column,
-						@XML_Process_data = XML_process_data,
+						@source_column = RTRIM(LTRIM(source_column)),
 						@workflow_process_id = workflow_process_id,
 						@message_process_id = process_id,
-						@workflow_group_id = wa.workflow_group_id
+						@workflow_group_id = wa.workflow_group_id,
+						@source_value_id = RTRIM(LTRIM(wa.source_id))
 				FROM workflow_activities wa
 				LEFT JOIN workflow_activities_audit waa ON wa.workflow_activity_id = waa.workflow_activity_id AND waa.control_new_status = wa.control_status
 				WHERE wa.workflow_activity_id = @workflow_activity_id
 
 				IF OBJECT_ID(@next_process_table) IS NULL
 				BEGIN
-					IF @XML_Process_data IS NOT NULL
-						BEGIN						
-							SET @XML_Process_data = '<PSRecordset>'+CAST(@XML_Process_data AS NVARCHAR(MAX))+'</PSRecordset>'
-							EXEC [spa_parse_xml_file] 'b',NULL,@XML_Process_data,@next_process_table
+					--IF @XML_Process_data IS NOT NULL
+					--	BEGIN						
+					--		SET @XML_Process_data = '<PSRecordset>'+CAST(@XML_Process_data AS NVARCHAR(MAX))+'</PSRecordset>'
+					--		EXEC [spa_parse_xml_file] 'b',NULL,@XML_Process_data,@next_process_table
+					SET @sql = 'CREATE TABLE ' + @next_process_table + ' (' + @source_column + ' NVARCHAR(300)) INSERT INTO ' + @next_process_table  + ' SELECT ' + @source_value_id
+					EXEC(@sql)
 
-						END
+						--END
 				END
 
 				IF @approved = 4 -- Recall
