@@ -1793,6 +1793,29 @@ BEGIN TRY
 		WHERE  sdd.term_start BETWEEN tm.term_start 
 			AND dateadd(day, case when tm.term_end=eomonth(tm.term_end) and sdh.template_id =@inv_actual_template_id then 1 else 0 end,tm.term_end)
 
+		INSERT INTO user_defined_deal_fields
+	    (
+			source_deal_header_id,
+			udf_template_id,
+			udf_value
+	    )
+	    SELECT sdh.source_deal_header_id, uddft.udf_template_id, default_value udf_value
+			FROM   (
+				SELECT TOP 1 t2.source_deal_header_id
+					FROM #detail_updated t1 
+					INNER JOIN source_deal_detail t2 ON t2.source_deal_detail_id = t1.source_deal_detail_id
+				) t
+			INNER JOIN source_deal_header sdh ON  sdh.source_deal_header_id = t.source_deal_header_id
+	        INNER JOIN source_deal_header_template sdht
+	            ON  sdh.template_id = sdht.template_id
+	        INNER JOIN user_defined_deal_fields_template uddft
+	            ON  uddft.template_id = sdh.template_id
+				AND uddft.udf_template_id > 0
+	            AND uddft.udf_type = 'h' AND uddft.Field_label in ('Conversion Neutrality Charge','Variable Storage Charge')
+		LEFT JOIN user_defined_deal_fields udddf
+	            ON  udddf.source_deal_header_id = sdh.source_deal_header_id
+	                AND udddf.udf_template_id = uddft.udf_template_id
+		WHERE  udddf.udf_deal_id IS NULL
 
 	    INSERT INTO user_defined_deal_detail_fields
 	    (
@@ -1808,7 +1831,7 @@ BEGIN TRY
 	            ON  sdh.template_id = sdht.template_id
 	        INNER JOIN user_defined_deal_fields_template uddft
 	            ON  uddft.template_id = sdh.template_id
-	            AND uddft.Field_label in('Injection Volume', 'Injection Amount','Withdrawal Volume','Withdrawal Amount','Begining Balance','Ending Balance') AND uddft.Field_type = 't'
+	            AND uddft.Field_label in ('Injection Volume', 'Injection Amount','Withdrawal Volume','Withdrawal Amount','Begining Balance','Ending Balance') AND uddft.Field_type = 't'					
 			LEFT JOIN user_defined_deal_detail_fields udddf
 	            ON  udddf.source_deal_detail_id = sdd.source_deal_detail_id
 	                AND udddf.udf_template_id = uddft.udf_template_id
