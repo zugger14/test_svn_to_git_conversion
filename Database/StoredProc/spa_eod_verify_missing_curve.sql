@@ -22,7 +22,8 @@ GO
 CREATE PROCEDURE [dbo].[spa_eod_verify_missing_curve]
     @flag VARCHAR(50),
     @as_of_date DATETIME,
-    @process_id VARCHAR(100) = NULL
+    @process_id VARCHAR(100) = NULL,
+	@curve_value_id NVARCHAR(4000) = NULL
 AS
 
 /*
@@ -51,6 +52,8 @@ IF OBJECT_ID('tempdb..#temp_copy_curves') IS NOT NULL
 
 IF OBJECT_ID('tempdb..#temp_vol_cor_copy_curves') IS NOT NULL
 	DROP TABLE #temp_vol_cor_copy_curves	
+
+DECLARE @sql NVARCHAR(MAX)
 
 CREATE TABLE #temp_all_curves (
 	[curve_id] INT,
@@ -82,7 +85,8 @@ CREATE TABLE #temp_all_vol_cor_curves (
 )
 
 
--- Generic Mapping EOD Price Copy 
+-- Generic Mapping EOD Price Copy
+SET @sql = '
 INSERT INTO #temp_all_curves ([curve_id], [holiday_curve_id],[expiration_curve_id], [holiday_calendar_id],[expiration_calendar_id], [expected_start_maturity], [expected_end_maturity], [forward_settle_flag], [check_dst], [Halt_process], [granularity], maturity_start_date, maturity_end_date)	
 SELECT gmv.clm1_value [curve_id],
        gmv.clm2_value [holiday_curve_id],
@@ -95,20 +99,22 @@ SELECT gmv.clm1_value [curve_id],
        gmv.clm9_value [check_dst],
 	   gmv.clm10_value [Halt_process],
        spcd.Granularity [granularity],
-       CASE WHEN spcd.Granularity IN (980, 10000289) THEN dbo.FNAContractMonthFormat(DATEADD(MONTH, CAST(ISNULL(NULLIF(gmv.clm6_value, ''), 0) AS INT), @as_of_date)) + '-01'
-			WHEN spcd.Granularity = 982 THEN DATEADD(DAY, 1, DATEADD(MONTH, CAST(ISNULL(NULLIF(gmv.clm6_value, ''), 0) AS INT), @as_of_date)) 
-			--DATEADD(HOUR, CAST(ISNULL(NULLIF(gmv.clm6_value, ''), 0) AS INT), @as_of_date)
-			WHEN spcd.Granularity IN (981, 10000290) THEN DATEADD(DAY, CAST(ISNULL(NULLIF(gmv.clm6_value, ''), 0) AS INT), @as_of_date)
+       CASE WHEN spcd.Granularity IN (980, 10000289) THEN dbo.FNAContractMonthFormat(DATEADD(MONTH, CAST(ISNULL(NULLIF(gmv.clm6_value, ''''), 0) AS INT), ''' + CONVERT(VARCHAR(20), @as_of_date, 120) + ''')) + ''-01''
+			WHEN spcd.Granularity = 982 THEN DATEADD(DAY, 1, DATEADD(MONTH, CAST(ISNULL(NULLIF(gmv.clm6_value, ''''), 0) AS INT), ''' + CONVERT(VARCHAR(20), @as_of_date, 120) + ''')) 
+			--DATEADD(HOUR, CAST(ISNULL(NULLIF(gmv.clm6_value, ''''), 0) AS INT), ''' + CONVERT(VARCHAR(20), @as_of_date, 120) + ''')
+			WHEN spcd.Granularity IN (981, 10000290) THEN DATEADD(DAY, CAST(ISNULL(NULLIF(gmv.clm6_value, ''''), 0) AS INT), ''' + CONVERT(VARCHAR(20), @as_of_date, 120) + ''')
 		END,
-		CASE WHEN spcd.Granularity IN (980, 10000289) THEN dbo.FNAContractMonthFormat(DATEADD(MONTH, CAST(ISNULL(NULLIF(gmv.clm7_value, ''), 0) AS INT), @as_of_date)) + '-01'
-			WHEN spcd.Granularity = 982 THEN DATEADD(HOUR, 23, DATEADD(MONTH, CAST(ISNULL(NULLIF(gmv.clm7_value, ''), 0) AS INT), @as_of_date))
-			WHEN spcd.Granularity IN (981, 10000290) THEN DATEADD(DAY, CAST(ISNULL(NULLIF(gmv.clm7_value, ''), 0) AS INT), @as_of_date)
+		CASE WHEN spcd.Granularity IN (980, 10000289) THEN dbo.FNAContractMonthFormat(DATEADD(MONTH, CAST(ISNULL(NULLIF(gmv.clm7_value, ''''), 0) AS INT), ''' + CONVERT(VARCHAR(20), @as_of_date, 120) + ''')) + ''-01''
+			WHEN spcd.Granularity = 982 THEN DATEADD(HOUR, 23, DATEADD(MONTH, CAST(ISNULL(NULLIF(gmv.clm7_value, ''''), 0) AS INT), ''' + CONVERT(VARCHAR(20), @as_of_date, 120) + '''))
+			WHEN spcd.Granularity IN (981, 10000290) THEN DATEADD(DAY, CAST(ISNULL(NULLIF(gmv.clm7_value, ''''), 0) AS INT), ''' + CONVERT(VARCHAR(20), @as_of_date, 120) + ''')
 		END
 FROM generic_mapping_values gmv
 INNER JOIN generic_mapping_header gmh ON  gmh.mapping_table_id = gmv.mapping_table_id
-INNER JOIN source_price_curve_def spcd ON CAST(spcd.source_curve_def_id AS VARCHAR(30)) = gmv.clm1_value
-WHERE gmh.mapping_name = 'EOD Price Copy' 
+INNER JOIN source_price_curve_def spcd ON CAST(spcd.source_curve_def_id AS VARCHAR(30)) = gmv.clm1_value ' 
++ CASE WHEN @curve_value_id IS NOT NULL THEN + ' INNER JOIN dbo.SplitCommaSeperatedValues(''' + @curve_value_id + ''') csv ON csv.item = spcd.source_curve_def_id ' ELSE + '' END
++' WHERE gmh.mapping_name = ''EOD Price Copy'''
 
+EXEC(@sql)
 INSERT INTO #temp_all_vol_cor_curves ([vol_cor_flag], [curve_id_from], [curve_id_to], [holiday_calendar_id], [expected_start_maturity], [expected_end_maturity], maturity_start_date, maturity_end_date,[Halt_process],[Copy Missing])
 SELECT gmv.clm1_value [vol_cor_flag],
 	   gmv.clm2_value [curve_id],
@@ -277,9 +283,7 @@ BEGIN
 	       @check_dst = ISNULL(check_dst, 'n')
 	FROM   #temp_all_curves
 	WHERE curve_id = @curve_id
-	
-	DECLARE @sql VARCHAR(5000)
-	
+		
 	SET @sql = 'INSERT INTO #temp_maturity_date (source_curve_def_id, maturity_date, is_dst)
 			SELECT ' + CAST(@curve_id AS VARCHAR(10)) + ', DATEADD(' + @granularity + ', n - 1, ''' + CONVERT(VARCHAR(200), @maturity_date_start, 121) + ''') maturity_date, 0
 			FROM #seq
