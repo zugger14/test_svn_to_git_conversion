@@ -79,12 +79,15 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10)  = ''@as_of_date'',
-		@_process_id VARCHAR(100) = ''@process_id''  
+		@_process_id VARCHAR(100) = ''@process_id'',
+		@_curve_id NVARCHAR(4000) = ''@curve_id''
 		
 IF ''@process_id'' <> ''NULL''
     SET @_process_id = ''@process_id''
  ELSE    
     SET @_process_id = NULL    
+IF ''@curve_id'' <> ''NULL''
+    SET @_curve_id = ''@curve_id''
 
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result 
 CREATE TABLE #tmp_result (
@@ -96,12 +99,13 @@ CREATE TABLE #tmp_result (
 	Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
 )
 INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
-EXEC spa_eod_verify_missing_curve ''CHECK'',@_as_of_date,@_process_id
+EXEC spa_eod_verify_missing_curve ''CHECK'',@_as_of_date,@_process_id,@_curve_id
 
 SELECT  
     [Status],
     @_as_of_date as_of_date,
     @_process_id process_id,
+	@_curve_id [curve_id],
 	[ErrorCode],
 	[Module],
 	[Area],
@@ -383,6 +387,40 @@ WHERE 1=1
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'process_id' AS [name], 'Process ID' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Price Verification'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Price Verification'
+	            AND dsc.name =  'curve_id'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Curve ID'
+			   , reqd_param = NULL, widget_id = 2, datatype_id = 5, param_data_source = 'SELECT source_curve_def_id, curve_id FROM source_price_curve_def', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Price Verification'
+			AND dsc.name =  'curve_id'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_id' AS [name], 'Curve ID' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 5 AS datatype_id, 'SELECT source_curve_def_id, curve_id FROM source_price_curve_def' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Price Verification'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
