@@ -176,7 +176,7 @@ ELSE IF @flag = 'a'
 				dbo.FNADateTimeFormat(ce.[start_date],1) [start_date],
 				ce.reminder/1440 [reminder_days],
 				CASE WHEN ce.include_holiday = 'y' THEN 1 ELSE 0 END [include_holiday],
-				wem.skip_log
+				MAX(wem.skip_log) skip_log
 		FROM workflow_event_message AS wem
 		LEFT JOIN calendar_events ce ON wem.event_message_id = ce.event_message_id
 		WHERE wem.event_message_id = @message_id
