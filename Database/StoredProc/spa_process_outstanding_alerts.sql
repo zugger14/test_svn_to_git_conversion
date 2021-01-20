@@ -538,11 +538,11 @@ BEGIN
 							EXEC spa_print @sql
 				EXEC(@sql)
 
-				UPDATE wa 
-				SET XML_process_data = tmp1.process_table_xml
-				FROM #temp_workflow_activities tmp
-				INNER JOIN workflow_activities wa ON tmp.workflow_activity_id = wa.workflow_activity_id
-				INNER JOIN #splitted_process_table_mapping tmp1 ON tmp1.source_id = wa.source_id
+				--UPDATE wa 
+				--SET XML_process_data = tmp1.process_table_xml
+				--FROM #temp_workflow_activities tmp
+				--INNER JOIN workflow_activities wa ON tmp.workflow_activity_id = wa.workflow_activity_id
+				--INNER JOIN #splitted_process_table_mapping tmp1 ON tmp1.source_id = wa.source_id
 
 				IF EXISTS(	SELECT	1
 							FROM workflow_event_message_documents wemd
