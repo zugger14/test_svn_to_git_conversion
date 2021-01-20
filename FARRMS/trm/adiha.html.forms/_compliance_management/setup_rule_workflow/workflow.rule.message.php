@@ -53,6 +53,7 @@
         $approval_req = $return_value[0]['approval_required'];
         $mult_approval_req = $return_value[0]['mult_approval_required'];
         $comment_req = $return_value[0]['comment_required'];
+        $skip_log = $return_value[0]['skip_log'];
         $notify_trader = $return_value[0]['notify_trader'];
         $next_module_events_id = $return_value[0]['next_module_events_id'];
         $minimum_approval_required = $return_value[0]['minimum_approval_required'];
@@ -71,6 +72,7 @@
         $approval_req = '';
         $mult_approval_req = '';
         $comment_req = '';
+        $skip_log = '';
         $notify_trader = '';
         $next_module_events_id = '';
         $minimum_approval_required = '';
@@ -288,6 +290,19 @@
                             'offsetLeft':".$ui_settings['offset_left'].",
                             'tooltip': 'Comment Required',
                             'checked':'$comment_req'
+                        },{
+                            type: 'newcolumn'
+                        },{
+                            'type': 'checkbox',
+                            'name': 'skip_log',
+                            'label': 'Skip logging',
+                            'hidden': 'false',
+                            'disabled': 'false',
+                            'position': 'label-right',
+                            'labelWidth': 'auto',
+                            'offsetLeft':".$ui_settings['offset_left'].",
+                            'tooltip': 'Skip logging',
+                            'checked':'$skip_log'
                         },{
                             type: 'newcolumn'
                         },{
@@ -559,6 +574,7 @@
                 var minimum_approval_required = workflow_rule_message.workflow_rule_message_form.getItemValue('minimum_approval_required');
                 var optional_event_msg = (workflow_rule_message.workflow_rule_message_form.isItemChecked('optional_event_msg')) ? 'y' : 'n';
                 var automatic_proceed = 'n';
+                var skip_log = (workflow_rule_message.workflow_rule_message_form.isItemChecked('skip_log')) ? 'y' : 'n';
                 
                 var role_to = [];
                 $.each(role_to_obj, function (index, value) {
@@ -573,7 +589,7 @@
                 var xml = '<Root><FormXML event_message_id="' + message_id + '" event_message_name="' + name +
                 '" event_trigger_id="' + rule_id + '" notification_type="' + notification_type + '" message="' + message +
                 '" self_notify="' + self_notify + '" approval_req="' + approval_required +
-                '" comment_req="' + comment_required + '" mult_app_req="' + mult_approval_required +
+                '" comment_req="' + comment_required + '" skip_log="' + skip_log + '" mult_app_req="' + mult_approval_required +
                 '" notify_trader="' + notify_trader + '" next_module_events_id="' + next_module_events_id + '" minimum_approval_required="' + minimum_approval_required + 
                 '" optional_event_msg="' + optional_event_msg + '" automatic_proceed="' + automatic_proceed + 
                 '"></FormXML>'

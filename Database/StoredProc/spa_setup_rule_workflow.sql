@@ -175,7 +175,8 @@ ELSE IF @flag = 'a'
 				CASE WHEN wem.automatic_proceed = 'h' OR wem.automatic_proceed = 'y' THEN 'y' ELSE 'n' END [automatic_proceed],
 				dbo.FNADateTimeFormat(ce.[start_date],1) [start_date],
 				ce.reminder/1440 [reminder_days],
-				CASE WHEN ce.include_holiday = 'y' THEN 1 ELSE 0 END [include_holiday]
+				CASE WHEN ce.include_holiday = 'y' THEN 1 ELSE 0 END [include_holiday],
+				wem.skip_log
 		FROM workflow_event_message AS wem
 		LEFT JOIN calendar_events ce ON wem.event_message_id = ce.event_message_id
 		WHERE wem.event_message_id = @message_id
@@ -231,7 +232,8 @@ ELSE IF @flag = 'm'
 					next_module_events_id	[next_module_events_id],
 					minimum_approval_required [minimum_approval_required],
 					optional_event_msg	[optional_event_msg],
-					automatic_proceed	[automatic_proceed]
+					automatic_proceed	[automatic_proceed],
+					skip_log			[skip_log]
 			INTO #workflow_event_message
 			FROM OPENXML(@idoc, '/Root/FormXML', 1)
 			WITH (
@@ -248,7 +250,8 @@ ELSE IF @flag = 'm'
 				next_module_events_id	INT,
 				minimum_approval_required INT,
 				optional_event_msg		NCHAR(1),
-				automatic_proceed		NCHAR(1)
+				automatic_proceed		NCHAR(1),
+				skip_log				NCHAR(1)
 			)
 
 			IF OBJECT_ID('tempdb..#tmp_msg_task') IS NOT NULL
@@ -369,7 +372,8 @@ ELSE IF @flag = 'm'
 						next_module_events_id,
 						minimum_approval_required,
 						optional_event_msg,
-						automatic_proceed
+						automatic_proceed,
+						skip_log
 					)
 					SELECT event_message_name,
 						CASE WHEN event_trigger_id = -9999 THEN @e_trigger_id ELSE ISNULL(NULLIF(event_trigger_id,0),@msg_event_trigger_id) END,
@@ -383,7 +387,8 @@ ELSE IF @flag = 'm'
 						NULLIF(next_module_events_id,0),
 						NULLIF(minimum_approval_required,0),
 						optional_event_msg,
-						automatic_proceed
+						automatic_proceed,
+						skip_log
 					FROM #workflow_event_message AS wem
 					
 					SET @event_message_id = SCOPE_IDENTITY()
@@ -483,7 +488,8 @@ ELSE IF @flag = 'm'
 							wem2.next_module_events_id = NULLIF(wem.next_module_events_id,0),
 							wem2.minimum_approval_required = NULLIF(wem.minimum_approval_required,0),
 							wem2.optional_event_msg = wem.optional_event_msg,
-							wem2.automatic_proceed = wem.automatic_proceed
+							wem2.automatic_proceed = wem.automatic_proceed,
+							wem2.skip_log = wem.skip_log
 					FROM #workflow_event_message AS wem
 					LEFT JOIN workflow_event_message AS wem2 ON wem.event_message_id = wem2.event_message_id
 					WHERE wem2.event_message_id = @event_message_id

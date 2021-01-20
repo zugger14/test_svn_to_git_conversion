@@ -109,7 +109,8 @@ BEGIN
 		mult_approval_required NCHAR(1) COLLATE DATABASE_DEFAULT,
 		event_message_id INT,
 		approval_action_required NCHAR(1) COLLATE DATABASE_DEFAULT ,
-		automatic_proceed NCHAR(1) COLLATE DATABASE_DEFAULT 
+		automatic_proceed NCHAR(1) COLLATE DATABASE_DEFAULT,
+		skip_log NCHAR(1) COLLATE DATABASE_DEFAULT
 	)
 
 	IF OBJECT_ID('tempdb..#notification_type') IS NOT NULL DROP TABLE #notification_type
@@ -242,7 +243,7 @@ BEGIN
 		DELETE FROM #alert_users
 			
 		INSERT INTO #alert_users
-		SELECT aru.user_login_id, wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN 'n' ELSE 'y' END [approval_action_required],wem.automatic_proceed
+		SELECT aru.user_login_id, wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN 'n' ELSE 'y' END [approval_action_required],wem.automatic_proceed, wem.skip_log
 		FROM   event_trigger et
 		INNER JOIN workflow_event_message wem ON wem.event_trigger_id = et.event_trigger_id
 		CROSS APPLY (SELECT MAX(wea.event_action_id) event_action_id FROM workflow_event_action wea WHERE wem.event_message_id = wea.event_message_id AND wea.status_id IN (726,728,729)) w_m
@@ -250,20 +251,20 @@ BEGIN
 		INNER JOIN application_role_user aru ON aru.role_id = weur.role_id
 		WHERE wem.event_message_id = @event_message_id AND et.event_trigger_id = ISNULL(@event_trigger_id, et.event_trigger_id)
 		UNION 
-		SELECT weur.user_login_id, wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN 'n' ELSE 'y' END [approval_action_required],wem.automatic_proceed
+		SELECT weur.user_login_id, wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN 'n' ELSE 'y' END [approval_action_required],wem.automatic_proceed,wem.skip_log
 		FROM   event_trigger et
 		INNER JOIN workflow_event_message wem ON wem.event_trigger_id = et.event_trigger_id
 		CROSS APPLY (SELECT MAX(wea.event_action_id) event_action_id FROM workflow_event_action wea WHERE wem.event_message_id = wea.event_message_id AND wea.status_id IN (726,728,729)) w_m
 		INNER JOIN workflow_event_user_role weur ON weur.event_message_id = wem.event_message_id
 		WHERE  wem.event_message_id = @event_message_id AND weur.user_login_id IS NOT NULL AND et.event_trigger_id = ISNULL(@event_trigger_id, et.event_trigger_id)
 		UNION 
-		SELECT @trader_user_id, wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN 'n' ELSE 'y' END [approval_action_required],wem.automatic_proceed
+		SELECT @trader_user_id, wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN 'n' ELSE 'y' END [approval_action_required],wem.automatic_proceed, wem.skip_log
 		FROM   event_trigger et
 		INNER JOIN workflow_event_message wem ON wem.event_trigger_id = et.event_trigger_id
 		CROSS APPLY (SELECT MAX(wea.event_action_id) event_action_id FROM workflow_event_action wea WHERE wem.event_message_id = wea.event_message_id AND wea.status_id IN (726,728,729)) w_m
 		WHERE  @trader_user_id IS NOT NULL AND wem.event_message_id = @event_message_id AND et.event_trigger_id = ISNULL(@event_trigger_id, et.event_trigger_id)
 		UNION 
-		SELECT @current_user_id, wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN 'n' ELSE 'y' END [approval_action_required],wem.automatic_proceed
+		SELECT @current_user_id, wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN 'n' ELSE 'y' END [approval_action_required],wem.automatic_proceed, wem.skip_log
 		FROM   event_trigger et
 		INNER JOIN workflow_event_message wem ON wem.event_trigger_id = et.event_trigger_id
 		CROSS APPLY (SELECT MAX(wea.event_action_id) event_action_id FROM workflow_event_action wea WHERE wem.event_message_id = wea.event_message_id AND wea.status_id IN (726,728,729)) w_m
@@ -276,12 +277,12 @@ BEGIN
 
 		IF @notify_trader = 'y'
 		BEGIN
-			SET @sql = 'INSERT INTO #alert_users(user_login_id, message, mult_approval_required, event_message_id, approval_action_required)
-						SELECT st.user_login_id, a.message, a.mult_approval_required, a.event_message_id,a.approval_action_required FROM ' + @process_table + ' tmp
+			SET @sql = 'INSERT INTO #alert_users(user_login_id, message, mult_approval_required, event_message_id, approval_action_required, skip_log)
+						SELECT st.user_login_id, a.message, a.mult_approval_required, a.event_message_id,a.approval_action_required, a.skip_log FROM ' + @process_table + ' tmp
 						INNER JOIN source_deal_header sdh ON tmp.source_deal_header_id = sdh.source_deal_header_id
 						INNER JOIN source_traders st ON sdh.trader_id = st.source_trader_id
 						OUTER APPLY (
-										SELECT wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN ''n'' ELSE ''y'' END [approval_action_required]
+										SELECT wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN ''n'' ELSE ''y'' END [approval_action_required], wem.skip_log
 										FROM   event_trigger et
 										INNER JOIN workflow_event_message wem ON wem.event_trigger_id = et.event_trigger_id
 										CROSS APPLY (SELECT MAX(wea.event_action_id) event_action_id FROM workflow_event_action wea WHERE wem.event_message_id = wea.event_message_id AND wea.status_id IN (726,728,729)) w_m
@@ -289,11 +290,11 @@ BEGIN
 									) a
 						WHERE sdh.trader_id IS NOT NULL
 						UNION
-						SELECT st.user_login_id, a.message, a.mult_approval_required, a.event_message_id,a.approval_action_required FROM ' + @process_table + ' tmp
+						SELECT st.user_login_id, a.message, a.mult_approval_required, a.event_message_id,a.approval_action_required, a.skip_log FROM ' + @process_table + ' tmp
 						INNER JOIN source_deal_header sdh ON tmp.source_deal_header_id = sdh.source_deal_header_id
 						INNER JOIN source_traders st ON sdh.trader_id2 = st.source_trader_id
 						OUTER APPLY (
-										SELECT wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN ''n'' ELSE ''y'' END [approval_action_required]
+										SELECT wem.message, wem.mult_approval_required,wem.event_message_id,CASE WHEN w_m.event_action_id IS NULL THEN ''n'' ELSE ''y'' END [approval_action_required], wem.skip_log
 										FROM   event_trigger et
 										INNER JOIN workflow_event_message wem ON wem.event_trigger_id = et.event_trigger_id
 										CROSS APPLY (SELECT MAX(wea.event_action_id) event_action_id FROM workflow_event_action wea WHERE wem.event_message_id = wea.event_message_id AND wea.status_id IN (726,728,729)) w_m
@@ -402,9 +403,15 @@ BEGIN
 				DROP TABLE #temp_grouping_workflow_activities
 		CREATE TABLE #temp_grouping_workflow_activities (workflow_activity_id INT, user_login_id NVARCHAR(50) COLLATE DATABASE_DEFAULT , source_id INT, wf_message NVARCHAR(MAX) COLLATE DATABASE_DEFAULT)
 
+		IF OBJECT_ID('tempdb..#temp_log_datas') IS NOT NULL
+			DROP TABLE #temp_log_datas
+
+		--created table to insert data without skipping the log
+		SELECT workflow_trigger_id, as_of_date, process_id, process_table, [message], source_column, source_id, user_login_id, event_message_id,XML_process_data, control_status, workflow_process_id, workflow_group_id, CAST(NULL AS NVARCHAR(1)) skip_log
+		INTO #temp_log_datas FROM workflow_activities WHERE 1 = 2
+		
 		SET @sql = '
-			INSERT INTO  workflow_activities(workflow_trigger_id, as_of_date, process_id, process_table, message, source_column, source_id, user_login_id, event_message_id,XML_process_data, control_status, workflow_process_id, workflow_group_id)
-				OUTPUT INSERTED.workflow_activity_id, INSERTED.user_login_id, INSERTED.source_id, INSERTED.[message] INTO  #temp_workflow_activities(workflow_activity_id, user_login_id, source_id, wf_message)
+			INSERT INTO  #temp_log_datas(workflow_trigger_id, as_of_date, process_id, process_table, message, source_column, source_id, user_login_id, event_message_id,XML_process_data, control_status, workflow_process_id, workflow_group_id, skip_log)
 				SELECT  DISTINCT
 						''' + CAST(ISNULL(@event_trigger_id, '') AS NVARCHAR(100)) + ''',
 						GETDATE(), ''' + @process_id + ''',' +
@@ -424,16 +431,23 @@ BEGIN
 						temp.event_message_id, NULL,
 						CASE WHEN temp.approval_action_required = ''y'' THEN NULL ELSE 728 END,
 						''' + @workflow_process_id + ''',
-						' + CAST(@workflow_group_id AS NVARCHAR) + '
+						' + CAST(@workflow_group_id AS NVARCHAR) + ',
+						temp.skip_log
 					FROM #alert_users temp '
 		
 		IF @process_table IS NOT NULL
 			SET @sql = @sql + ' CROSS APPLY(SELECT * FROM ' + @process_table + ') a 
 								INNER JOIN #splitted_process_table_mapping stmp ON a.' + @primary_table + ' = stmp.source_id'
 		
+		--SET @sql = @sql + ' WHERE ISNULL(temp.self_log, ''y'') = ''y'''
+		
 		IF @self_notify = 'n'
 				SET @sql = @sql + ' WHERE temp.user_login_id <> dbo.FNADBUser()'
 		
+		SET @sql = @sql + ' INSERT INTO  workflow_activities(workflow_trigger_id, as_of_date, process_id, process_table, message, source_column, source_id, user_login_id, event_message_id,XML_process_data, control_status, workflow_process_id, workflow_group_id)
+		  OUTPUT INSERTED.workflow_activity_id, INSERTED.user_login_id, INSERTED.source_id, INSERTED.[message] INTO #temp_workflow_activities(workflow_activity_id, user_login_id, source_id, wf_message)
+		  SELECT workflow_trigger_id, as_of_date, process_id, process_table, message, source_column, source_id, user_login_id, event_message_id,XML_process_data, control_status, workflow_process_id, workflow_group_id FROM #temp_log_datas
+		  WHERE ISNULL(temp.skip_log, ''y'') = ''y'''
 		--SET @sql = @sql + ' WHERE temp.approval_action_required = ''y'' '
 		--PRINT(@sql)
 		
@@ -627,7 +641,7 @@ BEGIN
 			LEFT JOIN report_page_tablix rpt ON rpt.page_id = rps.page_id
 			LEFT JOIN #temp_report_params trp ON ar.alert_reports_id = trp.alert_report_id
 			OUTER APPLY(
-				SELECT MAX(source_id) source_id FROM workflow_activities WHERE event_message_id = @event_message_id AND process_id = @process_id
+				SELECT MAX(source_id) source_id FROM #temp_log_datas WHERE event_message_id = @event_message_id AND process_id = @process_id
 			) wa_sid
 			--LEFT JOIN workflow_activities wa ON wa.event_message_id  = ar.event_message_id 
 			WHERE ar.event_message_id = @event_message_id AND (report_writer = 'n' OR report_writer ='a' OR report_writer ='y') --AND wa.process_id = @process_id
@@ -704,7 +718,7 @@ BEGIN
 					FROM dbo.SplitCommaSeperatedValues(@att_files) a
 				) b
 				where rnk = 1
-						
+					
 
 
 
