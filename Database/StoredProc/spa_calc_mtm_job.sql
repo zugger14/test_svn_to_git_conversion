@@ -203,8 +203,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =104416  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2020-10-31' , --'2017-02-15',
+	@source_deal_header_id =null  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2020-12-14' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -221,8 +221,8 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2020-10-01' ,
-	@term_end = '2020-10-31' ,
+	@term_start = '2020-12-01' ,
+	@term_end = '2020-12-14' ,
 	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
@@ -12611,11 +12611,6 @@ begin
 end
 
 
-
-
-
-
-
 If @print_diagnostic = 1
 BEGIN
 	print  @pr_name+': '+cast(datediff(ss,@log_time,getdate()) as varchar) +'*************************************'
@@ -12638,7 +12633,7 @@ SET @formula_table5 = dbo.FNAProcessTableName('udf_formula', @user_login_id, @pr
 
 SET @sql='
 	CREATE TABLE '+@formula_table5+'(
-		rowid int ,
+		rowid int identity(1,1) ,
 		counterparty_id INT,
 		contract_id INT,
 		curve_id INT,
@@ -12662,7 +12657,8 @@ SET @sql='
 		[mins] INT,is_dst int,
 		calc_aggregation INT,
 		internal_field_type INT,
-		sequence_order INT
+		sequence_order INT,
+		udf_template_id int
 	)
 '
 	
@@ -12715,10 +12711,10 @@ EXEC(@sql)
 
 SET @sql=' 
 	INSERT INTO '+@formula_table5+'
-		(rowid,formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation,internal_field_type,sequence_order)
+		(formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation,internal_field_type,sequence_order,udf_template_id)
 	SELECT 	
-		uddft.udf_template_id [ID],ISNULL(uddf.udf_value,udft.default_value) formula_id, ' + cast(@curve_source_value_id as varchar) + ', td.term_start, '''+@as_of_date+'''
-		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002,uddft.internal_field_type,CASE uddft.internal_field_type WHEN 18744 THEN 9999 ELSE 1 END
+		ISNULL(uddf.udf_value,udft.default_value) formula_id, ' + cast(@curve_source_value_id as varchar) + ', td.term_start, '''+@as_of_date+'''
+		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002,uddft.internal_field_type,CASE uddft.internal_field_type WHEN 18744 THEN 9999 ELSE 1 END,uddft.udf_template_id [ID]
 	FROM	
 		#temp_deals td 
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
@@ -12738,10 +12734,10 @@ EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@sql )
 
 SET @sql=' 
 	INSERT INTO '+@formula_table5+'
-		(rowid,formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation,internal_field_type,sequence_order)
+		(formula_id,curve_source_value_id,prod_date, as_of_date,granularity,contract_id,source_deal_header_id,source_deal_detail_id,volume,counterparty_id,calc_aggregation,internal_field_type,sequence_order,udf_template_id)
 	SELECT 	
-		uddft.udf_template_id [ID],try_cast(ISNULL(udddf.udf_value,uddft.default_value) as int) formula_id, ' + cast(@curve_source_value_id as varchar) + ', td.term_start, '''+@as_of_date+'''
-		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002,uddft.internal_field_type,CASE uddft.internal_field_type WHEN 18744 THEN 9999 ELSE 1 END
+		try_cast(ISNULL(udddf.udf_value,uddft.default_value) as int) formula_id, ' + cast(@curve_source_value_id as varchar) + ', td.term_start, '''+@as_of_date+'''
+		, 980 granularity,td.contract_id,td.source_deal_header_id,td.source_deal_detail_id,td.[deal_volume],td.counterparty_id,19002,uddft.internal_field_type,CASE uddft.internal_field_type WHEN 18744 THEN 9999 ELSE 1 END,uddft.udf_template_id [ID]
 	FROM #temp_deals td 
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
 		INNER JOIN user_defined_deal_fields_template uddft ON uddft.template_id=sdh.template_id	and isnull(uddft.leg,td.leg)=td.leg	
