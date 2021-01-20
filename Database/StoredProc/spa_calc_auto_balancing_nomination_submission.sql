@@ -83,6 +83,7 @@ CREATE TABLE #tmp_result (
 	, 1185
 	, NULL
     ,NULL
+	,@process_id
 
 IF EXISTS(SELECT 1 FROM #tmp_result WHERE [Status] = 'Error')
 BEGIN
@@ -95,64 +96,64 @@ BEGIN
 	EXEC spa_NotificationUserByRole 4, @process_id, 'Auto-Balancing Calculation', @_desc , 'e', NULL, 1, 0, @role_id
 
 END
-ELSE
-BEGIN
-	SELECT @role_id = role_id from application_security_role WHERE role_name = 'Nomination Submission Notification-Success'
+--ELSE
+--BEGIN
+--	SELECT @role_id = role_id from application_security_role WHERE role_name = 'Nomination Submission Notification-Success'
 
-	--EXEC spa_message_board 'u', 'farrms_admin', NULL, 'Calculation', @_desc, '', '', 'e', NULL, NULL, @process_id, '', '', '', 'n'
-	EXEC spa_NotificationUserByRole 4, @process_id, 'Auto-Balancing Calculation', 'Auto-Balancing Calculation Process is completed.' , 's', NULL, 1, 0, @role_id
+--	--EXEC spa_message_board 'u', 'farrms_admin', NULL, 'Calculation', @_desc, '', '', 'e', NULL, NULL, @process_id, '', '', '', 'n'
+--	EXEC spa_NotificationUserByRole 4, @process_id, 'Auto-Balancing Calculation', 'Auto-Balancing Calculation Process is completed.' , 's', NULL, 1, 0, @role_id
 
-	DECLARE @report_param VARCHAR(MAX)
-	SET @report_param = 'report_filter:''''as_of_date=' + @as_of_date + ',sub_id=NULL,stra_id=NULL,book_id=NULL,sub_book_id=NULL,convert_timezone_id=14,term_start=' + @term_start + ',term_end=' + @term_end + ',commodity_id=123,source_deal_header_ids=NULL,counterparty_ids=NULL,location_ids=NULL,deal_id=NULL,deal_status_id=NULL,deal_type_id=NULL,external_id1=NULL'''',is_refresh:0,report_region:en-US,runtime_user:farrms_admin,global_currency_format:$,global_date_format:dd.M.yyyy,global_thousand_format:,#,global_rounding_format:#0.0000,global_price_rounding_format:#0.0000,global_volume_rounding_format:#0.00,global_amount_rounding_format:#0.00,global_science_rounding_format:2,global_negative_mark_format:1,global_number_format_region:de-DE,is_html:n'
+--	DECLARE @report_param VARCHAR(MAX)
+--	SET @report_param = 'report_filter:''''as_of_date=' + @as_of_date + ',sub_id=NULL,stra_id=NULL,book_id=NULL,sub_book_id=NULL,convert_timezone_id=14,term_start=' + @term_start + ',term_end=' + @term_end + ',commodity_id=123,source_deal_header_ids=NULL,counterparty_ids=NULL,location_ids=NULL,deal_id=NULL,deal_status_id=NULL,deal_type_id=NULL,external_id1=NULL'''',is_refresh:0,report_region:en-US,runtime_user:farrms_admin,global_currency_format:$,global_date_format:dd.M.yyyy,global_thousand_format:,#,global_rounding_format:#0.0000,global_price_rounding_format:#0.0000,global_volume_rounding_format:#0.00,global_amount_rounding_format:#0.00,global_science_rounding_format:2,global_negative_mark_format:1,global_number_format_region:de-DE,is_html:n'
 
-	SET @_desc = 'EXEC spa_rfx_export_report_job @report_param = ''' + REPLACE(@report_param, '''', '''''') + '''
-	, @proc_desc = ''BatchReport'', @user_login_id = ''farrms_admin'', @report_RDL_name = ''Enercity Nomination Report_Enercity Nomination Report'' 
-	, @report_file_name = ''Enercity Nomination Report_farrms_admin.xlsx''
-	, @report_file_full_path = ''' + @report_file_full_path + '''
-	, @output_file_format = ''EXCELOPENXML'', @paramset_hash = ''9F239C20_03E5_4F47_81A9_55A6A1EB2959'''
-	--print @_desc
+--	SET @_desc = 'EXEC spa_rfx_export_report_job @report_param = ''' + REPLACE(@report_param, '''', '''''') + '''
+--	, @proc_desc = ''BatchReport'', @user_login_id = ''farrms_admin'', @report_RDL_name = ''Enercity Nomination Report_Enercity Nomination Report'' 
+--	, @report_file_name = ''Enercity Nomination Report_farrms_admin.xlsx''
+--	, @report_file_full_path = ''' + @report_file_full_path + '''
+--	, @output_file_format = ''EXCELOPENXML'', @paramset_hash = ''9F239C20_03E5_4F47_81A9_55A6A1EB2959'''
+--	--print @_desc
 
-	EXEC batch_report_process
-	@_desc
-	, 'i'
-	, ''
-	, ''
-	, ''
-	, ''
-	, ''
-	, ''
-	, ''
-	, ''
-	, ''
-	, ''
-	, ''
-	, ''
-	, ''
-	, 'r'
-	, 0
-	, ''
-	, ''
-	, @role_id
-	, '751'
-	, 'n'
-	, @batch_unique_id
-	, NULL
-	, ''
-	, ''
-	, ''
-	, ''
-	, @report_path
-	, ''
-	, ''
-	, 'n'
-	, ','
-	, '0'
-	, '-100000'
-	, '.xlsx'
-	, ''
-	, '3'
-	, ''
-	, ''
+--	EXEC batch_report_process
+--	@_desc
+--	, 'i'
+--	, ''
+--	, ''
+--	, ''
+--	, ''
+--	, ''
+--	, ''
+--	, ''
+--	, ''
+--	, ''
+--	, ''
+--	, ''
+--	, ''
+--	, ''
+--	, 'r'
+--	, 0
+--	, ''
+--	, ''
+--	, @role_id
+--	, '751'
+--	, 'n'
+--	, @batch_unique_id
+--	, NULL
+--	, ''
+--	, ''
+--	, ''
+--	, ''
+--	, @report_path
+--	, ''
+--	, ''
+--	, 'n'
+--	, ','
+--	, '0'
+--	, '-100000'
+--	, '.xlsx'
+--	, ''
+--	, '3'
+--	, ''
+--	, ''
 
-END
+--END
 
