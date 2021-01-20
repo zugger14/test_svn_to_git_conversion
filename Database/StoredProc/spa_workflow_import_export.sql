@@ -486,7 +486,8 @@ BEGIN
 			wem.automatic_proceed,
 			wem.notification_type,
 			wem.next_module_events_id,
-			0 [new_event_message_id]
+			0 [new_event_message_id],
+			skip_log
 	FROM module_events me
 	INNER JOIN event_trigger et ON me.module_events_id = et.modules_event_id
 	INNER JOIN workflow_event_message wem ON wem.event_trigger_id = et.event_trigger_id
@@ -1243,7 +1244,8 @@ BEGIN TRY
 							optional_event_msg,
 							automatic_proceed,
 							notification_type,
-							next_module_events_id
+							next_module_events_id,
+							skip_log
 					)
 					SELECT  et.new_event_trigger_id,
 							wem.event_message_name,
@@ -1257,7 +1259,8 @@ BEGIN TRY
 							wem.optional_event_msg,
 							wem.automatic_proceed,
 							wem.notification_type,
-							wem.next_module_events_id
+							wem.next_module_events_id,
+							wem.skip_log
 					FROM ' + @workflow_event_message_table + ' wem
 					INNER JOIN ' + @event_trigger_table + ' et ON wem.event_trigger_id = et.event_trigger_id
 					WHERE wem.event_message_id = @event_message_id
