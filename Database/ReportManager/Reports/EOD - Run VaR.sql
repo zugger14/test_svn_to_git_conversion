@@ -80,7 +80,7 @@ BEGIN TRY
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date''
 	,@_process_id VARCHAR(100) = ''@process_id''
-	,@_criteria_id VARCHAR(10) 
+	,@_criteria_id VARCHAR(MAX)
 
 IF ''@process_id'' <> ''NULL''
 	SET @_process_id = ''@process_id''
@@ -102,15 +102,33 @@ CREATE TABLE #tmp_result_calc_var_job (
 	,Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT
 	)
 
+IF OBJECT_ID(''tempdb..#var_measurement_criteria'') IS NOT NULL
+	DROP TABLE #var_measurement_criteria
+
 DECLARE @_var_id INT
 	,@_spa VARCHAR(5000)
 
+CREATE TABLE #var_measurement_criteria(id INT)
+
+IF @_criteria_id IS NOT NULL
+BEGIN
+	INSERT INTO #var_measurement_criteria(id)
+	SELECT id
+	FROM var_measurement_criteria_detail vmcd
+	INNER JOIN dbo.SplitCommaSeperatedValues(@_criteria_id) spsv ON vmcd.id = spsv.item
+	WHERE active = ''y''
+END
+ELSE
+BEGIN
+	INSERT INTO #var_measurement_criteria(id)
+	SELECT id
+	FROM var_measurement_criteria_detail vmcd
+	WHERE active = ''y''
+END
+
 DECLARE @_cur_var_id CURSOR SET @_cur_var_id = CURSOR
 FOR
-SELECT id
-FROM var_measurement_criteria_detail
-WHERE active = ''y'' AND id = @_criteria_id
-
+SELECT id FROM #var_measurement_criteria
 OPEN @_cur_var_id
 
 FETCH NEXT
@@ -461,7 +479,7 @@ ORDER BY [Status] DESC
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Criteria Id'
-			   , reqd_param = NULL, widget_id = 2, datatype_id = 5, param_data_source = 'SELECT id, [name] FROM var_measurement_criteria_detail', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+			   , reqd_param = NULL, widget_id = 9, datatype_id = 5, param_data_source = 'SELECT id, [name] FROM var_measurement_criteria_detail', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -474,7 +492,7 @@ ORDER BY [Status] DESC
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'criteria_id' AS [name], 'Criteria Id' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 5 AS datatype_id, 'SELECT id, [name] FROM var_measurement_criteria_detail' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'criteria_id' AS [name], 'Criteria Id' AS ALIAS, NULL AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'SELECT id, [name] FROM var_measurement_criteria_detail' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Run VaR'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)

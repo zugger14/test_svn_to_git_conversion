@@ -223,7 +223,7 @@ WHERE 1=1
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Curve IDs'
-			   , reqd_param = NULL, widget_id = 7, datatype_id = 5, param_data_source = 'browse_curve', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+			   , reqd_param = NULL, widget_id = 9, datatype_id = 5, param_data_source = 'SELECT source_curve_def_id [id], curve_id' + CHAR(10) + 'FROM source_price_curve_def' + CHAR(10) + '    WHERE formula_id IS NOT NULL AND granularity = 980', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -236,7 +236,7 @@ WHERE 1=1
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_ids' AS [name], 'Curve IDs' AS ALIAS, NULL AS reqd_param, 7 AS widget_id, 5 AS datatype_id, 'browse_curve' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_ids' AS [name], 'Curve IDs' AS ALIAS, NULL AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'SELECT source_curve_def_id [id], curve_id' + CHAR(10) + 'FROM source_price_curve_def' + CHAR(10) + '    WHERE formula_id IS NOT NULL AND granularity = 980' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Derive Prices Sql View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)

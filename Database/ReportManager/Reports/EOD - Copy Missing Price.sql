@@ -79,54 +79,103 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date''
+
 	,@_process_id VARCHAR(100) = ''@process_id''
+
 	,@_curve_id NVARCHAR(4000)
 
+
+
 IF ''@process_id'' <> ''NULL''
+
 	SET @_process_id = ''@process_id''
+
 ELSE
+
 	SET @_process_id = NULL
 
+
+
 IF ''@curve_id'' <> ''NULL''
+
     SET @_curve_id = ''@curve_id''
 
+
+
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL
+
 	DROP TABLE #tmp_result
 
+
+
 CREATE TABLE #tmp_result (
+
 	ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT
+
 	,Module VARCHAR(200) COLLATE DATABASE_DEFAULT
+
 	,Area VARCHAR(200) COLLATE DATABASE_DEFAULT
+
 	,STATUS VARCHAR(200) COLLATE DATABASE_DEFAULT
+
 	,Message VARCHAR(1000) COLLATE DATABASE_DEFAULT
+
 	,Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT
+
 	)
+
+
 
 INSERT INTO #tmp_result (
+
 	ErrorCode
+
 	,Module
+
 	,Area
+
 	,STATUS
+
 	,Message
+
 	,Recommendation
+
 	)
+
 EXEC spa_eod_verify_missing_curve ''COPY''
+
 	,@_as_of_date
+
 	,@_process_id
+
 	,@_curve_id
 
+
+
 SELECT @_as_of_date as_of_date
+
 	,@_process_id process_id
+
 	,@_curve_id [curve_id]
+
 	,[ErrorCode]
+
 	,[Module]
+
 	,[Area]
+
 	,[Status]
+
 	,[Message]
+
 	,[Recommendation]
+
 --[__batch_report__] 
+
 FROM #tmp_result
+
 WHERE 1 = 1
+
 ', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
@@ -420,7 +469,7 @@ WHERE 1 = 1
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Curve ID'
-			   , reqd_param = NULL, widget_id = 2, datatype_id = 5, param_data_source = 'SELECT source_curve_def_id, curve_id FROM source_price_curve_def', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+			   , reqd_param = NULL, widget_id = 9, datatype_id = 5, param_data_source = 'SELECT spcd.source_curve_def_id [id], spcd.curve_id FROM generic_mapping_header gmh' + CHAR(10) + 'INNER JOIN generic_mapping_values gmv ON gmh.mapping_table_id = gmv.mapping_table_id' + CHAR(10) + 'INNER JOIN source_price_curve_def spcd ON CAST(spcd.source_curve_def_id AS NVARCHAR(10)) =  CAST(gmv.clm1_value AS NVARCHAR(10))' + CHAR(10) + 'WHERE gmh.mapping_name = ''EOD Price Copy''', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -433,7 +482,7 @@ WHERE 1 = 1
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_id' AS [name], 'Curve ID' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 5 AS datatype_id, 'SELECT source_curve_def_id, curve_id FROM source_price_curve_def' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_id' AS [name], 'Curve ID' AS ALIAS, NULL AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'SELECT spcd.source_curve_def_id [id], spcd.curve_id FROM generic_mapping_header gmh' + CHAR(10) + 'INNER JOIN generic_mapping_values gmv ON gmh.mapping_table_id = gmv.mapping_table_id' + CHAR(10) + 'INNER JOIN source_price_curve_def spcd ON CAST(spcd.source_curve_def_id AS NVARCHAR(10)) =  CAST(gmv.clm1_value AS NVARCHAR(10))' + CHAR(10) + 'WHERE gmh.mapping_name = ''EOD Price Copy''' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'EOD - Copy Missing Price'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)

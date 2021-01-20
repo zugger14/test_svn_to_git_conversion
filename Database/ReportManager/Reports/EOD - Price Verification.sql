@@ -407,7 +407,7 @@ WHERE 1=1
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Curve ID'
-			   , reqd_param = NULL, widget_id = 2, datatype_id = 5, param_data_source = 'SELECT source_curve_def_id, curve_id FROM source_price_curve_def', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+			   , reqd_param = NULL, widget_id = 9, datatype_id = 5, param_data_source = 'SELECT spcd.source_curve_def_id [id], spcd.curve_id FROM generic_mapping_header gmh' + CHAR(10) + 'INNER JOIN generic_mapping_values gmv ON gmh.mapping_table_id = gmv.mapping_table_id' + CHAR(10) + 'INNER JOIN source_price_curve_def spcd ON CAST(spcd.source_curve_def_id AS NVARCHAR(10)) =  CAST(gmv.clm1_value AS NVARCHAR(10))' + CHAR(10) + 'WHERE gmh.mapping_name = ''EOD Price Copy''', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -420,7 +420,7 @@ WHERE 1=1
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_id' AS [name], 'Curve ID' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 5 AS datatype_id, 'SELECT source_curve_def_id, curve_id FROM source_price_curve_def' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_id' AS [name], 'Curve ID' AS ALIAS, NULL AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'SELECT spcd.source_curve_def_id [id], spcd.curve_id FROM generic_mapping_header gmh' + CHAR(10) + 'INNER JOIN generic_mapping_values gmv ON gmh.mapping_table_id = gmv.mapping_table_id' + CHAR(10) + 'INNER JOIN source_price_curve_def spcd ON CAST(spcd.source_curve_def_id AS NVARCHAR(10)) =  CAST(gmv.clm1_value AS NVARCHAR(10))' + CHAR(10) + 'WHERE gmh.mapping_name = ''EOD Price Copy''' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Price Verification'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
