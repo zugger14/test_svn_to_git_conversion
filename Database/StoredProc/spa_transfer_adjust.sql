@@ -24,7 +24,7 @@ GO
 --SET @deal_term_end = '2012-01-01'
 
 
-CREATE PROCEDURE spa_transfer_adjust
+CREATE PROCEDURE [dbo].[spa_transfer_adjust]
 	@source_deal_header_id INT
 	,@term DATETIME = NULL
 	,@is_deal_created BIT = NULL OUTPUT
@@ -57,8 +57,8 @@ EXEC [spa_drop_all_temp_table]
 
 --EXEC [dbo].[spa_transfer_adjust] @source_deal_header_id = 120208, @term = '2010-06-16'
 
-DECLARE @source_deal_header_id INT = 106493  
-DECLARE @term DATETIME = '2010-01-01'
+DECLARE @source_deal_header_id INT = 516637 
+DECLARE @term DATETIME = '2020-12-01'
 DECLARE @is_deal_created BIT
 
 --DECLARE @source_deal_header_id INT = 104615 
@@ -152,6 +152,18 @@ BEGIN
 	 SET @deal_term_end = @term
 END
 
+-- This is for capacity deal only
+-- This may have performance issue 
+-- need to check if we have other better
+-- solutions like using first/last day of month
+DECLARE @capacity_term_start DATETIME
+DECLARE @capacity_term_end DATETIME
+
+SELECT  @capacity_term_start = MIN(term_start)
+	, @capacity_term_end = MAX(term_end)
+FROM source_deal_detail 
+WHERE source_Deal_header_id = @source_deal_header_id   --8407 -- @source_deal_header_id  
+GROUP BY source_deal_header_id 
 
 SELECT @deal_location_id = MIN(location_id)
 FROM source_deal_detail 
@@ -605,7 +617,7 @@ BEGIN
 		IF @capacity_deal_id IS NOT NULL
 		BEGIN
 			DELETE sddh	
-			FROM [FNAGetPathMDQHourly] (@path_id, @deal_term_start, @deal_term_end, '') pmh --(330, '2020-09-25', '2020-09-25', '')pmh --
+			FROM [FNAGetPathMDQHourly] (@path_id, @capacity_term_start, @capacity_term_end, '') pmh --(330, '2020-09-25', '2020-09-25', '')pmh --
 			INNER JOIN source_deal_detail sdd
 				ON pmh.term_start BETWEEN sdd.term_start  AND sdd.term_end
 				AND sdd.source_deal_header_id = @capacity_deal_id -- 106173 -- 
@@ -616,7 +628,7 @@ BEGIN
 				ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 				AND tvc.hr = sddh.hr
 			WHERE pmh.is_complex = 'y'
-				AND  sddh.term_date BETWEEN  @deal_term_start AND @deal_term_end
+				AND  sddh.term_date BETWEEN  @capacity_term_start AND @capacity_term_end
 
 
 			INSERT INTO source_deal_detail_hour (
@@ -633,7 +645,7 @@ BEGIN
 				, 0
 				,  IIF(ISNULL(tvc.volume, 0) <= 0, 0, pmh.rmdq)
 				, 982 			
-			FROM [FNAGetPathMDQHourly](@path_id, @deal_term_start, @deal_term_end, '') pmh
+			FROM [FNAGetPathMDQHourly](@path_id, @capacity_term_start, @capacity_term_end, '') pmh
 			INNER JOIN source_deal_detail sdd
 				ON pmh.term_start BETWEEN sdd.term_start  AND sdd.term_end
 				AND sdd.source_deal_header_id = @capacity_deal_id
@@ -641,7 +653,7 @@ BEGIN
 				ON tvc.term_date = pmh.term_start	
 				AND RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00'  = tvc.hr
 			WHERE pmh.is_complex = 'y'
-				AND  pmh.term_start BETWEEN  @deal_term_start AND @deal_term_end
+				AND  pmh.term_start BETWEEN  @capacity_term_start AND @capacity_term_end
 
 			INSERT INTO #temp_updated_deals(source_deal_header_id)
 			SELECT @capacity_deal_id
@@ -1048,7 +1060,7 @@ BEGIN
 			INNER JOIN source_deal_detail sdd
 				ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 			WHERE sdd.source_deal_header_id = @capacity_deal_id
-			AND sddh.term_date BETWEEN @deal_term_start and @deal_term_end
+			AND sddh.term_date BETWEEN @capacity_term_start and @capacity_term_end
 
 			INSERT INTO source_deal_detail_hour 
 			(
@@ -1065,7 +1077,7 @@ BEGIN
 				, 0
 				, MAX(pmh.rmdq) rmdq
 				, 982 								
-			FROM [FNAGetPathMDQHourly]( @path_id, @deal_term_start,@deal_term_end, '') pmh
+			FROM [FNAGetPathMDQHourly]( @path_id, @capacity_term_start, @capacity_term_end, '') pmh
 			INNER JOIN source_deal_detail sdd
 				ON pmh.term_start BETWEEN sdd.term_start  AND sdd.term_end
 				--AND sdd.term_start = pmh.term_start
@@ -1081,8 +1093,7 @@ BEGIN
 			WHERE pmh.is_complex = 'y' 
 				 AND sdd.leg = 1
 				 AND NULLIF(sddh.volume, 0) IS NOT NULL
-				 AND pmh.term_start BETWEEN @deal_term_start and @deal_term_end
-
+				 AND pmh.term_start BETWEEN @capacity_term_start and @capacity_term_end
 			GROUP BY  sdd.source_deal_detail_id
 				, pmh.term_start
 				, pmh.hour
@@ -1093,7 +1104,7 @@ BEGIN
 				, 0
 				, MAX(pmh.rmdq) rmdq
 				, 982 								
-			FROM [FNAGetPathMDQHourly]( @path_id, @deal_term_start,@deal_term_end, '') pmh
+			FROM [FNAGetPathMDQHourly]( @path_id, @capacity_term_start,@capacity_term_end, '') pmh
 			INNER JOIN source_deal_detail sdd
 				ON pmh.term_start BETWEEN sdd.term_start  AND sdd.term_end
 				--AND sdd.term_start = pmh.term_start
@@ -1109,7 +1120,7 @@ BEGIN
 			WHERE pmh.is_complex = 'y' 
 				 AND sdd.leg = 2
 				 AND NULLIF(sddh.volume, 0) IS NOT NULL
-				 AND pmh.term_start BETWEEN @deal_term_start and @deal_term_end
+				 AND pmh.term_start BETWEEN @capacity_term_end and @capacity_term_end
 			GROUP BY  sdd.source_deal_detail_id
 				, pmh.term_start
 				, pmh.hour
@@ -1167,7 +1178,7 @@ BEGIN
 			INNER JOIN source_deal_detail sdd
 				ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 			WHERE sdd.source_deal_header_id = @capacity_deal_id
-			AND sddh.term_date BETWEEN @deal_term_start and @deal_term_end
+			AND sddh.term_date BETWEEN @capacity_term_start and @capacity_term_end
 
 			INSERT INTO source_deal_detail_hour (
 							source_deal_detail_id
@@ -1194,7 +1205,7 @@ BEGIN
 			WHERE  --sdd_m.source_deal_header_id = 102283 AND --@source_deal_header_id
 				 NULLIF(sddh_m.volume, 0) IS NOT NULL
 				AND sdd.source_deal_header_id =  @capacity_deal_id
-				AND sddh_m.term_date BETWEEN @deal_term_start and @deal_term_end
+				AND sddh_m.term_date BETWEEN @capacity_term_start and @capacity_term_end
 			GROUP BY sdd.source_deal_detail_id,
 				sddh_m.term_date,
 				sddh_m.hr
@@ -1516,7 +1527,7 @@ BEGIN
 		INNER JOIN source_deal_detail sdd
 			ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
 		WHERE sdd.source_deal_header_id = @capacity_deal_id
-		AND sddh.term_date BETWEEN @deal_term_start and @deal_term_end
+		AND sddh.term_date BETWEEN @capacity_term_start and @capacity_term_end
 
 		INSERT INTO source_deal_detail_hour (
 						source_deal_detail_id
@@ -1542,7 +1553,7 @@ BEGIN
 		WHERE --sdd_m.source_deal_header_id = 102283 AND --@source_deal_header_id
 			NULLIF(sddh_m.volume, 0) IS NOT NULL
 			AND sdd.source_deal_header_id =  @capacity_deal_id
-			AND sddh_m.term_date BETWEEN @deal_term_start and @deal_term_end
+			AND sddh_m.term_date BETWEEN @capacity_term_start and @capacity_term_end
 		GROUP BY sdd.source_deal_detail_id,
 			sddh_m.term_date,
 			sddh_m.hr
