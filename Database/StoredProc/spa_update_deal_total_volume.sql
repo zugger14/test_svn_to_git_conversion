@@ -777,13 +777,30 @@ IF @process_id_alert IS NOT NULL
 	SET @process_id = @process_id_alert
 
 DECLARE @alert_process_table VARCHAR(300)
+DECLARE @alert_process_table_hdr VARCHAR(300)
+
 SET @alert_process_table = 'adiha_process.dbo.alert_deal_' + @process_id + '_ad'
+SET @alert_process_table_hdr = 'adiha_process.dbo.alert_deal_header_' + @process_id + '_ad'
 
 IF OBJECT_id(@alert_process_table, N'U') IS NOT NULL
 	EXEC('DROP TABLE '+ @alert_process_table)
-
+	
+IF OBJECT_id(@alert_process_table_hdr, N'U') IS NOT NULL
+	EXEC('DROP TABLE '+ @alert_process_table_hdr)
+	
 if 	exists(select top(1) 1 from  #total_process_deals ) 
 begin
+	EXEC ('CREATE TABLE ' + @alert_process_table_hdr + ' (
+       		source_deal_header_id  VARCHAR(500),
+       		deal_date              DATETIME,
+       		term_start             DATETIME,
+       		counterparty_id        VARCHAR(100),
+       		hyperlink1             VARCHAR(5000),
+       		hyperlink2             VARCHAR(5000),
+       		hyperlink3             VARCHAR(5000),
+       		hyperlink4             VARCHAR(5000),
+       		hyperlink5             VARCHAR(5000)
+		   )')
 
 	EXEC ('CREATE TABLE ' + @alert_process_table + ' (
        		source_deal_header_id  VARCHAR(500),
@@ -797,6 +814,7 @@ begin
        		hyperlink4             VARCHAR(5000),
        		hyperlink5             VARCHAR(5000)
 		   )')
+
 	SET @sql = 'INSERT INTO ' + @alert_process_table + '
 	(
 		source_deal_header_id,
@@ -821,6 +839,21 @@ begin
 	IF ISNULL(@call_from_2, '') <> 'alert' AND @trigger_workflow = 'y'
 	BEGIN
 		EXEC(@sql)
+		SET @sql = 'INSERT INTO ' + @alert_process_table_hdr + '
+					(
+						source_deal_header_id,
+						deal_date,
+						term_start,
+						counterparty_id
+					)
+						SELECT distinct sdh.source_deal_header_id,
+						sdh.deal_date,
+						sdh.entire_term_start,
+						sdh.counterparty_id
+						FROM   source_deal_header sdh 
+							inner join #total_process_deals tpd on sdh.source_deal_header_id=tpd.source_deal_header_id
+						'
+		EXEC(@sql)
 		EXEC spa_print @sql
 			
         DECLARE @job_name1 NVARCHAR(100)       
@@ -829,6 +862,10 @@ begin
 		SET @sql= 'spa_register_event 20637, 20509, ''' + @alert_process_table + ''', 1, ''' + @process_id + ''''
      
         EXEC spa_run_sp_as_job @job_name1, @sql, 'spa_register_event', @user_login_id    		
+
+		SET @job_name1 = 'alert_from_position_calc_hdr' + @process_id
+        SET @sql= 'spa_register_event 20601, 20509, ''' + @alert_process_table_hdr + ''', 1, ''' + @process_id + ''''
+        EXEC spa_run_sp_as_job @job_name1, @sql, 'spa_register_event', @user_login_id
 		
 		--EXEC spa_register_event 20601, 20509, @alert_process_table, 1, @process_id
 	END
