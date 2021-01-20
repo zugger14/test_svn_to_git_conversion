@@ -32,60 +32,66 @@
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'CalculateTax'
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_source_deal_header_id VARCHAR(100),
-		@_prod_date_from	VARCHAR(100),
-		@_prod_date_to	VARCHAR(100),
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + '
+--SET nocount off	
+--DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), ''DEBUG_MODE_ON'')
+--SET CONTEXT_INFO @contextinfo
+SET nocount on
+
+DECLARE 
+		-- user variables for debug function
+		@_source_deal_header_id VARCHAR(100),
 		@_price VARCHAR(100),
 		@_charge_type VARCHAR(100),
 		@_tax_type VARCHAR(100),
-		@_tax_value FLOAT
+		@_tax_value VARCHAR(100),
 
-IF ''@source_deal_header_id''<>''NULL''
-	SET @_source_deal_header_id = ''@source_deal_header_id''
-IF ''@prod_date''<>''NULL''
-	SET @_prod_date_from = ''@prod_date''	
-IF ''@prod_date_to''<>''NULL''
-  SET @_prod_date_to = ''@prod_date_to''
-IF ''@price''<>''NULL''
-	SET @_price = ''@price''	
-IF ''@charge_type''<>''NULL''
-	SET @_charge_type = ''@charge_type''
-IF ''@tax_type''<>''NULL''
-	SET @_tax_type = ''@tax_type''
+		-- system variables for evaluation function
+		@_farrms_calc_process_table varchar(250), 
+		@_farrms_formula_id VARCHAR(100),
+		@_farrms_nested_id VARCHAR(100),
+		@_farrms_level_func_sno VARCHAR(100)
 
---SET @_source_deal_header_id = 529506 --227305 
---SET @_charge_type = ''-10019''
---SET @_tax_type = ''v''  -- vat, energy
---SET @_price = ''p'' 
 
-IF OBJECT_ID(''tempdb..#ud_function_evaluation'') IS NULL
-CREATE TABLE #ud_function_evaluation(
-	source_id INT, 
-	counterparty_id INT,
-	contract_id INT,
-	source_deal_header_id INT,
-	source_deal_detail_id INT,
-	data_source_id INT,
-	formula_id INT,
-	nested_id INT,
-	level_func_sno INT,
-	prod_date DATETIME,
-	hour INT,
-	mins INT,
-	value NUMERIC(28,10)
-)
-SELECT @_tax_value = a.value FROM #ud_function_evaluation a
-OUTER APPLY (
-	SELECT MAX(field_name) field_name FROM user_defined_deal_fields_template uddft 
-		INNER JOIN static_data_value sdv ON sdv.value_id = uddft.field_name
-	WHERE udf_template_id = a.source_id
-) b
-INNER JOIN static_data_value sdv ON sdv.value_id = b.field_name 
-WHERE sdv.code =  ''Commodity Energy Tax'' AND a.source_deal_header_id = @_source_deal_header_id
+/*
+
+select
+	-- variables for debug function
+		@_source_deal_header_id=null ,
+		@_price=''p'',
+		@_charge_type=-10019,
+		@_tax_type=''v'',
+		@_tax_value=null,
+
+		-- variables for evaluation function
+		@_farrms_calc_process_table=''adiha_process.dbo.udf_formula_tax_DEBUG_MODE_ON_6C73503D_CF1A_4794_B4E8_469A7B8AB324'', 
+		@_farrms_formula_id=209
+
+	--alter table adiha_process.dbo.udf_formula_tax_DEBUG_MODE_ON_6C73503D_CF1A_4794_B4E8_469A7B8AB324 add	temp_eval_value varchar(10)
+
+--*/
+
+Declare @sql varchar(max)
+
+SET @_source_deal_header_id = nullif(isnull(@_source_deal_header_id, nullif(''@source_deal_header_id'', replace(''@_source_deal_header_id'', ''@_'', ''@''))), ''null'')
+SET @_price = nullif(isnull(@_price, nullif(''@price'', replace(''@_price'', ''@_'', ''@''))), ''null'')
+SET @_charge_type = nullif(isnull(@_charge_type, nullif(''@charge_type'', replace(''@_charge_type'', ''@_'', ''@''))), ''null'')
+SET @_tax_type = nullif(isnull(@_tax_type, nullif(''@tax_type'', replace(''@_tax_type'', ''@_'', ''@''))), ''null'')
+SET @_tax_value = nullif(isnull(@_tax_value, nullif(''@tax_value'', replace(''@_tax_value'', ''@_'', ''@''))), ''null'')
+SET @_farrms_calc_process_table = nullif(isnull(@_farrms_calc_process_table, nullif(''@farrms_calc_process_table'', replace(''@_farrms_calc_process_table'', ''@_'', ''@''))), ''null'')
+SET @_farrms_formula_id = nullif(isnull(@_farrms_formula_id, nullif(''@farrms_formula_id'', replace(''@_farrms_formula_id'', ''@_'', ''@''))), ''null'')
+
+
+-----------------------------------------------------------------------------------------
+---- Fuction logic-------------------------------------------------------------------------
+
 IF OBJECT_ID(''tempdb..#table_tax_rules'') IS NOT NULL
     DROP TABLE #table_tax_rules  
+
 IF OBJECT_ID(''tempdb..#table_cpty_tax_info'') IS NOT NULL
     DROP TABLE #table_cpty_tax_info  
+
+
 SELECT generic_mapping_values_id,
 	CAST(clm1_value AS VARCHAR(MAX)) effective_date, 
 	CAST(clm2_value AS VARCHAR(MAX)) region,
@@ -104,6 +110,7 @@ FROM generic_mapping_header gmh
 INNER JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id=gmh.mapping_table_id 
 AND gmh.mapping_name = ''Tax Rules''
+
 SELECT DISTINCT CAST(clm1_value AS VARCHAR(MAX)) counterparty_id, 
 	CAST(clm2_value AS VARCHAR(MAX)) [commodity],
 	CAST(clm5_value AS VARCHAR(MAX)) [value],
@@ -113,144 +120,163 @@ FROM generic_mapping_header gmh
 INNER JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id=gmh.mapping_table_id 
 AND gmh.mapping_name = ''Counterparty Tax Info''
---SELECT * FROM #table_tax_rules
---SELECT * FROM #table_cpty_tax_info
---SELECT 
---	DISTINCT 
---	ttr.tax_unit,
---	ttr.tax_percentage,
---	sds.volume,
---	sds.net_price,  
---	sds.settlement_amount,
---	ttr_both.document_type,
---	ttr_inv_rem.document_type
-SELECT
-	@_source_deal_header_id [source_deal_header_id],
-	@_prod_date_from [prod_date],
-	@_prod_date_from [prod_date_to],
-	0 [hour], 
-	0 [mins], 
-	NULL [counterparty_id],
-	NULL [contract_id],
-	NULL [source_deal_detail_id],
-	CASE WHEN @_tax_type = ''v'' 
-		THEN MAX(CAST(ttr.tax_percentage AS FLOAT)) 
-	ELSE 
-		CASE WHEN MAX(sdh.header_buy_sell_flag) = ''s'' THEN 1 ELSE -1 END * ABS(MAX(CAST(ttr.tax_unit AS FLOAT))) 
-	END * 
-	(CASE WHEN @_tax_type = ''v'' THEN 
-		CASE WHEN @_price = ''n'' THEN (MAX(fees_negative.[value])) 
-			WHEN @_price = ''p'' THEN (MAX(fees_positive.[value])) 
-			ELSE ISNULL(MAX(fees_positive.[value]),0) + ISNULL(MAX(fees_negative.[value]), 0)
-		END + ISNULL(@_tax_value, 0)
-	ELSE 
-		ABS(CASE WHEN @_price = ''n'' THEN (MAX(fees_negative.volume)) 
-			WHEN @_price = ''p'' THEN (MAX(fees_positive.volume)) 
-		ELSE ISNULL(MAX(fees_positive.volume), 0) + ISNULL(MAX(fees_negative.volume), 0) END)
-	END) [value],
-	@_price [price],
-	@_charge_type [charge_type],
-	@_tax_type [tax_type]
---[__batch_report__]  
-FROM source_deal_header sdh 
-INNER JOIN source_counterparty sc 
-	ON sc.source_counterparty_id = sdh.counterparty_id
-OUTER APPLY (
-	SELECT MAX(cc.region) region 
-		FROM counterparty_contract_address cca 
-	INNER JOIN counterparty_contacts cc
-		ON cc.counterparty_id = sc.source_counterparty_id 
-		AND cca.receivables = cc.counterparty_contact_id
-	WHERE cca.contract_id = sdh.contract_id AND cca.counterparty_id = sdh.counterparty_id
-) r
-OUTER APPLY (
-	SELECT ifbs.value FROM index_fees_breakdown_settlement ifbs
-		INNER JOIN user_defined_fields_template udft 
-	ON udft.field_label = ifbs.field_name AND udft.udf_category = 101902
-	WHERE source_deal_header_id = sdh.source_deal_header_id
-) tax_amt
 
-CROSS APPLY(
-	SELECT MAX(ISNULL(effective_date,''9999-01-01'')) effective_date 
-		FROM #table_tax_rules ttr2
+
+set @sql=
+case when OBJECT_ID(''tempdb..#formula_breakdown'') IS NULL then 
+	''
+	select distinct source_deal_header_id,''+isnull(@_tax_value+ '' value'', ''null value'')+''
+	into #formula_tax_value
+	FROM ''+ @_farrms_calc_process_table +'';''
+
+else
+''
+	select a.source_deal_header_id,a.[value]
+	into #formula_tax_value
+	from (
+	SELECT distinct p.source_deal_header_id, p.udf_template_id, f.eval_value [value]
+	FROM ''+ @_farrms_calc_process_table+'' p
+	inner join #formula_breakdown f on p.rowid=f.source_id
+		--	and f.formula_id=''+@_farrms_formula_id+''
+		) a
+	OUTER APPLY (
+		SELECT MAX(field_name) field_name FROM user_defined_deal_fields_template uddft 
+			INNER JOIN static_data_value sdv ON sdv.value_id = uddft.field_name
+		WHERE udf_template_id = a.udf_template_id
+	) b
+	INNER JOIN static_data_value sdv ON sdv.value_id = b.field_name 
+	WHERE sdv.code =  ''''Commodity Energy Tax'''' ;
+	
+	''
+end 
++''
+	update p set temp_eval_value= ''
+	+	CASE WHEN @_tax_type = ''v'' THEN ''CAST(ttr.tax_percentage AS FLOAT)''
+		ELSE 
+			''CASE WHEN sdh.header_buy_sell_flag = ''''s'''' THEN 1 ELSE -1 END * ABS(CAST(ttr.tax_unit AS FLOAT)) ''
+		END +'' * (''
+		+CASE WHEN @_tax_type = ''v'' THEN 
+			CASE WHEN @_price = ''n'' THEN ''fees_negative.[value]'' 
+				WHEN @_price = ''p'' THEN ''fees_positive.[value]''
+			ELSE 
+				''ISNULL(fees_positive.[value],0) + ISNULL(fees_negative.[value], 0)'' END 
+			+ ''+ISNULL(tax.value, 0)''
+		ELSE 
+			CASE WHEN @_price = ''n'' THEN ''abs(fees_negative.volume)''
+					WHEN @_price = ''p'' THEN ''abs(fees_positive.volume)''
+				ELSE ''abs(ISNULL(fees_positive.volume, 0) + ISNULL(fees_negative.volume, 0))'' END
+		END +'')
+	FROM ''+ @_farrms_calc_process_table+'' p
+	inner join source_deal_header sdh on p.source_deal_header_id=sdh.source_deal_header_id ''+isnull('' and sdh.source_deal_header_id in (''+@_source_deal_header_id+'')'','''')+''
+		and p.formula_id=''+@_farrms_formula_id+''
+	left join #formula_tax_value tax on tax.source_deal_header_id=p.source_deal_header_id
+	INNER JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.counterparty_id
+	OUTER APPLY (
+		SELECT MAX(cc.region) region FROM counterparty_contract_address cca 
+		INNER JOIN counterparty_contacts cc
+			ON cc.counterparty_id = sc.source_counterparty_id 
+			AND cca.receivables = cc.counterparty_contact_id
+		WHERE cca.contract_id = sdh.contract_id AND cca.counterparty_id = sdh.counterparty_id
+	) r
+	OUTER APPLY (
+		SELECT ifbs.value FROM index_fees_breakdown_settlement ifbs
+			INNER JOIN user_defined_fields_template udft 
+		ON udft.field_label = ifbs.field_name AND udft.udf_category = 101902
+		WHERE source_deal_header_id = p.source_deal_header_id
+	) tax_amt
+	CROSS APPLY(
+		SELECT MAX(ISNULL(effective_date,''''9999-01-01'''')) effective_date 
+			FROM #table_tax_rules ttr2
+		INNER JOIN #table_cpty_tax_info ti1 
+			ON ti1.counterparty_id = sdh.counterparty_id 
+			AND ti1.[yes_no] = ttr2.reseller_certificate
+			AND ti1.[value] = ''''reseller_certificate''''
+			AND ti1.commodity = ttr2.commodity
+		INNER JOIN #table_cpty_tax_info ti2 
+			ON ti2.counterparty_id = sdh.counterparty_id 
+			AND ti2.[yes_no] = ttr2.energy_tax_exemption
+			AND ti2.[value] = ''''energy_tax_exemption''''
+			AND ti2.commodity = ttr2.commodity
+		WHERE region = r.region
+		AND  counterparty_type =sc.int_ext_flag 
+		--AND commodity_id = sdh.commodity_id
+		AND effective_date<=sdh.entire_term_start 
+		AND price =''''''+ @_price+''''''
+	) ttr1
+	INNER JOIN #table_tax_rules ttr
+		ON ISNULL(ttr.effective_date,''''9999-01-01'''') = ttr1.effective_date 
+		AND r.region = ttr.region
+		AND sc.int_ext_flag = ttr.counterparty_type
+		AND ttr.commodity = sdh.commodity_id
+	OUTER APPLY (
+		SELECT SUM(volume) volume, SUM(value) value 
+			FROM index_fees_breakdown_settlement 
+		INNER JOIN static_data_value sdv ON sdv.value_id = field_id
+		WHERE source_deal_header_id = p.source_deal_header_id AND sdv.code = ''''Negative Price Commodity''''  HAVING SUM(value)<>0
+	) fees_negative
+	OUTER APPLY (
+		SELECT SUM(volume) volume, SUM(value) value 
+			FROM index_fees_breakdown_settlement 
+		INNER JOIN static_data_value sdv ON sdv.value_id = field_id
+		WHERE source_deal_header_id = p.source_deal_header_id AND sdv.code = ''''Positive Price Commodity'''' HAVING SUM(value)<>0
+	) fees_positive
+	OUTER APPLY (
+		SELECT MAX(b.document_type) document_type FROM (
+			SELECT a.document_type FROM #table_tax_rules a  WHERE a.effective_date = ttr.effective_date
+				AND a.region = ttr.region
+				AND a.counterparty_type = ttr.counterparty_type
+				AND a.commodity = ttr.commodity
+				AND a.charge_type = ttr.charge_type
+				AND a.tax_type = ttr.tax_type 
+				AND a.price = ttr.price
+				AND a.reseller_certificate = ttr.reseller_certificate
+				AND a.energy_tax_exemption = ttr.energy_tax_exemption
+				AND a.document_type = ''''b''''
+		) b
+	) ttr_both
+	INNER JOIN #table_cpty_tax_info ti ON ti.commodity = ttr.commodity
 	INNER JOIN #table_cpty_tax_info ti1 
 		ON ti1.counterparty_id = sdh.counterparty_id 
-		AND ti1.[yes_no] = ttr2.reseller_certificate
-		AND ti1.[value] = ''reseller_certificate''
-		AND ti1.commodity = ttr2.commodity
+		AND ti1.[yes_no] = ttr.reseller_certificate
+		AND ti1.[value] = ''''reseller_certificate''''
+		AND ti1.commodity = ttr.commodity
 	INNER JOIN #table_cpty_tax_info ti2 
 		ON ti2.counterparty_id = sdh.counterparty_id 
-		AND ti2.[yes_no] = ttr2.energy_tax_exemption
-		AND ti2.[value] = ''energy_tax_exemption''
-		AND ti2.commodity = ttr2.commodity
-	WHERE region = r.region
-	AND  counterparty_type =sc.int_ext_flag 
-	AND sdh.commodity_id = sdh.commodity_id
-	AND effective_date<=sdh.entire_term_start 
-	AND price = @_price
-) ttr1
+		AND ti2.[yes_no] = ttr.energy_tax_exemption
+		AND ti2.[value] = ''''energy_tax_exemption''''
+		AND ti2.commodity = ttr.commodity
+	LEFT JOIN #table_tax_rules ttr_inv_rem 
+		ON ttr_inv_rem.generic_mapping_values_id = ttr.generic_mapping_values_id 
+		AND ttr_inv_rem.document_type = 
+		CASE
+			WHEN ttr_inv_rem.document_type <> ''''b'''' AND CAST(ttr_inv_rem.tax_percentage AS FLOAT) < 0 THEN ''''r''''
+			WHEN ttr_inv_rem.document_type <> ''''b'''' AND CAST(ttr_inv_rem.tax_percentage AS FLOAT) > 0 THEN ''''i'''' 
+		END
+	WHERE  ttr.charge_type =''''''+ @_charge_type+''''''
+	AND ttr.tax_type =''''''+ @_tax_type+''''''''+
+	case when @_price is not null then '' AND ttr.price = ttr.price'' else '''' end +''
+		AND ttr.document_type = ISNULL(NULLIF(ttr_both.document_type, ''''a''''), ttr_inv_rem.document_type)
+	''
 
-INNER JOIN #table_tax_rules ttr
-	ON ISNULL(ttr.effective_date,''9999-01-01'') = ttr1.effective_date 
-	AND r.region = ttr.region
-	AND sc.int_ext_flag = ttr.counterparty_type
-	AND ttr.commodity = sdh.commodity_id
-OUTER APPLY (
-	SELECT SUM(volume) volume, SUM(value) value 
-		FROM index_fees_breakdown_settlement 
-	INNER JOIN static_data_value sdv ON sdv.value_id = field_id
-	WHERE source_deal_header_id = @_source_deal_header_id AND sdv.code = ''Negative Price Commodity''  HAVING SUM(value)<>0
-) fees_negative
-OUTER APPLY (
-	SELECT SUM(volume) volume, SUM(value) value 
-		FROM index_fees_breakdown_settlement 
-	INNER JOIN static_data_value sdv ON sdv.value_id = field_id
-	WHERE source_deal_header_id = @_source_deal_header_id AND sdv.code = ''Positive Price Commodity'' HAVING SUM(value)<>0
-) fees_positive
-OUTER APPLY (
-	SELECT MAX(b.document_type) document_type FROM (
-		SELECT a.document_type
-			FROM #table_tax_rules a 
-		WHERE a.effective_date = ttr.effective_date
-		AND a.region = ttr.region
-		AND a.counterparty_type = ttr.counterparty_type
-		AND a.commodity = ttr.commodity
-		AND a.charge_type = ttr.charge_type
-		AND a.tax_type = ttr.tax_type 
-		AND a.price = ttr.price
-		AND a.reseller_certificate = ttr.reseller_certificate
-		AND a.energy_tax_exemption = ttr.energy_tax_exemption
-		AND a.document_type = ''b''
-		UNION ALL 
-		SELECT NULL
-	) b
-) ttr_both
-LEFT JOIN source_Deal_settlement sds 
-	ON sdh.source_deal_header_id = sds.source_deal_header_id
-INNER JOIN #table_cpty_tax_info ti
-	ON ti.commodity = ttr.commodity
-INNER JOIN #table_cpty_tax_info ti1 
-	ON ti1.counterparty_id = sdh.counterparty_id 
-	AND ti1.[yes_no] = ttr.reseller_certificate
-	AND ti1.[value] = ''reseller_certificate''
-	AND ti1.commodity = ttr.commodity
-INNER JOIN #table_cpty_tax_info ti2 
-	ON ti2.counterparty_id = sdh.counterparty_id 
-	AND ti2.[yes_no] = ttr.energy_tax_exemption
-	AND ti2.[value] = ''energy_tax_exemption''
-	AND ti2.commodity = ttr.commodity
-LEFT JOIN #table_tax_rules ttr_inv_rem 
-	ON ttr_inv_rem.generic_mapping_values_id = ttr.generic_mapping_values_id 
-	AND ttr_inv_rem.document_type = 
-	CASE
-		WHEN ttr_inv_rem.document_type <> ''b'' AND CAST(ttr_inv_rem.tax_percentage AS FLOAT) < 0 THEN ''r''
-		WHEN ttr_inv_rem.document_type <> ''b'' AND CAST(ttr_inv_rem.tax_percentage AS FLOAT) > 0 THEN ''i'' 
-	END
-WHERE sdh.source_deal_header_id = @_source_deal_header_id
-AND ttr.charge_type = @_charge_type
-AND ttr.tax_type = @_tax_type
-AND ttr.price = ISNULL(@_price, ttr.price)
-AND ttr.document_type = ISNULL(NULLIF(ttr_both.document_type, ''a''), ttr_inv_rem.document_type)
+
+
+	--exec spa_print @sql
+	exec(@sql)
+
+
+---- Fuction logic----------------------------------------------------------
+-------------------------------------------------------------------------------------------
+
+if OBJECT_ID(''tempdb..#formula_breakdown'') IS NULL  
+select 
+		@_source_deal_header_id source_deal_header_id,
+		@_price price,
+		@_charge_type harge_type,
+		@_tax_type tax_type,
+		@_tax_value tax_value
+--[__batch_report__]
+
+
 ', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106501' 
