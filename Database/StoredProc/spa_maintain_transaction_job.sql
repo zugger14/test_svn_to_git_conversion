@@ -1045,7 +1045,7 @@ BEGIN TRY
 			sum((cast(hb.hr15 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr15,  
 			sum((cast(hb.hr16 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr16,  
 			sum((cast(hb.hr17 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr17, 
-			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 24 ELSE 18 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr24 ELSE hb.hr18 END,0) as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr18, '
+			sum((cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN pdd.commodity_id=-1 THEN 24 ELSE 18 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb.hr18 ELSE hb.hr18 END,0) as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr18, '
 
 		SET @st_sql3 = '
 			sum((cast(hb.hr19 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr19, 
@@ -1055,7 +1055,7 @@ BEGIN TRY
 			sum((cast(case when isnull(hb1.add_dst_hour,0)<>0 and pdd.commodity_id=-1 then
 				isnull(hb1.hr3,0)* case when abs(isnull(hb1.add_dst_hour,0))+18=21 then 2.000 else 1.000 end
 			else isnull(hb.hr21,0) end as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr21,	
-			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 4 ELSE 22 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr4 ELSE hb.hr22 END,0) as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr22, 
+			sum((cast(CASE WHEN isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.add_dst_hour ELSE hb.add_dst_hour END ,0)=CASE WHEN pdd.commodity_id=-1 THEN 4 ELSE 22 END THEN 1.000 else 0 end +isnull(CASE WHEN pdd.commodity_id=-1 THEN hb1.hr22 ELSE hb.hr22 END,0) as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr22, 
 			sum((cast(hb.hr23 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr23, 
 			sum((cast(hb.hr24 as numeric(1,0)))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr24, 
 			sum(isnull(' +@dst_column + ',0)*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr25,getdate() create_ts,max(pdd.create_user) create_user,isnull(h_grp.exp_date,hb.term_date) expiration_date
