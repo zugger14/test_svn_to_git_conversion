@@ -78,7 +78,11 @@
 					if (strpos($row_val[$key], '::::') !== false) {
 						$val_arr = explode("::::", $row_val[$key]);
 						print_r($val_arr);
-						print("<cell title='" . $val_arr[1] . "'><![CDATA[");
+						if (strpos($val_arr[1], "'") !== false) {
+							print('<cell title="' . $val_arr[1] . '"><![CDATA[');
+						} else {
+							print("<cell title='" . $val_arr[1] . "'><![CDATA[");
+						}							
 						print($val_arr[0]);
 					} else {						
 					print("<cell><![CDATA[");

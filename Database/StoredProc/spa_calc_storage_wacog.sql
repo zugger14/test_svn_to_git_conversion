@@ -70,7 +70,7 @@ declare
 	@lot VARCHAR(100) = NULL,
 	@batch_id VARCHAR(500) = NULL,
 
-	------- Additional Parameters
+	----- Additional Parameters
 	@contract INT = NULL, -- 9223
 	@location_id INT = NULL,  --   1337
 
@@ -78,35 +78,35 @@ declare
 	@batch_report_param VARCHAR(500) = NULL, 
 	@enable_paging INT = 0,  --'1' = enable, '0' = disable
 	@page_size INT = NULL,
-	@page_no INT = NULL
+	@page_no INT = NULL,
   @return_output INT = 1
 
---SELECT @as_of_date='2018-04-30', @storage_assets_id='114', @contract=NULL, @location_id=NULL, @term_start='2017-06-01', @term_end='2018-04-02'
+SELECT @as_of_date='2018-04-30', @storage_assets_id='114', @contract=NULL, @location_id=NULL, @term_start='2017-06-01', @term_end='2018-04-02'
 
--- select * from source_minor_location where location_name like 'Rockstone%'
--- select * from general_assest_info_virtual_storage
--- alter table general_assest_info_virtual_storage add calculate_mtm varchar(1)
--- select * from calcprocess_storage_wacog where storage_assets_id=1091
-
-
-select @as_of_date='2018-07-16', @storage_assets_id='1091', @contract=NULL, @location_id=NULL, @term_start='2018-07-01', @term_end='2018-07-31'
+ select * from source_minor_location where location_name like 'Rockstone%'
+ select * from general_assest_info_virtual_storage
+ alter table general_assest_info_virtual_storage add calculate_mtm varchar(1)
+ select * from calcprocess_storage_wacog where storage_assets_id=1091
 
 
---select * from source_deal_header
---select deal_volume,* from source_deal_detail where source_deal_header_id=8447
---select deal_volume,* from source_deal_detail where source_deal_header_id=8448
+select  @as_of_date='2019-12-31', @storage_assets_id='22', @contract=NULL, @location_id=NULL, @term_start='2020-10-01', @term_end='2020-10-31'
 
 
---if @@TRANCOUNT>0 rollback
-
---begin tran
-
---   commit
+select * from source_deal_header
+select deal_volume,* from source_deal_detail where source_deal_header_id=8447
+select deal_volume,* from source_deal_detail where source_deal_header_id=8448
 
 
+if @@TRANCOUNT>0 rollback
+
+begin tran
+
+   commit
 
 
---*/
+
+
+*/
 
 
 
@@ -1793,6 +1793,7 @@ BEGIN TRY
 		WHERE  sdd.term_start BETWEEN tm.term_start 
 			AND dateadd(day, case when tm.term_end=eomonth(tm.term_end) and sdh.template_id =@inv_actual_template_id then 1 else 0 end,tm.term_end)
 
+	
 		INSERT INTO user_defined_deal_fields
 	    (
 			source_deal_header_id,
@@ -1811,7 +1812,8 @@ BEGIN TRY
 	        INNER JOIN user_defined_deal_fields_template uddft
 	            ON  uddft.template_id = sdh.template_id
 				AND uddft.udf_template_id > 0
-	            AND uddft.udf_type = 'h' AND uddft.Field_label in ('Conversion Neutrality Charge','Variable Storage Charge')
+	            AND uddft.udf_type = 'h' 
+			   --AND uddft.Field_label in ('Conversion Neutrality Charge','Variable Storage Charge')
 		LEFT JOIN user_defined_deal_fields udddf
 	            ON  udddf.source_deal_header_id = sdh.source_deal_header_id
 	                AND udddf.udf_template_id = uddft.udf_template_id
@@ -1831,7 +1833,8 @@ BEGIN TRY
 	            ON  sdh.template_id = sdht.template_id
 	        INNER JOIN user_defined_deal_fields_template uddft
 	            ON  uddft.template_id = sdh.template_id
-	            AND uddft.Field_label in ('Injection Volume', 'Injection Amount','Withdrawal Volume','Withdrawal Amount','Begining Balance','Ending Balance') AND uddft.Field_type = 't'					
+	            AND uddft.Field_label in ('Injection Volume', 'Injection Amount','Withdrawal Volume','Withdrawal Amount','Begining Balance','Ending Balance') 
+				AND uddft.Field_type = 't'					
 			LEFT JOIN user_defined_deal_detail_fields udddf
 	            ON  udddf.source_deal_detail_id = sdd.source_deal_detail_id
 	                AND udddf.udf_template_id = uddft.udf_template_id
