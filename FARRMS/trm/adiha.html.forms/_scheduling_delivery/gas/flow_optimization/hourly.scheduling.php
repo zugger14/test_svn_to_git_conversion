@@ -362,6 +362,7 @@ echo $sch_obj->close_layout();
         rId = context_info.rId;
         cId = context_info.cId;
         subgrid = context_info.grid_obj;
+		subgrid.editStop();
         col_value = subgrid.cells(rId, cId).getValue();
 
         col_num = subgrid.getColumnsNum();
@@ -562,6 +563,8 @@ echo $sch_obj->close_layout();
             }
         });
         xml_manual_vol += '</Root>';
+		
+		//console.log(xml_manual_vol);return;
         
         var sp_string = "EXEC spa_flow_optimization_hourly @flag='s2', @process_id='" + get_param.process_id + "', @xml_manual_vol='" + xml_manual_vol + "', @call_from='" + get_param.call_from + "'";
         post_data = { sp_string: sp_string };
