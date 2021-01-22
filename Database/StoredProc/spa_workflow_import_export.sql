@@ -487,7 +487,7 @@ BEGIN
 			wem.notification_type,
 			wem.next_module_events_id,
 			0 [new_event_message_id],
-			skip_log
+			wem.skip_log
 	FROM module_events me
 	INNER JOIN event_trigger et ON me.module_events_id = et.modules_event_id
 	INNER JOIN workflow_event_message wem ON wem.event_trigger_id = et.event_trigger_id
@@ -849,6 +849,12 @@ BEGIN TRY
 	EXEC spa_parse_json @flag = 'simple_parse', @filter_tag = 'workflow_where_clause', @json_string = @import_string, @json_full_path=@import_file, @output_process_table = @workflow_where_clause_table, @return_output = 0, @input_process_table  = @input_alert_sql_table
 	EXEC spa_parse_json @flag = 'simple_parse', @filter_tag = 'workflow_link', @json_string = @import_string, @json_full_path=@import_file, @output_process_table = @workflow_link_table, @return_output = 0, @input_process_table  = @input_alert_sql_table
 	EXEC spa_parse_json @flag = 'simple_parse', @filter_tag = 'workflow_link_where_clause', @json_string = @import_string, @json_full_path=@import_file, @output_process_table = @workflow_link_where_clause_table, @return_output = 0, @input_process_table  = @input_alert_sql_table
+
+	EXEC('	IF COL_LENGTH(''' + @workflow_event_message_documents_table + ''', ''use_generated_document'') IS NULL 
+			ALTER TABLE ' + @workflow_event_message_documents_table + ' ADD [use_generated_document] NCHAR(1) NULL')
+
+	EXEC('	IF COL_LENGTH(''' + @workflow_event_message_table  + ''', ''skip_log'') IS NULL 
+			ALTER TABLE ' + @workflow_event_message_table  + ' ADD [skip_log] NCHAR(1) NULL')
 
 
 	IF OBJECT_ID('tempdb..#validations') IS NOT NULL
