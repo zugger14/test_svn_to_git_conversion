@@ -186,7 +186,7 @@ select *  from source_deal_HEADER   where source_deal_header_id=104416
 select *  from source_deal_pnl_detail   where source_deal_header_id=1600
 select *  from source_deal_settlement   where source_deal_header_id=104416
 select * from index_fees_breakdown   where source_deal_header_id=1600
-select * from index_fees_breakdown_settlement   where source_deal_header_id=104416
+select * from index_fees_breakdown_settlement   where source_deal_header_id=145462
 delete index_fees_breakdown_settlement   where source_deal_header_id=1600
 
 select *  from source_deal_pnl_breakdown   where source_deal_header_id=7876
@@ -203,14 +203,14 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =null  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2020-12-14' , --'2017-02-15',
+	@source_deal_header_id =145462  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2020-01-31' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
 	@process_id = null,
 	@job_name = null,
-	@user_id = NULL,
+	@user_id = 'farrms_admin',
 	@assessment_curve_type_value_id = NULL,
 	@table_name = NULL,
 	@print_diagnostic = NULL,
@@ -221,8 +221,8 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2020-12-01' ,
-	@term_end = '2020-12-14' ,
+	@term_start = '2020-01-01' ,
+	@term_end = '2020-01-31' ,
 	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
@@ -232,6 +232,9 @@ SELECT
 	@ref_id=null,
 	@process_linear_options_delta = NULL
 	,@look_term= 's' -- 'd'-> delivered term 's'-> settled term
+
+
+
 
 /*
 
@@ -244,6 +247,8 @@ select * from source_deal_settlement_tou where source_deal_header_id=1288
 select * from #fx_curves
 select * from #fees_breakdown
 select * from index_fees_breakdown where source_deal_header_id=1266
+select * from index_fees_breakdown_settlement where source_deal_header_id=145354
+
 select * from #component_price
 
 select curve_value,curve_value_deal,curve_value_inv,* from #temp_leg_mtm
@@ -345,6 +350,8 @@ select original_formula_currency, formula_Currency, contract_id, formula_id, *
 
 */
 --select * from adiha_process.dbo.testtest
+
+
 
 
 
@@ -13319,7 +13326,7 @@ set @qry6b='
 
 set @qry7b='
 	LEFT JOIN '+@calc_result_table5+' udf_formula ON udf_formula.source_deal_detail_id = td.source_deal_detail_id
-		and uddft.udf_template_id=udf_formula.source_id AND udf_formula.is_final_result = ''y'' 	
+		and uddft.udf_template_id=udf_formula.udf_template_id AND udf_formula.is_final_result = ''y'' 	
 	left join #fuel_based_variable_charge fbvc on fbvc.location_id=td.location_id and fbvc.term_start=td.term_start
 	LEFT JOIN #tmp_source_fees sfv ON sfv.source_deal_detail_id=td.source_deal_detail_id AND sfv.field_id=uddft.field_name
 	OUTER APPLY(
@@ -13728,7 +13735,7 @@ set @qry8a='
 				and td.term_start=term_start AND udft.internal_field_type = 18722 
 				group by source_deal_header_id)op 
 		LEFT JOIN '+@calc_result_table5+' udf_formula ON udf_formula.source_deal_detail_id = td.source_deal_detail_id
-				and uddft.udf_template_id=udf_formula.source_id AND udf_formula.is_final_result = ''y'' 	
+				and uddft.udf_template_id=udf_formula.udf_template_id AND udf_formula.is_final_result = ''y'' 	
 		LEFT JOIN user_defined_deal_fields_template ud ON ud.template_id = sdh.template_id
 			AND ud.field_id = 305013
 		LEFT JOIN user_defined_deal_fields_template ud1 on ud1.template_id = sdh.template_id
