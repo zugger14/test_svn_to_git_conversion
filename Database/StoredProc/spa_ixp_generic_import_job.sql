@@ -21697,7 +21697,7 @@ BEGIN
 	END 
 
 	--call auto adjust(this part couldnot be handled in trigger as it created unexpected behaviour after position calculation)
-	IF @ixp_rule_hash = '1C668AFD_E3AE_4344_AF42_EB23F4BD8B59' --trayport import
+	IF @ixp_rule_hash = '9DB48870_5BA4_47A3_B100_2512AD19A3CE' --trayport import
 	BEGIN
 		EXEC(' INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
 			   SELECT DISTINCT source_deal_header_id,
