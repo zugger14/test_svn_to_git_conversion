@@ -43,6 +43,12 @@ begin
 	SET @prod_date = EOMONTH(@prod_date)
 
 	SELECT @rate_schedule = maintain_rate_schedule FROM contract_group WHERE contract_id = @contract_id
+	IF @rate_schedule IS NULL
+	BEGIN
+		SELECT @rate_schedule = rate_schedule_id FROM variable_charge WHERE contract_id = @contract_id AND rate_type_id = @rate_type_id
+		AND @prod_date >= ISNULL(begin_date, '1900-01-01') AND @prod_date <= ISNULL(end_date, '9999-01-01')
+	END
+
 	SELECT @rate_value = SUM(CAST(trs1.rate AS FLOAT))
 	FROM (
 		SELECT MAX(effective_date) effective_date
@@ -52,11 +58,14 @@ begin
 		WHERE rate_type_id = @rate_type_id
 			AND coalesce(rate_schedule_id,@rate_schedule,-1) = isnull(@rate_schedule,-1)
 			AND @prod_date >= ISNULL(effective_date, @prod_date)
+			AND @prod_date >= ISNULL(begin_date, '1900-01-01') AND @prod_date <= ISNULL(end_date, '9999-01-01')
+			AND contract_id = @contract_id
 		GROUP BY rate_schedule_id, rate_type_id
 		) trs
 	INNER JOIN transportation_rate_schedule trs1 ON ISNULL(trs1.effective_date, '1990-01-01') = ISNULL(trs.effective_date, '1990-01-01')
 		AND coalesce(trs1.rate_schedule_id,trs.rate_schedule_id,-1) = coalesce(trs.rate_schedule_id,-1)
 		AND trs1.rate_type_id = trs.rate_type_id
+		AND @prod_date >= ISNULL(trs1.begin_date, '1900-01-01') AND @prod_date <= ISNULL(trs1.end_date, '9999-01-01')
 
 	SELECT @rate_value1 = SUM(CAST(vc1.rate AS FLOAT))
 	FROM (
@@ -67,12 +76,15 @@ begin
 		WHERE rate_type_id = @rate_type_id
 			AND coalesce(rate_schedule_id,@rate_schedule,-1) = isnull(@rate_schedule,-1)
 			AND @prod_date >= ISNULL(effective_date, @prod_date)
+			AND @prod_date >= ISNULL(begin_date, '1900-01-01') AND @prod_date <= ISNULL(end_date, '9999-01-01')
+			AND contract_id = @contract_id
 		GROUP BY rate_schedule_id, rate_type_id
 		) vc
 	INNER JOIN variable_charge vc1 ON ISNULL(vc1.effective_date, '1990-01-01') = ISNULL(vc.effective_date, '1990-01-01')
 	AND coalesce(vc1.rate_schedule_id,vc.rate_schedule_id,-1) = coalesce(vc.rate_schedule_id,-1)
 		AND vc1.rate_schedule_id = vc.rate_schedule_id
 		AND vc1.rate_type_id = vc.rate_type_id
+		AND @prod_date >= ISNULL(vc1.begin_date, '1900-01-01') AND @prod_date <= ISNULL(vc1.end_date, '9999-01-01')
 	--select @rate_value, @rate_value1
 
 	RETURN COALESCE(@rate_value, @rate_value1, 0)
