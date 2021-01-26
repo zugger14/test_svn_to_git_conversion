@@ -199,19 +199,19 @@ BEGIN
 			 + 'INNER JOIN contract_group cg ON  cg.contract_id = si.contract_id  ' + CHAR(10)
 
 			 + 'OUTER APPLY (
-					SELECT MAX(cg.currency) netting_currency FROM stmt_netting_group ng
+					SELECT MAX(cg.currency) netting_currency, MAX(contract_detail_id) contract_detail_id FROM stmt_netting_group ng
 					INNER JOIN stmt_netting_group_detail ngd ON ng.netting_group_id = ngd.netting_group_id
 					INNER JOIN contract_group cg ON cg.contract_id = ngd.contract_detail_id
 					WHERE si.contract_id = ng.netting_contract_id
 				) nett ' + char(10)
-			 
+			 + 'LEFT JOIN contract_group cg1 ON cg1.contract_id =  nett.contract_detail_id ' + char(10)
 			 + 'LEFT JOIN source_currency scu ON scu.source_currency_id = ISNULL(nett.netting_currency, cg.currency)  ' + char(10)
 			 + 'LEFT JOIN static_data_value sdv_workflow ON sdv_workflow.value_id = si.invoice_status  ' + char(10)
 			 + 'LEFT JOIN static_data_value sdv ON sdv.value_id = si.invoice_status  ' + char(10)
 			 + 'LEFT JOIN Contract_report_template crp_invoice ON crp_invoice.template_id = cg.invoice_report_template' + char(10)
 			 + 'LEFT JOIN Contract_report_template crp_remittance ON crp_remittance.template_id = cg.Contract_report_template' + char(10)
 			 + 'LEFT JOIN Contract_report_template crp_netting ON crp_netting.template_id = cg.netting_template' + char(10)
-			 + 'LEFT JOIN counterparty_contract_address cca ON cca.counterparty_id = sc.source_counterparty_id AND cca.contract_id = cg.contract_id ' + char(10)
+			 + 'LEFT JOIN counterparty_contract_address cca ON cca.counterparty_id = sc.source_counterparty_id AND cca.contract_id = ISNULL(cg1.contract_id,cg.contract_id) ' + char(10)
 			 + 'LEFT JOIN contract_report_template crt ON  crt.template_id = si.invoice_template_id  ' + char(10)
 			 --+ 'LEFT JOIN netting_group ng ON  ng.netting_group_id = si.netting_invoice_id  ' + char(10)
 			  + 'WHERE  1 = 1 ' + char(10)
