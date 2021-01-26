@@ -4500,7 +4500,7 @@ BEGIN -- Insert/Update Deal data
 	SELECT DISTINCT
 		h.[source_system_id]
 		, @process_id + '____' + CAST(p.rowid AS VARCHAR)
-		, GETDATE() --p.first_dom
+		, CAST(CAST(GETDATE() AS DATE) AS DATETIME) --p.first_dom, cast as date first done since timepart will have values on getdate which will bring issues on comparision of date.
 		, h.[ext_deal_id]
 		, h.[physical_financial_flag]
 		, h.[structured_deal_id]
