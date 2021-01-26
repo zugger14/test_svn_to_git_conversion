@@ -281,9 +281,9 @@ SET @alert_register_event_iu_step = 'EXEC spa_register_event 20601, 20537, ''' +
  			
 SET @alert_register_event_step += '; ' + @alert_register_event_iu_step
 
-IF @affected_deals IS NOT NULL
+IF EXISTS(SELECT 1 FROM #temp_affected_deals)
 BEGIN
- 	SET @insert_update_audit_step = 'spa_insert_update_audit ''' + @insert_update_flag + ''',''' + ISNULL(@affected_deals, '') + '''' + ',''Inserted from Blotter.'''
+ 	SET @insert_update_audit_step = 'spa_insert_update_audit ''' + @insert_update_flag + ''','''',''Inserted from Blotter.'',''' + @search_table + ''''
 END
  			
 SET @master_deal_view_step = 'spa_master_deal_view ''' + @insert_update_flag + ''',NULL, ''' + @search_table + ''''
