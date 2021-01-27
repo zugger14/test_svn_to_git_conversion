@@ -447,7 +447,7 @@ BEGIN
 		SET @sql = @sql + ' INSERT INTO  workflow_activities(workflow_trigger_id, as_of_date, process_id, process_table, message, source_column, source_id, user_login_id, event_message_id,XML_process_data, control_status, workflow_process_id, workflow_group_id)
 		  OUTPUT INSERTED.workflow_activity_id, INSERTED.user_login_id, INSERTED.source_id, INSERTED.[message] INTO #temp_workflow_activities(workflow_activity_id, user_login_id, source_id, wf_message)
 		  SELECT workflow_trigger_id, as_of_date, process_id, process_table, message, source_column, source_id, user_login_id, event_message_id,XML_process_data, control_status, workflow_process_id, workflow_group_id FROM #temp_log_datas
-		  WHERE ISNULL(temp.skip_log, ''y'') = ''y'''
+		  WHERE ISNULL(skip_log, ''y'') = ''y'''
 		--SET @sql = @sql + ' WHERE temp.approval_action_required = ''y'' '
 		--PRINT(@sql)
 		
