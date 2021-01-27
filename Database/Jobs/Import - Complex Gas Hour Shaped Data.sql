@@ -19,15 +19,16 @@ BEGIN
 	INSERT INTO batch_process_notifications(role_id,process_id,notification_type,csv_file_path)
 	SELECT @role_id,
 		'zef42e2330j17',
-		750,
+		752,
 		@csv_file_path			
 END
 ELSE
 BEGIN
 	UPDATE batch_process_notifications
 	SET role_id = @role_id
-		, notification_type = 750
+		, notification_type = 752
 	WHERE process_id = 'zef42e2330j17'
+		AND role_id = @role_id
 END
 
 IF NOT EXISTS(SELECT * FROM application_security_role WHERE role_name = 'Enercity Traders')
@@ -43,15 +44,16 @@ BEGIN
 	INSERT INTO batch_process_notifications(role_id,process_id,notification_type,csv_file_path)
 	SELECT @role_id,
 		'zef42e2330j17',
-		750,
-		@csv_file_path			
+		752,
+		@csv_file_path	
 END
 ELSE
 BEGIN
 	UPDATE batch_process_notifications
 	SET role_id = @role_id
-		, notification_type = 750
+		, notification_type = 752
 	WHERE process_id = 'zef42e2330j17'
+		AND role_id = @role_id
 END
 
 DECLARE @command1 NVARCHAR(4000) = '
