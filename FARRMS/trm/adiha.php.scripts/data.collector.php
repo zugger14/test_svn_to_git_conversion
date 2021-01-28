@@ -327,7 +327,7 @@
             foreach ($array as $key => $value) {            
                 if (is_array($value)) {
                     if (array_depth($value) > 1 && (!array_key_exists("0", $value))) {
-                        $rand_num = rand(10,10000);                                                                                  
+                        $rand_num = rand(10,1000000) . '_' . rand(10,1000000);                                                                                  
                         print("<row id='".cleanString($parent_key)."_". $parent_counter . "_".$rand_num."'>");
                             print("<cell image='" . $folder_icon . "'><![CDATA[".$key."]]></cell>");
                             child_tree_grid_xml_prepare($value, $grouping_column_list, $key, $grouping_type);
@@ -339,7 +339,7 @@
                             if ($key !== 0 && empty($key)) {
                                 $row_display = "style='display:none'";
                             }
-                            $rand_num = rand(10,10000);
+                            $rand_num = rand(10,1000000) . '_' . rand(10,1000000);   
                             /* ADD lock icon for setup data import export */
                             $is_lock_image = '';
                             $user_data_lock = '';
