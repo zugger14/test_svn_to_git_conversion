@@ -3003,7 +3003,7 @@ $formula_form_data = '[
             var sql = "EXEC spa_deal_fields_mapping @flag = 's', @deal_id=" + deal_id 
                 + ", @template_id=" + template_id 
                 + ", @counterparty_id=" + counterparty_id 
-                + ", @location_id=" + location_id 
+                + ", @location_id='" + location_id + "'"
                 + ", @deal_fields='shipper_code1', @term_start='" + term_start + "'"
                 + ", @contract_id='" + contract_id + "'"
                 + ", @buy_sell_flag='" + buy_sell_flag + "'"
@@ -3016,7 +3016,7 @@ $formula_form_data = '[
             var sql = "EXEC spa_deal_fields_mapping @flag = 's', @deal_id=" + deal_id 
                 + ", @template_id=" + template_id 
                 + ", @counterparty_id=" + counterparty_id 
-                + ", @location_id=" + location_id 
+                + ", @location_id='" + location_id + "'"
                 + ", @deal_fields='shipper_code2', @term_start='" + term_start + "'"
                 + ", @contract_id='" + contract_id + "'"
                 + ", @buy_sell_flag='" + buy_sell_flag + "'"
