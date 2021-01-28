@@ -148,15 +148,12 @@ end
 if @sub_book is null
 begin
 	select @sub_book=isnull(@sub_book+',','')+cast(book_deal_type_map_id as varchar) from source_system_book_map 
-	where logical_name in (
-	'Opt-Power','Spec-Power','R2M-NGR','R2M-Other','Power-NOM','ConvGen','RenewGen','Sales-Power-B2B','Sales-Power-B2C','Sales-Power-Spot')
+	where logical_name in ('Opt-Power','Spec-Power','R2M-NGR','R2M-Other','Power-NOM','ConvGen','RenewGen','Sales-Power-B2B','Sales-Power-B2C','Sales-Power-Spot')
 end
 
 --SET @begin_time = GETDATE()
 
 --SET @process_id = REPLACE(newid(),'-','_')
-
-
 
 if object_id('tempdb..#temp_deals_pos') is not null drop table #temp_deals_pos
 if object_id('tempdb..#shaped_volume_update_deal_detail_id') is not null drop table #shaped_volume_update_deal_detail_id
@@ -177,7 +174,7 @@ create table #shaped_volume_update_deal_detail_id (
 	[period] int
 )
 
-CREATE TABLE #temp_deals_pos (source_deal_detail_id INT,external_id varchar(100))
+CREATE TABLE #temp_deals_pos (source_deal_detail_id INT,external_id varchar(100),buy_sell_flag varchar(1))
 
 create table #unpv_pos_shaped
 (
@@ -219,8 +216,8 @@ inner join dbo.time_zones tz (NOLOCK) ON tz.timezone_id = df.default_timezone_id
 
 
 
-SET @st1='insert into #temp_deals_pos (source_deal_detail_id,external_id)		
-select distinct sdd.source_deal_detail_id,scmd1.external_id
+SET @st1='insert into #temp_deals_pos (source_deal_detail_id,external_id,buy_sell_flag)		
+select distinct sdd.source_deal_detail_id,scmd1.external_id,sdd.buy_sell_flag
 from source_deal_header sdh
 	inner join source_system_book_map sbm  ON sdh.source_system_book_id1 = sbm.source_system_book_id1 AND 
 		sdh.source_system_book_id2 = sbm.source_system_book_id2 AND sdh.source_system_book_id3 = sbm.source_system_book_id3 AND 
@@ -316,20 +313,6 @@ insert into #auto_balancing_location(location_id) select distinct location_id  f
 
 exec spa_print @st1		
 exec(@st1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -503,7 +486,7 @@ group by sdh.source_deal_header_id
 
 	,dateadd(minute,pos.[Period],to_dt.to_dt) actual_term_to_start
 	,dateadd(minute,15,dateadd(minute,pos.[Period],to_dt.to_dt)) actual_term_to_end
-	,pos.volume position
+	,4*pos.volume position
 	,'MW' UOM
 
 	from (
@@ -511,7 +494,7 @@ group by sdh.source_deal_header_id
 			where [external_id] is not null
 			group by [external_id],term_start,hr,[period],is_dst
 		union all
-		select t.[external_id],sv.term_date,left(sv.hr,2) hr,sv.[period],sv.is_dst,sum(volume) volume 
+		select t.[external_id],sv.term_date,left(sv.hr,2) hr,sv.[period],sv.is_dst,sum(case when buy_sell_flag='s' then -1 else 1 end *volume) volume 
 		from #shaped_volume_update_deal_detail_id sv
 			inner join #temp_deals_pos t on t.source_deal_detail_id=sv.source_deal_detail_id
 		where  t.[external_id] is not null
