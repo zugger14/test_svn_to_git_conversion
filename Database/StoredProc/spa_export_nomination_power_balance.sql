@@ -58,7 +58,7 @@ DECLARE
         @str VARCHAR(1000) =null,
         @book VARCHAR(1000) =null,
 		@sub_book VARCHAR(1000) =null,--'16',--'211,217' ,--'162', --'162,164,166,206'
-        @location_ids VARCHAR(1000) ='2855,2849,2848,2856',
+        @location_ids VARCHAR(1000) =null,
         @term_start VARCHAR(10) = null,
         @term_end VARCHAR(10) = null,
         @round  tinyint = 10,
@@ -139,9 +139,13 @@ set @round=isnull(@round,10)
 
 --select @as_of_date,@term_start,@term_end
 
+if @location_ids is null
+begin
+	select @location_ids=isnull(@location_ids+',','')+cast(source_minor_location_id as varchar) from source_minor_location 
+	where location_name in ('Tennet','50Hertz','Amprion','Transnet')
+end
 
-
-if @sub_book is not null
+if @sub_book is null
 begin
 	select @sub_book=isnull(@sub_book+',','')+cast(book_deal_type_map_id as varchar) from source_system_book_map 
 	where logical_name in (
