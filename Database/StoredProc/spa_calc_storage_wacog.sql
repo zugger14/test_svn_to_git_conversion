@@ -1800,22 +1800,21 @@ BEGIN TRY
 			udf_template_id,
 			udf_value
 	    )
-	    SELECT sdh.source_deal_header_id, uddft.udf_template_id, default_value udf_value
-			FROM   (
-				SELECT TOP 1 t2.source_deal_header_id
-					FROM #detail_updated t1 
-					INNER JOIN source_deal_detail t2 ON t2.source_deal_detail_id = t1.source_deal_detail_id
-				) t
-			INNER JOIN source_deal_header sdh ON  sdh.source_deal_header_id = t.source_deal_header_id
-	        INNER JOIN source_deal_header_template sdht
-	            ON  sdh.template_id = sdht.template_id
-	        INNER JOIN user_defined_deal_fields_template uddft
-	            ON  uddft.template_id = sdh.template_id
-				AND uddft.udf_template_id > 0
-	            AND uddft.udf_type = 'h' 
-			   --AND uddft.Field_label in ('Conversion Neutrality Charge','Variable Storage Charge')
+	    SELECT t.source_deal_header_id, uddft.udf_template_id, default_value udf_value
+		FROM   (
+			SELECT sdh.source_deal_header_id, MAX(sdh.template_id) template_id
+			FROM #detail_updated t1 
+			INNER JOIN source_deal_detail t2 ON t2.source_deal_detail_id = t1.source_deal_detail_id
+			INNER JOIN source_deal_header sdh ON  sdh.source_deal_header_id = t2.source_deal_header_id
+			GROUP BY sdh.source_deal_header_id
+		) t
+	    INNER JOIN user_defined_deal_fields_template uddft
+	        ON  uddft.template_id = t.template_id
+			AND uddft.udf_template_id > 0
+	        AND uddft.udf_type = 'h' 
+			--AND uddft.Field_label in ('Conversion Neutrality Charge','Variable Storage Charge')
 		LEFT JOIN user_defined_deal_fields udddf
-	            ON  udddf.source_deal_header_id = sdh.source_deal_header_id
+	            ON  udddf.source_deal_header_id = t.source_deal_header_id
 	                AND udddf.udf_template_id = uddft.udf_template_id
 		WHERE  udddf.udf_deal_id IS NULL
 
