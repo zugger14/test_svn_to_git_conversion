@@ -472,30 +472,30 @@ BEGIN
 			' ELSE ' ' END 				
 	SET @Sql_WHERE = 'WHERE 1=1 '
 		+ ' AND ISNULL(term_bk.term_start, sdd.term_start) < ''' + CAST(@term_start AS VARCHAR(30)) + ''''	
-		+ ' AND sdh.template_id = CASE WHEN ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + ' THEN sdh.template_id ELSE ' + ISNULL(@imb_actualization, '-1') + ' END'
-		+ case @deal_type 
-			when 'a' then ' AND sdh.template_id IN ( ' + @deal_template_includes + ')' --term link report, storage inventory deals
-			when 'i' then ' AND ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''y'') = ''y'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''n'') = ''n''))'
-				+ ' AND sdh.template_id = ' + @storage_inj_template_id --injection volume link report, injection deals
-			when 'W' then ' AND ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''n'') = ''n'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''y'') = ''y''))'
-				+ ' AND sdh.template_id = ' + @storage_with_template_id --withdrawal volume link report, withdrawal deals
-			else ' AND sdh.template_id NOT IN ( ' + @deal_template_excludes + ')' 
-		  end + 
-		+ CASE WHEN @commodity_id IS NOT NULL THEN ' AND spcd.commodity_id=' + CAST(@commodity_id AS VARCHAR(30)) ELSE '' END
-		+ CASE WHEN @curve_id IS NOT NULL THEN ' AND sdd.curve_id=' + CAST(@curve_id AS VARCHAR(30)) ELSE '' END
-		+ CASE WHEN @contract_id IS NOT NULL THEN ' AND sdh.contract_id=' + CAST(@contract_id AS VARCHAR(30)) ELSE '' END
-		+ CASE WHEN @location_id IS NOT NULL THEN '
-			AND (
-				sdd.location_id IN (' + @location_id + ')' + 
-				IIF(@call_from = 'STORAGE_GRID'
-					, ' OR sdh.template_id = ' + ISNULL(@imb_actualization, '-1')
-					, ' AND ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10))
-				) 
-			+ ')' ELSE '' 
-		END
-		+ CASE WHEN ISNULL(@drill_location,'') <>'' THEN ' AND sdh.contract_id' 
-		+ CASE WHEN ISNULL(@drill_contract_id, '') = '' THEN ' IS NULL ' ELSE '=' + CAST(@drill_contract_id AS VARCHAR(30)) END ELSE '' END		
-		+ ' AND isnull(sdh.source_deal_type_id, -1) = iif(isnull(nullif(gaivs.include_non_standard_deals, ''''), ''n'') = ''n'',' + @deal_type_storage + ', isnull(sdh.source_deal_type_id, -1))'
+		--+ ' AND sdh.template_id = CASE WHEN ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + ' THEN sdh.template_id ELSE ' + ISNULL(@imb_actualization, '-1') + ' END'
+		--+ case @deal_type 
+		--	when 'a' then ' AND sdh.template_id IN ( ' + @deal_template_includes + ')' --term link report, storage inventory deals
+		--	when 'i' then ' AND ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''y'') = ''y'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''n'') = ''n''))'
+		--		+ ' AND sdh.template_id = ' + @storage_inj_template_id --injection volume link report, injection deals
+		--	when 'W' then ' AND ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''n'') = ''n'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''y'') = ''y''))'
+		--		+ ' AND sdh.template_id = ' + @storage_with_template_id --withdrawal volume link report, withdrawal deals
+		--	else ' AND sdh.template_id NOT IN ( ' + @deal_template_excludes + ')' 
+		--  end + 
+		--+ CASE WHEN @commodity_id IS NOT NULL THEN ' AND spcd.commodity_id=' + CAST(@commodity_id AS VARCHAR(30)) ELSE '' END
+		--+ CASE WHEN @curve_id IS NOT NULL THEN ' AND sdd.curve_id=' + CAST(@curve_id AS VARCHAR(30)) ELSE '' END
+		--+ CASE WHEN @contract_id IS NOT NULL THEN ' AND sdh.contract_id=' + CAST(@contract_id AS VARCHAR(30)) ELSE '' END
+		--+ CASE WHEN @location_id IS NOT NULL THEN '
+		--	AND (
+		--		sdd.location_id IN (' + @location_id + ')' + 
+		--		IIF(@call_from = 'STORAGE_GRID'
+		--			, ' OR sdh.template_id = ' + ISNULL(@imb_actualization, '-1')
+		--			, ' AND ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10))
+		--		) 
+		--	+ ')' ELSE '' 
+		--END
+		--+ CASE WHEN ISNULL(@drill_location,'') <>'' THEN ' AND sdh.contract_id' 
+		--+ CASE WHEN ISNULL(@drill_contract_id, '') = '' THEN ' IS NULL ' ELSE '=' + CAST(@drill_contract_id AS VARCHAR(30)) END ELSE '' END		
+		--+ ' AND isnull(sdh.source_deal_type_id, -1) = iif(isnull(nullif(gaivs.include_non_standard_deals, ''''), ''n'') = ''n'',' + @deal_type_storage + ', isnull(sdh.source_deal_type_id, -1))'
 
 		+ ' GROUP BY ml.location_name,ISNULL(cg.contract_name,'''') ,sdd.location_id' 
 		+ CASE WHEN @drill_location IS NULL THEN '' ELSE ', sdh.source_deal_header_id' END
@@ -624,31 +624,31 @@ BEGIN
 	SET @Sql_SELECT += '
 	WHERE 1 = 1'
 		+ ' AND term_bk.term_start BETWEEN ''' + CAST(@term_start AS VARCHAR(30)) + ''' AND ''' + CAST(@term_end AS VARCHAR(30)) + ''''				 
-		+ ' AND sdh.template_id = CASE WHEN ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + ' THEN sdh.template_id ELSE ' + ISNULL(@imb_actualization, '-1') + ' END'
-		+ case @deal_type 
-			when 'a' then ' AND sdht.template_id IN ( ' + @deal_template_includes + ')' --term link report, storage inventory deals
-			when 'i' then ' AND ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''y'') = ''y'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''n'') = ''n''))' 
-				+ ' AND sdht.template_id = ' + @storage_inj_template_id --injection volume link report, injection deals
-			when 'W' then ' AND ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''n'') = ''n'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''y'') = ''y''))'
-				+ ' AND sdht.template_id = ' + @storage_with_template_id --withdrawal volume link report, withdrawal deals
-			else ' AND sdht.template_id NOT IN ( ' + @deal_template_excludes + ')' 
-		  end +  
-		+ CASE WHEN @commodity_id IS NOT NULL THEN ' AND ISNULL(sdh.commodity_id, spcd.commodity_id) = ' + CAST(@commodity_id AS VARCHAR(30)) ELSE '' END
-		+ CASE WHEN @curve_id IS NOT NULL THEN ' AND sdd.curve_id=' + CAST(@curve_id AS VARCHAR(30)) ELSE '' END
-		+ CASE WHEN @contract_id IS NOT NULL THEN ' AND sdh.contract_id=' + CAST(@contract_id AS VARCHAR(30)) ELSE '' END
-		--+ CASE WHEN @location_id IS NOT NULL THEN ' AND ( (sdd.location_id IN (' + @location_id + ') AND ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + '))' ELSE '' END
-		+ CASE WHEN @location_id IS NOT NULL THEN '
-			AND (
-				sdd.location_id IN (' + @location_id + ')' + 
-				IIF(@call_from = 'STORAGE_GRID'
-					, ' OR sdh.template_id = ' + ISNULL(@imb_actualization, '-1')
-					, ' AND ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10))
-				) 
-			+ ')' ELSE '' 
-		END
-		+ CASE WHEN ISNULL(@drill_location,'') <>'' THEN ' AND sdh.contract_id' 
-		+ CASE WHEN ISNULL(@drill_contract_id, '') = '' THEN ' IS NULL ' ELSE '=' + CAST(@drill_contract_id AS VARCHAR(30)) END ELSE '' END
-		+ ' AND isnull(sdh.source_deal_type_id, -1) = iif(isnull(nullif(gaivs.include_non_standard_deals, ''''), ''n'') = ''n'',' + @deal_type_storage + ', isnull(sdh.source_deal_type_id, -1))'
+		--+ ' AND sdh.template_id = CASE WHEN ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + ' THEN sdh.template_id ELSE ' + ISNULL(@imb_actualization, '-1') + ' END'
+		--+ case @deal_type 
+		--	when 'a' then ' AND sdht.template_id IN ( ' + @deal_template_includes + ')' --term link report, storage inventory deals
+		--	when 'i' then ' AND ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''y'') = ''y'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''n'') = ''n''))' 
+		--		+ ' AND sdht.template_id = ' + @storage_inj_template_id --injection volume link report, injection deals
+		--	when 'W' then ' AND ((buy_sell_flag=''b'' and isnull(gaivs.injection_as_long,''n'') = ''n'') or (buy_sell_flag=''s'' and isnull(gaivs.injection_as_long,''y'') = ''y''))'
+		--		+ ' AND sdht.template_id = ' + @storage_with_template_id --withdrawal volume link report, withdrawal deals
+		--	else ' AND sdht.template_id NOT IN ( ' + @deal_template_excludes + ')' 
+		--  end +  
+		--+ CASE WHEN @commodity_id IS NOT NULL THEN ' AND ISNULL(sdh.commodity_id, spcd.commodity_id) = ' + CAST(@commodity_id AS VARCHAR(30)) ELSE '' END
+		--+ CASE WHEN @curve_id IS NOT NULL THEN ' AND sdd.curve_id=' + CAST(@curve_id AS VARCHAR(30)) ELSE '' END
+		--+ CASE WHEN @contract_id IS NOT NULL THEN ' AND sdh.contract_id=' + CAST(@contract_id AS VARCHAR(30)) ELSE '' END
+		----+ CASE WHEN @location_id IS NOT NULL THEN ' AND ( (sdd.location_id IN (' + @location_id + ') AND ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + '))' ELSE '' END
+		--+ CASE WHEN @location_id IS NOT NULL THEN '
+		--	AND (
+		--		sdd.location_id IN (' + @location_id + ')' + 
+		--		IIF(@call_from = 'STORAGE_GRID'
+		--			, ' OR sdh.template_id = ' + ISNULL(@imb_actualization, '-1')
+		--			, ' AND ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10))
+		--		) 
+		--	+ ')' ELSE '' 
+		--END
+		--+ CASE WHEN ISNULL(@drill_location,'') <>'' THEN ' AND sdh.contract_id' 
+		--+ CASE WHEN ISNULL(@drill_contract_id, '') = '' THEN ' IS NULL ' ELSE '=' + CAST(@drill_contract_id AS VARCHAR(30)) END ELSE '' END
+		--+ ' AND isnull(sdh.source_deal_type_id, -1) = iif(isnull(nullif(gaivs.include_non_standard_deals, ''''), ''n'') = ''n'',' + @deal_type_storage + ', isnull(sdh.source_deal_type_id, -1))'
 
 		+ ' 
 		GROUP BY ml.location_name, ISNULL(cg.contract_name, ''''), isnull(term_bk.term_start,sdd.term_start), sdd.location_id' 

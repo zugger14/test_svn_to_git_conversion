@@ -3116,13 +3116,14 @@
                 'reschedule': reschedule,
                 'granularity': granularity
             };
-            
-            var json_result = adiha_post_data('return_json', exec_call, '', '', 'fx_save_schedule_ajax', false);
+            parent.flow_optimization.layout.cells('d').progressOn();
+            var json_result = adiha_post_data('return_json', exec_call, '', '', 'fx_save_schedule_ajax', true);
             DEBUG_PROCESS && console.log(JSON.stringify(exec_call));
             //logic to open or not sub book window
         }
     }
     function fx_save_schedule_ajax(result) {
+		parent.flow_optimization.layout.cells('d').progressOff();
         var json_obj = $.parseJSON(result);
         DEBUG_PROCESS && console.log(JSON.stringify(json_obj));
         if(json_obj[0].errorcode == 'Error' && json_obj[0].recommendation == 'generic_mapping') {
@@ -3186,8 +3187,8 @@
                         };
                         DEBUG_PROCESS && console.log(JSON.stringify(exec_call));
                         
-                        var json_result = adiha_post_data('return_json', exec_call, '', '', '', false);
-                        pre_loading(5000);
+                        var json_result = adiha_post_data('return_json', exec_call, '', '', '', true);
+                        pre_loading(0);
                         success_call('Schedule deals have been created successfully.', 'error');
                         parent.flow_optimization.flow_optimization_form.uncheckItem('reschedule');
                         reschedule = 0;
@@ -3199,10 +3200,10 @@
            // DEBUG_PROCESS && console.log('SQL error on spa_schedule_deal_flow_optimization');
 		    var msg = json_obj[0].message; 
             success_call(msg, 'error');
-            pre_loading(5000);
+            pre_loading(0);
         } else if(json_obj[0].errorcode == 'Success') {
             success_call('Schedule deals have been created successfully.', 'error');
-            pre_loading(5000);
+            pre_loading(0);
             parent.flow_optimization.flow_optimization_form.uncheckItem('reschedule');
             reschedule = 0;
         }
