@@ -135,9 +135,9 @@ SET @_sql = ''
 			,ISNULL(sddh.price, sdd.fixed_price) [Price]
 			,sml.location_name [Location]
 			,spcd.curve_id [Index]
-			,case when LEFT(a.user_clm, 2) <= 6 THEN DATEADD(DD, 1, sddh.term_date)
-				ELSE sddh.term_date 
-				END [Term]
+			,dbo.FNADateFormat(case when LEFT(a.user_clm, 2) <= 6 THEN cast(DATEADD(DD, 1, sddh.term_date) as date)
+				ELSE cast(sddh.term_date as date) 
+				END) [Term]
 			,IIF(sdd.deal_volume_frequency = ''''d'''', NULL, LEFT(a.user_clm, 2)) [Hour]
 			,ABS(sddh.is_dst) [DST]
 			,sdd.leg [Leg]
@@ -993,7 +993,7 @@ EXEC(@_sql)
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Term'
-			   , reqd_param = NULL, widget_id = 6, datatype_id = 2, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 4, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 6, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 4, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -1006,7 +1006,7 @@ EXEC(@_sql)
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'Term' AS [name], 'Term' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 2 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'Term' AS [name], 'Term' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Shaped Data View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -1209,4 +1209,5 @@ COMMIT TRAN
 	END CATCH
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
-		DROP TABLE #data_source_column
+		DROP TABLE #data_source_column	
+	
