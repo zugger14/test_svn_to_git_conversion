@@ -92,7 +92,7 @@ exec [dbo].[spa_export_nomination_power_balance]
         @str =null,
         @book =null,
 		@sub_book =null,--'16',--'211,217' ,--'162', --'162,164,166,206'
-        @location_ids  ='2855,2849,2848,2856',
+        @location_ids  =null,
         @term_start = null,
         @term_end  = null,
         @round= 10,
@@ -318,6 +318,23 @@ exec spa_print @st1
 exec(@st1)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 --select distinct hr from #unpv_pos_shaped
 -- Power plant deals
 
@@ -490,10 +507,10 @@ group by sdh.source_deal_header_id
 	,'MW' UOM
 
 	from (
-		--select [external_id],term_start term_date,hr,[period],is_dst,sum(volume) volume from #unpv_pos_shaped
-		--	where [external_id] is not null
-		--	group by [external_id],term_start,hr,[period],is_dst
-		--union all
+		select [external_id],term_start term_date,hr,[period],is_dst,sum(volume) volume from #unpv_pos_shaped
+			where [external_id] is not null
+			group by [external_id],term_start,hr,[period],is_dst
+		union all
 		select t.[external_id],sv.term_date,left(sv.hr,2) hr,sv.[period],sv.is_dst,sum(volume) volume 
 		from #shaped_volume_update_deal_detail_id sv
 			inner join #temp_deals_pos t on t.source_deal_detail_id=sv.source_deal_detail_id
@@ -532,8 +549,6 @@ group by sdh.source_deal_header_id
 				-1   --CASE WHEN to_tz.offset_hr-from_tz.offset_hr<0 THEN -1 ELSE 1 END
 			ELSE 0 END  offset
 	) offset
-
-
 	CROSS APPLY
 	(
 		select DATEADD(hour,offset.offset,org_term_from.org_term_from) to_dt
@@ -557,9 +572,6 @@ group by sdh.source_deal_header_id
 --	,Message VARCHAR(1000) COLLATE DATABASE_DEFAULT
 --	,Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT
 --)
-
-
-
 
 
 --	INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation)   
