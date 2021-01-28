@@ -77,7 +77,8 @@ BEGIN
 			@next_module_id			INT,
 			@next_event_id			INT,
 			@final_next_module_events_id INT = NULL,
-			@module_id INT
+			@module_id INT,
+			@skip_log BIT = 0
 	
 	IF @workflow_process_id IS NULL
 		SET @workflow_process_id = dbo.FNAGetNewID()
@@ -718,24 +719,10 @@ BEGIN
 					FROM dbo.SplitCommaSeperatedValues(@att_files) a
 				) b
 				where rnk = 1
-					
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 			END
 			
+			SELECT @skip_log = 1 FROm #temp_log_datas WHERE skip_log = 'y'
+
 			-- Logic to send mail to listed user if the contact type is not defined. 
 			IF @msg_process_table IS NULL AND EXISTS(SELECT 1 FROM #notification_type WHERE notification_type IN (750))
 			BEGIN
@@ -917,18 +904,24 @@ BEGIN
 							CROSS JOIN #temp_workflow_activities twa
 							LEFT JOIN #temp_grouping_workflow_activities tgwa ON twa.workflow_activity_id = tgwa.workflow_activity_id'
 
-			IF @process_table  IS NOT NULL
+			IF @process_table  IS NOT NULL AND @skip_log = 'n'
 				SET @sql = @sql + ' INNER JOIN workflow_activities wa ON wa.workflow_activity_id = twa.workflow_activity_id
 									INNER JOIN #splitted_process_table_mapping a ON a.process_table_name = wa.process_table '
+
 			SET @sql = @sql + ' OUTER APPLY (SELECT notification_type FROM #notification_type WHERE notification_type IN (757,751)) nt'
 			SET @sql = @sql + ' WHERE temp.user_login_id IS NOT NULL AND ISNULL(NULLIF(twa.user_login_id,''''), temp.user_login_id) = temp.user_login_id AND temp.user_login_id <> '''''
+
 			IF @process_table  IS NOT NULL
 				SET @sql = @sql + ' AND a.message IS NOT NULL'
 
 			IF @self_notify = 'n'
 				SET @sql = @sql + ' AND temp.user_login_id <> dbo.FNADBUser()'
 			
-			SET @sql = @sql + ' AND ISNULL(temp.automatic_proceed,''a'') <> ''h'' AND tgwa.workflow_activity_id IS NOT NULL'
+			SET @sql = @sql + ' AND ISNULL(temp.automatic_proceed,''a'') <> ''h'''
+			
+			IF @skip_log = 'n'
+				SET @sql = @sql + ' AND tgwa.workflow_activity_id IS NOT NULL'
+
 		EXEC spa_print @att_file_string
 			EXEC(@sql)
 		END
