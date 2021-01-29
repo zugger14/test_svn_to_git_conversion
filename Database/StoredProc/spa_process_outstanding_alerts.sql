@@ -78,7 +78,7 @@ BEGIN
 			@next_event_id			INT,
 			@final_next_module_events_id INT = NULL,
 			@module_id INT,
-			@skip_log BIT = 0
+			@skip_log NCHAR(1) = 'n'
 	
 	IF @workflow_process_id IS NULL
 		SET @workflow_process_id = dbo.FNAGetNewID()
@@ -721,7 +721,7 @@ BEGIN
 				where rnk = 1
 			END
 			
-			SELECT @skip_log = 1 FROm #temp_log_datas WHERE skip_log = 'y'
+			SELECT @skip_log = 'y' FROm #temp_log_datas WHERE skip_log = 'y'
 
 			-- Logic to send mail to listed user if the contact type is not defined. 
 			IF @msg_process_table IS NULL AND EXISTS(SELECT 1 FROM #notification_type WHERE notification_type IN (750))
