@@ -16,6 +16,7 @@ GO
 									  m => Insertion for Message board.
 									  i => Insertion for Web serives.
 									  s= > Drilldown responses message.
+									  n= > Specific Messaging Logic for EznergyTDSExporter (Timeseries Decimal Segments)
 
 	@remote_service_response_log_id : Remote service response log Id 
 	@remote_service_type_id         : Remote service type Id
@@ -127,6 +128,66 @@ WHERE bpn.process_id = RIGHT(@process_id, 13)
 	AND (bpn.user_login_id IS NOT NULL OR aru.user_login_id IS NOT NULL)
 
 END
+IF @flag = 'n'
+BEGIN
+	-- For Success case, send message to users in role 'Nomination Submission Notification-Success'
+	INSERT INTO message_board (
+		 user_login_id
+		,source
+		,[description]
+		,url_desc
+		,[url]
+		,[type]
+		,job_name
+		,as_of_date
+		,process_id
+		)
+	SELECT DISTINCT users.user_login_id
+		,@source
+		,ISNULL('<a target="_blank" href="./dev/spa_html.php?__user_name__=' + users.user_login_id + '&spa=exec spa_remote_service_response_log @process_id =''' + @new_process_id + ''',@flag=''s'', @response_status=''Success''"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')</ul></a>', 'Description is null')
+		,NULL
+		,NULL
+		,'s'
+		,@job_name
+		,NULL
+		,@new_process_id
+	FROM remote_service_response_log rsrl
+	CROSS APPLY (
+		SELECT user_login_id FROM application_security_role asr 
+		INNER JOIN application_role_user aru ON aru.role_id = asr.role_id
+		WHERE role_name = 'Nomination Submission Notification-Success'
+	) users
+	WHERE rsrl.process_id = @new_process_id AND response_status = 'Success'
+
+	-- For Error case, send message to users in role 'Nomination Submission Notification-Error'
+	INSERT INTO message_board (
+		 user_login_id
+		,source
+		,[description]
+		,url_desc
+		,[url]
+		,[type]
+		,job_name
+		,as_of_date
+		,process_id
+		)
+	SELECT DISTINCT users.user_login_id
+		,@source
+		,ISNULL('<a target="_blank" href="./dev/spa_html.php?__user_name__=' + users.user_login_id + '&spa=exec spa_remote_service_response_log @process_id =''' + @new_process_id + ''',@flag=''s'', @response_status=''Error''"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')</ul></a><font color=''red''>(Error(s) Found).</font>', 'Description is null')
+		,NULL
+		,NULL
+		,'e'
+		,@job_name
+		,NULL
+		,@new_process_id
+	FROM remote_service_response_log rsrl
+	CROSS APPLY (
+		SELECT user_login_id FROM application_security_role asr 
+		INNER JOIN application_role_user aru ON aru.role_id = asr.role_id
+		WHERE role_name = 'Nomination Submission Notification-Error'
+	) users
+	WHERE rsrl.process_id = @new_process_id AND response_status = 'Error'
+END
 
 IF @flag = 'i'
 BEGIN
@@ -182,6 +243,7 @@ BEGIN
 		, create_user [Create User]
 		, create_ts [Create TS]
 	FROM remote_service_response_log WHERE process_id  =  @process_id 
+	AND response_status = ISNULL(@response_status, response_status)  
 END
 
 GO	

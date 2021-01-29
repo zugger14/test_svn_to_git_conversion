@@ -45,6 +45,10 @@ namespace FARRMSExportCLR
                 exportWebServiceInfo.Connection.Close();
                 #endregion
 
+                string flag = null;
+                
+                flag = (tableNameorQuery.IndexOf("spa_rfx_run_sql") > 0) ? "m" : "n";
+
                 string responseToken = "";
                 string tokenId = "";
                 string ContractGUID = exportWebServiceInfo.authToken;
@@ -138,9 +142,7 @@ namespace FARRMSExportCLR
                         timeSerieId = y.Key.timeSerieId
 
                     }).ToList();
-
-                    MessageBoard("TimeSeries Decimal Segment", exportStatus.ProcessID, exportStatus.FileName, "Success", tds.newProcessID, tds.jobName);
-
+                    
                     for (int x = 0; x < getUniqueTimeSerieIds.Count; x++)
                     {
                         string appendXml = "";
@@ -218,6 +220,8 @@ namespace FARRMSExportCLR
 
                         }
                     }
+                    MessageBoard("TimeSeries Decimal Segment", exportStatus.ProcessID, exportStatus.FileName, "Success", tds.newProcessID, tds.jobName, flag);
+
                 }
                 #endregion 
             }
@@ -239,7 +243,7 @@ namespace FARRMSExportCLR
         }
 
         #region Messaging board
-        public void MessageBoard(string msg, string ProcessId, string fileName, string Status, string newProcessID, String jobName)
+        public void MessageBoard(string msg, string ProcessId, string fileName, string Status, string newProcessID, String jobName, string flag)
         {
 
             //using (SqlConnection con = new SqlConnection(@"Data Source=SG-D-SQL02.farrms.us,2034;Initial Catalog=TRMTracker_release;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
@@ -250,7 +254,7 @@ namespace FARRMSExportCLR
                     using (SqlCommand cmdm = new SqlCommand("spa_remote_service_response_log", con))
                     {
                         cmdm.CommandType = CommandType.StoredProcedure;
-                        cmdm.Parameters.Add(new SqlParameter("@flag", "m"));
+                        cmdm.Parameters.Add(new SqlParameter("@flag", flag));
                         cmdm.Parameters.Add(new SqlParameter("@response_status", Status));
                         cmdm.Parameters.Add(new SqlParameter("@response_message", msg));
                         cmdm.Parameters.Add(new SqlParameter("@request_msg_detail", null));

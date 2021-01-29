@@ -480,21 +480,28 @@ group by sdh.source_deal_header_id
 		SET @new_job_name = 'spa_update_deal_total_volume_' + dbo.FNAGetNewID()
 		EXEC spa_run_sp_as_job @new_job_name,  @st1, 'spa_update_deal_total_volume', @user_login_id
 	END
+	
+	DECLARE @out_msg NVARCHAR(500), @export_web_services_id INT, @sql NVARCHAR(MAX), @batch_process_table NVARCHAR(200), @final_process_table NVARCHAR(200)
+	
+	SET @final_process_table = dbo.FNAProcessTableName('final', NULL, @process_id)
 
+	EXEC ('CREATE TABLE ' + @final_process_table + '([Time series id] INT, startDate DATETIME, endDate DATETIME, Position NUMERIC(38,18), UOM NVARCHAR(10))')
+	
+	SET @sql = ('INSERT INTO ' + @final_process_table + '
 	select 
 	pos.[external_id]
 
 	,dateadd(minute,pos.[Period],to_dt.to_dt) actual_term_to_start
 	,dateadd(minute,15,dateadd(minute,pos.[Period],to_dt.to_dt)) actual_term_to_end
 	,pos.volume position
-	,'MW' UOM
+	,''MW'' UOM
 
 	from (
 		select [external_id],term_start term_date,hr,[period],is_dst,4*sum(volume) volume from #unpv_pos_shaped
 			where [external_id] is not null
 			group by [external_id],term_start,hr,[period],is_dst
 		union all
-		select scmd1.external_id,sv.term_date,left(sv.hr,2) hr,sv.[period],sv.is_dst,sum(case when sdd.buy_sell_flag='s' then -1 else 1 end *volume) volume 
+		select scmd1.external_id,sv.term_date,left(sv.hr,2) hr,sv.[period],sv.is_dst,sum(case when sdd.buy_sell_flag=''s'' then -1 else 1 end *volume) volume 
 		from #shaped_volume_update_deal_detail_id sv
 		inner join source_deal_detail sdd on sdd.source_deal_detail_id=sv.source_deal_detail_id
 			left join shipper_code_mapping_detail scmd1 on scmd1.shipper_code_mapping_detail_id=sdd.shipper_code2
@@ -508,14 +515,14 @@ group by sdh.source_deal_header_id
 	OUTER APPLY 
 	(
 		SELECT
-			max(case when insert_delete='d' THEN  DATEADD(hour,[hour]-1,[date]) ELSE NULL END)  from_dst,
-			max(case when insert_delete='i' THEN  DATEADD(hour,[hour]-1,[date]) ELSE NULL END)  to_dst
+			max(case when insert_delete=''d'' THEN  DATEADD(hour,[hour]-1,[date]) ELSE NULL END)  from_dst,
+			max(case when insert_delete=''i'' THEN  DATEADD(hour,[hour]-1,[date]) ELSE NULL END)  to_dst
 		from mv90_DST WHERE  [YEAR]=year(pos.term_date) AND dst_group_value_id = COALESCE(from_tz.dst_group_value_id,to_tz.dst_group_value_id)
 	) dst 
 
 	CROSS APPLY
 	(
-		SELECT	convert(NVARCHAR(10),term_date,120) +' ' +right('0'+cast(hr-1  AS NVARCHAR),2)+':00:00' org_term_from
+		SELECT	convert(NVARCHAR(10),term_date,120) +'' '' +right(''0''+cast(hr-1  AS NVARCHAR),2)+'':00:00'' org_term_from
 	) org_term_from
 	
 	
@@ -531,7 +538,7 @@ group by sdh.source_deal_header_id
 	(
 		SELECT	(to_tz.offset_hr-from_tz.offset_hr)
 		  +
-			CASE WHEN  cast(convert(VARCHAR(10),term_date,120) +' ' +right('0'+cast(hr-1 AS VARCHAR),2)+':00:00' AS DATETIME) BETWEEN from_dst AND to_dst AND is_dst=1 THEN --dst start
+			CASE WHEN  cast(convert(VARCHAR(10),term_date,120) +'' '' +right(''0''+cast(hr-1 AS VARCHAR),2)+'':00:00'' AS DATETIME) BETWEEN from_dst AND to_dst AND is_dst=1 THEN --dst start
 				-1   --CASE WHEN to_tz.offset_hr-from_tz.offset_hr<0 THEN -1 ELSE 1 END
 			ELSE 0 END  offset
 	) offset
@@ -544,9 +551,18 @@ group by sdh.source_deal_header_id
 		select DATEADD(hour, CASE WHEN to_dt.to_dt BETWEEN dateadd(hour,-1,from_dst)  AND dateadd(hour,-2 ,to_dst) THEN 1 ELSE 0 end
 		   , to_dt.to_dt) term_to
 	) term_to  --- dst applied for to term
+	')
+	EXEC(@sql)
+	
+	SELECT @batch_process_table = dbo.FNAProcessTableName('batch_report', NULL, @process_id)
+	SET @sql = 'SELECT * INTO ' + @batch_process_table + ' FROM ' + @final_process_table
 
+	SELECT @export_web_services_id = id FROM export_web_service WHERE handler_class_name = 'EznergyTDSExporter'
+	--return
+	EXEC spa_post_data_to_web_service @export_web_services_id, @sql, '', @process_id, @out_msg OUTPUT
+	--SELECT @out_msg
 
-
+	EXEC('SELECT * FROM ' + @final_process_table)
 --IF OBJECT_ID('tempdb..#tmp_result') IS NOT NULL
 --	DROP TABLE #tmp_result
  
