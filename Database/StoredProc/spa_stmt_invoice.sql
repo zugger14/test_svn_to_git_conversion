@@ -1016,30 +1016,39 @@ BEGIN
 		WITH (
 			invoice_id INT
 		)
+
+		DELETE FROM #temp_invoice_delete WHERE invoice_id <= 0
+
         SELECT
             si.original_id_for_void
         INTO #temp_parent_detail
         FROM stmt_invoice si
         INNER JOIN #temp_invoice_delete tid ON tid.invoice_id = si.stmt_invoice_id
-
-        BEGIN TRAN
+		WHERE si.original_id_for_void IS NOT NULL
+		 
+		BEGIN TRAN
 			UPDATE  si
 			SET si.is_voided ='n'
 			FROM stmt_invoice si
 			INNER JOIN #temp_parent_detail tid ON tid.original_id_for_void = si.stmt_invoice_id
 
-			DELETE si_b
+			IF OBJECT_ID('tempdb..#to_delete_checkout') IS NOT NULL
+				DROP TABLE #to_delete_checkout
+
+			SELECT a.[stmt_checkout_id], si.stmt_invoice_id, si.is_voided
+			INTO #to_delete_checkout
 			FROM stmt_invoice si
 			INNER JOIN #temp_invoice_delete tid ON tid.invoice_id = si.stmt_invoice_id
 			INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
 			OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a 
-			OUTER APPLY (
-				SELECT DISTINCT stid_b.stmt_invoice_id
-				FROM stmt_invoice_detail stid_b
-				CROSS APPLY dbo.SplitCommaSeperatedValues(stid_b.description1) de
-				WHERE de.item = a.stmt_checkout_id AND stid_b.stmt_invoice_id <> tid.invoice_id
-			) inv
-			INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = inv.stmt_invoice_id  AND ISNULL(si_b.is_voided,'n') = ISNULL(si.is_voided,'n')
+
+			DELETE si_b
+			FROM stmt_invoice_detail stid_b
+			CROSS APPLY dbo.SplitCommaSeperatedValues(stid_b.description1) de
+			INNER JOIN #to_delete_checkout tmp ON tmp.[stmt_checkout_id] = de.item
+			INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = stid_b.stmt_invoice_id  
+				AND ISNULL(si_b.is_voided,'n') = ISNULL(tmp.is_voided,'n')
+				AND si_b.stmt_invoice_id <> tmp.stmt_invoice_id
 			WHERE ISNULL(si_b.is_backing_sheet,'n') = 'y'
 
 			DELETE si
