@@ -38,7 +38,7 @@ create proc [dbo].[spa_export_nomination_power_balance]
         @str VARCHAR(1000) =null,
         @book VARCHAR(1000) =null,
 		@sub_book VARCHAR(1000) =null,--'16',--'211,217' ,--'162', --'162,164,166,206'
-        @location_ids VARCHAR(1000) ='2855,2849,2848,2856',
+        @location_ids VARCHAR(1000) =null,
         @term_start VARCHAR(10) = null,
         @term_end VARCHAR(10) = null,
         @round  tinyint = 10,
@@ -486,19 +486,22 @@ group by sdh.source_deal_header_id
 
 	,dateadd(minute,pos.[Period],to_dt.to_dt) actual_term_to_start
 	,dateadd(minute,15,dateadd(minute,pos.[Period],to_dt.to_dt)) actual_term_to_end
-	,4*pos.volume position
+	,pos.volume position
 	,'MW' UOM
 
 	from (
-		select [external_id],term_start term_date,hr,[period],is_dst,sum(volume) volume from #unpv_pos_shaped
+		select [external_id],term_start term_date,hr,[period],is_dst,4*sum(volume) volume from #unpv_pos_shaped
 			where [external_id] is not null
 			group by [external_id],term_start,hr,[period],is_dst
 		union all
-		select t.[external_id],sv.term_date,left(sv.hr,2) hr,sv.[period],sv.is_dst,sum(case when buy_sell_flag='s' then -1 else 1 end *volume) volume 
+		select scmd1.external_id,sv.term_date,left(sv.hr,2) hr,sv.[period],sv.is_dst,sum(case when sdd.buy_sell_flag='s' then -1 else 1 end *volume) volume 
 		from #shaped_volume_update_deal_detail_id sv
-			inner join #temp_deals_pos t on t.source_deal_detail_id=sv.source_deal_detail_id
-		where  t.[external_id] is not null
-		group by t.[external_id],sv.term_date,sv.hr,sv.[period],sv.is_dst
+		inner join source_deal_detail sdd on sdd.source_deal_detail_id=sv.source_deal_detail_id
+			left join shipper_code_mapping_detail scmd1 on scmd1.shipper_code_mapping_detail_id=sdd.shipper_code2
+
+		--	inner join #temp_deals_pos t on t.source_deal_detail_id=sv.source_deal_detail_id
+		where  scmd1.external_id is not null
+		group by scmd1.external_id,sv.term_date,sv.hr,sv.[period],sv.is_dst
 	) pos
 	inner join time_zones from_tz on from_tz.TIMEZONE_ID=15--@_system_timezone_id
 	inner JOIN time_zones to_tz on to_tz.TIMEZONE_ID=14 --@_convert_timezone_id 
