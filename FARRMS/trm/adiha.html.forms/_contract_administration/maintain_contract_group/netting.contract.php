@@ -409,6 +409,7 @@
                  offset_method_combo_obj.setComboValue(null);
                  offset_method_combo_obj.setComboText(null); 
                  form_obj.hideItem('offset_method');  
+                 form_obj.checkItem("create_backing_sheet");
             } else { // Both
                  form_obj.showItem('settlement_date');
                  form_obj.showItem('settlement_days');
