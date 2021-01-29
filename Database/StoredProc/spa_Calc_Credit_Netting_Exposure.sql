@@ -1418,7 +1418,7 @@ IF @user_login_id IS NULL
 		(
 			SELECT 
 				h.source_deal_header_id,
-				MAX(as_of_date) as_of_date,
+				MAX(a.as_of_date) as_of_date,
 				CONVERT(varchar(7), a.term_start,120) term_start,
 				h.counterparty_id,
 				h.contract_id, 
@@ -1436,11 +1436,11 @@ IF @user_login_id IS NULL
 				END AS [invoice_due_date] '
 				
 		SET @sql_stmt1='
-			FROM index_fees_breakdown_settlement a 
-			INNER JOIN #tmp_fees_to_take_in_exposure tfe ON tfe.field_id = a.field_id
-			INNER JOIN ' + @deal_header_table + ' h ON a.source_deal_header_id = h.source_deal_header_id 
-				AND h.counterparty_id=sc.source_counterparty_id 
+			FROM  ' + @deal_header_table + ' h
+			INNER JOIN index_fees_breakdown_settlement a ON a.source_deal_header_id = h.source_deal_header_id 
 				AND leg = 1
+			INNER JOIN #tmp_fees_to_take_in_exposure tfe ON tfe.field_id = a.field_id
+			INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id= a.source_deal_header_id
 			INNER JOIN [deal_status_group] dsg ON dsg.status_value_id = ISNULL(h.deal_status,5604)
 			LEFT JOIN source_system_book_map sbm1 ON h.source_system_book_id1 = sbm1.source_system_book_id1 AND 
 				h.source_system_book_id2 = sbm1.source_system_book_id2 AND 
@@ -1448,7 +1448,12 @@ IF @user_login_id IS NULL
 				h.source_system_book_id4 = sbm1.source_system_book_id4
 			LEFT JOIN #books book1 ON book1.fas_book_id = sbm1.fas_book_id
 			LEFT JOIN fas_subsidiaries fs1 ON book1.fas_subsidiary_id = fs1.fas_subsidiary_id
-
+			LEFT JOIN stmt_checkout sc1 ON sc1.source_deal_detail_id = sdd.source_deal_detail_id
+				AND sdd.leg = a.leg 
+				AND sdd.term_start = a.term_start
+				AND sc1.accrual_or_final = ''f''
+				AND sc1.deal_charge_type_id = tfe.field_id
+				AND (sc1.accrual_or_final = ''f'' OR ISNULL(sc1.is_ignore, 0) = 1)
 			OUTER APPLY(SELECT MAX(sng1.effective_date) eff_date 
 						FROM stmt_netting_group sng1
 						WHERE sng1.counterparty_id = sc.source_counterparty_id
@@ -1484,17 +1489,9 @@ IF @user_login_id IS NULL
 											sng.netting_contract_id 
 										ELSE COALESCE(h.contract_id, cca1.contract_id) END
 				LEFT JOIN contract_group cg ON cg.contract_id = CASE WHEN eff.eff_date IS NOT NULL									THEN sng.netting_contract_id ELSE h.contract_id END
-				OUTER APPLY(SELECT MAX(sdd.source_deal_header_id) source_deal_header_id 
-					FROM stmt_checkout sc 
-					INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id= sc.source_deal_detail_id 
-					WHERE sdd.source_deal_header_id = a.source_deal_header_id 
-						AND sdd.leg = a.leg 
-						AND sdd.term_start = a.term_start
-						AND sc.accrual_or_final = ''f''
-						AND sc.deal_charge_type_id = tfe.field_id
-						AND (sc.accrual_or_final = ''f'' OR ISNULL(sc.is_ignore, 0) = 1)) stc
-				WHERE stc.source_deal_header_id IS NULL
-				AND ( (set_type = ''f'' AND as_of_date <= CONVERT(DATETIME, ''' + @as_of_date + ''', 102)) OR (set_type = ''s''  AND '''+CONVERT(VARCHAR(10),@as_of_date,120)+'''>=a.term_end))
+				WHERE sc1.source_deal_detail_id IS NULL
+				AND sc.source_counterparty_id = h.counterparty_id
+				AND ( (a.set_type = ''f'' AND a.as_of_date <= CONVERT(DATETIME, ''' + @as_of_date + ''', 102)) OR (a.set_type = ''s''  AND '''+CONVERT(VARCHAR(10),@as_of_date,120)+'''>=a.term_end))
 				GROUP BY h.source_deal_header_id,
 					CONVERT(varchar(7), a.term_start,120),
 					h.counterparty_id,
@@ -2053,12 +2050,76 @@ IF @user_login_id IS NULL
 		--PRINT @sql_stmt				
 		EXEC(@sql_stmt)
 	
-
-	
-
 	--- Include the data from new settlement checkout table
-        SET @sql_stmt='
-            INSERT INTO ' + @NettingDealProcessTableName + '(
+        SET @sql_stmt = ' SELECT sc.source_counterparty_id, dt.*
+		INTO #tmp_dt_detail
+		FROM #cpty sc  
+            INNER JOIN source_deal_header sdh ON sdh.counterparty_id = sc.source_counterparty_id 
+			INNER JOIN [deal_status_group] dsg ON dsg.status_value_id = ISNULL(sdh.deal_status,5604)
+            INNER JOIN source_deal_detail  sdd ON sdd.source_deal_header_id=sdh.source_deal_header_id
+            INNER JOIN source_system_book_map sbm1 ON sdh.source_system_book_id1 = sbm1.source_system_book_id1 
+				AND sdh.source_system_book_id2 = sbm1.source_system_book_id2 
+				AND sdh.source_system_book_id3 = sbm1.source_system_book_id3 
+				AND sdh.source_system_book_id4 = sbm1.source_system_book_id4
+            INNER JOIN #books book1 ON book1.fas_book_id = sbm1.fas_book_id
+            INNER JOIN fas_subsidiaries fs1 ON book1.fas_subsidiary_id = fs1.fas_subsidiary_id
+
+            OUTER APPLY(SELECT cca1.internal_counterparty_id,
+						si.payment_status,
+						CASE WHEN cca1.offset_method = 43501 AND si.payment_status <> ''u'' THEN 
+							COALESCE(
+								(dbo.FNAInvoiceDueDate((COALESCE(si.pd_from,(stc.term_start), GETDATE())), cca1.invoice_due_date, cca1.holiday_calendar_id, cca1.payment_days)),
+								(dbo.FNAInvoiceDueDate((COALESCE(si.pd_from,(stc.term_start), GETDATE())), cg.invoice_due_date, cg.holiday_calendar_id, cg.payment_days)),
+								--(a.settlement_date),
+								ISNULL(si.pd_from,(stc.term_end)))
+						ELSE
+							DATEADD(dd, 1, ''' + CAST(@as_of_date AS VARCHAR) + ''')
+						END AS [invoice_due_date],
+						stc.stmt_checkout_id 
+					FROM #tmp_fees_to_take_in_exposure tfe 
+					INNER JOIN stmt_checkout stc ON tfe.field_id = stc.deal_charge_type_id
+					OUTER APPLY(SELECT MAX(sng1.effective_date) eff_date 
+						FROM stmt_netting_group sng1
+						WHERE sng1.counterparty_id = sc.source_counterparty_id
+						AND sng1.netting_type IN (109802,109800)
+						AND sng1.effective_date <= ''' + CAST(@as_of_date AS VARCHAR) + ''') eff 
+					OUTER APPLY(SELECT ISNULL(si.payment_status, ''i'') payment_status, 
+									si.prod_date_from AS pd_from
+									FROM stmt_invoice si
+								INNER JOIN stmt_invoice_detail side ON side.stmt_invoice_id = si.stmt_invoice_id
+								WHERE stc.stmt_invoice_detail_id = side.stmt_invoice_detail_id) si 
+
+					OUTER APPLY (SELECT DISTINCT sng.netting_contract_id
+								FROM stmt_netting_group sng 
+								INNER JOIN stmt_netting_group_detail sngd ON sngd.netting_group_id = sng.netting_group_id
+									AND sngd.contract_detail_id = COALESCE(sdh.contract_id, sngd.contract_detail_id)
+								INNER JOIN counterparty_contract_address cca1 ON cca1.counterparty_id = sng.counterparty_id
+									AND cca1.contract_id = sng.netting_contract_id
+								OUTER APPLY(SELECT MAX(sng1.effective_date) eff_date,
+											MAX(sng1.internal_counterparty_id) AS internal_counterparty_id 
+											FROM stmt_netting_group sng1
+											WHERE sng1.counterparty_id = sng.counterparty_id
+											AND ISNULL(sng1.internal_counterparty_id, -1) = ISNULL(sng.internal_counterparty_id, -1)
+											AND sng1.netting_type IN (109802,109800)
+											AND sng1.effective_date <= ''' + CAST(@as_of_date AS VARCHAR) + ''') eff
+								WHERE sng.counterparty_id = sc.source_counterparty_id
+								AND COALESCE(sng.internal_counterparty_id, cca1.internal_counterparty_id, -1) = COALESCE(cca1.internal_counterparty_id, sng.internal_counterparty_id, -1)
+								AND sng.effective_date = eff.eff_date
+								AND ISNULL(sng.internal_counterparty_id, -1) = ISNULL(eff.internal_counterparty_id, -1)
+								AND sng.netting_type IN (109802,109800)) sng
+
+					INNER JOIN counterparty_contract_address cca1 ON sc.source_counterparty_id = cca1.counterparty_id
+						AND (cca1.internal_counterparty_id IS NULL OR fs1.counterparty_id = cca1.internal_counterparty_id) 
+						AND cca1.contract_id = COALESCE(sng.netting_contract_id, sdh.contract_id, cca1.contract_id)
+					
+					LEFT JOIN contract_group cg ON cg.contract_id = CASE WHEN eff.eff_date IS NOT NULL THEN																				sng.netting_contract_id 
+																ELSE sdh.contract_id END
+					WHERE sdd.source_deal_detail_id = stc.source_deal_detail_id 
+					AND stc.term_start <= ''' + CAST(@as_of_date AS VARCHAR) + '''
+					AND stc.accrual_or_final = ''f''
+					AND ISNULL(stc.is_ignore, 0)=0) dt 
+					
+		INSERT INTO ' + @NettingDealProcessTableName + '(
                 fas_subsidiary_id ,
                 fas_strategy_id ,
                 fas_book_id  ,
@@ -2081,8 +2142,11 @@ IF @user_login_id IS NULL
                 [invoice_due_date],
                 pnl_as_of_date,
                 parent_counterparty_id
-            )
-            SELECT     
+            ) '
+
+
+
+		SET @sql_stmt1 = 'SELECT     
                 book1.fas_subsidiary_id fas_subsidiary_id,
                 book1.fas_strategy_id fas_strategy_id,
                 book1.fas_book_id,
@@ -2123,70 +2187,12 @@ IF @user_login_id IS NULL
 				AND sdh.source_system_book_id4 = sbm1.source_system_book_id4
             INNER JOIN #books book1 ON book1.fas_book_id = sbm1.fas_book_id
             INNER JOIN fas_subsidiaries fs1 ON book1.fas_subsidiary_id = fs1.fas_subsidiary_id
-
-            OUTER APPLY(SELECT cca1.internal_counterparty_id,
-						si.payment_status,
-						CASE WHEN cca1.offset_method = 43501 AND si.payment_status <> ''u'' THEN 
-							COALESCE(
-								(dbo.FNAInvoiceDueDate((COALESCE(si.pd_from,(stc.term_start), GETDATE())), cca1.invoice_due_date, cca1.holiday_calendar_id, cca1.payment_days)),
-								(dbo.FNAInvoiceDueDate((COALESCE(si.pd_from,(stc.term_start), GETDATE())), cg.invoice_due_date, cg.holiday_calendar_id, cg.payment_days)),
-								--(a.settlement_date),
-								ISNULL(si.pd_from,(stc.term_end)))
-						ELSE
-							DATEADD(dd, 1, ''' + CAST(@as_of_date AS VARCHAR) + ''')
-						END AS [invoice_due_date],
-						stc.stmt_checkout_id 
-					FROM #tmp_fees_to_take_in_exposure tfe 
-					INNER JOIN stmt_checkout stc ON tfe.field_id = stc.deal_charge_type_id
-					OUTER APPLY(SELECT MAX(sng1.effective_date) eff_date 
-						FROM stmt_netting_group sng1
-						WHERE sng1.counterparty_id = sc.source_counterparty_id
-						AND sng1.netting_type IN (109802,109800)
-						AND sng1.effective_date <= ''' + CAST(@as_of_date AS VARCHAR) + ''') eff 
-					OUTER APPLY(SELECT ISNULL(si.payment_status, ''i'') payment_status, 
-									si.prod_date_from AS pd_from
-									FROM stmt_invoice si
-								INNER JOIN stmt_invoice_detail side ON side.stmt_invoice_id = si.stmt_invoice_id
-								WHERE stc.stmt_invoice_detail_id = side.stmt_invoice_detail_id) si '
-
-		SET @sql_stmt1 = '
-					OUTER APPLY (SELECT DISTINCT sng.netting_contract_id
-								FROM stmt_netting_group sng 
-								INNER JOIN stmt_netting_group_detail sngd ON sngd.netting_group_id = sng.netting_group_id
-									AND sngd.contract_detail_id = COALESCE(sdh.contract_id, sngd.contract_detail_id)
-								INNER JOIN counterparty_contract_address cca1 ON cca1.counterparty_id = sng.counterparty_id
-									AND cca1.contract_id = sng.netting_contract_id
-								OUTER APPLY(SELECT MAX(sng1.effective_date) eff_date,
-											MAX(sng1.internal_counterparty_id) AS internal_counterparty_id 
-											FROM stmt_netting_group sng1
-											WHERE sng1.counterparty_id = sng.counterparty_id
-											AND ISNULL(sng1.internal_counterparty_id, -1) = ISNULL(sng.internal_counterparty_id, -1)
-											AND sng1.netting_type IN (109802,109800)
-											AND sng1.effective_date <= ''' + CAST(@as_of_date AS VARCHAR) + ''') eff
-								WHERE sng.counterparty_id = sc.source_counterparty_id
-								AND COALESCE(sng.internal_counterparty_id, cca1.internal_counterparty_id, -1) = COALESCE(cca1.internal_counterparty_id, sng.internal_counterparty_id, -1)
-								AND sng.effective_date = eff.eff_date
-								AND ISNULL(sng.internal_counterparty_id, -1) = ISNULL(eff.internal_counterparty_id, -1)
-								AND sng.netting_type IN (109802,109800)) sng
-
-					INNER JOIN counterparty_contract_address cca1 ON sc.source_counterparty_id = cca1.counterparty_id
-						AND (cca1.internal_counterparty_id IS NULL OR fs1.counterparty_id = cca1.internal_counterparty_id) 
-						AND cca1.contract_id = COALESCE(sng.netting_contract_id, sdh.contract_id, cca1.contract_id)
-					
-					LEFT JOIN contract_group cg ON cg.contract_id = CASE WHEN eff.eff_date IS NOT NULL THEN																				sng.netting_contract_id 
-																ELSE sdh.contract_id END
-					WHERE sdd.source_deal_detail_id = stc.source_deal_detail_id 
-					AND stc.term_start <= ''' + CAST(@as_of_date AS VARCHAR) + '''
-					AND stc.accrual_or_final = ''f''
-					AND ISNULL(stc.is_ignore, 0)=0) dt
+			LEFT JOIN #tmp_dt_detail dt ON dt.source_counterparty_id = sc.source_counterparty_id		
 
 			INNER JOIN counterparty_contract_address cca1 ON sc.source_counterparty_id = cca1.counterparty_id
 				AND (cca1.internal_counterparty_id IS NULL OR fs1.counterparty_id = cca1.internal_counterparty_id) 
 				AND cca1.contract_id = COALESCE(sdh.contract_id, cca1.contract_id)
 			INNER JOIN stmt_checkout stc ON stc.stmt_checkout_id = dt.stmt_checkout_id
-    --        LEFT JOIN stmt_checkout stc ON sdd.source_deal_detail_id = stc.source_deal_detail_id 
-				--AND stc.accrual_or_final = ''f''
-				--AND stc.term_start <= ''' + CAST(@as_of_date AS VARCHAR) + '''
             LEFT JOIN stmt_checkout stc1 ON  sdd.source_deal_detail_id = stc1.source_deal_detail_id 
 				AND stc1.accrual_or_final = ''a''
                 AND stc1.deal_charge_type_id = stc.deal_charge_type_id 
