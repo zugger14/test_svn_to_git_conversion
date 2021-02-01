@@ -27264,7 +27264,10 @@ BEGIN
 					analyst = au_ast.user_login_id,
 					comments = a.comments,
 					min_transfer_amount = a.min_transfer_amount,
-					time_zone = tz.timezone_id
+					time_zone = tz.timezone_id,
+					receivables = cc1.counterparty_contact_id,
+					payables = cc3.counterparty_contact_id,
+					confirmation = cc2.counterparty_contact_id
  	        '			  
 			SET @sql +=  '     FROM ' + @import_temp_table_name + ' a
  	            INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id 
@@ -27279,6 +27282,7 @@ BEGIN
 					AND sdv2.type_id = 38800
  	            INNER JOIN counterparty_contract_address cca ON cca.counterparty_id = sc.source_counterparty_id
  					AND cca.contract_id = cg.contract_id
+
 				LEFT JOIN static_data_value sdv_holiday ON sdv_holiday.code = a.holiday_calendar_id
 					AND sdv_holiday.type_id = 10017
 				LEFT JOIN static_data_value sdv_pay_rule ON sdv_pay_rule.code = a.invoice_due_date
@@ -27301,7 +27305,16 @@ BEGIN
 				LEFT JOIN static_data_value sdv_comt ON sdv_comt.code = a.company_trigger
 					AND sdv_comt.type_id = 32900
 				LEFT JOIN static_data_value sdv_interest ON sdv_interest.code = a.interest_method 
-					AND sdv_interest.type_id = 105600				
+					AND sdv_interest.type_id = 105600	
+				LEFT JOIN counterparty_contacts cc3 ON CC3.counterparty_id = sc.source_counterparty_id
+ 					AND cc3.name = a.payables 
+					AND cc3.contact_type = -32202	
+				LEFT JOIN counterparty_contacts cc1 ON cc1.counterparty_id = sc.source_counterparty_id 					
+					AND cc1.name = a.receivables 
+					AND cc1.contact_type = -32203	
+				LEFT JOIN counterparty_contacts cc2 ON cc2.counterparty_id = sc.source_counterparty_id 					
+					AND cc2.name = a.confirmation 
+					AND cc2.contact_type = -32204
 				OUTER APPLY (
 								SELECT temp_id 
 								FROM #error_status es
