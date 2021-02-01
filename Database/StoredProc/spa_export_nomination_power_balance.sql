@@ -41,7 +41,7 @@ create proc [dbo].[spa_export_nomination_power_balance]
         @location_ids VARCHAR(1000) =null,
         @term_start VARCHAR(10) = null,
         @term_end VARCHAR(10) = null,
-        @round  tinyint = 10,
+        @round  varchar(10) = 2,
 		@commodity VARCHAR(1000) = 123,  --Power
 		@physical_financial VARCHAR(1000) = 'p',  
   		@balance_location_id int=NULL,
@@ -493,12 +493,12 @@ group by sdh.source_deal_header_id
 
 	,dateadd(minute,pos.[Period],to_dt.to_dt) actual_term_to_start
 	,dateadd(minute,15,dateadd(minute,pos.[Period],to_dt.to_dt)) actual_term_to_end
-	,pos.volume position
+	,round(pos.volume,' +isnull(@round,'2')+') position
 	,''MW'' UOM
 
 	from (
 		select [external_id],term_start term_date,hr,[period],is_dst,4*sum(volume) volume from #unpv_pos_shaped
-			where [external_id] is not null
+			where isnull(external_id,'''')<>''''
 			group by [external_id],term_start,hr,[period],is_dst
 		union all
 		select scmd1.external_id,sv.term_date,left(sv.hr,2) hr,sv.[period],sv.is_dst,sum(case when sdd.buy_sell_flag=''s'' then -1 else 1 end *volume) volume 
@@ -507,7 +507,7 @@ group by sdh.source_deal_header_id
 			left join shipper_code_mapping_detail scmd1 on scmd1.shipper_code_mapping_detail_id=sdd.shipper_code2
 
 		--	inner join #temp_deals_pos t on t.source_deal_detail_id=sv.source_deal_detail_id
-		where  scmd1.external_id is not null
+		where  isnull(scmd1.external_id,'''')<>''''
 		group by scmd1.external_id,sv.term_date,sv.hr,sv.[period],sv.is_dst
 	) pos
 	inner join time_zones from_tz on from_tz.TIMEZONE_ID=15--@_system_timezone_id
