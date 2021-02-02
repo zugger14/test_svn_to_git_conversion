@@ -216,11 +216,9 @@ select distinct sdd.source_deal_detail_id,scmd1.external_id,sdd.buy_sell_flag
 from source_deal_header sdh
 	inner join source_system_book_map sbm  ON sdh.source_system_book_id1 = sbm.source_system_book_id1 AND 
 		sdh.source_system_book_id2 = sbm.source_system_book_id2 AND sdh.source_system_book_id3 = sbm.source_system_book_id3 AND 
-		sdh.source_system_book_id4 = sbm.source_system_book_id4  AND sdh.deal_date<='''+convert(varchar(10),@as_of_date,120) +''''
-	--+isnull(' and sdh.source_deal_header_id in ('+@source_deal_header_ids+')','')       
-	--+ case when @calc_type='r' then ' and sdh.deal_id not like '''+@ramp_deal+'%''' else '' end +
-	--+ case when @calc_type='b' then isnull(' and sdh.source_deal_type_id<>'+cast(@trans_deal_type_id as varchar),'') + isnull(' and sdh.deal_id<>'''+@power_plant_deal_header_id+'''','') else '' end +
-	+'
+		sdh.source_system_book_id4 = sbm.source_system_book_id4  AND sdh.deal_date<='''+convert(varchar(10),@as_of_date,120) +'''
+		and sdh.source_deal_type_id<>'+cast(@trans_deal_type_id as varchar) +'
+		 and sdh.deal_id<>'''+@power_plant_deal_header_id+'''
 	INNER JOIN  portfolio_hierarchy book (NOLOCK) ON book.entity_id=sbm.fas_book_id
 	INNER JOIN  Portfolio_hierarchy stra (NOLOCK) ON book.parent_entity_id = stra.entity_id 
 	inner join source_deal_detail sdd on sdd.source_deal_header_id=sdh.source_deal_header_id
@@ -484,10 +482,9 @@ group by sdh.source_deal_header_id
 	SET @sql = ('INSERT INTO ' + @final_process_table + '
 	select 
 	pos.[external_id]
-
 	,dateadd(minute,pos.[Period],to_dt.to_dt) actual_term_to_start
 	,dateadd(minute,15,dateadd(minute,pos.[Period],to_dt.to_dt)) actual_term_to_end
-	,cast(pos.volume as numeric(38,' +isnull(@round,'2')+')) position
+	,cast(sum(pos.volume) as numeric(38,' +isnull(@round,'2')+')) position
 	,''MW'' UOM
 
 	from (
@@ -545,6 +542,10 @@ group by sdh.source_deal_header_id
 		select DATEADD(hour, CASE WHEN to_dt.to_dt BETWEEN dateadd(hour,-1,from_dst)  AND dateadd(hour,-2 ,to_dst) THEN 1 ELSE 0 end
 		   , to_dt.to_dt) term_to
 	) term_to  --- dst applied for to term
+	group by
+	pos.[external_id] ,dateadd(minute,pos.[Period],to_dt.to_dt)
+	,dateadd(minute,15,dateadd(minute,pos.[Period],to_dt.to_dt))
+
 	')
 
 	exec spa_print @sql		
