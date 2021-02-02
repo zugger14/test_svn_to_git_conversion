@@ -21700,15 +21700,15 @@ BEGIN
 	IF @ixp_rule_hash = '9DB48870_5BA4_47A3_B100_2512AD19A3CE' --trayport import
 	BEGIN
 		EXEC(' INSERT INTO process_deal_alert_transfer_adjust(source_deal_header_id, source_deal_detail_id, create_user, create_ts, process_status, process_id)
-			   SELECT DISTINCT source_deal_header_id,
-					  tmp.deal_detail_id,
+			   SELECT DISTINCT tmp.source_deal_header_id,
+					  sdd.source_deal_detail_id,
 					  dbo.FNADBUser(),
 					  GETDATE(),
 					  1, 
 					  ''' + @process_id + '''
 			   FROM ' + @search_table + ' tmp
 			   INNER JOIN source_deal_detail sdd
-				   ON sdd.source_deal_detail_id = tmp.deal_detail_id
+					ON sdd.source_deal_header_id = tmp.source_deal_header_id
 			   CROSS APPLY(
 							--get min term
 							SELECT sdd1.source_deal_header_id
