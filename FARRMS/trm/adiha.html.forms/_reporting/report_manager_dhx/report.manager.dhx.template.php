@@ -22,16 +22,19 @@
         $app_user_loc = $app_user_name;
         
         $rights_report_manager_dhx = 10202500;
-    	$rights_report_manager_dhx_iu = 10202510;
+        $rights_report_manager_dhx_iu = 10202510;
+        $rights_report_manager_dhx_power_bi = 10202512;
     	    
         list (
             $has_rights_report_manager_dhx,
-            $has_rights_report_manager_dhx_iu
+            $has_rights_report_manager_dhx_iu,
+            $has_rights_report_manager_dhx_power_bi
         ) = build_security_rights (
             $rights_report_manager_dhx, 
-            $rights_report_manager_dhx_iu
+            $rights_report_manager_dhx_iu,
+            $rights_report_manager_dhx_power_bi
         );
-        
+      
         $form_namespace = 'rm_template';
         $json = '[
                     {
@@ -62,6 +65,8 @@
 </style>
 <script>
     var has_rights_report_manager_dhx_iu =<?php echo (($has_rights_report_manager_dhx_iu) ? $has_rights_report_manager_dhx_iu : '0'); ?>;
+    var has_rights_report_manager_dhx_power_bi =<?php echo (($has_rights_report_manager_dhx_power_bi) ? $has_rights_report_manager_dhx_power_bi : '0'); ?>;
+
     var php_script_loc_ajax = "<?php echo $app_php_script_loc; ?>";
     
     $(function() {
@@ -203,6 +208,12 @@
             cmb_cat.sort('asc');
         });
         
+        //disable power bi checkbox if privilege is not assigned
+        if(has_rights_report_manager_dhx_power_bi == 0)
+        {
+            form_rd[param_obj.process_id].disableItem('chk_powerbi');
+        }
+
         //attaching menu
         /*
         var menu_json = [
@@ -297,7 +308,7 @@
                 
         var url = app_form_path + '_reporting/report_manager_dhx/report.manager.dhx.tab.template.php?session_id=' + js_session_id;
         
-        console.log('**dhx.template.php**');
+        // console.log('**dhx.template.php**');
         //console.dir(param_obj);
         rm_template["inner_tab_layout_" + rm_tab_id].cells('b').attachURL(url, null, 
             {
