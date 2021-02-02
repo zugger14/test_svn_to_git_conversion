@@ -61,7 +61,7 @@ DECLARE
         @location_ids VARCHAR(1000) =null,
         @term_start VARCHAR(10) = null,
         @term_end VARCHAR(10) = null,
-        @round  tinyint = 10,
+        @round  varchar(10) = null,
 		@commodity VARCHAR(1000) = 123,  --Power
 		@physical_financial VARCHAR(1000) = 'p',  
   		@balance_location_id int=NULL,
@@ -71,8 +71,6 @@ DECLARE
 
 --select * from source_minor_location where source_minor_location_id in (2855,2849,2848)
 -- select * from source_system_book_map where logical_name='Spec-Power'
-
-
 
 DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
 SET CONTEXT_INFO @contextinfo
@@ -113,8 +111,7 @@ exec [dbo].[spa_export_nomination_power_balance]
 
 DECLARE @current_datetime DATETIME = GETDATE()
 
-DECLARE @_system_timezone_id int
-,@_convert_timezone_id int
+DECLARE @_system_timezone_id int,@_convert_timezone_id int
 select @_system_timezone_id= var_value  from dbo.adiha_default_codes_values (nolock) WHERE instance_no = 1 AND default_code_id = 36 AND seq_no = 1
 set @_convert_timezone_id=14 -- (GMT) Western Europe Time, London, Lisbon, Casablanca
 
@@ -126,8 +123,6 @@ DECLARE @st1                       VARCHAR(MAX),
 		@dst_group_value_id VARCHAR(30)
 DECLARE @user_login_id VARCHAR(100) = dbo.FNADBUser() 
 DECLARE @new_job_name VARCHAR(100)
-
-
 
 SET @process_id =isnull(@process_id, REPLACE(newid(),'-','_'))
 
@@ -242,16 +237,15 @@ WHERE 1=1  '
 		
 exec spa_print @st1		
 exec(@st1)
+
+
 --select sdd.source_deal_detail_id,sdd.formula_curve_id,sdd.profile_id,scmd1.shipper_code1,scmd1.shipper_code shipper_code2
 --	,sdd.shipper_code1 shipper_code_id1,sdd.shipper_code2 shipper_code_id2,scmd1.external_id external_id1
 --into #sdd_shipper_code
 --from source_deal_detail sdd
 --	inner join #temp_deals_pos td on td.source_deal_header_id=sdd.source_deal_header_id
 		
-
-
 --	inner join	#sdd_shipper_code ssc on ssc.source_deal_detail_id=vw.source_deal_detail_id
-
 
 
 set @group_by_columns='e.location_id,t.external_id,e.term_start,e.period '
@@ -366,7 +360,7 @@ select
 	rps.term_start,
 	right('0'+cast(rps.hr as varchar(2)),2)+':'+right('0'+cast(rps.[period] as varchar(2)),2) hr,
 	rps.is_dst,
-	round(rps.total_volume*-1*4,@round) volume,
+	round(rps.total_volume*-1*4,cast(@round as int)) volume,
 	987 granularity,
 	right('0'+cast(rps.[period] as varchar(2)),2) period
 from  dbo.source_deal_detail sdd
@@ -442,7 +436,7 @@ group by sdh.source_deal_header_id
 		rps.term_start,
 		right('0'+cast(rps.hr as varchar(2)),2)+':'+right('0'+cast(rps.[period] as varchar(2)),2) hr,
 		rps.is_dst,
-		round(rps.volume*4,@round) volume,
+		round(rps.volume*4,cast(@round as int)) volume,
 		987 granularity,
 		right('0'+cast(rps.[period] as varchar(2)),2) period
 	from  dbo.source_deal_detail sdd
@@ -493,7 +487,7 @@ group by sdh.source_deal_header_id
 
 	,dateadd(minute,pos.[Period],to_dt.to_dt) actual_term_to_start
 	,dateadd(minute,15,dateadd(minute,pos.[Period],to_dt.to_dt)) actual_term_to_end
-	,round(pos.volume,' +isnull(@round,'2')+') position
+	,cast(pos.volume as numeric(38,' +isnull(@round,'2')+')) position
 	,''MW'' UOM
 
 	from (
@@ -552,6 +546,8 @@ group by sdh.source_deal_header_id
 		   , to_dt.to_dt) term_to
 	) term_to  --- dst applied for to term
 	')
+
+	exec spa_print @sql		
 	EXEC(@sql)
 	
 	SELECT @batch_process_table = dbo.FNAProcessTableName('batch_report', NULL, @process_id)
