@@ -304,32 +304,52 @@
 			var render_as = viewPivotDashboard.pivot_advance.cells(id, 3).getValue();		
 
 			if (render_as != '') {
-				if (render_as == 'n' || render_as == 'p' || render_as == 'c') {
+                if (render_as == 'n' || render_as == 'p' || render_as == 'c' || render_as == 'a' || render_as == 'v' || render_as == 'r') {
 					var currency = viewPivotDashboard.pivot_advance.cells(id, 5).getValue(); 
 					var thou_sep = viewPivotDashboard.pivot_advance.cells(id, 6).getValue(); 
 					var rounding = viewPivotDashboard.pivot_advance.cells(id, 7).getValue(); 
-					var neg_as_red = viewPivotDashboard.pivot_advance.cells(id, 8).getValue(); 
-					var sep = (thou_sep == '' || thou_sep == 'n') ? '' : ',';
+					var neg_as_red = viewPivotDashboard.pivot_advance.cells(id, 8).getValue();
+                    var sep = (thou_sep == 'n') ? '' : global_group_separator;
 
-					if (thou_sep != '' && rounding != '') {
-						var val1 = value;
-						var re = /,(?=[\d,]*\.\d{2}\b)/;
-						if (sep == '') {
-							val1 = val1.replace(re, '');							
-						}
-						return_val = $.number(val1, rounding, '.', sep);
-					} else if (rounding != '') {
-						return_val = $.number(value, rounding);
-					} else if (thou_sep !== '') {
-						var val1 = value;
-						var re = /,(?=[\d,]*\.\d{2}\b)/;
-						if (sep == '') {
-							val1 = val1.replace(re, '');
-						}
-						return_val = $.number(val1, '', '.', sep);
-					} else {
-						return_val = value;
-					}
+                    if (!rounding || rounding == '' || rounding == 'undefined' || rounding == '-1') {
+                        switch (render_as) {
+                            case 'r':
+                                rounding = global_price_rounding;
+                                break;
+                            case 'a':
+                                rounding = global_amount_rounding;
+                                break;
+                            case 'v':
+                                rounding = global_volume_rounding;
+                                break;
+                            default:
+                                rounding = global_number_rounding;
+                                break;
+                        }
+                    }
+
+                    if (thou_sep != '' && rounding != '') {
+                        var val1 = value.replaceAll(',','');
+                        var re = /,(?=[\d,]*\.\d{2}\b)/;
+                        if (sep == '') {
+                            val1 = val1.replace(re, '');
+                        }
+                        return_val = $.number(val1, rounding, global_decimal_separator, sep);
+                    } else if (rounding != '') {
+                        var val1 = value.replaceAll(',','');
+                        return_val = $.number(val1, rounding, global_decimal_separator, sep);
+                    } else if (thou_sep !== '') {
+                        var val1 = value;
+                        var val1 = value.replaceAll(',','');
+                        var re = /,(?=[\d,]*\.\d{2}\b)/;
+                        if (sep == '') {
+                            val1 = val1.replace(re, '');
+                        }
+                        return_val = $.number(val1, '', global_decimal_separator, sep);
+                    } else {
+                        var val1 = value.replaceAll(',','');
+                        return_val = $.number(val1, '', global_decimal_separator, sep);
+                    }
 					
 					value = value.toString();
 					return_val = return_val.toString();
