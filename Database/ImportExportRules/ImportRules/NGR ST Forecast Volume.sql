@@ -386,7 +386,7 @@ INSERT INTO [temp_process_table](
     , [Volume]
 )
 SELECT 
-	IIF(cast(calc.[Volume] as numeric(38)) >= 0.00, fp_buy.external_id, fp_sell.external_id)
+	IIF(cast(calc.[Volume] as numeric(38,10)) >= 0.00, fp_buy.external_id, fp_sell.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
@@ -405,12 +405,12 @@ LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
 UNION ALL
 SELECT 
-	fp_sell.external_id
+	IIF(cast(calc.[Volume] as numeric(38,10)) < 0.00, fp_buy.external_id, fp_sell.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(calc.[Volume])
+    , ''0.00''
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON calc.[Profile Name] = tp.[profile_name]
@@ -418,11 +418,12 @@ INNER JOIN #temp_position tp
 	AND calc.hour = tp.hr
 	AND calc.Minute = tp.period
 	AND calc.[Is DST] = tp.is_dst
+LEFT JOIN forecast_profile fp_buy
+	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-WHERE cast(calc.[Volume] as numeric(38)) = 0.00
 UNION ALL
-SELECT IIF(CAST(a.Volume AS NUMERIC(38)) > 0.00, gm.dest_buy_profile, gm.dest_sell_profile) [profile name]
+SELECT IIF(CAST(a.Volume AS NUMERIC(38,10)) > 0.00, gm.dest_buy_profile, gm.dest_sell_profile) [profile name]
 	, a.Term
 	, a.[Hour]
 	, a.[Minute]
@@ -460,7 +461,7 @@ AND gm_profile.source_profile1 IS NOT NULL
 ',
 					NULL,
 					'i' ,
-					'n' ,
+					'y' ,
 					@admin_user ,
 					23502,
 					1,
@@ -830,7 +831,7 @@ INSERT INTO [temp_process_table](
     , [Volume]
 )
 SELECT 
-	IIF(cast(calc.[Volume] as numeric(38)) >= 0.00, fp_buy.external_id, fp_sell.external_id)
+	IIF(cast(calc.[Volume] as numeric(38,10)) >= 0.00, fp_buy.external_id, fp_sell.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
@@ -849,12 +850,12 @@ LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
 UNION ALL
 SELECT 
-	fp_sell.external_id
+	IIF(cast(calc.[Volume] as numeric(38,10)) < 0.00, fp_buy.external_id, fp_sell.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(calc.[Volume])
+    , ''0.00''
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON calc.[Profile Name] = tp.[profile_name]
@@ -862,11 +863,12 @@ INNER JOIN #temp_position tp
 	AND calc.hour = tp.hr
 	AND calc.Minute = tp.period
 	AND calc.[Is DST] = tp.is_dst
+LEFT JOIN forecast_profile fp_buy
+	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-WHERE cast(calc.[Volume] as numeric(38)) = 0.00
 UNION ALL
-SELECT IIF(CAST(a.Volume AS NUMERIC(38)) > 0.00, gm.dest_buy_profile, gm.dest_sell_profile) [profile name]
+SELECT IIF(CAST(a.Volume AS NUMERIC(38,10)) > 0.00, gm.dest_buy_profile, gm.dest_sell_profile) [profile name]
 	, a.Term
 	, a.[Hour]
 	, a.[Minute]
@@ -906,7 +908,7 @@ AND gm_profile.source_profile1 IS NOT NULL
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
 				, ixp_category = 23502
-				, is_system_import = 'n'
+				, is_system_import = 'y'
 				, is_active = 1
 			WHERE ixp_rules_id = @ixp_rules_id_new
 				
@@ -930,9 +932,9 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity_Test\temp_Note\0',
+						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
 						   NULL,
-						   ',',
+						   ';',
 						   2,
 						   'fv',
 						   '0',
@@ -949,8 +951,8 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   '', 
 						   '0',
 						   '0',
-						   '2',
-						   NULL
+						   '11',
+						   'Import2TRM/EXT_NGR/DEAL_Forecast_Volume_NGR'
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
 					LEFT JOIN ixp_soap_functions isf ON isf.ixp_soap_functions_name = '' 
