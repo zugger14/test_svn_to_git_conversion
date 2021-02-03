@@ -43,8 +43,20 @@ SET @process_queue_type = ISNULL(@process_queue_type,112300)
 IF @flag = 'create_process_queue'
 BEGIN
 	BEGIN TRY
-		INSERT INTO process_queue (process_queue_type, source_id, queue_sql, process_id, is_processed, has_error, [description])
-		SELECT @process_queue_type, @source_id, @queue_sql, @process_id, 'n', 'n', @description
+		IF EXISTS (SELECT 1 FROM process_queue WHERE process_id = @process_id)
+		BEGIN
+			UPDATE process_queue
+			SET source_id = @source_id,
+				is_processed = 'n',
+				has_error = 'n',
+				queue_sql = @queue_sql
+			WHERE process_id = @process_id
+		END
+		ELSE
+		BEGIN
+			INSERT INTO process_queue (process_queue_type, source_id, queue_sql, process_id, is_processed, has_error, [description])
+			SELECT @process_queue_type, @source_id, @queue_sql, @process_id, 'n', 'n', @description
+		END
 		SET @output_status = 'true'
 	END TRY
 	BEGIN CATCH
