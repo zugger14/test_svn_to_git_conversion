@@ -1243,7 +1243,7 @@
                     var filter_in_xml = '<Parameters>';
 					
                     $.each(json_data.json, function(key, val) {
-						console.log(val);
+						// console.log(val);
                         if (val["filter_value"] != null ) {
                             var dyn_cal_val =  val["filter_value"].split('|');
                             if(val['widget_id'] == 6) { // case dynamic date
