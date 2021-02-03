@@ -75,7 +75,7 @@ CREATE PROCEDURE [dbo].[spa_pivot_report_view]
 	@is_public BIT = NULL,
 	@report_type INT = NULL,
 	@report_paramset_id INT = NULL,
-	@pivot_file_sql VARCHAR(2000) = NULL,
+	@pivot_file_sql NVARCHAR(MAX) = NULL,
 	@paramset_id			INT = NULL,
 	@component_id			 VARCHAR(500) = NULL
     

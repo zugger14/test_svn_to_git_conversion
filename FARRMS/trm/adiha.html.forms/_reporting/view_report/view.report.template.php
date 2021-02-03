@@ -1572,29 +1572,28 @@
 			if (start_format == 1) {
 				if (render_as != '') {
 					if (render_as == 'n' || render_as == 'p' || render_as == 'c' || render_as == 'a' || render_as == 'v' || render_as == 'r') {
-						
-						var sep = (thou_sep == '' || thou_sep == 'n') ? '' : global_group_separator;
+						var sep = (thou_sep == 'n') ? '' : global_group_separator;
 
 						if (thou_sep != '' && rounding != '') {
-							var val1 = value.replace(',','');
+							var val1 = value.replaceAll(',','');
 							var re = /,(?=[\d,]*\.\d{2}\b)/;
 							if (sep == '') {
 								val1 = val1.replace(re, '');							
 							}
 							return_val = $.number(val1, rounding, global_decimal_separator, sep);
 						} else if (rounding != '') {
-                            var val1 = value.replace(',','');
+                            var val1 = value.replaceAll(',','');
 							return_val = $.number(val1, rounding, global_decimal_separator, sep);
 						} else if (thou_sep !== '') {
 							var val1 = value;
-                            var val1 = value.replace(',','');
+                            var val1 = value.replaceAll(',','');
 							var re = /,(?=[\d,]*\.\d{2}\b)/;
 							if (sep == '') {
 								val1 = val1.replace(re, '');
 							}
 							return_val = $.number(val1, '', global_decimal_separator, sep);
 						} else {
-                            var val1 = value.replace(',','');
+                            var val1 = value.replaceAll(',','');
 							return_val = $.number(val1, '', global_decimal_separator, sep);
 						}
 						
@@ -1668,7 +1667,7 @@
 			if (PIVOT_VIEW_COL_FORMATTING_INFO != null) {
 				$.each(PIVOT_VIEW_COL_FORMATTING_INFO, function(ind, val) {
 					if(ind == 1) {
-						return_val = val.xaxis_label;
+						return_val = (val.xaxis_label != 'undefined' || val.xaxis_label != '')? '' : val.yaxis_label;
 					}
 				});
 			}
@@ -1680,7 +1679,7 @@
 			if (PIVOT_VIEW_COL_FORMATTING_INFO != null) {
 				$.each(PIVOT_VIEW_COL_FORMATTING_INFO, function(ind, val) {
 					if(ind == 1) {
-						return_val = val.yaxis_label;
+						return_val = (val.yaxis_label != 'undefined' || val.yaxis_label != '')? '' : val.yaxis_label;
 					}
 				});
 			}
@@ -1692,7 +1691,7 @@
 			if (PIVOT_VIEW_COL_FORMATTING_INFO != null) {
 				$.each(PIVOT_VIEW_COL_FORMATTING_INFO, function(ind, val) {
 					if(ind == 1) {
-						return_val = val.user_report_name;
+						return_val = (val.user_report_name != 'undefined' || val.user_report_name != '')? '' : val.user_report_name;
 					}
 				});
 			}
