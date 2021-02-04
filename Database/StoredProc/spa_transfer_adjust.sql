@@ -1,36 +1,36 @@
-IF OBJECT_ID(N'dbo.spa_transfer_adjust') IS NOT NULL
-    DROP PROCEDURE dbo.spa_transfer_adjust
-GO
+--IF OBJECT_ID(N'dbo.spa_transfer_adjust') IS NOT NULL
+--    DROP PROCEDURE dbo.spa_transfer_adjust
+--GO
  
-SET ANSI_NULLS ON
-GO
+--SET ANSI_NULLS ON
+--GO
 
  
-SET QUOTED_IDENTIFIER ON 
-GO
+--SET QUOTED_IDENTIFIER ON 
+--GO
 
-/**
-	Adjust transfer deal accorder to the physical deal
+--/**
+--	Adjust transfer deal accorder to the physical deal
 
-	Parameters 
-	@source_deal_header_id: Deal id according to which transfer deal needs to be adjusted
-*/
-
-
---exec spa_transfer_adjust 101014
+--	Parameters 
+--	@source_deal_header_id: Deal id according to which transfer deal needs to be adjusted
+--*/
 
 
---SET @deal_term_start = '2012-01-01'
---SET @deal_term_end = '2012-01-01'
+----exec spa_transfer_adjust 101014
 
 
-CREATE PROCEDURE [dbo].[spa_transfer_adjust]
-	@source_deal_header_id INT
-	,@term DATETIME = NULL
-	,@is_deal_created BIT = NULL OUTPUT
-AS
+----SET @deal_term_start = '2012-01-01'
+----SET @deal_term_end = '2012-01-01'
 
-/* DEBUG
+
+--CREATE PROCEDURE [dbo].[spa_transfer_adjust]
+--	@source_deal_header_id INT
+--	,@term DATETIME = NULL
+--	,@is_deal_created BIT = NULL OUTPUT
+--AS
+
+--/* DEBUG
 
 IF OBJECT_ID('tempdb..#temp_mdq_avail') IS NOT NULL
 DROP TABLE #temp_mdq_avail
@@ -57,8 +57,8 @@ EXEC [spa_drop_all_temp_table]
 
 --EXEC [dbo].[spa_transfer_adjust] @source_deal_header_id = 120208, @term = '2010-06-16'
 
-DECLARE @source_deal_header_id INT = 516637 
-DECLARE @term DATETIME = '2020-12-01'
+DECLARE @source_deal_header_id INT = 106493 
+DECLARE @term DATETIME = '2010-01-01'
 DECLARE @is_deal_created BIT
 
 --DECLARE @source_deal_header_id INT = 104615 
@@ -343,7 +343,7 @@ BEGIN
 			WAITFOR DELAY '00:00:15';
 
 			-- RESTART AUTO SCHEDULE AFTER 15 SECONDS OF IT IS RUNNING BY OTHER PROCESS
-			EXEC spa_transfer_adjust @source_deal_header_id
+			EXEC spa_transfer_adjust @source_deal_header_id, @is_deal_created= @is_deal_created			
 
 			RETURN;
 		END
@@ -784,7 +784,7 @@ BEGIN
 			WAITFOR DELAY '00:00:15';
 
 			-- RESTART AUTO SCHEDULE AFTER 15 SECONDS OF IT IS RUNNING BY OTHER PROCESS
-			EXEC spa_transfer_adjust @source_deal_header_id
+			EXEC spa_transfer_adjust @source_deal_header_id, @is_deal_created= @is_deal_created	
 
 			RETURN;
 		END
@@ -1345,7 +1345,7 @@ BEGIN
 			WAITFOR DELAY '00:00:15';
 
 			-- RESTART AUTO SCHEDULE AFTER 15 SECONDS OF IT IS RUNNING BY OTHER PROCESS
-			EXEC spa_transfer_adjust @source_deal_header_id
+			EXEC spa_transfer_adjust @source_deal_header_id, @is_deal_created= @is_deal_created	
 
 			RETURN;
 		END
@@ -1686,8 +1686,8 @@ BEGIN
 			WAITFOR DELAY '00:00:15';
 
 			-- RESTART AUTO SCHEDULE AFTER 15 SECONDS OF IT IS RUNNING BY OTHER PROCESS
-			EXEC spa_transfer_adjust @source_deal_header_id
-
+			EXEC spa_transfer_adjust @source_deal_header_id, @is_deal_created= @is_deal_created	
+			
 			RETURN;
 		END
 

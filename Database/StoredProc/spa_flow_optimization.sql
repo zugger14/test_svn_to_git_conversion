@@ -676,8 +676,8 @@ BEGIN
 				ELSE MAX(minor_to.source_minor_location_id) 
 			  END to_loc
 			, MAX(sdh.contract_id) contract_id
-			-- , CAST(ROUND(MIN(sdd.deal_volume), 1) AS INT) deal_volume 	
-			, sdd.deal_volume deal_volume 	
+			, CAST(MIN(sdd.deal_volume) AS INT) deal_volume 	
+			-- , sdd.deal_volume deal_volume 	
 		INTO #sch_deal_info--SELECT * FROM #sch_deal_info WHERE from_loc = 5563
 		FROM   source_deal_detail sdd
 		INNER JOIN source_deal_header sdh 
