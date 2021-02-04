@@ -391,7 +391,7 @@ SELECT
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(calc.[Volume])
+    , ABS(CAST(calc.[Volume] AS NUMERIC(38,10)))
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON calc.[Profile Name] = tp.[profile_name]
@@ -410,7 +410,7 @@ SELECT
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ''0.00''
+    , 0.00
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON calc.[Profile Name] = tp.[profile_name]
@@ -428,7 +428,7 @@ SELECT IIF(CAST(a.Volume AS NUMERIC(38,10)) > 0.00, gm.dest_buy_profile, gm.dest
 	, a.[Hour]
 	, a.[Minute]
 	, a.[Is DST]
-	, cast(ABS(a.[Volume]) as nvarchar)
+    , ABS(CAST(a.[Volume] AS NUMERIC(38,10)))
 FROM [temp_process_table] a
 INNER JOIN forecast_profile fp 
 		ON a.[Profile Name] = fp.external_id
@@ -836,7 +836,7 @@ SELECT
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(calc.[Volume])
+    , ABS(CAST(calc.[Volume] AS NUMERIC(38,10)))
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON calc.[Profile Name] = tp.[profile_name]
@@ -855,7 +855,7 @@ SELECT
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ''0.00''
+    , 0.00
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON calc.[Profile Name] = tp.[profile_name]
@@ -873,7 +873,7 @@ SELECT IIF(CAST(a.Volume AS NUMERIC(38,10)) > 0.00, gm.dest_buy_profile, gm.dest
 	, a.[Hour]
 	, a.[Minute]
 	, a.[Is DST]
-	, cast(ABS(a.[Volume]) as nvarchar)
+    , ABS(CAST(a.[Volume] AS NUMERIC(38,10)))
 FROM [temp_process_table] a
 INNER JOIN forecast_profile fp 
 		ON a.[Profile Name] = fp.external_id
