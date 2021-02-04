@@ -33,334 +33,699 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Settlement Data Export to SAP View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_counterparty_id NVARCHAR(MAX)
+
 	,@_contract_id NVARCHAR(MAX)
+
 	,@_stmt_invoice_id NVARCHAR(MAX)
+
 	,@_prod_date_from NVARCHAR(10)
+
 	,@_prod_date_to NVARCHAR(10)
+
 	,@_sql NVARCHAR(MAX)
+
 	,@_sql1 NVARCHAR(MAX)
+
 	,@_sql2 NVARCHAR(MAX)
+
 	,@_sql3 NVARCHAR(MAX)
+
 IF ''@counterparty_id'' <> ''NULL''
+
 	SET @_counterparty_id = ''@counterparty_id''
+
 IF ''@contract_id'' <> ''NULL''
+
 	SET @_contract_id = ''@contract_id''
+
 IF ''@stmt_invoice_id'' <> ''NULL''
+
 	SET @_stmt_invoice_id = ''@stmt_invoice_id''
+
 IF ''@prod_date_from'' <> ''NULL''
+
 	SET @_prod_date_from = ''@prod_date_from''
+
 IF ''@prod_date_to'' <> ''NULL''
+
 	SET @_prod_date_to = ''@prod_date_to''
---SET @_stmt_invoice_id = 56
---SET @_prod_date_from = ''2020-07-01''
---SET @_prod_date_to = ''2020-07-31''
---SET @_counterparty_id = 7713
-SET @_sql = 
-	N''
-	SELECT si.stmt_invoice_id
-	, MAX(sids.prod_date_from) prod_date_from
-	, MAX(sids.prod_date_to) prod_date_to
-	, MAX(sc.source_counterparty_id) [counterparty_id]
-	, MAX(sc.counterparty_id) [counterparty_code]
-	, MAX(sc.counterparty_name) counterparty_name
-	, CAST(ISNULL(SUM(sids.value),0) AS NUMERIC(32,17))  [value] 
-	, CAST(ISNULL(SUM(sids.volume),0) AS NUMERIC(32,17)) [volume]
-	, MAX(suom.source_uom_id) [uom_id]
-	, MAX(suom.uom_id) [uom_code]
-	, MAX(suom.uom_name) [uom_name]
-	, MAX(scu.source_currency_id) [currency_id]
-	, MAX(scu.currency_id) [currency_code]
-    , MAX(scu.currency_name) currency_name
-	, CASE WHEN MAX(si.invoice_type) = ''''i'''' THEN MAX(epa_receivable.external_value) ELSE MAX(epa_payable.external_value) END [creditor_debtor]
-	, CASE  
-		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''s'''' AND MAX(si.invoice_type) = ''''i'''' THEN  ''''Verkauf''''  
-		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''b'''' AND MAX(si.invoice_type) = ''''i''''  THEN  ''''Kauf'''' 
-		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''s'''' AND MAX(si.invoice_type) = ''''r''''  THEN  ''''Verkauf''''
-		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''b''''  AND MAX(si.invoice_type) = ''''r''''  THEN  ''''Kauf''''  
-	      ELSE NULL 
-	  END [buy_sell]
-	, CONCAT(MONTH(MAX(sids.prod_date_from)), ''''/'''', YEAR(MAX(sids.prod_date_from))) month_year
-	, CONCAT(CASE WHEN MAX(scom.commodity_id) = ''''Power'''' THEN ''''Strom'''' WHEN MAX(scom.commodity_id) = ''''GAS'''' THEN ''''Gas'''' ELSE MAX(scom.commodity_id) END,CASE  
-		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''s'''' AND MAX(si.invoice_type) = ''''i'''' THEN  ''''Verkauf''''  
-		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''b'''' AND MAX(si.invoice_type) = ''''i''''  THEN  ''''Kauf'''' 
-		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''s'''' AND MAX(si.invoice_type) = ''''r''''  THEN  ''''Verkauf''''
-		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''b''''  AND MAX(si.invoice_type) = ''''r''''  THEN  ''''Kauf''''  
-	      ELSE NULL 
-	  END,'''' '''',MAX(sc.counterparty_id) , '''' '''', MONTH(MAX(sids.prod_date_from)), ''''/'''',  YEAR(MAX(sids.prod_date_from)) )  summary_mapping_to_account
-	, CONCAT(''''*'''',si.stmt_invoice_id,'''' VOM '''', DAY(MAX(si.invoice_date)), ''''.'''', MONTH(MAX(si.invoice_date)) , ''''.'''', YEAR(MAX(si.invoice_date)) ) creditor_debtor_information
-	, MAX(cg.contract_id) contract_id
-	, MAX(cg.contract_name)  contract_name
-	, CAST(null AS VARCHAR(20)) barcode 
-	, MAX(sdv_ct.code) no_roc
-	, CASE WHEN MAX(scom.commodity_id) = ''''Power'''' THEN ''''Strom'''' WHEN MAX(scom.commodity_id) = ''''GAS'''' THEN ''''Gas'''' ELSE MAX(scom.commodity_id) END product
-	, CAST(null AS VARCHAR(20)) netting
-	, CAST(null AS VARCHAR(20)) document
-	, MAX(scom.source_commodity_id) commodity_id
-	, MAX(scom.commodity_id) commodity_code
-	, MAX(scom.commodity_name) commodity_name
-	, MAX(si.invoice_type) invoice_type
-	, ROW_NUMBER() OVER (ORDER BY si.stmt_invoice_id) row_num
-	,  MAX(sdv_ct.code) code
-	, MAX(stm_chkout.header_buy_sell_flag) header_buy_sell_flag
-	 INTO #temp_export_sap
-	FROM stmt_invoice_detail sids
-	INNER JOIN stmt_invoice si ON sids.stmt_invoice_id = si.stmt_invoice_id
-	INNER JOIN source_counterparty sc ON sc.source_counterparty_id = si.counterparty_id
-	LEFT JOIN contract_group cg ON cg.contract_id = si.contract_id
-	LEFT JOIN static_data_value sdv_ct ON sdv_ct.value_id = sids.invoice_line_item_id ''
-SET @_sql1 = 
-	N''
-   OUTER APPLY (
-      SELECT TOP 1 * FROM (
-		SELECT TOP 1 chkout.*,sdh.header_buy_sell_flag  from stmt_checkout chkout 
-		INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = chkout.source_deal_detail_id
-		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
-		WHERE chkout.stmt_invoice_detail_id = sids.stmt_invoice_detail_id
-		UNION ALL
-		SELECT TOP 1 chkout.*,sdh.header_buy_sell_flag
-		FROM stmt_invoice si1
-		INNER JOIN stmt_invoice_detail stid ON si1.stmt_invoice_id = stid.stmt_invoice_id
-		OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a 
-		OUTER APPLY (
-		SELECT DISTINCT stid_b.stmt_invoice_id, a.stmt_checkout_id 
-		FROM stmt_invoice_detail stid_b
-		CROSS APPLY dbo.SplitCommaSeperatedValues(stid_b.description1) de
-		WHERE de.item = a.stmt_checkout_id 
-		) inv
-		INNER JOIN stmt_checkout chkout ON chkout.stmt_checkout_id = a.stmt_checkout_id
-		INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = chkout.source_deal_detail_id
-		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
-		WHERE inv.stmt_invoice_id = si.stmt_invoice_id
-		) fnl
-	) stm_chkout
-	LEFT JOIN source_uom suom ON suom.source_uom_id = stm_chkout.uom_id
-	LEFT JOIN source_currency scu ON scu.source_currency_id = stm_chkout.currency_id
-	LEFT JOIN source_commodity scom ON scom.source_commodity_id = cg.commodity
-	OUTER APPLY (
-		SELECT 
-			 cea.external_type_id
-			, sdv.code
-			, cea.external_value
-		FROM counterparty_epa_account cea
-		INNER JOIN static_data_value sdv ON cea.external_type_id = sdv.value_id
-		WHERE cea.counterparty_id = si.counterparty_id AND cea.external_type_id = 2203
-		) epa_payable
-	OUTER APPLY (
-		SELECT 
-			 cea.external_type_id
-			, sdv.code
-			, cea.external_value
-		FROM counterparty_epa_account cea
-		INNER JOIN static_data_value sdv ON cea.external_type_id = sdv.value_id
-		WHERE cea.counterparty_id = si.counterparty_id AND cea.external_type_id = 2202
-		) epa_receivable
-	WHERE 1 = 1 
- '' 
-	+ CASE 
+
+--SET @_stmt_invoice_id = NULL
+--SET @_prod_date_from = ''2020-12-01''
+--SET @_prod_date_to = ''2020-12-31''
+--SET @_counterparty_id = 28
+
+IF OBJECT_ID(''tempdb..#temp_all_invoice'') IS NOT NULL
+	DROP TABLE #temp_all_invoice
+
+IF OBJECT_ID(''tempdb..#tmp_all_invoice_chk'') IS NOT NULL
+	DROP TABLE #tmp_all_invoice_chk
+
+CREATE TABLE #temp_all_invoice (stmt_invoice_id INT)
+
+SET @_sql = N''
+	INSERT INTO #temp_all_invoice (stmt_invoice_id)
+	SELECT DISTINCT stmt_invoice_id FROM stmt_invoice si
+	WHERE 1=1
+	'' + CASE 
 		WHEN @_counterparty_id IS NOT NULL
 			THEN '' AND  si.counterparty_id IN ('' + @_counterparty_id + '') ''
 		ELSE ''''
 		END + CASE 
+
 		WHEN @_contract_id IS NOT NULL
+
 			THEN '' AND  si.contract_id IN ('' + @_contract_id + '') ''
+
 		ELSE ''''
+
 		END + CASE 
+
 		WHEN @_stmt_invoice_id IS NOT NULL
+
 			THEN '' AND  si.stmt_invoice_id IN ('' + @_stmt_invoice_id + '') ''
+
 		ELSE ''''
+
 		END + CASE 
+
 		WHEN @_prod_date_from IS NOT NULL
-			THEN '' AND  sids.prod_date_from >= '''''' + @_prod_date_from + '''''' ''
+
+			THEN '' AND  si.prod_date_from >= '''''' + @_prod_date_from + '''''' ''
+
 		ELSE ''''
+
 		END + CASE 
+
 		WHEN @_prod_date_to IS NOT NULL
-			THEN '' AND  sids.prod_date_to <= '''''' + @_prod_date_to + '''''' ''
+
+			THEN '' AND  si.prod_date_to <= '''''' + @_prod_date_to + '''''' ''
+
 		ELSE ''''
-		END+ '' group by si.stmt_invoice_id ''
+
+		END
+
+EXEC (@_sql)
+
+SELECT a.[stmt_checkout_id]
+	, si.stmt_invoice_id
+	, si.is_voided
+INTO #tmp_all_invoice_chk
+FROM stmt_invoice si
+INNER JOIN #temp_all_invoice tid ON tid.stmt_invoice_id = si.stmt_invoice_id
+INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
+OUTER APPLY (
+	SELECT itm.item [stmt_checkout_id]
+	FROM dbo.SplitCommaSeperatedValues(stid.description1) itm
+	) a
+
+
+INSERT INTO #temp_all_invoice (stmt_invoice_id)
+SELECT DISTINCT si_b.stmt_invoice_id
+FROM stmt_invoice_detail stid_b
+CROSS APPLY dbo.SplitCommaSeperatedValues(stid_b.description1) de
+INNER JOIN #tmp_all_invoice_chk tmp ON tmp.[stmt_checkout_id] = de.item
+INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = stid_b.stmt_invoice_id
+	AND ISNULL(si_b.is_voided, ''n'') = ISNULL(tmp.is_voided, ''n'')
+	AND si_b.stmt_invoice_id <> tmp.stmt_invoice_id
+LEFT JOIN #temp_all_invoice tmpi ON tmpi.stmt_invoice_id = si_b.stmt_invoice_id
+WHERE ISNULL(si_b.is_backing_sheet, ''n'') = ''y''
+	AND tmpi.stmt_invoice_id IS NULL
+	--select * from #temp_all_invoice  return 
+SET @_sql = 
+
+	N''
+
+	SELECT si.stmt_invoice_id
+
+	, MAX(sids.prod_date_from) prod_date_from
+
+	, MAX(sids.prod_date_to) prod_date_to
+
+	, MAX(sc.source_counterparty_id) [counterparty_id]
+
+	, MAX(sc.counterparty_id) [counterparty_code]
+
+	, MAX(sc.counterparty_name) counterparty_name
+
+	, CAST(ISNULL(SUM(sids.value),0) AS NUMERIC(32,17))  [value] 
+
+	, CAST(ISNULL(SUM(sids.volume),0) AS NUMERIC(32,17)) [volume]
+
+	, MAX(suom.source_uom_id) [uom_id]
+
+	, MAX(suom.uom_id) [uom_code]
+
+	, MAX(suom.uom_name) [uom_name]
+
+	, MAX(scu.source_currency_id) [currency_id]
+
+	, MAX(scu.currency_id) [currency_code]
+
+    , MAX(scu.currency_name) currency_name
+
+	, CASE WHEN MAX(si.invoice_type) = ''''i'''' THEN MAX(epa_receivable.external_value) ELSE MAX(epa_payable.external_value) END [creditor_debtor]
+
+	, CASE  
+
+		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''s'''' AND MAX(si.invoice_type) = ''''i'''' THEN  ''''Verkauf''''  
+
+		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''b'''' AND MAX(si.invoice_type) = ''''i''''  THEN  ''''Kauf'''' 
+
+		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''s'''' AND MAX(si.invoice_type) = ''''r''''  THEN  ''''Verkauf''''
+
+		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''b''''  AND MAX(si.invoice_type) = ''''r''''  THEN  ''''Kauf''''  
+
+	      ELSE NULL 
+
+	  END [buy_sell]
+
+	, CONCAT(MONTH(MAX(sids.prod_date_from)), ''''/'''', YEAR(MAX(sids.prod_date_from))) month_year
+
+	, CONCAT(CASE WHEN MAX(scom.commodity_id) = ''''Power'''' THEN ''''Strom'''' WHEN MAX(scom.commodity_id) = ''''GAS'''' THEN ''''Gas'''' ELSE MAX(scom.commodity_id) END,CASE  
+
+		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''s'''' AND MAX(si.invoice_type) = ''''i'''' THEN  ''''Verkauf''''  
+
+		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''b'''' AND MAX(si.invoice_type) = ''''i''''  THEN  ''''Kauf'''' 
+
+		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''s'''' AND MAX(si.invoice_type) = ''''r''''  THEN  ''''Verkauf''''
+
+		  WHEN MAX(stm_chkout.header_buy_sell_flag) = ''''b''''  AND MAX(si.invoice_type) = ''''r''''  THEN  ''''Kauf''''  
+
+	      ELSE NULL 
+
+	  END,'''' '''',MAX(sc.counterparty_id) , '''' '''', MONTH(MAX(sids.prod_date_from)), ''''/'''',  YEAR(MAX(sids.prod_date_from)) )  summary_mapping_to_account
+
+	, CONCAT(''''*'''',si.stmt_invoice_id,'''' VOM '''', DAY(MAX(si.invoice_date)), ''''.'''', MONTH(MAX(si.invoice_date)) , ''''.'''', YEAR(MAX(si.invoice_date)) ) creditor_debtor_information
+
+	, MAX(cg.contract_id) contract_id
+
+	, MAX(cg.contract_name)  contract_name
+
+	, CAST(null AS VARCHAR(20)) barcode 
+
+	, MAX(sdv_ct.code) no_roc
+
+	, CASE WHEN MAX(scom.commodity_id) = ''''Power'''' THEN ''''Strom'''' WHEN MAX(scom.commodity_id) = ''''GAS'''' THEN ''''Gas'''' ELSE MAX(scom.commodity_id) END product
+
+	, CAST(null AS VARCHAR(20)) netting
+
+	, CAST(null AS VARCHAR(20)) document
+
+	, MAX(scom.source_commodity_id) commodity_id
+
+	, MAX(scom.commodity_id) commodity_code
+
+	, MAX(scom.commodity_name) commodity_name
+
+	, MAX(si.invoice_type) invoice_type
+
+	, ROW_NUMBER() OVER (ORDER BY si.stmt_invoice_id) row_num
+
+	,  MAX(sdv_ct.code) code
+
+	, MAX(stm_chkout.header_buy_sell_flag) header_buy_sell_flag
+	, CASE WHEN MAX(sng.netting_group_id) IS NULL THEN ''''y'''' ELSE ISNULL(MAX(si.is_backing_sheet), ''''n'''') END is_backing_sheet
+	 INTO #temp_export_sap
+	FROM stmt_invoice_detail sids
+
+	INNER JOIN #temp_all_invoice tmpi ON tmpi.stmt_invoice_id = sids.stmt_invoice_id
+
+	INNER JOIN stmt_invoice si ON sids.stmt_invoice_id = si.stmt_invoice_id
+
+	LEFT JOIN stmt_netting_group sng ON sng.counterparty_id = si.counterparty_id AND sng.netting_contract_id = si.contract_id
+
+	INNER JOIN source_counterparty sc ON sc.source_counterparty_id = si.counterparty_id
+
+	LEFT JOIN contract_group cg ON cg.contract_id = si.contract_id
+
+	LEFT JOIN static_data_value sdv_ct ON sdv_ct.value_id = sids.invoice_line_item_id ''
+
+SET @_sql1 = 
+
+	N''
+
+   OUTER APPLY (
+
+      SELECT TOP 1 * FROM (
+
+		SELECT TOP 1 chkout.*,sdh.header_buy_sell_flag  from stmt_checkout chkout 
+
+		INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = chkout.source_deal_detail_id
+
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+
+		WHERE chkout.stmt_invoice_detail_id = sids.stmt_invoice_detail_id
+
+		UNION ALL
+
+		SELECT TOP 1 chkout.*,sdh.header_buy_sell_flag
+
+		FROM stmt_invoice si1
+
+		INNER JOIN stmt_invoice_detail stid ON si1.stmt_invoice_id = stid.stmt_invoice_id
+
+		OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a 
+
+		OUTER APPLY (
+
+		SELECT DISTINCT stid_b.stmt_invoice_id, a.stmt_checkout_id 
+
+		FROM stmt_invoice_detail stid_b
+
+		CROSS APPLY dbo.SplitCommaSeperatedValues(stid_b.description1) de
+
+		WHERE de.item = a.stmt_checkout_id 
+
+		) inv
+
+		INNER JOIN stmt_checkout chkout ON chkout.stmt_checkout_id = a.stmt_checkout_id
+
+		INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = chkout.source_deal_detail_id
+
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+
+		WHERE inv.stmt_invoice_id = si.stmt_invoice_id
+
+		) fnl
+
+	) stm_chkout
+
+	LEFT JOIN source_uom suom ON suom.source_uom_id = stm_chkout.uom_id
+
+	LEFT JOIN source_currency scu ON scu.source_currency_id = stm_chkout.currency_id
+
+	LEFT JOIN source_commodity scom ON scom.source_commodity_id = cg.commodity
+
+	OUTER APPLY (
+
+		SELECT 
+
+			 cea.external_type_id
+
+			, sdv.code
+
+			, cea.external_value
+
+		FROM counterparty_epa_account cea
+
+		INNER JOIN static_data_value sdv ON cea.external_type_id = sdv.value_id
+
+		WHERE cea.counterparty_id = si.counterparty_id AND cea.external_type_id = 2203
+
+		) epa_payable
+
+	OUTER APPLY (
+
+		SELECT 
+
+			 cea.external_type_id
+
+			, sdv.code
+
+			, cea.external_value
+
+		FROM counterparty_epa_account cea
+
+		INNER JOIN static_data_value sdv ON cea.external_type_id = sdv.value_id
+
+		WHERE cea.counterparty_id = si.counterparty_id AND cea.external_type_id = 2202
+
+		) epa_receivable
+
+	WHERE 1 = 1  
+	AND CASE WHEN sng.netting_group_id IS NULL THEN ''''y'''' ELSE ISNULL(si.is_backing_sheet, ''''n'''') END = ''''y''''
+
+  group by si.stmt_invoice_id ''
+
 SET @_sql2 = 
+
 	N''
+
 SELECT  stmt_invoice_id
+
 	, prod_date_from
+
 	, prod_date_to
+
 	, counterparty_id
+
 	, counterparty_code
+
 	, counterparty_name
+
 	, value
+
 	, volume
+
 	, uom_id
+
 	, uom_code
+
 	, uom_name
+
 	, currency_id
+
 	, currency_code
+
 	, currency_name
+
 	, creditor_debtor
+
 	, buy_sell
+
 	, month_year
+
 	, summary_mapping_to_account
+
 	, creditor_debtor_information
+
 	, contract_id
+
 	, contract_name
+
 	, barcode
+
 	, CASE WHEN no_roc like ''''%VAT%'''' THEN ''''X'''' ELSE  NULL END no_roc
+
 	, product
+
 	, netting
+
 	, document
+
 	, commodity_id
+
 	, commodity_code
+
 	, commodity_name
+
 	, invoice_type
+
 	, row_num
+
 	,header_buy_sell_flag
+	,is_backing_sheet
 INTO #temp_export_sap1
+
 FROM #temp_export_sap where  (invoice_type = ''''i'''' AND  header_buy_sell_flag=  ''''s'''') OR   (invoice_type =''''r'''' AND  header_buy_sell_flag=  ''''b'''') 
+
 UNION ALL
+
 SELECT 
+
 	 stmt_invoice_id
+
 	, prod_date_from
+
 	, prod_date_to
+
 	, counterparty_id
+
 	, counterparty_code
+
 	, counterparty_name
+
 	, value
+
 	, CAST(0.00 AS NUMERIC(32,17)) volume
+
 	, uom_id
+
 	, uom_code
+
 	, uom_name
+
 	, currency_id
+
 	, currency_code
+
 	, currency_name
+
 	, creditor_debtor
+
 	, buy_sell
+
 	, month_year
+
 	, summary_mapping_to_account
+
 	, creditor_debtor_information
+
 	, contract_id
+
 	, contract_name
+
 	, barcode
+
 	,  CASE WHEN no_roc like ''''%VAT%'''' THEN ''''X'''' ELSE  NULL END no_roc
+
 	, CONCAT(product,'''' neg.EUR'''')  product
+
 	, netting
+
 	, document
+
 	, commodity_id
+
 	, commodity_code
+
 	, commodity_name
+
 	, invoice_type
+
 	, row_num
+
 	, header_buy_sell_flag
+	,is_backing_sheet
 FROM #temp_export_sap where  (invoice_type =''''i'''' AND  header_buy_sell_flag=  ''''b'''') OR   (invoice_type= ''''r'''' AND  header_buy_sell_flag=  ''''s'''')
+
 UNION ALL
+
 SELECT 
+
       stmt_invoice_id
+
 	, prod_date_from
+
 	, prod_date_to
+
 	, counterparty_id
+
 	, counterparty_code
+
 	, counterparty_name
+
 	, CAST(0.01 AS NUMERIC(32,17)) value
+
 	,  volume
+
 	, uom_id
+
 	, uom_code
+
 	, uom_name
+
 	, currency_id
+
 	, currency_code
+
 	, currency_name
+
 	, creditor_debtor
+
 	, buy_sell
+
 	, month_year
+
 	, summary_mapping_to_account
+
 	, creditor_debtor_information
+
 	, contract_id
+
 	, contract_name
+
 	, barcode
+
 	, CASE WHEN no_roc like ''''%VAT%'''' THEN ''''X'''' ELSE  NULL END no_roc
+
 	, CONCAT(product,'''' neg.MWh'''')  product
+
 	, netting
+
 	, document
+
 	, commodity_id
+
 	, commodity_code
+
 	, commodity_name
+
 	, invoice_type
+
 	, row_num
+
 	, header_buy_sell_flag
+	,is_backing_sheet
 FROM #temp_export_sap  where  (invoice_type =''''i'''' AND  header_buy_sell_flag=  ''''b'''') OR   (invoice_type =''''r'''' AND  header_buy_sell_flag=  ''''s'''')
+
 UNION ALL
+
 SELECT 
+
 	  stmt_invoice_id
+
 	, prod_date_from
+
 	, prod_date_to
+
 	, counterparty_id
+
 	, counterparty_code
+
 	, counterparty_name
+
 	, CAST(-0.01 AS NUMERIC(32,17)) value
+
 	, CAST(0.00 AS NUMERIC(32,17)) volume
+
 	, uom_id
+
 	, uom_code
+
 	, uom_name
+
 	, currency_id
+
 	, currency_code
+
 	, currency_name
+
 	, creditor_debtor
+
 	, buy_sell
+
 	, month_year
+
 	, summary_mapping_to_account
+
 	, creditor_debtor_information
+
 	, contract_id
+
 	, contract_name
+
 	, barcode
+
 	,  CASE WHEN no_roc like ''''%VAT%'''' THEN ''''X'''' ELSE  NULL END no_roc
+
 	,  CONCAT(product,'''' neg.MWh'''') product
+
 	, netting
+
 	, document
+
 	, commodity_id
+
 	, commodity_code
+
 	, commodity_name
+
 	, invoice_type
+
 	, row_num
+
 	, header_buy_sell_flag
+	,is_backing_sheet
 FROM #temp_export_sap where  (invoice_type =''''i'''' AND  header_buy_sell_flag=  ''''b'''') OR   (invoice_type =''''r'''' AND  header_buy_sell_flag=  ''''s'''') ''
+
 SET @_sql3 = 
+
 	N''
+
 SELECT 
+
 	 null stmt_invoice_id
+
 	, prod_date_from
+
 	, prod_date_to
+
 	, counterparty_id
+
 	, counterparty_code
+
 	, counterparty_name
+
 	, value
+
 	, volume
+
 	, uom_id
+
 	, uom_code
+
 	, uom_name
+
 	, currency_id
+
 	, currency_code
+
 	, currency_name
+
 	, creditor_debtor
+
 	, buy_sell
+
 	, month_year
+
 	, CASE WHEN product like ''''%neg.EUR%'''' THEN NULL ELSE summary_mapping_to_account END summary_mapping_to_account
+
 	,  CASE
+
 		WHEN  invoice_type = ''''i''''  AND header_buy_sell_flag = ''''s''''  THEN creditor_debtor_information
+
 		WHEN invoice_type = ''''r''''  AND Product not like ''''%Strom neg.MWh%'''' THEN CONCAT(''''*'''', ''''Re'''')
+
 		WHEN  product like ''''%Strom neg.EUR%'''' THEN creditor_debtor_information
+
 	    ELSE NULL
+
 	  END creditor_debtor_information
+
 	, contract_id
+
 	, contract_name
+
 	, barcode
+
 	, no_roc
+
 	, product
+
 	, netting
+
 	, document
+
 	, commodity_id
+
 	, commodity_code
+
 	, commodity_name
+
 	, invoice_type
+
 	, row_num
+
 --[__batch_report__]
+
 FROM #temp_export_sap1 ORDER BY invoice_type,row_num, product, value, volume ASC
+
 ''
+
 EXEC (@_sql + @_sql1 + @_sql2 + @_sql3)
+
 ', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106500' 
