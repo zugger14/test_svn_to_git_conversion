@@ -17736,7 +17736,7 @@ BEGIN
  					, [19] Hr19, [20] Hr20, [21] Hr21, [22] Hr22, [23] Hr23, [24] Hr24, [25] Hr25
  					, profile_id partition_value, interval
  				FROM
- 				(  SELECT fp.profile_id, tmp.term_date, tmp.hour, CAST(tmp.volume AS float) volume, tmp.interval
+ 				(  SELECT fp.profile_id, tmp.term_date, TRY_CAST(tmp.hour AS INT) [hour], CAST(tmp.volume AS float) volume, tmp.interval
  					FROM ' + @import_temp_table_name + ' tmp
  					INNER JOIN forecast_profile fp ON tmp.profile = fp.external_id
  				) p
