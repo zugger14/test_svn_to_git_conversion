@@ -56,7 +56,7 @@ CREATE TABLE #map_header_deal_id (source_deal_detail_id INT)
 
 SET @sql = '
 	INSERT INTO #map_header_deal_id (source_deal_detail_id)
-	SELECT sdh.source_deal_detail_id
+	SELECT sdd.source_deal_detail_id
 	FROM source_deal_header sdh
 	INNER JOIN source_deal_detail sdd ON sdh.source_deal_header_id = sdd.source_deal_header_id
 	INNER JOIN source_system_book_map ssbm ON ssbm.source_system_book_id1 = sdh.source_system_book_id1
