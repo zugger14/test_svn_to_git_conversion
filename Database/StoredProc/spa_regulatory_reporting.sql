@@ -293,6 +293,14 @@ BEGIN
 			LEFT JOIN source_commodity sc1
 				ON sc1.source_commodity_id = sdh.commodity_id
 			' + 
+			  CASE WHEN @submission_type IN (44702, 44705) 
+				   THEN ' INNER JOIN deal_status_group dsg
+							ON dsg.status_value_id = sdh.deal_status
+							AND dsg.status = ''Official'' 
+			  
+			  ' ELSE '' END 
+			+ '
+			' + 
 			  CASE WHEN @report_type = 39405 
 				   THEN ' OUTER APPLY (
 							SELECT DISTINCT term_start
