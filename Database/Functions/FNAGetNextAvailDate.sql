@@ -65,7 +65,25 @@ BEGIN
 					ELSE
 						SELECT @avail_date = dateadd(dd,1,@avail_date)							
 			END
-		END		
+		END
+		ELSE IF @due_date_type = 0 -- Include sat and sun
+		BEGIN
+			--SELECT @avail_date = dateadd(dd,1,@date)
+			 SELECT @avail_date = @date
+
+			WHILE 1=1
+			BEGIN					
+				IF NOT EXISTS(
+					SELECT 'x' from holiday_group
+					WHERE hol_group_value_id = @holiday_groupId 
+						AND hol_date = @avail_date)
+							SELECT @count = @count + 1			
+											
+					IF @count = @limit_count BREAK		
+					ELSE
+						SELECT @avail_date = dateadd(dd,1,@avail_date)							
+			END
+		END	
 		ELSE IF @due_date_type  IN (971,977)
 		BEGIN
 			SELECT @avail_date = CAST(CAST (YEAR(@date) AS VARCHAR)+'-'+CAST(MONTH(@date) AS VARCHAR)+'-01' AS DATETIME)

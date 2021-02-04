@@ -142,7 +142,7 @@ CREATE TABLE #temp_term(
 			ELSE val END,1) active_date,  
 			CASE WHEN t.date_or_block=''r'' THEN DATEADD(d,ISNULL(t.relative_days,0),ts.deal_date) ELSE NULL END relative_term_start,  
 			CASE WHEN t.date_or_block=''r'' THEN  DATEADD(d,ISNULL(t.no_of_days,0),DATEADD(d,ISNULL(t.relative_days,0),ts.deal_date)) ELSE NULL END relative_term_end,  
-			CASE WHEN t.date_or_block=''m'' THEN  dbo.FNAGetNextAvailDate(CAST(DATEADD(d,ISNULL(t.relative_days,1),ts.deal_date) AS DATE),1,t.holiday_calendar_id )
+			CASE WHEN t.date_or_block=''m'' THEN  dbo.FNAGetNextAvailDate(CAST(DATEADD(d,ISNULL(t.relative_days,1),ts.deal_date) AS DATE),0,t.holiday_calendar_id )
 				ELSE  dbo.FNAGetNextAvailDate(t.term_start,1,t.holiday_calendar_id )  END term_start,
 			CASE WHEN t.date_or_block=''m'' THEN  dbo.FNAGetTermEndDate(''m'',ts.deal_date,0) ELSE t.term_end END term_end,
 			ts.deal_id,t.date_or_block,t.no_of_days,ts.term_start    
