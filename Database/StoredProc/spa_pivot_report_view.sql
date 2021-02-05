@@ -106,7 +106,7 @@ BEGIN
 					COALESCE(prvc.render_as,tbl.render_as) render_as,
 				prvc.date_format,
 				prvc.currency,
-					COALESCE(prvc.thou_sep, tbl.thousand_seperation) thou_sep,
+					COALESCE(prvc.thou_sep, tbl.thousand_seperation, CASE WHEN COALESCE(prvc.render_as,tbl.render_as) IN ('a', 'v', 'n', 'r') THEN 'y' END) thou_sep,
 					CASE WHEN COALESCE(prvc.rounding, tbl.rounding) = '-1' AND COALESCE(prvc.render_as,tbl.render_as) IN ('a', 'v', 'n', 'r') 
 						 THEN CASE COALESCE(prvc.render_as,tbl.render_as) WHEN 'a' THEN tbl_rounding.amount_rounding
 																		  WHEN 'v' THEN tbl_rounding.volume_rounding
@@ -164,7 +164,7 @@ BEGIN
 																		  WHEN 'r' THEN tbl_rounding.price_rounding
 						 ELSE tbl.rounding END
 					ELSE tbl.rounding END rounding,
-					tbl.thousand_seperation thou_sep
+					COALESCE(tbl.thousand_seperation, CASE WHEN tbl.render_as IN ('a', 'v', 'n', 'r') THEN 'y' END) thou_sep
 				FROM   pivot_report_view prv
 				CROSS APPLY(
 					SELECT item columns_name
@@ -235,7 +235,7 @@ BEGIN
 					COALESCE(prvc.render_as,tbl.render_as) render_as,
 				prvc.date_format,
 				prvc.currency,
-					COALESCE(prvc.thou_sep, tbl.thousand_seperation) thou_sep,
+					COALESCE(prvc.thou_sep, tbl.thousand_seperation, CASE WHEN COALESCE(prvc.render_as,tbl.render_as) IN ('a', 'v', 'n', 'r') THEN 'y' END) thou_sep,
 					CASE WHEN COALESCE(prvc.rounding, tbl.rounding) = '-1' AND COALESCE(prvc.render_as,tbl.render_as) IN ('a', 'v', 'n', 'r') 
 						 THEN CASE COALESCE(prvc.render_as,tbl.render_as) WHEN 'a' THEN tbl_rounding.amount_rounding
 																		  WHEN 'v' THEN tbl_rounding.volume_rounding
@@ -289,7 +289,7 @@ BEGIN
 																		  WHEN 'r' THEN tbl_rounding.price_rounding
 						 ELSE tbl.rounding END
 					ELSE tbl.rounding END rounding,
-					tbl.thousand_seperation thou_sep
+					COALESCE(tbl.thousand_seperation, CASE WHEN tbl.render_as IN ('a', 'v', 'n', 'r') THEN 'y' END) thou_sep
 				FROM   pivot_report_view prv
 				CROSS APPLY(
 					SELECT item columns_name
