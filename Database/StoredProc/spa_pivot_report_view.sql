@@ -282,6 +282,9 @@ BEGIN
 					tbl_column.columns_name,
 					tbl_column.columns_name [label],
 					tbl.render_as,
+					NULL date_format,
+					NULL currency,
+					COALESCE(tbl.thousand_seperation, CASE WHEN tbl.render_as IN ('a', 'v', 'n', 'r') THEN 'y' END) thou_sep,
 					CASE WHEN tbl.rounding = '-1' AND tbl.render_as IN ('a', 'v', 'n', 'r') 
 						 THEN CASE tbl.render_as WHEN 'a' THEN tbl_rounding.amount_rounding
 																		  WHEN 'v' THEN tbl_rounding.volume_rounding
@@ -289,7 +292,7 @@ BEGIN
 																		  WHEN 'r' THEN tbl_rounding.price_rounding
 						 ELSE tbl.rounding END
 					ELSE tbl.rounding END rounding,
-					COALESCE(tbl.thousand_seperation, CASE WHEN tbl.render_as IN ('a', 'v', 'n', 'r') THEN 'y' END) thou_sep
+					NULL neg_as_red
 				FROM   pivot_report_view prv
 				CROSS APPLY(
 					SELECT item columns_name
