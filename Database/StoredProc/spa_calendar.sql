@@ -738,7 +738,7 @@ BEGIN
 		SELECT TOP(1) @alert_id = ett.alert_id, @event_trigger_id = ett.event_trigger_id
 		FROM module_events mee
 		INNER JOIN event_trigger ett ON mee.module_events_id = ett.modules_event_id
-		INNER JOIN workflow_schedule_task wst ON wst.workflow_id = ett.event_trigger_id
+		LEFT JOIN workflow_schedule_task wst ON wst.workflow_id = ett.event_trigger_id AND wst.workflow_id_type = 2
 		LEFT JOIN (	
 			SELECT DISTINCT wea.alert_id
 			FROM module_events me
@@ -750,7 +750,7 @@ BEGIN
 		) a ON a.alert_id = ett.event_trigger_id
 		LEFT JOIN alert_sql as2 ON ett.alert_id = as2.alert_sql_id
 		WHERE ett.modules_event_id = @workflow_id AND (a.alert_id IS NULL OR ett.initial_event = 'y') and as2.is_active = 'y'
-		ORDER BY wst.sort_order
+		ORDER BY ISNULL(wst.sort_order,ett.event_trigger_id)
 
 		SET @process_id = dbo.FNAGetNewID();
 		SET @alert_sql_statement = 'spa_run_alert_sql ' + CAST(@alert_id AS VARCHAR) + ', NULL, NULL, NULL, NULL, ' + CAST(@event_trigger_id AS VARCHAR) + ',NULL,NULL,NULL,' + CAST(@w_group_id AS VARCHAR)
