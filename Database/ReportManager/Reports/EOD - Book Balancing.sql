@@ -1,4 +1,4 @@
-<?x BEGIN TRY
+BEGIN TRY
 		BEGIN TRAN
 
 		DECLARE @report_id_dest INT 
@@ -1485,4 +1485,3 @@ BEGIN CATCH
 	DECLARE @error_message VARCHAR(MAX) = ERROR_MESSAGE()
 	RAISERROR(@error_message,16,1)
 END CATCH
-?>
