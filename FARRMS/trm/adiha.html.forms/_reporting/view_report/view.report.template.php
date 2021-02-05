@@ -1405,6 +1405,7 @@
 		}
         
         var PIVOT_VIEW_COL_FORMATTING_INFO = '';
+        var PIVOT_VIEW_REPORT_NAME = '';
 		load_pivot_view_callback = function(result) {
 			var attach_docs = '<?php echo $attach_docs_url_path; ?>';
 			var full_file_path = attach_docs.replace('attach_docs', 'temp_Note') + '/' + pivot_file_name;
@@ -1430,8 +1431,8 @@
 					col_list: JSON.stringify(pivot_col_list)
 				};
 			} else {
-				PIVOT_VIEW_COL_FORMATTING_INFO = JSON.parse(result[0][10]);
-                //console.log(PIVOT_VIEW_COL_FORMATTING_INFO);
+                PIVOT_VIEW_COL_FORMATTING_INFO = JSON.parse(result[0][10]);
+                PIVOT_VIEW_REPORT_NAME = result[0][5];
 				var renderer = result[0][3];
 
 				if (renderer == 'Table') {
@@ -1509,7 +1510,8 @@
 			refresh_pivot_view(post_param);
 		}
 
-		refresh_pivot_view = function(params) {    
+		refresh_pivot_view = function(params) {   
+            
 			var active_tab_id = report_ui_template.report_ui_tabbar.getActiveTab();
             var active_object_id = (active_tab_id.indexOf("tab_") != -1) ? active_tab_id.replace("tab_", "") : active_tab_id;
 			parent.report_ui.layout.cells('a').collapse();
@@ -1688,13 +1690,7 @@
 		
 		report_ui_template.fx_get_report_label_pivot_views = function() {
             var return_val = '';
-			if (PIVOT_VIEW_COL_FORMATTING_INFO != null) {
-				$.each(PIVOT_VIEW_COL_FORMATTING_INFO, function(ind, val) {
-					if(ind == 1) {
-						return_val = (val.user_report_name != 'undefined' || val.user_report_name != '')? '' : val.user_report_name;
-					}
-				});
-			}
+            return_val = (PIVOT_VIEW_REPORT_NAME != 'undefined' || PIVOT_VIEW_REPORT_NAME != '' ||PIVOT_VIEW_REPORT_NAME != null)? PIVOT_VIEW_REPORT_NAME : '' ;
             return return_val;
         };
 
