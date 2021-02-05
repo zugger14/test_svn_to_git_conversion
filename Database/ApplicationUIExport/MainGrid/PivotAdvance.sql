@@ -107,7 +107,7 @@ BEGIN
 
 							INSERT INTO #temp_all_grids_columns(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment, browser_grid_id, allow_multi_select, rounding)
 							
-												SELECT 295,'render_as','Render As','combo','SELECT ''c'' [id], ''Currency'' [name] UNION ALL SELECT ''d'', ''Date'' UNION ALL SELECT ''n'', ''Number'' UNION SELECT ''a'', ''Amount'' UNION SELECT ''r'', ''Price'' UNION SELECT ''v'', ''Volume''  UNION ALL SELECT ''p'', ''Percentage'' UNION ALL SELECT ''t'', ''Text'' UNION ALL SELECT ''h'', ''Hyperlink''','n','n','3','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 295,'render_as','Render As','combo','SELECT ''c'' [id], ''Currency'' [name] UNION ALL SELECT ''d'', ''Date'' UNION ALL SELECT ''n'', ''Number'' UNION SELECT ''a'', ''Amount'' UNION SELECT ''r'', ''Price'' UNION SELECT ''v'', ''Volume''  UNION ALL SELECT ''p'', ''Percentage'' UNION ALL SELECT ''t'', ''Text'' UNION ALL SELECT ''h'', ''Hyperlink''','n','y','3','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 295,'date_format','Date Format','combo','SELECT ''MM/dd/yyyy'' [id],''mm/dd/yyyy'' [name] UNION ALL 
 SELECT ''MM/dd/yyyy hh:mm'',''mm/dd/yyyy hh:mm'' UNION ALL 
 SELECT ''MM/dd/yyyy hh:mm:ss'',''mm/dd/yyyy hh:mm:ss'' UNION ALL 
@@ -129,8 +129,8 @@ SELECT ''MMMM dd'',''Month Day'' ','n','n','4','n',NULL,NULL,NULL,'150','str',NU
 	SELECT ''¥'', ''¥'' UNION ALL 
 	SELECT ''€'', ''€'' ','n','n','5','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 295,'thou_sep','Thousand Separator','combo','SELECT ''y'' [id], ''Yes'' [name] UNION ALL 
-	SELECT ''n'', ''No'' UNION SELECT ''-1'', ''Global''','n','n','6','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
-												SELECT 295,'rounding','Rounding','combo','SELECT n [id], CAST(n AS VARCHAR(10)) [name] FROM seq WHERE n<=20 UNION SELECT -1 , ''Global''','n','n','7','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+	SELECT ''n'', ''No'' UNION SELECT ''-1'', ''Global''','n','y','6','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
+												SELECT 295,'rounding','Rounding','combo','SELECT n [id], CAST(n AS VARCHAR(10)) [name] FROM seq WHERE n<=20 UNION SELECT -1 , ''Global''','n','y','7','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 295,'neg_as_red','Format Negative','combo','SELECT ''a'' [id], ''Absolute'' [name] UNION ALL SELECT ''y'' [id], ''Red'' [name] ','n','n','8','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 295,'label','Label','ed',NULL,'n','n','3','n',NULL,NULL,NULL,'150','str',NULL,'left', NULL,'n',NULL UNION ALL 
 												SELECT 295,'id','ID','ro',NULL,'n','n','1','y',NULL,NULL,NULL,'80','str',NULL,'left', NULL,'n',NULL UNION ALL 

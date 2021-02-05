@@ -140,7 +140,7 @@ BEGIN
 						ON dsc.data_source_column_id = rtc.column_id
 					WHERE report_paramset_id = @paramset_id
 						AND rpt.report_page_tablix_id = @component_id
-						AND dsc.[alias] = prvc.columns_name
+						AND rtc.[alias] = prvc.columns_name
 				) tbl
 				OUTER APPLY( SELECT price_rounding,volume_rounding,amount_rounding,number_rounding
 							 FROM company_info
@@ -167,7 +167,11 @@ BEGIN
 					tbl.thousand_seperation thou_sep
 				FROM   pivot_report_view prv
 				CROSS APPLY(
-					SELECT IIF(CHARINDEX('|',REPLACE(item,'||||','|')) = 0, REPLACE(item,'||||','|'),SUBSTRING(REPLACE(item,'||||','|'), CHARINDEX('|',REPLACE(item,'||||','|')) + 1 , LEN(REPLACE(item,'||||','|')))) columns_name
+					SELECT item columns_name
+					FROM dbo.FNASplit(prv.row_fields,',')
+					UNION SELECT item columns_name
+					FROM dbo.FNASplit(prv.columns_fields,',')
+					UNION SELECT IIF(CHARINDEX('|',REPLACE(item,'||||','|')) = 0, REPLACE(item,'||||','|'),SUBSTRING(REPLACE(item,'||||','|'), CHARINDEX('|',REPLACE(item,'||||','|')) + 1 , LEN(REPLACE(item,'||||','|')))) columns_name
 					FROM dbo.FNASplit(prv.detail_fields,',')
 				) tbl_column
 				OUTER APPLY (
@@ -194,7 +198,7 @@ BEGIN
 						ON dsc.data_source_column_id = rtc.column_id
 					WHERE report_paramset_id = @paramset_id
 						AND rpt.report_page_tablix_id = @component_id
-						AND dsc.[alias] = tbl_column.columns_name
+						AND rtc.[alias] = tbl_column.columns_name
 				) tbl
 				OUTER APPLY( SELECT price_rounding,volume_rounding,amount_rounding,number_rounding
 							 FROM company_info
@@ -265,7 +269,7 @@ BEGIN
 						ON dsc.data_source_column_id = rtc.column_id
 					WHERE report_paramset_id = @paramset_id
 						AND rpt.report_page_tablix_id = @component_id
-						AND dsc.[alias] = prvc.columns_name
+						AND rtc.[alias] = prvc.columns_name
 				) tbl
 				OUTER APPLY( SELECT price_rounding,volume_rounding,amount_rounding,number_rounding
 							 FROM company_info
@@ -288,7 +292,11 @@ BEGIN
 					tbl.thousand_seperation thou_sep
 				FROM   pivot_report_view prv
 				CROSS APPLY(
-					SELECT IIF(CHARINDEX('|',REPLACE(item,'||||','|')) = 0, REPLACE(item,'||||','|'),SUBSTRING(REPLACE(item,'||||','|'), CHARINDEX('|',REPLACE(item,'||||','|')) + 1 , LEN(REPLACE(item,'||||','|')))) columns_name
+					SELECT item columns_name
+					FROM dbo.FNASplit(prv.row_fields,',')
+					UNION SELECT item columns_name
+					FROM dbo.FNASplit(prv.columns_fields,',')
+					UNION SELECT IIF(CHARINDEX('|',REPLACE(item,'||||','|')) = 0, REPLACE(item,'||||','|'),SUBSTRING(REPLACE(item,'||||','|'), CHARINDEX('|',REPLACE(item,'||||','|')) + 1 , LEN(REPLACE(item,'||||','|')))) columns_name
 					FROM dbo.FNASplit(prv.detail_fields,',')
 				) tbl_column
 				OUTER APPLY (
@@ -315,7 +323,7 @@ BEGIN
 						ON dsc.data_source_column_id = rtc.column_id
 					WHERE report_paramset_id = @paramset_id
 						AND rpt.report_page_tablix_id = @component_id
-						AND dsc.[alias] = tbl_column.columns_name
+						AND rtc.[alias] = tbl_column.columns_name
 				) tbl
 				OUTER APPLY( SELECT price_rounding,volume_rounding,amount_rounding,number_rounding
 							 FROM company_info

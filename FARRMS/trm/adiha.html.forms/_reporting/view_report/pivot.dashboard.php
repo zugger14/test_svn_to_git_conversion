@@ -24,7 +24,8 @@
     $replace_params = (isset($_REQUEST["replace_params"]) && $_REQUEST["replace_params"] != '') ? "'" . urldecode($_REQUEST["replace_params"]) . "'" : 'NULL';
     $cell_text = get_sanitized_value($_REQUEST['cell_text'] ?? '');
     $cell_id = get_sanitized_value($_REQUEST['cell_id'] ?? '');
-
+    $paramset_id = '';
+    $component_id = '';
     if ($is_dashboard == 'y' && $view_id != '') {
     	$sp_db_param = "EXEC spa_pivot_report_view @flag='y', @view_id=" . $view_id . ", @dashboard_id=" . $dashboard_id . ", @replace_params=" . $replace_params;
     	$db_param = readXMLURL2($sp_db_param);
@@ -957,7 +958,8 @@
      */
     viewPivotDashboard.form_change = function(name, value, state) {
         var file_path = '<?php echo $report_views_url_path;?>';
-
+        var paramset_id = '<?php echo $paramset_id;?>';
+        var component_id = '<?php echo $component_id;?>';
         if (name == 'view') {
         	if (value == '' || value == null) {
         		return;
@@ -968,6 +970,8 @@
 		            "action":"spa_pivot_report_view",
 		            "flag":"t",
 		            "view_id":value,
+                    "paramset_id":paramset_id,
+                    "component_id":component_id,
 		            "grid_type":"g"
 		        }
 		        var sql_param = $.param(data);
