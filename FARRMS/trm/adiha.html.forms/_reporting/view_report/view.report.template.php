@@ -1577,25 +1577,25 @@
 						var sep = (thou_sep == 'n') ? '' : global_group_separator;
 
 						if (thou_sep != '' && rounding != '') {
-							var val1 = value.replaceAll(',','');
+							var val1 = value.replace(/,/g,'');
 							var re = /,(?=[\d,]*\.\d{2}\b)/;
 							if (sep == '') {
 								val1 = val1.replace(re, '');							
 							}
 							return_val = $.number(val1, rounding, global_decimal_separator, sep);
 						} else if (rounding != '') {
-                            var val1 = value.replaceAll(',','');
+                            var val1 = value.replace(/,/g,'');
 							return_val = $.number(val1, rounding, global_decimal_separator, sep);
 						} else if (thou_sep !== '') {
 							var val1 = value;
-                            var val1 = value.replaceAll(',','');
+                            var val1 = value.replace(/,/g,'');
 							var re = /,(?=[\d,]*\.\d{2}\b)/;
 							if (sep == '') {
 								val1 = val1.replace(re, '');
 							}
 							return_val = $.number(val1, '', global_decimal_separator, sep);
 						} else {
-                            var val1 = value.replaceAll(',','');
+                            var val1 = value.replace(/,/g,'');
 							return_val = $.number(val1, '', global_decimal_separator, sep);
 						}
 						
