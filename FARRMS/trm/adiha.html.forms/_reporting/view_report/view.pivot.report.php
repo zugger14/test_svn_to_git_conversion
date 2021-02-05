@@ -988,7 +988,8 @@
      */
     viewPivotReport.form_change = function(name, value, state) {
         var file_path = '<?php echo $report_views_url_path;?>';
-
+        var paramset_id = '<?php echo $paramset_id;?>';
+        var component_id = '<?php echo $component_id;?>';
         if (name == 'view') {
         	if (value == '' || value == null) {
         		viewPivotReport.view_form.uncheckItem('pin_it');
@@ -1002,6 +1003,8 @@
 		            "action":"spa_pivot_report_view",
 		            "flag":"t",
 		            "view_id":value,
+                    "paramset_id":paramset_id,
+                    "component_id":component_id,
 		            "grid_type":"g"
 		        }
 		        var sql_param = $.param(data);
