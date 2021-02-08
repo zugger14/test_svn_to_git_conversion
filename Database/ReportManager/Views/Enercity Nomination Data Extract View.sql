@@ -39,7 +39,7 @@ DECLARE
 	@_sub_id VARCHAR(MAX) = NULL
 	,@_stra_id VARCHAR(MAX) = NULL
 	,@_book_id VARCHAR(MAX) = null
-	,@_subbook_id VARCHAR(MAX) = NULL
+	,@_sub_book_id VARCHAR(MAX) = NULL
 	,@_source_deal_header_ids NVARCHAR(1000)=NULL, --103969, --62976,--46363,--7264,  
 	@_deal_id NVARCHAR(50)=NULL,  
 	@_deal_detail_ids NVARCHAR(500),
@@ -111,7 +111,7 @@ drop table #position_deal
 SET @_sub_id = nullif(isnull(@_sub_id, nullif(''@sub_id'', replace(''@_sub_id'', ''@_'', ''@''))), ''null'')
 SET @_stra_id = nullif(isnull(@_stra_id, nullif(''@stra_id'', replace(''@_stra_id'', ''@_'', ''@''))), ''null'')
 SET @_book_id = nullif(isnull(@_book_id, nullif(''@book_id'', replace(''@_book_id'', ''@_'', ''@''))), ''null'')
-SET @_subbook_id = nullif(isnull(@_subbook_id, nullif(''@subbook_id'', replace(''@_subbook_id'', ''@_'', ''@''))), ''null'')
+SET @_sub_book_id = nullif(isnull(@_sub_book_id, nullif(''@sub_book_id'', replace(''@_sub_book_id'', ''@_'', ''@''))), ''null'')
 SET @_source_deal_header_ids = nullif(isnull(@_source_deal_header_ids, nullif(''@source_deal_header_ids'', replace(''@_source_deal_header_ids'', ''@_'', ''@''))), ''null'')
 SET @_deal_id = nullif(isnull(@_deal_id, nullif(''@deal_id'', replace(''@_deal_id'', ''@_'', ''@''))), ''null'')
 SET @_deal_detail_ids = nullif(isnull(@_deal_detail_ids, nullif(''@deal_detail_ids'', replace(''@_deal_detail_ids'', ''@_'', ''@''))), ''null'')
@@ -166,7 +166,7 @@ CREATE TABLE #books (
 	fas_book_id INT, source_system_book_id1 INT ,source_system_book_id2 INT
 	,source_system_book_id3 INT,source_system_book_id4 INT,timezone_id INT
 	, book_name NVARCHAR(150) COLLATE DATABASE_DEFAULT
-	,strat_id INT,strategy NVARCHAR(100) COLLATE DATABASE_DEFAULT
+	,stra_id INT,strategy NVARCHAR(100) COLLATE DATABASE_DEFAULT
 	,sub_id INT,subsidiary NVARCHAR(150) COLLATE DATABASE_DEFAULT
 	, sub_book_id int,
 	sub_book NVARCHAR(150) COLLATE DATABASE_DEFAULT
@@ -188,7 +188,7 @@ SET @_Sql =
 	+isnull('' AND stra.parent_entity_id IN ( '' + @_sub_id + '')''  ,'''')            
 	+isnull('' AND stra.entity_id IN ('' + @_stra_id + '')''  ,'''')       
 	+isnull('' AND book.entity_id IN ('' + @_book_id + '')''   ,'''')         
-	+isnull('' AND ssbm.book_deal_type_map_id IN ('' + @_subbook_id + '')''  ,'''')  
+	+isnull('' AND ssbm.book_deal_type_map_id IN ('' + @_sub_book_id + '')''  ,'''')  
 exec spa_print @_Sql    
 EXEC ( @_Sql)    
 -- select * from #temp_deals
@@ -226,6 +226,9 @@ select
 + case when isnull(@_source_deal_header_ids,'''')<>'''' then
 '' FROM dbo.SplitCommaSeperatedValues(''+@_source_deal_header_ids+'') f
 	inner join source_deal_header sdh on f.item=sdh.source_deal_header_id
+	INNER JOIN deal_status_group dsg
+		ON dsg.status_value_id = sdh.deal_status
+		AND dsg.status = ''''Official'''' 
 	inner join source_deal_detail sdd on sdh.source_deal_header_id=sdd.source_deal_header_id
 	''
 	when  isnull(@_deal_id,'''')<>'''' then
@@ -234,11 +237,14 @@ select
 ELSE 
 	''
 	FROM source_deal_header sdh
-		INNER JOIN #books ssbm ON sdh.source_system_book_id1=ssbm.source_system_book_id1
-			AND  sdh.source_system_book_id2=ssbm.source_system_book_id2
-			AND  sdh.source_system_book_id3=ssbm.source_system_book_id3
-			AND  sdh.source_system_book_id4=ssbm.source_system_book_id4
-		inner join source_deal_detail sdd on sdh.source_deal_header_id=sdd.source_deal_header_id
+	INNER JOIN deal_status_group dsg
+		ON dsg.status_value_id = sdh.deal_status
+		AND dsg.status = ''''Official'''' 
+	INNER JOIN #books ssbm ON sdh.source_system_book_id1=ssbm.source_system_book_id1
+		AND  sdh.source_system_book_id2=ssbm.source_system_book_id2
+		AND  sdh.source_system_book_id3=ssbm.source_system_book_id3
+		AND  sdh.source_system_book_id4=ssbm.source_system_book_id4
+	inner join source_deal_detail sdd on sdh.source_deal_header_id=sdd.source_deal_header_id
 	''
 end +''
 		--outer apply
@@ -254,7 +260,7 @@ end +''
 		--left join shipper_code_mapping_detail scmd2 on scmd2.shipper_code_mapping_detail_id=sdd.shipper_code1
 		--	and scmd2.location_id=sdd.location_id and scmd2.effective_date=max_eff2.effective_date
 		where sdd.shipper_code2 is not null and sdd.shipper_code1 is not null 
-		and scmd.shipper_code is not null  and scmd.shipper_code1 is not null and scmd.external_id is not null 
+		and scmd.shipper_code is not null  and scmd.shipper_code1 is not null and scmd.external_id is not null AND scmd.external_id<>''''''''
 		''
 	+isnull('' AND sdh.counterparty_id in ('' + @_counterparty_ids+'')'','''')
 	+isnull('' AND sdh.source_deal_type_id=''+cast(@_deal_type_id as VARCHAR),'''')
@@ -473,8 +479,9 @@ SET @_Sql = ''SELECT from_tz.TIMEZONE_NAME timezone_from
 	,convert(varchar(5),dateadd(minute,case when tdp.granularity=982 then 60  else 15 end,dateadd(minute,tdp.Period,to_dt.to_dt)), 8) [Interval_end]
 	--,position,source_uom_id uom_id ,uom_name
 	,books.sub_id
-	,books.strat_id
+	,books.stra_id
 	,books.fas_book_id book_id
+	,books.sub_book_id sub_book_id
 	,books.sub_book_id subbook_id
 	,books.subsidiary [Subsidiary]
 	,books.strategy [strategy]
@@ -594,8 +601,7 @@ order by org_term_from,actual_term_to_start,actual_term_to_end
 exec spa_print @_Sql
 exec spa_print @_Sql1
 exec spa_print @_Sql2
-exec(@_Sql+@_Sql1+@_Sql2)
-', report_id = @report_id_data_source_dest,
+exec(@_Sql+@_Sql1+@_Sql2)', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106500' 
 	WHERE [name] = 'Enercity Nomination Data Extract View'
@@ -1962,39 +1968,6 @@ exec(@_Sql+@_Sql1+@_Sql2)
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
 	           WHERE ds.[name] = 'Enercity Nomination Data Extract View'
-	            AND dsc.name =  'strat_id'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Strat Id'
-			   , reqd_param = NULL, widget_id = 4, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'Enercity Nomination Data Extract View'
-			AND dsc.name =  'strat_id'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'strat_id' AS [name], 'Strat Id' AS ALIAS, NULL AS reqd_param, 4 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'Enercity Nomination Data Extract View'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'Enercity Nomination Data Extract View'
 	            AND dsc.name =  'strategy'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
@@ -2099,7 +2072,7 @@ exec(@_Sql+@_Sql1+@_Sql2)
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Subbook Id'
-			   , reqd_param = NULL, widget_id = 8, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -2112,7 +2085,7 @@ exec(@_Sql+@_Sql1+@_Sql2)
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'subbook_id' AS [name], 'Subbook Id' AS ALIAS, NULL AS reqd_param, 8 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'subbook_id' AS [name], 'Subbook Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Enercity Nomination Data Extract View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -2575,6 +2548,72 @@ exec(@_Sql+@_Sql1+@_Sql2)
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'external_id1' AS [name], 'External Id1' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Enercity Nomination Data Extract View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Enercity Nomination Data Extract View'
+	            AND dsc.name =  'stra_id'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Strategy ID'
+			   , reqd_param = NULL, widget_id = 4, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Enercity Nomination Data Extract View'
+			AND dsc.name =  'stra_id'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'stra_id' AS [name], 'Strategy ID' AS ALIAS, NULL AS reqd_param, 4 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Enercity Nomination Data Extract View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Enercity Nomination Data Extract View'
+	            AND dsc.name =  'sub_book_id'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Sub Book ID'
+			   , reqd_param = NULL, widget_id = 8, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Enercity Nomination Data Extract View'
+			AND dsc.name =  'sub_book_id'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'sub_book_id' AS [name], 'Sub Book ID' AS ALIAS, NULL AS reqd_param, 8 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Enercity Nomination Data Extract View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
