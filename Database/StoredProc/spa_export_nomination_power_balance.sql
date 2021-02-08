@@ -484,7 +484,7 @@ group by sdh.source_deal_header_id
 	pos.[external_id]
 	,dateadd(minute,pos.[Period],to_dt.to_dt) actual_term_to_start
 	,dateadd(minute,15,dateadd(minute,pos.[Period],to_dt.to_dt)) actual_term_to_end
-	,cast(sum(pos.volume) as numeric(38,' +isnull(@round,'2')+')) position
+	,cast(sum(pos.volume) as numeric(38,2)) position
 	,''MW'' UOM
 
 	from (
@@ -515,16 +515,12 @@ group by sdh.source_deal_header_id
 	(
 		SELECT	convert(NVARCHAR(10),term_date,120) +'' '' +right(''0''+cast(hr-1  AS NVARCHAR),2)+'':00:00'' org_term_from
 	) org_term_from
-	
-	
 	CROSS APPLY
 	(
 		select DATEADD(hour,case when (org_term_from.org_term_from=to_dst and is_dst=1)  then -1
 		when  org_term_from.org_term_from=dateadd(hour,-1,from_dst) then 1
 		else 0 end, org_term_from.org_term_from) tmp_term_from
 	) tmp_term_from  --- dst applied
-
-
 	CROSS APPLY
 	(
 		SELECT	(to_tz.offset_hr-from_tz.offset_hr)
@@ -559,7 +555,7 @@ group by sdh.source_deal_header_id
 	EXEC spa_post_data_to_web_service @export_web_services_id, @sql, '', @process_id, @out_msg OUTPUT
 	--SELECT @out_msg
 
-	EXEC('SELECT * FROM ' + @final_process_table)
+--	EXEC('SELECT * FROM ' + @final_process_table)
 --IF OBJECT_ID('tempdb..#tmp_result') IS NOT NULL
 --	DROP TABLE #tmp_result
  
