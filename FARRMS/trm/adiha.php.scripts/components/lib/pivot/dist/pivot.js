@@ -44,7 +44,7 @@
 		numberFormat = function(opts) {
 			var defaults;
 			defaults = {
-				digitsAfterDecimal: 2,
+				digitsAfterDecimal: 9,
 				scaler: 1,
 				thousandsSep: ",",
 				decimalSep: ".",
