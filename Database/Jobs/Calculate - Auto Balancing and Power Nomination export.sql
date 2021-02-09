@@ -3,7 +3,7 @@ DECLARE @owner_name NVARCHAR(100)
 DECLARE @job_name NVARCHAR(250)
 
 SET @db_name = DB_NAME()
-SET @owner_name = 'farrms_admin' --SYSTEM_USER
+SET @owner_name = SYSTEM_USER --SYSTEM_USER
 SET @job_name = @db_name + N' - Calculate - Auto Balancing and Power Nomination export'
 
 BEGIN TRANSACTION
@@ -20,8 +20,22 @@ IF EXISTS (SELECT job_id FROM   msdb.dbo.sysjobs_view WHERE  NAME = @job_name)
 	EXEC msdb.dbo.sp_delete_job @job_name = @job_name, @delete_unused_schedule = 1
 
 DECLARE @command VARCHAR(MAX) = '
-EXEC [dbo].[spa_calc_auto_balancing_nomination_submission]
-
+EXEC [dbo].[spa_export_nomination_power_balance]
+	@as_of_date  = null,
+	@sub =null,
+	@str =null,
+	@book =null,
+	@sub_book =null,
+	@location_ids =null,
+	@term_start = null,
+	@term_end = null,
+	@round = 10,
+	@commodity = 123,
+	@physical_financial = ''p'',
+	@balance_location_id=NULL,
+	@trans_deal_type_id=1185,
+	@power_plant_deal_header_id=NULL,
+	@process_id =null
 '
 DECLARE @jobId BINARY(16)
 EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=@job_name, 
