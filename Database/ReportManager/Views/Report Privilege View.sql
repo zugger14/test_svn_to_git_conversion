@@ -56,7 +56,7 @@ Create table #temp_report
 (Report_Name varchar(500) COLLATE DATABASE_DEFAULT, [View] Varchar(500) COLLATE DATABASE_DEFAULT , privilege Varchar(500) COLLATE DATABASE_DEFAULT, [user_name] NVarchar(500) COLLATE DATABASE_DEFAULT, [user_id] varchar(500) COLLATE DATABASE_DEFAULT, role_name varchar(500) COLLATE DATABASE_DEFAULT, report_id int, role_id int)
 
 INSERT INTO #temp_report
-SELECT
+SELECT distinct
 	r.name [Report Name],
 	ds.name [View], 
 	Case when report_privilege_type = ''e'' then ''Edit'' else ''View'' end report_privilege_type,  
@@ -77,7 +77,7 @@ SELECT
 
 	UNION ALL
 
-	SELECT
+	SELECT distinct
 	r.name [Report Name],
 	ds.name [View], 
 	CASE WHEN report_paramset_privilege_type = ''v'' THEN ''View'' ELSE NULL END report_privilege_type,  
@@ -423,6 +423,7 @@ COMMIT TRAN
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
+	
 	
 /*************************************View: 'Report Privilege View' END***************************************/
 
