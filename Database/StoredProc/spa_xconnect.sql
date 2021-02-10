@@ -129,17 +129,23 @@ BEGIN
 			WHERE icd.interface_name = @exchange_name
 		END
 				
-		SET @sql = ' spa_ixp_rules @flag = ''t'',@process_id = ''' + @process_id + ''',@ixp_rules_id =' + ISNULL(CAST(@ixp_rules_id AS VARCHAR), '0') + ',@run_table = ''' + @process_table_name + ''',@source = ''21400'',@run_with_custom_enable = ''n'',@run_in_debug_mode=''y'', @execute_in_queue=1'
-		--print @sql
-		SET @job_name = 'Import_' + REPLACE(@exchange_name, ' ', '_') + '_' +ISNULL(CAST(@ixp_rules_id AS VARCHAR), '0') + '_' + @process_id;
-		--	Added to maintain run in queue
+		SET @sql = 'EXEC spa_ixp_rules @flag = ''t'',@process_id = ''' + @process_id + ''',@ixp_rules_id =' + ISNULL(CAST(@ixp_rules_id AS VARCHAR), '0') + ',@run_table = ''' + @process_table_name + ''',@source = ''21400'',@run_with_custom_enable = ''n'',@run_in_debug_mode=''y'', @execute_in_queue=0'
+		
 		DECLARE @user_login_id VARCHAR(255) = dbo.FNAAppAdminID()
 		DECLARE @contextinfo varbinary(128)
 		SELECT @contextinfo = convert(varbinary(128), @user_login_id)
 		SET CONTEXT_INFO @contextinfo
-		INSERT INTO process_queue (process_queue_type, source_id, process_id) VALUES (112300, -1, @process_id)
+
+		DECLARE @process_queue_status NVARCHAR(100)
+		EXEC spa_process_queue	@flag = 'create_process_queue',
+								@source_id = @ixp_rules_id,
+								@process_queue_type = 112300,
+								@queue_sql = @sql,
+								@process_id = @process_id,
+								@output_status = @process_queue_status
+											
+		EXEC spa_process_queue @flag = 'create_or_start_queue_job',@output_status = @process_queue_status
 		
-		EXEC spa_run_sp_as_job  @job_name, @sql, @job_name,@user_login_id,NULL,NULL,'i'
 	END
 	ELSE IF @flag = 'l'
 	BEGIN
