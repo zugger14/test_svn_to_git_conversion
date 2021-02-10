@@ -1067,9 +1067,9 @@ BEGIN
 								@col_price_unit_capacity_unit AS [PriceUnit/CapacityUnit],				    
 								@xml_inner3,  --TimeIntervalQuantities
 								@col_total_contract_value AS [TotalContractValue],
-								@xml_inner4,								
 								@col_buyer_hubcode AS [HubCodificationInformation/BuyerHubCode],
 								@col_seller_hubcode AS [HubCodificationInformation/SellerHubCode],
+								@xml_inner4,								
 								@col_trader_name AS [TraderName] 
     					FOR XML PATH('TradeConfirmation'), TYPE)
 				END
