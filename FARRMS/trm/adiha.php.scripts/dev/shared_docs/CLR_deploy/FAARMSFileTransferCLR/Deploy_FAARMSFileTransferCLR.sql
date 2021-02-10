@@ -87,7 +87,7 @@ CREATE PROC [dbo].[spa_upload_file_to_ftp_using_clr]
 (
     @file_transfer_endpoint_id INT,
 	@target_remote_directory NVARCHAR(1024),
-    @source_file NVARCHAR(1024),
+    @source_file NVARCHAR(MAX),
     @output_result NVARCHAR(MAX) OUTPUT
 )
 AS
@@ -102,7 +102,7 @@ CREATE PROC [dbo].[spa_download_file_from_ftp_using_clr]
 (
     @file_transfer_endpoint_id INT,
 	@target_remote_directory NVARCHAR(1024),
-    @source_file NVARCHAR(1024),
+    @source_file NVARCHAR(MAX),
     @destination NVARCHAR(1024),
 	@extension NVARCHAR(10),
     @output_result NVARCHAR(MAX) OUTPUT
@@ -136,7 +136,7 @@ CREATE PROC [dbo].[spa_move_ftp_file_to_folder_using_clr]
     @file_transfer_endpoint_id INT,
 	@remoteWorkingDirectory NVARCHAR(1024),
 	@targetRemoteDirectory NVARCHAR(1024),
-	@source_file NVARCHAR(1024),    
+	@source_file NVARCHAR(MAX),    
     @output_result NVARCHAR(MAX) OUTPUT
 )
 AS
@@ -152,7 +152,7 @@ GO
 CREATE PROC [dbo].[spa_ftp_delete_file_using_clr]
 (
     @file_transfer_endpoint_id INT,
-    @source_file NVARCHAR(1024),
+    @source_file NVARCHAR(MAX),
     @output_result NVARCHAR(MAX) OUTPUT
 )
 AS
