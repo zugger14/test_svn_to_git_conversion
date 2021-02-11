@@ -2205,7 +2205,7 @@
 						});
 
 						subopts.renderer = opts.renderers[renderer.val()];
-						subopts.active_tab = opts.active_tab;
+						subopts.active_tab = (opts.active_tab)?opts.active_tab:subopts.active_tab;
 
 						//remove all other aggregators if not crosstab table
 						// if (renderer.val() != 'CrossTab Table') {
