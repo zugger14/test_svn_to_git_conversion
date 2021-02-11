@@ -121,12 +121,27 @@ BEGIN
 	SET @sql_query = 'CREATE TABLE ' + @output_table1 + '(' + @sql_query + ')'
 	EXEC(@sql_query)
 	
+	DECLARE @price_rounding INT
+	   ,@volume_rounding INT
+	   ,@amount_rounding INT
+	   ,@number_rounding INT
+	SELECT  @price_rounding = ISNULL(price_rounding, 4)
+			,@volume_rounding = ISNULL(volume_rounding, 4)
+			,@amount_rounding = ISNULL(amount_rounding,4)
+			,@number_rounding = ISNULL(number_rounding, 4)
+	FROM company_info
 	-- Rounding and date converion and inserting into new table
 	if @display_type = 't'
 	begin
 		SELECT @sql_query = STUFF((SELECT ',' + 
-									CASE WHEN rtc.render_as = 2 
-										THEN 'CAST([' + rtc.alias + '] AS NUMERIC(38, ' + CAST(CASE rtc.rounding WHEN -1 THEN 2 ELSE rtc.rounding END AS VARCHAR) + ')) AS [' + rtc.alias + ']'  
+									CASE WHEN rtc.render_as IN (2, 3, 13, 14)
+										THEN 'CAST([' + rtc.alias + '] AS NUMERIC(38, ' + CAST(CASE rtc.rounding WHEN -1 THEN CASE rtc.render_as WHEN 2 THEN @number_rounding
+																																				 WHEN 3 THEN @amount_rounding
+																																				 WHEN 13 THEN @price_rounding
+																																				 WHEN 14 THEN @volume_rounding
+																															   END
+										
+										ELSE rtc.rounding END AS VARCHAR) + ')) AS [' + rtc.alias + ']'  
 									WHEN rtc.render_as = 4
 									THEN
 										CASE WHEN rtc.date_format = 1
