@@ -341,8 +341,8 @@ BEGIN
 		+ IIF(@physical_financial_flag IS NOT NULL, ' AND sdh.physical_financial_flag = ''' + CAST(@physical_financial_flag AS CHAR(1)) + '''', '') 
 		+ IIF(@deal_date_from IS NOT NULL, ' AND sdh.deal_date >= ''' + @deal_date_from + '''', '')
 		+ IIF(@deal_date_to IS NOT NULL, ' AND sdh.deal_date <= ''' + @deal_date_to + '''', '')
-		+ IIF(@create_date_from IS NOT NULL , ' AND ' + CASE WHEN @report_type = 39405 THEN 'CAST(COALESCE(tbl_index_fees.term_start,tbl_settlement.term_start,sdh.create_ts) AS DATE)' ELSE 'CAST(sdh.create_ts AS DATE)' END  + ' >= ''' + @create_date_from + '''', '')
-		+ IIF(@create_date_to IS NOT NULL ,' AND ' + CASE WHEN @report_type = 39405 THEN 'CAST(COALESCE(tbl_index_fees.term_start,tbl_settlement.term_start,sdh.create_ts) AS DATE)' ELSE 'CAST(sdh.create_ts AS DATE)' END  + ' <= ''' + @create_date_to + '''', '')
+		+ IIF(@create_date_from IS NOT NULL , ' AND ' + CASE WHEN @submission_type = 44702 AND @report_type = 39405 THEN 'CAST(COALESCE(tbl_index_fees.term_start,tbl_settlement.term_start,sdh.update_ts,sdh.create_ts) AS DATE)' ELSE 'CAST(COALESCE(sdh.update_ts,sdh.create_ts) AS DATE)' END  + ' >= ''' + @create_date_from + '''', '')
+		+ IIF(@create_date_to IS NOT NULL ,' AND ' + CASE WHEN @submission_type = 44702 AND @report_type = 39405 THEN 'CAST(COALESCE(tbl_index_fees.term_start,tbl_settlement.term_start,sdh.update_ts,sdh.create_ts) AS DATE)' ELSE 'CAST(COALESCE(sdh.update_ts,sdh.create_ts) AS DATE)' END  + ' <= ''' + @create_date_to + '''', '')
 		+ CASE WHEN @submission_type = 44702 AND @report_type = 39401 THEN ' AND sdd.fixed_price IS NOT NULL'
 			   WHEN @submission_type = 44702 AND @report_type = 39400 THEN ' AND sdd.fixed_price IS NULL'
 			   ELSE ' '
