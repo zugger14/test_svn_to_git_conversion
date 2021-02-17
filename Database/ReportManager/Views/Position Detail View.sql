@@ -874,9 +874,10 @@ BEGIN
 		and hb.term_end=s.term_end  --and hb.term_date>'''''' + @_as_of_date +''''''
 		outer apply  (select MAX(exp_date) exp_date from holiday_group h where h.hol_date=hb.term_date AND 
 			h.hol_group_value_id=ISNULL(spcd.exp_calendar_id,spcd1.exp_calendar_id) and h.hol_date between s.term_start  and s.term_END AND COALESCE(spcd1.ratio_option,spcd.ratio_option,-1) <> 18800 ) hg   
-			outer apply  (select MIN(exp_date) hol_date ,MAX(exp_date) hol_date_to  from holiday_group h where 1=1 AND h.hol_group_value_id=ISNULL(spcd.exp_calendar_id,spcd1.exp_calendar_id) and h.hol_date between s.term_start  and s.term_END AND s.formula NOT IN(''''REBD'''')) hg1   
+			outer apply  (select MIN(hol_date) hol_date ,MAX(hol_date_to) hol_date_to  from holiday_group h where 1=1 AND h.hol_group_value_id=ISNULL(spcd.exp_calendar_id,spcd1.exp_calendar_id) 
+			 and s.term_start between h.hol_date  and  h.hol_date_to AND s.formula NOT IN(''''REBD'''')) hg1   
 			outer apply  (select count(exp_date) total_days,SUM(CASE WHEN h.exp_date>''''''+@_as_of_date+'''''' THEN 1 else 0 END) remain_days from holiday_group h where h.hol_group_value_id=ISNULL(spcd.exp_calendar_id,spcd1.exp_calendar_id) 
-					AND h.exp_date BETWEEN hg1.hol_date AND ISNULL(hg1.hol_date_to,dbo.FNALastDayInDate(hg1.hol_date))
+					AND h.hol_date BETWEEN hg1.hol_date AND ISNULL(hg1.hol_date_to,dbo.FNALastDayInDate(hg1.hol_date))
 					AND ISNULL(spcd1.ratio_option,spcd.ratio_option) = 18800 AND s.formula NOT IN(''''REBD'''')) remain_month  ''
 		+case when @_summary_option in (''x'',''y'')  then 
 			'' left join #minute_break hrs on hrs.granularity=982 ''
