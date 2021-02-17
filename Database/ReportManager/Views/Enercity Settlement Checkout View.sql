@@ -179,7 +179,7 @@ SELECT
 	AVG(sco.settlement_amount) * max(svd_m.multiplier) [settlement_amount],
 	ABS(AVG(sco.settlement_amount)) * max(svd_m.multiplier) [amount],
 	MAX(cur.currency_name) [currency],
-    SUM(sco.settlement_amount) / SUM(sco.settlement_volume) [price],
+    SUM(sco.settlement_amount) / NULLIF(SUM(sco.settlement_volume),0) [price],
 	svd_m.stmt_invoice_id [invoice_number],
 	CASE si.invoice_type WHEN ''''i'''' THEN ''''Invoice'''' WHEN ''''r'''' THEN ''''Remittance'''' ELSE '''''''' END [invoice_type],
 	MAX(sdv_is.code) [invoice_status],
@@ -312,7 +312,6 @@ SET @_sql1 = ''
 	MAX(sco.reversal_stmt_checkout_id) [reversal_stmt_checkout_id],
 	MAX(sco.accounting_month) AS show_accounting_month,
 	MAX(ISNULL(sdv_cc_c.code, cc.cc_country_name)) counterparty_country_name,
-	
 	MAX(ISNULL(sdv_cc_r.description, cc.cc_region_name)) counterparty_region_name,
 	MAX(sec_sc.source_counterparty_id) secondary_counterparty_id,
 	MAX(sec_sc.counterparty_name) secondary_counterparty_name,
@@ -320,6 +319,7 @@ SET @_sql1 = ''
 	MAX(d_sc.commodity_name) commodity_name,
 	null vat_percentage,
 	max(vt.vat_remarks) vat_remarks,
+	max(vt.price_description) price_description,
 	MAX(epa.external_value) counterparty_external_value,
 	MAX(sec_cc.secondary_cc_address1) secondary_cc_address1, 
 	MAX(sec_cc.secondary_cc_address2) secondary_cc_address2, 
@@ -530,7 +530,8 @@ LEFT JOIN static_data_value sdv_state ON sdv_state.value_id= ISNULL(cc_receivabl
 LEFT JOIN static_data_value sdv_p_state ON sdv_p_state.value_id= ccs.state
 LEFT JOIN source_commodity d_sc ON d_sc.source_commodity_id = sdh.commodity_id
 OUTER APPLY(
-	SELECT gmv.clm13_value [vat_remarks]
+	SELECT gmv.clm13_value [vat_remarks], 
+	case when gmv.clm8_value = ''''p'''' then ''''Positive'''' when  gmv.clm8_value = ''''n'''' then ''''Negative''''  when  gmv.clm8_value = ''''b'''' then''''Both'''' else NULL end [price_description]
 	FROM generic_mapping_values gmv
 	INNER JOIN generic_mapping_definition gmd ON gmv.mapping_table_id = gmd.mapping_table_id
 	INNER JOIN generic_mapping_header gmh ON gmh.mapping_table_id = gmd.mapping_table_id
@@ -573,7 +574,7 @@ SELECT
 	AVG(sco.settlement_amount) * max(svd_m.multiplier) [settlement_amount],
 	ABS(AVG(sco.settlement_amount)) * max(svd_m.multiplier) [amount],
 	MAX(cur.currency_name) [currency],
-	SUM(sco.settlement_amount) / SUM(sco.settlement_volume) [Price],
+	SUM(sco.settlement_amount) / NULLIF(SUM(sco.settlement_volume),0) [Price],
 	svd_m.stmt_invoice_id [invoice_number],
 	CASE si.invoice_type WHEN ''''i'''' THEN ''''Invoice'''' WHEN ''''r'''' THEN ''''Remittance'''' ELSE '''''''' END [invoice_type],
 	MAX(sdv_is.code) [invoice_status],
@@ -643,8 +644,8 @@ SELECT
 	MAX(st.trader_name) trader,
 	MAX(sdv_cnty.description) [country],
 	MAX(sdv_region.code) [region],
-	MAX(sdd.term_start) [term_start],   
-	MAX(sdd.term_end) [term_end],
+	MAX(sdd_d.term_start) [term_start],   
+	MAX(sdd_d.term_end) [term_end],
 	MAX(CAST(YEAR(sdd.term_start) AS VARCHAR(5)) + ''''-'''' + RIGHT(''''0''''+ CAST(MONTH(sdd.term_start) AS VARCHAR(2)), 2))   [term_start_year_month],
 	''''a'''' [actual_forward],
 	MAX(ag_t.agg_term) [term_quarter],
@@ -711,6 +712,7 @@ SET @_sql1 = ''
 	MAX(d_sc.commodity_name) commodity_name,
 	NULL vat_percentage,
 	MAX(vt.vat_remarks)  vat_remarks,
+	MAX(vt.price_description) price_description,
 	MAX(epa.external_value) counterparty_external_value,
 	MAX(sec_cc.secondary_cc_address1) secondary_cc_address1, 
 	MAX(sec_cc.secondary_cc_address2) secondary_cc_address2, 
@@ -742,6 +744,9 @@ LEFT JOIN static_data_value sdv_cta on sdv_cta.value_id = sco.charge_type_alias
 LEFT JOIN contract_report_template crt ON crt.template_id = si.invoice_template_id
 LEFT JOIN source_deal_header sdh ON sdh.source_deal_header_id = scin.source_deal_header_id
 LEFT JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+LEFT JOIN source_deal_detail sdd_d ON sdd_d.source_deal_header_id = sdh.source_deal_header_id
+		AND sdd_d.term_start = si.prod_date_from
+		AND sdd_d.term_end = si.prod_date_to
 LEFT JOIN static_data_value sdv_pli on sdv_pli.value_id = sco.pnl_line_item_id
 LEFT JOIN match_group_detail mgd ON mgd.source_deal_detail_id = sdd.source_deal_detail_id  AND sco.accrual_or_final = ''''f''''
 LEFT JOIN match_group_header mgh ON mgh.match_group_header_id = mgd.match_group_header_id
@@ -920,7 +925,8 @@ LEFT JOIN static_data_value sdv_state ON sdv_state.value_id= ISNULL(cc_receivabl
 LEFT JOIN static_data_value sdv_p_state ON sdv_p_state.value_id= ccs.state
 LEFT JOIN source_commodity d_sc ON d_sc.source_commodity_id = sdh.commodity_id
 OUTER APPLY(
-	SELECT  gmv.clm13_value [vat_remarks]
+	SELECT  gmv.clm13_value [vat_remarks], 
+	case when gmv.clm8_value = ''''p'''' then ''''Positive'''' when  gmv.clm8_value = ''''n'''' then ''''Negative'''' when gmv.clm8_value = ''''b'''' then ''''Both'''' else NULL end [price_description]
 	FROM generic_mapping_values gmv
 	INNER JOIN generic_mapping_definition gmd ON gmv.mapping_table_id = gmd.mapping_table_id
 	INNER JOIN generic_mapping_header gmh ON gmh.mapping_table_id = gmd.mapping_table_id
@@ -1024,7 +1030,10 @@ SELECT MAX(taf.stmt_invoice_id) stmt_invoice_id
 	,MAX(taf.contract_id) contract_id
 	,MAX(taf.charge_type) charge_type
 	,MAX(taf.charge_type_id) charge_type_id
-	,CAST(MAX(taf.volume) as Numeric(28, 10)) volume
+	, CASE WHEN MIN(taf.volume) < 0 THEN  CAST(MIN(taf.volume) as Numeric(28, 10))
+	ELSE  CAST(MAX(taf.volume) as Numeric(28, 10))
+	END
+	volume
 	,MAX(taf.uom) uom
 	,Cast(SUM(taf.deal_volume) as Numeric(28, 10)) deal_volume
 	,Cast(MAX(taf.settlement_amount) as Numeric(28, 10)) settlement_amount
@@ -1141,6 +1150,7 @@ SELECT MAX(taf.stmt_invoice_id) stmt_invoice_id
 	(MAX(ppcv.positive_commodity_vat_value) / (MAX(cet.commodity_energy_tax_value) + max(taf.settlement_amount)))
 	ELSE (MAX(npcv.negative_commodity_vat_value) / (MAX(cet.commodity_energy_tax_value) + max(taf.settlement_amount))) END vat_percentage
 	,MAX(taf.vat_remarks) vat_remarks
+	,MAX(taf.price_description)price_description
 	,MAX(taf.counterparty_external_value) counterparty_external_value
 	,MAX(taf.secondary_cc_address1) secondary_cc_address1
 	,MAX(taf.secondary_cc_address2) secondary_cc_address2
@@ -1158,9 +1168,9 @@ SELECT MAX(taf.stmt_invoice_id) stmt_invoice_id
 	, CONCAT(CAST(CAST(MAX(taf.amount) As Numeric(28, 10)) AS VARCHAR(250)) + '''' '''', MAX(taf.currency)) net_total
 	, CASE WHEN MAX(ppcv.positive_commodity_vat_value) IS NOT NULL THEN  (max(ppcv.positive_commodity_vat_value)) ELSE  (max(npcv.negative_commodity_vat_value)) END vat 
 	, CASE WHEN NULLIF(MAX(vat_percentage),'''''''') IS NOT NULL THEN CAST(MAX(settlement_amount) + MAX(settlement_amount) * MAX(vat_percentage) as Numeric(28, 10)) ELSE CAST(MAX(settlement_amount)as Numeric(28, 10)) END [gross_total]
-	, MAX (taf.void_status) void_status
 	''
 SET @_sql7 = ''
+, MAX (taf.void_status) void_status
 , cet.commodity_energy_tax_value commodity_energy_tax_value 
 , ppcv.positive_commodity_vat_value pcv_positive_commodity_vat_value
 , ppcv.source_deal_header_id pcv_source_deal_header_id
@@ -1234,9 +1244,14 @@ where
 		taf.source_deal_header_id = COALESCE(ppcv.source_deal_header_id,npcv.source_deal_header_id, taf.source_deal_header_id) 
 		and	taf.source_deal_header_id = COALESCE(cet.source_deal_header_id,taf.source_deal_header_id)
 GROUP BY taf.source_deal_header_id,ppcv.positive_commodity_vat_value,ppcv.source_deal_header_id,cet.commodity_energy_tax_value,npcv.negative_commodity_vat_value,npcv.source_deal_header_id
-select stmt_invoice_id,	as_of_date,	to_as_of_date,	prod_date_from,	prod_date_to,	settlement_date,	counterparty_name,	counterparty_accounting_code,	counterparty_id,	contract_name,	contract_id,	charge_type,	charge_type_id,	volume,	uom,	deal_volume,	settlement_amount,	amount,	currency,	price,	invoice_number,	invoice_type,	invoice_status,	invoice_notes,	invoice_subject,	cash_received,	cash_receive_variance_amount,	cash_received_date,	charge_type_alias,	receive_pay,	accounting_status,	invoice_date,	invoice_payment_date,	invoice_template,	lock_status,	source_deal_header_id,	payment_date_from,	payment_date_to,	pnl_line_item,	deal_reference,	Leg	buy_sell,	invoicing_charge_type,	Payment_Dr_GL_Code,	Payment_Cr_GL_Code,	Payment_Dr_GL_Name,	Payment_Cr_GL_Name,	Debit_GL_Number,	Credit_GL_Number,	Debit_account_name,	Credit_account_name,	payment_status,	book,	strategy,	subsidary,	sub_book,	subsidiary_accounting_code,	strategy_accounting_code,	book_accounting_code,	sub_book_accounting_code,	location_name,	location_accounting_code,	location_group,	commodity,	commodity_accounting_code,	commodity_description,	accounting_receivable_id,	accounting_payable_id,	[index],	template_name,	deal_type_name,	trader,	country,	region,	term_start,	term_end,	term_start_year_month,	actual_forward, term_quarter,	pnl_date,	physical_financial_flag,	invoice_id,	counterparty_description,	counterparty_contact,	counterparty_address1,	counterparty_address2,	counterparty_city,	counterparty_state,	counterparty_zip,	counterparty_phone,	counterparty_email,	counterparty_fax,	primary_counterparty,	primary_counterparty_description,	primary_counterparty_contact_name,	primary_counterparty_address1,	primary_counterparty_address2,	primary_counterparty_city,	primary_counterparty_state,	primary_counterparty_zip,	primary_counterparty_contact_telephone,	primary_counterparty_email_address,	primary_counterparty_fax,	primary_bank_name,	primary_account_name,	primary_account_no,	primary_iban,	primary_swift_no,	primary_reference,	internal_deal_subtype_value_id	,deal_date,	primary_counterparty_bank_address1,	primary_counterparty_bank_address2,	accounting_month,	accrual_or_final,	Deal_Charge_Type_ID	Deal_Charge_Type,	Calc_Type,	reversal_stmt_checkout_id,	show_accounting_month,	counterparty_country_name,	counterparty_region_name,	secondary_counterparty_id,	secondary_counterparty_name,	source_commodity_id,	commodity_name,	abs(vat_percentage) vat_percentage,	 case when vat is null then vat_remarks else NULL end vat_remarks,	counterparty_external_value,	secondary_cc_address1,	secondary_cc_address2,	secondary_cc_city,	Accrual_Final_Reversal,	update_ts_from,	update_ts_to,	create_ts_from,	create_ts_to,	primary_counterparty_country,	primary_counterparty_bank_currency_id,	primary_counterparty_bank_currency,	primary_counterparty_bank_currency_name,	total_volume,	net_total, (Vat) as vat, case when settlement_amount <0 THEN -1* (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) else 1 * (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) end gross_total,	void_status,	abs(commodity_energy_tax_value) commodity_energy_tax_value
+select stmt_invoice_id,	as_of_date,	to_as_of_date,	prod_date_from,	prod_date_to,	settlement_date,	counterparty_name,	counterparty_accounting_code,	counterparty_id,	contract_name,	contract_id,	charge_type,	charge_type_id,	volume,	uom,	deal_volume,	settlement_amount,	amount,	currency,	price,	invoice_number,	invoice_type,	invoice_status,	invoice_notes,	invoice_subject,	cash_received,	cash_receive_variance_amount,	cash_received_date,	charge_type_alias,	receive_pay,	accounting_status,	invoice_date,	invoice_payment_date,	invoice_template,	lock_status,	source_deal_header_id,	payment_date_from,	payment_date_to,	pnl_line_item,	deal_reference,	Leg	buy_sell,	invoicing_charge_type,	Payment_Dr_GL_Code,	Payment_Cr_GL_Code,	Payment_Dr_GL_Name,	Payment_Cr_GL_Name,	Debit_GL_Number,	Credit_GL_Number,	Debit_account_name,	Credit_account_name,	payment_status,	book,	strategy,	subsidary,	sub_book,	subsidiary_accounting_code,	strategy_accounting_code,	book_accounting_code,	sub_book_accounting_code,	location_name,	location_accounting_code,	location_group,	commodity,	commodity_accounting_code,	commodity_description,	accounting_receivable_id,	accounting_payable_id,	[index],	template_name,	deal_type_name,	trader,	country,	region,	term_start,	term_end,	term_start_year_month,	actual_forward, term_quarter,	pnl_date,	physical_financial_flag,	invoice_id,	counterparty_description,	counterparty_contact,	counterparty_address1,	counterparty_address2,	counterparty_city,	counterparty_state,	counterparty_zip,	counterparty_phone,	counterparty_email,	counterparty_fax,	primary_counterparty,	primary_counterparty_description,	primary_counterparty_contact_name,	primary_counterparty_address1,	primary_counterparty_address2,	primary_counterparty_city,	primary_counterparty_state,	primary_counterparty_zip,	primary_counterparty_contact_telephone,	primary_counterparty_email_address,	primary_counterparty_fax,	primary_bank_name,	primary_account_name,	primary_account_no,	primary_iban,	primary_swift_no,	primary_reference,	internal_deal_subtype_value_id	,deal_date,	primary_counterparty_bank_address1,	primary_counterparty_bank_address2,	accounting_month,	accrual_or_final,	Deal_Charge_Type_ID	Deal_Charge_Type,	Calc_Type,	reversal_stmt_checkout_id,	show_accounting_month,	counterparty_country_name,	counterparty_region_name,	secondary_counterparty_id,	secondary_counterparty_name,	source_commodity_id,	commodity_name,	abs(vat_percentage) vat_percentage,
+case when vat is null  and replace(charge_type,''''Price Commodity'''', '''''''') =  price_description then vat_remarks
+when vat is null and price_description = ''''Both'''' then vat_remarks
+else NULL end vat_remarks,
+counterparty_external_value,	secondary_cc_address1,	secondary_cc_address2,	secondary_cc_city,	Accrual_Final_Reversal,	update_ts_from,	update_ts_to,	create_ts_from,	create_ts_to,	primary_counterparty_country,	primary_counterparty_bank_currency_id,	primary_counterparty_bank_currency,	primary_counterparty_bank_currency_name,	total_volume,	net_total, (Vat) as vat, case when settlement_amount <0 THEN -1* (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) else 1 * (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) end gross_total,	void_status,	abs(commodity_energy_tax_value) commodity_energy_tax_value
 --[__batch_report__]   
 FROM  #tempt_last_finals''
+
 EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_sql7)', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106500' 
