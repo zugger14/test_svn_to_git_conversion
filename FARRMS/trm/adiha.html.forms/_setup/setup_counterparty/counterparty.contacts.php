@@ -78,19 +78,19 @@
 
                     var valid = 1;
                     var email = counterpartyContacts.form_counterparty_contacts.getItemValue('email', true);  
-                    var valid_email = validateMultipleEmails(email, ';', 'email');   
+                    var valid_email = validateMultipleEmails(email, ' ', 'email');   
                     if (valid_email == 'invalid') {
                         valid = 0;
                     }
 
                     var email_cc = counterpartyContacts.form_counterparty_contacts.getItemValue('email_cc', true); 
-                    var valid_email_cc = validateMultipleEmails(email_cc, ';', 'email_cc');   
+                    var valid_email_cc = validateMultipleEmails(email_cc, ' ', 'email_cc');   
                     if (valid_email_cc == 'invalid') {
                         valid = 0;
                     }
 
                     var email_bcc = counterpartyContacts.form_counterparty_contacts.getItemValue('email_bcc', true);
-                    var valid_email_bcc = validateMultipleEmails(email_bcc, ';', 'email_bcc');   
+                    var valid_email_bcc = validateMultipleEmails(email_bcc, ' ', 'email_bcc');   
                     if (valid_email_bcc == 'invalid') {
                         valid = 0;
                     }
