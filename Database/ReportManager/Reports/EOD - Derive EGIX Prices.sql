@@ -80,19 +80,32 @@ BEGIN TRY
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) =  ''@as_of_date'',
 		@_process_id VARCHAR(500) = ''@process_id''  
-
 DECLARE @_parent_egix_curve_id INT  
 DECLARE @_derived_egix_curve_id INT   
-DECLARE @_IsEndOfMonth INT 
+DECLARE @_Isterm_Month_expired INT 
 DECLARE @_maturity_date DATE
-
+DECLARE @_expiration_date DATE 
 SELECT @_parent_egix_curve_id = source_curve_def_id FROM source_price_curve_def WHERE curve_id = ''GAS.EGIX.EEX.D.Spot'' 
 SELECT @_derived_egix_curve_id = source_curve_def_id FROM source_price_curve_def WHERE curve_id = ''GAS.EGIX.EEX.M.Spot Settled'' 
 SELECT @_maturity_date= DATEADD(month, DATEDIFF(month, 0, @_as_of_date)+1, 0)
 
+--SELECT @_expiration_calendar_id= value_id FROM static_data_value WHERE Code=''EEX Monthly Gas''
+
+SELECT @_expiration_date=hg.exp_date FROM source_price_curve_def spcd 
+INNER JOIN holiday_group hg on hg.hol_group_value_id=spcd.exp_calendar_id
+WHERE hg.hol_date=@_maturity_date
+AND spcd.source_curve_def_id=@_derived_egix_curve_id
+--select @_expiration_date
+--update source_price_curve_def set exp_calendar_id=50000460 where source_curve_def_id=125 
+----select * from static_data_value where value_id=50000460  --EEX Monthly Gas
+--select exp_date from holiday_group where hol_group_value_id=50000460
+--and hol_date=''2021-03-01''
+
+SELECT  @_Isterm_Month_expired = IIF(@_as_of_date >@_expiration_date, 1, 0)
+--SELECT  @_Isterm_Month_expired
+
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL 
 	DROP TABLE #tmp_result 
-
 CREATE TABLE #tmp_result (
 	ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 	Module VARCHAR(200) COLLATE DATABASE_DEFAULT ,
@@ -102,52 +115,50 @@ CREATE TABLE #tmp_result (
 	Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
 )
 BEGIN TRY
-	--DECLARE @_as_of_date VARCHAR(10)=''2021-02-28''
-	--DECLARE @_maturity_date DATE
-	--DECLARE @_parent_egix_curve_id INT
-	--DECLARE @_derived_egix_curve_id INT
-	--DECLARE @_IsEndOfMonth INT
-	--SELECT @_maturity_date= DATEADD(month, DATEDIFF(month, 0, @_as_of_date)+1, 0)
-	--SELECT @_parent_egix_curve_id = source_curve_def_id FROM source_price_curve_def WHERE curve_id = ''GAS.EGIX.EEX.D.Spot''
-	--SELECT @_derived_egix_curve_id = source_curve_def_id FROM source_price_curve_def WHERE curve_id = ''GAS.EGIX.EEX.M.Spot Settled''
-
-	SELECT  @_IsEndOfMonth = IIF(@_as_of_date = EOMONTH(@_as_of_date), 1, 0)
-	IF (@_IsEndOfMonth = 1)
+	----DECLARE @_as_of_date VARCHAR(10)=''2021-02-28''
+	----DECLARE @_maturity_date DATE
+	----DECLARE @_parent_egix_curve_id INT
+	----DECLARE @_derived_egix_curve_id INT
+	----DECLARE @_IsEndOfMonth INT
+	----SELECT @_maturity_date= DATEADD(month, DATEDIFF(month, 0, @_as_of_date)+1, 0)
+	----SELECT @_parent_egix_curve_id = source_curve_def_id FROM source_price_curve_def WHERE curve_id = ''GAS.EGIX.EEX.D.Spot''
+	----SELECT @_derived_egix_curve_id = source_curve_def_id FROM source_price_curve_def WHERE curve_id = ''GAS.EGIX.EEX.M.Spot Settled''
+	----SELECT  @_IsEndOfMonth = IIF(@_as_of_date = EOMONTH(@_as_of_date), 1, 0)
+	IF (@_Isterm_Month_expired = 1)
 		BEGIN
-			IF OBJECT_ID(''tempdb..#tmp_data_eom'') IS NOT NULL 
-			DROP TABLE #tmp_data_eom
+			IF OBJECT_ID(''tempdb..#tmp_data_after_expiry'') IS NOT NULL 
+			DROP TABLE #tmp_data_after_expiry
 			DELETE FROM source_price_curve WHERE source_curve_def_id=@_derived_egix_curve_id
-					AND as_of_date BETWEEN  (SELECT DATEADD(month, DATEDIFF(month, 0, @_as_of_date), 0)) AND @_as_of_date
-					AND maturity_date=@_maturity_date
+					AND as_of_date  BETWEEN DATEADD(Day, -1, @_as_of_date) AND @_as_of_date
+					AND maturity_date=DATEADD(month, 1, @_maturity_date)
 			SELECT  source_curve_def_id,
 					as_of_date,
 					maturity_date,
 					curve_value
-			INTO #tmp_data_eom
+			INTO #tmp_data_after_expiry
 			FROM source_price_curve 
 			WHERE source_curve_def_id = @_parent_egix_curve_id
-					 AND as_of_date BETWEEN  (SELECT DATEADD(month, DATEDIFF(month, 0, @_as_of_date), 0)) AND @_as_of_date
+					 AND as_of_date = @_as_of_date
+					 AND curve_source_value_id=4500
+					 AND maturity_date=@_as_of_date
 	
 			INSERT INTO source_price_curve(source_curve_def_id, as_of_date, Assessment_curve_type_value_id, curve_source_value_id, maturity_date, curve_value, is_dst)
 			SELECT	@_derived_egix_curve_id,
 					t.as_of_date,
 					77,
 					4500,
-					@_maturity_date,
+					DATEADD(month, 1, @_maturity_date),
 					t.curve_value,
 					0
-			FROM #tmp_data_eom t
-	END
-
+			FROM #tmp_data_after_expiry t
+		END
 	ELSE
 	BEGIN
 			IF OBJECT_ID(''tempdb..#tmp_data_daily'') IS NOT NULL 
 			DROP TABLE #tmp_data_daily
-	
 			DELETE FROM source_price_curve WHERE source_curve_def_id=@_derived_egix_curve_id
-					AND as_of_date BETWEEN DATEADD(day, -1, convert(date, @_as_of_date)) AND @_as_of_date
+					AND as_of_date BETWEEN DATEADD(Day, -1, @_as_of_date) AND @_as_of_date
 					AND maturity_date=@_maturity_date
-
 			SELECT  source_curve_def_id,
 					as_of_date,
 					maturity_date,
@@ -156,7 +167,8 @@ BEGIN TRY
 			FROM source_price_curve 
 			WHERE source_curve_def_id = @_parent_egix_curve_id
 					 AND as_of_date = @_as_of_date
-	
+					 AND curve_source_value_id=4500
+					 AND maturity_date=@_as_of_date
 			INSERT INTO source_price_curve(source_curve_def_id, as_of_date, Assessment_curve_type_value_id, curve_source_value_id, maturity_date, curve_value, is_dst)
 			SELECT	@_derived_egix_curve_id,
 					t.as_of_date,
@@ -167,9 +179,7 @@ BEGIN TRY
 					0
 			FROM #tmp_data_daily t
 	END
-
 	--select * from source_price_curve where source_curve_def_id in (125,29) AND as_of_date BETWEEN  (SELECT DATEADD(month, DATEDIFF(month, 0, @_as_of_date), 0)) AND @_as_of_date
-
 	INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
 	SELECT  
 		''Success'' [ErrorCode],
@@ -178,7 +188,6 @@ BEGIN TRY
         ''Success'' [Status],
 		''EGIX Forward and Settled Prices Derived Successfully.'' [Message],
 		'''' [Recommendation]
-
 END TRY
 BEGIN CATCH
 	INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
@@ -189,10 +198,7 @@ BEGIN CATCH
         ''Error'' [Status],
 		''EGIX Forward and Settled Prices Derived Failed.'' [Message],
 		'''' [Recommendation]
-
 END CATCH 
-
-
 SELECT  
     @_as_of_date as_of_date,
     @_process_id process_id,  
