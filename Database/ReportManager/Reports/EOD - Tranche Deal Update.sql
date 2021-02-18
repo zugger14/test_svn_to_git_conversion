@@ -1,4 +1,4 @@
-BEGIN TRY
+ BEGIN TRY
 		BEGIN TRAN
 
 		DECLARE @report_id_dest INT 
@@ -73,286 +73,573 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) =  ''@as_of_date''
+
 DECLARE @_process_id NVARCHAR(500) = ''@process_id''
+
 IF ''@process_id'' <> ''NULL''
+
     SET @_process_id = ''@process_id''
+
  ELSE    
+
     SET @_process_id = null
+
 BEGIN TRY
+
  	IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL 
+
 	DROP TABLE #tmp_result 
+
 	CREATE TABLE #tmp_result (
+
 		ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 		Module VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 		Area VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 		Status VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 		Message VARCHAR(1000) COLLATE DATABASE_DEFAULT ,
+
 		Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
+
 	)
+
 	IF OBJECT_ID(''tempdb..#update_deal_fix_price'') IS NOT NULL
+
 		DROP TABLE #update_deal_fix_price
+
 	CREATE TABLE #update_deal_fix_price (
+
 		source_deal_header_id		INT,
+
 		update_value			  float
+
 	)
+
     Declare @_template_id INT
+
 	set @_template_id = (select template_id from source_deal_header_template where template_name = ''Swap Fixation'')
+
 	IF OBJECT_ID(''tempdb..#collect_deals'') IS NOT NULL
-	DROP table #collect_deals
+	    DROP table #collect_deals
+	IF OBJECT_ID(''tempdb..#component_data_collection_update'') IS NOT NULL
+		DROP table #component_data_collection_update
+	IF OBJECT_ID(''tempdb..#component_data_collection'') IS NOT NULL
+		DROP table #component_data_collection
+	IF OBJECT_ID(''tempdb..#update_case_final'') IS NOT NULL
+		DROP table #update_case_final
+		
+
 	Create table #collect_deals
+
 	(source_deal_header_id int , deal_date date)
+
 	INSERT INTO #collect_deals
+
 	Select source_deal_header_id , deal_date from source_deal_header where deal_date = @_as_of_date and template_id = @_template_id
+
 	DECLARE @_affected_deal VARCHAR(MAX)
+
 	SELECT @_affected_deal = COALESCE(@_affected_deal+'', '' ,'''') + cast(source_deal_header_id as varchar)
+
 	FROM #collect_deals
+
 	IF OBJECT_ID(''tempdb..#collect_deal_formula'') IS NOT NULL
+
 	DROP table #collect_deal_formula
+
 	SELECT DISTINCT fe.formula, sdd.source_deal_header_id,	CASE WHEN fe.formula IS NOT NULL THEN 1 ELSE 0 END formula_applicable 
+
 		INTO #collect_deal_formula
+
 	FROM source_deal_detail sdd
+
 		INNER JOIN #collect_deals cd ON cd.source_deal_header_id = sdd.source_deal_header_id
+
 	LEFT JOIN formula_editor FE ON FE.formula_id = sdd.formula_id 
+
 	WHERE sdd.formula_id IS NOT NULL
+
 	IF OBJECT_ID(''tempdb..#grouping_formula'') IS NOT NULL
+
 		DROP table #grouping_formula
+
 	
+
 	create table #grouping_formula
+
 	(source_deal_header_id int, pricing_index varchar(10) , multiplier float, adder float)
+
 	Insert into #grouping_formula
+
 	select c.source_deal_header_id, 
+
 	dbo.fnagetsplitpart(replace(replace(replace(item,''dbo.FNALagCurve'', ''''),''('',''''),'')'',''''),'','',1),
+
 		dbo.fnagetsplitpart(replace(replace(replace(item,''dbo.FNALagCurve'', ''''),''('',''''),'')'',''''),'','',8) multiplier, 
+
 		CASE WHEN item like ''%dbo.fna%'' THEN NULL ELSE item  END adder 
+
 	from #collect_deal_formula c
+
 	OUTER APPLY dbo.FNASplit(formula, ''+'') s
+
 	INNER JOIN #collect_deal_formula cdf ON cdf.formula = c.formula  
+
 	AND c.source_deal_header_id = cdf.source_deal_header_id
+
 	IF OBJECT_ID(''tempdb..#item'') IS NOT NULL
+
 		DROP table #item
+
 	CREATE TABLE #item
+
 	(source_deal_header_id INT,  pricing_index FLOAT, multiplier FLOAT, adder FLOAT)
+
 	INSERT INTO #item
+
 	SELECT DISTINCT cdf.source_deal_header_id, CASE WHEN item like ''%dbo.fna%''  THEN dbo.fnagetsplitpart(replace(replace(replace(item,''dbo.FNALagCurve'', ''''),''('',''''),'')'',''''),'','',1) Else NULL end Pricing_index,
+
 	dbo.fnagetsplitpart(replace(replace(replace(item,''dbo.FNALagCurve'', ''''),''('',''''),'')'',''''),'','',8) multiplier, CASE WHEN item like ''%dbo.fna%'' THEN NULL ELSE item  END adder 
+
 	FROM #collect_deal_formula cdf 
+
 		OUTER APPLY dbo.FNASplit(cdf.formula, ''+'')
+
 	ORDER BY cdf.source_deal_header_id
+
 	IF OBJECT_ID(''tempdb..#index_data_collection'') IS NOT NULL
+
 		DROP table #index_data_collection
+
 	Create table #index_data_collection (udf_deal_id int, Field_label varchar(1000), udf_value varchar(500), source_deal_header_id int, curve_value float, maturity_date date, pricing_ind int, pricing_index int)
+
 	INSERT INTO #index_data_collection
+
 	SELECT DISTINCT udf_deal_id, Field_label, udf_value, sdh.source_deal_header_id, spc.curve_value, maturity_date, RIGHT(Field_label,1) as pricing_ind, i.pricing_index
+
 	FROM user_defined_deal_fields   uddf
+
 	INNER JOIN source_deal_header sdh on sdh.source_deal_header_id = uddf.source_deal_header_id
+
 	INNER JOIN #collect_deals cd on cd.source_deal_header_id = sdh.source_deal_header_id
+
 	INNER JOIN #item i on i.source_deal_header_id = cd.source_deal_header_id 
+
 	INNER JOIN user_defined_deal_fields_template uddft ON uddft.udf_template_id = uddf.udf_template_id
+
 	INNER JOIN source_price_curve spc ON cast(spc.source_curve_def_id as varchar) = ISNULL(cast(udf_value as varchar), i.pricing_index) and sdh.entire_term_start = spc.maturity_date and spc.as_of_date = @_as_of_date
+
 	WHERE 
+
 	field_label in (''Pricing Index 1'',''Pricing Index 2'',''Component Price 1'',''Component Price 2'') AND curve_source_value_id = 4500
+
 	ORDER BY sdh.source_deal_header_id
+
+
 
 	IF OBJECT_ID(''tempdb..#index_data_collection_update'') IS NOT NULL
+
 		DROP table #index_data_collection_update
+
 	Create table #index_data_collection_update (udf_deal_id int, Field_label varchar(1000), udf_value varchar(500), source_deal_header_id int, curve_value float, maturity_date date, pricing_ind int, pricing_index int)
 
+
+
 	INSERT INTO #index_data_collection_update
+
 	SELECT DISTINCT udf_deal_id, Field_label, udf_value, sdh.source_deal_header_id, spc.curve_value, maturity_date, RIGHT(Field_label,1) as pricing_ind, i.pricing_index
+
 	FROM user_defined_deal_fields   uddf
+
 	INNER JOIN source_deal_header sdh on sdh.source_deal_header_id = uddf.source_deal_header_id
+
 	INNER JOIN #collect_deals cd on cd.source_deal_header_id = sdh.source_deal_header_id
+
 	INNER JOIN #item i on i.source_deal_header_id = cd.source_deal_header_id 
+
 	LEFT JOIN user_defined_deal_fields_template uddft ON uddft.udf_template_id = uddf.udf_template_id
+
 	INNER JOIN source_price_curve spc ON cast(spc.source_curve_def_id as varchar) = cast(udf_value as varchar) and sdh.entire_term_start = spc.maturity_date and spc.as_of_date =  @_as_of_date
+
 	WHERE 
+
 	field_label in (''Pricing Index 1'',''Pricing Index 2'',''Component Price 1'',''Component Price 2'') AND curve_source_value_id = 4500
+
 	UNION ALL
+
 	SELECT DISTINCT sdh.source_deal_header_id as udf_deal_id, field_caption as Field_label, NULL as udf_value, sdh.source_deal_header_id, spc.curve_value, maturity_date, RIGHT(field_caption,1) as pricing_ind, i.pricing_index
+
     FROM maintain_field_template_detail   uddf
+
     INNER JOIN source_deal_header_template sdht on sdht.field_template_id = uddf.field_template_id
+
     INNER JOIN source_deal_header sdh on sdh.template_id=sdht.template_id
+
     INNER JOIN #collect_deals cd on cd.source_deal_header_id = sdh.source_deal_header_id
+
     INNER JOIN #item i on i.source_deal_header_id = cd.source_deal_header_id
+
     --INNER JOIN user_defined_deal_fields_template uddft ON uddft.udf_template_id = uddf.udf_template_id
+
     INNER JOIN source_price_curve spc ON cast(spc.source_curve_def_id as varchar) = cast(default_value as varchar)
+
     and sdh.entire_term_start = spc.maturity_date and spc.as_of_date = @_as_of_date and cast(default_value as varchar)= i.pricing_index
+
     WHERE
+
     field_caption in (''Pricing Index 1'',''Pricing Index 2'',''Component Price 1'',''Component Price 2'') AND curve_source_value_id = 4500
+
    
 
+
+
 	Create table #component_data_collection
+
 	(udf_deal_id int,Field_label varchar(1000), udf_value varchar(500), source_deal_header_id int, component int)
+
 	INSERT INTO #component_data_collection
+
 	SELECT DISTINCT udf_deal_id, Field_label, udf_value, sdh.source_deal_header_id, RIGHT(Field_label,1) component
+
 	FROM user_defined_deal_fields   uddf
+
 	INNER JOIN source_deal_header sdh on sdh.source_deal_header_id = uddf.source_deal_header_id
+
 	INNER JOIN user_defined_deal_fields_template uddft ON uddft.udf_template_id = uddf.udf_template_id
+
 	INNER JOIN #collect_deals cd on cd.source_deal_header_id = sdh.source_deal_header_id
+
 	WHERE 
+
 	field_label in (''Component Price 1'',''Component Price 2'', ''Pricing Index 1'',''Pricing Index 2'' )
+
 	ORDER BY sdh.source_deal_header_id
+
 	IF OBJECT_ID(''tempdb..#update_case'') IS NOT NULL
+
 		DROP table #update_case
+
 	CREATE TABLE #update_case
+
 	(source_deal_header_id int, product float, adder float)
+
+
+
 
 
 	Create table #component_data_collection_update
+
 	(udf_deal_id int,Field_label varchar(1000), udf_value varchar(500), source_deal_header_id int, component int)
+
 	
+
 	INSERT INTO #component_data_collection_update
+
 	SELECT DISTINCT sdh.source_deal_header_id as udf_deal_id, field_caption as Field_label, NULL as udf_value, sdh.source_deal_header_id, RIGHT(field_caption,1) component
+
     --FROM user_defined_deal_fields   uddf
+
     FROM maintain_field_template_detail   uddf
+
     INNER JOIN source_deal_header_template sdht on sdht.field_template_id = uddf.field_template_id
+
     INNER JOIN source_deal_header sdh on sdh.template_id=sdht.template_id
+
     INNER JOIN #collect_deals cd on cd.source_deal_header_id = sdh.source_deal_header_id   
+
     WHERE
+
     field_caption in (''Component Price 1'',''Component Price 2'', ''Pricing Index 1'',''Pricing Index 2'' )
+
     ORDER BY sdh.source_deal_header_id
 
+
+
 	IF OBJECT_ID(''tempdb.#update_case_final'') IS NOT NULL
+
 		DROP table #update_case_final
 
+
+
 	CREATE TABLE #update_case_final
+
 	(source_deal_header_id int, product float, adder float)
 
+
+
 	INSERT INTO #update_case
+
 	SELECT Distinct cdc.source_deal_header_id,(o.multiplier * cdc.udf_value  + case when cdc.component = 1 then i.adder else 0 end ) Product, NULL adder
+
 	FROM #component_data_collection cdc
+
 	LEFT JOIN  #index_data_collection idc on cdc.source_deal_header_id = idc.source_deal_header_id and cdc.udf_deal_id = idc.udf_deal_id
+
 	LEFT JOIN #item i on i.source_deal_header_id = cdc.source_deal_header_id-- and i.pricing_index = cdc.udf_value
+
 	Outer APPLY (SELECT cdc.source_deal_header_id, component, multiplier FROM #component_data_collection cdc
+
 	LEFT JOIN  #index_data_collection idc on cdc.source_deal_header_id = idc.source_deal_header_id and cdc.udf_deal_id = idc.udf_deal_id
+
 	LEFT JOIN #item i on i.source_deal_header_id = cdc.source_deal_header_id and i.pricing_index = cdc.udf_value
+
 	WHERE multiplier is not null)o
+
 	WHERE o.source_deal_header_id = cdc.source_deal_header_id
+
 	and o.component = cdc.component
+
 	and cdc.field_label in (''Component Price 1'',''Component Price 2'') and cdc.udf_value is not null
+
 	and i.adder is not NULL
+
 	UNION ALL
+
 	SELECT Distinct c.source_deal_header_id, ((case when c.component = 1 then p.adder else 0 end) + o.curve_value * it.multiplier ) Product , NULL adder 
+
 	from #component_data_collection c
+
 	INNER JOIN #component_data_collection c1
+
 	ON c.source_deal_header_id = c1.source_deal_header_id and c1.udf_value is null and c1.component = c.component
+
 	INNER JOIN #item it ON it.source_deal_header_id = c.source_deal_header_id 
+
 	LEFT JOIN #index_data_collection idc on idc.source_deal_header_id = c.source_deal_header_id and idc.Field_label = c.Field_label
+
 	OUTER Apply (
+
 		SELECT Distinct c.source_deal_header_id, c.component,  idc.udf_value, curve_value FROM #component_data_collection c
+
 		LEFT JOIN #component_data_collection c1
+
 		ON c.source_deal_header_id = c1.source_deal_header_id and c1.udf_value is null
+
 		LEFT JOIN #item it ON it.source_deal_header_id = c.source_deal_header_id 
+
 		LEFT JOIN #index_data_collection idc on idc.source_deal_header_id = c.source_deal_header_id and idc.Field_label = c.Field_label
+
 		WHERE  c.component = c1.component and it.multiplier is not null and idc.udf_value is not null
+
 		) o
+
 	OUTER Apply (
+
 		Select source_deal_header_id, adder from #item
+
 		) p
+
 	WHERE
+
 	o.source_deal_header_id = c.source_deal_header_id and o.component = c.component
+
 	and c.udf_value is not null 
+
 	and c.udf_value = it.pricing_index
+
 	and p.source_deal_header_id = c.source_deal_header_id
+
 	and p.adder is not null
+
      UNION ALL 
+
         SELECT 
+
 	Distinct c.source_deal_header_id, (idc.curve_value * it.multiplier ) Product , p.adder adder
+
 	from #component_data_collection c
+
 	INNER JOIN #index_data_collection idc on idc.source_deal_header_id = c.source_deal_header_id and idc.udf_deal_id = c.udf_deal_id
+
 	INNER JOIN #item it ON it.source_deal_header_id = c.source_deal_header_id and it.pricing_index = idc.pricing_index
+
 	OUTER Apply (
+
 		Select source_deal_header_id, adder from #item
+
 		) p
+
 	INNER JOIN  #grouping_formula gf ON gf.pricing_index = it.pricing_index and gf.multiplier = it.multiplier and gf.source_deal_header_id = c.source_deal_header_id
+
 	WHERE
+
 	 p.source_deal_header_id = c.source_deal_header_id
+
 	and p.adder is not null
+
         and c.udf_value is null 
+
 	and component = ''1'' and c.field_label = ''Pricing Index 1''
 
+
+
 	
+
 	INSERT INTO #update_case_final
+
 	select * from #update_case
+
 	UNION ALL
+
     SELECT 
+
 	Distinct c.source_deal_header_id, (idc.curve_value * it.multiplier ) Product , p.adder adder
+
 	from #component_data_collection c
+
 	INNER JOIN #index_data_collection_update idc on idc.source_deal_header_id = c.source_deal_header_id and idc.udf_deal_id = c.udf_deal_id
+
 	INNER JOIN #item it ON it.source_deal_header_id = c.source_deal_header_id and it.pricing_index = idc.pricing_index
+
 	INNER JOIN  #update_case uc ON uc.source_deal_header_id = idc.source_deal_header_id
+
 	OUTER Apply (
+
 		Select source_deal_header_id, adder from #item
+
 		) p
+
 	INNER JOIN  #grouping_formula gf ON gf.pricing_index = it.pricing_index and gf.multiplier = it.multiplier and gf.source_deal_header_id = c.source_deal_header_id
+
 	WHERE
+
 	 p.source_deal_header_id = c.source_deal_header_id
+
 	and p.adder is not null
+
     and component = ''1'' and c.field_label = ''Pricing Index 1''
+
 	and idc.source_deal_header_id is NULL
+
 	UNION ALL
+
 	select Distinct c.source_deal_header_id, (idc.curve_value * it.multiplier ) Product , p.adder adder
+
 	from #component_data_collection_update c
+
 	INNER JOIN #index_data_collection_update idc on idc.source_deal_header_id = c.source_deal_header_id and idc.udf_deal_id = c.udf_deal_id
+
 	INNER JOIN #item it ON it.source_deal_header_id = c.source_deal_header_id and it.pricing_index = idc.pricing_index
+
 	OUTER Apply (
+
 		Select source_deal_header_id, adder from #item
+
 		) p	
+
 	--INNER JOIN  #grouping_formula gf ON gf.pricing_index = it.pricing_index and gf.multiplier = it.multiplier and gf.source_deal_header_id = c.source_deal_header_id
+
 	LEFT JOIN  #update_case uc ON uc.source_deal_header_id = idc.source_deal_header_id
+
 	where c.udf_value IS NULL AND uc.source_deal_header_id IS NULL
 
 
+
+
+
 	UPDATE sdd
+
 	   	 SET  sdd.fixed_price = (o.update_value + ISNULL(adder, 0))
+
 	FROM source_deal_detail sdd 
+
 	OUTER APPLY (SELECT source_deal_header_id, sum(product) update_value , max(adder) adder FROM #update_case_final GROUP BY source_deal_header_id) o
+
 	WHERE sdd.source_deal_header_id = o.source_deal_header_id
 
+
+
 	Declare @_Recommendation Nvarchar(1000)
+
 	IF Exists(Select 1 from  #collect_deals d 
-				LEFT JOIN #update_case u  ON u.source_deal_header_id = d.source_deal_header_id 
+
+				LEFT JOIN #update_case_final u  ON u.source_deal_header_id = d.source_deal_header_id 
+
 				where u.source_deal_header_id is NULL)
+
 	BEGIN
+
 		DECLARE @_deal_select varchar(1000)
+
 		SELECT @_deal_select = COALESCE(@_deal_select+'', '' ,'''') + cast(d.source_deal_header_id as varchar)
+
 			 FROM  #collect_deals d 
-				LEFT JOIN #update_case u  ON u.source_deal_header_id = d.source_deal_header_id 
+
+				LEFT JOIN #update_case_final u  ON u.source_deal_header_id = d.source_deal_header_id 
+
 			WHERE u.source_deal_header_id is NULL
+
 		SET @_Recommendation = CONCAT(''Confirmed Price data arenot uploaded in deals or EOD prices arenot available. Please verify prices for deals '' , @_deal_select)
+
 	END
+
 INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
+
 	SELECT  
+
 		''Success'' [ErrorCode],
+
 		''Treanche Deal Update'' [Module],
+
 		''Treanche Deal Update'' [Area],
+
         ''Success'' [Status],
+
 		''Deal updated successfully.'' [Message],
+
 		 @_Recommendation [Recommendation]
+
 END TRY
+
 BEGIN CATCH
+
 	INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
+
 	SELECT  
+
 		''Technical Error'' [ErrorCode],
+
 		''Treanche Deal Update'' [Module],
+
 		''Treanche Deal Update'' [Area],
+
         ''Technical Error'' [Status],
+
 		''Treanche Deal Update completed with error.'' [Message],
+
 		'''' [Recommendation]
+
 END CATCH 
+
 SELECT  
+
     @_as_of_date as_of_date,
+
     NULL process_id,
+
     @_affected_deal affected_dea,
+
 	''Tranche Deal Update'' [Deal],
+
     [ErrorCode],
+
 	[Module],
+
 	[Area],
+
 	[Status],
+
 	[Message],
+
 	[Recommendation]
+
 --[__batch_report__]
+
 FROM #tmp_result
+
 WHERE 1=1', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
