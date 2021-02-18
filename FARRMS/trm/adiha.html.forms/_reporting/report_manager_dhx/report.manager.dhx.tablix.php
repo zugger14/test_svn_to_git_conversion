@@ -490,6 +490,69 @@
     }
 
     /**
+     * Function to get formatted value for numeric values on pivot data
+     *
+     * @param   id       id
+     * @param   name     name of column
+     * @param   value    actual value of column
+     *
+     * @return  text   returns formatted value
+     */
+    function fx_get_formatted_value (id, name, value) {
+        var return_val = value;
+        //pick render as from advance tab
+        var context_row = $('.data-table .clone').filter(function(){
+                return ($('.column-real-name', $(this)).text() == name);
+            });
+        var render_as = $('.renderas-list option:selected', context_row).val();
+        var thousand_sep = $('.thousand-list option:selected', context_row).val();
+        var rounding = $('.rounding-list option:selected', context_row).val();
+        
+        //if not available from advance tab (happens for first load case), then refer to column datatype and gt corresponding render as
+        if (render_as == undefined || render_as == '') {
+            var id = ds_col_info_gbl.filter(function(e) {
+                return e.column_name_real == name;
+            });
+            
+            if (id.length > 0) {
+                render_as = fx_data_render_mapping(id[0].datatype_id);
+            }
+        }
+        
+
+        if (thousand_sep == 2) {
+            group_sep = '';
+        } else {
+            group_sep = global_group_separator;
+        }
+        
+        if (rounding == undefined || rounding == '' || rounding == -1) {
+            switch (render_as) {
+                case 2: 
+                    rounding = global_number_rounding;
+                    break;
+                case 3: 
+                    rounding = global_amount_rounding;
+                    break;
+                case 13: 
+                    rounding = global_price_rounding;
+                    break;
+                case 14: 
+                    rounding = global_volume_rounding;
+                    break;
+                default:
+                    rounding = global_number_rounding;
+            }
+        }
+        //console.log('render_as:'+render_as+'|group_sep:'+group_sep+'|rounding:'+rounding);
+        //render_as values: 2=number, 3=amount, 13=price, 14=volume
+        if (render_as == '2' || render_as == '3' || render_as == '13' || render_as == '14') {
+            //console.log('value:'+value+'|rounding:'+rounding+'|global_decimal_separator:'+global_decimal_separator+'|group_sep:' +group_sep);
+            return_val = $.number(value, rounding, global_decimal_separator, group_sep);
+        }
+        return return_val;
+    }
+    /**
      * [undock_details Undock detail layout]
      */
     rm_tablix.undock_reports = function() {

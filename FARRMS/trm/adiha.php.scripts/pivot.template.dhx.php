@@ -695,16 +695,7 @@
              * @param  {[type]} value [Value]
              */
             format_val = function(id, value, name) {
-            	if (call_from_gbl !== 'report_manager_dhx' && typeof id !== 'undefined' && id != '') {
-            		var is_dashboard = '<?php echo $is_dashboard;?>';
-
-            		if (is_dashboard == 'y')
-            			value = viewPivotDashboard.get_formatted_value(id, value, name);
-            		else 
-            			value = viewPivotReport.get_formatted_value(id, value, name);
-            	}
-
-            	return value;
+            	return fx_get_formatted_value (id, name, value);
             }
 
             /**
