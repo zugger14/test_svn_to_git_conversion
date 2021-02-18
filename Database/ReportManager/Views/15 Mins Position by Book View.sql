@@ -3108,3 +3108,4 @@ EXEC dbo.spa_position_report
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
+	
