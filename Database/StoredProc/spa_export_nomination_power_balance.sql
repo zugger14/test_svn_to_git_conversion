@@ -477,14 +477,14 @@ group by sdh.source_deal_header_id
 	
 	SET @final_process_table = dbo.FNAProcessTableName('final', NULL, @process_id)
 
-	EXEC ('CREATE TABLE ' + @final_process_table + '([Time series id] INT, startDate DATETIME, endDate DATETIME, Position NUMERIC(38,18), UOM NVARCHAR(10))')
+	EXEC ('CREATE TABLE ' + @final_process_table + '([Time series id] INT, startDate DATETIME, endDate DATETIME, Position NUMERIC(38,3), UOM NVARCHAR(10))')
 	
 	SET @sql = ('INSERT INTO ' + @final_process_table + '
 	select 
 	pos.[external_id]
 	,dateadd(minute,pos.[Period],to_dt.to_dt) actual_term_to_start
 	,dateadd(minute,15,dateadd(minute,pos.[Period],to_dt.to_dt)) actual_term_to_end
-	,cast(sum(pos.volume) as numeric(38,2)) position
+	, ROUND(sum(pos.volume) ,3,1) position
 	,''MW'' UOM
 
 	from (
