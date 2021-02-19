@@ -201,6 +201,7 @@ BEGIN
 		WHERE sdt.source_deal_type_name = 'Capacity'
 			AND sddh.term_date BETWEEN @term_start AND ISNULL(@term_end, @term_start)
 			--AND (sdv_pg.code NOT IN ('Complex-EEX', 'Complex-LTO', 'Complex-ROD') OR sdv_pg.code IS NULL) --exclude these product group capacity deals.
+			AND sdh.deal_status <> 5607 --avoid voided deals
 		GROUP by sdd.location_id, sdh.contract_id, sddh.term_date, CAST(LEFT(sddh.hr,2) AS INT)--,sdh.source_deal_header_id
 
 	END
@@ -271,6 +272,7 @@ BEGIN
 			and sdd.leg = 2
 			AND sddh.volume IS NOT NULL
 			AND (cn.contract_id IS NOT NULL OR @storage_type IS NOT NULL)
+			AND sdh.deal_status <> 5607 --avoid voided deals
 
 	END
 
