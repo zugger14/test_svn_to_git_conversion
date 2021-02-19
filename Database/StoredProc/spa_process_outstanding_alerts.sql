@@ -800,7 +800,7 @@ BEGIN
 						 CASE WHEN @logical_table_name ='Import Process' 
 						 THEN '''Import Notifications: '' + aem.event_message_name' ELSE
 						  '''EVENT Notifications: '' + aem.event_message_name' END +',
-							'' <body> <p> Dear '' + au2.user_f_name + '',</p> 
+							'' <body> <p> Dear '' + CAST(au2.user_f_name AS VARCHAR(MAX)) + '',</p> 
 							'+CASE WHEN  @logical_table_name ='Import Process' THEN '<p> Message: <br/>'''
 							ELSE +'<p> TRMTracker Event ' + @alert_name + ' has been triggered on : ' + CONVERT(VARCHAR(30), GETDATE(), 120) + ' with following status. </p> <p> <br/> 
 							<p> Message: <br/>
