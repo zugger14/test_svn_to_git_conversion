@@ -6544,3 +6544,16 @@ function create_canvas_div(layout_cell_obj) {
 
     return final_canvas_div;
 }
+
+/**
+ * Reruns the auto schedule issues.
+ * @process_id   {numeric}  process_id 
+
+ */
+function retry_auto_schedule(process_id) {
+	var data = {
+		"action": "[spa_deal_transfer_alert_wrapper] @process_id='" + process_id + "'"
+	};
+	adiha_post_data('return_array', data, '', '', '', ''); 
+
+}
