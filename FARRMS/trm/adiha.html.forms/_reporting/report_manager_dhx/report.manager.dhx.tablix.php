@@ -511,7 +511,7 @@
         //if not available from advance tab (happens for first load case), then refer to column datatype and gt corresponding render as
         if (render_as == undefined || render_as == '') {
             var id = ds_col_info_gbl.filter(function(e) {
-                return e.column_name_real == name;
+                return (e.column_name_real.split('.')[1].toLowerCase() == name.split('.')[1].toLowerCase());
             });
             
             if (id.length > 0) {
