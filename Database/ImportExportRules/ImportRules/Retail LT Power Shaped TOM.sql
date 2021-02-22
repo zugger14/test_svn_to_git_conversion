@@ -44,8 +44,11 @@ BEGIN
 					'Retail LT Power Shaped TOM' ,
 					'N' ,
 					NULL ,
-					'UPDATE [temp_process_table]
-SET [Term Date] = CAST(dbo.FNAClientToSqlDate([Term Date]) AS DATE)
+					'UPDATE a
+	SET [Term Date] = dd.sql_date_string
+FROM [temp_process_table] a
+INNER JOIN vw_date_details dd
+	ON a.[Term Date] = dd.user_date
 
 IF OBJECT_ID(N''tempdb..#curve_max_term'') IS NOT NULL
 	DROP TABLE #curve_max_term
@@ -59,31 +62,31 @@ CREATE TABLE #curve_max_term (
 	, deal_granularity INT
 )
 
+
 INSERT INTO #curve_max_term (term_start, term_end, as_of_date, pfc_curve, curve_granularity, deal_granularity)
-SELECT min([Term Date]) term_start, max(dc.[Term_end]) term_end, max(mx.as_of_date), (dc.curve_id),
-	max(mx.Granularity), max(dc.profile_granularity)
+SELECT min([Term Date]) term_start, max(sdd.[Term_end]) term_end, max(mx.as_of_date), (sdd.curve_id),
+	max(mx.Granularity), max(sdh.profile_granularity)
 FROM [temp_process_table] a
-OUTER APPLY (
-	SELECT sdd.term_start, sdd.term_end, sdh.source_deal_header_id source_deal_header_id, sdd.curve_id curve_id,sdh.profile_granularity profile_granularity
-	FROM source_deal_header sdh
-	INNER JOIN source_deal_detail sdd
-		ON sdd.source_deal_header_id = sdh.source_deal_header_id
-		and sdd.leg = a.leg
-		and a.[Term Date] between sdd.term_start and sdd.term_end
-	WHERE a.[Deal Ref ID] = sdh.deal_id
-) dc
+INNER JOIN source_deal_header sdh
+	ON sdh.deal_id = a.[Deal Ref ID]
+INNER JOIN source_deal_detail sdd
+	ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	AND sdd.leg = a.leg
+	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
 OUTER APPLY (
 	SELECT top 1 spc.as_of_date as_of_date, spc.curve_value, spc.source_curve_def_id pfc_curve , spcd.Granularity Granularity
 	FROM source_price_curve spc
 	INNER JOIN source_price_curve_def spcd
 		ON spcd.source_curve_def_id = spc.source_curve_def_id
-	WHERE spc.source_curve_def_id = dc.curve_id
-	and spc.maturity_date = dc.term_start
+	WHERE spc.source_curve_def_id = sdd.curve_id
+	and spc.maturity_date = sdd.term_start
 	AND spc.curve_source_value_id = 4500
-	order by spc.as_of_date desc
+	ORDER BY spc.as_of_date DESC
 ) mx
-WHERE dc.curve_id IS NOT NULL
-group by dc.curve_id
+WHERE sdd.curve_id IS NOT NULL
+group by sdd.curve_id
+
+
 
 IF OBJECT_ID(N''tempdb..#price_from_curve'') IS NOT NULL
 	DROP TABLE #price_from_curve
@@ -112,11 +115,11 @@ BEGIN
 		IIF(minute <> 0, DATEPART(HH,maturity_date), (DATEPART(HH,maturity_date) + 1))  [hour],
 		--DATEPART(MINUTE,maturity_date) [minute],
 		minute
-	FROM source_price_curve spc
+	FROM #curve_max_term cmt
 	INNER JOIN source_price_curve_def spcd
-		ON  spcd.source_curve_def_id = spc.source_curve_def_id
-	INNER JOIN #curve_max_term cmt
-		ON spcd.source_curve_def_id = cmt.pfc_curve
+		ON  spcd.source_curve_def_id = cmt.pfc_curve
+	INNER JOIN source_price_curve spc
+		ON spc.source_curve_def_id = spcd.source_curve_def_id
 	CROSS JOIN (
 			VALUES (0),(15),(30),(45)
 	) rs (minute)
@@ -136,11 +139,11 @@ BEGIN
 		spcd.Granularity,
 		(DATEPART(HH,maturity_date) + 1)  [hour],
 		DATEPART(MINUTE,maturity_date) [minute]
-	FROM source_price_curve spc
+	FROM #curve_max_term cmt
 	INNER JOIN source_price_curve_def spcd
-		ON  spcd.source_curve_def_id = spc.source_curve_def_id
-	INNER JOIN #curve_max_term cmt
-		ON spcd.source_curve_def_id = cmt.pfc_curve
+		ON  spcd.source_curve_def_id = cmt.pfc_curve
+	INNER JOIN source_price_curve spc
+		ON spc.source_curve_def_id = spcd.source_curve_def_id
 	WHERE spc.as_of_date = cmt.as_of_date
 		AND spc.maturity_date >= cmt.term_start
 		AND spc.maturity_date <= DATEADD(dd,1,cmt.term_end)
@@ -192,6 +195,51 @@ BEGIN
 	ADD price nvarchar(600)
 END
 
+IF OBJECT_ID(''tempdb..#deal_data'') IS NOT NULL
+	DROP TABLE #deal_data
+CREATE TABLE #deal_data(
+	source_deal_header_id INT,
+	deal_id NVARCHAR(400),
+	source_deal_detail_id INT,
+	parent_deal_id NVARCHAR(400),
+	term_date DATE
+)
+INSERT INTO #deal_data(source_deal_header_id,deal_id,source_deal_detail_id, parent_deal_id,term_date)
+SELECT DISTINCT sdh2.source_deal_header_id, sdh2.deal_id, sdd.source_deal_detail_id, a.[Deal Ref ID], a.[Term Date]
+FROM [temp_process_table] a
+INNER JOIN source_deal_header sdh
+	ON sdh.deal_id = a.[Deal Ref ID]  
+INNER JOIN source_deal_header sdh2
+	ON sdh2.close_reference_id = sdh.source_deal_header_id
+INNER JOIN source_deal_detail sdd
+	ON sdh2.source_deal_header_id = sdd.source_deal_header_id
+	AND sdd.leg = a.leg
+	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+UNION ALL
+SELECT DISTINCT sdh3.source_deal_header_id, sdh3.deal_id, sdd.source_deal_detail_id, a.[Deal Ref ID], a.[Term Date]
+FROM [temp_process_table] a
+INNER JOIN source_deal_header sdh
+	ON sdh.deal_id = a.[Deal Ref ID]  
+INNER JOIN source_deal_header sdh2
+	ON sdh2.close_reference_id = sdh.source_deal_header_id
+INNER JOIN source_deal_header sdh3
+		ON sdh3.close_reference_id = sdh2.source_deal_header_id
+INNER JOIN source_deal_detail sdd
+	ON sdh3.source_deal_header_id = sdd.source_deal_header_id
+	AND sdd.leg = a.leg
+	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+
+IF OBJECT_ID(''tempdb..#source_deal_detail_hour'') IS NOT NULL
+	DROP TABLE #source_deal_detail_hour
+
+SELECT dd.source_deal_header_id, dd.source_deal_detail_id, dd.parent_deal_id, sddh.volume, sddh.price, sddh.hr, sddh.is_dst, CAST(sddh.term_date AS DATE) term_date
+INTO #source_deal_detail_hour
+FROM #deal_data dd	
+INNER JOIN source_deal_detail_hour sddh
+	ON sddh.source_deal_detail_id = dd.source_deal_detail_id
+	AND CAST(sddh.term_date as date) = dd.[term_date]
+
+
 -- calculate and built offset and xfered datasets
 INSERT INTO [temp_process_table] (
 	 [Deal Ref ID]
@@ -203,110 +251,41 @@ INSERT INTO [temp_process_table] (
 	,[Price]
 	,[Leg]
 )
-SELECT  DISTINCT sdh2.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
+SELECT  DISTINCT dd.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
 	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
 FROM [temp_process_table] a
-INNER JOIN source_deal_header sdh
-	ON sdh.deal_id = a.[Deal Ref ID]  
-INNER JOIN source_deal_header sdh2
-	ON sdh2.close_reference_id = sdh.source_deal_header_id
-INNER JOIN source_deal_header sdh3
-		ON sdh3.close_reference_id = sdh2.source_deal_header_id
-INNER JOIN source_deal_detail sdd
-	ON sdh2.source_deal_header_id = sdd.source_deal_header_id
-	AND sdd.leg = a.leg
-	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+INNER JOIN #deal_data dd	
+	ON dd.parent_deal_id = a.[Deal Ref ID]
+	AND dd.term_date = a.[Term Date]
 INNER JOIN #price_from_curve  pfc
 	ON a.[Term Date] = pfc.term_date
 	and a.Hour = pfc.hour
 	and a.Minute = pfc.minute
 	and a.[Is DST] = pfc.is_dst
-INNER JOIN source_deal_detail_hour sddh
-	ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
-	AND CAST(sddh.term_date as date) = a.[Term Date]
+INNER JOIN #source_deal_detail_hour sddh
+	ON sddh.source_deal_header_id = dd.source_deal_header_id
+	AND sddh.term_date = dd.term_date
 INNER JOIN #temp_hour_breakdown thb
 	ON thb.process_clm = sddh.hr
 	AND thb.is_dst = sddh.is_dst
-	AND CAST(LEFT(thb.user_clm, 2) AS INT) = a.Hour
-	AND CAST(RIGHT(thb.user_clm, 2) AS INT) = ISNULL(a.Minute, 0)
+	AND CAST(LEFT(thb.user_clm, 2) AS INT) = CAST(a.Hour AS INT)
+	AND CAST(RIGHT(thb.user_clm, 2) AS INT) = ISNULL(CAST(a.Minute AS INT), 0)
 	AND thb.is_dst = a.[Is DST]
-UNION
-SELECT  DISTINCT sdh2.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
+UNION ALL
+SELECT  DISTINCT dd.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
 	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
 FROM [temp_process_table] a
-INNER JOIN source_deal_header sdh
-	ON sdh.deal_id = a.[Deal Ref ID]  
-INNER JOIN source_deal_header sdh2
-	ON sdh2.close_reference_id = sdh.source_deal_header_id
-INNER JOIN source_deal_header sdh3
-		ON sdh3.close_reference_id = sdh2.source_deal_header_id
-INNER JOIN source_deal_detail sdd
-	ON sdh2.source_deal_header_id = sdd.source_deal_header_id
-	AND sdd.leg = a.leg
-	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+INNER JOIN #deal_data dd	
+	ON dd.parent_deal_id = a.[Deal Ref ID]
+	AND dd.term_date = a.[Term Date]
 INNER JOIN #price_from_curve  pfc
 	ON a.[Term Date] = pfc.term_date
 	and a.Hour = pfc.hour
 	and a.Minute = pfc.minute
 	and a.[Is DST] = pfc.is_dst
-LEFT JOIN source_deal_detail_hour sddh
-	ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
-	AND CAST(sddh.term_date as date) = a.[Term Date]
-LEFT JOIN #temp_hour_breakdown thb
-	ON thb.process_clm = sddh.hr
-	AND thb.is_dst = sddh.is_dst
-WHERE sddh.source_deal_detail_id IS NULL
-	  AND thb.clm_name IS NULL
-UNION
-SELECT  DISTINCT sdh3.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
-	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
-FROM [temp_process_table] a
-INNER JOIN source_deal_header sdh
-	ON sdh.deal_id = a.[Deal Ref ID]  
-INNER JOIN source_deal_header sdh2
-	ON sdh2.close_reference_id = sdh.source_deal_header_id
-INNER JOIN source_deal_header sdh3
-		ON sdh3.close_reference_id = sdh2.source_deal_header_id
-INNER JOIN source_deal_detail sdd
-	ON sdh3.source_deal_header_id = sdd.source_deal_header_id
-	AND sdd.leg = a.leg
-	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
-INNER JOIN #price_from_curve  pfc
-	ON a.[Term Date] = pfc.term_date
-	and a.Hour = pfc.hour
-	and a.Minute = pfc.minute
-	and a.[Is DST] = pfc.is_dst
-INNER JOIN source_deal_detail_hour sddh
-	ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
-	AND CAST(sddh.term_date as date) = a.[Term Date]
-INNER JOIN #temp_hour_breakdown thb
-	ON thb.process_clm = sddh.hr
-	AND thb.is_dst = sddh.is_dst
-	AND CAST(LEFT(thb.user_clm, 2) AS INT) = a.Hour
-	AND CAST(RIGHT(thb.user_clm, 2) AS INT) = ISNULL(a.Minute, 0)
-	AND thb.is_dst = a.[Is DST]
-UNION
-SELECT  DISTINCT sdh3.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
-	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
-FROM [temp_process_table] a
-INNER JOIN source_deal_header sdh
-	ON sdh.deal_id = a.[Deal Ref ID]  
-INNER JOIN source_deal_header sdh2
-	ON sdh2.close_reference_id = sdh.source_deal_header_id
-INNER JOIN source_deal_header sdh3
-		ON sdh3.close_reference_id = sdh2.source_deal_header_id
-INNER JOIN source_deal_detail sdd
-	ON sdh3.source_deal_header_id = sdd.source_deal_header_id
-	AND sdd.leg = a.leg
-	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
-INNER JOIN #price_from_curve  pfc
-	ON a.[Term Date] = pfc.term_date
-	and a.Hour = pfc.hour
-	and a.Minute = pfc.minute
-	and a.[Is DST] = pfc.is_dst
-LEFT JOIN source_deal_detail_hour sddh
-	ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
-	AND CAST(sddh.term_date as date) = a.[Term Date]
+LEFT JOIN #source_deal_detail_hour sddh
+	ON sddh.source_deal_header_id = dd.source_deal_header_id
+	AND sddh.term_date = dd.term_date
 LEFT JOIN #temp_hour_breakdown thb
 	ON thb.process_clm = sddh.hr
 	AND thb.is_dst = sddh.is_dst
@@ -342,8 +321,11 @@ WHERE sddh.source_deal_detail_id IS NULL
 			SET ixp_rules_name = 'Retail LT Power Shaped TOM'
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
-				, before_insert_trigger = 'UPDATE [temp_process_table]
-SET [Term Date] = CAST(dbo.FNAClientToSqlDate([Term Date]) AS DATE)
+				, before_insert_trigger = 'UPDATE a
+	SET [Term Date] = dd.sql_date_string
+FROM [temp_process_table] a
+INNER JOIN vw_date_details dd
+	ON a.[Term Date] = dd.user_date
 
 IF OBJECT_ID(N''tempdb..#curve_max_term'') IS NOT NULL
 	DROP TABLE #curve_max_term
@@ -357,31 +339,31 @@ CREATE TABLE #curve_max_term (
 	, deal_granularity INT
 )
 
+
 INSERT INTO #curve_max_term (term_start, term_end, as_of_date, pfc_curve, curve_granularity, deal_granularity)
-SELECT min([Term Date]) term_start, max(dc.[Term_end]) term_end, max(mx.as_of_date), (dc.curve_id),
-	max(mx.Granularity), max(dc.profile_granularity)
+SELECT min([Term Date]) term_start, max(sdd.[Term_end]) term_end, max(mx.as_of_date), (sdd.curve_id),
+	max(mx.Granularity), max(sdh.profile_granularity)
 FROM [temp_process_table] a
-OUTER APPLY (
-	SELECT sdd.term_start, sdd.term_end, sdh.source_deal_header_id source_deal_header_id, sdd.curve_id curve_id,sdh.profile_granularity profile_granularity
-	FROM source_deal_header sdh
-	INNER JOIN source_deal_detail sdd
-		ON sdd.source_deal_header_id = sdh.source_deal_header_id
-		and sdd.leg = a.leg
-		and a.[Term Date] between sdd.term_start and sdd.term_end
-	WHERE a.[Deal Ref ID] = sdh.deal_id
-) dc
+INNER JOIN source_deal_header sdh
+	ON sdh.deal_id = a.[Deal Ref ID]
+INNER JOIN source_deal_detail sdd
+	ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	AND sdd.leg = a.leg
+	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
 OUTER APPLY (
 	SELECT top 1 spc.as_of_date as_of_date, spc.curve_value, spc.source_curve_def_id pfc_curve , spcd.Granularity Granularity
 	FROM source_price_curve spc
 	INNER JOIN source_price_curve_def spcd
 		ON spcd.source_curve_def_id = spc.source_curve_def_id
-	WHERE spc.source_curve_def_id = dc.curve_id
-	and spc.maturity_date = dc.term_start
+	WHERE spc.source_curve_def_id = sdd.curve_id
+	and spc.maturity_date = sdd.term_start
 	AND spc.curve_source_value_id = 4500
-	order by spc.as_of_date desc
+	ORDER BY spc.as_of_date DESC
 ) mx
-WHERE dc.curve_id IS NOT NULL
-group by dc.curve_id
+WHERE sdd.curve_id IS NOT NULL
+group by sdd.curve_id
+
+
 
 IF OBJECT_ID(N''tempdb..#price_from_curve'') IS NOT NULL
 	DROP TABLE #price_from_curve
@@ -410,11 +392,11 @@ BEGIN
 		IIF(minute <> 0, DATEPART(HH,maturity_date), (DATEPART(HH,maturity_date) + 1))  [hour],
 		--DATEPART(MINUTE,maturity_date) [minute],
 		minute
-	FROM source_price_curve spc
+	FROM #curve_max_term cmt
 	INNER JOIN source_price_curve_def spcd
-		ON  spcd.source_curve_def_id = spc.source_curve_def_id
-	INNER JOIN #curve_max_term cmt
-		ON spcd.source_curve_def_id = cmt.pfc_curve
+		ON  spcd.source_curve_def_id = cmt.pfc_curve
+	INNER JOIN source_price_curve spc
+		ON spc.source_curve_def_id = spcd.source_curve_def_id
 	CROSS JOIN (
 			VALUES (0),(15),(30),(45)
 	) rs (minute)
@@ -434,11 +416,11 @@ BEGIN
 		spcd.Granularity,
 		(DATEPART(HH,maturity_date) + 1)  [hour],
 		DATEPART(MINUTE,maturity_date) [minute]
-	FROM source_price_curve spc
+	FROM #curve_max_term cmt
 	INNER JOIN source_price_curve_def spcd
-		ON  spcd.source_curve_def_id = spc.source_curve_def_id
-	INNER JOIN #curve_max_term cmt
-		ON spcd.source_curve_def_id = cmt.pfc_curve
+		ON  spcd.source_curve_def_id = cmt.pfc_curve
+	INNER JOIN source_price_curve spc
+		ON spc.source_curve_def_id = spcd.source_curve_def_id
 	WHERE spc.as_of_date = cmt.as_of_date
 		AND spc.maturity_date >= cmt.term_start
 		AND spc.maturity_date <= DATEADD(dd,1,cmt.term_end)
@@ -490,6 +472,51 @@ BEGIN
 	ADD price nvarchar(600)
 END
 
+IF OBJECT_ID(''tempdb..#deal_data'') IS NOT NULL
+	DROP TABLE #deal_data
+CREATE TABLE #deal_data(
+	source_deal_header_id INT,
+	deal_id NVARCHAR(400),
+	source_deal_detail_id INT,
+	parent_deal_id NVARCHAR(400),
+	term_date DATE
+)
+INSERT INTO #deal_data(source_deal_header_id,deal_id,source_deal_detail_id, parent_deal_id,term_date)
+SELECT DISTINCT sdh2.source_deal_header_id, sdh2.deal_id, sdd.source_deal_detail_id, a.[Deal Ref ID], a.[Term Date]
+FROM [temp_process_table] a
+INNER JOIN source_deal_header sdh
+	ON sdh.deal_id = a.[Deal Ref ID]  
+INNER JOIN source_deal_header sdh2
+	ON sdh2.close_reference_id = sdh.source_deal_header_id
+INNER JOIN source_deal_detail sdd
+	ON sdh2.source_deal_header_id = sdd.source_deal_header_id
+	AND sdd.leg = a.leg
+	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+UNION ALL
+SELECT DISTINCT sdh3.source_deal_header_id, sdh3.deal_id, sdd.source_deal_detail_id, a.[Deal Ref ID], a.[Term Date]
+FROM [temp_process_table] a
+INNER JOIN source_deal_header sdh
+	ON sdh.deal_id = a.[Deal Ref ID]  
+INNER JOIN source_deal_header sdh2
+	ON sdh2.close_reference_id = sdh.source_deal_header_id
+INNER JOIN source_deal_header sdh3
+		ON sdh3.close_reference_id = sdh2.source_deal_header_id
+INNER JOIN source_deal_detail sdd
+	ON sdh3.source_deal_header_id = sdd.source_deal_header_id
+	AND sdd.leg = a.leg
+	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+
+IF OBJECT_ID(''tempdb..#source_deal_detail_hour'') IS NOT NULL
+	DROP TABLE #source_deal_detail_hour
+
+SELECT dd.source_deal_header_id, dd.source_deal_detail_id, dd.parent_deal_id, sddh.volume, sddh.price, sddh.hr, sddh.is_dst, CAST(sddh.term_date AS DATE) term_date
+INTO #source_deal_detail_hour
+FROM #deal_data dd	
+INNER JOIN source_deal_detail_hour sddh
+	ON sddh.source_deal_detail_id = dd.source_deal_detail_id
+	AND CAST(sddh.term_date as date) = dd.[term_date]
+
+
 -- calculate and built offset and xfered datasets
 INSERT INTO [temp_process_table] (
 	 [Deal Ref ID]
@@ -501,110 +528,41 @@ INSERT INTO [temp_process_table] (
 	,[Price]
 	,[Leg]
 )
-SELECT  DISTINCT sdh2.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
+SELECT  DISTINCT dd.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
 	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
 FROM [temp_process_table] a
-INNER JOIN source_deal_header sdh
-	ON sdh.deal_id = a.[Deal Ref ID]  
-INNER JOIN source_deal_header sdh2
-	ON sdh2.close_reference_id = sdh.source_deal_header_id
-INNER JOIN source_deal_header sdh3
-		ON sdh3.close_reference_id = sdh2.source_deal_header_id
-INNER JOIN source_deal_detail sdd
-	ON sdh2.source_deal_header_id = sdd.source_deal_header_id
-	AND sdd.leg = a.leg
-	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+INNER JOIN #deal_data dd	
+	ON dd.parent_deal_id = a.[Deal Ref ID]
+	AND dd.term_date = a.[Term Date]
 INNER JOIN #price_from_curve  pfc
 	ON a.[Term Date] = pfc.term_date
 	and a.Hour = pfc.hour
 	and a.Minute = pfc.minute
 	and a.[Is DST] = pfc.is_dst
-INNER JOIN source_deal_detail_hour sddh
-	ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
-	AND CAST(sddh.term_date as date) = a.[Term Date]
+INNER JOIN #source_deal_detail_hour sddh
+	ON sddh.source_deal_header_id = dd.source_deal_header_id
+	AND sddh.term_date = dd.term_date
 INNER JOIN #temp_hour_breakdown thb
 	ON thb.process_clm = sddh.hr
 	AND thb.is_dst = sddh.is_dst
-	AND CAST(LEFT(thb.user_clm, 2) AS INT) = a.Hour
-	AND CAST(RIGHT(thb.user_clm, 2) AS INT) = ISNULL(a.Minute, 0)
+	AND CAST(LEFT(thb.user_clm, 2) AS INT) = CAST(a.Hour AS INT)
+	AND CAST(RIGHT(thb.user_clm, 2) AS INT) = ISNULL(CAST(a.Minute AS INT), 0)
 	AND thb.is_dst = a.[Is DST]
-UNION
-SELECT  DISTINCT sdh2.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
+UNION ALL
+SELECT  DISTINCT dd.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
 	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
 FROM [temp_process_table] a
-INNER JOIN source_deal_header sdh
-	ON sdh.deal_id = a.[Deal Ref ID]  
-INNER JOIN source_deal_header sdh2
-	ON sdh2.close_reference_id = sdh.source_deal_header_id
-INNER JOIN source_deal_header sdh3
-		ON sdh3.close_reference_id = sdh2.source_deal_header_id
-INNER JOIN source_deal_detail sdd
-	ON sdh2.source_deal_header_id = sdd.source_deal_header_id
-	AND sdd.leg = a.leg
-	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+INNER JOIN #deal_data dd	
+	ON dd.parent_deal_id = a.[Deal Ref ID]
+	AND dd.term_date = a.[Term Date]
 INNER JOIN #price_from_curve  pfc
 	ON a.[Term Date] = pfc.term_date
 	and a.Hour = pfc.hour
 	and a.Minute = pfc.minute
 	and a.[Is DST] = pfc.is_dst
-LEFT JOIN source_deal_detail_hour sddh
-	ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
-	AND CAST(sddh.term_date as date) = a.[Term Date]
-LEFT JOIN #temp_hour_breakdown thb
-	ON thb.process_clm = sddh.hr
-	AND thb.is_dst = sddh.is_dst
-WHERE sddh.source_deal_detail_id IS NULL
-	  AND thb.clm_name IS NULL
-UNION
-SELECT  DISTINCT sdh3.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
-	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
-FROM [temp_process_table] a
-INNER JOIN source_deal_header sdh
-	ON sdh.deal_id = a.[Deal Ref ID]  
-INNER JOIN source_deal_header sdh2
-	ON sdh2.close_reference_id = sdh.source_deal_header_id
-INNER JOIN source_deal_header sdh3
-		ON sdh3.close_reference_id = sdh2.source_deal_header_id
-INNER JOIN source_deal_detail sdd
-	ON sdh3.source_deal_header_id = sdd.source_deal_header_id
-	AND sdd.leg = a.leg
-	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
-INNER JOIN #price_from_curve  pfc
-	ON a.[Term Date] = pfc.term_date
-	and a.Hour = pfc.hour
-	and a.Minute = pfc.minute
-	and a.[Is DST] = pfc.is_dst
-INNER JOIN source_deal_detail_hour sddh
-	ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
-	AND CAST(sddh.term_date as date) = a.[Term Date]
-INNER JOIN #temp_hour_breakdown thb
-	ON thb.process_clm = sddh.hr
-	AND thb.is_dst = sddh.is_dst
-	AND CAST(LEFT(thb.user_clm, 2) AS INT) = a.Hour
-	AND CAST(RIGHT(thb.user_clm, 2) AS INT) = ISNULL(a.Minute, 0)
-	AND thb.is_dst = a.[Is DST]
-UNION
-SELECT  DISTINCT sdh3.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
-	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
-FROM [temp_process_table] a
-INNER JOIN source_deal_header sdh
-	ON sdh.deal_id = a.[Deal Ref ID]  
-INNER JOIN source_deal_header sdh2
-	ON sdh2.close_reference_id = sdh.source_deal_header_id
-INNER JOIN source_deal_header sdh3
-		ON sdh3.close_reference_id = sdh2.source_deal_header_id
-INNER JOIN source_deal_detail sdd
-	ON sdh3.source_deal_header_id = sdd.source_deal_header_id
-	AND sdd.leg = a.leg
-	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
-INNER JOIN #price_from_curve  pfc
-	ON a.[Term Date] = pfc.term_date
-	and a.Hour = pfc.hour
-	and a.Minute = pfc.minute
-	and a.[Is DST] = pfc.is_dst
-LEFT JOIN source_deal_detail_hour sddh
-	ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
-	AND CAST(sddh.term_date as date) = a.[Term Date]
+LEFT JOIN #source_deal_detail_hour sddh
+	ON sddh.source_deal_header_id = dd.source_deal_header_id
+	AND sddh.term_date = dd.term_date
 LEFT JOIN #temp_hour_breakdown thb
 	ON thb.process_clm = sddh.hr
 	AND thb.is_dst = sddh.is_dst
@@ -657,7 +615,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   '', 
 						   '0',
 						   '0',
-						   '5',
+						   '11',
 						   'Import2TRM/RETAIL_Claudio/DEAL_Retail_LT_Shaped_TOM'
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
@@ -740,3 +698,4 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
+		
