@@ -636,7 +636,7 @@ BEGIN
 					@attachment_file_name NVARCHAR(200),
 					@alert_source_id INT
 			DECLARE email_report_cursor CURSOR FOR  
-			SELECT ar.alert_reports_id,ar.report_writer,ar.paramset_hash,ISNULL(trp.report_params,ar.report_param),rps.report_paramset_id,rpt.report_page_tablix_id, ISNULL(ar.file_option_type, 'r'), ar.report_desc, wa_sid.source_id
+			SELECT ar.alert_reports_id,ar.report_writer,ar.paramset_hash,ISNULL(trp.report_params,ar.report_param),rps.report_paramset_id,rpt.report_page_tablix_id, ISNULL(NULLIF(ar.file_option_type, ''), 'r'), ar.report_desc, wa_sid.source_id
 			FROM alert_reports ar
 			LEFT JOIN report_paramset rps ON ar.paramset_hash = rps.paramset_hash
 			LEFT JOIN report_page_tablix rpt ON rpt.page_id = rps.page_id
