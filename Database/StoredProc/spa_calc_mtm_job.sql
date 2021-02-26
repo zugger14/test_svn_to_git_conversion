@@ -8970,7 +8970,7 @@ end
 SET @sql='
 	select  [ID]=IDENTITY(int,1,1),'''+@curve_as_of_date +''' as_of_date,unpvt.term_start, unpvt.formula_id, 982 granularity,
 		 unpvt.contract_id, unpvt.source_deal_detail_id,case when [Hours]=25 then dst.[hour] else [Hours] end [Hours]
-		 ,case when [Hours]=25 then 1 else 0 end is_dst,-1*Volume Volume
+		 ,case when [Hours]=25 then 1 else 0 end is_dst,-1*Volume Volume,unpvt.source_deal_header_id 
 	INTO #tx3 
 	from (
 		select  t.term_start, t.formula_id, 982 granularity, MAX(t.contract_id) contract_id, t.source_deal_detail_id
@@ -8994,7 +8994,7 @@ SET @sql='
 	where [Hours]<25  or ([Hours]=25 and dst.[hour] is not null);
 
 	select  rowid=identity(int,1,1), t.as_of_date,' + cast(@curve_source_value_id as varchar) + ' curve_source_value_id, t.term_start prod_date
-		,t.formula_id, granularity, t.contract_id, t.source_deal_detail_id,[Hours],is_dst, volume
+		,t.formula_id, granularity, t.contract_id, t.source_deal_detail_id,[Hours] [Hour],is_dst, volume
 			,cast(null as int)	counterparty_id ,
 			cast(null as int)	curve_id,
 			cast(null as int) onPeakVolume,
@@ -9005,7 +9005,7 @@ SET @sql='
 			cast(null as int) generator_id,
 			cast(null as int) commodity_id,
 			cast(null as int) meter_id,
-			cast(null as int) [mins]	
+			cast(null as int) [mins],source_deal_header_id	
 	into '+@formula_table3+'	 
 	from	#tx3  t
 '
@@ -9055,7 +9055,7 @@ end
 
 SET @sql='
 	select  [ID]=IDENTITY(int,1,1),'''+@curve_as_of_date+''' as_of_date,unpvt.term_start, unpvt.formula_id, pos_granularity granularity,unpvt.contract_id, unpvt.source_deal_detail_id
-		,case when [Hours]=25 then dst.[hour] else [Hours] end [Hours],case when [Hours]=25 then 1 else 0 end is_dst,case when pos_granularity=987 then 15 when pos_granularity=989 THEN 30 else 0 end +period period,pos_granularity,Volume
+		,case when [Hours]=25 then dst.[hour] else [Hours] end [Hours],case when [Hours]=25 then 1 else 0 end is_dst,case when pos_granularity=987 then 15 when pos_granularity=989 THEN 30 else 0 end +period period,pos_granularity,Volume,unpvt.source_deal_header_id
 	INTO #tx4 
 	from (
 		select  t.term_start, t.formula_id, 982 granularity, MAX(t.contract_id) contract_id, t.source_deal_detail_id
@@ -9089,7 +9089,7 @@ SET @sql='
 			cast(null as int) volume_uom_id,
 			cast(null as int) generator_id,
 			cast(null as int) commodity_id,
-			cast(null as int) meter_id
+			cast(null as int) meter_id,source_deal_header_id
 		into '+@formula_table4+'	 
 	from	#tx4  t
 '
