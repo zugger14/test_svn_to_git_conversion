@@ -904,7 +904,32 @@ BEGIN
 				
  			EXEC spa_parse_xml_file 'b', NULL, @replace_params, @replace_params_table
  			
- 			SET @sql = 'UPDATE dp
+ 			IF NOT EXISTS(SELECT 1 FROM #temp_dashboard_params)
+			BEGIN
+				SET @sql = 'INSERT INTO #temp_dashboard_params (column_name, column_value, param_type)
+							SELECT pvp.column_name,
+							   REPLACE(NULLIF(MAX(pvp.column_name), ''''), '','', ''!''),
+							   MAX(dsc.widget_id)
+							FROM pivot_report_dashboard_detail prdd
+							INNER JOIN pivot_view_params pvp 
+								ON prdd.view_id = pvp.view_id
+							INNER JOIN data_source_column dsc 
+								ON dsc.data_source_column_id = pvp.column_id
+							INNER JOIN ' + @replace_params_table + ' prt ON  prt.[param_name] = pvp.column_name
+							WHERE prdd.dashboard_id = ' + CAST(@dashboard_id AS VARCHAR(10)) + ' AND pvp.column_name NOT LIKE ''LOGICAL____%''
+							GROUP BY pvp.column_name
+
+							UPDATE temp
+							SET column_value = dbo.FNAResolveBusinessDate(pvp.column_name)
+							FROM #temp_dashboard_params temp
+							INNER JOIN pivot_view_params pvp ON ''LOGICAL____'' + temp.column_name = pvp.column_name
+							INNER JOIN ' + @replace_params_table + ' prt ON  prt.[param_name] = pvp.column_name
+							WHERE pvp.view_id = ' + CAST(@view_id AS VARCHAR(10)) + ' AND NULLIF(pvp.column_name, '''') IS NOT NULL
+						'
+				EXEC(@sql)				
+			END
+			
+			SET @sql = 'UPDATE dp
 						SET column_value = NULLIF(NULLIF(replace(prt.[param_value],'','',''!''), ''''), ''null'')
 						FROM #temp_dashboard_params dp
 						INNER JOIN ' + @replace_params_table + ' prt ON  prt.[param_name] = dp.column_name  AND prt.param_name NOT LIKE ''LOGICAL____%'''
