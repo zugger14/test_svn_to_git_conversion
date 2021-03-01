@@ -37,12 +37,23 @@ BEGIN
 		WHERE process_id =  @process_id
 	) sub
 	
-	SET @sql =  'EXEC [spa_deal_transfer_alert] ''r'', ''' + @source_deal_header_ids + ''',''' +  @process_id + ''''
-	select @sql
+	SET @sql =  ' [spa_deal_transfer_alert] ''r'', ''' + @source_deal_header_ids + ''',''' +  @process_id + ''''
+	-- select @sql
+
+	DECLARE @job_process_id VARCHAR(200) = dbo.FNAGETNEWID()
+	DECLARE @job_name  VARCHAR(500)
+	DECLARE @user_name  VARCHAR(100) = dbo.FNADBUser()
 	
-	EXEC spa_get_output_schema_or_data @sql_query = @sql
+	-- SET @sql = 'spa_deal_insert_update_jobs ''i'', ''' + @after_insert_process_table + ''''
+	SET @job_name = 'auto_schedule_' + @user_name + '_' + @job_process_id 	
+	
+	
+	EXEC spa_run_sp_as_job @job_name, @sql, 'spa_deal_transfer_alert_wrapper', @user_name
+	
+	/*EXEC spa_get_output_schema_or_data @sql_query = @sql
 		,@process_table_name = '#resultdatatable'
 		,@data_output_col_count = @total_columns OUTPUT
 		,@flag = 'data'
+		*/
 
 END 
