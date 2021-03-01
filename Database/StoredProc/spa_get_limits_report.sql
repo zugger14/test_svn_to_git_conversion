@@ -72,7 +72,7 @@ DECLARE   @as_of_date DATETIME='2020-03-30',
     @drillflag VARCHAR(1) = NULL,
     @drillTenorLimit FLOAT = NULL,
 	@deal_level CHAR(1) = 'n'
-    
+   , @source_deal_header_id  VARCHAR(MAX) = NULL
     
 --select @as_of_date='2012-06-22', @limit_for=NULL, @limit_type=NULL, @limit_id=8, @show_exception_only='n', @trader_id=NULL, @commodity_id=NULL, @role_id=NULL
 
@@ -140,16 +140,18 @@ BEGIN
 END		
 		
 ELSE
-
  	INSERT INTO #limit_ids(limit_id ) SELECT item FROM dbo.SplitCommaSeperatedValues(@limit_id)
     
    
 CREATE TABLE #limit_info (maintain_limit_id INT,book_id VARCHAR(1000) COLLATE DATABASE_DEFAULT  ,limit_type INT,limit_for INT,party_id INT 
 	,limit_value NUMERIC(26,10),var_criteria_id INT,deal_type INT,curve_id INT,limit_uom INT,limit_currency INT
-	,tenor_granularity INT,tenor_month_from INT,tenor_month_to INT,effective_date DATETIME, deal_subtype INT, book1 INT,book2 INT,book3 INT,book4 INT, limit_id INT, curve_source_value_id INT, trader_id INT)
+	,tenor_granularity INT,tenor_month_from INT,tenor_month_to INT,effective_date DATETIME, deal_subtype INT, book1 INT,book2 INT,book3 INT,book4 INT, limit_id INT, curve_source_value_id INT, trader_id INT
+	,term_start date, term_end date
+	
+	)
 
 SET @sql_str='insert into  #limit_info (maintain_limit_id,limit_type,limit_for,party_id ,book_id ,var_criteria_id,book1,book2,book3,book4,deal_type,curve_id
-	,limit_uom,limit_currency,tenor_granularity,tenor_month_from,tenor_month_to, effective_date, deal_subtype, limit_value, limit_id, curve_source_value_id, trader_id)
+	,limit_uom,limit_currency,tenor_granularity,tenor_month_from,tenor_month_to, effective_date, deal_subtype, limit_value, limit_id, curve_source_value_id, trader_id,term_start , term_end )
 	select lt.maintain_limit_id,
 		lt.limit_type,
 		lh.limit_for,
@@ -182,6 +184,54 @@ SET @sql_str='insert into  #limit_info (maintain_limit_id,limit_type,limit_for,p
 		lh.curve_source,
 		CASE lh.limit_for WHEN 20200 THEN lh.trader_id
 		ELSE NULL END trader_id
+		,dbo.[FNAGetTermStartDate](
+			CASE lt.tenor_granularity 
+				WHEN 980 THEN ''m''
+				WHEN 981 THEN ''d''
+				WHEN 990 THEN ''w''
+				WHEN 991 THEN ''q''
+				WHEN 992 THEN ''s''
+				WHEN 993 THEN ''a''
+				WHEN 982 THEN ''h''
+			ELSE 
+				''m'' 
+			END,
+		''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''',ISNULL(lt.tenor_month_from,
+			CASE lt.tenor_granularity 
+				WHEN 980 THEN -3000 
+				WHEN 981 THEN -7000
+				WHEN 990 THEN -6000
+				WHEN 991 THEN -3000
+				WHEN 992 THEN -2000
+				WHEN 993 THEN -1000	
+				WHEN 982 THEN -10000
+			ELSE 
+				-3000 
+			END-1) ) term_start,
+		 dbo.FNAGetTermEndDate(
+			CASE lt.tenor_granularity 
+				WHEN 980 THEN ''m''
+				WHEN 981 THEN ''d''
+				WHEN 990 THEN ''w''
+				WHEN 991 THEN ''q''
+				WHEN 992 THEN ''s''
+				WHEN 993 THEN ''a''
+				WHEN 982 THEN ''h''
+			ELSE 
+				''m'' 
+			END,
+		''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''',ISNULL(lt.tenor_month_to,
+			CASE lt.tenor_granularity 
+				WHEN 980 THEN 3000 
+				WHEN 981 THEN 7000
+				WHEN 990 THEN 6000
+				WHEN 991 THEN 3000
+				WHEN 992 THEN 2000
+				WHEN 993 THEN 1000
+				WHEN 982 THEN 10000	
+			ELSE 
+				3000 
+			END)) term_end
 	FROM maintain_limit lt 
 	INNER JOIN limit_header lh on lh.limit_id = lt.limit_id
 		AND lh.active = ''y'' 
@@ -374,54 +424,7 @@ OUTER APPLY
 	WHERE r.term_start > ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''' 
 		AND expiration_date >= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''  
 		AND sdh.deal_date <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
-		AND r.term_start BETWEEN dbo.[FNAGetTermStartDate](
-			CASE li.tenor_granularity 
-				WHEN 980 THEN ''m''
-				WHEN 981 THEN ''d''
-				WHEN 990 THEN ''w''
-				WHEN 991 THEN ''q''
-				WHEN 992 THEN ''s''
-				WHEN 993 THEN ''a''
-				WHEN 982 THEN ''h''
-			ELSE 
-				''m'' 
-			END,
-		''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''',ISNULL(li.tenor_month_from,
-			CASE li.tenor_granularity 
-				WHEN 980 THEN -3000 
-				WHEN 981 THEN -7000
-				WHEN 990 THEN -6000
-				WHEN 991 THEN -3000
-				WHEN 992 THEN -2000
-				WHEN 993 THEN -1000	
-				WHEN 982 THEN -10000
-			ELSE 
-				-3000 
-			END-1) )
-		AND  dbo.FNAGetTermEndDate(
-			CASE li.tenor_granularity 
-				WHEN 980 THEN ''m''
-				WHEN 981 THEN ''d''
-				WHEN 990 THEN ''w''
-				WHEN 991 THEN ''q''
-				WHEN 992 THEN ''s''
-				WHEN 993 THEN ''a''
-				WHEN 982 THEN ''h''
-			ELSE 
-				''m'' 
-			END,
-		''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''',ISNULL(li.tenor_month_to,
-			CASE li.tenor_granularity 
-				WHEN 980 THEN 3000 
-				WHEN 981 THEN 7000
-				WHEN 990 THEN 6000
-				WHEN 991 THEN 3000
-				WHEN 992 THEN 2000
-				WHEN 993 THEN 1000
-				WHEN 982 THEN 10000	
-			ELSE 
-				3000 
-			END)) 
+		AND r.term_start BETWEEN li.term_start AND  li.term_end
 		AND li.limit_type IN (1581, 1588)
 		AND sdh.trader_id = CASE WHEN li.limit_for = 20200 THEN ISNULL(li.trader_id, sdh.trader_id) ELSE sdh.trader_id END 
 		AND sdh.counterparty_id = CASE WHEN li.limit_for = 20204 THEN ISNULL(li.party_id, sdh.counterparty_id) ELSE sdh.counterparty_id END 
@@ -448,58 +451,8 @@ OUTER APPLY
 	WHERE r.term_start > ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''' 
 		AND expiration_date >= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''  
 		AND sdh.deal_date <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
-		AND r.term_start >= 
-		CASE WHEN li.limit_type <> 1588 THEN dbo.[FNAGetTermStartDate](
-			CASE li.tenor_granularity 
-				WHEN 980 THEN ''m''
-				WHEN 981 THEN ''d''
-				WHEN 990 THEN ''w''
-				WHEN 991 THEN ''q''
-				WHEN 992 THEN ''s''
-				WHEN 993 THEN ''a''
-				WHEN 982 THEN ''h''
-			ELSE 
-				''m'' 
-			END, 
-		''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''', ISNULL(li.tenor_month_from, 
-		CASE li.tenor_granularity 
-			WHEN 980 THEN -3000 
-			WHEN 981 THEN -7000
-			WHEN 990 THEN -6000
-			WHEN 991 THEN -3000
-			WHEN 992 THEN -2000
-			WHEN 993 THEN -1000
-			WHEN 982 THEN -10000	
-			ELSE -3000 END-1) )
-		ELSE 
-			r.term_start 
-		END							
-		AND  r.term_start <= 
-		CASE WHEN li.limit_type <> 1588 THEN dbo.FNAGetTermEndDate(
-			CASE li.tenor_granularity 
-				WHEN 980 THEN ''m''
-				WHEN 981 THEN ''d''
-				WHEN 990 THEN ''w''
-				WHEN 991 THEN ''q''
-				WHEN 992 THEN ''s''
-				WHEN 993 THEN ''a''
-				WHEN 982 THEN ''h''
-			ELSE 
-				''m'' 
-			END,
-		''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''',ISNULL(li.tenor_month_to, 
-		CASE li.tenor_granularity 
-			WHEN 980 THEN 3000 
-			WHEN 981 THEN 7000
-			WHEN 990 THEN 6000
-			WHEN 991 THEN 3000
-			WHEN 992 THEN 2000
-			WHEN 993 THEN 1000
-			WHEN 982 THEN 10000	
-			ELSE 3000 END)) 
-		ELSE 
-			r.term_start 
-		END
+		AND r.term_start >= CASE WHEN li.limit_type <> 1588 THEN li.term_start ELSE r.term_start END							
+		AND  r.term_start <= CASE WHEN li.limit_type <> 1588 THEN li.term_end ELSE  r.term_start  END
 		AND sdh.trader_id = CASE WHEN li.limit_for = 20200 THEN ISNULL(li.trader_id, sdh.trader_id) ELSE sdh.trader_id END
 		AND sdh.counterparty_id = CASE WHEN li.limit_for = 20204 THEN ISNULL(li.party_id, sdh.counterparty_id) ELSE sdh.counterparty_id END 
 ) 	vol	
@@ -659,10 +612,7 @@ SET @sql_str='INSERT INTO #limit_info_value(maintain_limit_id,total_value, unit,
 				INNER JOIN source_deal_detail sdd ON  sdh.source_deal_header_id = sdd.source_deal_header_id
 				INNER JOIN source_price_curve_def spcd ON  sdd.curve_id = spcd.source_curve_def_id
 				WHERE  spcd.commodity_id = CASE WHEN li.limit_for IN(20200, 20203) AND li.party_id IS NOT NULL THEN 
-												li.party_id 
-										   ELSE 
-												spcd.commodity_id 
-				                           END
+						li.party_id  ELSE spcd.commodity_id  END
 					AND sdd.Leg = CASE WHEN li.limit_for IN(20200, 20203) AND li.party_id IS NOT NULL THEN 1 ELSE sdd.Leg END)
 		LEFT JOIN source_price_curve_def spcd1 ON spcd1.source_currency_id = sdpd.pnl_currency_id
 			AND spcd1.source_currency_to_id = ml.limit_currency
@@ -689,33 +639,33 @@ EXEC(@sql_str)
 -- Price Corridor
 SET @sql_str='
  INSERT INTO #limit_info_value(maintain_limit_id,total_value, unit, source_deal_header_id, value2)
- 	  SELECT maintain_limit_id, SUM(und_pnl) und_pnl, MAX(unit) [unit], ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'source_deal_header_id ' ELSE 'NULL ' END + ' source_deal_header_id, ((AVG(curve_value) - AVG(fixed_price + ISNULL(formula_value, 0) + ISNULL(price_adder, 0) ))/NULLIF(AVG(curve_value),0)) * 100 limit_percentage
-	   FROM (
-		 SELECT li.maintain_limit_id,  sdpd.und_pnl, sc.currency_name unit, 
-		 ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'sdh.source_deal_header_id ' ELSE 'NULL ' END + ' source_deal_header_id,
-		 sdpd.curve_value, sdpd.fixed_price, sdpd.formula_value, sdpd.price_adder
- 		 FROM #collect_deals cd 
-		 INNER JOIN maintain_limit ml ON ml.maintain_limit_id = cd.maintain_limit_id
-		 LEFT JOIN source_currency sc ON sc.source_currency_id = ml.limit_currency
-		 INNER JOIN #limit_info li ON li.maintain_limit_id = cd.maintain_limit_id AND li.limit_type = 1597
-		 INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = cd.source_deal_header_id AND sdh.deal_date <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
-			AND ISNULL(sdh.trader_id, -9999999) = CASE WHEN li.limit_for = 20200 THEN COALESCE(li.trader_id, sdh.trader_id, -9999999) ELSE ISNULL(sdh.trader_id, -9999999) END 
-			AND sdh.source_deal_header_id IN (
-				SELECT DISTINCT sdh.source_deal_header_id
-				FROM source_deal_header sdh
-				INNER JOIN source_deal_detail sdd ON  sdh.source_deal_header_id = sdd.source_deal_header_id
-				INNER JOIN source_price_curve_def spcd ON  sdd.curve_id = spcd.source_curve_def_id
-				WHERE  spcd.commodity_id = CASE WHEN li.limit_for IN(20200, 20203) AND li.party_id IS NOT NULL THEN li.party_id ELSE spcd.commodity_id END
-					AND sdd.Leg = CASE WHEN li.limit_for IN(20200, 20203) AND li.party_id IS NOT NULL THEN 1 ELSE sdd.Leg END
-			)
-		 LEFT JOIN ' + dbo.FNAGetProcessTableName(@as_of_date, 'source_deal_pnl_detail') + ' sdpd ON sdpd.source_deal_header_id = sdh.source_deal_header_id
-		 AND (cd.term_start IS NULL OR sdpd.term_start >= cd.term_start) AND (cd.term_end IS NULL OR sdpd.term_end <= cd.term_end)
-		 AND sdpd.pnl_as_of_date >= sdh.deal_date
-		 AND sdpd.term_start >= ''' + CONVERT(VARCHAR(7), @as_of_date, 120) + '-01''
-		 AND sdpd.pnl_as_of_date = ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''' 
+SELECT maintain_limit_id, SUM(und_pnl) und_pnl, MAX(unit) [unit], ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'source_deal_header_id ' ELSE 'NULL ' END + ' source_deal_header_id, ((AVG(curve_value) - AVG(fixed_price + ISNULL(formula_value, 0) + ISNULL(price_adder, 0) ))/NULLIF(AVG(curve_value),0)) * 100 limit_percentage
+FROM (
+	SELECT li.maintain_limit_id,  sdpd.und_pnl, sc.currency_name unit, 
+	' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'sdh.source_deal_header_id ' ELSE 'NULL ' END + ' source_deal_header_id,
+	sdpd.curve_value, sdpd.fixed_price, sdpd.formula_value, sdpd.price_adder
+ 	FROM #collect_deals cd 
+	INNER JOIN maintain_limit ml ON ml.maintain_limit_id = cd.maintain_limit_id
+	LEFT JOIN source_currency sc ON sc.source_currency_id = ml.limit_currency
+	INNER JOIN #limit_info li ON li.maintain_limit_id = cd.maintain_limit_id AND li.limit_type = 1597
+	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = cd.source_deal_header_id AND sdh.deal_date <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
+	AND ISNULL(sdh.trader_id, -9999999) = CASE WHEN li.limit_for = 20200 THEN COALESCE(li.trader_id, sdh.trader_id, -9999999) ELSE ISNULL(sdh.trader_id, -9999999) END 
+	AND sdh.source_deal_header_id IN (
+		SELECT DISTINCT sdh.source_deal_header_id
+		FROM source_deal_header sdh
+		INNER JOIN source_deal_detail sdd ON  sdh.source_deal_header_id = sdd.source_deal_header_id
+		INNER JOIN source_price_curve_def spcd ON  sdd.curve_id = spcd.source_curve_def_id
+		WHERE  spcd.commodity_id = CASE WHEN li.limit_for IN(20200, 20203) AND li.party_id IS NOT NULL THEN li.party_id ELSE spcd.commodity_id END
+			AND sdd.Leg = CASE WHEN li.limit_for IN(20200, 20203) AND li.party_id IS NOT NULL THEN 1 ELSE sdd.Leg END
+	)
+	LEFT JOIN ' + dbo.FNAGetProcessTableName(@as_of_date, 'source_deal_pnl_detail') + ' sdpd ON sdpd.source_deal_header_id = sdh.source_deal_header_id
+	AND (cd.term_start IS NULL OR sdpd.term_start >= cd.term_start) AND (cd.term_end IS NULL OR sdpd.term_end <= cd.term_end)
+	AND sdpd.pnl_as_of_date >= sdh.deal_date
+	AND sdpd.term_start >= ''' + CONVERT(VARCHAR(7), @as_of_date, 120) + '-01''
+	AND sdpd.pnl_as_of_date = ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''' 
 
-		WHERE li.maintain_limit_id IS NOT NULL
- 	  ) mtm GROUP BY maintain_limit_id ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN ', source_deal_header_id ' ELSE '' END
+WHERE li.maintain_limit_id IS NOT NULL
+) mtm GROUP BY maintain_limit_id ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN ', source_deal_header_id ' ELSE '' END
 	 
 EXEC(@sql_str)
 
@@ -761,8 +711,8 @@ EXEC(@sql_str)
 -- Reserve Limit
 SET @sql_str='
  INSERT INTO #limit_info_value(maintain_limit_id,total_value, unit, source_deal_header_id)
- 	  SELECT maintain_limit_id, SUM(total_value), MAX(unit), ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'source_deal_header_id ' ELSE 'NULL ' END + ' 
-		FROM (
+SELECT maintain_limit_id, SUM(total_value), MAX(unit), ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'source_deal_header_id ' ELSE 'NULL ' END + ' 
+FROM (
 
 		 SELECT li.maintain_limit_id,  (ced.effective_exposure_to_us * ISNULL((1-dbo.FNAGetRecoveryRate(ced.risk_rating_id, DATEDIFF(month,ced.term_start, ced.as_of_date), ced.as_of_date)), 1)*
 			ISNULL(dbo.FNAGetProbabilityDefault(ced.risk_rating_id, DATEDIFF(month,ced.term_start, ced.as_of_date), ced.as_of_date), 1)
