@@ -79,14 +79,18 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) =  ''@as_of_date'',
-		@_process_id VARCHAR(500) = ''@process_id''  
+		@_process_id VARCHAR(500) = ''@process_id'' 
 DECLARE @_parent_egix_curve_id INT  
 DECLARE @_derived_egix_curve_id INT   
 DECLARE @_Isterm_Month_expired INT 
+DECLARE @_proxy_curve_id INT
 DECLARE @_maturity_date DATE
 DECLARE @_expiration_date DATE 
 SELECT @_parent_egix_curve_id = source_curve_def_id FROM source_price_curve_def WHERE curve_id = ''GAS.EGIX.EEX.D.Spot'' 
 SELECT @_derived_egix_curve_id = source_curve_def_id FROM source_price_curve_def WHERE curve_id = ''GAS.EGIX.EEX.M.Spot Settled'' 
+
+SELECT @_proxy_curve_id = proxy_source_curve_def_id FROM source_price_curve_def WHERE curve_id = ''GAS.EGIX.EEX.M.Spot Settled'' 
+
 SELECT @_maturity_date= DATEADD(month, DATEDIFF(month, 0, @_as_of_date)+1, 0)
 
 --SELECT @_expiration_calendar_id= value_id FROM static_data_value WHERE Code=''EEX Monthly Gas''
@@ -130,27 +134,42 @@ BEGIN TRY
 			DROP TABLE #tmp_data_after_expiry
 			DELETE FROM source_price_curve WHERE source_curve_def_id=@_derived_egix_curve_id
 					AND as_of_date  BETWEEN DATEADD(Day, -1, @_as_of_date) AND @_as_of_date
-					AND maturity_date=DATEADD(month, 1, @_maturity_date)
+					AND maturity_date>=DATEADD(month, 1, @_maturity_date)
 			SELECT  source_curve_def_id,
 					as_of_date,
 					maturity_date,
 					curve_value
-			INTO #tmp_data_after_expiry
+			INTO #tmp_data_after_expiry FROM (
+			SELECT  source_curve_def_id,
+					as_of_date,
+					DATEADD(month, 1, @_maturity_date) AS maturity_date,
+					curve_value
 			FROM source_price_curve 
 			WHERE source_curve_def_id = @_parent_egix_curve_id
 					 AND as_of_date = @_as_of_date
 					 AND curve_source_value_id=4500
 					 AND maturity_date=@_as_of_date
+			 UNION ALL 
+			 SELECT  source_curve_def_id,
+					as_of_date,
+					maturity_date,
+					curve_value
+			FROM source_price_curve 
+			WHERE source_curve_def_id = @_proxy_curve_id
+					 AND as_of_date = @_as_of_date
+					 AND curve_source_value_id=4500
+					 AND maturity_date>DATEADD(month, 1, @_maturity_date)
+			) as tmp
 	
 			INSERT INTO source_price_curve(source_curve_def_id, as_of_date, Assessment_curve_type_value_id, curve_source_value_id, maturity_date, curve_value, is_dst)
-			SELECT	@_derived_egix_curve_id,
-					t.as_of_date,
+			SELECT	DISTINCT @_derived_egix_curve_id,
+					tmp.as_of_date,
 					77,
 					4500,
-					DATEADD(month, 1, @_maturity_date),
-					t.curve_value,
+					tmp.maturity_date,
+					tmp.curve_value,
 					0
-			FROM #tmp_data_after_expiry t
+			FROM #tmp_data_after_expiry tmp
 		END
 	ELSE
 	BEGIN
@@ -158,23 +177,40 @@ BEGIN TRY
 			DROP TABLE #tmp_data_daily
 			DELETE FROM source_price_curve WHERE source_curve_def_id=@_derived_egix_curve_id
 					AND as_of_date BETWEEN DATEADD(Day, -1, @_as_of_date) AND @_as_of_date
-					AND maturity_date=@_maturity_date
+					AND maturity_date>=@_maturity_date
 			SELECT  source_curve_def_id,
 					as_of_date,
 					maturity_date,
 					curve_value
-			INTO #tmp_data_daily
+			INTO #tmp_data_daily FROM (
+			SELECT  source_curve_def_id,
+					as_of_date,
+					@_maturity_date as maturity_date,
+					curve_value
 			FROM source_price_curve 
 			WHERE source_curve_def_id = @_parent_egix_curve_id
 					 AND as_of_date = @_as_of_date
 					 AND curve_source_value_id=4500
 					 AND maturity_date=@_as_of_date
+			UNION ALL
+			SELECT  source_curve_def_id,
+					as_of_date,
+					maturity_date,
+					curve_value
+			FROM source_price_curve 
+			WHERE source_curve_def_id = @_proxy_curve_id
+					 AND as_of_date = @_as_of_date
+					 AND curve_source_value_id=4500
+					 AND maturity_date>=DATEADD(month, 1, @_maturity_date)
+		     ) as tmp
+
+
 			INSERT INTO source_price_curve(source_curve_def_id, as_of_date, Assessment_curve_type_value_id, curve_source_value_id, maturity_date, curve_value, is_dst)
-			SELECT	@_derived_egix_curve_id,
+			SELECT	DISTINCT @_derived_egix_curve_id,
 					t.as_of_date,
 					77,
 					4500,
-					@_maturity_date,
+					t.maturity_date,
 					t.curve_value,
 					0
 			FROM #tmp_data_daily t
