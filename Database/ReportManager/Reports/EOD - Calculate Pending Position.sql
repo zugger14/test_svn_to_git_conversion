@@ -79,20 +79,13 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10)  = ''@as_of_date'',
-        @_process_id VARCHAR(100) = dbo.FNAgetnewid()
+        @_process_id VARCHAR(100) = dbo.FNAgetnewid(),
+		@_user_login_id VARCHAR(50) = dbo.fnadbuser()
 
 IF ''@process_id'' <> ''NULL''
     SET @_process_id = ''@process_id''
  ELSE    
     SET @_process_id = NULL    
-
-
-DECLARE @_user_login_id VARCHAR(50) = dbo.fnadbuser()
-DECLARE @_report_position varchar(250), @_st varchar(max)
-
-
-SET @_report_position = dbo.FNAProcessTableName(''report_position'', @_user_login_id, @_process_id)
-
  
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result 
  
@@ -106,49 +99,22 @@ CREATE TABLE #tmp_result (
     Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
 )
 
- 
 
 IF @_as_of_date =''1900'' -- validation SQL
 BEGIN
     INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
     SELECT ''1900'', ''1900'', ''1900'', ''1900'', ''1900'', ''1900''
 END
-ELSE
+	ELSE
 BEGIN    
-    SET @_st=''CREATE TABLE '' + @_report_position + ''(source_deal_header_id INT, [action] VARCHAR(1)) ''
-    EXEC(@_st)
-    
-    SET @_st=''
-        INSERT INTO '' + @_report_position + ''
-        SELECT DISTINCT sdh.source_deal_header_id, ''''i'''' action
-        --INTO '' + @_report_position + ''        
-        FROM source_deal_header sdh (nolock) 
-        INNER JOIN source_deal_detail sdd on sdh.source_deal_header_id=sdd.source_deal_header_id
-        LEFT JOIN report_hourly_position_deal s on sdh.source_deal_header_id=s.source_deal_header_id
-            AND s.term_start = sdd.term_start
-        WHERE (s.source_deal_header_id is null or sdd.total_volume is null)
-            AND isnull(sdh.internal_desk_id,17300) in (17300,17302) and  isnull(sdh.product_id,4101) = 4101
-        UNION
-        SELECT DISTINCT sdh.source_deal_header_id, ''''i'''' action
-        FROM source_deal_header sdh (nolock) 
-        INNER JOIN source_deal_detail sdd on sdh.source_deal_header_id=sdd.source_deal_header_id
-        LEFT JOIN report_hourly_position_profile s on sdh.source_deal_header_id=s.source_deal_header_id
-            AND s.term_start = sdd.term_start
-        WHERE (s.source_deal_header_id is null or sdd.total_volume is null)
-            AND sdh.internal_desk_id in (17301) and  isnull(sdh.product_id,4101) = 4101
-        UNION
-        SELECT DISTINCT sdh.source_deal_header_id, ''''i'''' action
-        FROM source_deal_header sdh (nolock)
-        INNER JOIN source_deal_detail sdd on sdh.source_deal_header_id=sdd.source_deal_header_id
-        LEFT JOIN report_hourly_position_fixed s on sdh.source_deal_header_id=s.source_deal_header_id
-            AND s.term_start = sdd.term_start
-        WHERE (s.source_deal_header_id is null or sdd.total_volume is null)
-            AND  sdh.product_id =4100    ''
-    EXEC(@_st)
-    
+  --Collect missing hourly position deals in process table:dbo.FNAProcessTableName(''report_position'', @_user_login_id, @process_id)  
+    EXEC [dbo].[spa_calc_missing_hourly_position] NULL, @_process_id, @_user_login_id, ''n''
+   
     UPDATE process_deal_position_breakdown SET process_status = 0 WHERE ISNULL(process_status, 0) = 9 
-       INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation)  
-    EXEC spa_calc_deal_position_breakdown NULL, @_process_id, 0, ''n'', ''n''
+
+   INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation)  
+
+   EXEC spa_calc_deal_position_breakdown NULL, @_process_id, 0, ''n'', ''n''
 END
 SELECT  
     @_as_of_date as_of_date,
@@ -161,7 +127,9 @@ SELECT
     [Recommendation]
 --[__batch_report__] 
 FROM #tmp_result
-WHERE 1=1', report_id = @report_id_data_source_dest,
+WHERE 1=1
+
+', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
 	WHERE [name] = 'Calculate Pending Position'
