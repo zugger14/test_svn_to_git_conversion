@@ -48,9 +48,13 @@ where 1=1' +case when @sub_id is null then '' else ' stra.parent_entity_id='+cas
 
 exec(@st)
 
+SET @st='CREATE TABLE ' + @report_position + '(source_deal_header_id INT, [action] VARCHAR(1),source_deal_detail_id INT) '
+EXEC(@st)
+
 set @st='
+   INSERT INTO ' + @report_position + '
 SELECT DISTINCT sdh.source_deal_header_id, ''i'' action,sdd.source_deal_detail_id
-INTO '+@report_position+'
+--INTO '+@report_position+'
 FROM source_deal_header sdh
 	inner join #books ssbm on
 		ssbm.source_system_book_id1=sdh.source_system_book_id1 and ssbm.source_system_book_id2=sdh.source_system_book_id2
