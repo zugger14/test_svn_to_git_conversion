@@ -118,8 +118,6 @@ BEGIN TRY
 
 	, @_col_sdpd_cur VARCHAR(100)
 
-
-
 SET @_from_as_of_date = NULLIF(ISNULL(@_from_as_of_date, NULLIF(''@from_as_of_date'', REPLACE(''@_from_as_of_date'', ''@_'', ''@''))), ''null'')
 
 SET @_to_as_of_date = NULLIF(ISNULL(@_to_as_of_date, NULLIF(''@to_as_of_date'', REPLACE(''@_to_as_of_date'', ''@_'', ''@''))), ''null'')
@@ -190,12 +188,9 @@ SET @_pricing_type_id  = NULLIF(ISNULL(@_pricing_type_id, NULLIF(''@pricing_type
 
 SET @_cur_type = NULLIF(ISNULL(@_cur_type, NULLIF(''@cur_type'', REPLACE(''@_cur_type'', ''@_'', ''@''))), ''null'')
 
-
 SELECT @_col_sdpd_pnl = CASE @_cur_type WHEN ''d'' THEN ''und_pnl_deal'' WHEN ''i'' THEN ''und_pnl_inv'' ELSE ''und_pnl'' END
 
-
 SELECT @_col_sdpd_cur = CASE @_cur_type WHEN ''d'' THEN ''deal_cur_id'' WHEN ''i'' THEN ''inv_cur_id'' ELSE ''pnl_currency_id'' END
-
 
 IF ''@from_as_of_date'' = ''NULL'' AND ''@to_as_of_date'' <> ''NULL''
 
@@ -205,36 +200,29 @@ IF ''@from_as_of_date'' = ''NULL'' AND ''@to_as_of_date'' <> ''NULL''
 
 	WHERE sdp.pnl_as_of_date <= ''@to_as_of_date''
 
-
 IF ''@from_as_of_date'' = ''NULL'' AND ''@to_as_of_date'' = ''NULL''
 
 	SELECT @_from_as_of_date = MAX(CONVERT(CHAR(10), sdp.pnl_as_of_date, 126))
 
 	FROM dbo.source_deal_pnl sdp
 
-
 DECLARE @_temp_date AS VARCHAR(25) = @_from_as_of_date
-
 
 IF @_to_as_of_date IS NOT NULL
 
 	SET @_temp_date = @_to_as_of_date
 
-
 IF @_period_from IS NOT NULL
 
 	SET @_term_start = dbo.Fnagettermstartdate(''m'', @_temp_date, ISNULL(@_period_from, 0))
-
 
 IF @_period_to IS NOT NULL
 
 	SET @_term_end = dbo.Fnagettermenddate(''m'', @_temp_date, @_period_to)
 
-
 IF OBJECT_ID(N''tempdb..#books'') IS NOT NULL
 
 	DROP TABLE #books
-
 
 SELECT sub.entity_id sub_id, 
 
@@ -294,11 +282,9 @@ AND (''@book_id'' = ''NULL'' OR book.entity_id IN (@book_id))
 
 AND (''@sub_book_id'' = ''NULL'' OR ssbm.book_deal_type_map_id IN (@sub_book_id))
 
-
 IF OBJECT_ID(N''tempdb..#final_values'') IS NOT NULL
 
 	DROP TABLE #final_values
-
 
 CREATE TABLE #final_values (
 
@@ -458,9 +444,7 @@ CREATE TABLE #final_values (
 
 	fair_value FLOAT)
 
-
 SET @_sql_select1 = 
-
 
 	''INSERT INTO #final_values
 
@@ -572,7 +556,6 @@ SET @_sql_select1 =
 
 		, sdpd.deal_volume Volume ''
 
-
 SET @_sql_select2 = '' 
 
 		, sdpd.price_adder2
@@ -623,7 +606,6 @@ SET @_sql_select2 = ''
 
 		,'' + @_col_sdpd_pnl + '' - (ISNULL('' + @_col_sdpd_pnl + '', 0)* ISNULL(dp.probability, 0) * (1 - ISNULL(drr.rate, 0))) [fair_value] ''
 
-
 SET @_sql_from1 = ''
 
 	FROM source_deal_header sdh --#tmp_deals td
@@ -660,9 +642,7 @@ SET @_sql_from1 = ''
 
 		AND '' + CASE WHEN @_to_as_of_date IS NULL THEN ''sdpd.pnl_as_of_date = CAST('''''' + @_from_as_of_date + '''''' AS DATETIME)'' ELSE ''sdpd.pnl_as_of_date BETWEEN CAST('''''' + @_from_as_of_date + '''''' AS DATETIME) AND CAST('''''' + @_to_as_of_date + '''''' AS DATETIME) '' END + CASE WHEN @_term_start IS NULL AND @_term_end IS NULL THEN '''' WHEN @_term_end IS NULL THEN '' AND sdpd.term_start >= CAST('''''' + Cast(@_term_start AS VARCHAR(100)) + '''''' AS DATETIME)'' WHEN @_term_start IS NULL 
 
-
 					THEN '' AND sdpd.term_start <= CAST('''''' + Cast(@_term_end AS VARCHAR(100)) + '''''' AS DATETIME)'' ELSE '' AND sdpd.term_start BETWEEN CAST('''''' + Cast(@_term_start AS VARCHAR(100)) + '''''' as DATETIME)
-
 
 		AND CAST('''''' + Cast(@_term_end AS VARCHAR(100)) + '''''' as DATETIME)'' END + '' 
 
@@ -730,11 +710,9 @@ SET @_sql_from1 = ''
 
 						AND YEAR('''''' + @_from_as_of_date + 
 
-
 		'''''') = YEAR(sdd.term_start) THEN convert(varchar(4),sdd.term_start,120) +''''-''''+ ''''M'''' + CAST(DATEDIFF(m,'''''' + @_from_as_of_date + '''''',sdd.term_start) AS VARCHAR) +'''' ''''+ ''''('''' + UPPER(LEFT(DATENAME(MONTH,dateadd(MONTH, MONTH(sdd.term_start),-1)),3)) + '''')'''' WHEN YEAR('''''' + @_from_as_of_date + '''''') = YEAR(sdd.term_start) THEN convert(varchar(4),sdd.term_start,120) + ''''-''''+ ''''Q'''' + CAST(DATEPART(q,sdd.term_start) AS VARCHAR)
 
 	ELSE CAST(YEAR(sdd.term_start) AS VARCHAR) END agg_term	FROM portfolio_mapping_tenor) ag_t ''
-
 
 SET @_sql_whr = '' WHERE 1 = 1 ''   
 
@@ -802,14 +780,11 @@ SET @_sql_whr = '' WHERE 1 = 1 ''
 
 	+ CASE WHEN @_pricing_type_id  IS NULL THEN '''' ELSE '' AND sdh.pricing_type IN ('' + @_pricing_type_id + '')'' END
 
-
 	EXEC (@_sql_select1 + @_sql_select2 + @_sql_from1 + @_sql_from2 + @_sql_whr)
-
 
 IF OBJECT_ID(N''tempdb..#settlement_value'') IS NOT NULL
 
 	DROP TABLE #settlement_value
-
 
 SELECT 
 
@@ -887,8 +862,9 @@ CROSS APPLY (SELECT
 
 			AND leg = fv.leg --and set_type=''''s''''
 
-			AND term_start <= @_from_as_of_date AND as_of_date <= @_from_as_of_date) aod
-
+			--AND term_start <= @_from_as_of_date 
+			AND as_of_date <= @_from_as_of_date
+			) aod
 
 CROSS APPLY (SELECT 
 
@@ -940,7 +916,6 @@ CROSS APPLY (SELECT
 
 	AND as_of_date = aod.as_of_date) sds1
 
-
 LEFT JOIN settlement_charge_type_exclude scte ON Isnull(scte.charge_type_id, - 1) = sds1.charge_type_id 
 
 	AND ISNULL(scte.counterparty_id, - 1) = fv.source_counterparty_id 
@@ -965,13 +940,11 @@ LEFT JOIN settlement_charge_type_exclude scte ON Isnull(scte.charge_type_id, - 1
 
 WHERE scte.charge_type_id IS NULL
 
-
 --### Get Contract Settlement Values
 
 IF OBJECT_ID(N''tempdb..#cs_group_info'') IS NOT NULL
 
 	DROP TABLE #cs_group_info
-
 
 SELECT source_counterparty_id
 
@@ -999,11 +972,9 @@ GROUP BY source_counterparty_id
 
 	, commodity_id
 
-
 IF OBJECT_ID(N''tempdb..#contract_fees'') IS NOT NULL
 
 	DROP TABLE #contract_fees
-
 
 SELECT source_counterparty_id
 
@@ -1050,7 +1021,6 @@ CROSS APPLY (SELECT
 			AND contract_id = fv.contract_id 
 
 			AND prod_date = fv.term_start AND as_of_date <= @_from_as_of_date) civv
-
 
 CROSS APPLY (SELECT 
 
@@ -1110,11 +1080,9 @@ CROSS APPLY (SELECT
 
 			AND COALESCE(cctd1.include_cash_flow, cctd.include_cash_flow, cgd.include_cash_flow) = ''y'') civv1
 
-
 IF OBJECT_ID(N''tempdb..#deal_fees_set'') IS NOT NULL
 
 	DROP TABLE #deal_fees_set
-
 
 SELECT DISTINCT fv.source_deal_header_id
 
@@ -1239,11 +1207,9 @@ LEFT JOIN source_currency scur ON scur.source_currency_id = isnull(ifbs.currency
 
 WHERE ifbs.field_id IS NOT NULL
 
-
 IF OBJECT_ID(N''tempdb..#deal_fees_set_onetime'') IS NOT NULL
 
 	DROP TABLE #deal_fees_set_onetime
-
 
 SELECT sv.source_deal_header_id
 
@@ -1315,7 +1281,6 @@ FROM (SELECT distinct
 
 	WHERE scte.charge_type_id IS NULL) sv
 
-
 CROSS APPLY (SELECT Max(as_of_date) as_of_date 
 
 			FROM index_fees_breakdown_settlement 
@@ -1326,9 +1291,7 @@ CROSS APPLY (SELECT Max(as_of_date) as_of_date
 
 			and internal_type in (18722,18723,18733,18742,18743)) ifbs_mx
 
-
 CROSS JOIN ( VALUES (18722),(18723),(18733) , (18742),(18743) ) fee (internal_type)
-
 
 OUTER APPLY( SELECT TOP(1) * 
 
@@ -1346,11 +1309,9 @@ LEFT JOIN source_currency scur ON scur.source_currency_id = ifbs.currency_id
 
 WHERE ifbs.field_id IS NOT NULL
 
-
 IF OBJECT_ID(N''tempdb..#deal_fees'') IS NOT NULL
 
 	DROP TABLE #deal_fees
-
 
 SELECT fv.source_deal_header_id
 
@@ -1425,8 +1386,6 @@ LEFT JOIN source_currency scur_dc ON scur_dc.source_currency_id = ifb.deal_cur_i
 WHERE ifb.field_id IS NOT NULL 
 
 AND ifb.internal_type NOT IN (18722,18723,18733,18742,18743)
-
-
 
 INSERT INTO #final_values (source_deal_header_id
 
@@ -1517,8 +1476,6 @@ INNER JOIN #contract_fees cf ON cf.source_counterparty_id = fv.source_counterpar
 	AND cf.entire_term_end = fv.entire_term_end 
 
 	AND cf.commodity_id = cf.commodity_id
-
-
 
 INSERT INTO #final_values (
 
@@ -1835,7 +1792,6 @@ LEFT JOIN source_counterparty AS sc ON sc.source_counterparty_id = df.counterpar
 LEFT JOIN contract_group cg ON cg.contract_id = df.contract_id
 
 where df.source_deal_header_id is not null
-
 
 INSERT INTO #final_values (
 
@@ -2159,8 +2115,6 @@ OUTER APPLY(
 
 ) ag_t
 
-
-
 INSERT INTO #final_values (
 
 source_deal_header_id 
@@ -2457,7 +2411,6 @@ LEFT JOIN #final_values fv ON fv.source_deal_header_id = sv.source_deal_header_i
 
 WHERE fv.charge_type = ''Commodity'' AND COALESCE(fv.cash_flow, sv.amount, fv.amount) IS NOT NULL
 
-
 DELETE #final_values
 
 WHERE charge_type = ''Commodity'' 
@@ -2466,11 +2419,9 @@ AND COALESCE(cash_flow, amount) IS NULL
 
 AND actual_forward = ''a''
 
-
 IF OBJECT_ID(N''tempdb..#tmp_settlement_detail'') IS NOT NULL
 
 	DROP TABLE #tmp_settlement_detail
-
 
 SELECT fv.source_deal_header_id 
 
@@ -2636,11 +2587,9 @@ INTO #tmp_settlement_detail
 
 FROM #final_values fv
 
-
 IF OBJECT_ID(N''tempdb..#tmp_matched_ratio'') IS NOT NULL
 
 	DROP TABLE #tmp_matched_ratio
-
 
 SELECT tsd.source_deal_detail_id
 
@@ -2660,7 +2609,6 @@ FROM (
 
 	FROM #tmp_settlement_detail) tsd
 
-
 OUTER APPLY (
 
 	SELECT SUM(match_vol) AS match_vol
@@ -2676,7 +2624,6 @@ OUTER APPLY (
 	GROUP BY mdv.buy_source_deal_detail_id
 
 	HAVING MIN(buy_outstanding_vol) > 0) mdv
-
 
 OUTER APPLY (
 
@@ -2694,7 +2641,6 @@ OUTER APPLY (
 
 	HAVING MIN(sell_outstanding_vol) > 0) mdv1
 
-
 OUTER APPLY (
 
 	SELECT MIN(buy_outstanding_vol) AS buy_outstanding_vol
@@ -2702,7 +2648,6 @@ OUTER APPLY (
 	FROM match_deal_volume mdv
 
 	WHERE mdv.buy_source_deal_detail_id = tsd.source_deal_detail_id) buy
-
 
 OUTER APPLY (
 
@@ -2712,11 +2657,9 @@ OUTER APPLY (
 
 	WHERE mdv.sell_source_deal_detail_id = tsd.source_deal_detail_id) sell
 
-
 IF OBJECT_ID(N''tempdb..#tmp_final_data'') IS NOT NULL
 
 	DROP TABLE #tmp_final_data
-
 
 SELECT 
 
@@ -3411,7 +3354,6 @@ LEFT JOIN static_data_value sdv_peakness ON sdv_peakness.value_id = spcd.curve_t
 LEFT JOIN static_data_value sdv ON sdv.[type_id] = 400 
 
 	AND books.transaction_type = sdv.value_id
-
 
 SELECT *, IIF(actual_forward= ''f'', IIF(ISNULL(deal_type_name, ''Non'') = ''Physical'', contract_value, und_pnl_set ),contract_value) pnl  
 
