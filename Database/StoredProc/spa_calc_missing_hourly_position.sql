@@ -4,7 +4,11 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-create proc [dbo].[spa_calc_missing_hourly_position] @sub_id int=null
+create proc [dbo].[spa_calc_missing_hourly_position] 
+	@sub_id int=null,
+	@process_id varchar(50)=null,
+	@db_usr varchar(30)=null,
+	@calc_position varchar(1)='y'
 as
 
 /*
@@ -19,15 +23,17 @@ declare @sub_id int
 
 --*/
 
-declare @report_position varchar(250),@process_id varchar(50),@st varchar(max),@db_usr varchar(30)
-set @db_usr= dbo.FNADBUser()
-set @process_id=dbo.FNAGetNewID()
+declare @report_position varchar(250),@st varchar(max)
+
+
+
+set @db_usr= isnull(@db_usr,dbo.FNADBUser())
+set @process_id=isnull(@process_id,dbo.FNAGetNewID())
 SET @report_position = dbo.FNAProcessTableName('report_position', @db_usr, @process_id)
 
---print('create table '+@report_position+' (source_deal_header_id int, [action] varchar(1))')
---exec('create table '+@report_position+' (source_deal_header_id int, [action] varchar(1))')
+if object_id(@report_position) is not null
+	exec('drop table '+@report_position)
 
--- Taking deals that mapped to imported profile through location.
 
 CREATE TABLE #books (fas_book_id INT, source_system_book_id1 INT,source_system_book_id2 INT,source_system_book_id3 INT,source_system_book_id4 INT)
 
@@ -45,7 +51,7 @@ exec(@st)
 set @st='
 SELECT DISTINCT sdh.source_deal_header_id, ''i'' action,sdd.source_deal_detail_id
 INTO '+@report_position+'
-FROM source_deal_header sdh (nolock)
+FROM source_deal_header sdh
 	inner join #books ssbm on
 		ssbm.source_system_book_id1=sdh.source_system_book_id1 and ssbm.source_system_book_id2=sdh.source_system_book_id2
 		and ssbm.source_system_book_id3=sdh.source_system_book_id3 and ssbm.source_system_book_id4=sdh.source_system_book_id4
@@ -91,9 +97,12 @@ where (s.source_deal_header_id is null or sddp.total_volume is null)
 	and sdh.product_id =4100 and sdd.fixed_float_leg = ''t'' AND ISNULL(sdht.internal_deal_type_value_id,-1) NOT IN(21,20) 
 '
 
-print(@st)
+exec spa_print @st
 exec(@st)
 
-if @@ROWCOUNT>0
-	EXEC dbo.spa_update_deal_total_volume NULL, @process_id, 0,1,@db_usr,'n',2,default,'n'
 
+if @@ROWCOUNT>0
+begin
+	if isnull(@calc_position,'y')='y'
+		EXEC dbo.spa_update_deal_total_volume NULL, @process_id, 0,1,@db_usr,'n',2,default,'n'
+end
