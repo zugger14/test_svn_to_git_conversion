@@ -43,7 +43,7 @@ DECLARE @command1 NVARCHAR(4000) = '
 		FROM ixp_rules ir
 		INNER JOIN ixp_import_data_source imds 
 			ON ir.ixp_rules_id = imds.rules_id
-		WHERE ir.ixp_rule_hash = ''2A25FC34_9758_4E1F_8323_358171FEA34B''
+		WHERE ir.ixp_rule_hash = ''E9912C6B_A585_4453_B49E_C365715439E4''
 		
 		IF OBJECT_ID(''tempdb..#ftp_dir_files'') IS NOT NULL 
 			DROP TABLE tempdb..#ftp_dir_files
