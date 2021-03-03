@@ -81,10 +81,11 @@ BEGIN
 	INNER JOIN msdb.dbo.sysjobsteps jp ON jp.job_id = v.job_id
 	INNER JOIN msdb.dbo.sysjobs sj ON jp.job_id = sj.job_id
 	LEFT JOIN application_users au ON au.user_login_id COLLATE SQL_Latin1_General_CP1_CI_AS = sj.[description] COLLATE SQL_Latin1_General_CP1_CI_AS
-	WHERE 1 =1 
-		and jp.database_name = DB_NAME()
-		AND 
-		(h.next_scheduled_run_date IS NOT NULL OR h.run_status IN (0, 2, 4))
+	WHERE 1 = 1 
+		AND jp.database_name = DB_NAME()
+		AND	((h.next_scheduled_run_date IS NOT NULL OR h.run_status IN (0, 2, 4)) 
+			OR (h.next_scheduled_run_date IS NULL AND h.start_execution_date IS NOT NULL AND h.stop_execution_date IS NULL))
+
 	ORDER BY [date_modified]
 END
 ELSE IF @flag = 'd'
