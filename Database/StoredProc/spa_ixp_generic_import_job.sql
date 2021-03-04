@@ -9285,7 +9285,8 @@ BEGIN
 	EXEC(@sql)
  	
 	SET @rec_job_name =  'calc_position_breakdown_' + @rec_process_id
-	SET @sql = 'spa_update_deal_total_volume NULL,'''+@rec_process_id+''', 0, 1, ''' + @user_login_id + ''''
+	--SET @sql = 'spa_update_deal_total_volume NULL,'''+@rec_process_id+''', 0, 1, ''' + @user_login_id + ''''
+	SET @sql = 'spa_calc_deal_position_breakdown NULL,'''+@rec_process_id+''''
 	EXEC spa_run_sp_as_job @rec_job_name,  @sql, 'generating_report_table', @user_login_id		
 END
 
@@ -17882,7 +17883,8 @@ BEGIN
 
  	IF @@rowcount > 0
 	BEGIN
- 		EXEC dbo.spa_update_deal_total_volume NULL, @report_position_process_id, 12
+ 		--EXEC dbo.spa_update_deal_total_volume NULL, @report_position_process_id, 12
+		 EXEC dbo.spa_calc_deal_position_breakdown NULL, @report_position_process_id
 	END
 END
 
@@ -18098,7 +18100,8 @@ BEGIN
  	
  	SET @pos_job_name5 =  'calc_position_breakdown_' + @process_id5
  	
- 	SET @sql = 'spa_update_deal_total_volume NULL,'''+@process_id5+''',0,1,''' + @user_login_id + ''''
+ 	--SET @sql = 'spa_update_deal_total_volume NULL,'''+@process_id5+''',0,1,''' + @user_login_id + ''''
+	 SET @sql = 'spa_calc_deal_position_breakdown NULL,'''+@process_id5+''''
 
 	EXEC spa_run_sp_as_job @pos_job_name5,  @sql, 'generating_report_table', @user_login_id
 
@@ -25143,7 +25146,9 @@ WHERE term_date BETWEEN @min_date AND @max_date
 	END
 
  	SET @pos_job_name4 =  'calc_position_breakdown_' + @process_id4
- 	EXEC spa_update_deal_total_volume NULL, @process_id4, 0,1,@user_login_id
+ 	--EXEC spa_update_deal_total_volume NULL, @process_id4, 0,1,@user_login_id
+	EXEC spa_calc_deal_position_breakdown NULL, @process_id4
+
 	
 	/* Update timestamp and user of the deal whose shaped volume are updated. */
 	UPDATE sdh
@@ -29964,9 +29969,11 @@ BEGIN
 	SET @sql = 'INSERT INTO ' + @report_position_deals + '(source_deal_header_id,action) SELECT source_deal_header_id, ''i''  from #updated_deals '
 	EXEC (@sql)
 
-	SET @spa = 'spa_update_deal_total_volume NULL,''' + CAST(@pipeline_process_id AS NVARCHAR(200)) + '''' 
-	SET @pipeline_job_name = 'spa_update_deal_total_volume_' + @pipeline_process_id 
-	EXEC spa_run_sp_as_job @pp_job_name, @spa, 'spa_update_deal_total_volume', @user_login_id
+	--SET @spa = 'spa_update_deal_total_volume NULL,''' + CAST(@pipeline_process_id AS NVARCHAR(200)) + '''' 
+	SET @spa = 'spa_calc_deal_position_breakdown NULL,''' + CAST(@pipeline_process_id AS NVARCHAR(200)) + '''' 
+
+	SET @pipeline_job_name = 'spa_calc_deal_position_breakdown_' + @pipeline_process_id 
+	EXEC spa_run_sp_as_job @pp_job_name, @spa, 'spa_calc_deal_position_breakdown', @user_login_id
 END
 
 IF @table_name  = 'ixp_deal_volume_template'
@@ -30144,7 +30151,9 @@ BEGIN
 	SET @sql = 'INSERT INTO ' + @report_position_deals + '(source_deal_header_id,action) SELECT source_deal_header_id, ''i''  from #deal_volume '
 	EXEC (@sql)
 
-	SET @spa_ = 'spa_update_deal_total_volume NULL,''' + CAST(@deal_volume_process_id AS NVARCHAR(200)) + '''' 
+	--SET @spa_ = 'spa_update_deal_total_volume NULL,''' + CAST(@deal_volume_process_id AS NVARCHAR(200)) + '''' 
+	SET @spa_ = 'spa_calc_deal_position_breakdown NULL,''' + CAST(@deal_volume_process_id AS NVARCHAR(200)) + '''' 
+
 	SET @deal_volume_job_name = 'spa_update_deal_total_volume_' + @deal_volume_process_id 
 	EXEC spa_run_sp_as_job @deal_volume_job_name, @spa_, 'spa_update_deal_total_volume', @user_login_id
  	
@@ -37265,7 +37274,9 @@ SET @sql = 'INSERT INTO #import_status (temp_id, process_id, error_code, [module
  	EXEC(@sql)
  	
   	SET @pos_job_name5 =  'calc_position_breakdown_' + @process_id51
- 	SET @sql = 'spa_update_deal_total_volume NULL,'''+@process_id51+''',0,1,''' + @user_login_id + ''''
+ 	--SET @sql = 'spa_update_deal_total_volume NULL,'''+@process_id51+''',0,1,''' + @user_login_id + ''''
+ 	SET @sql = 'spa_calc_deal_position_breakdown NULL,'''+@process_id51+''''
+
  	EXEC spa_run_sp_as_job @pos_job_name5,  @sql, 'generating_report_table', @user_login_id
 
 END
@@ -38119,7 +38130,10 @@ BEGIN
 
  	IF @@rowcount > 0
 	BEGIN
- 		EXEC dbo.spa_update_deal_total_volume NULL, @report_position_process_id_renew, 12
+ 		--EXEC dbo.spa_update_deal_total_volume NULL, @report_position_process_id_renew, 12
+ 		EXEC dbo.spa_calc_deal_position_breakdown NULL, @report_position_process_id_renew
+
+
 	END
 END
 
