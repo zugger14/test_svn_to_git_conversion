@@ -47,7 +47,7 @@ drop table #tmp_header_deal_id
 drop table #tmp_position_breakdown
 declare @process_id varchar(50),@insert_type int,@partition_no int,@user_login_id varchar(30),@deal_delete varchar(1)
 drop table #source_deal_detail_hour
-select  @process_id='AD6804AF_C6E2_4156_80F0_1496A46AB442',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
+select  @process_id='65ADE19C_84FD_48CB_A853_1180C27B3F76',@insert_type=1,@partition_no=1,@user_login_id='dev_admin',@deal_delete='y'
 --report_position_farrms_admin_49AFBFA8_BC35_404B_8590_78F087008D35
 --TRUNCATE TABLE select * from adiha_process.dbo.report_position_farrms_admin_E5D1C26F_C332_4A0A_8082_F3936706EEA8
 --insert into adiha_process.dbo.report_position_farrms_admin_testing select 4100,'d'
@@ -135,6 +135,7 @@ DECLARE @col_exp1 VARCHAR(MAX)
 	,@col_exp2_gas VARCHAR(MAX)
 	,@col_exp3 VARCHAR(MAX)
 	,@col_exp4 VARCHAR(MAX)
+	,@as_of_date date
 
 DECLARE @st_sql VARCHAR(MAX)
 	,@st_from VARCHAR(MAX)
@@ -197,14 +198,21 @@ SET @report_hourly_position_breakdown_main = ''
 
 DECLARE @default_dst_group VARCHAR(50)
 
+DECLARE @hot_data_commodity_ids varchar(30), @hot_data_sub_book_ids varchar(3000) ,@position_retention_period int
+ 
 SELECT  @default_dst_group = tz.dst_group_value_id
 FROM
 	(
 		SELECT var_value default_timezone_id 
-		FROM dbo.adiha_default_codes_values (NOLOCK) 
+		FROM dbo.adiha_default_codes_values 
 		WHERE instance_no = 1 AND default_code_id = 36 AND seq_no = 1
 	) df  
-inner join dbo.time_zones tz (NOLOCK) ON tz.timezone_id = df.default_timezone_id
+inner join dbo.time_zones tz ON tz.timezone_id = df.default_timezone_id
+
+SELECT  @position_retention_period = 
+ var_value FROM dbo.adiha_default_codes_values
+		WHERE instance_no = 1 AND default_code_id = 100 AND seq_no = 1
+
 
 
 IF OBJECT_ID('tempdb..#process_option') IS NOT NULL
@@ -338,7 +346,7 @@ BEGIN
 		,period INT
 		,granularity INT
 		,source_deal_detail_id int
-		,rowid int,calc_total_volume bit 
+		,rowid int,calc_total_volume int 
 	)
 
 	CREATE TABLE #report_hourly_position_financial_main_old (
@@ -1315,7 +1323,7 @@ BEGIN TRY
 		--END
 		
 		SET @destination_tbl = CASE WHEN isnull(@orginal_insert_type, 0) IN (111,222) THEN '' ELSE ' INSERT INTO ' + @destination_tbl + '(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid)' 
-		+ CASE WHEN ISNULL(@insert_type, 0) = 0 THEN ' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity,inserted.source_deal_detail_id,inserted.rowid,1
+		+ CASE WHEN ISNULL(@insert_type, 0) = 0 THEN ' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity,inserted.source_deal_detail_id,inserted.rowid,2
 		into #report_hourly_position_inserted(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid,calc_total_volume)
 		'
 		ELSE '' END END
@@ -1710,41 +1718,41 @@ BEGIN TRY
 				,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17
 				,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period, granularity,source_deal_detail_id,rowid
 			)' + CASE WHEN ISNULL(@insert_type, 0) = 0 THEN 
-			' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity ,inserted.source_deal_detail_id,inserted.rowid,1
+			' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity ,inserted.source_deal_detail_id,inserted.rowid,3
 			into #report_hourly_position_inserted (source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid,calc_total_volume)'
 		 ELSE '' END + '
 		SELECT
 			sdh.source_deal_header_id,
-			ISNULL(rhpp.term_start,rhpd.term_start) term_start,MAX(sdh.deal_date) deal_date
-			,MAX(ISNULL(rhpp.deal_volume_uom_id,rhpd.deal_volume_uom_id)) deal_volume_uom_id,
-			SUM(ISNULL(rhpp.hr1,rhpd.hr1)*' + @col_exp1 + '*' + @col_exp2 + ') hr1,
-			SUM(ISNULL(rhpp.hr2,rhpd.hr2)*' + @col_exp1 + '*' + @col_exp2 + ') hr2,
-			SUM(ISNULL(rhpp.hr3,rhpd.hr3)*' + @col_exp1 + '*' + @col_exp2 + ') hr3,
-			SUM(ISNULL(rhpp.hr4,rhpd.hr4)*' + @col_exp1 + '*' + @col_exp2 + ') hr4,
-			SUM(ISNULL(rhpp.hr5,rhpd.hr5)*' + @col_exp1 + '*' + @col_exp2 + ') hr5,
-			SUM(ISNULL(rhpp.hr6,rhpd.hr6)*' + @col_exp1 + '*' + @col_exp2 + ') hr6,
-			SUM(ISNULL(rhpp.hr7,rhpd.hr7)*' + @col_exp1 + '*' + @col_exp2 + ') hr7,
-			SUM(ISNULL(rhpp.hr8,rhpd.hr8)*' + @col_exp1 + '*' + @col_exp2 + ') hr8,
-			SUM(ISNULL(rhpp.hr9,rhpd.hr9)*' + @col_exp1 + '*' + @col_exp2 + ') hr9,
-			SUM(ISNULL(rhpp.hr10,rhpd.hr10)*' + @col_exp1 + '*' + @col_exp2 + ') hr10,
-			SUM(ISNULL(rhpp.hr11,rhpd.hr11)*' + @col_exp1 + '*' + @col_exp2 + ') hr11,
-			SUM(ISNULL(rhpp.hr12,rhpd.hr12)*' + @col_exp1 + '*' + @col_exp2 + ') hr12,
-			SUM(ISNULL(rhpp.hr13,rhpd.hr13)*' + @col_exp1 + '*' + @col_exp2 + ') hr13,
-			SUM(ISNULL(rhpp.hr14,rhpd.hr14)*' + @col_exp1 + '*' + @col_exp2 + ') hr14,
-			SUM(ISNULL(rhpp.hr15,rhpd.hr15)*' + @col_exp1 + '*' + @col_exp2 + ') hr15,
-			SUM(ISNULL(rhpp.hr16,rhpd.hr16)*' + @col_exp1 + '*' + @col_exp2 + ') hr16,
-			SUM(ISNULL(rhpp.hr17,rhpd.hr17)*' + @col_exp1 + '*' + @col_exp2 + ') hr17,
-			SUM(ISNULL(rhpp.hr18,rhpd.hr18)*' + @col_exp1 + '*' + @col_exp2 + ') hr18,
-			SUM(ISNULL(rhpp.hr19,rhpd.hr19)*' + @col_exp1 + '*' + @col_exp2 + ') hr19,
-			SUM(ISNULL(rhpp.hr20,rhpd.hr20)*' + @col_exp1 + '*' + @col_exp2 + ') hr20,
-			SUM(ISNULL(rhpp.hr21,rhpd.hr21)*' + @col_exp1 + '*' + @col_exp2 + ') hr21,
-			SUM(ISNULL(rhpp.hr22,rhpd.hr22)*' + @col_exp1 + '*' + @col_exp2 + ') hr22,
-			SUM(ISNULL(rhpp.hr23,rhpd.hr23)*' + @col_exp1 + '*' + @col_exp2 + ') hr23,
-			SUM(ISNULL(rhpp.hr24,rhpd.hr24)*' + @col_exp1 + '*' + @col_exp2 + ') hr24,
-			SUM(ISNULL(rhpp.hr25,rhpd.hr25)*' + @col_exp1 + '*' + @col_exp2 + ') hr25
-			,getdate() create_ts,max(thdi.create_user) create_user,ISNULL(rhpp.expiration_date,rhpd.expiration_date) expiration_date,
-			coalesce(rhpp.period,rhpd.period,0) period
-			,ISNULL(rhpp.granularity,rhpd.granularity) granularity,thdi.source_deal_detail_id,thdi.rowid
+			org.term_start,MAX(sdh.deal_date) deal_date
+			,MAX(org.deal_volume_uom_id) deal_volume_uom_id,
+			SUM(org.hr1*' + @col_exp1 + '*' + @col_exp2 + ') hr1,
+			SUM(org.hr2*' + @col_exp1 + '*' + @col_exp2 + ') hr2,
+			SUM(org.hr3*' + @col_exp1 + '*' + @col_exp2 + ') hr3,
+			SUM(org.hr4*' + @col_exp1 + '*' + @col_exp2 + ') hr4,
+			SUM(org.hr5*' + @col_exp1 + '*' + @col_exp2 + ') hr5,
+			SUM(org.hr6*' + @col_exp1 + '*' + @col_exp2 + ') hr6,
+			SUM(org.hr7*' + @col_exp1 + '*' + @col_exp2 + ') hr7,
+			SUM(org.hr8*' + @col_exp1 + '*' + @col_exp2 + ') hr8,
+			SUM(org.hr9*' + @col_exp1 + '*' + @col_exp2 + ') hr9,
+			SUM(org.hr10*' + @col_exp1 + '*' + @col_exp2 + ') hr10,
+			SUM(org.hr11*' + @col_exp1 + '*' + @col_exp2 + ') hr11,
+			SUM(org.hr12*' + @col_exp1 + '*' + @col_exp2 + ') hr12,
+			SUM(org.hr13*' + @col_exp1 + '*' + @col_exp2 + ') hr13,
+			SUM(org.hr14*' + @col_exp1 + '*' + @col_exp2 + ') hr14,
+			SUM(org.hr15*' + @col_exp1 + '*' + @col_exp2 + ') hr15,
+			SUM(org.hr16*' + @col_exp1 + '*' + @col_exp2 + ') hr16,
+			SUM(org.hr17*' + @col_exp1 + '*' + @col_exp2 + ') hr17,
+			SUM(org.hr18*' + @col_exp1 + '*' + @col_exp2 + ') hr18,
+			SUM(org.hr19*' + @col_exp1 + '*' + @col_exp2 + ') hr19,
+			SUM(org.hr20*' + @col_exp1 + '*' + @col_exp2 + ') hr20,
+			SUM(org.hr21*' + @col_exp1 + '*' + @col_exp2 + ') hr21,
+			SUM(org.hr22*' + @col_exp1 + '*' + @col_exp2 + ') hr22,
+			SUM(org.hr23*' + @col_exp1 + '*' + @col_exp2 + ') hr23,
+			SUM(org.hr24*' + @col_exp1 + '*' + @col_exp2 + ') hr24,
+			SUM(org.hr25*' + @col_exp1 + '*' + @col_exp2 + ') hr25
+			,getdate() create_ts,max(thdi.create_user) create_user,org.expiration_date,
+			coalesce(org.period,0) period
+			,org.granularity,thdi.source_deal_detail_id,thdi.rowid
 		'
 		
 		SET @st_sql1 ='		
@@ -1755,16 +1763,18 @@ BEGIN TRY
 			LEFT JOIN source_deal_detail sdd1 (nolock) ON sdd1.source_deal_header_id=sdh1.source_deal_header_id
 				AND isnull(sdd1.curve_id,-1)=coalesce(sdd.curve_id,sdd1.curve_id,-1)
 				AND sdd1.term_start=sdd.term_start AND sdd.leg=sdd1.leg
-			LEFT JOIN report_hourly_position_profile rhpp (nolock) ON rhpp.term_start BETWEEN sdd.term_start AND sdd.term_end
-				AND rhpp.source_deal_detail_id=sdd1.source_deal_detail_id
-			LEFT JOIN report_hourly_position_deal rhpd (nolock) ON 
-				 rhpd.term_start BETWEEN sdd.term_start AND sdd.term_end and rhpd.source_deal_detail_id = thdi.source_deal_detail_id
-			left join source_price_curve_def spcd (nolock) on spcd.source_curve_def_id=ISNULL(rhpp.curve_id,rhpd.curve_id)
+			--LEFT JOIN report_hourly_position_profile rhpp (nolock) ON rhpp.term_start BETWEEN sdd.term_start AND sdd.term_end
+			--	AND rhpp.source_deal_detail_id=sdd1.source_deal_detail_id
+			--LEFT JOIN report_hourly_position_deal rhpd (nolock) ON 
+			--	 rhpd.term_start BETWEEN sdd.term_start AND sdd.term_end and rhpd.source_deal_detail_id = thdi.source_deal_detail_id
+			left join #report_hourly_position_inserted org on org.term_start BETWEEN sdd.term_start AND sdd.term_end 
+				and org.source_deal_detail_id = sdd1.source_deal_detail_id
+			left join source_price_curve_def spcd (nolock) on spcd.source_curve_def_id=sdd.curve_id
 		WHERE
-			ISNULL(sdh.product_id,4101)=4100 AND ISNULL(sdh.internal_desk_id,17300)=17301  and ISNULL(rhpp.term_start,rhpd.term_start) is not null
-		GROUP BY thdi.source_deal_detail_id,thdi.rowid,sdh.source_deal_header_id,sdd.curve_id,ISNULL(rhpp.term_start,rhpd.term_start),sdd.location_id
-		,coalesce(rhpp.period,rhpd.period,0),ISNULL(rhpp.granularity,rhpd.granularity),ISNULL(rhpp.expiration_date,rhpd.expiration_date)							
-			'
+			ISNULL(sdh.product_id,4101)=4100 AND ISNULL(sdh.internal_desk_id,17300)=17301 and org.term_start is not null
+		GROUP BY thdi.source_deal_detail_id,thdi.rowid,sdh.source_deal_header_id,sdd.curve_id,org.term_start,sdd.location_id
+			,coalesce(org.period,0),org.granularity,org.expiration_date						
+		'
 
 		EXEC spa_print @st_sql
 		EXEC spa_print @st_sql1
@@ -1777,7 +1787,7 @@ BEGIN TRY
 		
 		SET @st_sql = 'insert into dbo.report_hourly_position_fixed_main(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) ' 
 		+ CASE WHEN ISNULL(@insert_type, 0) = 0 THEN 
-		' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity,inserted.source_deal_detail_id,inserted.rowid,1
+		' output inserted.source_deal_header_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.hr1,inserted.hr2,inserted.hr3,inserted.hr4,inserted.hr5,inserted.hr6,inserted.hr7,inserted.hr8,inserted.hr9,inserted.hr10,inserted.hr11,inserted.hr12,inserted.hr13,inserted.hr14,inserted.hr15,inserted.hr16,inserted.hr17,inserted.hr18,inserted.hr19,inserted.hr20,inserted.hr21,inserted.hr22,inserted.hr23,inserted.hr24,inserted.hr25,inserted.create_ts,inserted.create_user,inserted.expiration_date,inserted.period,inserted.granularity,inserted.source_deal_detail_id,inserted.rowid,3
 		into #report_hourly_position_inserted(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid,calc_total_volume) '  ELSE '' END + '
 		SELECT max(sdh.source_deal_header_id),
 			hb.term_date term_start,max(sdh.deal_date) deal_date,max(COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)) deal_volume_uom_id,
@@ -1868,32 +1878,86 @@ BEGIN TRY
 	-------------------------------------------------------------------------------------------
 	-- Total Volume Insert from sum of hourly volume
 	-------------------------------------------------------------------------------------------------------------			
-		if object_id('tempdb..#deal_detail_total_volume') is not null
-		drop table #deal_detail_total_volume
+	if object_id('tempdb..#deal_detail_total_volume') is not null
+	drop table #deal_detail_total_volume
 		
-		select source_deal_detail_id,sum(hr1+hr2+hr3+hr4+hr5+hr6+hr7+hr8+hr9+hr10+hr11+hr12+hr13+hr14+hr15+hr16+hr17+hr18+hr19+hr20+hr21+hr22+hr23+hr24) total_volume
-		into #deal_detail_total_volume -- select * from #deal_detail_total_volume
-		from #report_hourly_position_inserted 
-		where calc_total_volume=1
-		group by source_deal_detail_id
+	select source_deal_detail_id,
+	case when max(calc_total_volume)=2 and (max(deal_volume_uom_id) =@mw_id or max(deal_volume_uom_id) =@kw_id) then 1.00/4.0000 else 1.0000 end
+	* sum(hr1+hr2+hr3+hr4+hr5+hr6+hr7+hr8+hr9+hr10+hr11+hr12+hr13+hr14+hr15+hr16+hr17+hr18+hr19+hr20+hr21+hr22+hr23+hr24) total_volume
+	into #deal_detail_total_volume -- select * from #deal_detail_total_volume
+	from #report_hourly_position_inserted 
+	where calc_total_volume>0
+	group by source_deal_detail_id
 
-		delete sddp
-			FROM dbo.source_deal_detail_position sddp
-			INNER JOIN #deal_detail_total_volume v on v.source_deal_detail_id=sddp.source_deal_detail_id ;
+	delete sddp
+		FROM dbo.source_deal_detail_position sddp
+		INNER JOIN #deal_detail_total_volume v on v.source_deal_detail_id=sddp.source_deal_detail_id ;
 
-		insert into source_deal_detail_position(source_deal_detail_id,total_volume,position_report_group_map_rowid)
-		select sdd.source_deal_detail_id,
-			round(abs(ddtv.total_volume),isnull(rnd.position_calc_round,100)) total_volume,thdi.rowid
-		FROM #deal_detail_total_volume ddtv	
-			inner join source_deal_detail sdd on sdd.source_deal_detail_id=ddtv.source_deal_detail_id
-			inner join source_deal_header sdh on sdh.source_deal_header_id=sdd.source_deal_header_id
-			inner join source_price_curve_def spcd on spcd.source_curve_def_id=sdd.curve_id
-			left JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id 
-			outer apply (
-				select top(1) position_calc_round from deal_default_value where isnull(deal_type_id,-1)=COALESCE(sdh.source_deal_type_id,deal_type_id,-1)
-				--and isnull(pricing_type,-1)=COALESCE(sdd.pricing_type,pricing_type,-1)
-					and commodity=COALESCE(sdd.detail_commodity_id,sdh.commodity_id,spcd.commodity_id) and buy_sell_flag=isnull(sdd.buy_sell_flag,buy_sell_flag)
-			) rnd
+	insert into source_deal_detail_position(source_deal_detail_id,total_volume,position_report_group_map_rowid)
+	select sdd.source_deal_detail_id,
+		round(abs(ddtv.total_volume),isnull(rnd.position_calc_round,100)) total_volume,thdi.rowid
+	FROM #deal_detail_total_volume ddtv	
+		inner join source_deal_detail sdd on sdd.source_deal_detail_id=ddtv.source_deal_detail_id
+		inner join source_deal_header sdh on sdh.source_deal_header_id=sdd.source_deal_header_id
+		inner join source_price_curve_def spcd on spcd.source_curve_def_id=sdd.curve_id
+		left JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id 
+		outer apply (
+			select top(1) position_calc_round from deal_default_value where isnull(deal_type_id,-1)=COALESCE(sdh.source_deal_type_id,deal_type_id,-1)
+			--and isnull(pricing_type,-1)=COALESCE(sdd.pricing_type,pricing_type,-1)
+				and commodity=COALESCE(sdd.detail_commodity_id,sdh.commodity_id,spcd.commodity_id) and buy_sell_flag=isnull(sdd.buy_sell_flag,buy_sell_flag)
+		) rnd
+
+
+/*
+	if isnull(@position_retention_period,0)<>0
+	begin
+
+		select @as_of_date=getdate()-1
+
+		delete s from dbo.report_hourly_position_deal_main_hotdata s 
+			inner join #report_hourly_position_inserted i on s.term_start=i.term_start and s.source_deal_detail_id=i.source_deal_detail_id
+			--and i.term_start between getdate() and dateadd(day,@position_retention_period,getdate())
+			and i.calc_total_volume between 0 and 1
+
+		delete s from dbo.report_hourly_position_profile_main_hotdata s 
+			inner join #report_hourly_position_inserted i on s.term_start=i.term_start and s.source_deal_detail_id=i.source_deal_detail_id
+		--	and i.term_start between getdate() and dateadd(day,@position_retention_period,getdate())
+			and i.calc_total_volume=2
+
+		--delete s from dbo.report_hourly_position_fixed_main_hotdata s 
+		--	inner join #report_hourly_position_inserted i on s.term_start=i.term_start and s.source_deal_detail_id=i.source_deal_detail_id
+		--	--and i.term_start between getdate() and dateadd(day,@position_retention_period,getdate())
+		--	and i.calc_total_volume=3
+
+		insert into dbo.report_hourly_position_deal_main_hotdata
+		(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12
+		,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
+		,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid)
+		select source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16
+			,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid
+		from #report_hourly_position_inserted i 
+		where  i.term_start between @as_of_date and dateadd(day,@position_retention_period,@as_of_date)
+			and	i.calc_total_volume between 0 and 1
+
+		INSERT INTO dbo.report_hourly_position_profile_main_hotdata
+			(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16
+			,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid)
+		select source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16
+			,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid
+		from #report_hourly_position_inserted i 
+		where i.term_start between @as_of_date and dateadd(day,@position_retention_period,@as_of_date) and i.calc_total_volume=2
+
+		--insert into dbo.report_hourly_position_fixed_main_hotdata
+		--(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14
+		--,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user
+		--,expiration_date,period,granularity,source_deal_detail_id,rowid) 
+		--select source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10
+		--,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
+		--	,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid
+		--from #report_hourly_position_inserted i 
+		--where i.term_start between @as_of_date and dateadd(day,@position_retention_period,@as_of_date) and i.calc_total_volume=3
+	end
+--*/
 
 	--------------------------------------------------------------------------------------------------------------
 	----inserting delta for left hand side deal
