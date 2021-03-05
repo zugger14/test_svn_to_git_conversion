@@ -883,11 +883,11 @@ BEGIN
 						 CASE WHEN @logical_table_name ='Import Process' 
 						 THEN '''Import Notifications: ''' ELSE
 						      '''Workflow Notification: ''' END + ','
-								+ CASE WHEN @process_table IS NOT NULL THEN ' REPLACE(a.message,''__source_id__'',ISNULL(tgwa.source_id,''''))' ELSE 'REPLACE(''' + @msg + ''',''__source_id__'',ISNULL(tgwa.source_id,''''))' END + ' +
+								+ CASE WHEN @process_table IS NOT NULL AND @skip_log = 'n' THEN ' REPLACE(a.message,''__source_id__'',ISNULL(tgwa.source_id,''''))' ELSE 'REPLACE(''' + @msg + ''',''__source_id__'',ISNULL(tgwa.source_id,''''))' END + ' +
 								CASE WHEN temp.approval_action_required = ''y'' THEN +
-								''<br/> '' + '+ CASE WHEN @process_table IS NOT NULL THEN   'ISNULL(a.attachment_string, '''')'  ELSE ''   END +' +  ''
+								''<br/> '' + '+ CASE WHEN @process_table IS NOT NULL AND @skip_log = 'n' THEN   'ISNULL(a.attachment_string, '''')'  ELSE ''   END +' +  ''
 								<br/>'' + dbo.FNATrmWinHyperlink(''i'',10106700,''Proceed...'',' + CAST(1 AS NVARCHAR(10)) + ',DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,0) + ''''
-								ELSE ''' + '<br/>'' +'+ CASE WHEN @process_table IS NOT NULL THEN '  ISNULL(a.attachment_string, '''') '  ELSE ''''''   END  + '
+								ELSE ''' + '<br/>'' +'+ CASE WHEN @process_table IS NOT NULL AND @skip_log = 'n' THEN '  ISNULL(a.attachment_string, '''') '  ELSE ''''''   END  + '
 								END + '''  + ISNULL(@report_file,'') +''',
 								''s'',
 								CASE WHEN nt.notification_type = 757 THEN ''y'' ELSE ''n'' END,
@@ -911,7 +911,7 @@ BEGIN
 			SET @sql = @sql + ' OUTER APPLY (SELECT notification_type FROM #notification_type WHERE notification_type IN (757,751)) nt'
 			SET @sql = @sql + ' WHERE temp.user_login_id IS NOT NULL AND ISNULL(NULLIF(twa.user_login_id,''''), temp.user_login_id) = temp.user_login_id AND temp.user_login_id <> '''''
 
-			IF @process_table  IS NOT NULL
+			IF @process_table  IS NOT NULL AND @skip_log = 'n'
 				SET @sql = @sql + ' AND a.message IS NOT NULL'
 
 			IF @self_notify = 'n'
