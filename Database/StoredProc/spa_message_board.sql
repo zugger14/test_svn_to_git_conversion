@@ -730,17 +730,14 @@ BEGIN
 	RETURN
 END
 
-IF @flag = 'j' --deletes message with process_id
+IF @flag = 'j' --updates recommendation to null 
 BEGIN
 	BEGIN TRY
 		BEGIN TRAN
-			DELETE mb 
-			FROM message_board mb
-			WHERE mb.process_id = @process_id
 
-			DELETE dis
-			FROM source_system_data_import_status dis
-			WHERE dis.process_id = @process_id
+			UPDATE source_system_data_import_status
+			SET recommendation = NULL
+			WHERE process_id = @process_id
 
 			SET @returnOutput = 'n'
 		COMMIT TRAN
@@ -751,7 +748,7 @@ BEGIN
 			, 'message_board' -- Name the tables used in the query.
 			, 'spa_message_board' -- Name the stored proc.
 			, 'Error' -- Operations status.
-			, 'Error deleting message' -- Success message.
+			, 'Error updating message' -- Success message.
 			, @process_id -- The reference of the data deleted.
 	END CATCH
 
