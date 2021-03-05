@@ -729,6 +729,34 @@ BEGIN
 
 	RETURN
 END
+
+IF @flag = 'j' --deletes message with process_id
+BEGIN
+	BEGIN TRY
+		BEGIN TRAN
+			DELETE mb 
+			FROM message_board mb
+			WHERE mb.process_id = @process_id
+
+			DELETE dis
+			FROM source_system_data_import_status dis
+			WHERE dis.process_id = @process_id
+
+			SET @returnOutput = 'n'
+		COMMIT TRAN
+	END TRY
+	BEGIN CATCH
+	ROLLBACK TRAN
+		EXEC spa_ErrorHandler -1
+			, 'message_board' -- Name the tables used in the query.
+			, 'spa_message_board' -- Name the stored proc.
+			, 'Error' -- Operations status.
+			, 'Error deleting message' -- Success message.
+			, @process_id -- The reference of the data deleted.
+	END CATCH
+
+END
+
 IF @returnOutput = 'y'
 BEGIN
 	--PRINT 'select'
@@ -938,3 +966,4 @@ BEGIN
 	END
 	END
 END
+

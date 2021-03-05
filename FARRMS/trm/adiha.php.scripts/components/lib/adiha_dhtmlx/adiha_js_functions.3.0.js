@@ -6550,10 +6550,23 @@ function create_canvas_div(layout_cell_obj) {
  * @process_id   {numeric}  process_id 
 
  */
-function retry_auto_schedule(process_id) {
+function retry_auto_schedule(process_id, delete_process_id) {
+    $('#rerun').hide();
 	var data = {
 		"action": "[spa_deal_transfer_alert_wrapper] @process_id='" + process_id + "'"
 	};
-	adiha_post_data('return_array', data, '', '', '', ''); 
+	adiha_post_data('return_array', data, '', '', '', '');
+    delete_message(delete_process_id);
+}
 
+/**
+ * Delete rerun message
+ * @process_id   {numeric}  process_id 
+ * 
+ */
+function delete_message(process_id){
+    var data = {
+        "action" : "spa_message_board @flag = 'j', @process_id = '" + process_id + "'"
+    }
+    adiha_post_data('return_array', data, '', '', '', '');
 }
