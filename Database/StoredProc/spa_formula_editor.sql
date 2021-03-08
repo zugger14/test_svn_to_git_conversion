@@ -387,8 +387,8 @@ BEGIN
 		
 		-- breakdown formula
 		EXEC spa_formula_breakdown @flag,@formula_id,@sequence_number,@formula_xmlValue,@formula_group_id,@formula_nested_id
-		
-		DECLARE @report_position_deals VARCHAR(300)
+
+ 		DECLARE @report_position_deals VARCHAR(300)
 		SET @report_position_process_id = REPLACE(newid(),'-','_')
 
 		SET @report_position_deals = dbo.FNAProcessTableName('report_position', @user_login_id,@report_position_process_id)
@@ -399,42 +399,30 @@ BEGIN
 					
 		--PRINT @sql 
 		EXEC (@sql)
-		
-		CREATE TABLE #handle_sp_return_update(
-					[ErrorCode]	VARCHAR(100) COLLATE DATABASE_DEFAULT ,
-					[Module]		VARCHAR(500) COLLATE DATABASE_DEFAULT ,
-					[Area]		VARCHAR(100) COLLATE DATABASE_DEFAULT ,
-					[Status]	VARCHAR(100) COLLATE DATABASE_DEFAULT ,
-					[Message]	VARCHAR(500) COLLATE DATABASE_DEFAULT ,
-					[RecommENDation] VARCHAR(500) COLLATE DATABASE_DEFAULT  	
-				)		
-				
-		--PRINT 'EXEC spa_deal_position_breakdown ''u'',null,''' + @user_login_id+''',''' +@report_position_process_id+''''
+
 		SET @sql = 'spa_deal_position_breakdown ''u'',null,''' + @user_login_id+''',''' +@report_position_process_id+''''
 		SET @job_name = 'spa_deal_position_breakdown' + @report_position_process_id 
 		EXEC spa_run_sp_AS_job @job_name, @sql, 'spa_deal_position_breakdown', @user_login_id
-		--INSERT INTO #handle_sp_return_update EXEC spa_deal_position_breakdown 'u', NULL, @user_login_id,@report_position_process_id
-		--IF EXISTS(SELECT 1 FROM #handle_sp_return_update WHERE [ErrorCode]='Error')
-		--BEGIN
-		--	DECLARE @msg_err VARCHAR(1000),@recom_err VARCHAR(1000)
-		--	SELECT   @msg_err=[Message],	@recom_err=[RecommENDation] FROM #handle_sp_return_update WHERE [ErrorCode]='Error'
-			
-		--	EXEC spa_ErrorHandler -1,
-		--			 'Source Deal Detail Table',
-		--			 'spa_UpdateFromXml',
-		--			 'DB Error',
-		--			 @msg_err,
-		--			 @recom_err	
-		
-		--	ROLLBACK TRAN
-		
-		--	RETURN
-		--END	
+ 
 
-		SET @sql = 'spa_update_deal_total_volume NULL,''' + CAST(@report_position_process_id AS VARCHAR(50)) + ''''
-		SET @job_name = 'spa_update_deal_total_volume_' + @report_position_process_id 
-		--EXEC spa_run_sp_AS_job @job_name, @sql, 'spa_update_deal_total_volume', @user_login_id
-		
+		IF OBJECT_ID('tempdb..#deal_to_calc') IS NOT NULL
+			DROP TABLE #deal_to_calc
+		CREATE TABLE #deal_to_calc (source_deal_header_id INT)
+			
+		SET @sql = 'INSERT INTO dbo.process_deal_position_breakdown (source_deal_header_id, create_user, create_ts, process_status, insert_type, deal_type, commodity_id, fixation, internal_deal_type_value_id, source_deal_detail_id)
+					OUTPUT INSERTED.source_deal_header_id INTO #deal_to_calc(source_deal_header_id)
+				SELECT MAX(sdh.source_deal_header_id) source_deal_header_id, MAX(sdh.create_user), GETDATE(), 9 process_status, 0 insert_type, MAX(ISNULL(sdh.internal_desk_id, 17300)) deal_type, 
+				MAX(ISNULL(spcd.commodity_id, -1)) commodity_id, MAX(ISNULL(sdh.product_id, 4101)) fixation, MAX(ISNULL(sdh.internal_deal_type_value_id, -999999)) internal_deal_type_value_id, sdd.source_deal_detail_id
+				FROM source_deal_header sdh
+				INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+				INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id and sdd.curve_id IS NOT NULL
+				WHERE sdd.formula_id = ' + CAST(@formula_id AS VARCHAR(50)) + ' 
+				GROUP BY sdd.source_deal_detail_id '
+		EXEC (@sql)
+
+		IF EXISTS(SELECT 1 FROM #deal_to_calc)
+			EXEC dbo.spa_calc_pending_deal_position @call_from = 1	
+
 		SELECT @count = COUNT(*) 
 		FROM formula_breakdown fb 
 		WHERE fb.formula_id = @formula_id 
