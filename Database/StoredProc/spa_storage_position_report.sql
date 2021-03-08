@@ -95,15 +95,19 @@ SET NOCOUNT ON
 	@sub_book_id VARCHAR(MAX) = NULL,
 	@round TINYINT = 18
 
-	/* for link reports within std report */
-	--select @commodity_id=50, @drill_location=2794, @term_start='2018-07-01', @term_end='2018-07-31' ,@drill_term='2018-07-24',@drill_type='NULL',@drill_contract_id=10317,@deal_type='w'
-EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'enercity_4429';
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
 EXEC dbo.spa_drop_all_temp_table
 
 	/* for main std report */
-	select  @location_id = '9,10,11,12,13,14,33,34,35,36,37,38', @term_start = '2020-10-02 00:00:00.000',@term_end = '2020-10-02 00:00:00.000', @uom = '1159', @volume_conversion = '1159', @call_from='optimization'
-	
+	--select  @location_id = '2887', @term_start = '2010-01-01 00:00:00.000',@term_end = '2010-01-01 00:00:00.000', @uom = '1158', @volume_conversion = '1158', @call_from='optimization'
+	--EXEC spa_storage_position_report @location_id = '2852,2887,2852,2887', @term_start = '2010-01-01 00:00:00.000',@term_end = '2010-01-01 00:00:00.000', @uom = '1158', @volume_conversion = '1158', @call_from='optimization'
+
+	select @call_from='optimization',@commodity_id='-1',@location_id='2887',@term_start='2021-01-01',@term_end='2021-01-01'
+
+	--term link report
+	--select @commodity_id='-1', @location_id='2887', @term_start='2010-01-01', @term_end='2010-01-01', @drill_location=2887, @drill_term='2010-01-01', @drill_contract_id=8358, @round=18
+		
 
    --*/
 
@@ -118,6 +122,11 @@ DECLARE @is_batch BIT
 SET @str_batch_table = '' 
 SET @user_login_id = dbo.FNADBUser()  
 SET @is_batch = CASE WHEN @batch_process_id IS NOT NULL AND @batch_report_param IS NOT NULL THEN 1 ELSE 0 END 
+
+--remove duplicates
+SELECT @location_id = STUFF(
+	(SELECT DISTINCT ',' + item FROM dbo.SplitCommaSeperatedValues(@location_id) FOR XML PATH(''))
+, 1, 1, '')
  
 IF @is_batch = 1 
 BEGIN 
@@ -301,6 +310,7 @@ BEGIN
 		row_id INT IDENTITY(1, 1)	
 		,fixed_price 	NUMERIC(38, 20) 
 		,conversion_factor FLOAT
+		,term_end_added_row TINYINT DEFAULT 0
 	)
 	--internal_deal_type_value_id
 	SET @Sql_SELECT='
@@ -364,7 +374,8 @@ BEGIN
 
 
 	EXEC (@Sql_SELECT)
-	--   select * from #deal_term_breakdown_stg
+	--select s.*,h.contract_id from #deal_term_breakdown_stg s inner join source_deal_header h on h.source_deal_header_id=s.source_deal_header_id where s.term_start<'2021-01-01'
+	--return
 	--print '#deal_term_breakdown_stg E: ' + convert(VARCHAR(50),getdate() ,21)	
 	SET @Sql_SELECT = '
 	INSERT INTO #temp (
@@ -470,7 +481,8 @@ BEGIN
 			INNER JOIN dbo.SplitCommaSeperatedValues(''' + @counterparty_id + ''') tc
 				ON tc.item = sdh.counterparty_id
 			' ELSE ' ' END 				
-	SET @Sql_WHERE = 'WHERE 1=1 '
+	SET @Sql_WHERE = 'WHERE 1=1 
+			AND IIF(sdh.internal_desk_id = 17302, sddh.[hourly_vol], sdd.deal_volume) IS NOT NULL' -- avoid null volumes for previous terms
 		+ ' AND ISNULL(term_bk.term_start, sdd.term_start) < ''' + CAST(@term_start AS VARCHAR(30)) + ''''	
 		--+ ' AND sdh.template_id = CASE WHEN ml.source_major_location_id = ' + CAST(@location_group_id AS VARCHAR(10)) + ' THEN sdh.template_id ELSE ' + ISNULL(@imb_actualization, '-1') + ' END'
 		--+ case @deal_type 
@@ -504,7 +516,9 @@ BEGIN
 
 	--PRINT @Sql_SELECT
 	EXEC(@Sql_SELECT)
-
+	--select s.*,h.contract_id from #deal_term_breakdown_stg s inner join source_deal_header h on h.source_deal_header_id=s.source_deal_header_id where s.term_start<'2021-01-01'
+	--select * from #temp
+	--return
 
 	--print 'term < E: ' + convert(VARCHAR(50),getdate() ,21)
 	
@@ -661,6 +675,59 @@ BEGIN
 	EXEC(@Sql_SELECT)
 	--print 'term = E: ' + convert(VARCHAR(50),getdate() ,21)
 	
+	--GET TERM END DATE DATA ROW
+	BEGIN
+		
+		INSERT INTO #temp (
+			location_id
+			,[Location]
+			,[contract_id]
+			,[contract_name]
+			,[Date]
+			,[Daily Average Balance]
+			,[Injection]
+			,[Withdrawal]
+			,[UOM]
+			,conversion_factor
+			,term_end_added_row
+			)
+		SELECT loc.item [location_id]
+			,sml.location_name
+			,match_contract.contract_id
+			,match_contract.[contract_name]
+			,cast(@term_end AS DATETIME) [term]
+			,static_info.[Daily Average Balance]
+			,0
+			,0
+			,static_info.UOM
+			,static_info.conversion_factor
+			,1
+		FROM dbo.SplitCommaSeperatedValues(@location_id) loc
+		LEFT JOIN source_minor_location sml ON sml.source_minor_location_id = loc.item
+		LEFT JOIN source_major_location smj ON smj.source_major_location_id = sml.source_major_location_id
+		OUTER APPLY (
+			SELECT t2.contract_id, t2.[contract_name]
+			FROM #temp t2
+			WHERE t2.location_id = loc.item
+		) match_contract
+		OUTER APPLY (
+			SELECT TOP 1 t1.[Daily Average Balance]
+				,t1.UOM
+				,t1.conversion_factor
+			FROM #temp t1
+			WHERE t1.location_id = loc.item
+			ORDER BY t1.row_id DESC
+		) static_info
+		LEFT JOIN #temp t ON t.location_id = loc.item
+			AND t.[Date] = cast(@term_end AS DATETIME)
+			AND (t.contract_id = match_contract.contract_id OR match_contract.contract_id IS NULL)
+		WHERE t.location_id IS NULL
+			AND smj.location_name = 'storage' 
+	END
+
+	--select * from #temp
+	--return
+		
 	--- Now out the result showing the rolling SUM
 	--collect udfs
 	IF OBJECT_ID('tempdb..#udf_values') IS NOT NULL 
@@ -683,10 +750,11 @@ BEGIN
 				location_id INT,
 				contract_id INT,
 				term_date DATETIME,
-				conversion_factor FLOAT
+				conversion_factor FLOAT,
+				term_end_added_row TINYINT
 			)
 
-		INSERT INTO #tmp_rpt_data([Location],[Contract],[Term],[Injection],InjectionAmount,[Withdrawal],[WithdrawalAmount],[WACOG],[Balance],[BalanceAmount],[UOM],location_id,term_date,conversion_factor)
+		INSERT INTO #tmp_rpt_data([Location],[Contract],[Term],[Injection],InjectionAmount,[Withdrawal],[WithdrawalAmount],[WACOG],[Balance],[BalanceAmount],[UOM],location_id,term_date,conversion_factor,term_end_added_row)
 		SELECT 
 			CASE WHEN GROUPING(a.[Date]) = 1 THEN 
 				@font_tag_start + 'Total:' + @font_tag_end 
@@ -737,14 +805,26 @@ BEGIN
 			MAX(a.location_id) location_id 
 			,MAX(a.[Date])  term_date
 			,MAX(a.[conversion_factor]) conversion_factor
+			,MAX(a.[term_end_added_row]) [term_end_added_row]
 		FROM #temp a 		
 		GROUP BY a.[Location], a.[contract_name], a.[Date]
 		ORDER BY a.[Location], a.[contract_name], ISNULL(a.[Date], '9999-01-01')
 
+		--update contract for last term added row with available location contract, so that grouping can result to single row of daily balance for storage grid.
+		UPDATE tpd1
+		SET tpd1.contract = t2.contract
+		FROM #tmp_rpt_data tpd1
+		OUTER APPLY (
+			SELECT tpd2.contract
+			FROM #tmp_rpt_data tpd2
+			WHERE tpd2.location = tpd1.location
+				AND tpd2.contract IS NOT NULL
+			) t2
+		WHERE tpd1.[Contract] IS NULL
 		
 	END 
 	--print '#tmp_rpt_data E: ' + convert(VARCHAR(50),getdate() ,21)
-
+	
 	IF @call_from = 'Optimization'
 	BEGIN
 		SET @fields = '[Location],
@@ -755,7 +835,7 @@ BEGIN
 							[Withdrawal] [With Vol],
 							[WithdrawalAmount] [With Amt],
 							WACOG,
-							ROUND(b.[Balance], ' + CAST(@round AS VARCHAR(10)) + ') [Daily Balance], 
+							ROUND(ISNULL(last_blc.last_blc, b.[Balance]), ' + CAST(@round AS VARCHAR(10)) + ') [Daily Balance], 
 							ROUND(b.[BalanceAmount], ' + CAST(@round AS VARCHAR(10)) + ') [Inventory Value],
 							[UOM]
 							'
@@ -770,13 +850,24 @@ BEGIN
 				AND ISNULL([Contract], '''') = ISNULL(a.[Contract], '''')
 		) rg
 		OUTER APPLY(
-			SELECT SUM([Injection] - [Withdrawal]) [Balance],
-				SUM(BalanceAmount) BalanceAmount 
-			FROM #tmp_rpt_data 
-			WHERE rowid <= a.rowid 
-				AND rowid BETWEEN rg.from_id 
+			SELECT SUM(trd1.[Injection] - trd1.[Withdrawal]) [Balance],
+				ROUND(SUM(trd1.BalanceAmount), 2) BalanceAmount 
+			FROM #tmp_rpt_data trd1
+			WHERE trd1.rowid <= a.rowid 
+				AND trd1.rowid BETWEEN rg.from_id 
 				AND rg.to_id
-		)  b '
+				AND a.term_end_added_row = 0
+		)  b 
+		OUTER APPLY (
+			SELECT TOP 1 (t2.[Injection] - t2.[Withdrawal]) [last_blc]
+			FROM #tmp_rpt_data t2
+			WHERE t2.location_id = a.location_id
+				AND t2.[Contract] = a.[Contract]
+				AND t2.term_end_added_row = 0
+				AND a.term_end_added_row = 1
+			ORDER BY t2.rowid
+		) last_blc
+		ORDER BY [Location], [Contract] DESC, [Term]'
 		--print(@Sql_SELECT)			
 		EXEC(@Sql_SELECT)
 		--print 'final data E: ' + convert(VARCHAR(50),getdate() ,21)
@@ -919,55 +1010,56 @@ BEGIN
 							  [Withdrawal] [With Vol],
 							  FORMAT([WithdrawalAmount], ''' + @format_round + ''') [With Amt],
 							  FORMAT([WACOG], ''' + @format_round + ''') [WACOG],
-							  FORMAT(b.[Balance], ''' + @format_round + ''') [Daily Balance], 
+							  b.[Balance] [Daily Balance], 
 							  FORMAT(b.[BalanceAmount], ''' + @format_round + ''') [Inventory Value],
 							  [UOM]
 							  '
 			END
-				SET @Sql_SELECT = 'SELECT  DISTINCT ' + @fields + @str_batch_table + ' 
-							FROM #tmp_rpt_data1	 a
-								OUTER APPLY (
-									SELECT sml2.location_name location_group
-									FROM source_minor_location sml
-									INNER JOIN source_major_location sml2 ON sml2.source_major_location_id = sml.source_major_location_id
-									WHERE  sml.source_minor_location_id = a.location_id
-								) sml2
+				
+			SET @Sql_SELECT = 'SELECT  DISTINCT ' + @fields + @str_batch_table + ' 
+						FROM #tmp_rpt_data1	 a
+							OUTER APPLY (
+								SELECT sml2.location_name location_group
+								FROM source_minor_location sml
+								INNER JOIN source_major_location sml2 ON sml2.source_major_location_id = sml.source_major_location_id
+								WHERE  sml.source_minor_location_id = a.location_id
+							) sml2
 								
-								OUTER APPLY(
-									SELECT MIN(rowid) from_id, MAX(rowid) to_id 
-									FROM #tmp_rpt_data1
-									WHERE Location = a.Location 
-										AND ISNULL([Contract], '''') = ISNULL(a.[Contract], '''')
-								) rg
-								OUTER APPLY(
-									SELECT SUM(balance) [Balance],
-										ROUND(SUM(BalanceAmount), 2) BalanceAmount 
-									FROM #tmp_rpt_data1
-									WHERE rowid <= a.rowid 
-										AND rowid BETWEEN rg.from_id 
-										AND rg.to_id
-								)  b ' + case when  @call_from = 'STORAGE_GRID' then 
-								' group by location, contract, year(a.term_date) + ''-'' + month(a.term_date)
-								  UNION
-									 SELECT 
-									 ' + CASE WHEN @call_from = 'STORAGE_GRID' THEN 'CASE WHEN sml2.location_name = ''Storage'' THEN ''Storage'' ELSE ''Imbalance'' END location_name,' ELSE '' END + '
-									 sml.location_name,NULL,'''+CAST(dbo.fnadateformat(@term_start) AS VARCHAR(10))+''',0,tbl.uom_id,t.item
+							OUTER APPLY(
+								SELECT MIN(rowid) from_id, MAX(rowid) to_id 
+								FROM #tmp_rpt_data1
+								WHERE Location = a.Location 
+									AND ISNULL([Contract], '''') = ISNULL(a.[Contract], '''')
+							) rg
+							OUTER APPLY(
+								SELECT SUM(balance) [Balance],
+									ROUND(SUM(BalanceAmount), 2) BalanceAmount 
+								FROM #tmp_rpt_data1
+								WHERE rowid <= a.rowid 
+									AND rowid BETWEEN rg.from_id 
+									AND rg.to_id
+							)  b ' + case when  @call_from = 'STORAGE_GRID' then 
+							' group by location, contract, year(a.term_date) + ''-'' + month(a.term_date)
+								UNION
+									SELECT 
+									' + CASE WHEN @call_from = 'STORAGE_GRID' THEN 'CASE WHEN sml2.location_name = ''Storage'' THEN ''Storage'' ELSE ''Imbalance'' END location_name,' ELSE '' END + '
+									sml.location_name,NULL,'''+CAST(dbo.fnadateformat(@term_start) AS VARCHAR(10))+''',0,tbl.uom_id,t.item
 									 
-									FROM dbo.splitCommaSeperatedValues('''+ @location_id + ''') t
-									INNER JOIN source_minor_location sml
-										ON sml.source_minor_location_id = t.item
-									INNER JOIN source_major_location sml2 ON sml2.source_major_location_id = sml.source_major_location_id
-									LEFT JOIN #tmp_rpt_data1 a 
-										ON a.location_id =  sml.source_minor_location_id
-									OUTER APPLY(
-										SELECT uom_id
-										FROM source_uom
-										WHERE source_uom_id = ''' + CAST(ISNULL(@uom,'') AS VARCHAR(20)) + ''' 
-									) tbl
-									WHERE a.location_id IS NULL
-								 '
-								 else ''
-								 end 
+								FROM dbo.splitCommaSeperatedValues('''+ @location_id + ''') t
+								INNER JOIN source_minor_location sml
+									ON sml.source_minor_location_id = t.item
+								INNER JOIN source_major_location sml2 ON sml2.source_major_location_id = sml.source_major_location_id
+								LEFT JOIN #tmp_rpt_data1 a 
+									ON a.location_id =  sml.source_minor_location_id
+								OUTER APPLY(
+									SELECT uom_id
+									FROM source_uom
+									WHERE source_uom_id = ''' + CAST(ISNULL(@uom,'') AS VARCHAR(20)) + ''' 
+								) tbl
+								WHERE a.location_id IS NULL
+								'
+								else ''
+								end 
 
 
 			EXEC(@Sql_SELECT)
