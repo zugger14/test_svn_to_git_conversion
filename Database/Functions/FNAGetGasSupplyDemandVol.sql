@@ -18,14 +18,14 @@ GO
 
 CREATE OR ALTER FUNCTION [dbo].[FNAGetGasSupplyDemandVol]
 (
-	@supply_position NUMERIC(10,4) NULL,
-	@demand_position NUMERIC(10,4) NULL,
+	@supply_position NUMERIC(20,4) NULL,
+	@demand_position NUMERIC(20,4) NULL,
 	@case_type VARCHAR(20) NULL
 )
-RETURNS NUMERIC(10,4)
+RETURNS NUMERIC(20,4)
 AS
 BEGIN
-	DECLARE @return_value NUMERIC(10,4)
+	DECLARE @return_value NUMERIC(20,4)
 
 	IF @case_type = 'storage_injection' --incase of injection, demand volume is assumed to be large, hence we only see supply volume to pick. pick supply if positive. negative supply is violation of sign rule hence pick 0.
 	BEGIN
