@@ -84,7 +84,7 @@ SET NOCOUNT ON
 
 --exec spa_debug_helper N'EXEC sys.sp_set_session_context @key = N''DB_USER'', @value = ''dmanandhar'';EXEC spa_schedule_deal_flow_optimization  @flag=@P1,@box_ids=@P2,@flow_date_from=@P3,@flow_date_to=@P4,@sub=@P5,@str=@P6,@book=@P7,@sub_book=@P8,@contract_process_id=@P9,@from_priority=@P10,@to_priority=@P11,@call_from=@P12,@target_uom=@P13,@reschedule=@P14,@granularity=@P15',N'@P1 nvarchar(4000),@P2 nvarchar(4000),@P3 nvarchar(4000),@P4 nvarchar(4000),@P5 char(1),@P6 char(1),@P7 nvarchar(4000),@P8 char(1),@P9 nvarchar(4000),@P10 char(1),@P11 char(1),@P12 nvarchar(4000),@P13 nvarchar(4000),@P14 nvarchar(4000),@P15 nvarchar(4000)',N'i',N'2',N'2033-07-01',N'2033-07-01',NULL,NULL,N'60,164,165,167,166',NULL,N'D5C51485_A16D_4C94_B935_3AF34CB32F87',NULL,NULL,N'flow_opt',N'1158',N'0',N'982'
 
---Sets session DB users 
+	--Sets session DB users 
 	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
 
 	--Sets contextinfo to debug mode so that spa_print will prints data
@@ -97,27 +97,8 @@ SET NOCOUNT ON
 	EXEC [spa_drop_all_temp_table] 
 	
 	-- SPA parameter values
-	-- SPA parameter values
-	
+	SELECT @flag = 'i', @box_ids = '2,3', @flow_date_from = '2025-07-04', @flow_date_to = '2025-07-04', @sub = NULL, @str = NULL, @book = NULL, @sub_book = NULL, @contract_process_id = '6D5615A2_B3E7_4067_9079_8C7239743AEE', @from_priority = NULL, @to_priority = NULL, @call_from = 'flow_opt', @target_uom = '1158', @reschedule = '0', @granularity = '982'
 
-select
-	@flag = 'i'
-	, @box_ids = '1'
-	, @flow_date_from = '2010-01-01'
-	, @flow_date_to =  '2010-01-01'
-	, @sub = NULL
-	, @str = NULL
-	, @book = NULL
-	, @sub_book = NULL
-	, @contract_process_id = 'AA6C96D4_833D_4DBA_B043_B6360B5E746C'
-	, @from_priority = NULL
-	, @to_priority = NULL
-	, @call_from = 'flow_auto'
-	, @target_uom = 1158
-	, @reschedule = 1
-	, @granularity = 982
-	, @receipt_deals_id  = -1 
-	, @delivery_deals_id  = 106492
 
 --transport_deal_id	deal_volume		up_down_stream	source_deal_header_id
 --219590				6014.00000000	U				219589
@@ -4277,6 +4258,10 @@ UPDATE	source_deal_header_template
 SET update_ts = update_ts
 WHERE template_name = 'Transportation NG'
 
+--UPDATE	source_deal_header
+--SET update_ts = update_ts
+--WHERE source_deal_header_id in (ISNULL(@receipt_deals_id, '-1') + ',' + ISNULL(@delivery_deals_id, '-1')) 
+
 -- Check if deals are already created by parallel processing of import files
 IF @reschedule = 0 and @call_from = 'flow_auto'
 BEGIN
@@ -4295,13 +4280,13 @@ BEGIN
 		IF EXISTS(
 			SELECT  sdh.source_deal_header_id
 			FROM user_defined_deal_fields uddf	
-			INNER JOIN source_deal_header sdh
+			INNER JOIN source_deal_header sdh --(READCOMMITTEDLOCK )
 				ON sdh.source_deal_header_id = uddf.source_deal_header_id
 			INNER JOIN user_defined_deal_fields_template uddft
 				ON sdh.template_id = uddft.template_id 
 				AND uddf.udf_template_id = uddft.udf_template_id	
 				AND uddft.field_label = 'From Deal'
-			INNER JOIN source_deal_header_template sdht
+			INNER JOIN source_deal_header_template sdht 
 				ON sdht.template_id = sdh.template_id 
 			INNER JOIN source_deal_detail sdd
 				ON sdd.source_deal_header_id = sdh.source_deal_header_id
@@ -4610,6 +4595,7 @@ BEGIN -- Insert/Update Deal data
 		ON ed.leg1_loc_id= p.leg1_loc_id
 		AND ed.leg2_loc_id= p.leg2_loc_id
 		AND ed.first_dom= p.first_dom
+		AND ed.storage_deal_type = p.storage_deal_type
 	LEFT JOIN optimizer_detail od
 		ON od.source_deal_header_id = ed.source_deal_header_id 
 		AND ed.contract_id = COALESCE(od.contract_id,p.single_contract_id, p.contract_id)
@@ -4725,6 +4711,7 @@ BEGIN -- Insert/Update Deal data
 		ON ed.leg1_loc_id= p.leg1_loc_id
 		AND ed.leg2_loc_id= p.leg2_loc_id
 		AND ed.first_dom = p.first_dom		
+		AND ed.storage_deal_type = p.storage_deal_type
 	LEFT JOIN optimizer_detail od
 		ON od.source_deal_header_id = ed.source_deal_header_id
 		AND ed.contract_id = COALESCE(od.contract_id, p.single_contract_id, p.contract_id) 
