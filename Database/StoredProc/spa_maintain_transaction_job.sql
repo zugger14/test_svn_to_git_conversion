@@ -47,7 +47,7 @@ drop table #tmp_header_deal_id
 drop table #tmp_position_breakdown
 declare @process_id varchar(50),@insert_type int,@partition_no int,@user_login_id varchar(30),@deal_delete varchar(1)
 drop table #source_deal_detail_hour
-select  @process_id='65ADE19C_84FD_48CB_A853_1180C27B3F76',@insert_type=1,@partition_no=1,@user_login_id='dev_admin',@deal_delete='y'
+select  @process_id='219B5C4E_BABD_4377_8C0E_BBEB7523E38A',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
 --report_position_farrms_admin_49AFBFA8_BC35_404B_8590_78F087008D35
 --TRUNCATE TABLE select * from adiha_process.dbo.report_position_farrms_admin_E5D1C26F_C332_4A0A_8082_F3936706EEA8
 --insert into adiha_process.dbo.report_position_farrms_admin_testing select 4100,'d'
@@ -58,11 +58,10 @@ SET CONTEXT_INFO @contextinfo
 	if OBJECT_ID('adiha_process.dbo.report_position_farrms_admin_aaa') is not null
 		drop table adiha_process.dbo.report_position_farrms_admin_aaa
 
-	select source_deal_header_id,source_deal_detail_id into adiha_process.dbo.report_position_farrms_admin_aaa 
+	select source_deal_header_id,source_deal_detail_id into adiha_process.d+bo.report_position_farrms_admin_aaa 
 	from source_deal_detail where source_deal_header_id=95679
 
 --*/
-
 
 
 DROP TABLE #report_hourly_position_profile
@@ -617,7 +616,7 @@ BEGIN TRY
 			' output deleted.source_deal_header_id,deleted.term_start,deleted.deal_date,deleted.deal_volume_uom_id,deleted.hr1,deleted.hr2,deleted.hr3,deleted.hr4,deleted.hr5,deleted.hr6,deleted.hr7,deleted.hr8,deleted.hr9,deleted.hr10,deleted.hr11,deleted.hr12,deleted.hr13,deleted.hr14,deleted.hr15,deleted.hr16,deleted.hr17,deleted.hr18,deleted.hr19,deleted.hr20,deleted.hr21,deleted.hr22,deleted.hr23,deleted.hr24,deleted.hr25,deleted.create_ts,deleted.create_user,deleted.expiration_date,deleted.period,deleted.granularity,deleted.source_deal_detail_id,deleted.rowid 
 			into #report_hourly_position_old (source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid) '
 				END + '
-			FROM report_hourly_position_fixed_main  rhpf (nolock)
+			FROM report_hourly_position_fixed_main  rhpf 
 				INNER JOIN #tmp_header_deal_id_del thdi on rhpf.source_deal_detail_id=thdi.source_deal_detail_id '
 
 		EXEC spa_print @st_sql
@@ -660,9 +659,9 @@ BEGIN TRY
 			,max(hourly_position_breakdown) hourly_position_breakdown
 			--,982 hourly_position_breakdown
 			,source_deal_detail_id,max(ed.rowid) rowid
-		FROM ' + @effected_deals + ' ed (nolock) 
-			INNER JOIN source_deal_header sdh (nolock) on ed.source_deal_header_id=sdh.source_deal_header_id 
-			INNER JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id
+		FROM ' + @effected_deals + ' ed  
+			INNER JOIN source_deal_header sdh  on ed.source_deal_header_id=sdh.source_deal_header_id 
+			INNER JOIN  source_deal_header_template sdht  on sdh.template_id=sdht.template_id
 				AND hourly_position_breakdown is not null AND ISNULL(sdht.internal_deal_type_value_id,-1) <> 19 ----- Filter the Actual Storage Deals(Inventory)
 		GROUP BY ed.source_deal_detail_id'
 
@@ -677,8 +676,8 @@ BEGIN TRY
 			END
 
 		update ed set dst_group_value_id=isnull(tz.dst_group_value_id, @default_dst_group)
-		FROM source_deal_detail sdd  with (nolock)
-			INNER JOIN #tmp_header_deal_id ed  with (nolock) ON ed.source_deal_detail_id = sdd.source_deal_detail_id 
+		FROM source_deal_detail sdd   
+			INNER JOIN #tmp_header_deal_id ed    ON ed.source_deal_detail_id = sdd.source_deal_detail_id 
 			left join dbo.vwDealTimezone tz  on  tz.source_deal_header_id=sdd.source_deal_header_id
 					and tz.curve_id=isnull(sdd.curve_id,-1)  and tz.location_id=isnull(sdd.location_id,-1) 
 		
@@ -758,7 +757,6 @@ BEGIN TRY
 					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 15 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [15]
 				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
 					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 16 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [16]'
-			
 			set @st_sql1='
 				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
 					ELSE CASE WHEN cast(left(hr, 2) AS INT) = 17 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [17]
@@ -779,8 +777,9 @@ BEGIN TRY
 				,cast(sum(CASE WHEN sddh.granularity = 981 THEN 0
 					ELSE CASE WHEN is_dst = 1 THEN '+@col_exp2+' ELSE 0 END END) AS NUMERIC(24, 14)) [25]
 				INTO #source_deal_detail_hour
-				FROM source_deal_detail_hour sddh(NOLOCK)
-					INNER JOIN source_deal_detail sdd(NOLOCK) ON sdd.source_deal_detail_id = sddh.source_deal_detail_id
+				FROM source_deal_detail_hour sddh
+					INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = sddh.source_deal_detail_id
+						and sddh.term_date between sdd.term_start and sdd.term_end
 					INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
 					INNER JOIN #tmp_header_deal_id thdi ON thdi.source_deal_detail_id = sddh.source_deal_detail_id 
 					left join (select distinct granularity , factor from #minute_break) mw on mw.granularity=sddh.granularity
@@ -832,11 +831,11 @@ BEGIN TRY
 				INNER JOIN source_deal_detail sdd ON sdh.source_deal_header_id=sdd.source_deal_header_id 
 					and sdd.curve_id is not null and ISNULL(sdh.internal_desk_id,17300)=17302
 				INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id
-				INNER JOIN #source_deal_detail_hour sddh (nolock) on sddh.source_deal_detail_id=sdd.source_deal_detail_id and sddh.granularity<>981 
-				LEFT JOIN source_price_curve_def spcd (nolock) ON spcd.source_curve_def_id=sdd.curve_id
-				left join rec_volume_unit_conversion conv (nolock) on conv.from_source_uom_id=sdd.deal_volume_uom_id
+				INNER JOIN #source_deal_detail_hour sddh  on sddh.source_deal_detail_id=sdd.source_deal_detail_id and sddh.granularity<>981 
+				LEFT JOIN source_price_curve_def spcd  ON spcd.source_curve_def_id=sdd.curve_id
+				left join rec_volume_unit_conversion conv  on conv.from_source_uom_id=sdd.deal_volume_uom_id
 						and conv.to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
-				LEFT JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id		
+				LEFT JOIN  source_deal_header_template sdht  on sdh.template_id=sdht.template_id		
 				left join #density_multiplier dm on sdd.source_deal_detail_id=dm.source_deal_detail_id
 				outer apply (select MAX(exp_date) exp_date from holiday_group where  hol_group_value_id=spcd.exp_calendar_id
 							and ((sdd.physical_financial_flag=''p'' and sdh.internal_deal_subtype_value_id='+@CFD_id+') or sdd.physical_financial_flag=''f'' or ISNULL(spcd.hourly_volume_allocation,17601) =17606)
@@ -890,41 +889,41 @@ BEGIN TRY
 		
 			SET @st_from = @report_hourly_position_deal_main + 
 					'
-			 FROM source_deal_header sdh  with (nolock) 
-				INNER JOIN source_deal_detail sdd  with (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id 
+			 FROM source_deal_header sdh    
+				INNER JOIN source_deal_detail sdd    ON sdh.source_deal_header_id=sdd.source_deal_header_id 
 					 and  ISNULL(sdh.internal_desk_id,17300)=17302
 				INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id 
-				--INNER JOIN source_system_book_map ssbm  with (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
+				--INNER JOIN source_system_book_map ssbm    on sdh.source_system_book_id1=ssbm.source_system_book_id1
 				--	and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
 				--	and sdh.source_system_book_id4=ssbm.source_system_book_id4
-				INNER JOIN #source_deal_detail_hour sddh (NOLOCK) ON sddh.source_deal_detail_id = sdd.source_deal_detail_id 
+				INNER JOIN #source_deal_detail_hour sddh  ON sddh.source_deal_detail_id = sdd.source_deal_detail_id 
 					AND sddh.granularity=981 
-				LEFT JOIN source_price_curve_def spcd  with (nolock) ON spcd.source_curve_def_id=sdd.curve_id
-				LEFT JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=spcd.settlement_curve_id
-				outer apply ( select nullif(sum(volume_mult),0) term_hours from hour_block_term (nolock) where
+				LEFT JOIN source_price_curve_def spcd    ON spcd.source_curve_def_id=sdd.curve_id
+				LEFT JOIN source_price_curve_def spcd1   ON spcd1.source_curve_def_id=spcd.settlement_curve_id
+				outer apply ( select nullif(sum(volume_mult),0) term_hours from hour_block_term  where
 					dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') and
 					block_define_id = COALESCE(spcd.block_define_id,sdh.block_define_id,'+ @baseload_block_define_id + ')
 					AND term_date=sddh.term_date and (isnull(spcd.hourly_volume_allocation,17601) in (17600,17601,17602,17605) or sdd.physical_financial_flag=''p'')
 				) hb_term		
 				outer apply (
-					select sum(volume_mult) term_no_hrs from hour_block_term hbt (nolock) 
-						inner join (select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date=sddh.term_date 
+					select sum(volume_mult) term_no_hrs from hour_block_term hbt  
+						inner join (select distinct exp_date from holiday_group h  where  h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date=sddh.term_date 
 						) ex on ex.exp_date=hbt.term_date
 					where  hbt.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') and hbt.block_define_id=COALESCE(spcd.block_define_id,' + @baseload_block_define_id + ') 
 					and hbt.term_date =sddh.term_date
 					and  isnull(spcd.hourly_volume_allocation,17601) IN(17603,17604) and sdd.physical_financial_flag=''f''
 				) term_hrs_exp
-				LEFT JOIN hour_block_term hb WITH (NOLOCK) ON hb.dst_group_value_id = isnull(thdi.dst_group_value_id,'+@default_dst_group+') 
+				LEFT JOIN hour_block_term hb   ON hb.dst_group_value_id = isnull(thdi.dst_group_value_id,'+@default_dst_group+') 
 					AND hb.block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id, ' + @baseload_block_define_id + ')  
 					AND hb.block_type = COALESCE(spcd.block_type, sdh.block_type, ' + @baseload_block_type + ')
 					and hb.term_date =sddh.term_date
-				left join rec_volume_unit_conversion conv (nolock) on conv.from_source_uom_id=sdd.deal_volume_uom_id
+				left join rec_volume_unit_conversion conv  on conv.from_source_uom_id=sdd.deal_volume_uom_id
 					and conv.to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
-				outer apply  (select distinct exp_date from holiday_group h (nolock) where h.exp_date=hb.term_date and h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date =sddh.term_date ) hg  
-				LEFT OUTER JOIN hour_block_term hb1 (nolock) ON hb1.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+')
+				outer apply  (select distinct exp_date from holiday_group h  where h.exp_date=hb.term_date and h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date =sddh.term_date ) hg  
+				LEFT OUTER JOIN hour_block_term hb1  ON hb1.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+')
 					AND hb1.block_define_id=hb.block_define_id
 					AND hb1.term_date-1=hb.term_date
-				LEFT JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id			
+				LEFT JOIN  source_deal_header_template sdht  on sdh.template_id=sdht.template_id			
 				outer apply (
 					select MAX(exp_date) exp_date from holiday_group where  hol_group_value_id=spcd.exp_calendar_id
 						and ((sdd.physical_financial_flag=''p'' and sdh.internal_deal_subtype_value_id='+@CFD_id+') or sdd.physical_financial_flag=''f'' or   ISNULL(spcd.hourly_volume_allocation,17601) =17606)
@@ -989,22 +988,22 @@ BEGIN TRY
 				,thdi.create_user,thdi.granularity,thdi.source_deal_detail_id,thdi.rowid,sdd.deal_volume_uom_id deal_detail_volume_uom_id
 				,sdh.internal_deal_subtype_value_id,COALESCE(hb_term_day.no_days,term_hrs_exp_day.no_days,0) no_days
 			into #tmp_pos_deal_detail
-			FROM  source_deal_header sdh  with (nolock) 
-				INNER JOIN source_deal_detail sdd  with (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id --  and sdd.curve_id is not null
+			FROM  source_deal_header sdh    
+				INNER JOIN source_deal_detail sdd    ON sdh.source_deal_header_id=sdd.source_deal_header_id --  and sdd.curve_id is not null
 				INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id  
 					and ISNULL(sdh.internal_desk_id,17300)=17300 --and ISNULL(sdh.product_id,-1)<>4100  --this condition is for applying fixation so it will not inserted for fixation logic.
-				INNER JOIN source_system_book_map ssbm  with (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
+				INNER JOIN source_system_book_map ssbm    on sdh.source_system_book_id1=ssbm.source_system_book_id1
 					and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
 					and sdh.source_system_book_id4=ssbm.source_system_book_id4
 				left join dbo.source_deal_detail_position sddp on sddp.source_deal_detail_id=sdd.source_deal_detail_id
-				LEFT JOIN source_price_curve_def spcd  with (nolock) ON spcd.source_curve_def_id=sdd.curve_id
-				LEFT JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=spcd.settlement_curve_id
-				left join rec_volume_unit_conversion conv (nolock) on conv.from_source_uom_id=sdd.deal_volume_uom_id
+				LEFT JOIN source_price_curve_def spcd    ON spcd.source_curve_def_id=sdd.curve_id
+				LEFT JOIN source_price_curve_def spcd1   ON spcd1.source_curve_def_id=spcd.settlement_curve_id
+				left join rec_volume_unit_conversion conv  on conv.from_source_uom_id=sdd.deal_volume_uom_id
 					and conv.to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
 				left join #density_multiplier dm on sdd.source_deal_detail_id=dm.source_deal_detail_id
-				LEFT JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id	
+				LEFT JOIN  source_deal_header_template sdht  on sdh.template_id=sdht.template_id			
 				outer apply 
-					( select nullif(count(1),0) no_days from hour_block_term (nolock) 
+					( select nullif(count(1),0) no_days from hour_block_term  
 						where dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') 
 							AND block_define_id = COALESCE(spcd.block_define_id,sdh.block_define_id,' + @baseload_block_define_id + ')
 							and	term_date between sdd.term_start and sdd.term_end and (isnull(spcd.hourly_volume_allocation,17601) in(17600,17601,17602,17605) or sdd.physical_financial_flag=''p'') and hol_date is null
@@ -1012,8 +1011,8 @@ BEGIN TRY
 					) hb_term_day		
 				outer apply 
 				(
-					select nullif(count(1),0) no_days from hour_block_term hbt (nolock) inner join 
-						(select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) 
+					select nullif(count(1),0) no_days from hour_block_term hbt  inner join 
+						(select distinct exp_date from holiday_group h  where  h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) 
 								and h.exp_date between sdd.term_start  and sdd.term_END 
 						) ex on ex.exp_date=hbt.term_date
 					where hbt.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') 
@@ -1071,13 +1070,13 @@ BEGIN TRY
 			
 		SET @st_from = @report_hourly_position_deal_main + ' 
 			From #tmp_pos_deal_detail pdd
-				LEFT JOIN hour_block_term hb with (nolock) on hb.dst_group_value_id=pdd.dst_group_value_id  
+				LEFT JOIN hour_block_term hb   on hb.dst_group_value_id=pdd.dst_group_value_id  
 					and hb.block_define_id= pdd.block_define_id 
 					and hb.term_date between pdd.term_start and pdd.term_end
-				LEFT OUTER JOIN hour_block_term hb1 (nolock) ON hb1.dst_group_value_id=pdd.dst_group_value_id
+				LEFT OUTER JOIN hour_block_term hb1  ON hb1.dst_group_value_id=pdd.dst_group_value_id
 					AND hb1.block_define_id=pdd.block_define_id AND hb1.term_date-1=hb.term_date
 				outer apply 
-					(	select distinct exp_date from holiday_group h (nolock) 
+					(	select distinct exp_date from holiday_group h  
 						where h.exp_date=hb.term_date and h.hol_group_value_id=pdd.exp_calendar_id
 						and h.exp_date between pdd.term_start  and pdd.term_END 
 					) hg  
@@ -1085,30 +1084,30 @@ BEGIN TRY
 						and ((pdd.physical_financial_flag=''p'' and pdd.internal_deal_subtype_value_id='+@CFD_id+') or pdd.physical_financial_flag=''f'' or pdd.hourly_volume_allocation =17606)
 						and hb.term_date between hol_date AND isnull(nullif(hol_date_to,''1900-01-01''),hol_date)
 					) h_grp 
-				outer apply ( select nullif(sum(volume_mult),0) term_hours from hour_block_term (nolock) where
+				outer apply ( select nullif(sum(volume_mult),0) term_hours from hour_block_term  where
 					dst_group_value_id=pdd.dst_group_value_id AND block_define_id = pdd.block_define_id
 					and term_date=hb.term_date
 					and (pdd.hourly_volume_allocation in (17600,17601,17602,17605) or pdd.physical_financial_flag=''p'')
 				) hb_term			
 				outer apply (
-					select sum(volume_mult) term_no_hrs from hour_block_term hbt (nolock) inner join 
+					select sum(volume_mult) term_no_hrs from hour_block_term hbt  inner join 
 						(
-							select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb.term_date
+							select distinct exp_date from holiday_group h  where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb.term_date
 						) ex on ex.exp_date=hbt.term_date
 					where  hbt.dst_group_value_id=pdd.dst_group_value_id
 						and hbt.block_define_id=pdd.block_define_id 
 						and hbt.term_date=hb.term_date 
 						and pdd.hourly_volume_allocation IN(17603,17604) and pdd.physical_financial_flag=''f'' 
 				) term_hrs_exp
-				outer apply ( select nullif(sum(volume_mult),0) term_hours from hour_block_term (nolock) where
+				outer apply ( select nullif(sum(volume_mult),0) term_hours from hour_block_term  where
 					dst_group_value_id=pdd.dst_group_value_id AND block_define_id = pdd.block_define_id
 					and term_date=hb1.term_date and pdd.commodity_id=-1
 					and (pdd.hourly_volume_allocation in (17600,17601,17602,17605) or pdd.physical_financial_flag=''p'')
 				) hb_term1			
 				outer apply (
-					select sum(volume_mult) term_no_hrs from hour_block_term hbt (nolock) inner join 
+					select sum(volume_mult) term_no_hrs from hour_block_term hbt  inner join 
 						(
-							select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb1.term_date
+							select distinct exp_date from holiday_group h  where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb1.term_date
 						) ex on ex.exp_date=hbt.term_date
 					where  hbt.dst_group_value_id=pdd.dst_group_value_id
 						and hbt.block_define_id=pdd.block_define_id 
@@ -1158,24 +1157,24 @@ BEGIN TRY
 				,COALESCE(hb_term_day.no_days,term_hrs_exp_day.no_days,0) no_days
 				--,sdh.internal_deal_subtype_value_id 
 			into #tmp_pos_deal_detail
-			FROM  source_deal_header sdh  with (nolock) 
-				INNER JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id AND sdht.internal_deal_type_value_id IN(21) --- Only include schduled storage deals 		
-				INNER JOIN source_deal_detail sdd  with (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id --  and sdd.curve_id is not null
+			FROM  source_deal_header sdh    
+				INNER JOIN  source_deal_header_template sdht  on sdh.template_id=sdht.template_id AND sdht.internal_deal_type_value_id IN(21) --- Only include schduled storage deals 		
+				INNER JOIN source_deal_detail sdd    ON sdh.source_deal_header_id=sdd.source_deal_header_id --  and sdd.curve_id is not null
 				INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id  
 					AND ISNULL(sdh.internal_desk_id,17300)=17300 --and ISNULL(sdh.product_id,-1)<>4100  --this condition is for applying fixation so it will not inserted for fixation logic.
-				INNER JOIN source_system_book_map ssbm  with (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
+				INNER JOIN source_system_book_map ssbm    on sdh.source_system_book_id1=ssbm.source_system_book_id1
 				and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
 				 and sdh.source_system_book_id4=ssbm.source_system_book_id4
 				left join dbo.source_deal_detail_position sddp on sddp.source_deal_detail_id=sdd.source_deal_detail_id
-				LEFT JOIN source_price_curve_def spcd  with (nolock) ON spcd.source_curve_def_id=sdd.curve_id
-				LEFT JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=spcd.settlement_curve_id
-				left join rec_volume_unit_conversion conv (nolock) on conv.from_source_uom_id=sdd.deal_volume_uom_id
+				LEFT JOIN source_price_curve_def spcd    ON spcd.source_curve_def_id=sdd.curve_id
+				LEFT JOIN source_price_curve_def spcd1   ON spcd1.source_curve_def_id=spcd.settlement_curve_id
+				left join rec_volume_unit_conversion conv  on conv.from_source_uom_id=sdd.deal_volume_uom_id
 					and conv.to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
 				left join #density_multiplier dm on sdd.source_deal_detail_id=dm.source_deal_detail_id	
-				LEFT JOIN source_deal_header sdh1 (nolock) ON sdh1.close_reference_id = sdh.source_deal_header_id  -- get the nomination deals
+				LEFT JOIN source_deal_header sdh1  ON sdh1.close_reference_id = sdh.source_deal_header_id  -- get the nomination deals
 					AND ISNULL(sdh1.internal_deal_type_value_id,-1)=20  -- for storage types
 				outer apply 
-					( select nullif(count(1),0) no_days from hour_block_term (nolock) 
+					( select nullif(count(1),0) no_days from hour_block_term  
 						where dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') 
 							AND block_define_id = COALESCE(spcd.block_define_id,sdh.block_define_id,' + @baseload_block_define_id + ')
 							and	term_date between sdd.term_start and sdd.term_end and (isnull(spcd.hourly_volume_allocation,17601) in (17600,17601,17602,17605) or sdd.physical_financial_flag=''p'') and hol_date is null
@@ -1183,8 +1182,8 @@ BEGIN TRY
 					) hb_term_day		
 				outer apply 
 				(
-					select nullif(count(1),0) no_days from hour_block_term hbt (nolock) inner join 
-						(select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) 
+					select nullif(count(1),0) no_days from hour_block_term hbt  inner join 
+						(select distinct exp_date from holiday_group h  where  h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) 
 								and h.exp_date between sdd.term_start  and sdd.term_END 
 						) ex on ex.exp_date=hbt.term_date
 					where hbt.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') 
@@ -1235,12 +1234,12 @@ BEGIN TRY
 		SET @st_from = @report_hourly_position_deal_main + 
 				'
 			From #tmp_pos_deal_detail pdd
-			LEFT JOIN hour_block_term hb with (nolock) on
+			LEFT JOIN hour_block_term hb   on
 				hb.dst_group_value_id=pdd.dst_group_value_id and hb.block_define_id=pdd.block_define_id
 				and hb.term_date between pdd.term_start and pdd.term_end
-			LEFT OUTER JOIN hour_block_term hb1 (nolock) ON  hb1.dst_group_value_id=hb.dst_group_value_id
+			LEFT OUTER JOIN hour_block_term hb1  ON  hb1.dst_group_value_id=hb.dst_group_value_id
 				AND hb1.block_define_id=hb.block_define_id AND hb1.term_date-1=hb.term_date
-			left join hour_block_term hb_term1 (nolock) 
+			left join hour_block_term hb_term1  
 				on  hb_term1.dst_group_value_id=pdd.dst_group_value_id AND hb_term1.block_define_id =pdd.block_define_id
 				and hb_term1.term_date = hb1.term_date and (pdd.hourly_volume_allocation in (17600,17601,17602,17605) or pdd.physical_financial_flag=''p'')
 			left join hour_block_term hb_term (nolock) on hb_term.dst_group_value_id=pdd.dst_group_value_id
@@ -1248,23 +1247,23 @@ BEGIN TRY
 					hb_term.term_date=hb.term_date
 				and (pdd.hourly_volume_allocation in (17600,17601,17602,17605) or pdd.physical_financial_flag=''p'')
 			outer apply (
-				select  nullif(sum(volume_mult),0) term_no_hrs from hour_block_term hbt (nolock) inner join 
-				(select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb.term_date ) ex 
+				select  nullif(sum(volume_mult),0) term_no_hrs from hour_block_term hbt  inner join 
+				(select distinct exp_date from holiday_group h  where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb.term_date ) ex 
 					on hbt.dst_group_value_id=pdd.dst_group_value_id
 							and hbt.block_define_id=pdd.block_define_id 
 							and hbt.term_date= hb.term_date and
 					ex.exp_date=hbt.term_date and pdd.hourly_volume_allocation IN(17603,17604) and pdd.physical_financial_flag=''f''
 			) term_hrs_exp	
-			outer apply  (select distinct exp_date from holiday_group h (nolock) WHERE h.exp_date=hb.term_date and h.hol_group_value_id=pdd.exp_calendar_id
+			outer apply  (select distinct exp_date from holiday_group h  WHERE h.exp_date=hb.term_date and h.hol_group_value_id=pdd.exp_calendar_id
 					and h.exp_date between pdd.term_start  and pdd.term_END ) hg 
 			LEFT JOIN report_hourly_position_deal rhpd 
 				ON rhpd.source_deal_detail_id = pdd.source_deal_detail_id
 					AND rhpd.term_start = hb.term_date  and isnull(rhpd.curve_id,-1)=-1
 			left join #minute_break mb on mb.granularity=pdd.granularity  
 			outer apply (
-				select sum(volume_mult) term_no_hrs from hour_block_term hbt (nolock) inner join 
+				select sum(volume_mult) term_no_hrs from hour_block_term hbt  inner join 
 				(
-					select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb1.term_date
+					select distinct exp_date from holiday_group h  where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb1.term_date
 				) ex on ex.exp_date=hbt.term_date
 				where  hbt.dst_group_value_id=pdd.dst_group_value_id
 					and hbt.block_define_id=pdd.block_define_id 
@@ -1306,8 +1305,8 @@ BEGIN TRY
 
 			SET @st_sql = 'INSERT INTO #tmp_header_deal_id (source_deal_header_id,create_user,source_deal_detail_id) 
 			select max(ed.source_deal_header_id),max(ed.create_user) ,ed.source_deal_detail_id
-			from ' + @effected_deals + ' ed (nolock) INNER JOIN source_deal_header sdh (nolock) on ed.source_deal_header_id=sdh.source_deal_header_id 
-			INNER JOIN  source_deal_header_template sdht (nolock) on sdh.template_id=sdht.template_id and hourly_position_breakdown is not null
+			from ' + @effected_deals + ' ed  INNER JOIN source_deal_header sdh  on ed.source_deal_header_id=sdh.source_deal_header_id 
+			INNER JOIN  source_deal_header_template sdht  on sdh.template_id=sdht.template_id and hourly_position_breakdown is not null
 			GROUP BY ed.source_deal_detail_id'
 
 			EXEC spa_print @st_sql
@@ -1559,9 +1558,9 @@ BEGIN TRY
 			'
 			SET @st_from = @report_hourly_position_profile_main + '
 			FROM  #tmp_profile_header tph  
-				inner JOIN hour_block_term hb (nolock) on hb.dst_group_value_id=tph.dst_group_value_id and hb.block_define_id=tph.block_define_id 
+				inner JOIN hour_block_term hb  on hb.dst_group_value_id=tph.dst_group_value_id and hb.block_define_id=tph.block_define_id 
 					and hb.term_date between tph.term_start and tph.term_end  AND tph.commodity_id<>-1
-				inner join ' + @deal_detail_hour + ' ddh (nolock) on tph.profile_id=ddh.profile_id AND  hb.term_date=ddh.term_date
+				inner join ' + @deal_detail_hour + ' ddh  on tph.profile_id=ddh.profile_id AND  hb.term_date=ddh.term_date
 				LEFT JOIN #tmp_header_deal_id thdi ON tph.source_deal_detail_id=thdi.source_deal_detail_id
 				outer apply (select MAX(exp_date) exp_date from holiday_group h
 					inner join source_price_curve_def spcd on  h.hol_group_value_id=spcd.exp_calendar_id
@@ -1621,13 +1620,13 @@ BEGIN TRY
 			'
 			SET @st_from = @report_hourly_position_profile_main + '
 			FROM  #tmp_profile_header tph  
-				inner JOIN hour_block_term hb (nolock) on hb.dst_group_value_id=tph.dst_group_value_id and hb.block_define_id=tph.block_define_id 		and hb.term_date between tph.term_start AND tph.term_end  AND tph.commodity_id=-1
-				left join ' + @deal_detail_hour + ' ddh (nolock) on tph.profile_id=ddh.profile_id AND  hb.term_date=ddh.term_date
-				LEFT OUTER JOIN hour_block_term hb1 (nolock) ON hb1.dst_group_value_id=hb.dst_group_value_id
+				inner JOIN hour_block_term hb  on hb.dst_group_value_id=tph.dst_group_value_id and hb.block_define_id=tph.block_define_id 		and hb.term_date between tph.term_start AND tph.term_end  AND tph.commodity_id=-1
+				left join ' + @deal_detail_hour + ' ddh  on tph.profile_id=ddh.profile_id AND  hb.term_date=ddh.term_date
+				LEFT OUTER JOIN hour_block_term hb1  ON hb1.dst_group_value_id=hb.dst_group_value_id
 					AND hb1.block_define_id=hb.block_define_id
 					AND hb1.term_date-1=hb.term_date
 				left join ' + @deal_detail_hour + 
-					' ddh1 (nolock) on tph.profile_id=ddh1.profile_id AND  hb1.term_date=ddh1.term_date and ddh.period=ddh1.period
+					' ddh1  on tph.profile_id=ddh1.profile_id AND  hb1.term_date=ddh1.term_date and ddh.period=ddh1.period
 				LEFT JOIN #tmp_header_deal_id thdi ON tph.source_deal_detail_id=thdi.source_deal_detail_id
 				outer apply (select MAX(exp_date) exp_date from holiday_group h
 					inner join source_price_curve_def spcd on  h.hol_group_value_id=spcd.exp_calendar_id
@@ -1684,8 +1683,8 @@ BEGIN TRY
 		SET @st_from = @report_hourly_position_profile_main + 
 		'
 		FROM  #tmp_profile_header tph  
-			LEFT JOIN hour_block_term hb (nolock) on hb.dst_group_value_id=tph.dst_group_value_id and hb.block_define_id=tph.block_define_id 			and hb.term_date between tph.term_start AND tph.term_end 
-			LEFT OUTER JOIN hour_block_term hb1 (nolock) ON hb1.dst_group_value_id=tph.dst_group_value_id
+			LEFT JOIN hour_block_term hb  on hb.dst_group_value_id=tph.dst_group_value_id and hb.block_define_id=tph.block_define_id 			and hb.term_date between tph.term_start AND tph.term_end 
+			LEFT OUTER JOIN hour_block_term hb1  ON hb1.dst_group_value_id=tph.dst_group_value_id
 				AND hb1.block_define_id=hb.block_define_id AND hb1.term_date-1=hb.term_date
 			LEFT JOIN #tmp_header_deal_id thdi ON tph.source_deal_detail_id=thdi.source_deal_detail_id
 			outer apply (select MAX(exp_date) exp_date from holiday_group h
@@ -1708,6 +1707,7 @@ BEGIN TRY
 		--------###############################################################			
 		--------########## Break down Fixed Physical deal and save in different table
 
+
 	IF  isnull(@orginal_insert_type, 0) NOT IN (111,222)
 	BEGIN
 
@@ -1722,58 +1722,53 @@ BEGIN TRY
 			into #report_hourly_position_inserted (source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid,calc_total_volume)'
 		 ELSE '' END + '
 		SELECT
-			sdh.source_deal_header_id,
-			org.term_start,MAX(sdh.deal_date) deal_date
-			,MAX(org.deal_volume_uom_id) deal_volume_uom_id,
-			SUM(org.hr1*' + @col_exp1 + '*' + @col_exp2 + ') hr1,
-			SUM(org.hr2*' + @col_exp1 + '*' + @col_exp2 + ') hr2,
-			SUM(org.hr3*' + @col_exp1 + '*' + @col_exp2 + ') hr3,
-			SUM(org.hr4*' + @col_exp1 + '*' + @col_exp2 + ') hr4,
-			SUM(org.hr5*' + @col_exp1 + '*' + @col_exp2 + ') hr5,
-			SUM(org.hr6*' + @col_exp1 + '*' + @col_exp2 + ') hr6,
-			SUM(org.hr7*' + @col_exp1 + '*' + @col_exp2 + ') hr7,
-			SUM(org.hr8*' + @col_exp1 + '*' + @col_exp2 + ') hr8,
-			SUM(org.hr9*' + @col_exp1 + '*' + @col_exp2 + ') hr9,
-			SUM(org.hr10*' + @col_exp1 + '*' + @col_exp2 + ') hr10,
-			SUM(org.hr11*' + @col_exp1 + '*' + @col_exp2 + ') hr11,
-			SUM(org.hr12*' + @col_exp1 + '*' + @col_exp2 + ') hr12,
-			SUM(org.hr13*' + @col_exp1 + '*' + @col_exp2 + ') hr13,
-			SUM(org.hr14*' + @col_exp1 + '*' + @col_exp2 + ') hr14,
-			SUM(org.hr15*' + @col_exp1 + '*' + @col_exp2 + ') hr15,
-			SUM(org.hr16*' + @col_exp1 + '*' + @col_exp2 + ') hr16,
-			SUM(org.hr17*' + @col_exp1 + '*' + @col_exp2 + ') hr17,
-			SUM(org.hr18*' + @col_exp1 + '*' + @col_exp2 + ') hr18,
-			SUM(org.hr19*' + @col_exp1 + '*' + @col_exp2 + ') hr19,
-			SUM(org.hr20*' + @col_exp1 + '*' + @col_exp2 + ') hr20,
-			SUM(org.hr21*' + @col_exp1 + '*' + @col_exp2 + ') hr21,
-			SUM(org.hr22*' + @col_exp1 + '*' + @col_exp2 + ') hr22,
-			SUM(org.hr23*' + @col_exp1 + '*' + @col_exp2 + ') hr23,
-			SUM(org.hr24*' + @col_exp1 + '*' + @col_exp2 + ') hr24,
-			SUM(org.hr25*' + @col_exp1 + '*' + @col_exp2 + ') hr25
-			,getdate() create_ts,max(thdi.create_user) create_user,org.expiration_date,
-			coalesce(org.period,0) period
-			,org.granularity,thdi.source_deal_detail_id,thdi.rowid
+			sdh.source_deal_header_id,rhpp.term_start,MAX(sdh.deal_date) deal_date
+			,MAX(rhpp.deal_volume_uom_id) deal_volume_uom_id,
+			SUM(rhpp.hr1*' + @col_exp1 + '*' + @col_exp2 + ') hr1,
+			SUM(rhpp.hr2*' + @col_exp1 + '*' + @col_exp2 + ') hr2,
+			SUM(rhpp.hr3*' + @col_exp1 + '*' + @col_exp2 + ') hr3,
+			SUM(rhpp.hr4*' + @col_exp1 + '*' + @col_exp2 + ') hr4,
+			SUM(rhpp.hr5*' + @col_exp1 + '*' + @col_exp2 + ') hr5,
+			SUM(rhpp.hr6*' + @col_exp1 + '*' + @col_exp2 + ') hr6,
+			SUM(rhpp.hr7*' + @col_exp1 + '*' + @col_exp2 + ') hr7,
+			SUM(rhpp.hr8*' + @col_exp1 + '*' + @col_exp2 + ') hr8,
+			SUM(rhpp.hr9*' + @col_exp1 + '*' + @col_exp2 + ') hr9,
+			SUM(rhpp.hr10*' + @col_exp1 + '*' + @col_exp2 + ') hr10,
+			SUM(rhpp.hr11*' + @col_exp1 + '*' + @col_exp2 + ') hr11,
+			SUM(rhpp.hr12*' + @col_exp1 + '*' + @col_exp2 + ') hr12,
+			SUM(rhpp.hr13*' + @col_exp1 + '*' + @col_exp2 + ') hr13,
+			SUM(rhpp.hr14*' + @col_exp1 + '*' + @col_exp2 + ') hr14,
+			SUM(rhpp.hr15*' + @col_exp1 + '*' + @col_exp2 + ') hr15,
+			SUM(rhpp.hr16*' + @col_exp1 + '*' + @col_exp2 + ') hr16,
+			SUM(rhpp.hr17*' + @col_exp1 + '*' + @col_exp2 + ') hr17,
+			SUM(rhpp.hr18*' + @col_exp1 + '*' + @col_exp2 + ') hr18,
+			SUM(rhpp.hr19*' + @col_exp1 + '*' + @col_exp2 + ') hr19,
+			SUM(rhpp.hr20*' + @col_exp1 + '*' + @col_exp2 + ') hr20,
+			SUM(rhpp.hr21*' + @col_exp1 + '*' + @col_exp2 + ') hr21,
+			SUM(rhpp.hr22*' + @col_exp1 + '*' + @col_exp2 + ') hr22,
+			SUM(rhpp.hr23*' + @col_exp1 + '*' + @col_exp2 + ') hr23,
+			SUM(rhpp.hr24*' + @col_exp1 + '*' + @col_exp2 + ') hr24,
+			SUM(rhpp.hr25*' + @col_exp1 + '*' + @col_exp2 + ') hr25
+			,getdate() create_ts,max(thdi.create_user) create_user,rhpp.expiration_date,
+			coalesce(rhpp.period,0) period
+			,rhpp.granularity,thdi.source_deal_detail_id,thdi.rowid
 		'
 		
 		SET @st_sql1 ='		
-		FROM source_deal_header sdh  with (nolock) 
-			INNER JOIN source_deal_detail sdd  with (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id 
+		FROM source_deal_header sdh    
+			INNER JOIN source_deal_detail sdd    ON sdh.source_deal_header_id=sdd.source_deal_header_id 
 			INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id --and ISNULL(sdh.internal_desk_id,17300)=17300
-			INNER JOIN source_deal_header sdh1 (nolock) ON sdh1.source_deal_header_id=sdh.close_reference_id
-			LEFT JOIN source_deal_detail sdd1 (nolock) ON sdd1.source_deal_header_id=sdh1.source_deal_header_id
+			INNER JOIN source_deal_header sdh1  ON sdh1.source_deal_header_id=sdh.close_reference_id
+			LEFT JOIN source_deal_detail sdd1  ON sdd1.source_deal_header_id=sdh1.source_deal_header_id
 				AND isnull(sdd1.curve_id,-1)=coalesce(sdd.curve_id,sdd1.curve_id,-1)
 				AND sdd1.term_start=sdd.term_start AND sdd.leg=sdd1.leg
-			--LEFT JOIN report_hourly_position_profile rhpp (nolock) ON rhpp.term_start BETWEEN sdd.term_start AND sdd.term_end
-			--	AND rhpp.source_deal_detail_id=sdd1.source_deal_detail_id
-			--LEFT JOIN report_hourly_position_deal rhpd (nolock) ON 
-			--	 rhpd.term_start BETWEEN sdd.term_start AND sdd.term_end and rhpd.source_deal_detail_id = thdi.source_deal_detail_id
-			left join #report_hourly_position_inserted org on org.term_start BETWEEN sdd.term_start AND sdd.term_end 
-				and org.source_deal_detail_id = sdd1.source_deal_detail_id
-			left join source_price_curve_def spcd (nolock) on spcd.source_curve_def_id=sdd.curve_id
+			LEFT JOIN report_hourly_position_profile rhpp  ON rhpp.term_start BETWEEN sdd.term_start AND sdd.term_end
+				AND rhpp.source_deal_detail_id=sdd1.source_deal_detail_id
+			left join source_price_curve_def spcd on spcd.source_curve_def_id=rhpp.curve_id
 		WHERE
-			ISNULL(sdh.product_id,4101)=4100 AND ISNULL(sdh.internal_desk_id,17300)=17301 and org.term_start is not null
-		GROUP BY thdi.source_deal_detail_id,thdi.rowid,sdh.source_deal_header_id,sdd.curve_id,org.term_start,sdd.location_id
-			,coalesce(org.period,0),org.granularity,org.expiration_date						
+			ISNULL(sdh.product_id,4101)=4100 AND ISNULL(sdh.internal_desk_id,17300)=17301  and rhpp.term_start is not null
+		GROUP BY thdi.source_deal_detail_id,thdi.rowid,sdh.source_deal_header_id,sdd.curve_id,rhpp.term_start,sdd.location_id
+		,coalesce(rhpp.period,0),rhpp.granularity,rhpp.expiration_date							
 		'
 
 		EXEC spa_print @st_sql
@@ -1823,35 +1818,35 @@ BEGIN TRY
 		,isnull(h_grp.exp_date,hb.term_date) expiration_date,0 period,max(thdi.granularity) granularity,thdi.source_deal_detail_id,thdi.rowid'
 		
 	SET @st_from = 
-	' FROM source_deal_header sdh  with (nolock) 
-		INNER JOIN source_deal_detail sdd  with (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id --  and sdd.curve_id is not null
+	' FROM source_deal_header sdh    
+		INNER JOIN source_deal_detail sdd    ON sdh.source_deal_header_id=sdd.source_deal_header_id --  and sdd.curve_id is not null
 		INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id  
 			and ISNULL(sdh.internal_desk_id,17300)=17300 --and ISNULL(sdh.product_id,-1)<>4100  --this condition is for applying fixation so it will not inserted for fixation logic.
-		INNER JOIN source_system_book_map ssbm  with (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
+		INNER JOIN source_system_book_map ssbm    on sdh.source_system_book_id1=ssbm.source_system_book_id1
 			and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
 				and sdh.source_system_book_id4=ssbm.source_system_book_id4
 		left join dbo.source_deal_detail_position sddp on sddp.source_deal_detail_id=sdd.source_deal_detail_id
-		LEFT JOIN source_price_curve_def spcd  with (nolock) ON spcd.source_curve_def_id=sdd.curve_id
-		LEFT JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=spcd.settlement_curve_id
-		outer apply ( select nullif(sum(volume_mult),0) term_hours from hour_block_term (nolock) where
+		LEFT JOIN source_price_curve_def spcd    ON spcd.source_curve_def_id=sdd.curve_id
+		LEFT JOIN source_price_curve_def spcd1   ON spcd1.source_curve_def_id=spcd.settlement_curve_id
+		outer apply ( select nullif(sum(volume_mult),0) term_hours from hour_block_term  where
 			dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') AND block_define_id = COALESCE(spcd.block_define_id,sdh.block_define_id,'+ @baseload_block_define_id + ')
 			and term_date between sdd.term_start and sdd.term_end and (isnull(spcd.hourly_volume_allocation,17601) in (17600,17601,17602,17605) or sdd.physical_financial_flag=''p'')
 		) hb_term		
 		outer apply (
-			select sum(volume_mult) term_no_hrs from hour_block_term hbt (nolock) inner join (select distinct exp_date from holiday_group h (nolock) where  h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date between sdd.term_start  and sdd.term_END ) ex on ex.exp_date=hbt.term_date
+			select sum(volume_mult) term_no_hrs from hour_block_term hbt  inner join (select distinct exp_date from holiday_group h  where  h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date between sdd.term_start  and sdd.term_END ) ex on ex.exp_date=hbt.term_date
 			where hbt.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') 
 				and hbt.block_define_id=COALESCE(spcd.block_define_id,' + @baseload_block_define_id +') 
 				and hbt.term_date between sdd.term_start  and sdd.term_END 
 				and isnull(spcd.hourly_volume_allocation,17601) IN(17603,17604) and sdd.physical_financial_flag=''f''
 		) term_hrs_exp
-		LEFT JOIN hour_block_term hb with (nolock) on hb.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') AND 
+		LEFT JOIN hour_block_term hb   on hb.dst_group_value_id=isnull(thdi.dst_group_value_id,'+@default_dst_group+') AND 
 			hb.block_define_id=COALESCE(spcd.block_define_id,sdh.block_define_id,' + @baseload_block_define_id + ')  
 			and hb.term_date between sdd.term_start and sdd.term_end
-		left join rec_volume_unit_conversion conv (nolock) on conv.from_source_uom_id=sdd.deal_volume_uom_id
+		left join rec_volume_unit_conversion conv  on conv.from_source_uom_id=sdd.deal_volume_uom_id
 				and conv.to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
 		left join #density_multiplier dm on sdd.source_deal_detail_id=dm.source_deal_detail_id 	
-		outer apply  (select distinct exp_date from holiday_group h (nolock) where h.exp_date=hb.term_date and h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date between sdd.term_start  and sdd.term_END ) hg  
-		LEFT OUTER JOIN hour_block_term hb1 (nolock) ON hb1.dst_group_value_id=hb.dst_group_value_id  
+		outer apply  (select distinct exp_date from holiday_group h  where h.exp_date=hb.term_date and h.hol_group_value_id=ISNULL(spcd1.exp_calendar_id,spcd.exp_calendar_id) and h.exp_date between sdd.term_start  and sdd.term_END ) hg  
+		LEFT OUTER JOIN hour_block_term hb1  ON hb1.dst_group_value_id=hb.dst_group_value_id  
 			AND hb1.block_define_id=hb.block_define_id AND hb1.term_date-1=hb.term_date
 		outer apply (
 			select MAX(exp_date) exp_date from holiday_group where hol_group_value_id=spcd.exp_calendar_id
@@ -1882,8 +1877,8 @@ BEGIN TRY
 	drop table #deal_detail_total_volume
 		
 	select source_deal_detail_id,
-	case when max(calc_total_volume)=2 and (max(deal_volume_uom_id) =@mw_id or max(deal_volume_uom_id) =@kw_id) then 1.00/4.0000 else 1.0000 end
-	* sum(hr1+hr2+hr3+hr4+hr5+hr6+hr7+hr8+hr9+hr10+hr11+hr12+hr13+hr14+hr15+hr16+hr17+hr18+hr19+hr20+hr21+hr22+hr23+hr24) total_volume
+	--case when max(calc_total_volume)=2 and (max(deal_volume_uom_id) =@mw_id or max(deal_volume_uom_id) =@kw_id) then 1.00/4.0000 else 1.0000 end*
+	 sum(hr1+hr2+hr3+hr4+hr5+hr6+hr7+hr8+hr9+hr10+hr11+hr12+hr13+hr14+hr15+hr16+hr17+hr18+hr19+hr20+hr21+hr22+hr23+hr24) total_volume
 	into #deal_detail_total_volume -- select * from #deal_detail_total_volume
 	from #report_hourly_position_inserted 
 	where calc_total_volume>0
@@ -2110,11 +2105,11 @@ BEGIN TRY
 			MAX(sdd.buy_sell_flag) buy_sell_flag,max(sddp.total_volume) total_volume,isnull(max(sdh.product_id),4101) fixing
 			,max(sdd.volume_multiplier2) fix_volume_multiplier2 ,max(sdd.multiplier) fix_multiplier,max(sdd.pay_opposite) pay_opposite,
 			MAX(formula) formula,thdi.source_deal_detail_id,max(thdi.rowid) rowid				
-		FROM  source_deal_header sdh with (nolock) INNER JOIN 
-		source_deal_detail sdd  with (nolock) on sdd.source_deal_header_id=sdh.source_deal_header_id ' 
+		FROM  source_deal_header sdh   INNER JOIN 
+		source_deal_detail sdd    on sdd.source_deal_header_id=sdh.source_deal_header_id ' 
 		+ CASE WHEN ISNULL(@insert_type, 0) = 0
 			THEN ' INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id' ELSE '' END + '
-		INNER JOIN deal_position_break_down dpbd with (nolock) ON dpbd.source_deal_detail_id=sdd.source_deal_detail_id 
+		INNER JOIN deal_position_break_down dpbd   ON dpbd.source_deal_detail_id=sdd.source_deal_detail_id 
 		left join dbo.source_deal_detail_position sddp on sddp.source_deal_detail_id=sdd.source_deal_detail_id
 		left JOIN source_price_curve_def spcd with (nolock) ON spcd.source_curve_def_id=isnull(dpbd.curve_id,sdd.formula_curve_id)
 		left JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=sdd.curve_id
@@ -2146,19 +2141,25 @@ BEGIN TRY
 			,del_term_end
 			)
 
+
 		UPDATE #tmp_financial_term
 		SET fin_term_vol = cast(isnull(term.multiplier, 1) AS NUMERIC(24, 16)) * cast(term.total_volume AS NUMERIC(30, 16))
 			,del_vol_multiplier = cast(isnull(term.del_vol_multiplier, 1) AS NUMERIC(24, 16)) * CASE 
 				WHEN pay_opposite = 'y' THEN - 1 ELSE 1 END
-			,multiplier2 = CASE WHEN isnull(term.del_vol_multiplier, 1) < 0 THEN -1 ELSE 1 END * CASE WHEN pay_opposite = 'y' THEN -1 ELSE 1 END
+		--	,multiplier2 = CASE WHEN isnull(term.del_vol_multiplier, 1) < 0 THEN -1 ELSE 1 END * CASE WHEN pay_opposite = 'y' THEN -1 ELSE 1 END
+			,multiplier2 =  CASE WHEN pay_opposite = 'y' THEN -1 ELSE 1 END
+
 		FROM #tmp_financial_term term
 		WHERE fixing = 4100
 
 		UPDATE #tmp_financial_term
-		SET fin_term_vol = cast(isnull(term.multiplier, 1) AS NUMERIC(24, 16)) * cast(ABS(rp.term_volume) AS NUMERIC(22, 10)) 
+		SET 
+			--fin_term_vol = cast(isnull(term.multiplier, 1) AS NUMERIC(24, 16)) * cast(abs(rp.term_volume) AS NUMERIC(22, 10)) 
+			--* CASE WHEN term.buy_sell_flag = 'b' AND rp.term_volume < 0 THEN -1 ELSE 1 END
+			fin_term_vol = cast(isnull(term.multiplier, 1) AS NUMERIC(24, 16)) * cast(rp.term_volume AS NUMERIC(22, 10)) 
 			* CASE WHEN term.buy_sell_flag = 'b' AND rp.term_volume < 0 THEN -1 ELSE 1 END
 			,del_vol_multiplier = cast(isnull(term.del_vol_multiplier, 1) AS NUMERIC(24, 16))
-			,multiplier2 = CASE WHEN isnull(term.del_vol_multiplier, 1) < 0 THEN -1 ELSE 1 END
+			,multiplier2 =  CASE WHEN pay_opposite = 'y' THEN -1 ELSE 1 END
 			,volume_uom_id=rp.deal_volume_uom_id
 		FROM #tmp_financial_term term
 		INNER JOIN (
@@ -2168,7 +2169,7 @@ BEGIN TRY
 					,max(rp.deal_volume_uom_id) deal_volume_uom_id
 					,(sum(hr1 + hr2 + hr3 + hr4 + hr5 + hr6 + hr7 + hr8 + hr9 + hr10 + hr11 + hr12 + hr13 + hr14 + hr15 + hr16 + hr17
 					 + hr18 + hr19 + hr20 + hr21 + hr22 + hr23 + hr24)) term_volume
-				FROM #report_hourly_position_inserted rp(NOLOCK)
+				FROM #report_hourly_position_inserted rp
 				INNER JOIN (select distinct source_deal_detail_id,del_term_start,del_term_end from #tmp_financial_term  where fixing <> 4100 ) term
 					 on term.source_deal_detail_id = rp.source_deal_detail_id
 					 and rp.term_start BETWEEN term.del_term_start AND term.del_term_end
@@ -2228,10 +2229,10 @@ BEGIN TRY
 			,max(COALESCE(spcd.display_uom_id,spcd.uom_id) ) deal_volume_uom_id, getdate() create_ts,max(thdi.create_user) create_user,
 			sum(tft.fin_term_vol*ISNULL(tft.multiplier2,1)*ISNULL(rvuc.conversion_factor, 1)) AS calc_volume,
 			tft.fin_term_end term_end,max(COALESCE(h_grp.exp_date,tft.expiration_date)) expiration_date,MAX(tft.formula) formula,thdi.source_deal_detail_id,max(thdi.rowid) rowid ' + @report_hourly_position_breakdown_main + '
-		FROM  source_deal_header sdh  with (nolock)
+		FROM  source_deal_header sdh   
 			INNER JOIN #tmp_financial_term tft ON tft.source_deal_header_id=sdh.source_deal_header_id  
 				and isnull(tft.hourly_volume_allocation,17601) IN(17600,17604) -- in (17600,17603) --17603 expiration allocation
-			left join source_system_book_map ssbm  with (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
+			left join source_system_book_map ssbm    on sdh.source_system_book_id1=ssbm.source_system_book_id1
 				and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
 				and sdh.source_system_book_id4=ssbm.source_system_book_id4
 			inner JOIN #tmp_header_deal_id thdi ON tft.source_deal_detail_id=thdi.source_deal_detail_id
@@ -2240,7 +2241,7 @@ BEGIN TRY
 					and spcd.source_curve_def_id=tft.curve_id and h.hol_group_value_id=spcd.exp_calendar_id
 					and tft.fin_term_start between h.hol_date AND isnull(nullif(h.hol_date_to,''1900-01-01''),h.hol_date)
 			) h_grp
-			left JOIN source_price_curve_def spcd with (nolock) ON spcd.source_curve_def_id=tft.curve_id 
+			left JOIN source_price_curve_def spcd   ON spcd.source_curve_def_id=tft.curve_id 
 			left join rec_volume_unit_conversion rvuc on rvuc.from_source_uom_id = tft.volume_uom_id
 				AND rvuc.to_source_uom_id = COALESCE(spcd.display_uom_id,spcd.uom_id)
 		Group by  thdi.source_deal_detail_id,tft.source_deal_header_id,tft.curve_id,tft.location_id,tft.physical_financial_flag, tft.volume_uom_id,tft.commodity_id,tft.fin_term_start,tft.fin_term_end'
@@ -2259,15 +2260,15 @@ BEGIN TRY
 			ISNULL(vol.term_start,tft.fin_term_end),max(COALESCE(h_grp.exp_date,tft.expiration_date)) expiration_date
 			,MAX(tft.formula) formula,thdi.source_deal_detail_id,max(thdi.rowid) rowid' 
 				+ @report_hourly_position_breakdown_main + '
-		FROM  source_deal_header sdh  with (nolock)
+		FROM  source_deal_header sdh   
 		INNER JOIN  #tmp_financial_term tft ON tft.source_deal_header_id=sdh.source_deal_header_id  
 			and isnull(tft.hourly_volume_allocation,17601)=17602
-		left join source_system_book_map ssbm  with (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
+		left join source_system_book_map ssbm    on sdh.source_system_book_id1=ssbm.source_system_book_id1
 			and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
 			and sdh.source_system_book_id4=ssbm.source_system_book_id4
 		OUTER  apply (
 			select term_start,hr1+hr2+hr3+hr4+hr5+hr6+hr7+hr8+hr9+hr10+hr11+hr12+hr13+hr14+hr15+hr16+hr17+hr18+hr19+hr20+hr21+hr22+hr23+hr24 term_volume
-			from #report_hourly_position_inserted rp (nolock) where rp.term_start between tft.fin_term_start and tft.fin_term_end and  tft.source_deal_detail_id=rp.source_deal_detail_id
+			from #report_hourly_position_inserted rp  where rp.term_start between tft.fin_term_start and tft.fin_term_end and  tft.source_deal_detail_id=rp.source_deal_detail_id
 		) vol
 		inner JOIN #tmp_header_deal_id thdi ON tft.source_deal_detail_id=thdi.source_deal_detail_id
 		outer apply (
@@ -2276,13 +2277,12 @@ BEGIN TRY
 					and    spcd.source_curve_def_id=tft.curve_id and h.hol_group_value_id=spcd.exp_calendar_id
 					and ISNULL(vol.term_start,tft.fin_term_start) between h.hol_date AND isnull(nullif(h.hol_date_to,''1900-01-01''),h.hol_date)
 		) h_grp 
-		left JOIN source_price_curve_def spcd with (nolock) ON spcd.source_curve_def_id=tft.curve_id 
+		left JOIN source_price_curve_def spcd   ON spcd.source_curve_def_id=tft.curve_id 
 		left join rec_volume_unit_conversion rvuc on rvuc.from_source_uom_id = tft.volume_uom_id
 					AND rvuc.to_source_uom_id = COALESCE(spcd.display_uom_id,spcd.uom_id)
 		group by thdi.source_deal_detail_id,tft.source_deal_header_id,	tft.curve_id,ISNULL(vol.term_start,tft.fin_term_start),ISNULL(vol.term_start,tft.fin_term_end) '
 
 		EXEC spa_print @st_sql
-
 		EXEC (@st_sql)
 
 
@@ -2291,7 +2291,6 @@ BEGIN TRY
 			'
 		SELECT 
 			sdh.source_deal_header_id,
-			--dpbd.curve_id,
 			case when dpbd.derived_curve_id is  null then dpbd.curve_id else sdd.curve_id end curve_id,
 			ISNULL(dpbd.fin_term_start,sdd.term_start) term_start,
 			max(sdh.deal_date) deal_date,max(COALESCE(spcd.display_uom_id,spcd.uom_id) ) deal_volume_uom_id
@@ -2302,17 +2301,17 @@ BEGIN TRY
 			case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,dpbd.del_vol_multiplier,1)  * CASE WHEN sdh.product_id=4100 THEN CASE WHEN sdd.pay_opposite=''y'' THEN -1 ELSE 1 END ELSE 1 END ELSE CASE WHEN buy_sell_flag=''b'' THEN 1 ELSE -1 END END  as numeric(22,16))*ISNULL(rvuc.conversion_factor, 1))   AS calc_volume,
 			ISNULL(dpbd.fin_term_end,sdd.term_end) term_end,COALESCE(h_grp.exp_date,dpbd.fin_expiration_date,sdd.term_end) expiration_date,MAX(dpbd.formula) formula,thdi.source_deal_detail_id,max(thdi.rowid) rowid' 
 			+ @report_hourly_position_breakdown_main + '
-		FROM  source_deal_header sdh  with (nolock)
-		INNER JOIN source_deal_detail sdd  with (nolock) ON sdh.source_deal_header_id=sdd.source_deal_header_id  
+		FROM  source_deal_header sdh   
+		INNER JOIN source_deal_detail sdd    ON sdh.source_deal_header_id=sdd.source_deal_header_id  
 		INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id
-		INNER JOIN deal_position_break_down dpbd with (nolock) ON dpbd.source_deal_header_id=sdh.source_deal_header_id   
+		INNER JOIN deal_position_break_down dpbd   ON dpbd.source_deal_header_id=sdh.source_deal_header_id   
 			AND sdd.leg=dpbd.leg AND sdd.term_start=dpbd.del_term_start	-- and dpbd.derived_curve_id IS  NULL
 		left join dbo.source_deal_detail_position sddp on sddp.source_deal_detail_id=sdd.source_deal_detail_id
-		left join source_system_book_map ssbm  with (nolock) on sdh.source_system_book_id1=ssbm.source_system_book_id1
+		left join source_system_book_map ssbm    on sdh.source_system_book_id1=ssbm.source_system_book_id1
 			and sdh.source_system_book_id2=ssbm.source_system_book_id2 and sdh.source_system_book_id3=ssbm.source_system_book_id3
 			and sdh.source_system_book_id4=ssbm.source_system_book_id4
-		left JOIN source_price_curve_def spcd with (nolock) ON spcd.source_curve_def_id=dpbd.curve_id
-		left JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=sdd.curve_id
+		left JOIN source_price_curve_def spcd   ON spcd.source_curve_def_id=dpbd.curve_id
+		left JOIN source_price_curve_def spcd1   ON spcd1.source_curve_def_id=sdd.curve_id
 		left join #density_multiplier dm on sdd.source_deal_detail_id=dm.source_deal_detail_id and 	
 		 COALESCE(sdd.position_uom,spcd1.display_uom_id,spcd1.uom_id)=COALESCE(sdd.position_uom,spcd1.display_uom_id,spcd1.uom_id)	
 		outer apply (select MAX(exp_date) exp_date from holiday_group h
@@ -2383,7 +2382,7 @@ BEGIN TRY
 		FROM  #tmp_header_deal_id thdi
 		INNER JOIN  #tmp_financial_term tft ON tft.source_deal_detail_id=thdi.source_deal_detail_id  and isnull(tft.hourly_volume_allocation,17601)=17605 -- and fixing<>4100
 		cross  apply (
-			select * from #report_hourly_position_inserted rp (nolock) where rp.term_start between tft.fin_term_start and tft.fin_term_end 
+			select * from #report_hourly_position_inserted rp  where rp.term_start between tft.fin_term_start and tft.fin_term_end 
 			 and tft.source_deal_detail_id=rp.source_deal_detail_id
 		) vol	
 	'
@@ -2580,3 +2579,4 @@ BEGIN CATCH
 END CATCH
 	/************************************* Object: 'spa_maintain_transaction_job' END *************************************/
 	
+
