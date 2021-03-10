@@ -68,7 +68,7 @@ declare @source_deal_header_ids VARCHAR(MAX),
 	,@user_login_id VARCHAR(50),@insert_process_table VARCHAR(1)
 	,@call_from BIT=1,@call_from_2 VARCHAR(20) = NULL 
 	,@trigger_workflow NCHAR(1) = 'y'
-
+	,@process_id_alert VARCHAR(128) = NULL
 /*
 select * from report_hourly_position_deal where source_deal_header_id=100856
 select * from report_hourly_position_profile where source_deal_header_id=100856
@@ -102,10 +102,13 @@ SET nocount off
 DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
 SET CONTEXT_INFO @contextinfo
 
+
+		
+
 -- select * from  process_deal_position_breakdown set process_status=0
 -- delete process_deal_position_breakdown
 
-select @source_deal_header_ids=104071 , 
+select @source_deal_header_ids=163855 , 
 	@process_id = null, --'52C2B537_BDBA_41DB_BE8D_B657F070A041',
 	@insert_type =1,
 	@partition_no =1,
@@ -145,8 +148,6 @@ declare @mw_uoms varchar(100)
 select @mw_uoms=ISNULL(@mw_uoms+',','')+cast(source_uom_id as varchar) from source_uom where uom_id in ('MW','KW')
 set @mw_uoms=isnull(nullif(@mw_uoms,''),'-1')
 
-
-
 DECLARE @default_dst_group VARCHAR(50)
 
 SELECT  @default_dst_group = tz.dst_group_value_id
@@ -185,7 +186,6 @@ CREATE TABLE #total_process_deals(
 	source_deal_detail_id int
 )
 
-	
 
 --for debugging by deal id 
 set @process_id=isnull(@process_id,dbo.FNAGetNewID())
@@ -221,7 +221,6 @@ begin
 			isnull(spcd.commodity_id,-1) commodity_id,isnull(fix.product_id,4101) fixation
 			,isnull(fix.internal_deal_type_value_id,-999999)
 			,sdd.source_deal_detail_id  
-	
 		FROM #sdh11 p inner join source_deal_header fix  on p.id=fix.close_reference_id 
 				and ISNULL(fix.internal_desk_id,17300)=17301 
 				and isnull(fix.product_id,4101)=4100 
@@ -237,11 +236,12 @@ begin
 			,commodity_id,fixation ,internal_deal_type_value_id,source_deal_detail_id)
 		SELECT max(sdd.source_deal_header_id),@user_login_id,getdate(),0,@orginal_insert_type
 		,max(isnull(fix.internal_desk_id,17300)) deal_type ,
-			max(isnull(spcd.commodity_id,-1)) commodity_id,max(isnull(fix.product_id,4101)) fixation
+			max(isnull(spcd.commodity_id,-1)) commodity_id,max(isnull(org.product_id,4101)) fixation
 			,max(isnull(fix.internal_deal_type_value_id,-999999)),sdd.source_deal_detail_id  
 		FROM #sdh11 h inner join source_deal_header fix on h.id=fix.source_deal_header_id 
 			and isnull(fix.product_id,4101)=4100
-		inner join source_deal_detail sdd on fix.close_reference_id=sdd.source_deal_header_id
+		inner join source_deal_header org on org.source_deal_header_id=fix.close_reference_id 
+		inner join source_deal_detail sdd on org.source_deal_header_id=sdd.source_deal_header_id
 		left join source_price_curve_def spcd on sdd.curve_id=spcd.source_curve_def_id and sdd.curve_id is not null
 		left join process_deal_position_breakdown ex on  ex.source_deal_header_id=sdd.source_deal_header_id
 		where  ex.source_deal_header_id is null
@@ -336,7 +336,7 @@ IF  ISNULL(@insert_type,0) NOT IN (1,2)
 BEGIN 		
 	IF isnull(@call_from,0)IN (0,2)
 	BEGIN
-			
+
 		SET @sql='IF COL_LENGTH('''+@effected_deals+''', ''source_deal_detail_id'') IS NULL
 					ALTER TABLE '+@effected_deals+' ADD source_deal_detail_id INT
 				'
@@ -425,6 +425,7 @@ BEGIN
 			--EXECUTE master.dbo.xp_sqlagent_enum_jobs 1,''
 
 			IF  not EXISTS (SELECT a.job_id FROM dbo.farrms_sysjobactivity a INNER JOIN  msdb.dbo.sysjobs_view b ON a.job_id=b.job_id 
+				--inner JOIN msdb.dbo.sysjobsteps js ON a.job_id = js.job_id AND ISNULL(a.last_executed_step_id,0)+1 = js.step_id
 			WHERE b.name like '%'+db_name()+' - Calc Position Breakdown%' AND a.stop_execution_date IS NULL  
 				AND a.start_execution_date IS NOT NULL -- AND a.run_requested_date IS NOT NULL
 				)
@@ -523,7 +524,6 @@ FROM source_deal_detail sdd
 BEGIN TRY
 ------------------------	
 	
-
 	if object_id('tempdb..#position_report_group_map') is not null
 		drop table #position_report_group_map
 
@@ -614,8 +614,7 @@ BEGIN TRY
 			and s.physical_financial_flag=d.physical_financial_flag
 
 	set @sql='
-		update e set rowid=h.rowid
-		from '+@effected_deals +' e inner join #tmp_header_deal_id_1 h on h.source_deal_detail_id=e.source_deal_detail_id
+		update e set rowid=h.rowid from '+@effected_deals +' e inner join #tmp_header_deal_id_1 h on h.source_deal_detail_id=e.source_deal_detail_id
 		'
 		
 	EXEC spa_print @sql
