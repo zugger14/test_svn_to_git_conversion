@@ -1,4 +1,4 @@
-BEGIN TRY
+	BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'SDETSV'
@@ -2081,4 +2081,3 @@ FROM #temp_export_sap1 ORDER BY invoice_type,row_num, product, value, volume ASC
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
-	

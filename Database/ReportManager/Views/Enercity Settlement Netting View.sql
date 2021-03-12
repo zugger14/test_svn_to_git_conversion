@@ -1,4 +1,4 @@
-BEGIN TRY
+	BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'ENSNV'

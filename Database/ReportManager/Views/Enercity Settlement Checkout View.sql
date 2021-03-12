@@ -1,4 +1,4 @@
-   BEGIN TRY
+	BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'ENSCV'
@@ -590,7 +590,7 @@ SET @_sql1 = ''
 
 	MAX(sco.accounting_month) AS show_accounting_month,
 
-	MAX(ISNULL(sdv_cc_c.code, cc.cc_country_name)) counterparty_country_name,
+	MAX(ISNULL(sdv_cc_c.description, cc.cc_country_name)) counterparty_country_name,
 
 	MAX(ISNULL(sdv_cc_r.description, cc.cc_region_name)) counterparty_region_name,
 
@@ -1376,7 +1376,7 @@ SET @_sql1 = ''
 
 	MAX(sco.accounting_month) AS show_accounting_month,
 
-	MAX(ISNULL(sdv_cc_c.code, cc.cc_country_name)) counterparty_country_name,
+	MAX(ISNULL(sdv_cc_c.description, cc.cc_country_name)) counterparty_country_name,
 
 	ISNULL(MAX(sdv_cc_r.description), MAX(cc.cc_region_name)) counterparty_region_name,
 
@@ -1886,7 +1886,7 @@ CASE WHEN @_to_as_of_date IS NOT NULL THEN '' AND sco.as_of_date <= '''''' + @_t
 
 CASE WHEN @_charge_type_id IS NULL THEN '''' ELSE '' AND sid.invoice_line_item_id IN('' + @_charge_type_id + '') '' END +
 
-CASE WHEN @_stmt_invoice_id IS NULL THEN '''' ELSE '' AND si.stmt_invoice_id IN('' + @_stmt_invoice_id + '') '' END +
+--CASE WHEN @_stmt_invoice_id IS NULL THEN '''' ELSE '' AND si.stmt_invoice_id IN('' + @_stmt_invoice_id + '') '' END +
 
 + CASE WHEN @_accounting_status IS NULL THEN '''' ELSE '' AND CASE 
 
