@@ -1,7 +1,5 @@
 /****** Object:  StoredProcedure [dbo].[spa_maintain_transaction_job]    Script Date: 10/28/2011 21:32:16 ******/
-IF EXISTS (
-		SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[spa_maintain_transaction_job]') AND type IN (N'P',N'PC')
-		)
+IF EXISTS ( SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[spa_maintain_transaction_job]') AND type IN (N'P',N'PC') )
 	DROP PROCEDURE [dbo].[spa_maintain_transaction_job]
 GO
 
@@ -47,7 +45,7 @@ drop table #tmp_header_deal_id
 drop table #tmp_position_breakdown
 declare @process_id varchar(50),@insert_type int,@partition_no int,@user_login_id varchar(30),@deal_delete varchar(1)
 drop table #source_deal_detail_hour
-select  @process_id='219B5C4E_BABD_4377_8C0E_BBEB7523E38A',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
+select  @process_id='FF42DB81_35FF_426E_B303_797D72E3120E',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
 --report_position_farrms_admin_49AFBFA8_BC35_404B_8590_78F087008D35
 --TRUNCATE TABLE select * from adiha_process.dbo.report_position_farrms_admin_E5D1C26F_C332_4A0A_8082_F3936706EEA8
 --insert into adiha_process.dbo.report_position_farrms_admin_testing select 4100,'d'
@@ -1903,57 +1901,6 @@ BEGIN TRY
 		) rnd
 
 
-/*
-	if isnull(@position_retention_period,0)<>0
-	begin
-
-		select @as_of_date=getdate()-1
-
-		delete s from dbo.report_hourly_position_deal_main_hotdata s 
-			inner join #report_hourly_position_inserted i on s.term_start=i.term_start and s.source_deal_detail_id=i.source_deal_detail_id
-			--and i.term_start between getdate() and dateadd(day,@position_retention_period,getdate())
-			and i.calc_total_volume between 0 and 1
-
-		delete s from dbo.report_hourly_position_profile_main_hotdata s 
-			inner join #report_hourly_position_inserted i on s.term_start=i.term_start and s.source_deal_detail_id=i.source_deal_detail_id
-		--	and i.term_start between getdate() and dateadd(day,@position_retention_period,getdate())
-			and i.calc_total_volume=2
-
-		--delete s from dbo.report_hourly_position_fixed_main_hotdata s 
-		--	inner join #report_hourly_position_inserted i on s.term_start=i.term_start and s.source_deal_detail_id=i.source_deal_detail_id
-		--	--and i.term_start between getdate() and dateadd(day,@position_retention_period,getdate())
-		--	and i.calc_total_volume=3
-
-		insert into dbo.report_hourly_position_deal_main_hotdata
-		(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12
-		,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
-		,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid)
-		select source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16
-			,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid
-		from #report_hourly_position_inserted i 
-		where  i.term_start between @as_of_date and dateadd(day,@position_retention_period,@as_of_date)
-			and	i.calc_total_volume between 0 and 1
-
-		INSERT INTO dbo.report_hourly_position_profile_main_hotdata
-			(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16
-			,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid)
-		select source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16
-			,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid
-		from #report_hourly_position_inserted i 
-		where i.term_start between @as_of_date and dateadd(day,@position_retention_period,@as_of_date) and i.calc_total_volume=2
-
-		--insert into dbo.report_hourly_position_fixed_main_hotdata
-		--(source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14
-		--,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,create_ts,create_user
-		--,expiration_date,period,granularity,source_deal_detail_id,rowid) 
-		--select source_deal_header_id,term_start,deal_date,deal_volume_uom_id,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10
-		--,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25
-		--	,create_ts,create_user,expiration_date,period,granularity,source_deal_detail_id,rowid
-		--from #report_hourly_position_inserted i 
-		--where i.term_start between @as_of_date and dateadd(day,@position_retention_period,@as_of_date) and i.calc_total_volume=3
-	end
---*/
-
 	--------------------------------------------------------------------------------------------------------------
 	----inserting delta for left hand side deal
 	---------------------------------------------------------------------------------------------------------------
@@ -2080,85 +2027,84 @@ BEGIN TRY
 	*/
 	SET @st_sql = 
 	'
-	INSERT INTO #tmp_financial_term (
-		source_deal_header_id ,leg,curve_id ,del_term_start ,del_term_end,fin_term_start,fin_term_end ,multiplier ,del_vol_multiplier 
-		,location_id,hourly_volume_allocation,physical_financial_flag,volume_uom_id, expiration_date,commodity_id,phy_curve_id,phy_location_id
-		,buy_sell_flag,total_volume,fixing,fix_multiplier,fix_volume_multiplier2,pay_opposite,formula,source_deal_detail_id,rowid)
-	SELECT term.source_deal_header_id ,max(term.leg) leg,term.curve_id ,min(term.del_term_start) del_term_start
-		,max(term.del_term_end) del_term_end,term.fin_term_start,term.fin_term_end ,avg(term.multiplier) multiplier
-		,avg(term.del_vol_multiplier) del_vol_multiplier,term.location_id
-		,max(term.hourly_volume_allocation) hourly_volume_allocation,term.physical_financial_flag,term.volume_uom_id
-		,term.expiration_date,max(term.commodity_id) commodity_id,term.phy_curve_id,term.phy_location_id,MAX(buy_sell_flag)
-		,sum(term.total_volume) total_volume,max(term.fixing) fixing,avg(term.fix_volume_multiplier2) fix_volume_multiplier2
-		,avg(term.fix_multiplier) fix_multiplier, max(term.pay_opposite) pay_opposite ,MAX(formula),term.source_deal_detail_id,max(term.rowid) rowid
-	from (
-		SELECT sdd.source_deal_header_id ,sdd.leg leg,dpbd.curve_id ,dpbd.del_term_start,dateadd(month,1,dpbd.del_term_start)-1 del_term_end
-			,min(dpbd.fin_term_start) fin_term_start,max(dpbd.fin_term_end) fin_term_end
-			,avg(dpbd.multiplier) multiplier,avg(dpbd.del_vol_multiplier) del_vol_multiplier
-			,case when dpbd.derived_curve_id is  null then NULL else sdd.location_id end location_id
-			,max(isnull(spcd.hourly_volume_allocation,17601)) hourly_volume_allocation
-			,max(COALESCE(spcd.block_define_id,'+ @baseload_block_define_id + ')) block_define_id
-			,max(COALESCE(spcd.block_type,sdh.block_type,' + @baseload_block_type + ')) block_type
-			,max(case when dpbd.derived_curve_id is  null then ''f'' else sdd.physical_financial_flag end) physical_financial_flag
-			,max(COALESCE(sdd.position_uom,spcd1.display_uom_id,spcd1.uom_id)) volume_uom_id
-			,max(COALESCE(dpbd.fin_expiration_date,h_grp.exp_date,sdd.term_end)) expiration_date,max(spcd.commodity_id) commodity_id,sdd.curve_id phy_curve_id,isnull(sdd.location_id,-1) phy_location_id,
-			MAX(sdd.buy_sell_flag) buy_sell_flag,max(sddp.total_volume) total_volume,isnull(max(sdh.product_id),4101) fixing
-			,max(sdd.volume_multiplier2) fix_volume_multiplier2 ,max(sdd.multiplier) fix_multiplier,max(sdd.pay_opposite) pay_opposite,
-			MAX(formula) formula,thdi.source_deal_detail_id,max(thdi.rowid) rowid				
-		FROM  source_deal_header sdh   INNER JOIN 
-		source_deal_detail sdd    on sdd.source_deal_header_id=sdh.source_deal_header_id ' 
-		+ CASE WHEN ISNULL(@insert_type, 0) = 0
-			THEN ' INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id' ELSE '' END + '
-		INNER JOIN deal_position_break_down dpbd   ON dpbd.source_deal_detail_id=sdd.source_deal_detail_id 
-		left join dbo.source_deal_detail_position sddp on sddp.source_deal_detail_id=sdd.source_deal_detail_id
-		left JOIN source_price_curve_def spcd with (nolock) ON spcd.source_curve_def_id=isnull(dpbd.curve_id,sdd.formula_curve_id)
-		left JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=sdd.curve_id
-		outer apply (
-				select MAX(exp_date) exp_date from holiday_group where hol_group_value_id=spcd.exp_calendar_id
-					and isnull(dpbd.fin_term_start,sdd.term_start) between hol_date AND isnull(hol_date_to,hol_date)
-			) h_grp 
-		WHERE 1=1 --AND sdd.fixed_float_leg=''t'' 
-			and isnull(spcd.hourly_volume_allocation,17601) in (17600,17602,17603,17604,17605)
-		Group by  sdd.source_deal_header_id,sdd.leg,sdd.curve_id,dpbd.curve_id,sdd.location_id
-			,case when dpbd.derived_curve_id is null then NULL else sdd.location_id end,dpbd.del_term_start
-			,thdi.source_deal_detail_id
-	) term
-	Group by  term.source_deal_header_id,term.curve_id,term.phy_curve_id,term.phy_location_id,term.location_id
-		,term.fin_term_start,term.fin_term_end,term.expiration_date,term.physical_financial_flag,term.volume_uom_id
-		,term.source_deal_detail_id
+		INSERT INTO #tmp_financial_term (
+			source_deal_header_id ,leg,curve_id ,del_term_start ,del_term_end,fin_term_start,fin_term_end ,multiplier ,del_vol_multiplier 
+			,location_id,hourly_volume_allocation,physical_financial_flag,volume_uom_id, expiration_date,commodity_id,phy_curve_id,phy_location_id
+			,buy_sell_flag,total_volume,fixing,fix_multiplier,fix_volume_multiplier2,pay_opposite,formula,source_deal_detail_id,rowid)
+		SELECT term.source_deal_header_id ,max(term.leg) leg,term.curve_id ,min(term.del_term_start) del_term_start
+			,max(term.del_term_end) del_term_end,term.fin_term_start,term.fin_term_end ,avg(term.multiplier) multiplier
+			,avg(term.del_vol_multiplier) del_vol_multiplier,term.location_id
+			,max(term.hourly_volume_allocation) hourly_volume_allocation,term.physical_financial_flag,term.volume_uom_id
+			,term.expiration_date,max(term.commodity_id) commodity_id,term.phy_curve_id,term.phy_location_id,MAX(buy_sell_flag)
+			,sum(term.total_volume) total_volume,max(term.fixing) fixing,avg(term.fix_volume_multiplier2) fix_volume_multiplier2
+			,avg(term.fix_multiplier) fix_multiplier, max(term.pay_opposite) pay_opposite ,MAX(formula),term.source_deal_detail_id,max(term.rowid) rowid
+		from (
+			SELECT sdd.source_deal_header_id ,sdd.leg leg,dpbd.curve_id ,dpbd.del_term_start,dateadd(month,1,dpbd.del_term_start)-1 del_term_end
+				,min(dpbd.fin_term_start) fin_term_start,max(dpbd.fin_term_end) fin_term_end
+				,avg(dpbd.multiplier) multiplier,avg(dpbd.del_vol_multiplier) del_vol_multiplier
+				,case when dpbd.derived_curve_id is  null then NULL else sdd.location_id end location_id
+				,max(isnull(spcd.hourly_volume_allocation,17601)) hourly_volume_allocation
+				,max(COALESCE(spcd.block_define_id,'+ @baseload_block_define_id + ')) block_define_id
+				,max(COALESCE(spcd.block_type,sdh.block_type,' + @baseload_block_type + ')) block_type
+				,max(case when dpbd.derived_curve_id is  null then ''f'' else sdd.physical_financial_flag end) physical_financial_flag
+				,max(COALESCE(sdd.position_uom,spcd1.display_uom_id,spcd1.uom_id)) volume_uom_id
+				,max(COALESCE(dpbd.fin_expiration_date,h_grp.exp_date,sdd.term_end)) expiration_date,max(spcd.commodity_id) commodity_id,sdd.curve_id phy_curve_id,isnull(sdd.location_id,-1) phy_location_id,
+				MAX(sdd.buy_sell_flag) buy_sell_flag,max(sddp.total_volume) total_volume,isnull(max(sdh.product_id),4101) fixing
+				,max(sdd.volume_multiplier2) fix_volume_multiplier2 ,max(sdd.multiplier) fix_multiplier,max(sdd.pay_opposite) pay_opposite,
+				MAX(formula) formula,thdi.source_deal_detail_id,max(thdi.rowid) rowid				
+			FROM  source_deal_header sdh   INNER JOIN 
+			source_deal_detail sdd    on sdd.source_deal_header_id=sdh.source_deal_header_id ' 
+			+ CASE WHEN ISNULL(@insert_type, 0) = 0
+				THEN ' INNER JOIN #tmp_header_deal_id thdi on sdd.source_deal_detail_id=thdi.source_deal_detail_id' ELSE '' END + '
+			INNER JOIN deal_position_break_down dpbd   ON dpbd.source_deal_detail_id=sdd.source_deal_detail_id 
+			left join dbo.source_deal_detail_position sddp on sddp.source_deal_detail_id=sdd.source_deal_detail_id
+			left JOIN source_price_curve_def spcd with (nolock) ON spcd.source_curve_def_id=isnull(dpbd.curve_id,sdd.formula_curve_id)
+			left JOIN source_price_curve_def spcd1 with (nolock) ON spcd1.source_curve_def_id=sdd.curve_id
+			outer apply (
+					select MAX(exp_date) exp_date from holiday_group where hol_group_value_id=spcd.exp_calendar_id
+						and isnull(dpbd.fin_term_start,sdd.term_start) between hol_date AND isnull(hol_date_to,hol_date)
+				) h_grp 
+			WHERE 1=1 --AND sdd.fixed_float_leg=''t'' 
+				and isnull(spcd.hourly_volume_allocation,17601) in (17600,17602,17603,17604,17605)
+			Group by  sdd.source_deal_header_id,sdd.leg,sdd.curve_id,dpbd.curve_id,sdd.location_id
+				,case when dpbd.derived_curve_id is null then NULL else sdd.location_id end,dpbd.del_term_start
+				,thdi.source_deal_detail_id
+		) term
+		Group by  term.source_deal_header_id,term.curve_id,term.phy_curve_id,term.phy_location_id,term.location_id
+			,term.fin_term_start,term.fin_term_end,term.expiration_date,term.physical_financial_flag,term.volume_uom_id
+			,term.source_deal_detail_id
 		'
 
-		EXEC spa_print @st_sql
-
-		EXEC (@st_sql)
+	EXEC spa_print @st_sql
+	EXEC (@st_sql)
 
 		--SELECT * FROM static_data_value WHERE TYPE_ID=17600
-		CREATE INDEX indx_tmp_financial_term ON #tmp_financial_term (
-			source_deal_header_id
-			,phy_curve_id
-			,phy_location_id
-			,del_term_start
-			,del_term_end
-			)
+	CREATE INDEX indx_tmp_financial_term ON #tmp_financial_term (
+		source_deal_header_id
+		,phy_curve_id
+		,phy_location_id
+		,del_term_start
+		,del_term_end
+		)
 
 
-		UPDATE #tmp_financial_term
-		SET fin_term_vol = cast(isnull(term.multiplier, 1) AS NUMERIC(24, 16)) * cast(term.total_volume AS NUMERIC(30, 16))
-			,del_vol_multiplier = cast(isnull(term.del_vol_multiplier, 1) AS NUMERIC(24, 16)) * CASE 
-				WHEN pay_opposite = 'y' THEN - 1 ELSE 1 END
-		--	,multiplier2 = CASE WHEN isnull(term.del_vol_multiplier, 1) < 0 THEN -1 ELSE 1 END * CASE WHEN pay_opposite = 'y' THEN -1 ELSE 1 END
-			,multiplier2 =  CASE WHEN pay_opposite = 'y' THEN -1 ELSE 1 END
+	UPDATE #tmp_financial_term
+	SET fin_term_vol = cast(isnull(term.multiplier, 1) AS NUMERIC(24, 16)) * cast(term.total_volume AS NUMERIC(30, 16))
+	* CASE WHEN term.buy_sell_flag = 'b' THEN 1 ELSE -1 END
+		,del_vol_multiplier = cast(isnull(term.del_vol_multiplier, 1) AS NUMERIC(24, 16)) --* CASE WHEN pay_opposite = 'y' THEN - 1 ELSE 1 END
+	--	,multiplier2 = CASE WHEN isnull(term.del_vol_multiplier, 1) < 0 THEN -1 ELSE 1 END * CASE WHEN pay_opposite = 'y' THEN -1 ELSE 1 END
+		,multiplier2 =1  --CASE WHEN pay_opposite = 'y' THEN -1 ELSE 1 END
 
-		FROM #tmp_financial_term term
-		WHERE fixing = 4100
+	FROM #tmp_financial_term term
+	WHERE fixing = 4100
 
-		UPDATE #tmp_financial_term
+	UPDATE #tmp_financial_term
 		SET 
 			--fin_term_vol = cast(isnull(term.multiplier, 1) AS NUMERIC(24, 16)) * cast(abs(rp.term_volume) AS NUMERIC(22, 10)) 
 			--* CASE WHEN term.buy_sell_flag = 'b' AND rp.term_volume < 0 THEN -1 ELSE 1 END
 			fin_term_vol = cast(isnull(term.multiplier, 1) AS NUMERIC(24, 16)) * cast(rp.term_volume AS NUMERIC(22, 10)) 
 			* CASE WHEN term.buy_sell_flag = 'b' AND rp.term_volume < 0 THEN -1 ELSE 1 END
-			,del_vol_multiplier = cast(isnull(term.del_vol_multiplier, 1) AS NUMERIC(24, 16))
+			,del_vol_multiplier = cast(isnull(term.del_vol_multiplier, 1) AS NUMERIC(24, 16)) * CASE WHEN pay_opposite = 'y' THEN - 1 ELSE 1 END
 			,multiplier2 =  CASE WHEN pay_opposite = 'y' THEN -1 ELSE 1 END
 			,volume_uom_id=rp.deal_volume_uom_id
 		FROM #tmp_financial_term term
@@ -2173,12 +2119,10 @@ BEGIN TRY
 				INNER JOIN (select distinct source_deal_detail_id,del_term_start,del_term_end from #tmp_financial_term  where fixing <> 4100 ) term
 					 on term.source_deal_detail_id = rp.source_deal_detail_id
 					 and rp.term_start BETWEEN term.del_term_start AND term.del_term_end
-				GROUP BY term.source_deal_detail_id
-					,term.del_term_start
-					,term.del_term_end
-			) rp ON  rp.del_term_start = term.del_term_start
-				AND rp.del_term_end = term.del_term_end
-				AND term.source_deal_detail_id = rp.source_deal_detail_id
+				GROUP BY term.source_deal_detail_id ,term.del_term_start,term.del_term_end
+		) rp ON  rp.del_term_start = term.del_term_start
+			AND rp.del_term_end = term.del_term_end
+			AND term.source_deal_detail_id = rp.source_deal_detail_id
 
 		CREATE INDEX indx_tmp_financial_term1 ON #tmp_financial_term (fin_term_start,fin_term_end)
 
@@ -2214,9 +2158,11 @@ BEGIN TRY
 		--17600	17600	Monthly Average Allocation
 		--17601	17600	TOU Allocation			
 		--CREATE INDEX indx_tmp_term_financial_vol ON #tmp_term_financial_vol (source_deal_header_id ,curve_id ,location_id,del_term_start,del_term_end,fin_term_start,fin_term_end )
+
+
 		--save the record term level(strip_to) volume for 17600 Monthly Average Allocation	
-		SET @destination_tbl = CASE WHEN isnull(@orginal_insert_type, 0) IN ( 111 ,222 ) THEN ''
-			ELSE 'insert  into dbo.report_hourly_position_breakdown_main(source_deal_header_id,curve_id,term_start,deal_date,deal_volume_uom_id,create_ts,create_user,calc_volume,term_end,expiration_date,formula,source_deal_detail_id,rowid) '
+		SET @destination_tbl = CASE WHEN isnull(@orginal_insert_type, 0) IN (111,222 ) THEN ''
+			ELSE 'insert into dbo.report_hourly_position_breakdown_main(source_deal_header_id,curve_id,term_start,deal_date,deal_volume_uom_id,create_ts,create_user,calc_volume,term_end,expiration_date,formula,source_deal_detail_id,rowid) '
 			 + CASE WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
 				CASE WHEN EXISTS ( SELECT 1 FROM @report_hourly_position_breakdown_main_old )
 					THEN ' output inserted.source_deal_header_id,inserted.curve_id,inserted.term_start,inserted.deal_date,inserted.deal_volume_uom_id,inserted.create_ts,inserted.create_user,inserted.calc_volume,inserted.term_end,inserted.expiration_date
@@ -2256,7 +2202,9 @@ BEGIN TRY
 		SELECT tft.source_deal_header_id,	tft.curve_id,ISNULL(vol.term_start,tft.fin_term_start) term_start,
 			max(sdh.deal_date) deal_date,max(COALESCE(spcd.display_uom_id,spcd.uom_id) ) deal_volume_uom_id
 			, getdate() create_ts,max(thdi.create_user) create_user,	
-			sum(ISNULL(ABS(vol.term_volume)*ISNULL(tft.del_vol_multiplier,1)* CASE WHEN tft.buy_sell_flag = ''b'' AND vol.term_volume<0 THEN -1 ELSE 1 END,tft.fin_term_vol*multiplier2)*ISNULL(rvuc.conversion_factor, 1)) AS calc_volume,
+			--sum(ISNULL(ABS(vol.term_volume)*ISNULL(tft.del_vol_multiplier,1)* CASE WHEN tft.buy_sell_flag = ''b'' AND vol.term_volume<0 THEN -1 ELSE 1 END,tft.fin_term_vol*multiplier2)*ISNULL(rvuc.conversion_factor, 1)) AS calc_volume,
+
+			sum(ISNULL(vol.term_volume*ISNULL(tft.del_vol_multiplier,1)* CASE WHEN tft.buy_sell_flag = ''b'' AND vol.term_volume<0 THEN -1 ELSE 1 END,tft.fin_term_vol*multiplier2)*ISNULL(rvuc.conversion_factor, 1)) AS calc_volume,
 			ISNULL(vol.term_start,tft.fin_term_end),max(COALESCE(h_grp.exp_date,tft.expiration_date)) expiration_date
 			,MAX(tft.formula) formula,thdi.source_deal_detail_id,max(thdi.rowid) rowid' 
 				+ @report_hourly_position_breakdown_main + '
@@ -2297,8 +2245,16 @@ BEGIN TRY
 			--max(ISNULL(sdd.position_uom,sdd.deal_volume_uom_id)) deal_volume_uom_id,
 			--max(ISNULL(spcd1.display_uom_id,spcd1.uom_id)) deal_volume_uom_id,
 		 , getdate() create_ts,max(thdi.create_user) create_user,
-			sum(cast(sddp.total_volume as numeric(26,10))* cast(CASE WHEN dpbd.curve_id IS NOT NULL THEN COALESCE((dpbd.del_vol_multiplier/nullif(dpbd.multiplier,0))*
-			case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,dpbd.del_vol_multiplier,1)  * CASE WHEN sdh.product_id=4100 THEN CASE WHEN sdd.pay_opposite=''y'' THEN -1 ELSE 1 END ELSE 1 END ELSE CASE WHEN buy_sell_flag=''b'' THEN 1 ELSE -1 END END  as numeric(22,16))*ISNULL(rvuc.conversion_factor, 1))   AS calc_volume,
+			--sum(cast(sddp.total_volume as numeric(26,10))* cast(CASE WHEN dpbd.curve_id IS NOT NULL THEN COALESCE((dpbd.del_vol_multiplier/nullif(dpbd.multiplier,0))*
+			--case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,dpbd.del_vol_multiplier,1)  
+			--* CASE WHEN sdh.product_id=4100 THEN CASE WHEN sdd.pay_opposite=''y'' THEN -1 ELSE 1 END ELSE 1 END 
+			--ELSE CASE WHEN buy_sell_flag=''b'' THEN 1 ELSE -1 END END  as numeric(22,16))*ISNULL(rvuc.conversion_factor, 1))   AS calc_volume,
+
+			sum(cast(sddp.total_volume as numeric(26,10))*CASE WHEN buy_sell_flag=''b'' THEN 1 ELSE -1 END
+			*cast(CASE WHEN dpbd.curve_id IS NOT NULL THEN COALESCE((dpbd.del_vol_multiplier/nullif(abs(dpbd.multiplier),0))
+				*case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,dpbd.del_vol_multiplier,1)  
+				--*CASE WHEN sdd.pay_opposite=''y'' THEN -1 ELSE 1 END 
+				ELSE 1 END  as numeric(22,16))*ISNULL(rvuc.conversion_factor, 1)) AS calc_volume,
 			ISNULL(dpbd.fin_term_end,sdd.term_end) term_end,COALESCE(h_grp.exp_date,dpbd.fin_expiration_date,sdd.term_end) expiration_date,MAX(dpbd.formula) formula,thdi.source_deal_detail_id,max(thdi.rowid) rowid' 
 			+ @report_hourly_position_breakdown_main + '
 		FROM  source_deal_header sdh   
@@ -2334,16 +2290,18 @@ BEGIN TRY
 		IF isnull(@orginal_insert_type, 0) NOT IN (111,222)
 		BEGIN
 			SET @st_sql = 'delete s ' + CASE WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
-		' output 
-			deleted.[source_deal_header_id],deleted.[term_start],deleted.[deal_date],deleted.[deal_volume_uom_id]
-			 ,deleted.[hr1],deleted.[hr2],deleted.[hr3],deleted.[hr4],deleted.[hr5],deleted.[hr6],deleted.[hr7],deleted.[hr8],deleted.[hr9],deleted.[hr10],deleted.[hr11],deleted.[hr12],deleted.[hr13],deleted.[hr14],deleted.[hr15],deleted.[hr16],deleted.[hr17],deleted.[hr18],deleted.[hr19],deleted.[hr20],deleted.[hr21],deleted.[hr22]
-			 ,deleted.[hr23],deleted.[hr24],deleted.[hr25],deleted.[create_ts] ,deleted.[create_user] ,deleted.source_deal_detail_id,deleted.rowid,deleted.granularity,deleted.[period],deleted.financial_curve_id,deleted.expiration_date
-		into #report_hourly_position_financial_main_old([source_deal_header_id],[term_start],[deal_date],[deal_volume_uom_id]
-			 ,[hr1],[hr2],[hr3],[hr4],[hr5],[hr6],[hr7],[hr8],[hr9],[hr10],[hr11],[hr12],[hr13],[hr14],[hr15],[hr16],[hr17]
-			 ,[hr18],[hr19],[hr20],[hr21],[hr22]
-			 ,[hr23],[hr24],[hr25],[create_ts] ,[create_user],source_deal_detail_id,rowid,granularity,[period],financial_curve_id,expiration_date) '
-			END + ' from report_hourly_position_financial_main s 
-			INNER JOIN #tmp_header_deal_id_del h ON s.source_deal_detail_id=h.source_deal_detail_id' -- where h.[action]=''u'''
+			' output 
+				deleted.[source_deal_header_id],deleted.[term_start],deleted.[deal_date],deleted.[deal_volume_uom_id]
+				 ,deleted.[hr1],deleted.[hr2],deleted.[hr3],deleted.[hr4],deleted.[hr5],deleted.[hr6],deleted.[hr7],deleted.[hr8],deleted.[hr9],deleted.[hr10],deleted.[hr11],deleted.[hr12]
+				 ,deleted.[hr13],deleted.[hr14],deleted.[hr15],deleted.[hr16],deleted.[hr17],deleted.[hr18],deleted.[hr19],deleted.[hr20],deleted.[hr21],deleted.[hr22]
+				 ,deleted.[hr23],deleted.[hr24],deleted.[hr25],deleted.[create_ts] ,deleted.[create_user] ,deleted.source_deal_detail_id,deleted.rowid,deleted.granularity
+				 ,deleted.[period],deleted.financial_curve_id,deleted.expiration_date
+			into #report_hourly_position_financial_main_old([source_deal_header_id],[term_start],[deal_date],[deal_volume_uom_id]
+				 ,[hr1],[hr2],[hr3],[hr4],[hr5],[hr6],[hr7],[hr8],[hr9],[hr10],[hr11],[hr12],[hr13],[hr14],[hr15],[hr16],[hr17]
+				 ,[hr18],[hr19],[hr20],[hr21],[hr22]
+				 ,[hr23],[hr24],[hr25],[create_ts] ,[create_user],source_deal_detail_id,rowid,granularity,[period],financial_curve_id,expiration_date) '
+				END + ' from report_hourly_position_financial_main s 
+				INNER JOIN #tmp_header_deal_id_del h ON s.source_deal_detail_id=h.source_deal_detail_id' -- where h.[action]=''u'''
 
 			EXEC spa_print @st_sql
 
@@ -2367,7 +2325,7 @@ BEGIN TRY
 		' ELSE '' END
 		END
 	END
-		SET @st_sql1 = '  
+	SET @st_sql1 = '  
 		SELECT   vol.[source_deal_header_id],vol.[term_start],vol.[deal_date],vol.[deal_volume_uom_id],
 			CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr1,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr2,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr3
 				,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr4,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr5,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr6
@@ -2579,4 +2537,8 @@ BEGIN CATCH
 END CATCH
 	/************************************* Object: 'spa_maintain_transaction_job' END *************************************/
 	
+
+
+
+
 
