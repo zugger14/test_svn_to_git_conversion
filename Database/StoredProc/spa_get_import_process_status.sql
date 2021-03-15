@@ -21,7 +21,7 @@ DROP PROCEDURE spa_get_import_process_status
 */
 
 CREATE PROCEDURE [dbo].[spa_get_import_process_status]
-	@process_id VARCHAR(50),
+	@process_id VARCHAR(100),
 	@user_login_id VARCHAR(50),
 	@rule_name varchar(200) = NULL,
 	@import_source VARCHAR(200) = NULL

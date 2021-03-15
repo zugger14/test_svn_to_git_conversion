@@ -49,7 +49,7 @@ CREATE PROCEDURE [dbo].[spa_message_board]
 	@type CHAR(1) = NULL,
 	@job_name VARCHAR(MAX) = NULL,
 	@as_of_date DATETIME = NULL,
-	@process_id VARCHAR(50) = NULL,
+	@process_id VARCHAR(100) = NULL,
 	@process_type CHAR(1) = NULL ,
 	@returnOutput CHAR(1) = 'y',
 	@process_table_name VARCHAR(500) = NULL,
@@ -81,7 +81,7 @@ DECLARE @flag CHAR
 	, @type CHAR(1) = NULL
 	, @job_name VARCHAR(MAX) = NULL
 	, @as_of_date DATETIME = NULL
-	, @process_id VARCHAR(50) = NULL
+	, @process_id VARCHAR(100) = NULL
 	, @process_type CHAR(1) = NULL
 	, @returnOutput CHAR(1) = 'y'
 	, @process_table_name VARCHAR(500) = NULL
@@ -91,8 +91,8 @@ DECLARE @flag CHAR
 	, @source_filter VARCHAR(MAX) = NULL
 	, @message_filter VARCHAR(MAX) = NULL
 	, @date_filter DATETIME = NULL
-	@file_name VARCHAR(1500) = NULL,	
-, @email_subject VARCHAR(MAX) = NULL
+	, @file_name VARCHAR(1500) = NULL	
+	, @email_subject VARCHAR(MAX) = NULL
 	, @is_aggregate INT = 0
 	, @url_or_desc CHAR(1) = NULL
   
@@ -745,11 +745,11 @@ BEGIN
 	BEGIN CATCH
 	ROLLBACK TRAN
 		EXEC spa_ErrorHandler -1
-			, 'message_board' -- Name the tables used in the query.
-			, 'spa_message_board' -- Name the stored proc.
-			, 'Error' -- Operations status.
-			, 'Error updating message' -- Success message.
-			, @process_id -- The reference of the data deleted.
+			, 'source_system_data_import_status' 
+			, 'spa_message_board' 
+			, 'Error' 
+			, 'Error updating message'
+			, @process_id 
 	END CATCH
 
 END

@@ -21,7 +21,7 @@ GO
 */
 
 CREATE PROCEDURE [dbo].[spa_get_import_process_status_detail]
-	@process_id NVARCHAR(50)
+	@process_id NVARCHAR(100)
 	, @source NVARCHAR(50) = NULL
 	, @type_error NVARCHAR(500) = NULL
 	, @import_from NVARCHAR(500) = NULL
