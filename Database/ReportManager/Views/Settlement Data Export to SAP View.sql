@@ -1,4 +1,4 @@
-	BEGIN TRY
+BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'SDETSV'
@@ -89,13 +89,13 @@ IF ''@prod_date_to'' <> ''NULL''
 	SET @_prod_date_to = ''@prod_date_to''
 
 
---SET @_stmt_invoice_id = NULL
+--SET @_stmt_invoice_id = ''832,897''
 
---SET @_prod_date_from = ''2020-12-01''
+--SET @_prod_date_from = ''2021-01-01''
 
---SET @_prod_date_to = ''2020-12-31''
+--SET @_prod_date_to = ''2021-01-31''
 
---SET @_counterparty_id = ''9''
+--SET @_counterparty_id = null
 
 
 IF OBJECT_ID(''tempdb..#temp_all_invoice'') IS NOT NULL
@@ -259,10 +259,10 @@ WHERE ISNULL(si_b.is_backing_sheet, ''n'') = ''y''
 	, MAX(sc.counterparty_name) counterparty_name
 
 
-	, CAST(ISNULL(SUM(sids.value),0) AS NUMERIC(32,17))  [value] 
+	, CAST(COALESCE(SUM(stm_vol_amt.value),SUM(sids.value),0) AS NUMERIC(32,17))  [value] 
 
 
-	, CAST(ISNULL(SUM(sids.volume),0) AS NUMERIC(32,17)) [volume]
+	, CAST(COALESCE(SUM(stm_vol_amt.volume),SUM(sids.volume),0) AS NUMERIC(32,17)) [volume]
 
 
 	, MAX(suom.source_uom_id) [uom_id]
@@ -415,6 +415,18 @@ WHERE ISNULL(si_b.is_backing_sheet, ''n'') = ''y''
 		WHERE sids.invoice_line_item_id = stid.invoice_line_item_id AND stid.invoice_line_item_id = 50000513 AND stid.stmt_invoice_id = si.stmt_invoice_id
 
 	) stm_chkout
+
+	OUTER APPLY (
+	    SELECT SUM(stmt.value) value , SUM(stmt.volume) volume , stmt.invoice_line_item_id , stmt.stmt_invoice_id FROM (
+		SELECT stid.value ,stid.volume , sids.invoice_line_item_id , stid.stmt_invoice_id  FROM stmt_invoice_detail stid
+
+		WHERE sids.invoice_line_item_id = stid.invoice_line_item_id AND stid.invoice_line_item_id = 50000512 AND stid.stmt_invoice_id = si.stmt_invoice_id
+		UNION ALL
+		SELECT stid.value, stid.volume , sids.invoice_line_item_id , stid.stmt_invoice_id FROM stmt_invoice_detail stid
+		WHERE sids.invoice_line_item_id = stid.invoice_line_item_id AND stid.invoice_line_item_id = 50000513 AND stid.stmt_invoice_id = si.stmt_invoice_id
+		) stmt GROUP BY stmt.stmt_invoice_id , stmt.invoice_line_item_id
+	) stm_vol_amt
+
 
 
 	LEFT JOIN source_uom suom ON suom.source_uom_id = cg.volume_uom
@@ -2081,3 +2093,4 @@ FROM #temp_export_sap1 ORDER BY invoice_type,row_num, product, value, volume ASC
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
+	
