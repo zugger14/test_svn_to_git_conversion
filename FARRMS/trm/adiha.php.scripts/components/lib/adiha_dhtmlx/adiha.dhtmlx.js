@@ -2859,6 +2859,34 @@ dhtmlXGridObject.prototype.PSExport = function(type, process_table, grid_name, h
         }).join(',')
     }
 
+    var number_coumns = ['ed_p','ro_p','ed_v','ro_v','ed_a','ro_a','ed_no','ed_ro'];
+    var columns_ids_formatted = columns_ids.map(function(col_id) {
+        var column_id = setupDeals.setup_deals.getColTypeById(col_id);
+        if ($.inArray(column_id, number_coumns) != -1) {
+            var col_type = 'n';
+            switch (column_id) {
+                case 'ro_v':
+                case 'ed_v':
+                    col_type = 'v';
+                    break;
+                case 'ed_p':
+                case 'ro_p':
+                    col_type = 'p';
+                    break;
+                case 'ed_a':
+                case 'ro_a':
+                    col_type = 'a';
+                    break;
+                default:
+                    col_type = 'b';
+                    break;
+            }
+            return 'dbo.FNANumberFormat(' + col_id + ',\'' + col_type + '\') [' + col_id + ']';
+        } else {
+            return col_id;
+        }
+    });
+
     var url = js_php_path + 'components/lib/adiha_dhtmlx/grid-excel-php/export_sql_to_excel.php';
 
     var y = document.createElement("div");
@@ -2877,7 +2905,7 @@ dhtmlXGridObject.prototype.PSExport = function(type, process_table, grid_name, h
         order_by = ' ORDER BY ' + order_by;
     }
 
-    var sql = 'SELECT ' + columns_ids.join(',') + ' FROM ' + process_table + where + order_by;
+    var sql = 'SELECT ' + columns_ids_formatted.join(',') + ' FROM ' + process_table + where + order_by;
     // console.log(sql);
     var filename = grid_name + '_' + (new Date()).valueOf();
     y.innerHTML = '<form id="' + m + '" method="post" action="' + url + '" accept-charset="utf-8"  enctype="application/x-www-form-urlencoded" target="_blank">' +
