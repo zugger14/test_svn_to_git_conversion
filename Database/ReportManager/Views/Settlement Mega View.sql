@@ -1928,10 +1928,10 @@ CROSS APPLY (SELECT Max(as_of_date) as_of_date
 			AND as_of_date <= Isnull(sv.from_as_of_date, @_from_as_of_date) 
 
 
-			and internal_type in (18722,18733,18742,18743)) ifbs_mx
+			and internal_type in (18722,18733)) ifbs_mx
 
 
-CROSS JOIN ( VALUES (18722),(18733), (18742),(18743) ) fee (internal_type)
+CROSS JOIN ( VALUES (18722),(18733)) fee (internal_type)
 
 
 OUTER APPLY( SELECT TOP(1) * 
@@ -2432,7 +2432,7 @@ INSERT INTO #final_values (
 )
 
 
-SELECT 
+SELECT DISTINCT
 
 
    fv.source_deal_header_id
@@ -2480,13 +2480,13 @@ SELECT
  , fv.dis_extrinisic_pnl 
 
 
- , fv.market_value 
+ , NULL market_value 
 
 
  , df.contract_value 
 
 
- , fv.dis_market_value 
+ , NULL dis_market_value 
 
 
  , fv.dis_contract_value 
@@ -2501,10 +2501,10 @@ SELECT
  , fv.formula 
 
 
- , ISNULL(df.volume, fv.total_volume) total_volume 
+ , df.volume total_volume 
 
 
- , fv.market_price 
+ , NULL market_price 
 
 
  , fv.formula_price 
