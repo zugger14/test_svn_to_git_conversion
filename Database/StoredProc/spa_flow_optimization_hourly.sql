@@ -110,7 +110,8 @@ CREATE PROCEDURE [dbo].[spa_flow_optimization_hourly]
 	@path_ids VARCHAR(1000) = NULL,
 	@batch_process_id varchar(50)=NULL,
 	@batch_report_param varchar(500)=NULL   ,
-	@enable_paging INT = NULL   --'1'=enable, '0'=disable
+	@enable_paging INT = NULL,   --'1'=enable, '0'=disable
+	@dst_case TINYINT = 0
 AS 
 SET NOCOUNT ON
 /*
@@ -157,24 +158,24 @@ declare @flag CHAR(50),
 	@path_ids VARCHAR(1000) = NULL,
 	@batch_process_id varchar(50)=NULL,
 	@batch_report_param varchar(500)=NULL   ,
-	@enable_paging INT = NULL   --'1'=enable, '0'=disable
+	@enable_paging INT = NULL,   --'1'=enable, '0'=disable
+	@dst_case TINYINT = 0
 	
 EXEC dbo.spa_drop_all_temp_table
 
-EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'enercity_4429';
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
-	select	@flag='c'
-,@flow_date_from='2020-11-11'
-,@flow_date_to='2020-11-11'
-,@from_location='38,36,35,34,33'
-,@to_location='38,36,35,34,33'
-,@path_priority='-31400'
-,@opt_objective='38301'
-,@uom='1159'
-,@process_id='E9F55C82_C058_4485_A33B_502256235452'
-,@reschedule='0'
+	select	@flag='s1'
+,@process_id='6BAC07FB_74B4_4367_84B0_20B2078C9679'
+,@delivery_path='310'
+,@contract_id='8333'
+,@flow_date_from='2027-10-30'
 ,@granularity='982'
-,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24'
+,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
+,@from_location='2852'
+,@to_location='2887'
+,@round='4'
+,@dst_case=1
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -183,7 +184,7 @@ SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
 	, @sub_book_id = NULLIF(NULLIF(@sub_book_id, ''), 'NULL')
 	, @contract_id = NULLIF(NULLIF(@contract_id, ''), 'NULL')
 	, @counterparty_id = NULLIF(NULLIF(@counterparty_id, ''), 'NULL')    
-	, @period_from = ISNULL(NULLIF(@period_from,''),'1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24')
+	, @period_from = ISNULL(NULLIF(@period_from,''),'1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25')
 	, @pipeline_ids = NULLIF(NULLIF(@pipeline_ids, ''), 'NULL')
 	, @receipt_deals_id = NULLIF(NULLIF(@receipt_deals_id, ''), 'NULL')
 	, @delivery_deals_id = NULLIF(NULLIF(@delivery_deals_id, ''), 'NULL')
@@ -3986,7 +3987,53 @@ BEGIN
 END 
 ELSE IF @flag = 's1' --Subgrid load on hourly scheduling flow optimization
 BEGIN
-	IF @call_from = 'clear_adj'
+	IF @call_from = 'get_subgrid_definition'
+	BEGIN
+		DECLARE @hour_column_headers VARCHAR(500)
+			,@hour_column_ids VARCHAR(500)
+			,@hour_count TINYINT
+			,@hour_column_types VARCHAR(100)
+			,@hour_column_widths VARCHAR(100)
+
+		DROP TABLE IF EXISTS #function_data
+		SELECT *
+		INTO #function_data
+		FROM dbo.FNAGetDisplacedPivotGranularityColumn(@flow_date_from, @flow_date_from, @granularity, 102201, 6) -- 102201=dst group value id, 6=gas hour shift value
+
+		IF EXISTS (SELECT TOP 1 1 FROM #function_data WHERE is_dst = 1)
+		BEGIN
+			SET @dst_case = 1
+		END
+
+		SELECT @hour_count = COUNT(*)
+		FROM #function_data
+
+		SELECT @hour_column_headers = STUFF((
+					SELECT ',' + alias_name
+					FROM #function_data
+					ORDER BY rowid
+					FOR XML path('')
+					), 1, 1, '')
+
+		SELECT @hour_column_ids = STUFF((
+					SELECT ',hr' + CAST(CAST(left(clm_name, 2) AS INT) + 1 AS VARCHAR(10)) + IIF(is_dst = 1, '_DST', '')
+					FROM #function_data
+					ORDER BY rowid
+					FOR XML path('')
+					), 1, 1, '')
+
+		SELECT @hour_column_types = STUFF((REPLICATE(',ro', @hour_count)), 1, 1, '')
+
+		SELECT @hour_column_widths = STUFF((REPLICATE(',70', @hour_count)), 1, 1, '')
+
+		SELECT 'delivery_path_detail_id,path_id,path,contract_id,contract,group_path_id,volume,' + @hour_column_ids [column_ids]
+			,'Path Detail ID,Path ID,Path,Contract ID,Contract,Group Path ID,Volume,' + @hour_column_headers [column_headers]
+			,'ro,ro,ro,ro,ro,ro,ro,' + @hour_column_types [column_types]
+			,'70,70,166,100,100,100,100,' + @hour_column_widths [column_widths]
+			, @dst_case [dst_case]
+		RETURN;
+
+	END ELSE IF @call_from = 'clear_adj'
 	BEGIN
 		--flush and reload hourly contractwise table
 		EXEC('
@@ -4012,7 +4059,19 @@ BEGIN
 			AND cdf.to_loc_id IN (' + @to_location + ')
 		')
 	END
+	ELSE 
 	DECLARE @pivot_hr_cols VARCHAR(200)
+
+	
+
+	IF @dst_case = 1 AND CHARINDEX('21', @period_from, 0) > 0
+	BEGIN
+		SET @period_from = REPLACE(@period_from, '21', '21,21_DST')
+	END
+
+	DECLARE @period_from_temp VARCHAR(200) = @period_from
+
+	SET @period_from_temp = '''' + REPLACE(@period_from_temp, ',', ''',''') + ''''
 
 	SET @pivot_hr_cols = '[' + REPLACE(@period_from,',','],[') + ']'
 	SET @sql = '
@@ -4024,7 +4083,13 @@ BEGIN
 			, IIF(v.item = ''PMDQ/PRMDQ'', cd.contract_id, NULL) [contract_id]
 			, IIF(v.item = ''PMDQ/PRMDQ'', cd.contract_name, NULL) [contract]
 			, IIF(cd.group_path = ''y'', cd.path_id, NULL) [group_path_id]
-			, cd.[hour] [hour]
+			, CASE 
+				WHEN cd.[hour] = 25 AND ISNULL(cd.supply_position, cd.demand_position) IS NOT NULL
+					THEN ''21_DST''
+				--WHEN cd.[hour] = 21 AND ' + CAST(@dst_case AS VARCHAR(1)) + ' = 1
+				--	THEN 
+				ELSE CAST(cd.[hour] AS VARCHAR(10))
+			  END [hour]
 			, v.item [volume]
 			, CASE v.item 
 				WHEN ''PMDQ/PRMDQ'' 
@@ -4088,7 +4153,7 @@ BEGIN
 			AND cd.to_loc_id IN (' + @to_location + ')
 			AND cd.path_id = ' + CAST(@delivery_path AS VARCHAR(10)) + '
 			AND (cd.group_path = ''y'' OR cd.contract_id = ' + CAST(ISNULL(@contract_id, '''''') AS VARCHAR(10)) + ')
-			AND cd.hour IN (' + CAST(@period_from AS VARCHAR(100)) + ')
+			AND CAST(cd.hour AS VARCHAR(10)) IN (' + @period_from_temp + ')
 	) s
 	PIVOT (
 		MAX(VALUE)

@@ -68,6 +68,10 @@ $to_loc_grp_name = get_sanitized_value($_GET['to_loc_grp_name'] ?? '');
 $from_pos_beg = get_sanitized_value($_GET['from_pos_beg'] ?? '');
 $to_pos_beg = get_sanitized_value($_GET['to_pos_beg'] ?? '');
 
+//get subgrid header definition
+$xml_file = "EXEC spa_flow_optimization_hourly @flag='s1', @call_from='get_subgrid_definition', @flow_date_from='$flow_start', @granularity=$granularity";
+$subgrid_header_definition = readXMLURL2($xml_file);
+
 $hide_storage_contract_col = 'true';
 $storage_asset_info_arr = [];
 if($from_loc_grp_name == 'Storage' || $to_loc_grp_name == 'Storage') {
@@ -291,6 +295,7 @@ echo $sch_obj->close_layout();
     }
     
     STORAGE_ASSET_INFO = JSON.parse('<?php echo json_encode($storage_asset_info_arr) ?>');
+    SUBGRID_HEADER_DEFINITION = JSON.parse('<?php echo json_encode($subgrid_header_definition) ?>')[0];
     
     var rec_row_index = 1;
     var fuel_row_index = 2;
@@ -811,6 +816,7 @@ echo $sch_obj->close_layout();
     		
         if (typeof subgrid !== 'undefined') {
 
+            /*
             var term_start = grid_obj.cells(rid, grid_obj.getColIndexById('term_from')).getValue();
             var term_to = grid_obj.cells(rid, grid_obj.getColIndexById('term_to')).getValue();
             //alert(term_start);
@@ -832,6 +838,7 @@ echo $sch_obj->close_layout();
                 col_sorting += ',int';
 
             }
+            */
 
             var ds_context_menu = new dhtmlXMenuObject({
                 icons_path: js_image_path + 'dhxmenu_web/',
@@ -842,10 +849,10 @@ echo $sch_obj->close_layout();
 
 
             subgrid.setImagePath(js_php_path + "components/dhtmlxSuite/codebase/imgs/");
-            subgrid.setHeader(header);
-            subgrid.setColumnIds(column_ids);
-			subgrid.setColTypes(col_types);
-            subgrid.setInitWidths(width);
+            subgrid.setHeader(SUBGRID_HEADER_DEFINITION.column_headers);
+            subgrid.setColumnIds(SUBGRID_HEADER_DEFINITION.column_ids);
+			subgrid.setColTypes(SUBGRID_HEADER_DEFINITION.column_types);
+            subgrid.setInitWidths(SUBGRID_HEADER_DEFINITION.column_widths);
             subgrid.enableMultiselect(true);
             subgrid.enableColumnMove(true);
             subgrid.setColumnsVisibility("true,true,false,true,false,true");
@@ -1032,7 +1039,8 @@ echo $sch_obj->close_layout();
                 "from_location": get_param.rec_location_id,
                 "to_location": get_param.del_location_id,
                 "xml_manual_vol": (get_param.parent_call_from == 'book_out' ? '-1' : ''),
-				"round": ROUNDING_VALUE
+				"round": ROUNDING_VALUE,
+                "dst_case": SUBGRID_HEADER_DEFINITION.dst_case
             };
         } else {
             data = {
