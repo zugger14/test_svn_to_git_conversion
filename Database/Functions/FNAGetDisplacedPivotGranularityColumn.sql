@@ -109,7 +109,9 @@ DECLARE
 		left join dbo.mv90_dst dst
 				on  dst.dst_group_value_id=@dst_group_value_id  and
 					 DATEADD(DAY, -1, dst.[date]) = convert(varchar(10),a.term_start,120) 
-					and (dst.[hour] + 18)=DATEPART(hour,a.term_start)+1
+				--	and (dst.[hour] + 18)=DATEPART(hour,a.term_start)+1
+					and (dst.[hour])=DATEPART(hour,a.term_start)+1
+
 					--and dst.insert_delete='d'
 		where isnull(dst.insert_delete,'')<>'d'
 		group by 
