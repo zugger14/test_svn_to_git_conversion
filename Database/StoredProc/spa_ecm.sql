@@ -436,7 +436,7 @@ BEGIN
 				 INNER JOIN generic_mapping_values gmv
 					ON gmv.mapping_table_id = gmh.mapping_table_id
 				 WHERE gmh.mapping_name = 'ECM HUB Mapping'
-				 AND ISNULL(gmv.clm1_value,'-1') = CASE WHEN scom.commodity_id = 'Power' THEN ISNULL(gmv.clm1_value,'-1') ELSE tcuv.[Deal EIC] END
+				 AND ISNULL(gmv.clm1_value,'-1') = CASE WHEN scom.commodity_id = 'Power' THEN ISNULL(gmv.clm1_value,'-1') ELSE tcuv.[Sub EIC]  END
 				 AND gmv.clm2_value = CAST(tdd.location_id AS VARCHAR(20))
 				 AND gmv.clm3_value = CAST(scom.source_commodity_id AS VARCHAR(20))
 	) tbl_ecm_hub 
@@ -445,7 +445,7 @@ BEGIN
 				 INNER JOIN generic_mapping_values gmv
 					ON gmv.mapping_table_id = gmh.mapping_table_id
 				 WHERE gmh.mapping_name = 'ECM HUB Mapping'
-				 AND gmv.clm1_value = tcuv.[Sub EIC] 
+				 AND gmv.clm1_value = tcuv.[Deal EIC]
 				 AND gmv.clm2_value = CAST(tdd.location_id AS VARCHAR(20))
 				 AND gmv.clm3_value = CAST(scom.source_commodity_id AS VARCHAR(20))
 	) tbl_ecm_hub_counterparty 
