@@ -236,6 +236,13 @@ BEGIN
 
     IF @process_id IS NULL
         SET @process_id = LOWER(NEWID())
+
+	DECLARE @document_usage NVARCHAR(100)
+	SELECT @document_usage = gmv.clm1_value
+	FROM generic_mapping_header gmh
+	INNER JOIN generic_mapping_values gmv
+		ON gmv.mapping_table_id = gmh.mapping_table_id
+	WHERE gmh.mapping_name = 'Document Usage'
 	
 	IF OBJECT_ID('tempdb..#temp_ecm') IS NOT NULL
 		DROP TABLE #temp_ecm
@@ -246,7 +253,7 @@ BEGIN
 		   MAX(td.sub_book_id) sub_book_id,
 		   MAX(td.physical_financial_flag) physical_financial_flag,
 		   'CNF_' + CONVERT(VARCHAR(10), GETDATE(), 112) + '_' + REPLICATE('0', 10 - LEN(RTRIM(td.source_deal_header_id))) + RTRIM(td.source_deal_header_id) + '@' + MAX(tcuv.[Sub EIC]) document_id,
-		   'Test' document_usage,
+		   ISNULL(@document_usage, 'Test') document_usage,
 		    IIF(MAX(ssr.rule_id) IS NOT NULL,MAX(tcuv.[Sub EIC]),MAX(tcuv.[Broker EIC])) sender_id,
 		    MAX(tcuv.[Deal EIC]) receiver_id,
 		   IIF(MAX(ssr.rule_id) IS NOT NULL,'Trader','Broker') receiver_role,
@@ -375,6 +382,7 @@ BEGIN
 	INNER JOIN #temp_deal_details tdd ON td.source_deal_header_id = tdd.source_deal_header_id
 	LEFT JOIN setup_submission_rule ssr
 		ON ssr.counterparty_id = td.counterparty_id
+		AND ISNULL(ssr.commodity_id,td.commodity_id) = td.commodity_id
 		AND ssr.submission_type_id = 44705
 	LEFT JOIN #temp_cpty_udf_values tcuv 
 		ON tcuv.source_deal_header_id = td.source_deal_header_id
@@ -639,7 +647,7 @@ BEGIN
 		END
 		CLOSE c
 		DEALLOCATE c
-		
+
 		INSERT INTO #temp_messages(source_deal_header_id, [column], [messages])
 		SELECT source_deal_header_id, 'document_id','document ID Must not exceed 255 characters'
 		FROM source_ecm
@@ -746,7 +754,7 @@ BEGIN
 										WHEN 'PTTP' THEN 0
 				   ELSE 0
 				   END AS FLOAT) broker_fee,
-				   'Test' document_usage,
+				   ISNULL(@document_usage, 'Test') document_usage,
 				   MAX(tcuv.[Sub EIC]) sender_id,
 				   MAX(tcuv.[Broker EIC]) receiver_id,
 				   'Broker' receiver_role,
@@ -765,6 +773,7 @@ BEGIN
 			INNER JOIN setup_submission_rule ssr
 				ON ssr.submission_type_id = 44705
 				AND ssr.broker_id = sdh.broker_id
+				AND ISNULL(ssr.commodity_id,td.commodity_id) = td.commodity_id
 			INNER JOIN maintain_udf_static_data_detail_values musddv
 				ON musddv.primary_field_object_id = sdh.broker_id
 			INNER JOIN application_ui_template_fields autf
@@ -883,7 +892,7 @@ BEGIN
 			   MAX(td.sub_book_id) sub_book_id,
 			   MAX(td.physical_financial_flag) physical_financial_flag,
 			   'CAN_' + CONVERT(VARCHAR(10), GETDATE(), 112) + '_' + REPLICATE('0', 10-LEN(RTRIM(td.source_deal_header_id))) + RTRIM(td.source_deal_header_id) + '@' + MAX(tcuv.[Sub EIC]) document_id,
-			   'Test' document_usage,
+			   ISNULL(@document_usage, 'Test') document_usage,
 			   MAX(tcuv.[Sub EIC]) sender_id,
 			   MAX(tcuv.[Deal EIC]) receiver_id,
 			   'Trader' receiver_role,
