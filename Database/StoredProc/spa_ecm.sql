@@ -343,7 +343,7 @@ BEGIN
 				WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, 6, MAX(td.entire_term_start)), 126)
 				ELSE CONVERT(VARCHAR(19), CAST(MAX(td.entire_term_start) AS DATETIME), 126)
 		   END [delivery_start],
-		   CASE WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, 6, MAX(td.entire_term_end)) + CASE WHEN ISNULL(MAX(td.block_define_id), 292037) = 292037 THEN 1 ELSE 0 END, 126) ELSE CONVERT(VARCHAR(19), CAST(MAX(td.entire_term_end) AS DATETIME) + CASE WHEN ISNULL(MAX(td.block_define_id), 292037) = 292037 THEN 1 ELSE 0 END, 126) END [delivery_end],
+		   CASE WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, 6, MAX(td.entire_term_end)) + 1 , 126) ELSE CONVERT(VARCHAR(19), CAST(MAX(td.entire_term_end) AS DATETIME) + 1 , 126) END [delivery_end],
 		   MAX(tdd.deal_volume) [contract_capacity],
 		   (AVG(tdd.fixed_price) + ISNULL(MAX(ABS(CAST(uddf.udf_value AS FLOAT))), 0)) * CASE WHEN MAX(sdht.template_name) LIKE '%Zeebrugge%' THEN 100 ELSE 1 END [price],
 		   CASE WHEN MAX(scom.commodity_id) IN ('ELectricity', 'Power') THEN NULL
