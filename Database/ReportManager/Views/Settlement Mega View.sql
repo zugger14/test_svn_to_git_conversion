@@ -476,7 +476,7 @@ SET @_sql_select1 =
 
 		, sdd.formula_curve_id
 
-		, COALESCE(dbo.FNAInvoiceDueDate(sdd.term_start, cg.pnl_date, cg.holiday_calendar_id,10),sdd.term_end) [pnl_date]
+		, COALESCE(dbo.FNAInvoiceDueDate(sdd.term_start, ISNULL(cca.settlement_date, cg.settlement_date), cg.holiday_calendar_id,ISNULL(cca.settlement_days, cg.settlement_days)),sdd.term_end) [pnl_date]
 
 		, sdh.pricing_type [pricing_type_id]
 
@@ -683,6 +683,10 @@ SET @_sql_from1 = '' INTO #tmp_final_values
 	LEFT JOIN formula_editor fe ON fe.formula_id = sdd.formula_id
 
 	LEFT JOIN contract_group cg ON cg.contract_id = sdh.contract_id
+	
+	LEFT JOIN counterparty_contract_address cca On cca.counterparty_id = sdh.counterparty_id 
+
+		AND cca.contract_id = cg.contract_id
 
 	LEFT JOIN source_minor_location sml ON sml.source_minor_location_id = sdd.location_id
 
@@ -3032,7 +3036,7 @@ SELECT
 
 , sdh.structured_deal_id AS structured_id--,tsd.structured_id
 
-, COALESCE(dbo.FNAInvoiceDueDate(sdd.term_start, ISNULL(cca.invoice_due_date,cg.invoice_due_date), cg.holiday_calendar_id,ISNULL(cca.payment_days,cg.payment_days)),sdd.term_end) [payment_date]
+, COALESCE(dbo.FNAInvoiceDueDate(sdd.term_start, ISNULL(cca.settlement_due_date,cg.invoice_due_date), cg.holiday_calendar_id,ISNULL(cca.settlement_payment_days,cg.payment_days)),sdd.term_end) [payment_date]
 
 , tsd.pricing_type_id
 
@@ -3074,7 +3078,7 @@ SELECT
 
 , CONVERT(VARCHAR(7), tsd.pnl_date, 120) [PNL_year_month]
 
-, CONVERT(VARCHAR(7), COALESCE(dbo.FNAInvoiceDueDate(sdd.term_start, ISNULL(cca.invoice_due_date,cg.invoice_due_date), cg.holiday_calendar_id,ISNULL(cca.payment_days,cg.payment_days)),sdd.term_end), 120) [cash_flow_year_month]
+, CONVERT(VARCHAR(7), COALESCE(dbo.FNAInvoiceDueDate(sdd.term_start, ISNULL(cca.settlement_due_date,cg.invoice_due_date), cg.holiday_calendar_id,ISNULL(cca.settlement_payment_days,cg.payment_days)),sdd.term_end), 120) [cash_flow_year_month]
 
 , ISNULL(@_deal_status_group,'''') [deal_status_group]
 
