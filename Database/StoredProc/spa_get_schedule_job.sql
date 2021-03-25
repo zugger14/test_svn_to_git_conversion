@@ -73,7 +73,7 @@ BEGIN
 								  ELSE 'In progress'
 						     END
 			END [run_status],
-			dbo.FNADateTImeFormat(v.date_modified, 1) [date_modified],
+			dbo.FNADateTImeFormat(a.date_modified, 1) [date_modified],
 			sj.[description] [user_name],
 			v.job_id [Job ID]
 	FROM msdb.dbo.sysjobs_view v 
@@ -81,7 +81,14 @@ BEGIN
 	INNER JOIN msdb.dbo.sysjobsteps jp ON jp.job_id = v.job_id
 	INNER JOIN msdb.dbo.sysjobs sj ON jp.job_id = sj.job_id
 	LEFT JOIN application_users au ON au.user_login_id COLLATE SQL_Latin1_General_CP1_CI_AS = sj.[description] COLLATE SQL_Latin1_General_CP1_CI_AS
-	WHERE 1 = 1 
+	LEFT JOIN msdb.dbo.sysjobschedules sjs ON sj.job_id = sjs.job_id
+	OUTER APPLY( 
+		SELECT TOP 1 ss.schedule_id [schedule_id], ss.date_modified [date_modified]
+		FROM msdb.dbo.sysschedules ss
+		WHERE ss.schedule_id = sjs.schedule_id
+		ORDER BY ss.date_modified DESC
+	) a
+	WHERE 1 = 1
 		AND jp.database_name = DB_NAME()
 		AND	((h.next_scheduled_run_date IS NOT NULL OR h.run_status IN (0, 2, 4)) 
 			OR (h.next_scheduled_run_date IS NULL AND h.start_execution_date IS NOT NULL AND h.stop_execution_date IS NULL))
