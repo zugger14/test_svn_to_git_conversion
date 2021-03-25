@@ -103,15 +103,16 @@ BEGIN
 				
 						INSERT INTO #temp_all_grids_columns(grid_id, column_name, column_label, field_type, sql_string, is_editable, is_required, column_order, is_hidden, fk_table, fk_column, is_unique, column_width, sorting_preference, validation_rule, column_alignment)
 							
-											SELECT 26,'job_id','Job ID','ro',NULL,'y','y','1','n',NULL,NULL,NULL,'300','str',NULL,'left' UNION ALL 
-											SELECT 26,'name','Job Name','ro',NULL,'y','y','2','n',NULL,NULL,NULL,'400','str',NULL,'left' UNION ALL 
-											SELECT 26,'date_created','Date Created','ro',NULL,'y','y','3','n',NULL,NULL,NULL,'200','date',NULL,'left' UNION ALL 
-											SELECT 26,'next_scheduled_run_date','Next Scheduled Run Date','ro',NULL,'y','y','4','n',NULL,NULL,NULL,'200','date',NULL,'left' UNION ALL 
-											SELECT 26,'last_exectued_step_date','Last Executed Date','ro',NULL,'y','y','5','n',NULL,NULL,NULL,'200','date',NULL,'left' UNION ALL 
-											SELECT 26,'owner_sid','Job Owner','ro',NULL,'y','y','6','n',NULL,NULL,NULL,'200','str',NULL,'left' UNION ALL 
-											SELECT 26,'run_status','Job Status','ro',NULL,'y','y','7','n',NULL,NULL,NULL,'200','str',NULL,'left' UNION ALL 
-											SELECT 26,'date_modified','Date Modified','ro',NULL,'y','y','8','n',NULL,NULL,NULL,'200','date',NULL,'left' UNION ALL 
-											SELECT 26,'user_name','User Name','ro',NULL,'y','y','9','n',NULL,NULL,NULL,'200','str',NULL,'left'
+											SELECT 26,'name','Job Name','ro',NULL,'y','y','1','n',NULL,NULL,NULL,'400','str',NULL,'left' UNION ALL 
+											SELECT 26,'date_created','Date Created','ro',NULL,'y','y','2','n',NULL,NULL,NULL,'200','date',NULL,'left' UNION ALL 
+											SELECT 26,'next_scheduled_run_date','Next Scheduled Run Date','ro',NULL,'y','y','3','n',NULL,NULL,NULL,'200','date',NULL,'left' UNION ALL 
+											SELECT 26,'last_exectued_step_date','Last Executed Date','ro',NULL,'y','y','4','n',NULL,NULL,NULL,'200','date',NULL,'left' UNION ALL 
+											SELECT 26,'owner_sid','Job Owner','ro',NULL,'y','y','5','n',NULL,NULL,NULL,'200','str',NULL,'left' UNION ALL 
+											SELECT 26,'run_status','Job Status','ro',NULL,'y','y','6','n',NULL,NULL,NULL,'200','str',NULL,'left' UNION ALL 
+											SELECT 26,'date_modified','Date Modified','ro',NULL,'y','y','7','n',NULL,NULL,NULL,'200','date',NULL,'left' UNION ALL 
+											SELECT 26,'user_name','User Name','ro',NULL,'y','y','8','n',NULL,NULL,NULL,'200','str',NULL,'left' UNION ALL
+											SELECT 26,'job_id','Job ID','ro',NULL,'y','y','9','y',NULL,NULL,NULL,'300','str',NULL,'left' 
+
 							
 						UPDATE tagc
 						SET tagc.grid_id = @grid_id

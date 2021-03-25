@@ -57,7 +57,6 @@ BEGIN
 
 
 	SELECT DISTINCT
-		   v.job_id [Job ID],
 		   v.[name] [Name],
 		   dbo.FNADateTImeFormat(v.date_created, 1) [date_created],
 		   dbo.FNADateTImeFormat(h.next_scheduled_run_date, 1) [next_scheduled_run_date],
@@ -70,12 +69,13 @@ BEGIN
 							 WHEN 1 THEN 'Succeeded'
 							 WHEN 2 THEN 'Retry'
 							 WHEN 3 THEN 'Canceled'
-							 ELSE CASE WHEN h.run_status IS NULL AND h.next_scheduled_run_date > '' + CAST(GETDATE() AS VARCHAR) + '' THEN 'JOB IN QUEUE' 
-								  ELSE 'IN Progress'
+							 ELSE CASE WHEN h.run_status IS NULL AND h.next_scheduled_run_date > '' + CAST(GETDATE() AS VARCHAR) + '' THEN 'Job in queue'
+								  ELSE 'In progress'
 						     END
 			END [run_status],
 			dbo.FNADateTImeFormat(v.date_modified, 1) [date_modified],
-			sj.[description] [user_name]
+			sj.[description] [user_name],
+			v.job_id [Job ID]
 	FROM msdb.dbo.sysjobs_view v 
 	INNER JOIN #tmp_job h ON v.job_id = h.job_id
 	INNER JOIN msdb.dbo.sysjobsteps jp ON jp.job_id = v.job_id
