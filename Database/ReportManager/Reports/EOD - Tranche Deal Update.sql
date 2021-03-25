@@ -249,7 +249,7 @@ BEGIN TRY
 	WHERE multiplier is not null)o
 	WHERE o.source_deal_header_id = cdc.source_deal_header_id
 	and o.component = cdc.component
-	and cdc.field_label in (''Component Price 1'',''Component Price 2'') and cdc.udf_value is not null
+	and cdc.field_label in (''Component Price 1'',''Component Price 2'') AND NULLIF(cdc.udf_value, '''') is not null 
 	and isnull(i.adder,i.negative_adder) is not NULL
 	UNION ALL
 	SELECT Distinct c.source_deal_header_id, ((case when c.component = 1 then isnull(p.adder, -1* p.negative_adder) else 0 end) + o.curve_value * it.multiplier ) Product , NULL adder , NULL negative_adder
@@ -311,11 +311,13 @@ BEGIN TRY
     SELECT 
 	Distinct c.source_deal_header_id, (idc.curve_value * it.multiplier ) Product , p.adder adder, p.negative_adder
 	from #component_data_collection c
-	INNER JOIN #index_data_collection_update idc on idc.source_deal_header_id = c.source_deal_header_id and idc.udf_deal_id = c.udf_deal_id
+	INNER JOIN #index_data_collection_update idc on idc.source_deal_header_id = c.source_deal_header_id and idc.udf_deal_id = c.udf_deal_id AND idc.Field_label =  c.Field_label
 	INNER JOIN #item_udpate it ON it.source_deal_header_id = c.source_deal_header_id and it.pricing_index = idc.pricing_index
 	INNER JOIN  #update_case uc ON uc.source_deal_header_id = idc.source_deal_header_id
 	OUTER Apply (
-		Select source_deal_header_id, adder, negative_adder from #item_udpate
+		Select source_deal_header_id, MAX(adder) adder, MAX(negative_adder) negative_adder from #item_udpate
+		WHERE source_deal_header_id = c.source_deal_header_id
+		GROUP BY source_deal_header_id
 		) p
 	INNER JOIN  #grouping_formula_update gf ON gf.pricing_index = it.pricing_index and gf.multiplier = it.multiplier and gf.source_deal_header_id = c.source_deal_header_id
 	WHERE
@@ -326,18 +328,21 @@ BEGIN TRY
 	UNION ALL
 	select Distinct c.source_deal_header_id, (idc.curve_value * it.multiplier ) Product , p.adder adder, p.negative_adder
 	from #component_data_collection_update c
-	INNER JOIN #index_data_collection_update idc on idc.source_deal_header_id = c.source_deal_header_id and idc.udf_deal_id = c.udf_deal_id
+	INNER JOIN #index_data_collection_update idc on idc.source_deal_header_id = c.source_deal_header_id and idc.udf_deal_id = c.udf_deal_id AND idc.Field_label =  c.Field_label
 	INNER JOIN #item_udpate it ON it.source_deal_header_id = c.source_deal_header_id and it.pricing_index = idc.pricing_index
 	OUTER Apply (
-		Select source_deal_header_id, adder, negative_adder from #item_udpate
+		Select source_deal_header_id, MAX(adder) adder, MAX(negative_adder) negative_adder  from #item_udpate
+		WHERE source_deal_header_id = c.source_deal_header_id
+		GROUP BY source_deal_header_id
 		) p	
 	--INNER JOIN  #grouping_formula gf ON gf.pricing_index = it.pricing_index and gf.multiplier = it.multiplier and gf.source_deal_header_id = c.source_deal_header_id
 	LEFT JOIN  #update_case uc ON uc.source_deal_header_id = idc.source_deal_header_id
 	where c.udf_value IS NULL AND uc.source_deal_header_id IS NULL
 	UPDATE sdd
-            SET  sdd.fixed_price = CAST((o.update_value + ISNULL(adder, 0)) AS NUMERIC(38,10))
+            SET  sdd.fixed_price = CAST((o.update_value + ISNULL(adder, 0) - ISNULL(negative_adder,0)) AS NUMERIC(38,10))
 	FROM source_deal_detail sdd 
-	OUTER APPLY (SELECT source_deal_header_id, sum(product) update_value , max(adder) adder FROM #update_case_final GROUP BY source_deal_header_id) o
+	OUTER APPLY (SELECT source_deal_header_id, sum(product) update_value , max(adder) adder , max(negative_adder) negative_adder
+	FROM #update_case_final GROUP BY source_deal_header_id) o
 	WHERE sdd.source_deal_header_id = o.source_deal_header_id
 	Declare @_Recommendation Nvarchar(1000)
 	IF Exists(Select 1 from  #collect_deals d 
@@ -810,7 +815,7 @@ WHERE 1=1', report_id = @report_id_data_source_dest,
 	
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, 'Process ID' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'EOD - Tranche Deal Update'
