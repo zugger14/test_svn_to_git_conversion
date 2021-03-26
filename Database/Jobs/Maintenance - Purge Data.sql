@@ -18,6 +18,7 @@ DECLARE @cmd NVARCHAR(MAX) = CAST('' AS NVARCHAR(MAX)) + N'
 DECLARE @one_month AS DATETIME = DATEADD(DD, -30, GETDATE()),
 	@one_week AS DATETIME =	DATEADD(WEEK, -1, GETDATE()),
 	@three_months AS DATETIME = DATEADD(DD, -90, GETDATE()),
+	@ten_days AS DATETIME = DATEADD(DD, -10, GETDATE()),
 	@five_days AS DATETIME = DATEADD(DD, -5, GETDATE())
 
 IF EXISTS (
@@ -197,7 +198,7 @@ IF EXISTS (
 		AND COLUMN_NAME = ''create_ts''
 )
 BEGIN
-	DELETE FROM message_board WHERE create_ts < @one_month
+	DELETE FROM message_board WHERE create_ts < @ten_days
 END
 
 IF EXISTS (
