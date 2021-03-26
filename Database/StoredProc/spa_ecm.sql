@@ -1,4 +1,4 @@
-IF OBJECT_ID (N'[dbo].[spa_ecm]', N'P') IS NOT NULL
+﻿IF OBJECT_ID (N'[dbo].[spa_ecm]', N'P') IS NOT NULL
 	DROP PROCEDURE [dbo].[spa_ecm]
 GO
 
@@ -340,10 +340,24 @@ BEGIN
 		   END [price_unit_capacity_unit],
 		   ABS(SUM(tdd.total_volume * ISNULL(conv.conversion_factor, 1) * (tdd.fixed_price + ISNULL(ABS(CAST(uddf.udf_value AS FLOAT)), 0)) )) * CASE WHEN MAX(sdht.template_name) LIKE '%Zeebrugge%' THEN 100 ELSE 1 END [total_contract_value],
 		   CASE 
-				WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, 6, MAX(td.entire_term_start)), 126)
+				WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, CASE WHEN MAX(sdv_block.value_id) = -10000298 THEN 6
+				  ELSE CASE WHEN TRY_CAST(IIF(CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) = 0, LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),SUBSTRING(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),0, CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))))) AS INT) IS NULL THEN 6
+					   ELSE TRY_CAST(IIF(CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) = 0, LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),SUBSTRING(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),0, CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))))) AS INT) 
+				  END
+		     END, MAX(td.entire_term_start)) + CASE WHEN MAX(sdv_block.code) IN ('WD 00-06','WD 01-06','WD 02-06','WD 03-06','WD 04-06','WD 05-06','00-01','01-02','02-03','03-04','04-05','05-06') THEN 1
+												  ELSE 0 END, 126)
 				ELSE CONVERT(VARCHAR(19), CAST(MAX(td.entire_term_start) AS DATETIME), 126)
 		   END [delivery_start],
-		   CASE WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, 6, MAX(td.entire_term_end)) + 1 , 126) ELSE CONVERT(VARCHAR(19), CAST(MAX(td.entire_term_end) AS DATETIME) + 1 , 126) END [delivery_end],
+		   CASE WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, CASE WHEN MAX(sdv_block.value_id) = -10000298 THEN 6
+				  ELSE CASE WHEN TRY_CAST(IIF(CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) = 0, LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),SUBSTRING(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')), CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) + 1 , LEN(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))))) AS INT) IS NULL THEN 6 
+					   ELSE TRY_CAST(IIF(CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) = 0, LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),SUBSTRING(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')), CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) + 1 , LEN(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))))) AS INT) 
+				  END
+		     END, MAX(td.entire_term_end)) + CASE WHEN ISNULL(MAX(sdv_block.value_id), -10000298) = -10000298 THEN 1 
+												  WHEN MAX(sdv_block.code) IN ('00-01','01-02','02-03','03-04','04-05','05-06') THEN 1
+												  WHEN MAX(sdv_block.code) LIKE '%WD %' THEN 1
+												  ELSE 0 END , 126) 
+			 ELSE CONVERT(VARCHAR(19), CAST(MAX(td.entire_term_end) AS DATETIME) + 1 , 126) 
+			 END [delivery_end],
 		   MAX(tdd.deal_volume) [contract_capacity],
 		   (AVG(tdd.fixed_price) + ISNULL(MAX(ABS(CAST(uddf.udf_value AS FLOAT))), 0)) * CASE WHEN MAX(sdht.template_name) LIKE '%Zeebrugge%' THEN 100 ELSE 1 END [price],
 		   CASE WHEN MAX(scom.commodity_id) IN ('ELectricity', 'Power') THEN NULL
