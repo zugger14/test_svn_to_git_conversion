@@ -1877,7 +1877,7 @@ BEGIN
 					   NULL AS [clickAndTradeDetails/undisclosedVolume/unit],
 					   [order_duration] AS [clickAndTradeDetails/orderDuration/duration],
 					   NULL AS [clickAndTradeDetails/orderDuration/expirationDateTime],
-					   [source_deal_header_id] AS [contractInfo/contract/contractId],
+					   srs.[source_deal_header_id] AS [contractInfo/contract/contractId],
 					   [contract_name] AS [contractInfo/contract/contractName],
 					   [contract_type] AS [contractInfo/contract/contractType],
 					   [energy_commodity] AS [contractInfo/contract/energyCommodity],
