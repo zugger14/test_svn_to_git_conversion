@@ -19,6 +19,7 @@ $sql = (isset($_REQUEST["sql"])) ? $_REQUEST["sql"] : '';
 $filename = (isset($_REQUEST['filename'])) ? $_REQUEST['filename'] : 'grid';
 $ws_title = (isset($_REQUEST['worksheet_title'])) ? $_REQUEST['worksheet_title'] : 'Sheet1';
 $headers = (isset($_REQUEST['headers'])) ? $_REQUEST['headers'] : '';
+$format_code = (isset($_REQUEST['format_code'])) ? $_REQUEST['format_code'] : '';
 
 $filename = ($filename == '') ? 'grid' : $filename;
 $filename = $filename . '.xlsx';
@@ -73,7 +74,9 @@ $header_style_array = array(
 );
 $header_array = array();
 $header_array = explode(',', $headers);
+$format_code_array = explode('|', $format_code);
 $header_array_size = sizeof($header_array);
+$format_code_array_size = sizeof($format_code_array);
 
 // Fill Spreadsheet cells with data
 for ($i = 0; $i < $total_rcount; $i++) {
@@ -100,6 +103,13 @@ for ($i = 0; $i < $total_rcount; $i++) {
         $col_idx = $i + 2;
         $excel_columns_cell = $excell_column_name . $col_idx ;
         $obj_php_excel->getActiveSheet()->setCellValue($excel_columns_cell, strip_tags($recordsets[$i][$key_names[$j]]));
+
+        if ($format_code_array_size > 1) {
+            if ($format_code_array[$j] && $format_code_array[$j] != '') {
+                $obj_php_excel->getActiveSheet()->getStyle($excel_columns_cell)->getNumberFormat()->setFormatCode($format_code_array[$j]);
+            }
+        }
+
     }
     $row_header = 0;
 } 

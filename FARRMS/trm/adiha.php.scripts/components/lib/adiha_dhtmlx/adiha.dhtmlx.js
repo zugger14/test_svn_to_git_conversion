@@ -2857,36 +2857,39 @@ dhtmlXGridObject.prototype.PSExport = function(type, process_table, grid_name, h
         var headers = columns_ids.map(function(column_id) {
             return that.getColLabel(that.getColIndexById(column_id))
         }).join(',')
-    }
 
+    }
+    var default_rounding = 2;
     var number_coumns = ['ed_p','ro_p','ed_v','ro_v','ed_a','ro_a','ed_no','ed_ro'];
-    var columns_ids_formatted = columns_ids.map(function(col_id) {
+    var format_code_array = columns_ids.map(function(col_id) {
         var column_id = setupDeals.setup_deals.getColTypeById(col_id);
         if ($.inArray(column_id, number_coumns) != -1) {
             var col_type = 'n';
             switch (column_id) {
                 case 'ro_v':
                 case 'ed_v':
-                    col_type = 'v';
+                    default_rounding = Number(global_volume_rounding);
                     break;
                 case 'ed_p':
                 case 'ro_p':
                     col_type = 'p';
+                    default_rounding = Number(global_price_rounding);
                     break;
                 case 'ed_a':
                 case 'ro_a':
-                    col_type = 'a';
+                    default_rounding = Number(global_amount_rounding);
                     break;
                 default:
-                    col_type = 'b';
+                    default_rounding = Number(global_number_rounding);
                     break;
             }
-            return 'dbo.FNANumberFormat(' + col_id + ',\'' + col_type + '\') [' + col_id + ']';
+            var decimal_part = Array(default_rounding + 1).join('0');
+            return '#,##0.' + decimal_part ;
         } else {
-            return col_id;
+            return '';
         }
     });
-
+    var format_code = format_code_array.join('|');
     var url = js_php_path + 'components/lib/adiha_dhtmlx/grid-excel-php/export_sql_to_excel.php';
 
     var y = document.createElement("div");
@@ -2905,7 +2908,7 @@ dhtmlXGridObject.prototype.PSExport = function(type, process_table, grid_name, h
         order_by = ' ORDER BY ' + order_by;
     }
 
-    var sql = 'SELECT ' + columns_ids_formatted.join(',') + ' FROM ' + process_table + where + order_by;
+    var sql = 'SELECT ' + columns_ids.join(',') + ' FROM ' + process_table + where + order_by;
     // console.log(sql);
     var filename = grid_name + '_' + (new Date()).valueOf();
     y.innerHTML = '<form id="' + m + '" method="post" action="' + url + '" accept-charset="utf-8"  enctype="application/x-www-form-urlencoded" target="_blank">' +
@@ -2914,6 +2917,7 @@ dhtmlXGridObject.prototype.PSExport = function(type, process_table, grid_name, h
         '<textarea style="display:none" name="headers" id="headers">' + headers + '</textarea>' +
         '<textarea style="display:none" name="columns_ids" id="columns_ids">' + columns_ids + '</textarea>' +
         '<textarea style="display:none" name="filename" id="filename">' + filename + '</textarea>' +
+        '<textarea style="display:none" name="format_code" id="format_code">' + format_code + '</textarea>' +
         '</form>';
     document.getElementById(m).submit();
     y.parentNode.removeChild(y);
