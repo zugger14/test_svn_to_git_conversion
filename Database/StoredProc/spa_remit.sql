@@ -893,7 +893,7 @@ BEGIN
 				term_date DATETIME, 
 				hr_mult INT
 			)
-			
+
 			DECLARE c1 CURSOR FOR 
 			    SELECT source_deal_Header_id, document_id, document_usage, sender_id, receiver_id, receiver_role, 
 					   document_version, market, commodity, transaction_type, delivery_point_area, buyer_party, 
@@ -1016,8 +1016,8 @@ BEGIN
 							AND unpvt.error_validation_message IS NULL
 
  						SELECT @xml_inner3 = (
-							SELECT CONVERT(VARCHAR(19), DATEADD(hh, 6, DATEADD(hh, min(hr-1), term_date)), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
-									CONVERT(VARCHAR(19), DATEADD(hh, 6, DATEADD(hh, max(hr), term_date)), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+							SELECT CASE WHEN CAST(term_date AS DATE) = CAST(DATEADD(hh, 12, DATEADD(hh, min(hr-1), term_date)) AS DATE) THEN CONVERT(VARCHAR(19), DATEADD(hh, 12, DATEADD(hh, min(hr-1), term_date)), 126) ELSE CONVERT(VARCHAR(19), DATEADD(hh, 12, DATEADD(hh, min(hr-1), DATEADD(DAY,-1,term_date))), 126) END AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
+									CASE WHEN CAST(term_date AS DATE) = CAST(DATEADD(hh, 12, DATEADD(hh, max(hr), term_date)) AS DATE) THEN CONVERT(VARCHAR(19), DATEADD(hh, 12, DATEADD(hh, max(hr), term_date)), 126) ELSE CONVERT(VARCHAR(19), DATEADD(hh, 12, DATEADD(hh, max(hr), DATEADD(DAY,-1,term_date))), 126) END AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
 									@col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
 									@col_price AS [TimeIntervalQuantity/Price]
 							FROM #tempblock WHERE hr_mult = 1
@@ -1340,6 +1340,32 @@ BEGIN
 						AND fb.func_name IN (''LagCurve'')
 						'
 			EXEC(@sql)
+
+
+			IF OBJECT_ID('tempdb..#temp_source_non_remit_standard_pvt') IS NOT NULL
+				DROP TABLE #temp_source_non_remit_standard_pvt
+
+			SELECT  source_deal_header_id, 
+			ace, lei, bic, eic, gin,
+			SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin,
+			DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin
+			INTO #temp_source_non_remit_standard_pvt
+			FROM (
+							SELECT  source_deal_header_id ,
+									process_id,
+									[reporting_entity_id] AS RRM,
+								   [type_of_code_used_in_field_5] AS RRM_ID,
+								   [id_of_the_market_participant_or_counterparty] AS sub_counterparty_id,
+								   'SOURCE_CODE_' + [type_of_code_used_in_field_1] AS sub_source_code,
+								   [id_of_the_other_market_participant_or_counterparty] AS deal_counterparty_id,
+								   'DEAL_SOURCE_CODE_' + [type_of_code_used_in_field_3] AS deal_source_code,
+								   [beneficiary_id] AS beneficiaryIdentification,
+								   [type_of_code_used_in_field_7] AS type_of_code_used_in_field_7
+							FROM source_remit_non_standard
+							WHERE process_id = @process_id
+						) AS s PIVOT (MAX(RRM) FOR RRM_ID IN (ace, lei, bic, eic, gin)) AS pvt
+						PIVOT (MAX(sub_counterparty_id) FOR sub_source_code IN (SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin)) AS pvt2
+						PIVOT (MAX(deal_counterparty_id) FOR deal_source_code IN (DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin)) AS pvt3
 		
 			SELECT @xml_innermost = (
 				SELECT ROW_NUMBER() OVER(ORDER BY [Action_type]) AS
@@ -1397,6 +1423,8 @@ BEGIN
                        [Load_Type] AS [loadType],
                        [Action_type] AS [actionType]
                 FROM source_remit_non_standard srs
+				INNER JOIN #temp_source_non_remit_standard_pvt tsnrsp
+					ON tsnrsp.source_deal_header_id = srs.source_deal_header_id
 				OUTER APPLY (
 					SELECT  MAX(spcd.curve_id) [fixingIndex]
 							,'FW' [fixingIndexType]
@@ -1551,6 +1579,33 @@ BEGIN
         END
         ELSE IF @report_type = 39401
 		BEGIN
+			IF OBJECT_ID('tempdb..#temp_source_remit_standard_pvt') IS NOT NULL
+				DROP TABLE #temp_source_remit_standard_pvt
+
+			SELECT  source_deal_header_id, 
+			DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin,
+			ace, lei, bic, eic, gin,
+			SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin
+			INTO #temp_source_remit_standard_pvt
+			FROM (
+				SELECT  source_deal_header_id ,
+						process_id,
+						[reporting_entity_id] AS RRM,
+						[type_of_code_field_6] AS RRM_ID,
+						[market_id_participant_counterparty] AS sub_counterparty_id,
+						'SOURCE_CODE_' + [type_of_code_field_1]  AS sub_source_code,
+						[other_id_market_participant_counterparty] AS deal_counterparty_id,
+						'DEAL_SOURCE_CODE_' + [type_of_code_field_4] AS deal_source_code,
+						[beneficiary_id] AS beneficiaryIdentification,
+						[type_of_code_field_8] AS type_of_code_used_in_field_8
+				FROM source_remit_standard
+				WHERE process_id = @process_id
+
+			) AS s 
+			PIVOT (MAX(deal_counterparty_id) FOR deal_source_code IN (DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin)) AS pvt3
+			PIVOT (MAX(RRM) FOR RRM_ID IN (ace, lei, bic, eic, gin)) AS pvt
+			PIVOT (MAX(sub_counterparty_id) FOR sub_source_code IN (SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin)) AS pvt2
+
 			SELECT @trade_list = (
 				SELECT -- according to generated sample by xsd
 					   ROW_NUMBER() OVER(ORDER BY [Action_type]) AS RecordSeqNumber,
@@ -1616,23 +1671,11 @@ BEGIN
 					   NULL AS [Extra]
 				FROM source_remit_standard srs
 				INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = srs.source_deal_header_id
+				INNER JOIN #temp_source_remit_standard_pvt rsrsp
+					ON rsrsp.source_deal_header_id = srs.source_deal_header_id
 				WHERE process_id = @process_id
 				FOR XML PATH ('TradeReport'), Root('TradeList'), TYPE)
-			FROM (
-				SELECT [reporting_entity_id] AS RRM,
-					   [type_of_code_field_6] AS RRM_ID,
-					   [market_id_participant_counterparty] AS sub_counterparty_id,
-					   'SOURCE_CODE_' + [type_of_code_field_1]  AS sub_source_code,
-					   [other_id_market_participant_counterparty] AS deal_counterparty_id,
-					   'DEAL_SOURCE_CODE_' + [type_of_code_field_4] AS deal_source_code,
-					   [beneficiary_id] AS beneficiaryIdentification,
-					   [type_of_code_field_8] AS type_of_code_used_in_field_8
-				FROM source_remit_standard
-				WHERE process_id = @process_id
-			) AS s 
-			PIVOT (MAX(RRM) FOR RRM_ID IN (ace, lei, bic, eic, gin)) AS pvt
-			PIVOT (MAX(sub_counterparty_id) FOR sub_source_code IN (SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin)) AS pvt2
-			PIVOT (MAX(deal_counterparty_id) FOR deal_source_code IN (DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin)) AS pvt3
+			
 		
 		----Xml export of selected row
 			;WITH XMLNAMESPACES (
@@ -1712,7 +1755,33 @@ BEGIN
 			RETURN
 		END
 		ELSE IF @report_type = 39405
-		BEGIN		
+		BEGIN
+		
+			IF OBJECT_ID('tempdb..#temp_source_remit_standard_pvt1') IS NOT NULL
+				DROP TABLE #temp_source_remit_standard_pvt1
+
+			SELECT  source_deal_header_id, 
+			ace,lei,bic,eic,gin,
+			SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin,
+			DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin
+			INTO #temp_source_remit_standard_pvt1
+			FROM (
+				SELECT source_deal_header_id ,
+						process_id,
+						[reporting_entity_id] AS RRM,
+						[type_of_code_field_6] AS RRM_ID,
+						[market_id_participant_counterparty] AS sub_counterparty_id,
+						'SOURCE_CODE_' + [type_of_code_field_1]  AS sub_source_code,
+						[other_id_market_participant_counterparty] AS deal_counterparty_id,
+						'DEAL_SOURCE_CODE_' + [type_of_code_field_4] AS deal_source_code,
+						[beneficiary_id] AS beneficiaryIdentification,
+						[type_of_code_field_8] AS type_of_code_used_in_field_8
+				FROM source_remit_standard
+				WHERE process_id = @process_id
+			) AS s PIVOT (MAX(RRM) FOR RRM_ID IN (ace,lei,bic,eic,gin)) AS pvt
+			PIVOT (MAX(sub_counterparty_id) FOR sub_source_code IN (SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin)) AS pvt2
+			PIVOT (MAX(deal_counterparty_id) FOR deal_source_code IN (DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin)) AS pvt3
+
 			SELECT @contract_list = (
 				SELECT [contract_id] AS [contractId],
 					   [contract_name] AS [contractName],
@@ -1747,24 +1816,37 @@ BEGIN
 					   days_of_the_week [deliveryProfile/daysOfTheWeek],
 					   dbo.FNATimeWithLeadingZero(RTRIM(LEFT([load_delivery_intervals], 5))) [deliveryProfile/loadDeliveryStartTime],
 					   dbo.FNATimeWithLeadingZero(LTRIM(RIGHT([load_delivery_intervals], 5))) [deliveryProfile/loadDeliveryEndTime]
-				FROM source_remit_standard
+				FROM source_remit_standard srs
+				INNER JOIN #temp_source_remit_standard_pvt1 tsrsp
+					ON tsrsp.source_deal_header_id = srs.source_deal_header_id
 				WHERE process_id = @process_id 
 				FOR XML PATH ('contract'), Root('contractList'), TYPE)
+
+			IF OBJECT_ID('tempdb..#temp_source_remit_standard_pvt2') IS NOT NULL
+				DROP TABLE #temp_source_remit_standard_pvt2
+
+			SELECT source_deal_header_id, ace, lei, bic, eic, gin,
+			SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin,
+			DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin
+			INTO #temp_source_remit_standard_pvt2
 			FROM (
-				SELECT [reporting_entity_id] AS RRM,
-					   [type_of_code_field_6] AS RRM_ID,
-					   [market_id_participant_counterparty] AS sub_counterparty_id,
-					   'SOURCE_CODE_' + [type_of_code_field_1]  AS sub_source_code,
-					   [other_id_market_participant_counterparty] AS deal_counterparty_id,
-					   'DEAL_SOURCE_CODE_' + [type_of_code_field_4] AS deal_source_code,
-					   [beneficiary_id] AS beneficiaryIdentification,
-					   [type_of_code_field_8] AS type_of_code_used_in_field_8
+				SELECT  source_deal_header_id ,
+						process_id,
+						[reporting_entity_id] AS RRM,
+						[type_of_code_field_6] AS RRM_ID,
+						[market_id_participant_counterparty] AS sub_counterparty_id,
+						'SOURCE_CODE_' + [type_of_code_field_1]  AS sub_source_code,
+						[other_id_market_participant_counterparty] AS deal_counterparty_id,
+						'DEAL_SOURCE_CODE_' + [type_of_code_field_4] AS deal_source_code,
+						[beneficiary_id] AS beneficiaryIdentification,
+						[type_of_code_field_8] AS type_of_code_used_in_field_8
 				FROM source_remit_standard
 				WHERE process_id = @process_id
-			) AS s PIVOT (MAX(RRM) FOR RRM_ID IN (ace,lei,bic,eic,gin)) AS pvt
+			) AS s 
+			PIVOT (MAX(RRM) FOR RRM_ID IN (ace, lei, bic, eic, gin)) AS pvt
 			PIVOT (MAX(sub_counterparty_id) FOR sub_source_code IN (SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin)) AS pvt2
 			PIVOT (MAX(deal_counterparty_id) FOR deal_source_code IN (DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin)) AS pvt3
-			
+
 			SELECT @trade_list = (
 				SELECT -- according to generated sample by xsd
 					   ROW_NUMBER() OVER(ORDER BY [Action_type]) AS RecordSeqNumber,
@@ -1824,25 +1906,12 @@ BEGIN
 					   [termination_date] AS [terminationDate],
 					   [action_type] AS [actionType],
 					   NULL AS [Extra]
-				FROM source_remit_standard
+				FROM source_remit_standard srs
+				INNER JOIN #temp_source_remit_standard_pvt2  tsrsp
+					ON tsrsp.source_deal_header_id = srs.source_deal_header_id
 				WHERE process_id = @process_id
 				FOR XML PATH ('TradeReport'), Root('TradeList'), TYPE)
-			FROM (
-				SELECT [reporting_entity_id] AS RRM,
-					   [type_of_code_field_6] AS RRM_ID,
-					   [market_id_participant_counterparty] AS sub_counterparty_id,
-					   'SOURCE_CODE_' + [type_of_code_field_1]  AS sub_source_code,
-					   [other_id_market_participant_counterparty] AS deal_counterparty_id,
-					   'DEAL_SOURCE_CODE_' + [type_of_code_field_4] AS deal_source_code,
-					   [beneficiary_id] AS beneficiaryIdentification,
-					   [type_of_code_field_8] AS type_of_code_used_in_field_8
-				FROM source_remit_standard
-				WHERE process_id = @process_id
-			) AS s 
-			PIVOT (MAX(RRM) FOR RRM_ID IN (ace, lei, bic, eic, gin)) AS pvt
-			PIVOT (MAX(sub_counterparty_id) FOR sub_source_code IN (SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin)) AS pvt2
-			PIVOT (MAX(deal_counterparty_id) FOR deal_source_code IN (DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin)) AS pvt3
-		
+					
 		----Xml export of selected row
 			;WITH XMLNAMESPACES (
 				'http://www.w3.org/2001/XMLSchema-instance' AS xsi,
