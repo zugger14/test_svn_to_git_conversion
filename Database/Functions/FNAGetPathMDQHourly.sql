@@ -30,6 +30,7 @@ RETURNS @return_table TABLE (
 	[contract_id] INT NULL,
 	[term_start] DATETIME NULL,
 	[hour] INT NULL,
+	[is_dst] TINYINT NULL,
 	[mdq] NUMERIC(10,4) NULL,
 	[used_mdq] NUMERIC(10,4) NULL,
 	[rmdq] NUMERIC(10,4) NULL,
@@ -51,6 +52,7 @@ DECLARE @return_table TABLE (
 	[contract_id] INT NULL,
 	[term_start] DATETIME NULL,
 	[hour] INT NULL,
+	[is_dst] TINYINT NULL,
 	[mdq] NUMERIC(10,4) NULL,
 	[used_mdq] NUMERIC(10,4) NULL,
 	[rmdq] NUMERIC(10,4) NULL,
@@ -61,7 +63,7 @@ DECLARE @return_table TABLE (
 	[stg_net_type] VARCHAR(50) NULL
 )
 
-SELECT @path_id = '310', @term_start = '2025-07-01', @term_end = '2025-07-02', @data_level = ''
+SELECT @path_id = '330', @term_start = '2027-10-30', @term_end = '2027-10-30', @data_level = ''
 
 	
 EXEC dbo.spa_drop_all_temp_table
@@ -156,6 +158,7 @@ BEGIN
 			[contract_id] INT NULL,
 			[term_start] DATETIME NULL,
 			[hour] INT NULL,
+			[is_dst] TINYINT NULL,
 			[hourly_mdq] NUMERIC(10,4) NULL,
 			[hourly_mdq1] NUMERIC(10,4) NULL
 		)
@@ -166,6 +169,7 @@ BEGIN
 			[contract_id],
 			[term_start],
 			[hour],
+			[is_dst],
 			[hourly_mdq],
 			[hourly_mdq1]
 		)
@@ -174,6 +178,7 @@ BEGIN
 			, sdh.contract_id
 			, sddh.term_date [term_start]
 			, CAST(LEFT(sddh.hr,2) AS INT) [hour]
+			, sddh.is_dst
 			, SUM(
 				CASE WHEN sdv_pg.code NOT IN ('Complex-EEX', 'Complex-LTO', 'Complex-ROD') OR sdv_pg.code IS NULL
 						THEN IIF(sdh.header_buy_sell_flag = 's', -1, 1) * sddh.volume
@@ -202,7 +207,7 @@ BEGIN
 			AND sddh.term_date BETWEEN @term_start AND ISNULL(@term_end, @term_start)
 			--AND (sdv_pg.code NOT IN ('Complex-EEX', 'Complex-LTO', 'Complex-ROD') OR sdv_pg.code IS NULL) --exclude these product group capacity deals.
 			AND sdh.deal_status <> 5607 --avoid voided deals
-		GROUP by sdd.location_id, sdh.contract_id, sddh.term_date, CAST(LEFT(sddh.hr,2) AS INT)--,sdh.source_deal_header_id
+		GROUP by sdd.location_id, sdh.contract_id, sddh.term_date, CAST(LEFT(sddh.hr,2) AS INT), sddh.is_dst--,sdh.source_deal_header_id
 
 	END
 	--select * from @loc_wise_capacity_hourly_mdq
@@ -218,6 +223,7 @@ BEGIN
 			[location_id] INT NULL,
 			[leg] TINYINT NULL,
 			[hour] TINYINT NULL,
+			[is_dst] TINYINT NULL,
 			[hourly_mdq] NUMERIC(10,4) NULL,
 			[is_complex] VARCHAR(10) NULL,
 			[storage_type] CHAR(1) NULL,
@@ -232,6 +238,7 @@ BEGIN
 			[location_id],
 			[leg],
 			[hour],
+			[is_dst],
 			[hourly_mdq],
 			[is_complex],
 			[storage_type],
@@ -244,6 +251,7 @@ BEGIN
 			, sdd.location_id
 			, sdd.leg
 			, CAST(LEFT(sddh.hr,2) AS INT) [hour]
+			, sddh.is_dst
 			, IIF(sdd.buy_sell_flag = 's', -1, 1) * sddh.volume [hourly_mdq]
 			, CASE WHEN sdv_pg.code IN ('Complex-EEX', 'Complex-LTO', 'Complex-ROD') AND sddh.volume > 0 THEN 'y' ELSE 'n' END [is_complex]
 			, @storage_type
@@ -266,7 +274,7 @@ BEGIN
 		LEFT JOIN @contract_ids cn ON cn.contract_id = sdh.contract_id
 		LEFT JOIN static_data_value sdv_pg 
 			ON sdv_pg.value_id = sdh.internal_portfolio_id
-		where sdht.template_name = 'Transportation NG'
+		WHERE sdht.template_name = 'Transportation NG'
 			AND sddh.term_date BETWEEN @term_start AND ISNULL(@term_end, @term_start)
 			--AND (sdd.leg = 2 OR @storage_type IS NOT NULL)
 			and sdd.leg = 2
@@ -314,6 +322,7 @@ BEGIN
 			[contract_id] INT NULL,
 			[term_start] DATETIME NULL,
 			[hour] INT NULL,
+			[is_dst] TINYINT NULL,
 			[mdq] NUMERIC(10,4) NULL,
 			[mdq1] NUMERIC(10,4) NULL,
 			[used_mdq] NUMERIC(10,4) NULL,
@@ -325,12 +334,13 @@ BEGIN
 			[stg_net_flow] NUMERIC(10,4) NULL,
 			[stg_net_type] VARCHAR(50) NULL
 		)
-	
+			
 		INSERT INTO @path_mdq_info (
 			[path_id],
 			[contract_id],
 			[term_start],
 			[hour],
+			[is_dst],
 			[mdq],
 			[mdq1],
 			[rmdq],
@@ -346,6 +356,7 @@ BEGIN
 			, ccrs.contract_id
 			, tm.term_start
 			, hr_values.[hour]
+			, hr_values.is_dst [is_dst]
 			, ISNULL([dbo].[FNAGetGasSupplyDemandVol](
 					  IIF(smj_from.location_name = 'storage', ABS(lwchm_to.hourly_mdq) + 1, lwchm_from.hourly_mdq) --incase of withdrawal, assume supply position greater than demand position
 					, IIF(lwchm_to.hourly_mdq < 0, 0, -1 * lwchm_to.hourly_mdq) --capacity case; if -ve position assume 0 else pass value as negative, since function will see -ve demand volume as valid one.
@@ -369,7 +380,7 @@ BEGIN
 			, IIF(COALESCE(lwchm_from.hourly_mdq, lwchm_to.hourly_mdq) IS NOT NULL, 'n', 'y') [only_path_mdq]
 			, stn.stg_affected_path_id
 			, stn.stg_net_flow
-			, stn.stg_net_type
+			, stn.stg_net_type		
 			
 		FROM delivery_path dp
 		LEFT JOIN counterparty_contract_rate_schedule ccrs 
@@ -380,20 +391,21 @@ BEGIN
 			WHERE n <= (DATEDIFF(DAY, @term_start, @term_end) + 1)
 		) tm
 		CROSS JOIN (
-			SELECT (n) [hour]
-			FROM seq sq
-			WHERE sq.n < 25
+			SELECT CAST(LEFT(hr_col.clm_name, 2) AS INT) + 1 [hour], hr_col.is_dst
+			FROM dbo.FNAGetDisplacedPivotGranularityColumn(@term_start, @term_end, 982, 102201, 6) hr_col
 		) hr_values
 		LEFT JOIN @loc_wise_capacity_hourly_mdq lwchm_from 
 			ON (lwchm_from.location_id = dp.from_location OR lwchm_from.proxy_location_id = dp.from_location) 
 			AND lwchm_from.contract_id = ccrs.contract_id 
 			AND lwchm_from.term_start = tm.term_start
 			AND lwchm_from.[hour] = hr_values.[hour]
+			AND lwchm_from.is_dst = hr_values.is_dst
 		LEFT JOIN @loc_wise_capacity_hourly_mdq lwchm_to 
 			ON (lwchm_to.location_id = dp.to_location OR lwchm_to.proxy_location_id = dp.to_location) 
 			AND lwchm_to.contract_id = ccrs.contract_id 
 			AND lwchm_to.term_start = tm.term_start
 			AND lwchm_to.[hour] = hr_values.[hour]
+			AND lwchm_to.is_dst = hr_values.is_dst
 		LEFT JOIN source_minor_location sml_from 
 			ON sml_from.source_minor_location_id = dp.from_location
 		LEFT JOIN source_major_location smj_from 
@@ -409,6 +421,7 @@ BEGIN
 				AND sch.contract_id = ccrs.contract_id
 				AND sch.term_start = tm.term_start
 				AND sch.[hour] = hr_values.[hour]
+				AND sch.is_dst = hr_values.is_dst
 		) sch_info
 		OUTER APPLY (
 			SELECT TOP 1 dpm.mdq [mdq]
@@ -422,8 +435,6 @@ BEGIN
 			AND stn.[term_start] = tm.term_start
 		WHERE dp.path_id = @path_id
 
-		
-		
 		IF @storage_type IS NULL
 		BEGIN
 			--while deriving rmdq, use non-excluded mdq1
@@ -447,6 +458,7 @@ BEGIN
 				, [contract_id]
 				, [term_start]
 				, [hour]
+				, [is_dst]
 				, [mdq]
 				, [used_mdq]
 				, [rmdq]
@@ -466,6 +478,7 @@ BEGIN
 				, [contract_id]
 				, NULL [term_start]
 				, [hour]
+				, [is_dst]
 				, SUM([mdq]) [mdq]
 				, SUM([used_mdq]) [used_mdq]
 				, SUM([rmdq]) [rmdq]
@@ -478,6 +491,7 @@ BEGIN
 			GROUP BY [path_id]
 				,[contract_id]
 				,[hour]
+				,[is_dst]
 			--ORDER BY [hour]
 		END
 		ELSE IF @data_level = 'path_term'
@@ -487,6 +501,7 @@ BEGIN
 				, [contract_id]
 				, [term_start]
 				, NULL [hour]
+				, NULL [is_dst]
 				, SUM([mdq]) [mdq]
 				, SUM([used_mdq]) [used_mdq]
 				, SUM([rmdq]) [rmdq]

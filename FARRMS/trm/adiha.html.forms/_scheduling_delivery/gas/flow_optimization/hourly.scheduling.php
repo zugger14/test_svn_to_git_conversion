@@ -555,11 +555,18 @@ echo $sch_obj->close_layout();
         subgrid.editStop();
         subgrid.forEachCell(subgrid.getRowId(rec_row_index), function(cellObj, cid) { //loop for Rec row
             if(cid > 6) {//only for hour columns
+				var hr = subgrid.getColumnId(cid).replace('hr','');
+				var is_dst = 0;
+				if (hr.indexOf('_DST') > 0) {
+					hr = hr.replace('_DST', '');
+					is_dst = 1;
+				}					
                 xml_manual_vol += '<PSRecordset from_loc_id="' + get_param.rec_location_id +
                     '" to_loc_id="' + get_param.del_location_id +
                     '" path_id="' + path_id_selected +
                     '" contract_id="' + sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('contract')).getValue() +
-                    '" hour="' + subgrid.getColumnId(cid).replace('hr','') +
+                    '" hour="' + hr +
+					'" is_dst="' + is_dst +
                     '" received="' + cellObj.getValue() +
                     '" delivered="' + subgrid.cells2(del_row_index, cid).getValue() +
                     '" path_rmdq="' + subgrid.cells2(0, cid).getValue().split('/')[1] +

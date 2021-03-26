@@ -165,17 +165,46 @@ EXEC dbo.spa_drop_all_temp_table
 
 EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
-	select	@flag='s1'
-,@process_id='6BAC07FB_74B4_4367_84B0_20B2078C9679'
-,@delivery_path='310'
-,@contract_id='8333'
-,@flow_date_from='2027-10-30'
-,@granularity='982'
-,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
-,@from_location='2852'
-,@to_location='2887'
-,@round='4'
-,@dst_case=1
+	SELECT @flag='s2', @process_id='BABD518E_8E0B_4AA3_9E1A_7E1877B39554', @xml_manual_vol='<Root>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="1" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="2" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="3" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="4" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="5" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="6" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="7" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="8" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="9" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="10" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="11" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="12" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="13" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="14" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="15" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="16" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="17" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="18" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="19" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="20" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="21" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="21" is_dst="1" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="22" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="23" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="24" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
+</Root>', @call_from='flow_optimization'
+
+--select @flag='c'
+--,@flow_date_from='2027-10-30'
+--,@flow_date_to='2027-10-30'
+--,@from_location='2857'
+--,@to_location='2854'
+--,@path_priority='-31400'
+--,@opt_objective='38301'
+--,@uom='1158'
+--,@process_id='6BCD464E_41AE_41D3_9F48_63C8D5223FFD'
+--,@reschedule='0'
+--,@granularity='982'
+--,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -2316,8 +2345,6 @@ BEGIN
 		AND (sdv_pg.code NOT IN ('Complex-EEX', 'Complex-LTO', 'Complex-ROD') OR sdv_pg.code IS NULL) --exclude these product group capacity deals.
 	GROUP by sdd.location_id, sdh.contract_id, CAST(LEFT(sddh.hr,2) AS INT)--,sdh.source_deal_header_id	
 
-	--select @child_proxy_from,@child_proxy_to
-	--select * from #loc_wise_capacity_hourly_mdq order by 1,2,3  select * from #tmp_filtered_data 
 --print '@flag = ''c'', #loc_wise_capacity_hourly_mdq E: ' + convert(varchar(50),getdate() ,21)
 
 	--store path mdq information prior Ffor performance optimization
@@ -2332,6 +2359,7 @@ BEGIN
 			) a
 		OUTER APPLY [dbo].[FNAGetPathMDQHourly](a.path_id, @flow_date_from, @flow_date_from, '') b
 	END
+
 --print '@flag = ''c'', #path_mdq_info E: ' + convert(varchar(50),getdate() ,21)
 	--create hourly table
 	SET @sql = '
@@ -2389,6 +2417,7 @@ BEGIN
 		, t.rmdq [ormdq]
 		, ''' + CONVERT(VARCHAR(10),@flow_date_from,21) + ''' [term_start]
 		, hr_values.[hour] [hour]
+		, hr_values.[is_dst]
 		, ' + cast(@granularity as VARCHAR(10)) + ' [granularity]
 		, pos_s.position [supply_position]
 		, pos_d.position [demand_position]
@@ -2396,23 +2425,32 @@ BEGIN
 	INTO ' + @contractwise_detail_mdq_hourly + ' 
 	FROM #tmp_filtered_data t
 	CROSS JOIN (
-		SELECT (n) [hour]
-		FROM seq sq
-		WHERE sq.n IN (' + @period_from + ')
+		SELECT (CAST(left(hr_col.clm_name,2) AS INT) + 1) [hour], hr_col.is_dst
+		FROM dbo.FNAGetDisplacedPivotGranularityColumn(''' + CONVERT(VARCHAR(10),@flow_date_from,21) + ''', ''' + CONVERT(VARCHAR(10),@flow_date_to,21) + ''', 982, 102201, 6) hr_col
+		WHERE (CAST(left(hr_col.clm_name,2) AS INT) + 1) IN (' + @period_from + ')
 	) hr_values
 	LEFT JOIN #path_mdq_info path_mdq_info
 		ON path_mdq_info.path_id = t.path_id
 		AND path_mdq_info.[hour] = hr_values.[hour]
+		AND path_mdq_info.is_dst = hr_values.is_dst
 	OUTER APPLY (
-		SELECT SUM(hp.position) [position]
+		SELECT SUM(hp.position - ISNULL(dst_pos.position,0)) [position]
 		FROM ' + @hourly_pos_info + ' hp
+		LEFT JOIN ' + @hourly_pos_info + ' dst_pos
+			ON dst_pos.source_deal_detail_id = hp.source_deal_detail_id
+			AND dst_pos.hour = 25
+			AND hp.hour = 21
 		WHERE hp.location_id = t.from_loc_id
 			AND hp.term_start = ''' + CONVERT(VARCHAR(10),@flow_date_from,21) + '''
 			AND hp.[hour] = hr_values.[hour]
 	) pos_s
 	OUTER APPLY (
-		SELECT SUM(hp.position) [position]
+		SELECT SUM(hp.position - ISNULL(dst_pos.position,0)) [position]
 		FROM ' + @hourly_pos_info + ' hp
+		LEFT JOIN ' + @hourly_pos_info + ' dst_pos
+			ON dst_pos.source_deal_detail_id = hp.source_deal_detail_id
+			AND dst_pos.hour = 25
+			AND hp.hour = 21
 		WHERE hp.location_id = t.to_loc_id
 			AND hp.term_start = ''' + CONVERT(VARCHAR(10),@flow_date_from,21) + '''
 			AND hp.[hour] = hr_values.[hour]
@@ -2420,7 +2458,6 @@ BEGIN
 	'
 	--PRINT(@sql)
 	EXEC(@sql)
-	--return
 
 	--fresh hourly data
 	EXEC('
@@ -4061,12 +4098,12 @@ BEGIN
 	END
 	ELSE 
 	DECLARE @pivot_hr_cols VARCHAR(200)
-
-	
+		
 
 	IF @dst_case = 1 AND CHARINDEX('21', @period_from, 0) > 0
 	BEGIN
 		SET @period_from = REPLACE(@period_from, '21', '21,21_DST')
+		
 	END
 
 	DECLARE @period_from_temp VARCHAR(200) = @period_from
@@ -4074,6 +4111,12 @@ BEGIN
 	SET @period_from_temp = '''' + REPLACE(@period_from_temp, ',', ''',''') + ''''
 
 	SET @pivot_hr_cols = '[' + REPLACE(@period_from,',','],[') + ']'
+
+	IF @dst_case = 1 AND CHARINDEX(',[25]', @pivot_hr_cols, 0) > 0
+	BEGIN
+		SET @pivot_hr_cols = REPLACE(@pivot_hr_cols, ',[25]', '')
+	END
+
 	SET @sql = '
 	SELECT * FROM (
 		SELECT 
@@ -4084,10 +4127,8 @@ BEGIN
 			, IIF(v.item = ''PMDQ/PRMDQ'', cd.contract_name, NULL) [contract]
 			, IIF(cd.group_path = ''y'', cd.path_id, NULL) [group_path_id]
 			, CASE 
-				WHEN cd.[hour] = 25 AND ISNULL(cd.supply_position, cd.demand_position) IS NOT NULL
-					THEN ''21_DST''
-				--WHEN cd.[hour] = 21 AND ' + CAST(@dst_case AS VARCHAR(1)) + ' = 1
-				--	THEN 
+				WHEN cd.[is_dst] = 1
+					THEN CAST(cd.[hour] AS VARCHAR(10)) + ''_DST''
 				ELSE CAST(cd.[hour] AS VARCHAR(10))
 			  END [hour]
 			, v.item [volume]
@@ -4134,20 +4175,28 @@ BEGIN
 		LEFT JOIN delivery_path_detail dpd ON dpd.path_id = cd.path_id and dpd.path_name = cd.single_path_id
 		CROSS JOIN (values(''PMDQ/PRMDQ''),(''Rec''),(''Fuel''),(''Del'')) v (item)
 		OUTER APPLY (
-			SELECT SUM(hp.position) position
+			SELECT SUM(hp.position - ISNULL(dst_pos.position,0)) position
 			FROM ' + @hourly_pos_info +  ' hp
+			LEFT JOIN ' + @hourly_pos_info +  ' dst_pos
+				ON dst_pos.source_deal_detail_id = hp.source_deal_detail_id
+				AND dst_pos.hour = 25
+				AND hp.hour = 21			
 			WHERE hp.hour = cd.hour
-			AND hp.term_start = cd.term_start
-			AND hp.location_id = cd.from_loc_id
-			' + ISNULL('AND hp.source_deal_header_id IN (' + @receipt_deals_id + ')', '') + '
+				AND hp.term_start = cd.term_start
+				AND hp.location_id = cd.from_loc_id
+				' + ISNULL('AND hp.source_deal_header_id IN (' + @receipt_deals_id + ')', '') + '
 		) supply_pos
 		OUTER APPLY (
-			SELECT SUM(hp.position) position
+			SELECT SUM(hp.position - ISNULL(dst_pos.position,0)) position
 			FROM ' + @hourly_pos_info +  ' hp
+			LEFT JOIN ' + @hourly_pos_info +  ' dst_pos
+				ON dst_pos.source_deal_detail_id = hp.source_deal_detail_id
+				AND dst_pos.hour = 25
+				AND hp.hour = 21
 			WHERE hp.hour = cd.hour
-			AND hp.term_start = cd.term_start
-			AND hp.location_id = cd.to_loc_id
-			' + ISNULL('AND hp.source_deal_header_id IN (' + @delivery_deals_id + ')', '') + '
+				AND hp.term_start = cd.term_start
+				AND hp.location_id = cd.to_loc_id
+				' + ISNULL('AND hp.source_deal_header_id IN (' + @delivery_deals_id + ')', '') + '
 		) demand_pos
 		WHERE cd.from_loc_id IN (' + @from_location + ')
 			AND cd.to_loc_id IN (' + @to_location + ')
@@ -4177,17 +4226,18 @@ BEGIN
 		INTO #hourly_schd_vol
 		FROM OPENXML(@idoc_s2,'/Root/PSRecordset',2)
 		WITH (
-			from_loc_id			INT		'@from_loc_id',
-			to_loc_id			INT		'@to_loc_id',
-			path_id				INT		'@path_id',
-			contract_id			INT		'@contract_id',
-			[hour]				INT		'@hour',
-			received			FLOAT	'@received',
-			delivered			FLOAT	'@delivered',
-			path_rmdq			FLOAT	'@path_rmdq',
-			storage_asset_id	INT		'@storage_asset_id'		
+			from_loc_id			INT			'@from_loc_id',
+			to_loc_id			INT			'@to_loc_id',
+			path_id				INT			'@path_id',
+			contract_id			INT			'@contract_id',
+			[hour]				VARCHAR(10)	'@hour',
+			[is_dst]			INT			'@is_dst',
+			received			FLOAT		'@received',
+			delivered			FLOAT		'@delivered',
+			path_rmdq			FLOAT		'@path_rmdq',
+			storage_asset_id	INT			'@storage_asset_id'		
 		)
-	
+		
 		--update hourly contractwise table
 		SET @sql = '
 		UPDATE cd
@@ -4201,7 +4251,8 @@ BEGIN
 			AND cd.to_loc_id = scv.to_loc_id
 			AND scv.path_id = cd.path_id 
 			AND scv.contract_id = cd.contract_id
-			AND scv.[hour] = cd.[hour]
+			AND scv.[hour] = cd.[hour] 
+			AND scv.[is_dst] = cd.[is_dst]
 		'
 		--print(@sql)
 		EXEC(@sql)
