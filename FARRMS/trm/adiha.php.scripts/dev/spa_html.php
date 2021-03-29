@@ -847,6 +847,67 @@ $build_exec_code = [];
 						$clm_sub_total = "";
 						$sub_total_clm = -1;
 						
+					} else if ($fields == 34) { 
+						$clm_total = array("Total", "", "", "", "", "", "", ""
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+							);
+						$clm_total_format = array("N", "N", "N", "N", "N", "N", "N", "N"
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+								, "$." . str_replace("'", "", $round_no)
+						);
+						$report_total_clm_start = 1;
+						$clm_sub_total = "";
+						$sub_total_clm = -1;
+						
 					}
                 } else if (strpos($sql, "spa_flow_optimization") != false) { //position report for flow optimization grid
                     $report_name = 'spa_flow_optimization';

@@ -165,46 +165,22 @@ EXEC dbo.spa_drop_all_temp_table
 
 EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
-	SELECT @flag='s2', @process_id='BABD518E_8E0B_4AA3_9E1A_7E1877B39554', @xml_manual_vol='<Root>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="1" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="2" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="3" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="4" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="5" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="6" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="7" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="8" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="9" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="10" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="11" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="12" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="13" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="14" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="15" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="16" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="17" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="18" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="19" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="20" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="21" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="21" is_dst="1" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="22" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="23" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-	<PSRecordset from_loc_id="2857" to_loc_id="2854" path_id="330" contract_id="8347" hour="24" is_dst="0" received="25.0000" delivered="25.0000" path_rmdq="75" storage_asset_id=""/>
-</Root>', @call_from='flow_optimization'
+	SELECT @flag='l'
+,@receipt_delivery='FROM'
+,@flow_date_from='2027-10-30'
+,@flow_date_to='2027-10-30'
+,@major_location='14'
+,@minor_location='2857'
+,@from_location='2857'
+,@to_location='2854'
+,@path_priority='-31400'
+,@opt_objective='38301'
+,@uom='1158'
+,@hide_pos_zero='n'
+,@reschedule='0'
+,@granularity='982'
+,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
 
---select @flag='c'
---,@flow_date_from='2027-10-30'
---,@flow_date_to='2027-10-30'
---,@from_location='2857'
---,@to_location='2854'
---,@path_priority='-31400'
---,@opt_objective='38301'
---,@uom='1158'
---,@process_id='6BCD464E_41AE_41D3_9F48_63C8D5223FFD'
---,@reschedule='0'
---,@granularity='982'
---,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -1268,14 +1244,7 @@ BEGIN
 
 	INSERT INTO #locwise_range_total -- select * from #locwise_range_total
 	SELECT hp.location_id
-		, SUM(hp.position * ISNULL(rvuc.conversion_factor, 1)) [total_position]
-		--, SUM(
-		--	IIF(
-		--		hp.hour = @first_hour
-		--		, IIF(smj.location_name = ''storage'' AND sdh.template_id = ' + CAST(@transportation_template_id AS VARCHAR(10)) + ', 0, hp.position)
-		--		, 0
-		--	)
-		--) [beg_pos]
+		, SUM(hp.position * ISNULL(rvuc.conversion_factor, 1)) [total_position]		
 		, SUM(IIF(smj.location_name = ''storage'' AND sdh.template_id = ' + CAST(@transportation_template_id AS VARCHAR(10)) + ', 0, hp.position)) / ISNULL(NULLIF(@hour_count, 0), 1) [beg_pos]
 	FROM ' + @hourly_pos_info + ' hp 
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = hp.source_deal_detail_id
@@ -3789,56 +3758,107 @@ BEGIN
 	DECLARE @pivot_cols VARCHAR(2000)
 	DECLARE @pivot_cols_alias VARCHAR(2000)
 	DECLARE @dynamic_sql NVARCHAR(max)
-	
-	IF @granularity = 989 --30 min
-	BEGIN
-		SET @dynamic_sql = '
-		SELECT @pivot_cols = STUFF(( SELECT DISTINCT ''],['' + REPLACE(STR(n-1, 2), '' '', ''0'') + brk_min.label
-		FROM seq s 
-		CROSS JOIN (
-			SELECT '':00'' [label], 0 [value]
-			UNION ALL 
-			SELECT '':30'' [label], 1 [value]
-		) brk_min
-		WHERE s.n <= 24
-			FOR XML PATH('''')),1,2,'''') + '']''
-		'
-	END
-	ELSE IF @granularity = 987 --15 min
-	BEGIN
-		SET @dynamic_sql = '
-		SELECT @pivot_cols = STUFF(( SELECT DISTINCT ''],['' + REPLACE(STR(n-1, 2), '' '', ''0'') + brk_min.label
-		FROM seq s 
-		CROSS JOIN (
-			SELECT '':00'' [label], 0 [value]
-			UNION ALL 
-			SELECT '':15'' [label], 1 [value]
-			UNION ALL 
-			SELECT '':30'' [label], 2 [value]
-			UNION ALL 
-			SELECT '':45'' [label], 3 [value]
-		) brk_min
-		WHERE s.n <= 24
-		'
-	END
-	ELSE
-	BEGIN
-		--set @gas_hour_display=1
-		SET @dynamic_sql = '
-		SELECT @pivot_cols = STUFF(( SELECT DISTINCT ''],['' + REPLACE(STR(n, 2), '' '', ''0'') + '':00''
-			FROM seq s WHERE s.n <= 24
-			FOR XML PATH('''')),1,2,'''') + '']''
+	DROP TABLE IF EXISTS #tmp_report_data
+
+	CREATE TABLE #tmp_report_data (
+		[term_start] DATE NULL,
+		[source_deal_header_id] INT NULL,
+		[deal_id] VARCHAR(200) NULL,
+		[deal_ref_id] VARCHAR(50) NULL,
+		[location] VARCHAR(200) NULL,
+		[counterparty_name] VARCHAR(200) NULL,
+		[to_location] VARCHAR(200) NULL,
+		[curve_id] INT NULL,
+		[contract_name] VARCHAR(200) NULL,
+		[uom_name] VARCHAR(10) NULL,
+		[hour] VARCHAR(10) NULL,
+		[gas_hour] VARCHAR(10) NULL,
+		[position] NUMERIC(30,4) NULL,
+		[total_position] NUMERIC(30,4) NULL
+	)
+
+	SET @sql = '
+	INSERT INTO #tmp_report_data
+	SELECT ddi.term_start
+		, ddi.source_deal_header_id
+		, ''<span style="cursor: pointer;" onclick="parent.parent.parent.TRMHyperlink(10131010,'' + cast(ddi.source_deal_header_id as varchar(10)) + '',''''n'''',''''NULL'''')"><font color="#0000ff"><u>'' + cast(ddi.source_deal_header_id as varchar(10)) + ''</u></font></span>'' deal_id
+		, sdh.deal_id [deal_ref_id]
+		, IIF(sdd.leg = 1, sml.Location_Name + '' ['' + smj.location_name + '']'', ca_leg_loc.location_id) [location]
+		, sc.counterparty_name
+		, IIF(sdd.leg = 2, sml.Location_Name + '' ['' + smj.location_name + '']'', ca_leg_loc.location_id) [to_location]
+		, sdd.curve_id
+		, cg.contract_name
+		, uom.uom_name
+		, ca_pos.hour
+		, ca_pos.[gas_hour] 
+		, cast(ca_pos.position as numeric(38,' + @rounding_value + ')) [position]
+		, cast(ca_total_pos.total_position as numeric(38,' + @rounding_value + ')) [total_position]
+		 
+	FROM ' + @deal_detail_info + ' ddi
+	INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = ddi.source_deal_detail_id
+	INNER JOIN source_minor_location sml ON sml.source_minor_location_id = ddi.location_id
+	INNER JOIN source_major_location smj ON smj.source_major_location_ID = sml.source_major_location_ID
+	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = ddi.source_deal_header_id
+	INNER JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.counterparty_id
+	INNER JOIN source_deal_type sdt ON sdt.source_deal_type_id = sdh.source_deal_type_id
+	OUTER APPLY (
+		SELECT p.source_deal_header_id,p.location_id,p.term_start
+			, CASE WHEN p.hour = 25 AND p.position IS NOT NULL
+				THEN ''21:00DST''
+				ELSE REPLACE(STR(p.hour, 2), '' '', ''0'') + '':'' + REPLACE(STR(p.period, 2), '' '', ''0'') 
+				END [hour]
+			, CASE WHEN p.hour = 25 AND p.position IS NOT NULL
+				THEN ''03:00DST''
+				ELSE REPLACE(STR(p.hour + IIF(p.hour <= 18, 6, -18), 2), '' '', ''0'') + '':'' + REPLACE(STR(p.period, 2), '' '', ''0'') 
+				END [gas_hour]
+			, (p.position - ISNULL(dst_pos.position, 0)) [position]
+		FROM ' + @hourly_pos_info + ' p
+		LEFT JOIN ' + @hourly_pos_info + ' dst_pos
+			ON dst_pos.source_deal_detail_id = p.source_deal_detail_id
+			AND dst_pos.hour = 25
+			AND p.hour = 21
+		WHERE p.source_deal_detail_id = sdd.source_deal_detail_id
+				
+	) ca_pos
+	OUTER APPLY (
+		SELECT sdd1.leg, sdd1.location_id [source_minor_location_id], sml.location_name, smj.location_name [location_type], sml.location_id
+		FROM source_deal_detail sdd1
+		LEFT JOIN source_minor_location sml ON sml.source_minor_location_id = sdd1.location_id
+		LEFT JOIN source_major_location smj ON smj.source_major_location_id = sml.source_major_location_id
+		WHERE sdd1.leg = case sdd.leg when 1 then 2 else 1 end 
+			AND sdd1.source_deal_header_id = sdd.source_deal_header_id 
+			AND sdd1.term_start = sdd.term_start
+	) ca_leg_loc
+	OUTER APPLY (
+		SELECT p.term_start, p.source_deal_header_id, p.location_id
+			, SUM(p.position - ISNULL(dst_pos.position, 0)) total_position
+		FROM ' + @hourly_pos_info + ' p
+		LEFT JOIN ' + @hourly_pos_info + ' dst_pos
+			ON dst_pos.source_deal_detail_id = p.source_deal_detail_id
+			AND dst_pos.hour = 25
+			AND p.hour = 21
+		WHERE p.source_deal_detail_id = sdd.source_deal_detail_id 
+		GROUP by p.term_start, p.source_deal_header_id, p.location_id
+	) ca_total_pos
+	LEFT JOIN contract_group cg ON cg.contract_id = sdh.contract_id
+	LEFT JOIN source_uom uom ON uom.source_uom_id = ' + cast(isnull(nullif(@uom,''),'sdd.deal_volume_uom_id') as varchar(10)) + '
+
+	WHERE sdd.location_id = ' + ISNULL(@minor_location, '''''') + ' 
+		AND sdt.source_deal_type_name <> ''Capacity Power''
+	'
+	EXEC(@sql)
+	--select * from #tmp_report_data
+	--return
+	SELECT @pivot_cols = STUFF(( SELECT DISTINCT '],[' + [hour]
+		FROM #tmp_report_data
+		FOR XML PATH('')),1,2,'') + ']'
 		
-		SELECT @pivot_cols_alias =  STUFF(( 
-			SELECT DISTINCT '',MAX(['' + REPLACE(STR(n, 2), '' '', ''0'') + '':00])' + IIF(@gas_hour_display = 1, ' AS ['' + REPLACE(STR(IIF(s.n <= 18, s.n + 6, s.n - 18), 2), '' '', ''0'') + '':00]''', '''') + '
-			FROM seq s WHERE s.n <= 24
-			FOR XML PATH('''')
+	SELECT @pivot_cols_alias = STUFF(( 
+		SELECT DISTINCT ',MAX([' + [hour] + ']) AS [' + [gas_hour] + ']'
+		FROM #tmp_report_data
+		FOR XML PATH('')
 	
-		),1,1,'''')
-		'
-		--print @dynamic_sql
-	END
-	EXEC sp_executesql @dynamic_sql, N'@pivot_cols VARCHAR(2000) OUTPUT, @pivot_cols_alias VARCHAR(2000) OUTPUT', @pivot_cols OUTPUT, @pivot_cols_alias OUTPUT
+	),1,1,'')	
 
 	SET @sql = '
 	SELECT dbo.FNADateFormat(piv.term_start) [Term]
@@ -3849,58 +3869,11 @@ BEGIN
 		, piv.counterparty_name [Counterparty]
 		, piv.contract_name [Contract]
 		, piv.uom_name [UOM]
-		' + isnull(',' + @pivot_cols_alias, '') + '
-		, SUM(piv.total_position) [Total]
+		' + ISNULL(',' + @pivot_cols_alias, '') + '
+		, MAX(piv.total_position) [Total]
 		' + IIF(@batch_flag = 1, 'INTO' + @temptablename,'')+ '
 	FROM (
-		SELECT DISTINCT ddi.term_start, ddi.source_deal_header_id
-		,''<span style="cursor: pointer;" onclick="parent.parent.parent.TRMHyperlink(10131010,'' + cast(ddi.source_deal_header_id as varchar(10)) + '',''''n'''',''''NULL'''')"><font color="#0000ff"><u>'' + cast(ddi.source_deal_header_id as varchar(10)) + ''</u></font></span>'' deal_id, sdh.deal_id [deal_ref_id]
-		 , IIF(sdd.leg = 1, sml.Location_Name + '' ['' + smj.location_name + '']'', ca_leg_loc.location_id) [location]
-		 , sc.counterparty_name
-		 , IIF(sdd.leg = 2, sml.Location_Name + '' ['' + smj.location_name + '']'', ca_leg_loc.location_id) [to_location]
-		 ,sdd.curve_id,cg.contract_name,uom.uom_name
-		 ,ca_pos.sub_hour_rank [hour], cast(ca_pos.position as numeric(38,' + @rounding_value + ')) position, cast(ca_total_pos.total_position as numeric(38,' + @rounding_value + ')) total_position
-		 
-		FROM ' + @deal_detail_info + ' ddi
-		INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = ddi.source_deal_detail_id
-		INNER JOIN source_minor_location sml ON sml.source_minor_location_id = ddi.location_id
-		INNER JOIN source_major_location smj ON smj.source_major_location_ID = sml.source_major_location_ID
-		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = ddi.source_deal_header_id
-		INNER JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.counterparty_id
-		INNER JOIN source_deal_type sdt ON sdt.source_deal_type_id = sdh.source_deal_type_id
-		OUTER APPLY (
-			SELECT p.source_deal_header_id,p.location_id,p.term_start,REPLACE(STR(p.hour, 2), '' '', ''0'') + '':'' + REPLACE(STR(p.period, 2), '' '', ''0'') sub_hour_rank,p.position
-			FROM ' + @hourly_pos_info + ' p
-			WHERE p.source_deal_detail_id = sdd.source_deal_detail_id
-				--AND p.term_start = sdd.term_start
-				--AND p.location_id = sdd.location_id
-				--AND p.curve_id = sdd.curve_id
-				
-		) ca_pos
-		OUTER APPLY (
-			SELECT sdd1.leg, sdd1.location_id [source_minor_location_id], sml.location_name, smj.location_name [location_type], sml.location_id
-			FROM source_deal_detail sdd1
-			LEFT JOIN source_minor_location sml ON sml.source_minor_location_id = sdd1.location_id
-			LEFT JOIN source_major_location smj ON smj.source_major_location_id = sml.source_major_location_id
-			WHERE sdd1.leg = case sdd.leg when 1 then 2 else 1 end 
-				AND sdd1.source_deal_header_id = sdd.source_deal_header_id 
-				AND sdd1.term_start = sdd.term_start
-		) ca_leg_loc
-		OUTER APPLY (
-			SELECT p.term_start, p.source_deal_header_id, p.location_id, sum(p.position) total_position
-			FROM ' + @hourly_pos_info + ' p
-			WHERE p.source_deal_detail_id = sdd.source_deal_detail_id
-				--AND p.term_start = sdd.term_start
-				--AND p.location_id = sdd.location_id
-				--AND p.curve_id = sdd.curve_id
-			GROUP by p.term_start, p.source_deal_header_id, p.location_id
-		) ca_total_pos
-		LEFT JOIN contract_group cg ON cg.contract_id = sdh.contract_id
-		LEFT JOIN source_uom uom ON uom.source_uom_id = ' + cast(isnull(nullif(@uom,''),'sdd.deal_volume_uom_id') as varchar(10)) + '
-
-		WHERE sdd.location_id = ' + ISNULL(@minor_location, '''''') + ' 
-			AND sdt.source_deal_type_name <> ''Capacity Power''
-
+		SELECT * FROM #tmp_report_data
 	) a'
 	+ CASE WHEN @pivot_cols IS NOT NULL THEN '
 	PIVOT (
@@ -3915,7 +3888,7 @@ BEGIN
 		, piv.contract_name 
 		, piv.uom_name
 	' ELSE '' END
-	+ IIF(@batch_flag = 0, 'ORDER BY [Term], [From Location]', '')
+	+ IIF(@batch_flag = 0, ' ORDER BY [Term], [From Location]', '')
 	--print(@sql)
 	EXEC(@sql)
 	
