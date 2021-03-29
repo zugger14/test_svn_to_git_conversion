@@ -1759,7 +1759,6 @@ BEGIN
 	 , @selected_counterparty_id INT 
  	 , @selected_contract_id INT 
 	 , @is_email_counterparty_contract BIT = 0
-	 , @doc_path  NVARCHAR(MAX)
 	
 	SET @user_login_id = dbo.FNADBUser()   
 	SET @email_attachment = CASE WHEN @notification_type IN (752) THEN 'y' ELSE 'n' END
@@ -1769,7 +1768,6 @@ BEGIN
 
 	SELECT 
 		@report_file_path = document_path + '\temp_Note/Invoice Report Template.pdf'
-		, @doc_path = document_path + '\temp_Note'
 	FROM connection_string c
 
 	SELECT 
@@ -1854,7 +1852,7 @@ BEGIN
 					@notification_type,
 					@email_attachment,
 					 'n',
-					@doc_path,
+					NULL,
 					NULL,
 					NULLIF(@email_address,''),
 					NULLIF(@bcc_emails, ''),
@@ -1870,7 +1868,7 @@ BEGIN
 			@notification_type,
 			@email_attachment,
 			 'n' ,
-			@doc_path,
+			NULL,
 			NULL,
 			a.item
 	FROM  dbo.SplitCommaSeperatedValues(@non_system_users) a
@@ -1881,7 +1879,7 @@ BEGIN
 			@notification_type,
 			@email_attachment,
 			 'n' ,
-			@doc_path,
+			NULL,
 			NULL,
 			NULL
 	FROM dbo.SplitCommaSeperatedValues(@notify_users) a
@@ -1894,7 +1892,7 @@ BEGIN
 			@notification_type,
 			@email_attachment,
 			'n' ,
-			@doc_path,
+			NULL,
 			NULL,
 			NULL
 	FROM   dbo.SplitCommaSeperatedValues(@notify_roles) a
@@ -1906,7 +1904,7 @@ BEGIN
 			@notification_type,
 			@email_attachment,
 			 'n',
-			@doc_path,
+			NULL,
 			NULL,
 			NULL	
 	WHERE @notification_type <> 750

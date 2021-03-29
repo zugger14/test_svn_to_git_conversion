@@ -143,6 +143,8 @@ FROM   batch_process_notifications bpn
 LEFT JOIN application_role_user aru ON  bpn.role_id = aru.role_Id
 WHERE  bpn.process_id = @batch_notification_process_id
 
+SELECT @output_dir = ISNULL(@output_dir, document_path + '\temp_Note') FROM connection_string
+
 IF @process_table_name IS NULL
 	SELECT @process_table_name = dbo.FNAProcessTableName('batch_report', dbo.FNADBUser(), @process_id)
 

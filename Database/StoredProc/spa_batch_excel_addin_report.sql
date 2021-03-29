@@ -121,10 +121,11 @@ IF EXISTS (SELECT 1 FROM #temp_return_msg WHERE return_msg = 'Success')
 				
 		SELECT @path = MAX(bpn.csv_file_path)
 		FROM   batch_process_notifications bpn
-				LEFT JOIN application_role_user aru ON  bpn.role_id = aru.role_Id
-			WHERE  bpn.process_id = RIGHT(@batch_process_id, 13) --AND bpn.attach_file = 'y'		
+		LEFT JOIN application_role_user aru ON  bpn.role_id = aru.role_Id
+		WHERE  bpn.process_id = RIGHT(@batch_process_id, 13) --AND bpn.attach_file = 'y'		
 		
-		
+		--Pick path from connection_string if not defined in batch_process_notifications.
+		SELECT @path = ISNULL(@path,document_path) from connection_string
 		--SELECT * FROM dbo.FNASplit(@report_file_path, ';') AS f
 		
 		IF EXISTS (SELECT 1 

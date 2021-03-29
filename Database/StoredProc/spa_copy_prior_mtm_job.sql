@@ -245,7 +245,7 @@ BEGIN
 	
 	SET @notification_process_id = dbo.FNAGetSplitPart(@batch_process_id, '_', 6)
 	SELECT @desc =  @desc +
-		CASE WHEN CHARINDEX('Temp_Note', csv_file_path)>0 THEN '. Please <a target="_blank" href="' + @url + 
+		CASE WHEN CHARINDEX('Temp_Note', csv_file_path)>0 OR csv_file_path IS NULL THEN '. Please <a target="_blank" href="' + @url + 
 			'"><b>Click Here</a></b> to download.'
 		ELSE 'Report has been saved at <b>' + csv_file_path + '</b>.' 
 		END  

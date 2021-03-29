@@ -388,7 +388,10 @@ BEGIN
 	--don't try to re-save export and notification info in case of export flag	
 	IF (@flag <> 'e') AND (@notify_users IS NOT NULL OR @notify_roles IS NOT NULL OR @csv_path IS NOT NULL OR @holiday_calendar_id IS NOT NULL OR @export_table_name IS NOT NULL)
 	BEGIN
-		IF @batch_type = 'c' SET @csv_path = NULL
+		IF (@batch_type = 'c' OR @csv_path = @temp_notes_path)
+		BEGIN			
+			SET @csv_path = NULL
+		END
 
 		INSERT INTO batch_process_notifications (
 			user_login_id, role_id, process_id, notification_type, attach_file, scheduled, csv_file_path, holiday_calendar_id, non_sys_user_email, export_table_name,
@@ -732,7 +735,10 @@ BEGIN
 	IF @notify_users IS NOT NULL OR @notify_roles IS NOT NULL OR @csv_path IS NOT NULL OR @holiday_calendar_id IS NOT NULL OR @export_table_name IS NOT NULL
 	BEGIN
 		SET @batch_unique_id = RIGHT(@report_name, 13)
-		IF @batch_type = 'c' SET @csv_path = NULL
+		IF (@batch_type = 'c' OR @csv_path = @temp_notes_path)
+		BEGIN			
+			SET @csv_path = NULL
+		END
 		--First deleting existing records for this job then insert again new records
 		DELETE 
 		FROM batch_process_notifications
