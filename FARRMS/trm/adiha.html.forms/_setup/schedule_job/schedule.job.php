@@ -47,7 +47,7 @@
             echo $view_scheduled_job_layout->attach_grid_cell($grid_name, 'a');
             $grid_view_scheduled_job = new GridTable('view_scheduled_job');
             echo $grid_view_scheduled_job->init_grid_table($grid_name, $name_space);
-            echo $grid_view_scheduled_job->set_search_filter(false, '#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#combo_filter,#combo_filter,#text_filter,#text_filter');
+            echo $grid_view_scheduled_job->set_search_filter(false, '#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#combo_filter,#combo_filter,#text_filter,#text_filter,#text_filter');
             echo $grid_view_scheduled_job->enable_multi_select(true);
             echo $grid_view_scheduled_job->return_init();
             echo $grid_view_scheduled_job->load_grid_data("EXEC spa_get_schedule_job @flag='s'");

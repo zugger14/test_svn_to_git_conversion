@@ -74,13 +74,15 @@ BEGIN
 						     END
 			END [run_status],
 			dbo.FNADateTImeFormat(a.date_modified, 1) [date_modified],
-			sj.[description] [user_name],
+			i.user_login_id [user_name],
+			i.[description] [description],
 			v.job_id [Job ID]
 	FROM msdb.dbo.sysjobs_view v 
 	INNER JOIN #tmp_job h ON v.job_id = h.job_id
 	INNER JOIN msdb.dbo.sysjobsteps jp ON jp.job_id = v.job_id
 	INNER JOIN msdb.dbo.sysjobs sj ON jp.job_id = sj.job_id
-	LEFT JOIN application_users au ON au.user_login_id COLLATE SQL_Latin1_General_CP1_CI_AS = sj.[description] COLLATE SQL_Latin1_General_CP1_CI_AS
+	CROSS APPLY (SELECT a.user_login_id user_login_id, a.description [description] FROM dbo.FNAGetJobDescription(sj.job_id) a) i
+	LEFT JOIN application_users au ON au.user_login_id COLLATE SQL_Latin1_General_CP1_CI_AS = i.user_login_id COLLATE SQL_Latin1_General_CP1_CI_AS
 	LEFT JOIN msdb.dbo.sysjobschedules sjs ON sj.job_id = sjs.job_id
 	OUTER APPLY( 
 		SELECT TOP 1 ss.schedule_id [schedule_id], ss.date_modified [date_modified]
