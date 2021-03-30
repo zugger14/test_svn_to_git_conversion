@@ -299,10 +299,22 @@ BEGIN
 	IF EXISTS (
 		SELECT 1
 		FROM application_users au
-		CROSS APPLY (SELECT total_users FROM application_license) al
-		WHERE ([entity_id] <> -10076 -- This will not count pioneer users
-			OR [entity_id] IS NULL)
-			AND ISNULL(@entity_id, '') <> -10076 -- This will allow creating user if current user is internal even though total user count has exceeded
+		OUTER APPLY (
+			SELECT total_users
+			FROM application_license
+		) al
+		WHERE ( -- Do not count internal users with pioneer/hitachi domain.
+			CHARINDEX('@pioneersolutionsglobal.com', au.user_emal_add) <= 0 AND
+			CHARINDEX('@hitachi-powergrids.com', au.user_emal_add) <= 0 AND
+			CHARINDEX('@us.abb.com', au.user_emal_add) <= 0
+		) AND 1 = ( -- If the email address is of internal user then do not restrict.
+			CASE
+				WHEN CHARINDEX('@pioneersolutionsglobal.com', @user_emal_add) > 0 THEN 0
+				WHEN CHARINDEX('@hitachi-powergrids.com', @user_emal_add) > 0 THEN 0
+				WHEN CHARINDEX('@us.abb.com', @user_emal_add) > 0 THEN 0
+				ELSE 1
+			END
+		)
 		GROUP BY al.total_users
 		HAVING COUNT(au.user_login_id) >= al.total_users
 	)
