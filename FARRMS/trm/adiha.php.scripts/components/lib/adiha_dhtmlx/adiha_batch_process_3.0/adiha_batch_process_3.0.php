@@ -114,7 +114,6 @@ if ($flag == 'u') {
     $value = $freq_interval;
     $mon_day = 'NULL';
     $mon_mon = 'NULL';
-
     for ($i = 64; $i >= 1; $i = $i / 2) {
         if ($value >= $i) {
             array_push($store, $i);
@@ -219,8 +218,8 @@ if ($flag == 'u') {
     $holiday_calendar_id = $sp_xml[0][16];
     $export_table_name = $sp_xml[0][17];
     $compress_file = ($sp_xml[0][18] == 'y') ? 1 : 0;
-    $delimeter = $sp_xml[0][19];
-    $report_header = $sp_xml[0][20];
+    $delimiter = $sp_xml[0][19];
+    $display_header = $sp_xml[0][20];
     $export_format = $sp_xml[0][21];
     $sp_url_non = "EXEC batch_report_process @flag='f', @report_name='" . $job_name . "'"; 
     $return_value_non = readXMLURL($sp_url_non);
@@ -315,7 +314,6 @@ for ($i = 0; $i < 60; $i++) {
 for ($i = 0; $i < 101; $i++) {
     $data_array_recurring[$i] = $i+1;
 }
-
 
 
 if ($report_paramset_id != 'NULL') {
@@ -496,9 +494,9 @@ if ($call_from == 'Report Snapshot Batch Job') {
 }
 $form_structure = "[
                     {type: 'fieldset', label: 'Format', inputWidth: 700, disabled: " . $format_export_enabled . ", list:[
-                        {type: 'combo', name: 'cmb_export_format', label: 'Export Format', position: 'label-top', width: 180, options: $json_export_report_format_opt, offsetLeft: 20},
+                        {type: 'combo', name: 'cmb_export_format', label: 'Export Format', position: 'label-top', width: 180, value: '$display_header', options: $json_export_report_format_opt, offsetLeft: 20},
                         {type: 'newcolumn'},
-                        {type: 'combo', name: 'cmb_delimiter_c', label: 'Delimiter', position: 'label-top', width: 180, options: $json_delimiter_opt, offsetLeft: 20},
+                        {type: 'combo', name: 'cmb_delimiter_c', label: 'Delimiter', position: 'label-top', width: 180, value: '$delimiter', options: $json_delimiter_opt, offsetLeft: 20},
                         {type: 'newcolumn'},
                         {type: 'combo', name: 'cmb_xml_format_c', label: 'XML Format', position: 'label-top', width: 180, options: cmb_xml_format, offsetLeft: 20},
                         {type: 'newcolumn'},
