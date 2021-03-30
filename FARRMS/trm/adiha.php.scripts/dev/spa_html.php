@@ -908,13 +908,9 @@ $build_exec_code = [];
 						$clm_sub_total = "";
 						$sub_total_clm = -1;
 						
-					} else if ($fields == 9) { //when no deal exists, no position exists.
-						$clm_total = array("Total", "", "", "", "", "", "", ""
-								, "$." . str_replace("'", "", $round_no)
-							);
-						$clm_total_format = array("N", "N", "N", "N", "N", "N", "N", "N"
-								, "$." . str_replace("'", "", $round_no)
-						);
+					} else { //
+						$clm_total = array("Total", "", "", "", "", "", "", "");
+						$clm_total_format = array("N", "N", "N", "N", "N", "N", "N", "N");
 						$report_total_clm_start = 1;
 						$clm_sub_total = "";
 						$sub_total_clm = -1;

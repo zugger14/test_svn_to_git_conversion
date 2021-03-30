@@ -165,11 +165,7 @@ EXEC dbo.spa_drop_all_temp_table
 
 EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
-	SELECT @flag='p', @uom=1158, @flow_date_from='2030-01-01',  @flow_date_to='2030-01-01', @minor_location='2854', @process_id='D77799D4_3F19_4EBA_A633_36FF99F22300', @reschedule='0'
-
-	--no position
-	--select @flag='p', @uom=1158, @flow_date_from='2030-02-01',  @flow_date_to='2030-02-01', @minor_location='2854', @process_id='8AABC4FC_15F5_4AB9_90F3_36EDAEF917D1', @reschedule='0'
-
+	SELECT @flag='s1', @flow_date_from='2030-02-01',@flow_date_to='2030-02-01',@call_from='get_subgrid_definition',@granularity=982,@period_from='1,2'
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -4004,10 +4000,12 @@ BEGIN
 			,@hour_column_widths VARCHAR(100)
 
 		DROP TABLE IF EXISTS #function_data
-		SELECT *
+		SELECT f.*
 		INTO #function_data
-		FROM dbo.FNAGetDisplacedPivotGranularityColumn(@flow_date_from, @flow_date_from, @granularity, 102201, 6) -- 102201=dst group value id, 6=gas hour shift value
-
+		FROM dbo.FNAGetDisplacedPivotGranularityColumn(@flow_date_from, @flow_date_from, @granularity, 102201, 6) f-- 102201=dst group value id, 6=gas hour shift value
+		INNER JOIN dbo.SplitCommaSeperatedValues(@period_from) scsv 
+			ON scsv.item = f.rowid
+		
 		IF EXISTS (SELECT TOP 1 1 FROM #function_data WHERE is_dst = 1)
 		BEGIN
 			SET @dst_case = 1

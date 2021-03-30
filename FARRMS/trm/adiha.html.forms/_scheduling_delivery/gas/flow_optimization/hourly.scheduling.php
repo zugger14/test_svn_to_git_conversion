@@ -69,7 +69,7 @@ $from_pos_beg = get_sanitized_value($_GET['from_pos_beg'] ?? '');
 $to_pos_beg = get_sanitized_value($_GET['to_pos_beg'] ?? '');
 
 //get subgrid header definition
-$xml_file = "EXEC spa_flow_optimization_hourly @flag='s1', @call_from='get_subgrid_definition', @flow_date_from='$flow_start', @granularity=$granularity";
+$xml_file = "EXEC spa_flow_optimization_hourly @flag='s1', @call_from='get_subgrid_definition', @flow_date_from='$flow_start', @granularity=$granularity, @period_from='$period_from'";
 $subgrid_header_definition = readXMLURL2($xml_file);
 
 $hide_storage_contract_col = 'true';
