@@ -178,6 +178,9 @@ select @flag='a', @jobId='C542E225-A86F-41F1-B144-AFF3C982EDA9'
 ------------------------------------------------------------------------*/
 
 SET NOCOUNT ON
+DECLARE @is_csv_path BIT = 0
+SET @is_csv_path = IIF(NULLIF(@csv_path, '') IS NULL, 0, 1)
+
 IF @csv_path = @temp_notes_path
 	SET @csv_path = ''
 
@@ -388,7 +391,7 @@ BEGIN
 	--don't try to re-save export and notification info in case of export flag	
 	IF (@flag <> 'e') AND (@notify_users IS NOT NULL OR @notify_roles IS NOT NULL OR @csv_path IS NOT NULL OR @holiday_calendar_id IS NOT NULL OR @export_table_name IS NOT NULL)
 	BEGIN
-		IF (@batch_type = 'c' OR @csv_path = @temp_notes_path)
+		IF (@batch_type = 'c' OR @is_csv_path = 0)
 		BEGIN			
 			SET @csv_path = NULL
 		END
@@ -735,7 +738,7 @@ BEGIN
 	IF @notify_users IS NOT NULL OR @notify_roles IS NOT NULL OR @csv_path IS NOT NULL OR @holiday_calendar_id IS NOT NULL OR @export_table_name IS NOT NULL
 	BEGIN
 		SET @batch_unique_id = RIGHT(@report_name, 13)
-		IF (@batch_type = 'c' OR @csv_path = @temp_notes_path)
+		IF (@batch_type = 'c' OR @is_csv_path = 0)
 		BEGIN			
 			SET @csv_path = NULL
 		END

@@ -87,6 +87,14 @@ $export_web_services_id = '';
 $export_file_transfer_endpoint_id = '';
 $report_header = '';
 
+$export_report_name = '';
+$export_file_path = '';
+$export_report_format = '';
+$delimiter = '';
+$display_header = '';
+$compress_file = '';
+$xml_format = '';
+
 if ($flag == 'u') {
     $sp_url = "EXEC batch_report_process @flag='a', @jobId='" . $job_id . "'"; 
     $sp_xml = readXMLURL($sp_url);
@@ -308,13 +316,7 @@ for ($i = 0; $i < 101; $i++) {
     $data_array_recurring[$i] = $i+1;
 }
 
-$export_report_name = '';
-$export_file_path = '';
-$export_report_format = '';
-$delimiter = '';
-$display_header = '';
-$compress_file = '';
-$xml_format = '';
+
 
 if ($report_paramset_id != 'NULL') {
     $xml_url_report_paramset = "EXEC spa_rfx_report_paramset_dhx @flag='z', @report_paramset_id='$report_paramset_id'";
