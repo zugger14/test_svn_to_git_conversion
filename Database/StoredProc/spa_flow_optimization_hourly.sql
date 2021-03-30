@@ -165,21 +165,10 @@ EXEC dbo.spa_drop_all_temp_table
 
 EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
-	SELECT @flag='l'
-,@receipt_delivery='FROM'
-,@flow_date_from='2027-10-30'
-,@flow_date_to='2027-10-30'
-,@major_location='14'
-,@minor_location='2857'
-,@from_location='2857'
-,@to_location='2854'
-,@path_priority='-31400'
-,@opt_objective='38301'
-,@uom='1158'
-,@hide_pos_zero='n'
-,@reschedule='0'
-,@granularity='982'
-,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
+	SELECT @flag='p', @uom=1158, @flow_date_from='2030-01-01',  @flow_date_to='2030-01-01', @minor_location='2854', @process_id='D77799D4_3F19_4EBA_A633_36FF99F22300', @reschedule='0'
+
+	--no position
+	--select @flag='p', @uom=1158, @flow_date_from='2030-02-01',  @flow_date_to='2030-02-01', @minor_location='2854', @process_id='8AABC4FC_15F5_4AB9_90F3_36EDAEF917D1', @reschedule='0'
 
 --*/
 
@@ -3791,8 +3780,12 @@ BEGIN
 		, uom.uom_name
 		, ca_pos.hour
 		, ca_pos.[gas_hour] 
-		, cast(ca_pos.position as numeric(38,' + @rounding_value + ')) [position]
-		, cast(ca_total_pos.total_position as numeric(38,' + @rounding_value + ')) [total_position]
+		, ca_pos.position [position]
+		--, ca_total_pos.total_position [total_position]
+		, SUM(ca_pos.position) OVER (
+			PARTITION BY ddi.term_start, ddi.source_deal_header_id, sml.Location_Name, sc.counterparty_name, cg.contract_name 
+			ORDER BY ddi.source_deal_header_id
+		  ) [total_position]
 		 
 	FROM ' + @deal_detail_info + ' ddi
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = ddi.source_deal_detail_id
@@ -3801,6 +3794,7 @@ BEGIN
 	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = ddi.source_deal_header_id
 	INNER JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.counterparty_id
 	INNER JOIN source_deal_type sdt ON sdt.source_deal_type_id = sdh.source_deal_type_id
+	CROSS JOIN dbo.FNAGetDisplacedPivotGranularityColumn(''' + convert(VARCHAR(50), @flow_date_from, 21) + ''', ''' + convert(VARCHAR(50), @flow_date_from, 21)+ ''', 982, 102201, 6) hr_col 
 	OUTER APPLY (
 		SELECT p.source_deal_header_id,p.location_id,p.term_start
 			, CASE WHEN p.hour = 25 AND p.position IS NOT NULL
@@ -3818,6 +3812,7 @@ BEGIN
 			AND dst_pos.hour = 25
 			AND p.hour = 21
 		WHERE p.source_deal_detail_id = sdd.source_deal_detail_id
+			AND p.hour = hr_col.rowid
 				
 	) ca_pos
 	OUTER APPLY (
@@ -3829,17 +3824,17 @@ BEGIN
 			AND sdd1.source_deal_header_id = sdd.source_deal_header_id 
 			AND sdd1.term_start = sdd.term_start
 	) ca_leg_loc
-	OUTER APPLY (
-		SELECT p.term_start, p.source_deal_header_id, p.location_id
-			, SUM(p.position - ISNULL(dst_pos.position, 0)) total_position
-		FROM ' + @hourly_pos_info + ' p
-		LEFT JOIN ' + @hourly_pos_info + ' dst_pos
-			ON dst_pos.source_deal_detail_id = p.source_deal_detail_id
-			AND dst_pos.hour = 25
-			AND p.hour = 21
-		WHERE p.source_deal_detail_id = sdd.source_deal_detail_id 
-		GROUP by p.term_start, p.source_deal_header_id, p.location_id
-	) ca_total_pos
+	--OUTER APPLY (
+	--	SELECT p.term_start, p.source_deal_header_id, p.location_id
+	--		, SUM(p.position - ISNULL(dst_pos.position, 0)) total_position
+	--	FROM ' + @hourly_pos_info + ' p
+	--	LEFT JOIN ' + @hourly_pos_info + ' dst_pos
+	--		ON dst_pos.source_deal_detail_id = p.source_deal_detail_id
+	--		AND dst_pos.hour = 25
+	--		AND p.hour = 21
+	--	WHERE p.source_deal_detail_id = sdd.source_deal_detail_id 
+	--	GROUP by p.term_start, p.source_deal_header_id, p.location_id
+	--) ca_total_pos
 	LEFT JOIN contract_group cg ON cg.contract_id = sdh.contract_id
 	LEFT JOIN source_uom uom ON uom.source_uom_id = ' + cast(isnull(nullif(@uom,''),'sdd.deal_volume_uom_id') as varchar(10)) + '
 
@@ -3847,6 +3842,7 @@ BEGIN
 		AND sdt.source_deal_type_name <> ''Capacity Power''
 	'
 	EXEC(@sql)
+	--print(@sql)
 	--select * from #tmp_report_data
 	--return
 	SELECT @pivot_cols = STUFF(( SELECT DISTINCT '],[' + [hour]
@@ -3874,11 +3870,13 @@ BEGIN
 		' + IIF(@batch_flag = 1, 'INTO' + @temptablename,'')+ '
 	FROM (
 		SELECT * FROM #tmp_report_data
-	) a'
-	+ CASE WHEN @pivot_cols IS NOT NULL THEN '
+	) '
+	+ CASE WHEN @pivot_cols IS NOT NULL THEN ' a
 	PIVOT (
 		SUM(a.position) FOR a.hour IN (' + @pivot_cols + ')
-	) AS piv
+	) AS piv '
+	  ELSE ' piv' 
+	  END + '
 	GROUP BY piv.term_start
 		, piv.deal_id 
 		, piv.deal_ref_id 
@@ -3887,7 +3885,7 @@ BEGIN
 		, piv.counterparty_name
 		, piv.contract_name 
 		, piv.uom_name
-	' ELSE '' END
+	' 
 	+ IIF(@batch_flag = 0, ' ORDER BY [Term], [From Location]', '')
 	--print(@sql)
 	EXEC(@sql)
