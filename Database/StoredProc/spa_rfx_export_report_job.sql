@@ -342,11 +342,14 @@ IF  EXISTS (SELECT job_id FROM msdb.dbo.sysjobs_view WHERE name = @export_job_na
 	SET @export_job_name = 'report_batch_' + @new_process_id 
 
 DECLARE @job_delete_level INT
+DECLARE @job_description NVARCHAR(1000) 
+
+SET @job_description = 'Created by: ' + @user_name + CHAR(13) + 'No description available.' --CHAR(13) used to seperate username and description
 SET @job_delete_level = 1
 --if job is scheduled, set @delete_level = 0 to prevent auto deletion after first run
 SET @job_delete_level = IIF((@freq_type <> '' AND @freq_interval <> 0), 0, 1)
 
-EXEC msdb.dbo.sp_add_job @job_name = @export_job_name, @delete_level = @job_delete_level, @description = @user_name
+EXEC msdb.dbo.sp_add_job @job_name = @export_job_name, @delete_level = @job_delete_level, @description = @job_description
 
 IF @@ERROR = 0 
 BEGIN

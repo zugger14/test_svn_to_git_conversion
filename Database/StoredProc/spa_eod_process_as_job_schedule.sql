@@ -92,7 +92,8 @@ AS
 	        @source       VARCHAR(1000),
 	        @step_name_1  VARCHAR(1000),
 	        @step_name_2  VARCHAR(1000),
-	        @step_name_3  VARCHAR(1000)
+	        @step_name_3  VARCHAR(1000),
+			@job_description NVARCHAR(1000)
 			
 	--SET @user_name = dbo.FNADBUser()
 	              
@@ -100,6 +101,7 @@ AS
 	SET @db_name = DB_NAME()
 	SET @as_of_date = ISNULL(@as_of_date, '')
 	SET @run_job_name = @db_name + ' - ' + @run_job_name
+	SET @job_description = 'Created by: ' + @user_name + CHAR(13) + 'No description available.' -- CHAR(13) used to seperate username and description
 
 	BEGIN TRY
 		BEGIN TRAN	
@@ -142,7 +144,7 @@ AS
 			EXECUTE msdb.dbo.sp_add_job @job_id = @job_ID OUTPUT 
 					, @job_name = @run_job_name
 					--, @owner_login_name = @user_name
-					, @description = @user_name
+					, @description = @job_description
 					, @category_name = N'[Uncategorized (Local)]'
 					, @enabled = 1
 					, @delete_level= 0

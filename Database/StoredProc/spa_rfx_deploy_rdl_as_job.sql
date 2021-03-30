@@ -40,8 +40,10 @@ SET NOCOUNT ON
 			@rdl_cmd_success	 VARCHAR(500)
 	
 	DECLARE @desc                VARCHAR(500),
-	        @msg                 VARCHAR(500)
+	        @msg                 VARCHAR(500),
+			@job_description	NVARCHAR(1000)
 
+	SET @job_description = 'Created by: ' + @user_name + CHAR(13) + 'No description available.' --CHAR(13) used to seperate username and description
 	SET @source_system_name = NULL   
 
 	SET @user_name = ISNULL(@user_login_id, dbo.FNADBUser())
@@ -85,7 +87,7 @@ SET NOCOUNT ON
 	SET @rdl_cmd_queue = 'EXEC ' + @db_name + '.dbo.spa_job_queue ''' + @rdl_job_name + ''','''  + @source_system_name + ''','''  + @flag + ''''
 	--PRINT @rdl_cmd_queue
 
-	EXEC msdb.dbo.sp_add_job @job_name = @rdl_job_name, @delete_level = 1, @description = @user_name
+	EXEC msdb.dbo.sp_add_job @job_name = @rdl_job_name, @delete_level = 1, @description = @job_description
 
 	IF @@ERROR = 0 
 	BEGIN

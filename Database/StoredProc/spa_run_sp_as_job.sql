@@ -41,6 +41,7 @@ SET NOCOUNT ON
 		DECLARE @desc varchar(500),@msg varchar(500)
 		DECLARE @ssispath VARCHAR(1000),@root VARCHAR(1000),@configfile VARCHAR(1000)
 		DECLARE @context_info NVARCHAR(MAX)
+		DECLARE @job_description NVARCHAR(1000)
 
 		if @system_id IS NOT NULL
 			SELECT @source_system_name = source_system_name from source_system_description WHERE source_system_id=@system_id
@@ -77,12 +78,12 @@ SET NOCOUNT ON
 		IF @job_subsystem ='SSIS'
 			SELECT @proxy_name= MAX(sql_proxy_account) FROM connection_string
 
-
-		EXEC msdb.dbo.sp_add_job 
+		SET @job_description = 'Created by: ' + @user_name + CHAR(13) + 'No description available.' --CHAR(13) used to seperate username and description
+		EXEC msdb.dbo.sp_add_job
 					@job_name = @run_job_name,
 					--@owner_login_name='sa',
 					@delete_level = 1,
-					@description = @user_name
+					@description = @job_description
 
 		If @@ERROR = 0 
 		BEGIN

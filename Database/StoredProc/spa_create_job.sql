@@ -19,14 +19,16 @@ AS
 				@error_found INT = 0,
 				@source VARCHAR(20), 
 				@user_name VARCHAR(25) = ISNULL( @user_login_id,dbo.FNADBUser()),
-				@desc VARCHAR(500)
+				@desc VARCHAR(500),
+				@job_description NVARCHAR(1000)
 		
 		SET @run_job_name = @db_name + ' - ' + @run_job_name
+		SET @job_description = 'Created by: ' +@user_name + CHAR(13) + 'No description available.' --CHAR(13) used to seperate username and description
 		EXEC msdb.dbo.sp_add_job 
 					@job_name = @run_job_name,
 					--@owner_login_name='sa',
 					@delete_level = 1,
-					@description = @user_name
+					@description = @job_description
 
 		IF @@ERROR = 0 
 		BEGIN

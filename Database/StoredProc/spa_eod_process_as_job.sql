@@ -94,8 +94,8 @@ AS
 						' + @spa_success
 						
 	BEGIN TRY	
-	
-		EXEC msdb.dbo.sp_add_job @job_name = @run_job_name, @delete_level = 1, @description = @user_name
+		DECLARE @job_description NVARCHAR(1000) = 'Created by: ' + @user_name + CHAR(13) + 'No description available.' -- CHAR(13) used to seperate username and description
+		EXEC msdb.dbo.sp_add_job @job_name = @run_job_name, @delete_level = 1, @description = @job_description
 	
 		SET @job_subsystem = ISNULL(@job_subsystem, 'TSQL')
 		

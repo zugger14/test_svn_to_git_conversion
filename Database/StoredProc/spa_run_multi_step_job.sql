@@ -179,9 +179,11 @@ BEGIN TRY
 	IF NOT EXISTS(SELECT 1 FROM msdb.dbo.sysjobs where name = @job_name)
 	BEGIN
 	--Add the job.
+	DECLARE @new_job_description NVARCHAR(1000) = 'Created by: ' + @user_name + CHAR(13) + @job_description --CHAR(13) used to seperate username and description
+	
 	EXEC msdb.dbo.sp_add_job @job_name = @job_name, 
 							 @enabled = 1,
-							 @description = @job_description,
+							 @description = @new_job_description,
 							 --@owner_login_name  = @user_name,
 							 @delete_level = 1,
 							 @job_id = @job_id OUTPUT

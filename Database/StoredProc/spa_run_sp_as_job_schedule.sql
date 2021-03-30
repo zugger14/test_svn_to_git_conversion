@@ -70,13 +70,14 @@ SET @context_info ='DECLARE @contextinfo varbinary(128)
 begin try
 begin tran
 	DECLARE @JobID BINARY(16) ,@job_delete_level INT
-
+	DECLARE @job_description NVARCHAR(1000)
 	SET @job_delete_level = IIF((@freq_type <> '' AND NULLIF(@freq_interval,0) IS NOT NULL ), 0, 1)
+	SET @job_description = 'Created by: ' + @user_name + CHAR(13) + 'No description available.' --CHAR(13) used to seperate username and description
 
 	-- Add the job
 	EXECUTE msdb.dbo.sp_add_job @job_id = @JobID OUTPUT 
 		, @job_name = @run_job_name--, @owner_login_name =@user_name
-		, @description = @user_name, @category_name = N'[Uncategorized (Local)]'
+		, @description = @job_description, @category_name = N'[Uncategorized (Local)]'
 		, @enabled = 1, @delete_level= @job_delete_level
 
 	
