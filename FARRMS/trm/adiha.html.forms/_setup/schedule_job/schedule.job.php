@@ -91,8 +91,10 @@
                 var job_next_run = view_scheduled_job.grd_view_scheduled_job.cells(row_id, job_next_run_col_id).getValue();
                 var user_name_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('user_name');
                 var user_name = view_scheduled_job.grd_view_scheduled_job.cells(row_id, user_name_col_index).getValue();
-                
-                if (has_rights_scheduled_job_run && row_id != '') {
+                var run_status_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('run_status');
+                var run_status = view_scheduled_job.grd_view_scheduled_job.cells(row_id, run_status_col_index).getValue();
+
+                if (has_rights_scheduled_job_run && row_id != '' && run_status.toLowerCase() != 'in progress') {
                     view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
                 } else {
                     view_scheduled_job.jobs_toolbar.setItemDisabled('Run');
