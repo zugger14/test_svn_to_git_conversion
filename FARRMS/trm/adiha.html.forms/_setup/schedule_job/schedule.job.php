@@ -47,7 +47,7 @@
             echo $view_scheduled_job_layout->attach_grid_cell($grid_name, 'a');
             $grid_view_scheduled_job = new GridTable('view_scheduled_job');
             echo $grid_view_scheduled_job->init_grid_table($grid_name, $name_space);
-            echo $grid_view_scheduled_job->set_search_filter(false, '#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#combo_filter,#combo_filter,#text_filter,#text_filter,#text_filter');
+            echo $grid_view_scheduled_job->set_search_filter(false, '#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#combo_filter,#combo_filter,#text_filter,#text_filter,#combo_filter,#text_filter');
             echo $grid_view_scheduled_job->enable_multi_select(true);
             echo $grid_view_scheduled_job->return_init();
             echo $grid_view_scheduled_job->load_grid_data("EXEC spa_get_schedule_job @flag='s'");
@@ -85,7 +85,7 @@
             var has_rights_scheduled_job_edit = Boolean(<?php echo $has_rights_scheduled_job_edit; ?>);
             var has_rights_scheduled_job_del = Boolean(<?php echo $has_rights_scheduled_job_del; ?>);
             var has_rights_scheduled_job_run = Boolean(<?php echo $has_rights_scheduled_job_run; ?>);
-            
+
             function grd_scheduled_jobs_click(row_id) {
                 var job_next_run_col_id = view_scheduled_job.grd_view_scheduled_job.getColIndexById('next_scheduled_run_date');
                 var job_next_run = view_scheduled_job.grd_view_scheduled_job.cells(row_id, job_next_run_col_id).getValue();
@@ -93,8 +93,10 @@
                 var user_name = view_scheduled_job.grd_view_scheduled_job.cells(row_id, user_name_col_index).getValue();
                 var run_status_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('run_status');
                 var run_status = view_scheduled_job.grd_view_scheduled_job.cells(row_id, run_status_col_index).getValue();
+                var run_privilege_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('run_privilege');
+                var run_privilege = view_scheduled_job.grd_view_scheduled_job.cells(row_id, run_privilege_col_index).getValue();
 
-                if (has_rights_scheduled_job_run && row_id != '' && run_status.toLowerCase() != 'in progress') {
+                if (has_rights_scheduled_job_run && row_id != '' && run_status.toLowerCase() != 'in progress' && run_privilege.toLowerCase() == 'yes') {
                     view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
                 } else {
                     view_scheduled_job.jobs_toolbar.setItemDisabled('Run');

@@ -32,6 +32,8 @@ BEGIN
 	IF OBJECT_ID('tempdb..#tmp_job') IS NOT NULL
 		DROP TABLE #tmp_job
 	
+	DECLARE @user_login_id NVARCHAR(200) = dbo.FNADBUser();
+
 	CREATE TABLE #tmp_job (
 		session_id INT,
 		job_id VARCHAR(100) COLLATE DATABASE_DEFAULT ,
@@ -76,13 +78,15 @@ BEGIN
 			dbo.FNADateTImeFormat(a.date_modified, 1) [date_modified],
 			i.user_login_id [user_name],
 			i.[description] [description],
+			CASE WHEN (b.is_admin = 1 OR i.user_login_id = @user_login_id) THEN 'Yes' ELSE 'No' END [run_privilege],
 			v.job_id [Job ID]
-	FROM msdb.dbo.sysjobs_view v 
+	FROM msdb.dbo.sysjobs_view v
 	INNER JOIN #tmp_job h ON v.job_id = h.job_id
 	INNER JOIN msdb.dbo.sysjobsteps jp ON jp.job_id = v.job_id
 	INNER JOIN msdb.dbo.sysjobs sj ON jp.job_id = sj.job_id
 	CROSS APPLY (SELECT a.user_login_id user_login_id, a.description [description] FROM dbo.FNAGetJobDescription(sj.job_id) a) i
 	LEFT JOIN application_users au ON au.user_login_id COLLATE SQL_Latin1_General_CP1_CI_AS = i.user_login_id COLLATE SQL_Latin1_General_CP1_CI_AS
+	CROSS APPLY (SELECT dbo.FNAIsUserOnAdminGroup(@user_login_id, 0) is_admin) b
 	LEFT JOIN msdb.dbo.sysjobschedules sjs ON sj.job_id = sjs.job_id
 	OUTER APPLY( 
 		SELECT TOP 1 ss.schedule_id [schedule_id], ss.date_modified [date_modified]
