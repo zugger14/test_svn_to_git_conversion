@@ -203,8 +203,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =145462  ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2020-01-31' , --'2017-02-15',
+	@source_deal_header_id =165082   ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2021-03-15' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -223,7 +223,7 @@ SELECT
 	@run_incremental = 'n',
 	@term_start = '2020-01-01' ,
 	@term_end = '2020-01-31' ,
-	@calc_type = 's',
+	@calc_type = 'm',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
 	@deal_list_table = null,
@@ -2236,6 +2236,7 @@ set @sqlstmt3='
 		sdd.capacity,'
 
 
+
 set @sqlstmt4='	
 		CASE WHEN(sdh.product_id=4100 AND sdh.close_reference_id IS NOT NULL) THEN sdh.close_reference_id ELSE sdh.source_deal_header_id END meter_deal_id,
 		ISNULL(spcd.curve_tou, -1) curve_tou,
@@ -2245,15 +2246,16 @@ set @sqlstmt4='
 		CASE WHEN ISNULL(sdh.product_id, 4101) = 4100 AND ISNULL(sdh.internal_desk_id,17300)=17301 AND  '''+@calc_type+'''=''s'' THEN ''y'' ELSE ''n'' END
 		,case when case  isnull(sdht.save_mtm_at_calculation_granularity,''-1'') when  20150 then ''m''  when 20151 then ''s'' when 20152 then  '''+@calc_type+''' else '''' end='''+@calc_type+''' then ''y'' else ''n'' end save_mtm_at_calculation_granularity
 		,COALESCE(sdh.timezone_id, sml.time_zone, spcd.time_zone) timezone_id,sdh.header_buy_sell_flag header_buy_sell_flag 
-		,case when isnull(sdht.ignore_bom,''n'')=''n'' then dateadd(day,1,'''+@as_of_date+''')  else '''+ convert(varchar(10),dateadd(month,1,left(@as_of_date,8)+'01'),120) +''' end filter_term_start
+		,case when isnull(sdht.ignore_bom,''n'')=''n'' then dateadd(day,1,'''+@as_of_date+''')  
+		else '''+ convert(varchar(10),dateadd(month,1,left(@as_of_date,8)+'01'),120) +''' end filter_term_start
 		,case when  (sdht.[month] is null and sdht.[year] is null) then ''9999-01-01''  
 			else  dateadd(month,isnull(sdht.[month],0),dateadd(year,isnull(sdht.[year],0),case when sdht.[year] is null then case when sdht.[month] is null then '''+@as_of_date+''' else '''+convert(varchar(10),dateadd(day,-1,dateadd(month,1,left(@as_of_date,8)+'01')),120)+''' end else '''+convert(varchar(10),dateadd(day,-1,dateadd(year,1,left(@as_of_date,5)+'01-01')),120)+''' end )) end filter_term_end
-		,sdht.actual_granularity,isnull(sdht.actualization_flag,''d'') actualization_flag,sdd.actual_volume,sdd.schedule_volume 		
-		,sdht.options_calc_method,sdht.attribute_type,sdht.bid_n_ask_price,sdh.broker_id
-		-- For excluding fx conversion for FX deal type.
-		,case when sdh.source_deal_type_id=1228 then ''-999999'' else COALESCE(sdh.fx_conversion_market, sbm.fx_conversion_market,'''') end fx_conversion_market
-		,sdd.fx_conversion_rate invoice_fx_rate
-		,sbm.fas_sub_id,isnull(sdh.fx_rounding,10),isnull(sdh.fx_option,104500) fx_option, cg.holiday_calendar_id,cg.settlement_days,cg.invoice_due_date, null invoice_date
+	,sdht.actual_granularity,isnull(sdht.actualization_flag,''d'') actualization_flag,sdd.actual_volume,sdd.schedule_volume 		
+	,sdht.options_calc_method,sdht.attribute_type,sdht.bid_n_ask_price,sdh.broker_id
+	-- For excluding fx conversion for FX deal type.
+	,case when sdh.source_deal_type_id=1228 then ''-999999'' else COALESCE(sdh.fx_conversion_market, sbm.fx_conversion_market,'''') end fx_conversion_market
+	,sdd.fx_conversion_rate invoice_fx_rate
+	,sbm.fas_sub_id,isnull(sdh.fx_rounding,10),isnull(sdh.fx_option,104500) fx_option, cg.holiday_calendar_id,cg.settlement_days,cg.invoice_due_date, null invoice_date
 	,isnull(sdh.term_frequency,''m'') term_frequency,''n'' calc_mtm_at_tou_level
 	,COALESCE(sdd.detail_commodity_id,sdh.commodity_id,-1),null match_group_shipment_id, null ticket_detail_id, pd.state_value_id, pd.tier_value_id, ' 
 	+ CASE WHEN @calc_type = 's' THEN 'rec.match_info_id' ELSE 'NULL' END
@@ -6464,7 +6466,7 @@ SET @sqlstmt= '
 	end+'		
 		WHERE 1=1 '+
 	case when @calc_type <> 's' then 
-	' AND case when ISNULL(spcd.hourly_volume_allocation,17601) =17606 then rp.expiration_date  else rp.term_start end  between td.filter_term_start and td.filter_term_end and rp.expiration_date  > '''+@as_of_date+''''
+	' AND case when ISNULL(spcd.hourly_volume_allocation,17601) =17606  or rp.term_start<rp.expiration_date then rp.expiration_date  else rp.term_start end  between td.filter_term_start and td.filter_term_end and rp.expiration_date  > '''+@as_of_date+''''
 	else
 	case when  @cpt_type='b' THEN '' else case when isnull(@look_term,'d')='s' then ' 
 		and case when td.physical_financial_flag=''f'' or (td.physical_financial_flag=''p'' and td.internal_deal_subtype_value_id='+@CFD_id+') then rp.expiration_date else rp.term_start end ' else ' and rp.term_start '  end +' BETWEEN '''+@term_start+''' and '''+@term_end+'''' end 
@@ -6576,7 +6578,7 @@ from report_hourly_position_deal_main rd  inner join #temp_deals_filter td on rd
 	 and case when td.physical_financial_flag=''f'' or (td.physical_financial_flag=''p'' and td.internal_deal_subtype_value_id='+@CFD_id+') then rd.expiration_date else rd.term_start end ' else ' and rd.term_start '  end 
 		+' BETWEEN '''+@term_start+''' and '''+@term_end+'''-- AND ISNULL(td.actualization_flag,'''') <> ''d'' '
 		  	else ' 
-				 AND case when ISNULL(spcd.hourly_volume_allocation,17601) =17606 then rd.expiration_date  else rd.term_start end  between td.filter_term_start and td.filter_term_end 
+				 AND case when ISNULL(spcd.hourly_volume_allocation,17601) =17606 or rd.term_start<rd.expiration_date then rd.expiration_date  else rd.term_start end  between td.filter_term_start and td.filter_term_end 
 				and rd.expiration_date > '''+@as_of_date+'''' end +';'
 			
 			
