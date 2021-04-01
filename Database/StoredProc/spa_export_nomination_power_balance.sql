@@ -41,13 +41,17 @@ create proc [dbo].[spa_export_nomination_power_balance]
         @location_ids VARCHAR(1000) =null,
         @term_start VARCHAR(10) = null,
         @term_end VARCHAR(10) = null,
-        @round  varchar(10) = 2,
+        @round  varchar(10) = null,
 		@commodity VARCHAR(1000) = 123,  --Power
 		@physical_financial VARCHAR(1000) = 'p',  
   		@balance_location_id int=NULL,
 		@trans_deal_type_id int=1185,
 		@power_plant_deal_header_id VARCHAR(1000)=NULL,--'DA_Power_Plant_autobalancing',
-		@process_id varchar(150)
+		@process_id varchar(150)=null,
+		@flag varchar(1)='c',
+		@_process_table varchar(250)=null,	
+		@_batch_process_id VARCHAR(100)=NULL
+
 as
 
 /*
@@ -67,20 +71,22 @@ DECLARE
   		@balance_location_id int=NULL,
 		@trans_deal_type_id int=1185,
 		@power_plant_deal_header_id VARCHAR(1000)=NULL,  --'DA_Power_Plant_autobalancing',
-		@process_id varchar(150)
+		@process_id varchar(150)=null
+		,@flag varchar(1)='r',
+		@_process_table varchar(250)=null,
+		@_batch_process_id VARCHAR(100)=NULL
+----select * from source_minor_location where source_minor_location_id in (2855,2849,2848)
+---- select * from source_system_book_map where logical_name='Spec-Power'
 
---select * from source_minor_location where source_minor_location_id in (2855,2849,2848)
--- select * from source_system_book_map where logical_name='Spec-Power'
-
-DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
-SET CONTEXT_INFO @contextinfo
+--DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
+--SET CONTEXT_INFO @contextinfo
  
---exec spa_drop_all_temp_table  
+----exec spa_drop_all_temp_table  
        
---*/
+----*/
 
 
---------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
 
 
 /*
@@ -100,6 +106,9 @@ exec [dbo].[spa_export_nomination_power_balance]
 		@trans_deal_type_id =1185,
 		@power_plant_deal_header_id=NULL,--'DA_Power_Plant_autobalancing',
 		@process_id=null
+		,@flag ='r',
+		@_process_table=null,
+		@_batch_process_id =NULL
 
 */
 
@@ -108,6 +117,8 @@ exec [dbo].[spa_export_nomination_power_balance]
 --SET @user_login_id = dbo.FNADBUser() 
 
 --Start tracking time for Elapse time
+DECLARE @_user_login_id     VARCHAR(50),@_temp_process_id           VARCHAR(100)
+,@_process_output_table VARCHAR(250) =''
 
 DECLARE @current_datetime DATETIME = GETDATE()
 
@@ -134,6 +145,27 @@ set @round=isnull(@round,10)
 
 --select @as_of_date,@term_start,@term_end
 
+
+SET @_temp_process_id=isnull(@_batch_process_id,dbo.FNAGetNewID())
+SET @_user_login_id = dbo.FNADBUser() 
+
+if isnull(@_process_table,'')=''
+begin
+	if  isnull(@_batch_process_id,'')=''
+		set @_process_output_table=''
+	else
+	begin
+		set @_process_output_table=' into '+dbo.FNAProcessTableName('batch_process', @_user_login_id, @_temp_process_id)
+	end
+end
+else
+begin
+	if object_id(@_process_table) is not null  exec('drop table '+@_process_table)
+	set @_process_output_table=' into '+	@_process_table
+end
+
+
+
 if @location_ids is null
 begin
 	select @location_ids=isnull(@location_ids+',','')+cast(source_minor_location_id as varchar) from source_minor_location 
@@ -157,6 +189,9 @@ if object_id('tempdb..#auto_balancing_deals') is not null drop table #auto_balan
 if object_id('tempdb..#unpv_pos_shaped') is not null drop table #unpv_pos_shaped
 if object_id('tempdb..#auto_balancing_location') is not null drop table #auto_balancing_location
 if object_id('tempdb..#auto_balancing_location_deals') is not null drop table #auto_balancing_location_deals
+if object_id('tempdb..#temp_pos') is not null drop table #temp_pos
+if object_id('tempdb..#tmp_result') is not null drop table #tmp_result
+
 
 
 create table #shaped_volume_update_deal_detail_id (
@@ -447,9 +482,6 @@ group by sdh.source_deal_header_id
 		) rps 
 		
 
-
-
-
 	update sdd set deal_volume= tmp.volume
 	from dbo.source_deal_detail sdd 
 		cross apply
@@ -473,6 +505,62 @@ group by sdh.source_deal_header_id
 		EXEC spa_run_sp_as_job @new_job_name,  @st1, 'spa_update_deal_total_volume', @user_login_id
 	END
 	
+
+
+DECLARE @_default_dst_group VARCHAR(50) --='102202'
+
+SELECT  @_default_dst_group = tz.dst_group_value_id
+FROM
+	(
+		SELECT var_value default_timezone_id  FROM dbo.adiha_default_codes_values  
+		WHERE instance_no = 1 AND default_code_id = 36 AND seq_no = 1
+	) df  
+inner join dbo.time_zones tz  ON tz.timezone_id = df.default_timezone_id
+
+select unp.[external_id],unp.term_date,unp.hr,unp.[period],unp.volume volume,
+CASE WHEN unp.[Hr] = 25 THEN 0 
+	ELSE 	
+		CASE WHEN CAST(convert(NVARCHAR(10),unp.[term_date],120)+' '+RIGHT('00'+CAST(CASE WHEN mv.[date] IS NOT NULL THEN mv.Hour ELSE unp.[Hr] END -1 AS NVARCHAR),2)+':00:000' AS DATETIME) BETWEEN CAST(convert(NVARCHAR(10),mv2.[date],120)+' '+CAST(mv2.Hour-1 AS NVARCHAR)+':00:00' AS DATETIME) 
+			AND CAST(convert(NVARCHAR(10),mv3.[date],120)+' '+CAST(mv3.Hour-1 AS NVARCHAR)+':00:00' AS DATETIME)
+			 THEN 1 ELSE 0 END 
+	END AS is_DST
+into #temp_pos
+from (
+		select [external_id],term_start term_date,hr,[period],is_dst
+		,4*sum(volume) volume
+	--	,sum(volume) volume
+		 from #unpv_pos_shaped
+			where isnull(external_id,'')<>''
+			group by [external_id],term_start,hr,[period],is_dst
+		union all
+		select scmd1.external_id,sv.term_date,left(sv.hr,2) hr,sv.[period],sv.is_dst,sum(case when sdd.buy_sell_flag='s' then -1 else 1 end *volume) volume 
+		from #shaped_volume_update_deal_detail_id sv
+		inner join source_deal_detail sdd on sdd.source_deal_detail_id=sv.source_deal_detail_id
+			left join shipper_code_mapping_detail scmd1 on scmd1.shipper_code_mapping_detail_id=sdd.shipper_code2
+
+		--	inner join #temp_deals_pos t on t.source_deal_detail_id=sv.source_deal_detail_id
+		where  isnull(scmd1.external_id,'')<>''
+		group by scmd1.external_id,sv.term_date,sv.hr,sv.[period],sv.is_dst
+	) unp
+	left join time_zones from_tz on from_tz.TIMEZONE_ID=15
+	LEFT JOIN mv90_DST mv  ON (unp.[term_date])=(mv.[date])
+		  AND mv.insert_delete='i'
+		  AND unp.[hr]=25
+		  AND mv.dst_group_value_id = @_default_dst_group
+	LEFT JOIN mv90_DST mv1 ON (unp.[term_date])=(mv1.[date])
+		AND mv1.insert_delete='d'
+		AND mv1.Hour=unp.[hr]	
+		AND mv1.dst_group_value_id = @_default_dst_group
+	LEFT JOIN mv90_DST mv2  ON YEAR(unp.[term_date])=(mv2.[YEAR])
+		AND mv2.insert_delete='d'
+		AND mv2.dst_group_value_id = @_default_dst_group
+	LEFT JOIN mv90_DST mv3  ON YEAR(unp.[term_date])=(mv3.[YEAR])
+		AND mv3.insert_delete='i'
+		AND mv3.dst_group_value_id = @_default_dst_group
+	WHERE  (((unp.[hr]=25 AND mv.[date] IS NOT NULL AND from_tz.apply_dst='y') OR (unp.[hr]<>25)) AND ((mv1.[date] IS NULL AND from_tz.apply_dst='y') OR (from_tz.apply_dst = 'n'))) 
+
+
+
 	DECLARE @out_msg NVARCHAR(500), @export_web_services_id INT, @sql NVARCHAR(MAX), @batch_process_table NVARCHAR(200), @final_process_table NVARCHAR(200)
 	
 	SET @final_process_table = dbo.FNAProcessTableName('final', NULL, @process_id)
@@ -486,21 +574,7 @@ group by sdh.source_deal_header_id
 	,dateadd(minute,15,dateadd(minute,pos.[Period],to_dt.to_dt)) actual_term_to_end
 	, ROUND(sum(pos.volume) ,3,1) position
 	,''MW'' UOM
-
-	from (
-		select [external_id],term_start term_date,hr,[period],is_dst,4*sum(volume) volume from #unpv_pos_shaped
-			where isnull(external_id,'''')<>''''
-			group by [external_id],term_start,hr,[period],is_dst
-		union all
-		select scmd1.external_id,sv.term_date,left(sv.hr,2) hr,sv.[period],sv.is_dst,sum(case when sdd.buy_sell_flag=''s'' then -1 else 1 end *volume) volume 
-		from #shaped_volume_update_deal_detail_id sv
-		inner join source_deal_detail sdd on sdd.source_deal_detail_id=sv.source_deal_detail_id
-			left join shipper_code_mapping_detail scmd1 on scmd1.shipper_code_mapping_detail_id=sdd.shipper_code2
-
-		--	inner join #temp_deals_pos t on t.source_deal_detail_id=sv.source_deal_detail_id
-		where  isnull(scmd1.external_id,'''')<>''''
-		group by scmd1.external_id,sv.term_date,sv.hr,sv.[period],sv.is_dst
-	) pos
+	from #temp_pos pos
 	inner join time_zones from_tz on from_tz.TIMEZONE_ID=15--@_system_timezone_id
 	inner JOIN time_zones to_tz on to_tz.TIMEZONE_ID=14 --@_convert_timezone_id 
 	OUTER APPLY 
@@ -549,11 +623,28 @@ group by sdh.source_deal_header_id
 	
 	SELECT @batch_process_table = dbo.FNAProcessTableName('batch_report', NULL, @process_id)
 	SET @sql = 'SELECT * INTO ' + @batch_process_table + ' FROM ' + @final_process_table
-
+if isnull(@flag,'c')='c'
+begin
 	SELECT @export_web_services_id = id FROM export_web_service WHERE handler_class_name = 'EznergyTDSExporter'
-	--return
+	----return
 	EXEC spa_post_data_to_web_service @export_web_services_id, @sql, '', @process_id, @out_msg OUTPUT
-	--SELECT @out_msg
+	----SELECT @out_msg
+end
+else
+begin
+
+	SET @sql ='SELECT [Time series id], startDate, endDate, Position, UOM, 
+	'''+@as_of_date+''' as_of_date,
+	'''+ @term_start+''' term_start,
+	'''+ @term_end+''' term_end
+	'+isnull(@_process_output_table,'')+
+	'
+	FROM ' + @final_process_table
+	exec spa_print @sql		
+	EXEC(@sql)
+
+end
+
 
 --	EXEC('SELECT * FROM ' + @final_process_table)
 --IF OBJECT_ID('tempdb..#tmp_result') IS NOT NULL
@@ -611,3 +702,4 @@ select * from #unpv_pos_shaped
 
 
 */
+
