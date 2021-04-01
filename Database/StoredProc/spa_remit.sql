@@ -858,7 +858,7 @@ BEGIN
 				@col_reference_document_id AS VARCHAR(500), @col_reference_document_version AS VARCHAR(500), @col_broker_fee VARCHAR(100),
 				@file_path VARCHAR(1000), @baseload_block_define_id INT, @xml_string VARCHAR(MAX), @result VARCHAR(MAX), @file_name VARCHAR(255), @xml_inner4 XML,
 				@include_broker NVARCHAR(12) = 'n', @file_name_export NVARCHAR(MAX) = '', @ecm_document_type NVARCHAR(20)
-				, @mapping_table_id INT
+				, @mapping_table_id INT, @has_interval CHAR(1), @business_day CHAR(1)
 		
 		SELECT @file_path = gmv.clm1_value
 		FROM generic_mapping_header gmh
@@ -972,6 +972,18 @@ BEGIN
 					SET @xml_inner4 = NULL
 				END
 
+				SELECT @has_interval = ISNULL(tbl_ecm_time_interval.has_interval,'n')
+					  ,@business_day = ISNULL(tbl_ecm_time_interval.business_day,'n')
+				FROM source_deal_header sdh
+				OUTER APPLY( SELECT ISNULL(gmv.clm4_value, 'n') [business_day], ISNULL(gmv.clm5_value, 'n') [has_interval]
+				 FROM generic_mapping_header gmh
+				 INNER JOIN generic_mapping_values gmv
+					ON gmv.mapping_table_id = gmh.mapping_table_id
+				 WHERE gmh.mapping_name = 'ECM Time Interval'
+				 AND gmv.clm1_value = CAST(sdh.block_define_id AS VARCHAR(20))
+				) tbl_ecm_time_interval
+				WHERE sdh.source_deal_header_id = @col_source_deal_header_id
+
 				IF @col_commodity = 'Gas'
 				BEGIN
 					IF NOT EXISTS (
@@ -979,7 +991,7 @@ BEGIN
 						FROM source_deal_header 
 						WHERE source_deal_header_id = @col_source_deal_header_id
 							AND ISNULL(block_define_id, @baseload_block_define_id) = @baseload_block_define_id
-					)
+					) AND @has_interval = 'y'
 					BEGIN
 						INSERT INTO #tempblock(hr, source_deal_header_id, term_date, hr_mult)
 						SELECT CAST(SUBSTRING([hour], 3, 5) AS INT) hr,
@@ -1003,7 +1015,8 @@ BEGIN
 									AND h1.term_date = h.term_date + 1
 								WHERE h.block_define_id = sdh.block_define_id
 									AND h.block_type = 12000
-									AND h.term_date BETWEEN CAST(se.delivery_start AS DATE) AND CAST(se.delivery_end AS DATE)
+									AND h.term_date BETWEEN CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_start AS DATE)) IN (1,7) THEN dbo.FNAGetBusinessDay('n',CAST(sdh.entire_term_start AS DATE), NULL) ELSE CAST(sdh.entire_term_start AS DATE) END
+									AND CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_end AS DATE) ) IN (1,7) THEN dbo.FNAGetBusinessDay('p',CAST(sdh.entire_term_end AS DATE), NULL) ELSE CAST(sdh.entire_term_end AS DATE)  END
 							) hb
 						)p UNPIVOT (hr_mult FOR [hour] IN (
 								hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13, 
@@ -1016,8 +1029,8 @@ BEGIN
 							AND unpvt.error_validation_message IS NULL
 
  						SELECT @xml_inner3 = (
-							SELECT CASE WHEN CAST(term_date AS DATE) = CAST(DATEADD(hh, 12, DATEADD(hh, min(hr-1), term_date)) AS DATE) THEN CONVERT(VARCHAR(19), DATEADD(hh, 12, DATEADD(hh, min(hr-1), term_date)), 126) ELSE CONVERT(VARCHAR(19), DATEADD(hh, 12, DATEADD(hh, min(hr-1), DATEADD(DAY,-1,term_date))), 126) END AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
-									CASE WHEN CAST(term_date AS DATE) = CAST(DATEADD(hh, 12, DATEADD(hh, max(hr), term_date)) AS DATE) THEN CONVERT(VARCHAR(19), DATEADD(hh, 12, DATEADD(hh, max(hr), term_date)), 126) ELSE CONVERT(VARCHAR(19), DATEADD(hh, 12, DATEADD(hh, max(hr), DATEADD(DAY,-1,term_date))), 126) END AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+							SELECT CONVERT(VARCHAR(19), DATEADD(hh, min(hr-1), term_date), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
+									CONVERT(VARCHAR(19), DATEADD(hh, max(hr), term_date), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
 									@col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
 									@col_price AS [TimeIntervalQuantity/Price]
 							FROM #tempblock WHERE hr_mult = 1
@@ -1080,7 +1093,7 @@ BEGIN
 						FROM source_deal_header 
 						WHERE source_deal_header_id = @col_source_deal_header_id 
 							AND ISNULL(block_define_id, @baseload_block_define_id) = @baseload_block_define_id
-					)
+					) AND @has_interval = 'y'
 					BEGIN
 						INSERT INTO #tempblock(hr, source_deal_header_id, term_date, hr_mult)
 						SELECT CAST(SUBSTRING([hour], 3, 5) AS INT) hr,
@@ -1098,8 +1111,8 @@ BEGIN
 								FROM hour_block_term h WITH (NOLOCK)
 								WHERE block_define_id = sdh.block_define_id
 									AND h.block_type = 12000
-									AND term_date BETWEEN CAST(se.delivery_start AS DATE)
-									AND CAST(se.delivery_end AS DATE) 
+									AND term_date BETWEEN CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_start AS DATE)) IN (1,7) THEN dbo.FNAGetBusinessDay('n',CAST(sdh.entire_term_start AS DATE), NULL) ELSE CAST(sdh.entire_term_start AS DATE) END
+									AND CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_end AS DATE) ) IN (1,7) THEN dbo.FNAGetBusinessDay('p',CAST(sdh.entire_term_end AS DATE), NULL) ELSE CAST(sdh.entire_term_end AS DATE)  END
 							) hb --todo
 						) p UNPIVOT (hr_mult FOR [hour] IN (
 								hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13,
@@ -1122,7 +1135,7 @@ BEGIN
 							ORDER BY term_date
 							FOR XML PATH(''), ROOT('TimeIntervalQuantities')
 						)
-					END
+					END 
 					ELSE
 					BEGIN
  						SELECT @xml_inner3 = (
@@ -1345,13 +1358,14 @@ BEGIN
 			IF OBJECT_ID('tempdb..#temp_source_non_remit_standard_pvt') IS NOT NULL
 				DROP TABLE #temp_source_non_remit_standard_pvt
 
-			SELECT  source_deal_header_id, 
+			SELECT  source_deal_header_id, id,
 			ace, lei, bic, eic, gin,
 			SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin,
 			DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin
 			INTO #temp_source_non_remit_standard_pvt
 			FROM (
 							SELECT  source_deal_header_id ,
+									id,
 									process_id,
 									[reporting_entity_id] AS RRM,
 								   [type_of_code_used_in_field_5] AS RRM_ID,
@@ -1425,6 +1439,7 @@ BEGIN
                 FROM source_remit_non_standard srs
 				INNER JOIN #temp_source_non_remit_standard_pvt tsnrsp
 					ON tsnrsp.source_deal_header_id = srs.source_deal_header_id
+					AND tsnrsp.id = srs.id
 				OUTER APPLY (
 					SELECT  MAX(spcd.curve_id) [fixingIndex]
 							,'FW' [fixingIndexType]
@@ -1582,13 +1597,14 @@ BEGIN
 			IF OBJECT_ID('tempdb..#temp_source_remit_standard_pvt') IS NOT NULL
 				DROP TABLE #temp_source_remit_standard_pvt
 
-			SELECT  source_deal_header_id, 
+			SELECT  source_deal_header_id, id,
 			DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin,
 			ace, lei, bic, eic, gin,
 			SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin
 			INTO #temp_source_remit_standard_pvt
 			FROM (
 				SELECT  source_deal_header_id ,
+						id,
 						process_id,
 						[reporting_entity_id] AS RRM,
 						[type_of_code_field_6] AS RRM_ID,
@@ -1673,6 +1689,7 @@ BEGIN
 				INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = srs.source_deal_header_id
 				INNER JOIN #temp_source_remit_standard_pvt rsrsp
 					ON rsrsp.source_deal_header_id = srs.source_deal_header_id
+					AND rsrsp.id = srs.id
 				WHERE process_id = @process_id
 				FOR XML PATH ('TradeReport'), Root('TradeList'), TYPE)
 			
@@ -1760,13 +1777,14 @@ BEGIN
 			IF OBJECT_ID('tempdb..#temp_source_remit_standard_pvt1') IS NOT NULL
 				DROP TABLE #temp_source_remit_standard_pvt1
 
-			SELECT  source_deal_header_id, 
+			SELECT  source_deal_header_id, id1,
 			ace,lei,bic,eic,gin,
 			SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin,
 			DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin
 			INTO #temp_source_remit_standard_pvt1
 			FROM (
 				SELECT source_deal_header_id ,
+						id [id1],
 						process_id,
 						[reporting_entity_id] AS RRM,
 						[type_of_code_field_6] AS RRM_ID,
@@ -1819,18 +1837,20 @@ BEGIN
 				FROM source_remit_standard srs
 				INNER JOIN #temp_source_remit_standard_pvt1 tsrsp
 					ON tsrsp.source_deal_header_id = srs.source_deal_header_id
+					AND tsrsp.id1 = srs.id1
 				WHERE process_id = @process_id 
 				FOR XML PATH ('contract'), Root('contractList'), TYPE)
 
 			IF OBJECT_ID('tempdb..#temp_source_remit_standard_pvt2') IS NOT NULL
 				DROP TABLE #temp_source_remit_standard_pvt2
 
-			SELECT source_deal_header_id, ace, lei, bic, eic, gin,
+			SELECT source_deal_header_id,id1, ace, lei, bic, eic, gin,
 			SOURCE_CODE_ace, SOURCE_CODE_lei, SOURCE_CODE_bic, SOURCE_CODE_eic, SOURCE_CODE_gin,
 			DEAL_SOURCE_CODE_ace, DEAL_SOURCE_CODE_lei, DEAL_SOURCE_CODE_bic, DEAL_SOURCE_CODE_eic, DEAL_SOURCE_CODE_gin
 			INTO #temp_source_remit_standard_pvt2
 			FROM (
 				SELECT  source_deal_header_id ,
+						id [id1],
 						process_id,
 						[reporting_entity_id] AS RRM,
 						[type_of_code_field_6] AS RRM_ID,
@@ -1909,6 +1929,7 @@ BEGIN
 				FROM source_remit_standard srs
 				INNER JOIN #temp_source_remit_standard_pvt2  tsrsp
 					ON tsrsp.source_deal_header_id = srs.source_deal_header_id
+					AND tsrsp.id1 = srs.id1
 				WHERE process_id = @process_id
 				FOR XML PATH ('TradeReport'), Root('TradeList'), TYPE)
 					
@@ -3126,7 +3147,7 @@ BEGIN
         	LEFT JOIN source_uom tsu ON tvf.notional_quantity_unit = tsu.source_uom_id
         	LEFT JOIN #temp_fixing2 tf2 ON tf2.source_deal_header_id = tvf.source_deal_header_id
         	LEFT JOIN source_currency scur_fixed ON scur_fixed.source_currency_id = tdd.fixed_price_currency_id
-        	LEFT JOIN static_data_value sdv_block ON sdv_block.value_id = td.block_define_id
+        	LEFT JOIN static_data_value sdv_block ON sdv_block.value_id = ISNULL(td.block_define_id,-10000298)
         	LEFT JOIN source_deal_type sd_type ON sd_type.source_deal_type_id = td.source_deal_type_id
         		AND sd_type.sub_type = 'n'
         	LEFT JOIN source_deal_type sd_sub_type ON sd_sub_type.source_deal_type_id = td.deal_sub_type_type_id
@@ -3526,7 +3547,7 @@ BEGIN
 				LEFT JOIN source_uom tsu ON tvf.notional_quantity_unit=tsu.source_uom_id
 				LEFT JOIN #temp_fixing2 tf2 ON tf2.source_deal_header_id=tvf.source_deal_header_id
 				LEFT JOIN source_currency scur_fixed ON scur_fixed.source_currency_id = tdd.fixed_price_currency_id
-				LEFT JOIN static_data_value sdv_block ON sdv_block.value_id = td.block_define_id
+				LEFT JOIN static_data_value sdv_block ON sdv_block.value_id = ISNULL(td.block_define_id,-10000298)
 				LEFT JOIN source_deal_type sd_type ON sd_type.source_deal_type_id = td.source_deal_type_id
 					AND sd_type.sub_type = 'n'
 				LEFT JOIN source_deal_type sd_sub_type ON sd_sub_type.source_deal_type_id = td.deal_sub_type_type_id
@@ -3596,7 +3617,7 @@ BEGIN
 							Hr14, Hr15, Hr16, Hr17, Hr18, Hr19, Hr20, Hr21, Hr22, Hr23, Hr24
 						)
 					) AS P
-					WHERE block_value_id = td.block_define_id
+					WHERE block_value_id = ISNULL(td.block_define_id,-10000298)
 						AND selected = 1
 				) hb
 				OUTER APPLY (
@@ -3969,7 +3990,7 @@ BEGIN
 				AND ts.term_end = src_remit.delivery_end_date
 			LEFT JOIN static_data_value sdv_deal_status ON sdv_deal_status.value_id = td.deal_status
 			LEFT JOIN source_currency scur_fixed ON scur_fixed.source_currency_id = tdd.fixed_price_currency_id
-			LEFT JOIN static_data_value sdv_block ON sdv_block.value_id = td.block_define_id
+			LEFT JOIN static_data_value sdv_block ON sdv_block.value_id = ISNULL(td.block_define_id,-10000298)
 			LEFT JOIN source_deal_type sd_type ON sd_type.source_deal_type_id = td.source_deal_type_id
 				AND sd_type.sub_type = 'n'
 			LEFT JOIN source_deal_type sd_sub_type ON sd_sub_type.source_deal_type_id = td.deal_sub_type_type_id

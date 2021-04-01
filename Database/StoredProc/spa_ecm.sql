@@ -340,23 +340,73 @@ BEGIN
 		   END [price_unit_capacity_unit],
 		   ABS(SUM(tdd.total_volume * ISNULL(conv.conversion_factor, 1) * (tdd.fixed_price + ISNULL(ABS(CAST(uddf.udf_value AS FLOAT)), 0)) )) * CASE WHEN MAX(sdht.template_name) LIKE '%Zeebrugge%' THEN 100 ELSE 1 END [total_contract_value],
 		   CASE 
-				WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, CASE WHEN MAX(sdv_block.value_id) = -10000298 THEN 6
-				  ELSE CASE WHEN TRY_CAST(IIF(CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) = 0, LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),SUBSTRING(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),0, CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))))) AS INT) IS NULL THEN 6
-					   ELSE TRY_CAST(IIF(CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) = 0, LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),SUBSTRING(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),0, CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))))) AS INT) 
-				  END
-		     END, MAX(td.entire_term_start)) + CASE WHEN MAX(sdv_block.code) IN ('WD 00-06','WD 01-06','WD 02-06','WD 03-06','WD 04-06','WD 05-06','00-01','01-02','02-03','03-04','04-05','05-06') THEN 1
-												  ELSE 0 END, 126)
-				ELSE CONVERT(VARCHAR(19), CAST(MAX(td.entire_term_start) AS DATETIME), 126)
+				WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, CASE WHEN ISNULL(MAX(sdv_block.value_id),-10000298) = -10000298 THEN 6
+																							   ELSE ISNULL(TRY_CAST(MAX(tbl_ecm_time_interval.start_hour) AS INT), 0)
+																						  END
+														, CASE WHEN MAX(tbl_ecm_time_interval.business_day) = 'y'  AND DATEPART(dw, MAX(td.entire_term_start)) IN (1,7)
+																	THEN CAST(dbo.FNAGetBusinessDay('n', CAST(MAX(td.entire_term_start) AS DATETIME),NULL) AS DATETIME)			     
+																		 + CASE WHEN MAX(sdv_block.code) IN ('WD 00-06','WD 01-06','WD 02-06'
+																															,'WD 03-06','WD 04-06','WD 05-06','00-01'
+																															,'01-02','02-03','03-04','04-05','05-06') THEN 1
+																											   ELSE 0 
+																										  END
+														       ELSE CAST(MAX(td.entire_term_start) AS DATETIME) 
+																    + CASE WHEN MAX(sdv_block.code) IN ('WD 00-06','WD 01-06','WD 02-06','WD 03-06','WD 04-06'
+																				,'WD 05-06','00-01','01-02','02-03','03-04','04-05','05-06') THEN 1
+																		   ELSE 0 
+																	  END
+														  END		
+														)
+														
+														, 126)
+				ELSE CONVERT(VARCHAR(19), DATEADD(hh, CASE WHEN ISNULL(MAX(sdv_block.value_id),-10000298) = -10000298 THEN 0
+															ELSE ISNULL(TRY_CAST(MAX(tbl_ecm_time_interval.start_hour) AS INT), 0)
+													  END
+										  ,CASE WHEN MAX(tbl_ecm_time_interval.business_day) = 'y' AND DATEPART(dw, MAX(td.entire_term_start)) IN (1,7)  THEN dbo.FNAGetBusinessDay('n', CAST(MAX(td.entire_term_start) AS DATETIME),NULL) 
+												ELSE CAST(MAX(td.entire_term_start) AS DATETIME)
+										   END
+
+					 ), 126)
 		   END [delivery_start],
-		   CASE WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, CASE WHEN MAX(sdv_block.value_id) = -10000298 THEN 6
-				  ELSE CASE WHEN TRY_CAST(IIF(CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) = 0, LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),SUBSTRING(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')), CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) + 1 , LEN(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))))) AS INT) IS NULL THEN 6 
-					   ELSE TRY_CAST(IIF(CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) = 0, LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')),SUBSTRING(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', '')), CHARINDEX('-',LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))) + 1 , LEN(LTRIM(REPLACE(MAX(sdv_block.code), 'WD', ''))))) AS INT) 
-				  END
-		     END, MAX(td.entire_term_end)) + CASE WHEN ISNULL(MAX(sdv_block.value_id), -10000298) = -10000298 THEN 1 
-												  WHEN MAX(sdv_block.code) IN ('00-01','01-02','02-03','03-04','04-05','05-06') THEN 1
-												  WHEN MAX(sdv_block.code) LIKE '%WD %' THEN 1
-												  ELSE 0 END , 126) 
-			 ELSE CONVERT(VARCHAR(19), CAST(MAX(td.entire_term_end) AS DATETIME) + 1 , 126) 
+		   CASE WHEN MAX(scom.commodity_id) = 'Gas' THEN CONVERT(VARCHAR(19), DATEADD(hh, CASE WHEN ISNULL(MAX(sdv_block.value_id),-10000298) = -10000298 THEN 6
+																							   ELSE ISNULL(TRY_CAST(MAX(tbl_ecm_time_interval.end_hour) AS INT), 0)
+																						  END
+														,  CASE WHEN MAX(tbl_ecm_time_interval.business_day) = 'y' AND DATEPART(dw, MAX(td.entire_term_end)) IN (1,7) 
+																	 THEN CAST(dbo.FNAGetBusinessDay('p', CAST(MAX(td.entire_term_end) AS DATETIME),NULL) AS DATETIME)
+																		+ CASE WHEN ISNULL(MAX(sdv_block.value_id), -10000298) = -10000298 THEN 1 
+																										 WHEN MAX(sdv_block.code) IN ('00-01','01-02','02-03','03-04'
+																															 ,'04-05','05-06') THEN 1
+																										 WHEN MAX(sdv_block.code) LIKE '%WD %' THEN 1
+																										 ELSE 0 
+																									END
+																 ELSE CAST(MAX(td.entire_term_end) AS DATETIME) 
+																	  + CASE WHEN ISNULL(MAX(sdv_block.value_id), -10000298) = -10000298 THEN 1 
+																			 WHEN MAX(sdv_block.code) IN ('00-01','01-02','02-03','03-04','04-05','05-06') THEN 1
+																			 WHEN MAX(sdv_block.code) LIKE '%WD %' THEN 1
+																			 ELSE 0 
+																		END
+														   END
+
+														)
+													, 126) 
+														
+													
+			    ELSE CONVERT(VARCHAR(19),  DATEADD(hh, CASE WHEN ISNULL(MAX(sdv_block.value_id),-10000298) = -10000298 THEN 0
+															ELSE ISNULL(TRY_CAST(MAX(tbl_ecm_time_interval.end_hour) AS INT), 0)
+														END
+										  , CASE WHEN MAX(tbl_ecm_time_interval.business_day) = 'y'  AND DATEPART(dw, MAX(td.entire_term_end)) IN (1,7)
+													  THEN CAST(dbo.FNAGetBusinessDay('p', CAST(MAX(td.entire_term_end) AS DATETIME) ,NULL) AS DATETIME)
+																					+ CASE WHEN ISNULL(TRY_CAST(MAX(tbl_ecm_time_interval.end_hour) AS INT), 0) = 0 THEN 1
+																							ELSE 0
+																					  END 													 
+												 ELSE CAST(MAX(td.entire_term_end) AS DATETIME)
+													+ CASE WHEN ISNULL(TRY_CAST(MAX(tbl_ecm_time_interval.end_hour) AS INT), 0) = 0 THEN 1
+															ELSE 0
+														END 
+											END  
+
+										  ) 
+										 , 126) 
 			 END [delivery_end],
 		   MAX(tdd.deal_volume) [contract_capacity],
 		   (AVG(tdd.fixed_price) + ISNULL(MAX(ABS(CAST(uddf.udf_value AS FLOAT))), 0)) * CASE WHEN MAX(sdht.template_name) LIKE '%Zeebrugge%' THEN 100 ELSE 1 END [price],
@@ -463,6 +513,13 @@ BEGIN
 				 AND gmv.clm2_value = CAST(tdd.location_id AS VARCHAR(20))
 				 AND gmv.clm3_value = CAST(scom.source_commodity_id AS VARCHAR(20))
 	) tbl_ecm_hub_counterparty 
+	OUTER APPLY( SELECT gmv.clm2_value [start_hour], gmv.clm3_value [end_hour], ISNULL(gmv.clm4_value, 'n') [business_day]
+				 FROM generic_mapping_header gmh
+				 INNER JOIN generic_mapping_values gmv
+					ON gmv.mapping_table_id = gmh.mapping_table_id
+				 WHERE gmh.mapping_name = 'ECM Time Interval'
+				 AND gmv.clm1_value = CAST(td.block_define_id AS VARCHAR(20))
+	) tbl_ecm_time_interval
 	WHERE td.deal_status <> 5607
 		AND ISNULL(cs.[type], 17200) <> 17202
 	GROUP BY  td.source_deal_header_id, td.deal_id
