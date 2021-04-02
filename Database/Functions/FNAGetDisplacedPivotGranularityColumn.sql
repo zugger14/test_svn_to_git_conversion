@@ -39,30 +39,14 @@ BEGIN
 DECLARE 
 	 @term_start datetime		=	'2020-10-24' 
 	,@term_end  datetime		=	'2020-10-24' 
-	,@granularity int			=	982
+	,@granularity int			=	987
 	,@dst_group_value_id int	=	102201
-	,@shift_value SMALLINT		=	6
+	,@shift_value SMALLINT		=	0
 	--set @term_start = '2020-03-28'
 	--set @term_end	= '2020-03-28'
 
 -- * DEBUG QUERY END * */
 
-	DECLARE @is_shifted_day BIT
-
-	IF EXISTS (
-		SELECT 1 
-		FROM mv90_DST
-		WHERE  dst_group_value_id = 102201
-			AND @shift_value <= hour 
-		GROUP BY hour
-	)
-	BEGIN
-		SET @is_shifted_day = 0
-	END
-	ELSE
-	BEGIN
-		SET @is_shifted_day = 1
-	END
 
 	declare @st varchar(max),@frequency varchar(1)
 
@@ -105,14 +89,11 @@ DECLARE
 										end +datepart(MINUTE,term_start) as varchar),2) mi 
 			,'' dst_hr
 		--	,max(case when dst.insert_delete='i' then 'A' else '' end) dst_hr
-		FROM [FNATermBreakdown] (@frequency,@term_start,@term_end) a
-		left join dbo.mv90_dst dst
+		FROM [FNATermBreakdown] (@frequency,@term_start,dateadd(hour,@shift_value,@term_end)) a
+			left join dbo.mv90_dst dst
 				on  dst.dst_group_value_id=@dst_group_value_id  and
-					 DATEADD(DAY, -1, dst.[date]) = convert(varchar(10),a.term_start,120) 
-				--	and (dst.[hour] + 18)=DATEPART(hour,a.term_start)+1
-					and (dst.[hour])=DATEPART(hour,a.term_start)+1
-
-					--and dst.insert_delete='d'
+					 dst.[date] = convert(varchar(10),dateadd(hour,@shift_value,a.term_start),120) 
+					and (dst.[hour])=DATEPART(hour,dateadd(hour,@shift_value,a.term_start))+1
 		where isnull(dst.insert_delete,'')<>'d'
 		group by 
 		right('0'+cast(datepart(hour,term_start) as varchar),2)+right('0'+cast(datepart(MINUTE,term_start) as varchar),2)
@@ -120,13 +101,12 @@ DECLARE
 			datepart(hour,dateadd(HOUR, @shift_value, term_start))
 			as varchar),2)
 			,right('0'+cast(case @granularity
-											when 987 then 15
-											when 994 then 10
-											when 989 then 30
-											when 995 then 5
-											else 0
-										end +datepart(MINUTE,term_start) as varchar),2) 
-
+							when 987 then 15
+							when 994 then 10
+							when 989 then 30
+							when 995 then 5
+							else 0
+						end +datepart(MINUTE,term_start) as varchar),2) 
 		union all
 		SELECT distinct right('0'+cast(datepart(hour,term_start) as varchar),2)+right('0'+cast(datepart(MINUTE,term_start) as varchar),2) hhmm
 			,right('0'+cast(case when @granularity =982 then 1 else 0 end +
@@ -140,10 +120,10 @@ DECLARE
 								else 0
 							end +datepart(MINUTE,term_start) as varchar),2) mi 
 			,'DST' dst_hr
-		FROM [FNATermBreakdown] (@frequency,@term_start,@term_end) a
+		FROM [FNATermBreakdown] (@frequency,@term_start,dateadd(hour,@shift_value,@term_end)) a
 		inner join dbo.mv90_dst dst
 				on  dst.dst_group_value_id=@dst_group_value_id  and
-					 IIF(@is_shifted_day = 1,DATEADD(DAY, -1, dst.[date]),dst.[date])  = convert(varchar(10),a.term_start,120) 
+					 dst.[date]= convert(varchar(10),dateadd(hour,@shift_value,a.term_start),120) 
 					and dst.[hour] = DATEPART(hour,dateadd(HOUR, @shift_value, a.term_start)) + 1
 					and dst.insert_delete='i'
 
