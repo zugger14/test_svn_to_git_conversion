@@ -165,7 +165,18 @@ EXEC dbo.spa_drop_all_temp_table
 
 EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
-	SELECT @flag='p', @uom=1158, @flow_date_from='2027-10-30',  @flow_date_to='2027-10-30', @minor_location='2857', @process_id='E262BAA7_E8C6_4EB6_B204_184C96ED516D', @reschedule='0'
+	SELECT @flag='c'
+,@flow_date_from='2027-10-30'
+,@flow_date_to='2027-10-30'
+,@from_location='2857'
+,@to_location='2854'
+,@path_priority='-31400'
+,@opt_objective='38301'
+,@uom='1158'
+,@process_id='8E6A7E3F_FF7C_47C6_8D50_59BA83193332'
+,@reschedule='0'
+,@granularity='982'
+,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
 
 --*/
 
@@ -1233,13 +1244,21 @@ BEGIN
 		
 	INSERT INTO #locwise_range_total -- select * from #locwise_range_total
 	SELECT hp.location_id
-		, SUM((hp.position - ISNULL(dst_pos.position, 0)) * ISNULL(rvuc.conversion_factor, 1)) [total_position]		
+		, SUM(
+			(hp.position - ISNULL(dst_pos.position, 0) - IIF(dst_del.id IS NOT NULL AND hp.hour = 21, hp.position, 0))
+			* ISNULL(rvuc.conversion_factor, 1)
+		  ) [total_position]	
 		, SUM(
 			IIF(smj.location_name = ''storage'' AND sdh.template_id = ' + CAST(@transportation_template_id AS VARCHAR(10)) + '
 				, 0
 				, (hp.position - ISNULL(dst_pos.position, 0))
 			)
-		  ) / ISNULL(NULLIF(IIF(MAX(dst_pos.position) <> 0, 25, @hour_count), 0), 1) [beg_pos]		  
+		  ) / ISNULL(NULLIF(
+							IIF(MAX(dst_pos.position) <> 0
+							, 25
+							, IIF(MAX(dst_del.id) IS NOT NULL, 23, @hour_count)
+							), 0), 1) [beg_pos]	
+		
 	FROM ' + @hourly_pos_info + ' hp 
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = hp.source_deal_detail_id
 	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
@@ -1253,10 +1272,14 @@ BEGIN
 		ON dst_pos.source_deal_detail_id = hp.source_deal_detail_id
 		AND dst_pos.hour = 25
 		AND hp.hour = 21
+	LEFT JOIN mv90_DST dst_del --delete position for dst delete case; only for total position
+		ON dst_del.[date]-1 = hp.term_start
+		AND dst_del.insert_delete = ''d''
 	GROUP BY hp.location_id
 	'
-	--print(@sql)
+	
 	EXEC(@sql)
+	--print(@sql)
 	--return
 	--CALCULATE TOTAL POSITION FOR RANGE OF TERMS END
 	
@@ -2401,7 +2424,11 @@ BEGIN
 		AND path_mdq_info.[hour] = hr_values.[hour]
 		AND path_mdq_info.is_dst = hr_values.is_dst
 	OUTER APPLY (
-		SELECT SUM(hp.position - ISNULL(dst_pos.position,0)) [position]
+		SELECT 
+			IIF(hr_values.is_dst = 1
+				, MAX(dst_pos.position) --for dst hour actual position
+				, SUM(hp.position - ISNULL(dst_pos.position,0))
+			) [position]
 		FROM ' + @hourly_pos_info + ' hp
 		LEFT JOIN ' + @hourly_pos_info + ' dst_pos
 			ON dst_pos.source_deal_detail_id = hp.source_deal_detail_id
@@ -2410,9 +2437,14 @@ BEGIN
 		WHERE hp.location_id = t.from_loc_id
 			AND hp.term_start = ''' + CONVERT(VARCHAR(10),@flow_date_from,21) + '''
 			AND hp.[hour] = hr_values.[hour]
+		GROUP BY hp.location_id, hp.term_start, hp.[hour]
 	) pos_s
 	OUTER APPLY (
-		SELECT SUM(hp.position - ISNULL(dst_pos.position,0)) [position]
+		SELECT 
+			IIF(hr_values.is_dst = 1
+				, MAX(dst_pos.position) --for dst hour actual position
+				, SUM(hp.position - ISNULL(dst_pos.position,0))
+			) [position]
 		FROM ' + @hourly_pos_info + ' hp
 		LEFT JOIN ' + @hourly_pos_info + ' dst_pos
 			ON dst_pos.source_deal_detail_id = hp.source_deal_detail_id
@@ -2421,10 +2453,13 @@ BEGIN
 		WHERE hp.location_id = t.to_loc_id
 			AND hp.term_start = ''' + CONVERT(VARCHAR(10),@flow_date_from,21) + '''
 			AND hp.[hour] = hr_values.[hour]
+		GROUP BY hp.location_id, hp.term_start, hp.[hour]
 	) pos_d
 	'
-	--PRINT(@sql)
+	
 	EXEC(@sql)
+	--PRINT(@sql)
+	--RETURN
 
 	--fresh hourly data
 	EXEC('
@@ -2651,6 +2686,7 @@ BEGIN
 		WHERE c1.box_id = t.box_id
 			AND c1.path_id = t.path_id
 			AND c1.hour = cdh.hour
+			AND c1.is_dst = cdh.is_dst
 	) path_mdq_info
 	GROUP BY t.box_id
 			, t.from_loc_id
@@ -2669,7 +2705,7 @@ BEGIN
 		, t.to_rank
 		, t.to_loc_id
 	'
-	--print(@sql)
+	print(@sql)
 	EXEC(@sql)
 	--print '@flag = ''c'', final: ' + convert(varchar(50),getdate() ,21)
 END
@@ -3806,7 +3842,7 @@ BEGIN
 	CROSS JOIN dbo.FNAGetDisplacedPivotGranularityColumn(''' + convert(VARCHAR(50), @flow_date_from, 21) + ''', ''' + convert(VARCHAR(50), @flow_date_from, 21)+ ''', 982, 102201, 6) hr_col 
 	OUTER APPLY (
 		SELECT RIGHT(''0'' + CAST(p.hour AS VARCHAR(2)), 2) + '':00'' + IIF(hr_col.is_dst = 1, ''DST'', '''') [hour]
-			, (p.position - ISNULL(dst_pos.position, 0)) [position]
+			, IIF(hr_col.is_dst = 1, dst_pos.position, (p.position - ISNULL(dst_pos.position, 0))) [position]
 		FROM ' + @hourly_pos_info + ' p
 		LEFT JOIN ' + @hourly_pos_info + ' dst_pos
 			ON dst_pos.source_deal_detail_id = p.source_deal_detail_id
@@ -4142,7 +4178,11 @@ BEGIN
 	LEFT JOIN delivery_path_detail dpd ON dpd.path_id = cd.path_id and dpd.path_name = cd.single_path_id
 	CROSS JOIN (values(''PMDQ/PRMDQ''),(''Rec''),(''Fuel''),(''Del'')) v (item)
 	OUTER APPLY (
-		SELECT SUM(hp.position - ISNULL(dst_pos.position,0)) position
+		SELECT 
+			IIF(cd.is_dst = 1
+				, MAX(dst_pos.position) --for dst hour actual position
+				, SUM(hp.position - ISNULL(dst_pos.position,0))
+			) [position]
 		FROM ' + @hourly_pos_info +  ' hp
 		LEFT JOIN ' + @hourly_pos_info +  ' dst_pos
 			ON dst_pos.source_deal_detail_id = hp.source_deal_detail_id
@@ -4152,9 +4192,14 @@ BEGIN
 			AND hp.term_start = cd.term_start
 			AND hp.location_id = cd.from_loc_id
 			' + ISNULL('AND hp.source_deal_header_id IN (' + @receipt_deals_id + ')', '') + '
+		GROUP BY hp.location_id, hp.term_start, hp.[hour]
 	) supply_pos
 	OUTER APPLY (
-		SELECT SUM(hp.position - ISNULL(dst_pos.position,0)) position
+		SELECT 
+			IIF(cd.is_dst = 1
+				, MAX(dst_pos.position) --for dst hour actual position
+				, SUM(hp.position - ISNULL(dst_pos.position,0))
+			) [position]
 		FROM ' + @hourly_pos_info +  ' hp
 		LEFT JOIN ' + @hourly_pos_info +  ' dst_pos
 			ON dst_pos.source_deal_detail_id = hp.source_deal_detail_id
@@ -4164,6 +4209,7 @@ BEGIN
 			AND hp.term_start = cd.term_start
 			AND hp.location_id = cd.to_loc_id
 			' + ISNULL('AND hp.source_deal_header_id IN (' + @delivery_deals_id + ')', '') + '
+		GROUP BY hp.location_id, hp.term_start, hp.[hour]
 	) demand_pos
 	WHERE cd.from_loc_id IN (' + @from_location + ')
 		AND cd.to_loc_id IN (' + @to_location + ')

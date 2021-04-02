@@ -1,4 +1,5 @@
 <?php
+error_reporting(E_ALL);
 /**
  * Builds HTML for reports
  * 
@@ -788,6 +789,20 @@ $build_exec_code = [];
                     }
                 } else if (strpos($sql, "spa_flow_optimization_hourly") != false) { //position report for flow optimization hourly grid
 					$report_name = 'spa_flow_optimization_hourly';
+
+                    $clm_total = array("Total", "", "", "", "", "", "", "");
+                    $clm_total_format = array("N", "N", "N", "N", "N", "N", "N", "N");
+
+                    for($i = 1; $i <= ($fields-8); $i++) {
+                        array_push ($clm_total, "$." . str_replace("'", "", $round_no));
+                        array_push ($clm_total_format, "$." . str_replace("'", "", $round_no));
+                    }
+
+                    $report_total_clm_start = 1;
+                    $clm_sub_total = "";
+                    $sub_total_clm = -1;
+
+                    /*
 					if ($fields == 33) { 
 						$clm_total = array("Total", "", "", "", "", "", "", ""
 								, "$." . str_replace("'", "", $round_no)
@@ -916,6 +931,7 @@ $build_exec_code = [];
 						$sub_total_clm = -1;
 						
 					}
+                    */
                 } else if (strpos($sql, "spa_flow_optimization") != false) { //position report for flow optimization grid
                     $report_name = 'spa_flow_optimization';
                     if ($fields == 13) { 
