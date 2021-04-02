@@ -120,62 +120,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'book_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 27 AS param_order, 0 AS param_depth, 'Broker' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'broker_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 15 AS param_order, 0 AS param_depth, 'Buy/Sell' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
@@ -256,62 +200,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'confirm_status_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 23 AS param_order, 0 AS param_depth, 'Contract' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'contract_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 28 AS param_order, 0 AS param_depth, 'Country' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'country_id'	
 	
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
@@ -484,62 +372,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 21 AS param_order, 0 AS param_depth, 'Index' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'index_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 33 AS param_order, 0 AS param_depth, 'Product Group' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'internal_portfolio_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 22 AS param_order, 0 AS param_depth, 'Location' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
@@ -680,62 +512,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 32 AS param_order, 0 AS param_depth, 'Product' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'product_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 26 AS param_order, 0 AS param_depth, 'Region' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'region_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 19 AS param_order, 0 AS param_depth, 'Counterparty' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
@@ -816,90 +592,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'source_deal_type_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'stra_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'sub_book_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'sub_id'	
 	
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
@@ -988,34 +680,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 20 AS param_order, 0 AS param_depth, 'Trader' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'trader_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 39 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
@@ -1040,6 +704,370 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'actual_forward'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, 'o' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 6 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'deal_status_group'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'book_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 27 AS param_order, 0 AS param_depth, 'Broker' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'broker_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 23 AS param_order, 0 AS param_depth, 'Contract' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'contract_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 28 AS param_order, 0 AS param_depth, 'Country' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'country_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 21 AS param_order, 0 AS param_depth, 'Index' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'index_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 33 AS param_order, 0 AS param_depth, 'Product Group' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'internal_portfolio_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 32 AS param_order, 0 AS param_depth, 'Product' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'product_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 26 AS param_order, 0 AS param_depth, 'Region' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'region_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'stra_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'sub_book_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'sub_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 20 AS param_order, 0 AS param_depth, 'Trader' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'MTM Settlement Extract Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'SSMV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'SSMV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Settlement Mega View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'trader_id'	
 	
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
@@ -1152,34 +1180,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'template_id'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, 'o' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 6 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'SSMV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'SSMV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Settlement Mega View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'deal_status_group'	
 	
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
@@ -1351,7 +1351,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 	
 
 		INSERT INTO report_page_tablix(page_id,root_dataset_id, [name], width, height, [top], [left], group_mode, border_style, page_break, type_id, cross_summary, no_header, export_table_name, is_global)
-		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'Standard MTM Settlement Report' [name], '11.546666666666667' width, '2.466666666666667' height, '0' [top], '0' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,2 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
+		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'Standard MTM Settlement Report' [name], '11.546666666666667' width, '2.48' height, '0' [top], '0.05324074427286784' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,2 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 		ON rpage.[name] = 'MTM Settlement Extract Report'
@@ -1433,7 +1433,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 28 column_order,NULL aggregation, NULL functions, 'Total Position' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,13 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 26 column_order,NULL aggregation, NULL functions, 'Total Position' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,13 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1455,7 +1455,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 29 column_order,NULL aggregation, NULL functions, 'Position UOM' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 27 column_order,NULL aggregation, NULL functions, 'Position UOM' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1472,28 +1472,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'position_uom' 
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 43 column_order,NULL aggregation, NULL functions, 'PNL MTM' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,13 cross_summary_aggregation,0 mark_for_total,13 sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'SSMV1' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Amount' 
 
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
@@ -1565,51 +1543,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 22 column_order,NULL aggregation, NULL functions, 'Term Day' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'SSMV1' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'term_start_day' 
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 21 column_order,NULL aggregation, NULL functions, 'Term Month' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'SSMV1' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'term_start_month' 
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 23 column_order,NULL aggregation, NULL functions, 'Aggregate Term' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 21 column_order,NULL aggregation, NULL functions, 'Aggregate Term' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1631,7 +1565,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 25 column_order,NULL aggregation, NULL functions, 'Location Group' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 23 column_order,NULL aggregation, NULL functions, 'Location Group' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1653,7 +1587,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 26 column_order,NULL aggregation, NULL functions, 'Location' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 24 column_order,NULL aggregation, NULL functions, 'Location' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1675,7 +1609,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 27 column_order,NULL aggregation, NULL functions, 'Index' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 25 column_order,NULL aggregation, NULL functions, 'Index' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1719,7 +1653,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 24 column_order,NULL aggregation, NULL functions, 'Charge Type' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, 3 default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 22 column_order,NULL aggregation, NULL functions, 'Charge Type' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, 3 default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1741,7 +1675,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 30 column_order,NULL aggregation, NULL functions, 'Indexed On' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 28 column_order,NULL aggregation, NULL functions, 'Indexed On' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1763,7 +1697,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 31 column_order,NULL aggregation, NULL functions, 'Formula' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 29 column_order,NULL aggregation, NULL functions, 'Formula' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1785,7 +1719,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 32 column_order,NULL aggregation, NULL functions, 'Fixed Price' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 30 column_order,NULL aggregation, NULL functions, 'Fixed Price' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1807,7 +1741,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 33 column_order,NULL aggregation, NULL functions, 'Indexed On Price' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 31 column_order,NULL aggregation, NULL functions, 'Indexed On Price' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1829,7 +1763,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 34 column_order,NULL aggregation, NULL functions, 'Price Multiplier' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 32 column_order,NULL aggregation, NULL functions, 'Price Multiplier' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1851,7 +1785,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 35 column_order,NULL aggregation, NULL functions, 'Price Adder' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 33 column_order,NULL aggregation, NULL functions, 'Price Adder' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1873,7 +1807,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 36 column_order,NULL aggregation, NULL functions, 'Deal Price' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 34 column_order,NULL aggregation, NULL functions, 'Deal Price' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1895,7 +1829,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 38 column_order,NULL aggregation, NULL functions, 'Net Price' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 36 column_order,NULL aggregation, NULL functions, 'Net Price' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1917,7 +1851,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 37 column_order,NULL aggregation, NULL functions, 'Market Price' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 35 column_order,NULL aggregation, NULL functions, 'Market Price' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1939,7 +1873,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 39 column_order,NULL aggregation, NULL functions, 'Fixed Cost' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 37 column_order,NULL aggregation, NULL functions, 'Fixed Cost' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1961,7 +1895,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 40 column_order,NULL aggregation, NULL functions, 'Contract Value' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,13 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 38 column_order,NULL aggregation, NULL functions, 'Contract Value' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,13 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1983,7 +1917,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 41 column_order,NULL aggregation, NULL functions, 'Market Value' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,13 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 39 column_order,NULL aggregation, NULL functions, 'Market Value' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,13 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -2225,29 +2159,7 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 42 column_order,NULL aggregation, NULL functions, 'PNL' [alias], 1 sortable, 4 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'SSMV1' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'pnl' 
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 44 column_order,NULL aggregation, NULL functions, 'Currency' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 40 column_order,NULL aggregation, NULL functions, 'Currency' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -2352,116 +2264,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'payment_date' 
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 45 column_order,NULL aggregation, NULL functions, 'Reporting Group1' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'SSMV1' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'reporting_group1_name' 
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 46 column_order,NULL aggregation, NULL functions, 'Reporting Group2' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'SSMV1' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'reporting_group2_name' 
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 47 column_order,NULL aggregation, NULL functions, 'Reporting Group3' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'SSMV1' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'reporting_group3_name' 
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 48 column_order,NULL aggregation, NULL functions, 'Reporting Group4' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'SSMV1' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'reporting_group4_name' 
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 49 column_order,NULL aggregation, NULL functions, 'Reporting Group5' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,0 mark_for_total,NULL sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'SSMV1' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'reporting_group5_name' 
  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
@@ -3336,62 +3138,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 			'Tahoma' font,
 			'8' font_size,
 			'1,0,0' font_style,
-			'Left' text_align,
-			'#ffffff' text_color,
-			'#458bc1' background,
-			rtc.report_tablix_column_id			 		       
-		FROM   sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'term_start_day' 
-		INNER JOIN report_tablix_column rtc 
-			on rtc.tablix_id = rpt.report_page_tablix_id
-			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Term Day' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
-	  SELECT TOP 1 
-			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
-			'Tahoma' font,
-			'8' font_size,
-			'1,0,0' font_style,
-			'Left' text_align,
-			'#ffffff' text_color,
-			'#458bc1' background,
-			rtc.report_tablix_column_id			 		       
-		FROM   sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'term_start_month' 
-		INNER JOIN report_tablix_column rtc 
-			on rtc.tablix_id = rpt.report_page_tablix_id
-			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Term Month' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
-	  SELECT TOP 1 
-			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
-			'Tahoma' font,
-			'8' font_size,
-			'1,0,0' font_style,
 			'Right' text_align,
 			'#ffffff' text_color,
 			'#458bc1' background,
@@ -3497,34 +3243,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Charge Type' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
-	  SELECT TOP 1 
-			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
-			'Tahoma' font,
-			'8' font_size,
-			'1,0,0' font_style,
-			'Right' text_align,
-			'#ffffff' text_color,
-			'#458bc1' background,
-			rtc.report_tablix_column_id			 		       
-		FROM   sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Amount' 
-		INNER JOIN report_tablix_column rtc 
-			on rtc.tablix_id = rpt.report_page_tablix_id
-			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'PNL MTM' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
@@ -3693,174 +3411,6 @@ AND SSMV1.[reporting_group5] IN ( @reporting_group5 ))' AS where_part, 0
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Pnl Year Month' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
-	  SELECT TOP 1 
-			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
-			'Tahoma' font,
-			'8' font_size,
-			'1,0,0' font_style,
-			'Right' text_align,
-			'#ffffff' text_color,
-			'#458bc1' background,
-			rtc.report_tablix_column_id			 		       
-		FROM   sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'pnl' 
-		INNER JOIN report_tablix_column rtc 
-			on rtc.tablix_id = rpt.report_page_tablix_id
-			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'PNL' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
-	  SELECT TOP 1 
-			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
-			'Tahoma' font,
-			'8' font_size,
-			'1,0,0' font_style,
-			'Left' text_align,
-			'#ffffff' text_color,
-			'#458bc1' background,
-			rtc.report_tablix_column_id			 		       
-		FROM   sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'reporting_group1_name' 
-		INNER JOIN report_tablix_column rtc 
-			on rtc.tablix_id = rpt.report_page_tablix_id
-			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Reporting Group1' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
-	  SELECT TOP 1 
-			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
-			'Tahoma' font,
-			'8' font_size,
-			'1,0,0' font_style,
-			'Left' text_align,
-			'#ffffff' text_color,
-			'#458bc1' background,
-			rtc.report_tablix_column_id			 		       
-		FROM   sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'reporting_group2_name' 
-		INNER JOIN report_tablix_column rtc 
-			on rtc.tablix_id = rpt.report_page_tablix_id
-			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Reporting Group2' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
-	  SELECT TOP 1 
-			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
-			'Tahoma' font,
-			'8' font_size,
-			'1,0,0' font_style,
-			'Left' text_align,
-			'#ffffff' text_color,
-			'#458bc1' background,
-			rtc.report_tablix_column_id			 		       
-		FROM   sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'reporting_group3_name' 
-		INNER JOIN report_tablix_column rtc 
-			on rtc.tablix_id = rpt.report_page_tablix_id
-			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Reporting Group3' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
-	  SELECT TOP 1 
-			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
-			'Tahoma' font,
-			'8' font_size,
-			'1,0,0' font_style,
-			'Left' text_align,
-			'#ffffff' text_color,
-			'#458bc1' background,
-			rtc.report_tablix_column_id			 		       
-		FROM   sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'reporting_group4_name' 
-		INNER JOIN report_tablix_column rtc 
-			on rtc.tablix_id = rpt.report_page_tablix_id
-			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Reporting Group4' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
-	  SELECT TOP 1 
-			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
-			'Tahoma' font,
-			'8' font_size,
-			'1,0,0' font_style,
-			'Left' text_align,
-			'#ffffff' text_color,
-			'#458bc1' background,
-			rtc.report_tablix_column_id			 		       
-		FROM   sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'Standard MTM Settlement Report'
-		INNER JOIN report_page rpage 
-			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN report r 
-			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'MTM Settlement Extract Report'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Settlement Mega View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'reporting_group5_name' 
-		INNER JOIN report_tablix_column rtc 
-			on rtc.tablix_id = rpt.report_page_tablix_id
-			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Reporting Group5' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
 
 		--RETAIN APPLICATION FILTER DETAILS START (PART2)
