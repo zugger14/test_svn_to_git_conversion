@@ -57,6 +57,7 @@ DECLARE @_sql VARCHAR(MAX)
 , @_period_to varchar(25) 
 , @_curve_id VARCHAR(MAX)
 , @_Granularity VARCHAR(MAX)
+, @_curve_source_value_id VARCHAR(100)
 
 IF ''@to_as_of_date'' <> ''NULL''
 	SET @_to_as_of_date = ''@to_as_of_date''
@@ -72,6 +73,8 @@ IF ''@curve_id'' <> ''NULL''
 	SET @_curve_id = ''@curve_id''
 IF ''@Granularity'' <> ''NULL''
 	SET @_Granularity = ''@Granularity''
+IF ''@curve_source_value_id'' <> ''NULL''
+	SET @_curve_source_value_id = ''@curve_source_value_id''
 
 IF (@_from_maturity_date IS NOT NULL AND @_period_from IS NOT NULL) OR (@_to_maturity_date IS NOT NULL  AND @_period_to IS NOT NULL)
 BEGIN
@@ -145,6 +148,8 @@ SET @_sql = ''SELECT spc.source_curve_def_id [curve_id],
 			 CASE WHEN @_curve_id IS NOT NULL THEN '' AND spc.source_curve_def_id IN(''+@_curve_id+'')'' ELSE '''' END 
 			 +
 			 CASE WHEN @_Granularity IS NOT NULL THEN '' AND spcd.Granularity IN(''+@_Granularity+'')'' ELSE '''' END 
+			  +
+			 CASE WHEN @_curve_source_value_id IS NOT NULL THEN '' AND spc.curve_source_value_id IN(''+@_curve_source_value_id+'')'' ELSE '''' END 
 --PRINT(@_sql)
 EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
@@ -439,7 +444,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Curve Source Value ID'
-			   , reqd_param = 0, widget_id = 9, datatype_id = 4, param_data_source = 'EXEC spa_StaticDataValues @flag = ''h'', @type_id = 10007', param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 2, key_column = 1, required_filter = NULL
+			   , reqd_param = 0, widget_id = 9, datatype_id = 4, param_data_source = 'EXEC spa_StaticDataValues @flag = ''h'', @type_id = 10007', param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 2, key_column = 1, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -452,7 +457,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_source_value_id' AS [name], 'Curve Source Value ID' AS ALIAS, 0 AS reqd_param, 9 AS widget_id, 4 AS datatype_id, 'EXEC spa_StaticDataValues @flag = ''h'', @type_id = 10007' AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,2 AS column_template, 1 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_source_value_id' AS [name], 'Curve Source Value ID' AS ALIAS, 0 AS reqd_param, 9 AS widget_id, 4 AS datatype_id, 'EXEC spa_StaticDataValues @flag = ''h'', @type_id = 10007' AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,2 AS column_template, 1 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Price Curve View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)

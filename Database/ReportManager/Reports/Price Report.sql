@@ -3,6 +3,7 @@ BEGIN TRY
 
 		DECLARE @report_id_dest INT 
 	
+
 		--RETAIN APPLICATION FILTER DETAILS START (PART1)
 		if object_id('tempdb..#paramset_map') is not null drop table #paramset_map
 		create table #paramset_map (
@@ -28,17 +29,20 @@ BEGIN TRY
 		END
 		--RETAIN APPLICATION FILTER DETAILS END (PART1)
 		
+
 		declare @report_copy_name varchar(200)
 		
 		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'Price Report')
 		
+
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'Price Report' [name], 'farrms_admin' [owner], 1 is_system, 1 is_excel, 0 is_mobile, '2D00443E_0D44_4876_A857_A09EBAAF4B9E' report_hash, 'Price Report' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'Price Report' [name], 'dev_admin' [owner], 1 is_system, 1 is_excel, 0 is_mobile, '2D00443E_0D44_4876_A857_A09EBAAF4B9E' report_hash, 'Price Report' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'MTM' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
 		
 		
+
 		INSERT INTO report_dataset (source_id, report_id, [alias], root_dataset_id, is_free_from, relationship_sql)
 		SELECT TOP 1 ds.data_source_id AS source_id, @report_id_dest AS report_id, 'PCV1' [alias], rd_root.report_dataset_id AS root_dataset_id,0 AS is_free_from, 'NULL' AS relationship_sql
 		FROM sys.objects o
@@ -47,12 +51,14 @@ BEGIN TRY
 		LEFT JOIN report_dataset rd_root ON rd_root.[alias] = NULL
 			AND rd_root.report_id = @report_id_dest		
 		
+
 	INSERT INTO report_page(report_id, [name], report_hash, width, height)
 	SELECT @report_id_dest AS report_id, 'Price Report' [name], '2D00443E_0D44_4876_A857_A09EBAAF4B9E' report_hash, 11.5 width,5.5 height
 	
-		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file)
+
+		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
 		SELECT TOP 1 rpage.report_page_id, 'Price Report  ', '724ED9C5_1794_49EE_80E5_746964755FF8', 3,'','','.xlsx',',', 
-		-100003,'y','n'	
+		-100003,'y','n',0	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 			on rpage.[name] = 'Price Report'
@@ -60,8 +66,9 @@ BEGIN TRY
 		ON r.report_id = rpage.report_id
 			AND r.[name] = 'Price Report'
 	
+
 		INSERT INTO report_dataset_paramset(paramset_id, root_dataset_id, where_part, advance_mode)
-		SELECT TOP 1 rp.report_paramset_id AS paramset_id, rd.report_dataset_id AS root_dataset_id, NULL AS where_part, 0
+		SELECT TOP 1 rp.report_paramset_id AS paramset_id, rd.report_dataset_id AS root_dataset_id, '(  PCV1.[curve_source_value_id] IN ( @curve_source_value_id ))' AS where_part, 0
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'Price Report  '
@@ -75,33 +82,7 @@ BEGIN TRY
 			ON rd.report_id = @report_id_dest
 			AND rd.[alias] = 'PCV1'
 	
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 6 AS param_order, 0 AS param_depth, 'Curve Name' AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Price Report  '
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Price Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Price Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'PCV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'PCV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Price Curve View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'curve_id'	
-	
+
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
@@ -129,6 +110,7 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'as_of_date'	
 	
+
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
@@ -156,33 +138,7 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'maturity_date'	
 	
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 7 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'Price Report  '
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'Price Report'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'Price Report'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'PCV1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'PCV1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Price Curve View' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'Granularity'	
-	
+
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
@@ -210,6 +166,7 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'to_as_of_date'	
 	
+
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
@@ -237,6 +194,7 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'to_maturity_date'	
 	
+
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, NULL AS label
@@ -264,6 +222,7 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'period_from'	
 	
+
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
 		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, NULL AS label
@@ -291,6 +250,91 @@ BEGIN TRY
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'period_to'	
 	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 6 AS param_order, 0 AS param_depth, 'Curve Name' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Price Report  '
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Price Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Price Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'PCV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'PCV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Price Curve View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'curve_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,0 AS logical_operator, 8 AS param_order, 0 AS param_depth, 'Curve Source' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Price Report  '
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Price Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Price Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'PCV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'PCV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Price Curve View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'curve_source_value_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 7 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'Price Report  '
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'Price Report'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'Price Report'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'PCV1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'PCV1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Price Curve View' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'Granularity'	
+	
+
 		INSERT INTO report_page_tablix(page_id,root_dataset_id, [name], width, height, [top], [left], group_mode, border_style, page_break, type_id, cross_summary, no_header, export_table_name, is_global)
 		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'Price Report_tablix' [name], '10.026666666666667' width, '3.493333333333333' height, '0' [top], '0' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
 		FROM sys.objects o
@@ -303,6 +347,7 @@ BEGIN TRY
 			ON rd.report_id = r.report_id 
 			AND rd.[alias] = 'PCV1' 
 	
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -324,6 +369,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'as_of_date' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -345,6 +391,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'curve_code' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -366,6 +413,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'assessment_curve_type' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -387,6 +435,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'code' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -408,6 +457,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'curve_name' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -429,6 +479,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'maturity_date' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -450,6 +501,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'maturity_year' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -471,6 +523,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'maturity_quarter' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -492,6 +545,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'maturity_month' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -513,6 +567,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'hour' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -534,6 +589,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'minute' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -555,6 +611,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'bid_value' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -576,6 +633,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'curve_value' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -597,6 +655,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'ask_value' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -618,6 +677,7 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'is_dst' 
+
 		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
@@ -638,7 +698,8 @@ BEGIN TRY
 		INNER JOIN data_source ds 
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Price Curve View' 	
 		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'maturity_day'  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'maturity_day' 
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -665,7 +726,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'As of Date' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -692,7 +754,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Maturity Date' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -719,7 +782,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Curve Value' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -746,7 +810,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Bid Value' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -773,7 +838,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Ask Value' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -800,7 +866,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'DST' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -827,7 +894,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Index' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -854,7 +922,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Curve Source' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -881,7 +950,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Maturity Month' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -908,7 +978,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Maturity Quarter' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -935,7 +1006,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Maturity Year' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -962,7 +1034,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Assessment Curve Type' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -989,7 +1062,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Hour' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -1016,7 +1090,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Minute' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -1043,7 +1118,8 @@ BEGIN TRY
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Curve Code' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	 INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
 			'Tahoma' font,
@@ -1071,6 +1147,7 @@ BEGIN TRY
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Maturity Day' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
+
 		--RETAIN APPLICATION FILTER DETAILS START (PART2)
 		update pm
 		set inserted_paramset_id = rp.report_paramset_id
@@ -1095,7 +1172,8 @@ BEGIN TRY
 			where rpm.report_paramset_id = f.report_id
 		)
 		--RETAIN APPLICATION FILTER DETAILS END (PART2)
-	COMMIT 
+	
+COMMIT 
 
 END TRY
 BEGIN CATCH
