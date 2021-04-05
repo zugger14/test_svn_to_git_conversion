@@ -96,28 +96,29 @@
                 var run_privilege_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('run_privilege');
                 var run_privilege = view_scheduled_job.grd_view_scheduled_job.cells(row_id, run_privilege_col_index).getValue();
 
-                if (has_rights_scheduled_job_run && row_id != '' && run_status.toLowerCase() != 'in progress' && run_privilege.toLowerCase() == 'yes') {
-                    view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
-                } else {
-                    view_scheduled_job.jobs_toolbar.setItemDisabled('Run');
-                }	
-
                 if (row_id != '' && js_user_name.toLowerCase() == user_name.toLowerCase()) {
-                    if (has_rights_scheduled_job_del) {
-                        view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
-                    }
-                    
+                    view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
+                    view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
                     if (job_next_run != '') {
-                        if (has_rights_scheduled_job_edit) {
-                            view_scheduled_job.jobs_toolbar.setItemEnabled('Update');
-                        }                
-                    } else {
-                        view_scheduled_job.jobs_toolbar.setItemDisabled('Update');
+                        view_scheduled_job.jobs_toolbar.setItemEnabled('Update');
                     }
-                } else {
-                    view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
-                    view_scheduled_job.jobs_toolbar.setItemDisabled('Update');
-                }       
+                }  else {
+                    if (has_rights_scheduled_job_del) 
+                        view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
+                    else 
+                        view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
+                    
+                    if (job_next_run != '' && has_rights_scheduled_job_edit) 
+                        view_scheduled_job.jobs_toolbar.setItemEnabled('Update');          
+                    else
+                        view_scheduled_job.jobs_toolbar.setItemDisabled('Update');
+
+                    if (has_rights_scheduled_job_run && row_id != '') 
+                        view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
+                    else 
+                        view_scheduled_job.jobs_toolbar.setItemDisabled('Run');
+                }
+                
             }
 
             function run_toolbar_click(id) {    
@@ -130,9 +131,7 @@
                         var user_name_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('user_name');
                         var user_name = view_scheduled_job.grd_view_scheduled_job.cells(row_id, user_name_col_index).getValue();
 
-                        if (js_user_name.toLowerCase() != user_name.toLowerCase()) {
-                            return;
-                        }
+                        if (js_user_name.toLowerCase() != user_name.toLowerCase()) return;
 
                         var job_row_id = view_scheduled_job.grd_view_scheduled_job.getSelectedRowId();
                         var job_id_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('job_id');
