@@ -393,7 +393,7 @@ DEALLOCATE #collect_deals
  */
  --declare   @as_of_date DATETIME='2012-11-27'
  CREATE TABLE #limit_info_value (maintain_limit_id INT, total_value NUMERIC(38,2), unit VARCHAR(100) COLLATE DATABASE_DEFAULT, source_deal_header_id INT, value2 FLOAT)
- CREATE TABLE #limit_info_value_reserve (maintain_limit_id INT, total_value NUMERIC(38,2), unit VARCHAR(100) COLLATE DATABASE_DEFAULT, source_deal_header_id INT, value2 FLOAT,source_counterparty_id int)
+ CREATE TABLE #limit_info_value_reserve (maintain_limit_id INT, total_value NUMERIC(38,2), unit VARCHAR(100) COLLATE DATABASE_DEFAULT, source_deal_header_id INT, value2 FLOAT,source_counterparty_id int, contract_id int)
 SET @sql_str1 = '
 INSERT INTO #limit_info_value (maintain_limit_id, total_value, unit, source_deal_header_id)
 SELECT li.maintain_limit_id, SUM(ISNULL(vol.vol, 0)) total_value, MAX(su.uom_name) unit, ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'cd.source_deal_header_id ' ELSE 'NULL' END + '
@@ -711,9 +711,9 @@ EXEC(@sql_str)
 
 -- Reserve Limit
 SET @sql_str='
-		INSERT INTO #limit_info_value_reserve(maintain_limit_id,total_value, unit, source_deal_header_id,source_counterparty_id)
+		INSERT INTO #limit_info_value_reserve(maintain_limit_id,total_value, unit, source_deal_header_id,source_counterparty_id, contract_id)
 		SELECT maintain_limit_id, CASE WHEN SUM(total_value) < 0 THEN 0 ELSE SUM(total_value) END , MAX(unit), ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'source_deal_header_id ' ELSE 'NULL ' END + ' 
-		,source_counterparty_id FROM (
+		,source_counterparty_id, contract_id FROM (
 
 		 SELECT li.maintain_limit_id,  (ced.effective_exposure_to_us * ISNULL((1-dbo.FNAGetRecoveryRate(ced.risk_rating_id, DATEDIFF(month,ced.term_start, ced.as_of_date), ced.as_of_date)), 1)*
 			ISNULL(dbo.FNAGetProbabilityDefault(ced.risk_rating_id, DATEDIFF(month,ced.term_start, ced.as_of_date), ced.as_of_date), 1)
@@ -721,6 +721,7 @@ SET @sql_str='
 		sc.currency_name unit, 
 		 NULL source_deal_header_id
 		 ,sc1.source_counterparty_id
+		 ,ced.contract_id
 		 
 		FROM source_counterparty sc1
 		INNER JOIN credit_exposure_detail ced ON ced.source_counterparty_id = sc1.source_counterparty_id	 
@@ -729,7 +730,7 @@ SET @sql_str='
   		 LEFT JOIN source_currency sc ON sc.source_currency_id = ml.limit_currency
 
 		WHERE ced.as_of_date = ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''' AND li.maintain_limit_id IS NOT NULL
- 	  ) mtm GROUP BY maintain_limit_id ,source_counterparty_id 	  
+ 	  ) mtm GROUP BY maintain_limit_id ,source_counterparty_id,contract_id 	  
 	  ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN ', source_deal_header_id ' ELSE '' END + '
 
 	   INSERT INTO #limit_info_value(maintain_limit_id,total_value, unit, source_deal_header_id)
@@ -740,7 +741,7 @@ SET @sql_str='
 --PRINT(@sql_str)	 
 EXEC(@sql_str)
 
- 
+--select * from #limit_info_value_reserve where source_counterparty_id = 205
 --select * from #limit_info_value
  
 
