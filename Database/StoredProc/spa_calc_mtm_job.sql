@@ -6385,26 +6385,87 @@ CREATE INDEX [IX_PT_temp_deals_term_0001212] ON [#temp_deals_filter]
 
 if @calc_type='s'
 	set @hr_columns	='
-		,ISNULL(md.mhr1,hr1) hr1,ISNULL(md.mhr2,hr2) hr2,ISNULL(md.mhr3,hr3) hr3
-		,ISNULL(md.mhr4,hr4) hr4,ISNULL(md.mhr5,hr5) hr5,ISNULL(md.mhr6,hr6) hr6
-		,ISNULL(md.mhr7,hr7) hr7,ISNULL(md.mhr8,hr8) hr8,ISNULL(md.mhr9,hr9) hr9
-		,ISNULL(md.mhr10,hr10) hr10,ISNULL(md.mhr11,hr11) hr11,ISNULL(md.mhr12,hr12) hr12
-		,ISNULL(md.mhr13,hr13) hr13,ISNULL(md.mhr14,hr14) hr14,ISNULL(md.mhr15,hr15) hr15
-		,ISNULL(md.mhr16,hr16) hr16,ISNULL(md.mhr17,hr17) hr17,ISNULL(md.mhr18,hr18) hr18
-		,ISNULL(md.mhr19,hr19) hr19,ISNULL(md.mhr20,hr20) hr20,ISNULL(md.mhr21,hr21) hr21
-		,ISNULL(md.mhr22,hr22) hr22,ISNULL(md.mhr23,hr23) hr23,ISNULL(md.mhr24,hr24) hr24,ISNULL(md.mhr25,hr25) hr25
-		,md.mhr1 mhr1,md.mhr2 mhr2,md.mhr3 mhr3
-		,md.mhr4 mhr4,md.mhr5 mhr5,md.mhr6 mhr6
-		,md.mhr7 mhr7,md.mhr8 mhr8,md.mhr9 mhr9
-		,md.mhr10 mhr10,md.mhr11 mhr11,md.mhr12 mhr12
-		,md.mhr13 mhr13,md.mhr14 mhr14,md.mhr15 mhr15
-		,md.mhr16 mhr16,md.mhr17 mhr17,md.mhr18 mhr18
-		,md.mhr19 mhr19,md.mhr20 mhr20,md.mhr21 mhr21
-		,md.mhr22 mhr22,md.mhr23 mhr23,md.mhr24 mhr24,md.mhr25 mhr25
+		,CAST(ISNULL(md.mhr1,hr1) AS NUMERIC(28,13)) hr1
+		,CAST(ISNULL(md.mhr2,hr2) AS NUMERIC(28,13)) hr2
+		,CAST(ISNULL(md.mhr3,hr3) AS NUMERIC(28,13)) hr3
+		,CAST(ISNULL(md.mhr4,hr4) AS NUMERIC(28,13)) hr4
+		,CAST(ISNULL(md.mhr5,hr5) AS NUMERIC(28,13)) hr5
+		,CAST(ISNULL(md.mhr6,hr6) AS NUMERIC(28,13)) hr6
+		,CAST(ISNULL(md.mhr7,hr7) AS NUMERIC(28,13)) hr7
+		,CAST(ISNULL(md.mhr8,hr8) AS NUMERIC(28,13)) hr8
+		,CAST(ISNULL(md.mhr9,hr9) AS NUMERIC(28,13)) hr9
+		,CAST(ISNULL(md.mhr10,hr10) AS NUMERIC(28,13)) hr10
+		,CAST(ISNULL(md.mhr11,hr11) AS NUMERIC(28,13)) hr11
+		,CAST(ISNULL(md.mhr12,hr12) AS NUMERIC(28,13)) hr12
+		,CAST(ISNULL(md.mhr13,hr13) AS NUMERIC(28,13)) hr13
+		,CAST(ISNULL(md.mhr14,hr14) AS NUMERIC(28,13)) hr14
+		,CAST(ISNULL(md.mhr15,hr15) AS NUMERIC(28,13)) hr15
+		,CAST(ISNULL(md.mhr16,hr16) AS NUMERIC(28,13)) hr16
+		,CAST(ISNULL(md.mhr17,hr17) AS NUMERIC(28,13)) hr17
+		,CAST(ISNULL(md.mhr18,hr18) AS NUMERIC(28,13)) hr18
+		,CAST(ISNULL(md.mhr19,hr19) AS NUMERIC(28,13)) hr19
+		,CAST(ISNULL(md.mhr20,hr20) AS NUMERIC(28,13)) hr20
+		,CAST(ISNULL(md.mhr21,hr21) AS NUMERIC(28,13)) hr21
+		,CAST(ISNULL(md.mhr22,hr22) AS NUMERIC(28,13)) hr22
+		,CAST(ISNULL(md.mhr23,hr23) AS NUMERIC(28,13)) hr23
+		,CAST(ISNULL(md.mhr24,hr24) AS NUMERIC(28,13)) hr24
+		,CAST(ISNULL(md.mhr25,hr25) AS NUMERIC(28,13)) hr25
+		,CAST(md.mhr1 AS NUMERIC(28,13)) mhr1
+		,CAST(md.mhr2 AS NUMERIC(28,13)) mhr2
+		,CAST(md.mhr3 AS NUMERIC(28,13)) mhr3
+		,CAST(md.mhr4 AS NUMERIC(28,13)) mhr4
+		,CAST(md.mhr5 AS NUMERIC(28,13)) mhr5
+		,CAST(md.mhr6 AS NUMERIC(28,13)) mhr6
+		,CAST(md.mhr7 AS NUMERIC(28,13)) mhr7
+		,CAST(md.mhr8 AS NUMERIC(28,13)) mhr8
+		,CAST(md.mhr9 AS NUMERIC(28,13)) mhr9
+		,CAST(md.mhr10 AS NUMERIC(28,13)) mhr10
+		,CAST(md.mhr11 AS NUMERIC(28,13)) mhr11
+		,CAST(md.mhr12 AS NUMERIC(28,13)) mhr12
+		,CAST(md.mhr13 AS NUMERIC(28,13)) mhr13
+		,CAST(md.mhr14 AS NUMERIC(28,13)) mhr14
+		,CAST(md.mhr15 AS NUMERIC(28,13)) mhr15
+		,CAST(md.mhr16 AS NUMERIC(28,13)) mhr16
+		,CAST(md.mhr17 AS NUMERIC(28,13)) mhr17
+		,CAST(md.mhr18 AS NUMERIC(28,13)) mhr18
+		,CAST(md.mhr19 AS NUMERIC(28,13)) mhr19
+		,CAST(md.mhr20 AS NUMERIC(28,13)) mhr20
+		,CAST(md.mhr21 AS NUMERIC(28,13)) mhr21
+		,CAST(md.mhr22 AS NUMERIC(28,13)) mhr22
+		,CAST(md.mhr23 AS NUMERIC(28,13)) mhr23
+		,CAST(md.mhr24 AS NUMERIC(28,13)) mhr24
+		,CAST(md.mhr25 AS NUMERIC(28,13)) mhr25
 	'
 	
 else 
-	set @hr_columns	=',hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25'
+	set @hr_columns	= '
+		,CAST(hr1 AS NUMERIC(28,13)) hr1, 
+		CAST(hr2 AS NUMERIC(28,13)) hr2,
+		CAST(hr3 AS NUMERIC(28,13)) hr3,
+		CAST(hr4 AS NUMERIC(28,13)) hr4,
+		CAST(hr5 AS NUMERIC(28,13)) hr5,
+		CAST(hr6 AS NUMERIC(28,13)) hr6,
+		CAST(hr7 AS NUMERIC(28,13)) hr7,
+		CAST(hr8 AS NUMERIC(28,13)) hr8,
+		CAST(hr9 AS NUMERIC(28,13)) hr9,
+		CAST(hr10 AS NUMERIC(28,13)) hr10,
+		CAST(hr11 AS NUMERIC(28,13)) hr11,
+		CAST(hr12 AS NUMERIC(28,13)) hr12,
+		CAST(hr13 AS NUMERIC(28,13)) hr13,
+		CAST(hr14 AS NUMERIC(28,13)) hr14,
+		CAST(hr15 AS NUMERIC(28,13)) hr15,
+		CAST(hr16 AS NUMERIC(28,13)) hr16,
+		CAST(hr17 AS NUMERIC(28,13)) hr17,
+		CAST(hr18 AS NUMERIC(28,13)) hr18,
+		CAST(hr19 AS NUMERIC(28,13)) hr19,
+		CAST(hr20 AS NUMERIC(28,13)) hr20,
+		CAST(hr21 AS NUMERIC(28,13)) hr21,
+		CAST(hr22 AS NUMERIC(28,13)) hr22,
+		CAST(hr23 AS NUMERIC(28,13)) hr23,
+		CAST(hr24 AS NUMERIC(28,13)) hr24,
+		CAST(hr25 AS NUMERIC(28,13)) hr25'
+
+	--set @hr_columns	=',hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25'
 
 
 SET @sqlstmt= '
@@ -6478,16 +6539,31 @@ SET @sqlstmt= '
 DECLARE @hr_act_columns VARCHAR(MAX)
 IF @calc_type = 's'
 	set @hr_act_columns	='
-		,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL THEN ISNULL(actual_volume.[1],0) ELSE COALESCE(md.mhr1,actual_volume.[1],hr1) END hr1
-		,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[2],0) ELSE COALESCE(md.mhr2,actual_volume.[2],hr2) END hr2,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[3],0) ELSE COALESCE(md.mhr3,actual_volume.[3],hr3) END hr3
-		,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[3],0) ELSE COALESCE(md.mhr4,actual_volume.[4],hr4) END hr4,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[5],0) ELSE COALESCE(md.mhr5,actual_volume.[5],hr5) END hr5,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[6],0) ELSE COALESCE(md.mhr6,actual_volume.[6],hr6) END hr6
-		,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[7],0) ELSE COALESCE(md.mhr7,actual_volume.[7],hr7) END hr7,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[8],0) ELSE COALESCE(md.mhr8,actual_volume.[8],hr8) END hr8,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[9],0) ELSE COALESCE(md.mhr9,actual_volume.[9],hr9) END hr9
-		,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[10],0) ELSE COALESCE(md.mhr10,actual_volume.[10],hr10) END hr10,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[11],0) ELSE COALESCE(md.mhr11,actual_volume.[11],hr11) END hr11,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[12],0) ELSE COALESCE(md.mhr12,actual_volume.[12],hr12) END hr12
-		,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[13],0) ELSE COALESCE(md.mhr13,actual_volume.[13],hr13) END hr13,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[14],0) ELSE COALESCE(md.mhr14,actual_volume.[14],hr14) END hr14,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[15],0) ELSE COALESCE(md.mhr15,actual_volume.[15],hr15) END hr15
-		,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[16],0) ELSE COALESCE(md.mhr16,actual_volume.[16],hr16) END hr16,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[17],0) ELSE COALESCE(md.mhr17,actual_volume.[17],hr17) END hr17,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[18],0) ELSE COALESCE(md.mhr18,actual_volume.[18],hr18) END hr18
-		,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[19],0) ELSE COALESCE(md.mhr19,actual_volume.[19],hr19) END hr19,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[20],0) ELSE COALESCE(md.mhr20,actual_volume.[20],hr20) END hr20,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[21],0) ELSE COALESCE(md.mhr21,actual_volume.[21],hr21) END hr21
-		,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[22],0) ELSE COALESCE(md.mhr22,actual_volume.[22],hr22) END hr22,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[23],0) ELSE COALESCE(md.mhr23,actual_volume.[23],hr23) END hr23,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[24],0) ELSE COALESCE(md.mhr24,actual_volume.[24],hr24) END hr24
-		,CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[25],0) ELSE COALESCE(md.mhr25,actual_volume.[25],hr25) END hr25
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL THEN ISNULL(actual_volume.[1],0) ELSE COALESCE(md.mhr1,actual_volume.[1],hr1) END AS NUMERIC(28,13)) hr1
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[2],0) ELSE COALESCE(md.mhr2,actual_volume.[2],hr2) END AS NUMERIC(28,13)) hr2
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[3],0) ELSE COALESCE(md.mhr3,actual_volume.[3],hr3) END AS NUMERIC(28,13)) hr3
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[3],0) ELSE COALESCE(md.mhr4,actual_volume.[4],hr4) END AS NUMERIC(28,13)) hr4
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[5],0) ELSE COALESCE(md.mhr5,actual_volume.[5],hr5) END AS NUMERIC(28,13)) hr5
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[6],0) ELSE COALESCE(md.mhr6,actual_volume.[6],hr6) END AS NUMERIC(28,13)) hr6
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[7],0) ELSE COALESCE(md.mhr7,actual_volume.[7],hr7) END AS NUMERIC(28,13)) hr7
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[8],0) ELSE COALESCE(md.mhr8,actual_volume.[8],hr8) END AS NUMERIC(28,13)) hr8
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[9],0) ELSE COALESCE(md.mhr9,actual_volume.[9],hr9) END AS NUMERIC(28,13)) hr9
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[10],0) ELSE COALESCE(md.mhr10,actual_volume.[10],hr10) END AS NUMERIC(28,13)) hr10
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[11],0) ELSE COALESCE(md.mhr11,actual_volume.[11],hr11) END AS NUMERIC(28,13)) hr11
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[12],0) ELSE COALESCE(md.mhr12,actual_volume.[12],hr12) END AS NUMERIC(28,13)) hr12
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[13],0) ELSE COALESCE(md.mhr13,actual_volume.[13],hr13) END AS NUMERIC(28,13)) hr13
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[14],0) ELSE COALESCE(md.mhr14,actual_volume.[14],hr14) END AS NUMERIC(28,13)) hr14
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[15],0) ELSE COALESCE(md.mhr15,actual_volume.[15],hr15) END AS NUMERIC(28,13)) hr15
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[16],0) ELSE COALESCE(md.mhr16,actual_volume.[16],hr16) END AS NUMERIC(28,13)) hr16
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[17],0) ELSE COALESCE(md.mhr17,actual_volume.[17],hr17) END AS NUMERIC(28,13)) hr17
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[18],0) ELSE COALESCE(md.mhr18,actual_volume.[18],hr18) END AS NUMERIC(28,13)) hr18
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[19],0) ELSE COALESCE(md.mhr19,actual_volume.[19],hr19) END AS NUMERIC(28,13)) hr19
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[20],0) ELSE COALESCE(md.mhr20,actual_volume.[20],hr20) END AS NUMERIC(28,13)) hr20
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[21],0) ELSE COALESCE(md.mhr21,actual_volume.[21],hr21) END AS NUMERIC(28,13)) hr21
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[22],0) ELSE COALESCE(md.mhr22,actual_volume.[22],hr22) END AS NUMERIC(28,13)) hr22
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[23],0) ELSE COALESCE(md.mhr23,actual_volume.[23],hr23) END AS NUMERIC(28,13)) hr23
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[24],0) ELSE COALESCE(md.mhr24,actual_volume.[24],hr24) END AS NUMERIC(28,13)) hr24
+		,CAST(CASE WHEN td.actual_granularity=981 AND actual_volume.[1] IS NOT NULL  THEN ISNULL(actual_volume.[25],0) ELSE COALESCE(md.mhr25,actual_volume.[25],hr25) END AS NUMERIC(28,13)) hr25
 		,md.mhr1 mhr1,md.mhr2 mhr2,md.mhr3 mhr3
 		,md.mhr4 mhr4,md.mhr5 mhr5,md.mhr6 mhr6
 		,md.mhr7 mhr7,md.mhr8 mhr8,md.mhr9 mhr9
@@ -8340,7 +8416,7 @@ FROM(
 		ISNULL(CASE WHEN sddh.hr25 <> 0 THEN sddh.hr25 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr25_c) ELSE ISNULL(pr.price, t.hr25) END END, 0) hr25,
 		vol.hr1   vol1,
 		vol.hr2   vol2,
-		vol.hr3-case when td.commodity_id<>-1 and isnull(vol.hr25,0)<>0 then isnull(vol.hr25,0) else 0 end   vol3,
+		CAST((vol.hr3-case when td.commodity_id<>-1 and isnull(vol.hr25,0)<>0 then isnull(vol.hr25,0) else 0 end) AS NUMERIC(28,13))   vol3,
 		vol.hr4   vol4,
 		vol.hr5   vol5,
 		vol.hr6   vol6,
@@ -8358,7 +8434,7 @@ FROM(
 		vol.hr18  vol18,
 		vol.hr19  vol19,
 		vol.hr20  vol20,
-		vol.hr21-case when td.commodity_id=-1 and isnull(vol.hr25,0)<>0 then isnull(vol.hr25,0) else 0 end vol21,
+		CAST((vol.hr21-case when td.commodity_id=-1 and isnull(vol.hr25,0)<>0 then isnull(vol.hr25,0) else 0 end) AS NUMERIC(28,13)) vol21,
 		vol.hr22  vol22,
 		vol.hr23  vol23,
 		vol.hr24  vol24,
