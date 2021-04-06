@@ -63,7 +63,14 @@ SET @sql = 'IF OBJECT_ID(''tempdb..#temp_import_data'') IS NOT NULL
 			,buy_sell_flag = CASE WHEN CHARINDEX(''/'',temp.curve_id) <> 0 AND  temp.date_sep = 2 AND temp.term_end IS NOT NULL THEN CASE WHEN mod_buy_sell_flag = ''Buy'' THEN ''Sell'' ELSE ''Buy'' END ELSE mod_buy_sell_flag END
 			,fixed_price = CASE WHEN  CHARINDEX(''/'',temp.curve_id) <> 0 THEN ''0'' ELSE temp.fixed_price END
 			, @counter = ixp_source_unique_id = @counter + 1
-			, deal_date = CASE WHEN DATEPART(HOUR, dbo.FNAGetLOCALTime(deal_date, 15)) < 2 THEN DATEADD(DAY, -1, dbo.FNAGetLOCALTime(deal_date, 15)) ELSE dbo.FNAGetLOCALTime(deal_date, 15) END 
+			, deal_date = CASE WHEN  CASE WHEN temp.[date_sep] = 1 THEN ISNULL(NULLIF(temp.term_start,''NULL''),temp.term_end) 
+										  ELSE ISNULL(NULLIF(temp.term_end,''NULL''),temp.term_start) 
+									 END = ''DA'' AND DATEPART(HOUR, dbo.FNAGetLOCALTime(deal_date, 15)) < 3 THEN DATEADD(DAY, -1, dbo.FNAGetLOCALTime(deal_date, 15)) 
+							   WHEN CASE WHEN temp.[date_sep] = 1 THEN ISNULL(NULLIF(temp.term_start,''NULL''),temp.term_end) 
+										  ELSE ISNULL(NULLIF(temp.term_end,''NULL''),temp.term_start) 
+									 END <> ''DA'' AND DATEPART(HOUR, dbo.FNAGetLOCALTime(deal_date, 15)) < 2 THEN DATEADD(DAY, -1, dbo.FNAGetLOCALTime(deal_date, 15)) 
+							   ELSE dbo.FNAGetLOCALTime(deal_date, 15) 
+						  END 
 		FROM #temp_import_data temp
 
 		ALTER TABLE #temp_import_data
@@ -235,7 +242,10 @@ CREATE TABLE #temp_term(
 		UPDATE ' + @process_table + ' 
 			SET term_start = CONVERT(VARCHAR,ht.term_start,120) , 
 				term_end = CONVERT(VARCHAR,ht.term_end,120),
-				deal_date = CASE WHEN DATEPART(HOUR, deal_date) < 2 THEN DATEADD(DAY, 1, deal_date) ELSE deal_date END
+				deal_date = CASE WHEN titd.term_code = ''DA'' AND DATEPART(HOUR, deal_date) < 3 THEN DATEADD(DAY, 1, deal_date)
+								 WHEN titd.term_code <> ''DA'' AND DATEPART(HOUR, deal_date) < 2 THEN DATEADD(DAY, 1, deal_date) 
+								 ELSE deal_date 
+							END
 		FROM ' + @process_table + ' t 
 		INNER JOIN #temp_import_term_data titd
 			ON titd.deal_id = t.deal_id
