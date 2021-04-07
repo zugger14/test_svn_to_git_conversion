@@ -77,6 +77,7 @@ BEGIN
 			  , @leg INT
 			  , @function_id INT
 			  , @include_in_credit_exposure VARCHAR(100)
+			  , @split_positive_and_negative_commodity VARCHAR(10)
 
 		IF OBJECT_ID('tempdb..#temp_setup_udf') IS NOT NULL
 			DROP TABLE #temp_setup_udf
@@ -99,7 +100,8 @@ BEGIN
 				deal_udf_type		VARCHAR(100) COLLATE database_default,				
 				internal_field_type	VARCHAR(100) COLLATE database_default,
 				leg					VARCHAR(100) COLLATE database_default,
-				include_in_credit_exposure VARCHAR(100) COLLATE database_default
+				include_in_credit_exposure VARCHAR(100) COLLATE database_default,
+				split_positive_and_negative_commodity  VARCHAR(10) COLLATE database_default
 		)
 		
 	
@@ -125,6 +127,7 @@ BEGIN
 				, internal_field_type	
 				, leg
 				, include_in_credit_exposure
+				, split_positive_and_negative_commodity
 		)
 		SELECT 
 				  NULLIF(udf_template_id, '')
@@ -145,6 +148,7 @@ BEGIN
 				, NULLIF(internal_field_type, '')
 				, NULLIF(leg, '')
 				, NULLIF(include_in_credit_exposure, '')
+				, NULLIF(split_positive_and_negative_commodity, '')
 		FROM   OPENXML (@idoc, '/Root/FormXML', 2)
 		WITH (							
 				udf_template_id		VARCHAR(100) '@udf_template_id',
@@ -164,7 +168,8 @@ BEGIN
 				deal_udf_type		VARCHAR(100) '@deal_udf_type',				
 				internal_field_type VARCHAR(100) '@internal_field_type',								
 				leg					VARCHAR(100) '@leg',
-				include_in_credit_exposure VARCHAR(100) '@include_in_credit_exposure'
+				include_in_credit_exposure VARCHAR(100) '@include_in_credit_exposure',
+				split_positive_and_negative_commodity VARCHAR(100) '@split_positive_and_negative_commodity'
 		)
 
 		SELECT @udf_template_id = udf_template_id
@@ -185,6 +190,7 @@ BEGIN
 			 , @internal_field_type = internal_field_type
 			 , @leg = leg
 			 , @include_in_credit_exposure = include_in_credit_exposure
+			 , @split_positive_and_negative_commodity = split_positive_and_negative_commodity
 		FROM #temp_setup_udf
 		
 		DECLARE @udf_data_source_id INT
@@ -214,6 +220,7 @@ BEGIN
 					   ,internal_field_type
 					   ,leg	
 					   ,include_in_credit_exposure
+					   ,split_positive_and_negative_commodity
 				)
 				VALUES( 
 						@field_name
@@ -238,6 +245,7 @@ BEGIN
 					   ,@internal_field_type
 					   ,@leg
 					   ,@include_in_credit_exposure
+					   ,@split_positive_and_negative_commodity
 				)
 				
 				SET @udf_template_id = SCOPE_IDENTITY()
@@ -292,6 +300,7 @@ BEGIN
 				   ,internal_field_type = @internal_field_type
 				   ,leg = @leg
 				   ,include_in_credit_exposure = @include_in_credit_exposure
+				   ,split_positive_and_negative_commodity = @split_positive_and_negative_commodity
 				WHERE udf_template_id = @udf_template_id
 
 				-- Added to update label of field in maintain_field_template_detail 

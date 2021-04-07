@@ -35,4 +35,5 @@ AS
 			  ELSE NULL 
 		 END default_value_date
 		,include_in_credit_exposure
+		,split_positive_and_negative_commodity
 	FROM user_defined_fields_template
