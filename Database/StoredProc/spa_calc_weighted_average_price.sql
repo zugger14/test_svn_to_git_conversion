@@ -428,13 +428,13 @@ select  '#src_hour_breakdown',count(1) from #src_hour_breakdown --order by term,
 IF @mapping_id = 112704	--storage case
 BEGIN
 	DROP TABLE IF EXISTS #group_deals
-	CREATE TABLE #group_deals(group_source_deal_header_id INT, group_deal_id NVARCHAR(500))
+	CREATE TABLE #group_deals(structured_deal_id INT, group_source_deal_header_id INT, group_deal_id NVARCHAR(500))
 
-	INSERT INTO #group_deals(group_source_deal_header_id, group_deal_id)
-	SELECT DISTINCT lnk_deal.*
+	INSERT INTO #group_deals(structured_deal_id,group_source_deal_header_id, group_deal_id)
+	SELECT DISTINCT lnk_deal.structured_deal_id,lnk_deal.source_deal_header_id,lnk_deal.deal_id
 	FROM #deal_max_term dmt
 	CROSS APPLY (
-		select source_deal_header_id,deal_id from source_deal_header where structured_deal_id = dmt.source_deal_header_id --AND source_deal_header_id <> dmt.source_deal_header_id
+		SELECT structured_deal_id,source_deal_header_id,deal_id FROM source_deal_header WHERE structured_deal_id = dmt.source_deal_header_id --AND source_deal_header_id <> dmt.source_deal_header_id
 	) lnk_deal
 	LEFT JOIN #deal_max_term dmt1 ON dmt1.source_deal_header_id = lnk_deal.source_deal_header_id
 	WHERE dmt1.source_deal_header_id is null
@@ -444,10 +444,11 @@ BEGIN
 	IF EXISTS(SELECT 1 FROM #group_deals)
 	BEGIN
 		
-		SELECT *
+		SELECT sdh.*,a.*
 		INTO #src_hour_breakdown_grp
 		from #src_hour_breakdown sdh
-		cross join #group_deals a
+		INNER JOIN source_deal_header sdh1 ON sdh1.deal_id = sdh.deal_id
+		CROSS APPLY(SELECT group_source_deal_header_id, group_deal_id FROM #group_deals gd WHERE gd.structured_deal_id = sdh1.source_deal_header_id)a
 		UNION
 		SELECT *,null,deal_id
 		from #src_hour_breakdown 
