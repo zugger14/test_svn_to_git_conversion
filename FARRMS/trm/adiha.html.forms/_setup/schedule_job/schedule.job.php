@@ -47,7 +47,7 @@
             echo $view_scheduled_job_layout->attach_grid_cell($grid_name, 'a');
             $grid_view_scheduled_job = new GridTable('view_scheduled_job');
             echo $grid_view_scheduled_job->init_grid_table($grid_name, $name_space);
-            echo $grid_view_scheduled_job->set_search_filter(false, '#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#combo_filter,#combo_filter,#text_filter,#text_filter,#combo_filter,#text_filter');
+            echo $grid_view_scheduled_job->set_search_filter(false, '#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#combo_filter,#combo_filter,#text_filter,#text_filter,#text_filter');
             echo $grid_view_scheduled_job->enable_multi_select(true);
             echo $grid_view_scheduled_job->return_init();
             echo $grid_view_scheduled_job->load_grid_data("EXEC spa_get_schedule_job @flag='s'");
@@ -93,8 +93,9 @@
                 var user_name = view_scheduled_job.grd_view_scheduled_job.cells(row_id, user_name_col_index).getValue();
                 var run_status_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('run_status');
                 var run_status = view_scheduled_job.grd_view_scheduled_job.cells(row_id, run_status_col_index).getValue();
-                var run_privilege_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('run_privilege');
-                var run_privilege = view_scheduled_job.grd_view_scheduled_job.cells(row_id, run_privilege_col_index).getValue();
+                var job_owner_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('owner_sid');
+                var job_owner = view_scheduled_job.grd_view_scheduled_job.cells(row_id, job_owner_col_index).getValue();
+                job_owner = job_owner.trim().split(' ').join('').toLowerCase();
 
                 if (row_id != '' && js_user_name.toLowerCase() == user_name.toLowerCase()) {
                     view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
@@ -103,17 +104,17 @@
                         view_scheduled_job.jobs_toolbar.setItemEnabled('Update');
                     }
                 }  else {
-                    if (has_rights_scheduled_job_del) 
+                    if (has_rights_scheduled_job_del && job_owner != 'adminuser' && job_owner != 'systemjob') 
                         view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
                     else 
                         view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
                     
-                    if (job_next_run != '' && has_rights_scheduled_job_edit) 
+                    if (job_next_run != '' && has_rights_scheduled_job_edit && job_owner != 'adminuser' && job_owner != 'systemjob')
                         view_scheduled_job.jobs_toolbar.setItemEnabled('Update');          
                     else
                         view_scheduled_job.jobs_toolbar.setItemDisabled('Update');
 
-                    if (has_rights_scheduled_job_run && row_id != '') 
+                    if (has_rights_scheduled_job_run && row_id != '' && run_status != 'in progress') 
                         view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
                     else 
                         view_scheduled_job.jobs_toolbar.setItemDisabled('Run');
@@ -130,9 +131,6 @@
                         var row_id = view_scheduled_job.grd_view_scheduled_job.getSelectedRowId();
                         var user_name_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('user_name');
                         var user_name = view_scheduled_job.grd_view_scheduled_job.cells(row_id, user_name_col_index).getValue();
-
-                        if (js_user_name.toLowerCase() != user_name.toLowerCase()) return;
-
                         var job_row_id = view_scheduled_job.grd_view_scheduled_job.getSelectedRowId();
                         var job_id_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('job_id');
                         var job_id = view_scheduled_job.grd_view_scheduled_job.cells(job_row_id, job_id_col_index).getValue();
