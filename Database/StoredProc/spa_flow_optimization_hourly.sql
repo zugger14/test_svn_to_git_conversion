@@ -165,18 +165,7 @@ EXEC dbo.spa_drop_all_temp_table
 
 EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
-	SELECT @flag='c'
-,@flow_date_from='2027-10-30'
-,@flow_date_to='2027-10-30'
-,@from_location='2857'
-,@to_location='2854'
-,@path_priority='-31400'
-,@opt_objective='38301'
-,@uom='1158'
-,@process_id='8E6A7E3F_FF7C_47C6_8D50_59BA83193332'
-,@reschedule='0'
-,@granularity='982'
-,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
+	SELECT @flag='p', @uom=1158, @flow_date_from='2027-10-30',  @flow_date_to='2027-10-30', @minor_location='2854', @process_id='88525567_A068_48C2_BD53_0D01C6D66D07', @reschedule='0', @receipt_delivery='FROM'
 
 --*/
 
@@ -3866,6 +3855,7 @@ BEGIN
 
 	WHERE sdd.location_id = ' + ISNULL(@minor_location, '''''') + ' 
 		AND sdt.source_deal_type_name <> ''Capacity Power''
+		AND ddi.market_side = ''' + @receipt_delivery + '''
 	'
 	EXEC(@sql)
 	--print(@sql)

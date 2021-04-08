@@ -1038,7 +1038,7 @@
 			
             highlight = ((del_loc_inv_json[index].total_pos > 0 && del_loc_inv_json[index].location_type != 'Storage') ? 'color_red' : '');
 			
-            $(this).html('<span onclick="fx_position_report(this)" class="position_drill_d ' + highlight + '" title="Total Position"\
+            $(this).html('<span market_side="TO" onclick="fx_position_report(this)" class="position_drill_d ' + highlight + '" title="Total Position"\
                 loc_type="' + del_loc_inv_json[index].location_type + '" \
                 loc_id="' + del_loc_inv_json[index].location_id + '" \
                 proxy_loc_id="' + del_loc_inv_json[index].proxy_loc_id + '" \
@@ -1096,7 +1096,7 @@
             highlight = ((rec_loc_inv_json[index].total_pos < 0 && rec_loc_inv_json[index].location_type != 'Storage') ? 'color_red' : '');
 
             $(this).attr('value', rec_loc_inv_json[index].total_pos);
-            $(this).html('<span onclick="fx_position_report(this)" class="position_drill_d ' + highlight + '" title="Total Position"\
+            $(this).html('<span market_side="FROM" onclick="fx_position_report(this)" class="position_drill_d ' + highlight + '" title="Total Position"\
                 loc_type="' + rec_loc_inv_json[index].location_type + '" \
                 loc_id="' + rec_loc_inv_json[index].location_id + '" \
                 proxy_loc_id="' + rec_loc_inv_json[index].proxy_loc_id + '" \
@@ -1211,6 +1211,7 @@
         var loc_type = obj.attr('loc_type');
         var proxy_loc_type = obj.attr('proxy_loc_type');
         var proxy_type = obj.attr('proxy_type');
+        var market_side = obj.attr('market_side');
         
         if(proxy_loc_id != -1 && proxy_type == 'cv') {
             location_id = proxy_loc_id;
@@ -1223,7 +1224,8 @@
         var param_uom_id = (uom == '' ? 'NULL' : uom);
         var exec_call = "EXEC "+SPA_FLOW_OPTIMIZATION_SP+" @flag='p', @uom=" + param_uom_id + ", @flow_date_from='" + flow_date_from 
             + "',  @flow_date_to='" + flow_date_to 
-            + "', @minor_location='" + location_id + "', @process_id='" + process_id_gbl + "', @reschedule='" + reschedule + "'";
+            + "', @minor_location='" + location_id + "', @process_id='" + process_id_gbl + "', @reschedule='" + reschedule 
+            + "', @receipt_delivery='" + market_side + "'";
         
         if (loc_type == 'Storage') {
             exec_call = "EXEC spa_storage_position_report @book_entity_id=" + (book_id == 'NULL' ? 'NULL' : "'" + book_id + "'") + ", @location_id='" + location_id + "', @term_start='" + flow_date_from + "', @term_end='" + flow_date_to + "', @uom=" + param_uom_id + ", @call_from='Optimization'" + ", @round=" + round;
