@@ -114,7 +114,7 @@
                     else
                         view_scheduled_job.jobs_toolbar.setItemDisabled('Update');
 
-                    if (has_rights_scheduled_job_run && row_id != '' && run_status != 'in progress') 
+                    if (has_rights_scheduled_job_run && row_id != '' && run_status.toLowerCase() != 'in progress') 
                         view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
                     else 
                         view_scheduled_job.jobs_toolbar.setItemDisabled('Run');
