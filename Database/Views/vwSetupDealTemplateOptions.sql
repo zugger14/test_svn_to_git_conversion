@@ -31,7 +31,8 @@ AS
 		sdht.[month],
 		mft.show_cost_tab,
 		mft.show_detail_cost_tab,
-		mft.show_udf_tab
+		mft.show_udf_tab,
+		sdht.split_positive_and_negative_commodity
 	FROM source_deal_header_template sdht
 	INNER JOIN maintain_field_template mft ON mft.field_template_id = sdht.field_template_id
 

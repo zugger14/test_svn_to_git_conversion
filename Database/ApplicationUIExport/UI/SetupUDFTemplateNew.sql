@@ -1,4 +1,4 @@
-SET NOCOUNT ON
+ SET NOCOUNT ON
 BEGIN
 	BEGIN TRY
 		BEGIN TRAN			
@@ -145,22 +145,22 @@ BEGIN
 				DROP TABLE #temp_new_template_definition 
 					
 			CREATE TABLE #temp_new_template_definition (new_definition_id INT, field_id VARCHAR(200) COLLATE DATABASE_DEFAULT , field_type VARCHAR(200) COLLATE DATABASE_DEFAULT )
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','','','','settings','',' ',' ','',NULL,'n','n','','n','n','n','n','n','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','','','','settings','',' ',' ','',NULL,'n','n','','n','n','n','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','udf_template_id','udf_template_id','UDF Template ID','input','varchar','h','n',NULL,NULL,'y','y',NULL,'n','n','n','n','n','y','n','y',NULL,NULL,NULL)
+			VALUES('20008300','udf_template_id','udf_template_id','UDF Template ID','input','varchar','h','n',NULL,NULL,'y','y',NULL,'n','n','n','n','n','y','n','y',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','field_name','field_name','Field Name','combo','varchar','h','n','EXEC spa_StaticDataValues ''h'', 5500',NULL,'n','n',NULL,'y','n','y','n','y','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','field_name','field_name','Field Name','combo','varchar','h','n','EXEC spa_StaticDataValues ''h'', 5500',NULL,'n','n',NULL,'y','n','y','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20008300','field_type','field_type','Field Type','combo','varchar','h','n','
@@ -176,9 +176,9 @@ SELECT ''a'' AS ID ,''Date Field'' AS VALUE
 UNION ALL 
 SELECT ''w'' AS ID ,''Formula'' AS VALUE
 UNION ALL 
-SELECT ''e'' AS ID ,''Time'' AS VALUE',NULL,'n','n',NULL,'y','n','y','n','y','n','n','n',NULL,NULL,NULL)
+SELECT ''e'' AS ID ,''Time'' AS VALUE',NULL,'n','n',NULL,'y','n','y','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20008300','data_type','data_type','Data Type','combo','varchar','h','n','SELECT ''bit'' AS ID, ''bit'' AS VALUE UNION ALL
@@ -188,29 +188,29 @@ SELECT ''nchar(1)'' AS ID, ''nchar(1)'' AS VALUE UNION ALL
 SELECT ''numeric(38,20)'' AS ID, ''numeric(38,20)'' AS VALUE UNION ALL
 SELECT ''nvarchar(250)'' AS ID, ''nvarchar(250)'' AS VALUE UNION ALL
 SELECT ''nvarchar(MAX)'' AS ID, ''nvarchar(MAX)'' AS VALUE UNION ALL
-SELECT ''xml'' AS ID, ''xml'' AS VALUE',NULL,'n','n',NULL,'y','n','y','n','y','n','n','n',NULL,NULL,NULL)
+SELECT ''xml'' AS ID, ''xml'' AS VALUE',NULL,'n','n',NULL,'y','n','y','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','data_source_type_id','data_source_type_id','Data Source','combo','varchar','h','n','SELECT udf_data_source_id AS id, udf_data_source_name AS value From udf_data_source where is_hidden = 0',NULL,'n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','data_source_type_id','data_source_type_id','Data Source','combo','varchar','h','n','SELECT udf_data_source_id AS id, udf_data_source_name AS value From udf_data_source where is_hidden = 0',NULL,'n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','window_id','window_id','Window','input','varchar','h','n',NULL,NULL,'n','y',NULL,'n','n','n','n','n','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','window_id','window_id','Window','input','varchar','h','n',NULL,NULL,'n','y',NULL,'n','n','n','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','formula_id','formula_id','Formula','browser','varchar','h','n',NULL,NULL,'n','n',NULL,'n','n','n','y','y','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','formula_id','formula_id','Formula','browser','varchar','h','n',NULL,NULL,'n','n',NULL,'n','n','n','y','y','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','internal_field_type','internal_field_type','Internal Field Type','combo','varchar','h','n','EXEC spa_StaticDataValues ''h'', 18700',NULL,'n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','internal_field_type','internal_field_type','Internal Field Type','combo','varchar','h','n','EXEC spa_StaticDataValues ''h'', 18700',NULL,'n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20008300','leg','leg','Leg','combo','varchar','h','n','SELECT 1 AS id, 1 AS value UNION ALL
@@ -232,61 +232,61 @@ SELECT 16 AS id, 16 AS value UNION ALL
 SELECT 17 AS id, 17 AS value UNION ALL
 SELECT 18 AS id, 18 AS value UNION ALL
 SELECT 19 AS id, 19 AS value UNION ALL
-SELECT 20 AS id, 20 AS value',NULL,'n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL)
+SELECT 20 AS id, 20 AS value',NULL,'n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','sql_string','sql_string','Custom Data Source','input','varchar','h','n',NULL,NULL,'n','n',NULL,'n','n','n','n','n','n','n','n','10',NULL,NULL)
+			VALUES('20008300','sql_string','sql_string','Custom Data Source','input','varchar','h','n',NULL,NULL,'n','n',NULL,'n','n','n','n','n','n','n','n','10',NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20008300','udf_type','udf_type','UDF Type','combo','varchar','h','n','SELECT ''h'' AS id, ''Deal Header'' AS value UNION ALL
 SELECT ''d'' AS id, ''Deal Detail'' AS value UNION ALL
-SELECT ''o'' AS id, ''Others'' AS value',NULL,'n','n',NULL,'n','n','n','n','n','n','n','n',NULL,NULL,NULL)
+SELECT ''o'' AS id, ''Others'' AS value',NULL,'n','n',NULL,'n','n','n','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','default_value','default_value','Default Value','input','varchar','h','n',NULL,NULL,'n','n',NULL,'n','n','n','n','n','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','default_value','default_value','Default Value','input','varchar','h','n',NULL,NULL,'n','n',NULL,'n','n','n','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','udf_category','udf_category','UDF Category','combo','varchar','h','n','EXEC spa_StaticDataValues ''h'', 101900',NULL,'n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','udf_category','udf_category','UDF Category','combo','varchar','h','n','EXEC spa_StaticDataValues ''h'', 101900',NULL,'n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20008300','deal_udf_type','deal_udf_type','Deal UDF Type','combo','varchar','h','n','SELECT ''c'' AS id, ''Cost'' AS value 
 UNION ALL  SELECT ''u'' AS id, ''UDF'' AS value
-UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL)
+UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','field_id','field_id','Field ID','input','varchar','h','n',NULL,NULL,'y','y',NULL,'y','n','y','n','n','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','field_id','field_id','Field ID','input','varchar','h','n',NULL,NULL,'y','y',NULL,'y','n','y','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','field_label','field_label','Field Label','input','varchar','h','n',NULL,NULL,'n','n',NULL,'y','n','y','n','n','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','field_label','field_label','Field Label','input','varchar','h','n',NULL,NULL,'n','n',NULL,'y','n','y','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','test','test','Validate','button','varchar','h','n',NULL,'200','n','n','Test','n','n','n','n','n','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','test','test','Validate','button','varchar','h','n',NULL,'200','n','n','Test','n','n','n','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','default_value_date','default_value_date','Default Value','calendar','datetime','h','n',NULL,NULL,'n','n',NULL,'n','n','n','n','n','n','n','n',NULL,NULL,NULL)
-
-			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length) 
+			VALUES('20008300','default_value_date','default_value_date','Default Value','calendar','datetime','h','n',NULL,NULL,'n','n',NULL,'n','n','n','n','n','n','n','n',NULL,NULL,NULL,NULL)
+						
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20008300','include_in_credit_exposure','include_in_credit_exposure','Include in Credit Exposure','checkbox','varchar','h','n',NULL,NULL,'n','n','y','n','n','n','n','y','n','n','n',NULL,NULL,NULL)
+			VALUES('20008300','include_in_credit_exposure','include_in_credit_exposure','Include in Credit Exposure','checkbox','varchar','h','n',NULL,NULL,'n','n','y','n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
 		END 
 	
@@ -369,7 +369,7 @@ UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','
 				
 		INSERT INTO #temp_old_template_fieldsets(old_fieldset_id, old_group_id, group_name, fieldset_name, className, is_disable, is_hidden, inputLeft, inputTop, label, offsetLeft, offsetTop, position, width, sequence, num_column)
 		
-								SELECT 3671,9455,'General','fee_fields',NULL,'n','n','500','500','Fee Fields',NULL,NULL,NULL,'750','1','3'
+								SELECT 4138,11048,'General','fee_fields',NULL,'n','n','500','500','Fee Fields',NULL,NULL,NULL,'750','1','3'
 				
 		UPDATE otfs
 		SET otfs.new_group_id = ntg.new_id
@@ -434,7 +434,8 @@ UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','
 			dependent_query					VARCHAR(MAX) COLLATE DATABASE_DEFAULT ,
 			old_grid_id						VARCHAR(200) COLLATE DATABASE_DEFAULT ,
 			new_grid_id						VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-			validation_message				VARCHAR(200) COLLATE DATABASE_DEFAULT 
+			validation_message				VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+			load_child_without_parent		BIT
 		)	
 					
 		IF OBJECT_ID('tempdb..#temp_new_template_fields') IS NOT NULL
@@ -442,29 +443,28 @@ UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','
 					
 		CREATE TABLE #temp_new_template_fields (new_field_id INT, new_definition_id INT, sdv_code varchar(200) COLLATE DATABASE_DEFAULT )	
 					
-		INSERT INTO #temp_old_template_fields(old_field_id, old_group_id, old_application_ui_field_id, old_fieldset_id, group_name, ui_field_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, udf_field_name, position, dependent_field, dependent_query, old_grid_id, validation_message)
+		INSERT INTO #temp_old_template_fields(old_field_id, old_group_id, old_application_ui_field_id, old_fieldset_id, group_name, ui_field_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, udf_field_name, position, dependent_field, dependent_query, old_grid_id, validation_message, load_child_without_parent)
 		
-		SELECT 64304,9455,63717,NULL,'General','',NULL,NULL,NULL,NULL,NULL,NULL,'settings',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64305,9455,63718,NULL,'General','udf_template_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64306,9455,63719,NULL,'General','field_name',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64307,9455,63720,NULL,'General','field_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'3',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64308,9455,63721,NULL,'General','data_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'6',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64309,9455,63722,NULL,'General','data_source_type_id',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64310,9455,63723,NULL,'General','window_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'8',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64311,9455,63724,NULL,'General','formula_id',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'9',NULL,NULL,NULL,NULL,NULL,NULL,'formula',NULL UNION ALL 
-		SELECT 64312,9455,63725,'3671','General','internal_field_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64313,9455,63726,'3671','General','leg',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64314,9455,63727,NULL,'General','sql_string',NULL,NULL,NULL,NULL,NULL,'720','input',NULL,'21',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64315,9455,63728,NULL,'General','udf_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64316,9455,63729,NULL,'General','default_value',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64317,9455,63730,NULL,'General','udf_category',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'18',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64318,9455,63731,NULL,'General','deal_udf_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64319,9455,63732,NULL,'General','field_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64320,9455,63733,NULL,'General','field_label',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64321,9455,63734,NULL,'General','test',NULL,NULL,NULL,NULL,NULL,NULL,'button',NULL,'22',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 64322,9455,63735,NULL,'General','default_value_date',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL 
-		  UNION ALL 
-		SELECT 64323,9455,63736,NULL,'General','include_in_credit_exposure',NULL,'n',NULL,NULL,NULL,NULL,'checkbox',NULL,'23',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+		SELECT 76347,11048,75467,NULL,'General','',NULL,NULL,NULL,NULL,NULL,NULL,'settings',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76348,11048,75468,NULL,'General','udf_template_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76349,11048,75469,NULL,'General','field_name',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76350,11048,75470,NULL,'General','field_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'3',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76351,11048,75471,NULL,'General','data_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'6',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76352,11048,75472,NULL,'General','data_source_type_id',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76353,11048,75473,NULL,'General','window_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'8',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76354,11048,75474,NULL,'General','formula_id',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'9',NULL,NULL,NULL,NULL,NULL,NULL,'formula',NULL,NULL UNION ALL 
+		SELECT 76355,11048,75475,'4138','General','internal_field_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76356,11048,75476,'4138','General','leg',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76357,11048,75477,NULL,'General','sql_string',NULL,NULL,NULL,NULL,NULL,'720','input',NULL,'21',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76358,11048,75478,NULL,'General','udf_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76359,11048,75479,NULL,'General','default_value',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76360,11048,75480,NULL,'General','udf_category',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'18',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76361,11048,75481,NULL,'General','deal_udf_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76362,11048,75482,NULL,'General','field_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76363,11048,75483,NULL,'General','field_label',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76364,11048,75484,NULL,'General','test',NULL,NULL,NULL,NULL,NULL,NULL,'button',NULL,'22',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76365,11048,75485,NULL,'General','default_value_date',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 76366,11048,75486,'4138','General','include_in_credit_exposure',NULL,'n',NULL,NULL,NULL,NULL,'checkbox',NULL,'23',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
 				
 		UPDATE otf
 		SET otf.new_group_id = ntg.new_id
@@ -494,7 +494,7 @@ UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','
 		--	WHERE otf.udf_field_name IS NOT NULL AND otf.udf_field_name > 0
 		--END
 				
-		INSERT INTO application_ui_template_fields (application_group_id, application_ui_field_id, application_fieldset_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, position, dependent_field, dependent_query, grid_id, validation_message) 
+		INSERT INTO application_ui_template_fields (application_group_id, application_ui_field_id, application_fieldset_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, position, dependent_field, dependent_query, grid_id, validation_message, load_child_without_parent) 
 		OUTPUT INSERTED.application_field_id, INSERTED.application_ui_field_id
 		INTO #temp_new_template_fields (new_field_id, new_definition_id)
 		SELECT  otf.new_group_id,
@@ -515,7 +515,8 @@ UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','
 				otf.dependent_field,
 				otf.dependent_query,
 				ISNULL(otf.new_grid_id, otf.old_grid_id),
-				otf.validation_message
+				otf.validation_message,
+				otf.load_child_without_parent
 					    
 		FROM #temp_old_template_fields otf
 		LEFT JOIN #temp_old_template_fieldsets otfs ON otfs.old_fieldset_id = otf.old_fieldset_id
@@ -565,7 +566,7 @@ UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','
 		)	
 					
 		INSERT INTO #temp_old_ui_layout(old_layout_grid_id, old_group_id, group_name, layout_cell, old_grid_id, grid_name, sequence, num_column, cell_height,grid_object_name,grid_object_unique_column)
-		SELECT 7821,9455,'General','a','FORM',NULL,1,NULL,NULL,NULL,NULL
+		SELECT 9467,11048,'General','a','FORM',NULL,1,NULL,NULL,NULL,NULL
 				
 		UPDATE oul
 		SET oul.new_group_id = ntg.new_id
