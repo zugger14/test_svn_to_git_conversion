@@ -165,8 +165,25 @@ EXEC dbo.spa_drop_all_temp_table
 
 EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
-	SELECT @flag='p', @uom=1158, @flow_date_from='2027-10-30',  @flow_date_to='2027-10-30', @minor_location='2854', @process_id='88525567_A068_48C2_BD53_0D01C6D66D07', @reschedule='0', @receipt_delivery='FROM'
+--	SELECT @flag='s1'
+--,@process_id='D003DE78_9BC4_4A11_9A35_CC0C8EA097EC'
+--,@delivery_path='330'
+--,@contract_id='8347'
+--,@flow_date_from='2027-10-30'
+--,@granularity='982'
+--,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
+--,@from_location='2857'
+--,@to_location='2854'
+--,@round='4'
+--,@dst_case='1'
 
+select @flag='VOL_LIMIT'
+,@from_location='2857'
+,@to_location='2854'
+,@process_id='D003DE78_9BC4_4A11_9A35_CC0C8EA097EC'
+,@flow_date_from='2027-10-30'
+,@path_ids='330'
+,@xml_manual_vol='1'
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -2875,6 +2892,7 @@ SET @sql = CAST('' AS VARCHAR(MAX)) + '
 				, CAST(1 AS NUMERIC(38,18)) demand_adjust_factor 
 				, CAST(1 AS NUMERIC(38,18)) delivery_adjust_factor 
 				, CAST(NULL AS INT) [hour]
+				, CAST(NULL AS TINYINT) [is_dst]
 				, CAST(NULL AS INT) [granularity]
 			INTO ' + @contractwise_detail_mdq_group + '
 			FROM ' + @contractwise_detail_mdq + '
@@ -3197,6 +3215,7 @@ SET @sql = CAST('' AS VARCHAR(MAX)) + '
 				,demand_adjust_factor
 				,delivery_adjust_factor
 				,hour
+				,is_dst
 				,granularity
 			)
 
@@ -3253,6 +3272,7 @@ SET @sql = CAST('' AS VARCHAR(MAX)) + '
 				,1 demand_adjust_factor
 				,1 delivery_adjust_factor
 				,a.hour
+				,a.is_dst
 				,a.granularity
 				
 			FROM ' + @contractwise_detail_mdq_hourly + ' a
@@ -3311,6 +3331,7 @@ SET @sql = CAST('' AS VARCHAR(MAX)) + '
 				,wo.demand_adjust_factor
 				,wo.delivery_adjust_factor
 				,a.hour
+				,a.is_dst
 				,a.granularity
 				
 			FROM ' + @contractwise_detail_mdq_hourly + ' a
@@ -4208,6 +4229,9 @@ BEGIN
 		AND CAST(cd.hour AS VARCHAR(10)) IN (' + @period_from_temp + ')
 	'
 	EXEC(@sql)
+	--print(@sql)
+	--select * from #tmp_subgrid_data
+	--return
 
 	SELECT @pivot_hr_cols = STUFF(( SELECT '],[' + [hour]
 		FROM #tmp_subgrid_data
@@ -4353,14 +4377,24 @@ BEGIN
 		DECLARE @vol_limit_json NVARCHAR(MAX)
 		SET @vol_limit_json = (
 								SELECT pvt.[hr]
+									, CAST(pvt.is_dst AS TINYINT) [is_dst]
 									, IIF(pvt.[supply_position] > 0, ABS(pvt.[supply_position]), 0) [supply_position]
 									, IIF(pvt.[demand_position] < 0, ABS(pvt.[demand_position]), 0) [demand_position]
 									, pvt.[path_ormdq]
 								FROM (
 									SELECT ''supply_position'' [value_type]
 										, sp.hour [hr]
-										, CAST(sp.position AS NUMERIC(38,20)) [value]
-									FROM ' + @hourly_pos_info +  ' sp
+										, cdh.is_dst
+										, IIF(cdh.is_dst = 1, dst_pos.position, CAST(sp.position AS NUMERIC(38,20)) - ISNULL(dst_pos.position, 0)) [value]
+									FROM ' + @hourly_pos_info + ' sp
+									INNER JOIN ' + @contractwise_detail_mdq_hourly + ' cdh
+										ON cdh.term_start = sp.term_start
+										AND cdh.hour = sp.hour
+										AND cdh.from_loc_id = sp.location_id
+									LEFT JOIN ' + @hourly_pos_info +  ' dst_pos
+										ON dst_pos.source_deal_detail_id = sp.source_deal_detail_id
+										AND dst_pos.hour = 25
+										AND sp.hour = 21
 									WHERE 1 = 1 ' 
 										+ ISNULL(' AND sp.source_deal_header_id IN (' + @receipt_deals_id + ')', '')
 										+ ISNULL(' AND sp.location_id IN (' + @from_location + ')', '')
@@ -4369,8 +4403,17 @@ BEGIN
 									UNION ALL
 									SELECT ''demand_position''
 										, dp.hour
-										, CAST(dp.position AS NUMERIC(38,20))
-									FROM ' + @hourly_pos_info +  ' dp
+										, cdh.is_dst
+										, IIF(cdh.is_dst = 1, dst_pos.position, CAST(dp.position AS NUMERIC(38,20)) - ISNULL(dst_pos.position, 0))
+									FROM ' + @hourly_pos_info + ' dp
+									INNER JOIN ' + @contractwise_detail_mdq_hourly + ' cdh
+										ON cdh.term_start = dp.term_start
+										AND cdh.hour = dp.hour
+										AND cdh.to_loc_id = dp.location_id
+									LEFT JOIN ' + @hourly_pos_info + ' dst_pos
+										ON dst_pos.source_deal_detail_id = dp.source_deal_detail_id
+										AND dst_pos.hour = 25
+										AND dp.hour = 21
 									WHERE 1 = 1' 
 										+ ISNULL(' AND dp.source_deal_header_id IN (' + @delivery_deals_id + ')', '')
 										+ ISNULL(' AND dp.location_id IN (' + @to_location + ')', '')
@@ -4379,18 +4422,20 @@ BEGIN
 									UNION ALL
 									SELECT ''path_ormdq''
 										, cd.hour
+										, cd.is_dst
 										, CAST(MAX(cd.path_ormdq) AS NUMERIC(38,20))
-									FROM ' + @contractwise_detail_mdq_hourly +  ' cd
+									FROM ' + @contractwise_detail_mdq_hourly + ' cd
 									WHERE 1 = 1' 
 										+ ISNULL(' AND cd.box_id = ' + @xml_manual_vol, '')
 										+ ISNULL(' AND cd.path_id = ' + @path_ids, '')
 										+ ISNULL(' AND cd.term_start = ''' + CONVERT(VARCHAR(10), @flow_date_from, 21) + '''', '')
 										+ '
-									GROUP BY cd.[hour], cd.path_id
+									GROUP BY cd.[hour], cd.is_dst, cd.path_id
 								) src
 								PIVOT (
 									SUM([value]) FOR [value_type] IN ([supply_position], [demand_position], [path_ormdq])
 								) AS pvt
+								ORDER BY pvt.[hr]
 
 								FOR JSON PATH   
 								, INCLUDE_NULL_VALUES

@@ -903,10 +903,16 @@ echo $sch_obj->close_layout();
             nValue = 0;
         }
 		
-		var hour = parseInt(subgrid.getColumnId(cInd).replace('hr', ''));
+		var hour = subgrid.getColumnId(cInd).replace('hr', '');
 		var hourly_info = hourly_info_json_gbl.filter(function (entry) {
-            return entry.hr == hour
+            if (hour.indexOf('_DST') > 0) {
+                return (entry.hr == hour.replace('_DST', '') && entry.is_dst == 1);
+            } else {
+                return (entry.hr == hour);
+            }
+            
         });
+        //console.log(hour);
     	var loss = 0;
     	var path_mdq_display = subgrid.cells(0, cInd).getValue().split('/');
         if (subgrid.cells(rId, subgrid.getColIndexById('volume')).getValue() == 'Rec') {

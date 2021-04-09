@@ -63,7 +63,7 @@ DECLARE @return_table TABLE (
 	[stg_net_type] VARCHAR(50) NULL
 )
 
-SELECT @path_id = '330', @term_start = '2027-10-30', @term_end = '2027-10-30', @data_level = ''
+SELECT @path_id = '330', @term_start = '2027-10-29', @term_end = '2027-10-30', @data_level = ''
 
 	
 EXEC dbo.spa_drop_all_temp_table
@@ -390,9 +390,9 @@ BEGIN
 			FROM seq s
 			WHERE n <= (DATEDIFF(DAY, @term_start, @term_end) + 1)
 		) tm
-		CROSS JOIN (
+		CROSS APPLY (
 			SELECT CAST(LEFT(hr_col.clm_name, 2) AS INT) + 1 [hour], hr_col.is_dst
-			FROM dbo.FNAGetDisplacedPivotGranularityColumn(@term_start, @term_end, 982, 102201, 6) hr_col
+			FROM dbo.FNAGetDisplacedPivotGranularityColumn(tm.term_start, tm.term_start, 982, 102201, 6) hr_col
 		) hr_values
 		LEFT JOIN @loc_wise_capacity_hourly_mdq lwchm_from 
 			ON (lwchm_from.location_id = dp.from_location OR lwchm_from.proxy_location_id = dp.from_location) 
@@ -448,7 +448,9 @@ BEGIN
 		END
 				
 	END
-		
+	
+	--select * from @path_mdq_info order by 3,4
+	--return
 	--select final data on basis of parameter data_level
 	BEGIN
 		IF @data_level = 'path_term_hour'
@@ -522,3 +524,5 @@ BEGIN
 	RETURN
 
 END;
+----------------------------------
+
