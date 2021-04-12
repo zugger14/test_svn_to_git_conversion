@@ -63,7 +63,7 @@ DECLARE @return_table TABLE (
 	[stg_net_type] VARCHAR(50) NULL
 )
 
-SELECT @path_id = '330', @term_start = '2027-10-29', @term_end = '2027-10-30', @data_level = ''
+SELECT @path_id = '321', @term_start = '2010-10-30', @term_end = '2010-10-30', @data_level = ''
 
 	
 EXEC dbo.spa_drop_all_temp_table
@@ -293,6 +293,7 @@ BEGIN
 			[stg_affected_path_id] INT NULL,
 			[term_start] DATETIME NULL,
 			[hour] INT NULL,
+			[is_dst] TINYINT NULL,
 			[stg_net_flow] NUMERIC(10,4) NULL,
 			[stg_net_type] VARCHAR(50) NULL
 		)
@@ -301,13 +302,14 @@ BEGIN
 			[stg_affected_path_id],
 			[term_start],
 			[hour],
+			[is_dst],
 			[stg_net_flow],
 			[stg_net_type]
 		)
-		SELECT NULL [stg_affected_path_id], t.[term_start], t.[hour], SUM(IIF(t.path_id = @inj_path_id, 1, -1) * t.hourly_mdq) [stg_net_flow], CAST(NULL AS VARCHAR(50)) [stg_net_type]
+		SELECT NULL [stg_affected_path_id], t.[term_start], t.[hour], t.is_dst, SUM(IIF(t.path_id = @inj_path_id, 1, -1) * t.hourly_mdq) [stg_net_flow], CAST(NULL AS VARCHAR(50)) [stg_net_type]
 		FROM @sch_deal_info t
 		WHERE @storage_type IS NOT NULL --only on storage case
-		GROUP BY t.[term_start], t.[hour]
+		GROUP BY t.[term_start], t.[hour], t.[is_dst]
 	
 		UPDATE @stg_net_flow SET [stg_affected_path_id] = IIF([stg_net_flow] >= 0, @inj_path_id, @with_path_id)
 			, [stg_net_type] = CASE WHEN [stg_net_flow] > 0 THEN 'net_inj' WHEN [stg_net_flow] < 0 THEN 'net_with' ELSE NULL END
@@ -433,6 +435,7 @@ BEGIN
 		LEFT JOIN @stg_net_flow stn
 			ON stn.[hour] = hr_values.[hour]
 			AND stn.[term_start] = tm.term_start
+			AND stn.[is_dst] = hr_values.[is_dst]
 		WHERE dp.path_id = @path_id
 
 		IF @storage_type IS NULL
