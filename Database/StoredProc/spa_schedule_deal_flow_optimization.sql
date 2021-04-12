@@ -4536,7 +4536,7 @@ BEGIN -- Insert/Update Deal data
 		, ISNULL(@product_group, h.[internal_portfolio_id])
 		, h.[commodity_id]
 		, h.[reference]
-		, 'n' [deal_locked]
+		, 'y' [deal_locked]
 		, h.[close_reference_id]
 		, h.[block_type]
 		, h.[block_define_id]
@@ -5061,6 +5061,7 @@ BEGIN -- Insert/Update Deal data
 				INNER JOIN source_deal_detail_hour sddh
 					ON sddh.source_deal_detail_id = idd.source_deal_detail_id
 					AND sddh.hr =  RIGHT(''0'' + CAST(cdmh.hour AS VARCHAR(10)), 2) + '':00''
+					AND sddh.is_dst = cdmh.is_dst
 				INNER JOIN source_deal_header sdh
 					ON sdh.source_deal_header_id = idd.source_deal_header_id
 				--LEFT JOIN static_data_value sdv
@@ -5082,7 +5083,7 @@ BEGIN -- Insert/Update Deal data
 					SELECT idd.source_deal_detail_id
 						,idd.term_start
 						, RIGHT(''0'' + CAST(cdmh.hour AS VARCHAR(10)), 2) + '':00'' hr
-						, 0 is_dst
+						, cdmh.is_dst
 						, ' + CAST(@granularity AS VARCHAR(10)) + ' granularity
 						--, ABS(CAST(CASE WHEN idd.leg = 1 THEN cdmh.received ELSE cdmh.delivered END AS NUMERIC(38,20))) deal_volume
 						, CAST(CASE WHEN idd.leg = 1 THEN cdmh.received ELSE cdmh.delivered END AS NUMERIC(38,20)) deal_volume
