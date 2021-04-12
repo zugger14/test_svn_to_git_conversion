@@ -40,7 +40,10 @@ BEGIN TRY
 
 	@_param_term_start DATE = NULL
 
+	
+
 DECLARE @_counterparty_id INT, @_pricing FLOAT, @_company VARCHAR(500)
+
 
 SELECT @_company = [entity_name] FROM portfolio_hierarchy WHERE  [entity_id] = -1
 
@@ -74,6 +77,7 @@ WHERE  sdd.source_deal_header_id = @_source_deal_header_id
 
 	AND leg= 1
 
+
 IF OBJECT_ID(''tempdb..#signature_temp_table'') IS NOT NULL
 
 BEGIN
@@ -82,9 +86,11 @@ BEGIN
 
 END
 
+
 IF OBJECT_ID(''tempdb..#temp_final_data'') IS NOT NULL
 
-Drop table #temp_final_data	
+DROP TABLE #temp_final_data	
+
 
 CREATE TABLE #signature_temp_table (
 
@@ -98,9 +104,12 @@ CREATE TABLE #signature_temp_table (
 
 )  
 
+
 DECLARE @_file_path VARCHAR(MAX)
 
+
 SELECT @_file_path= SUBSTRING(file_attachment_path, 0, CHARINDEX(''adiha_pm_html'', file_attachment_path)) + ''/dev/shared_docs/attach_docs/setup user/''  FROM connection_string
+
 
 INSERT INTO #signature_temp_table (source_deal_header_id,attachment_file_name,  file_path , user_login_id)
 
@@ -113,6 +122,7 @@ INNER JOIN application_users au on au.application_users_id = an.notes_object_id
 WHERE  an.internal_type_value_id = 10000132 AND an.user_category = -43000 
 
 	AND au.user_login_id = (SELECT TOP 1 ISNULL(update_user, create_user ) FROM confirm_status WHERE  source_deal_header_id = @_source_deal_header_id AND type = 17202 ORDER BY 1 DESC) AND NULLIF(attachment_file_name , '''') IS NOT NULL	
+
 
 IF @_flag <> ''a''
 
@@ -182,11 +192,16 @@ BEGIN
 
 	EXEC (@_sql1)
 
+	
+
 	EXEC spa_get_dealvolume_mult_byfrequency @_vol_frequency_table
+
 
 	--EXEC spa_print @_vol_frequency_table	
 
 	CREATE TABLE #deal_confirmation_tbl(source_deal_header_id INT, confirm_replace_flag CHAR(1) COLLATE DATABASE_DEFAULT , [filename] VARCHAR(1000) COLLATE DATABASE_DEFAULT , [filename1] VARCHAR(1000) COLLATE DATABASE_DEFAULT , term INT,	wtavgCost NUMERIC(30,18), hourlyQty NUMERIC(30,18))
+
+	
 
 	INSERT INTO #deal_confirmation_tbl(source_deal_header_id, confirm_replace_flag, [filename], [filename1], term,	wtavgCost, hourlyQty)
 
@@ -344,13 +359,15 @@ BEGIN
 
 				END [Quantity] ,
 
-				CASE WHEN MAX(sdh.internal_desk_id) = 17302
+				--CASE WHEN MAX(sdh.internal_desk_id) = 17302
 
-					THEN CAST(dbo.FNARemoveTrailingZeroes(CAST(SUM(ISNULL(sddh.volume,0)) AS DECIMAL(36,10))) AS DECIMAL(36,10))
+				--	THEN CAST(dbo.FNARemoveTrailingZeroes(CAST(SUM(ISNULL(sddh.volume,0)) AS DECIMAL(36,10))) AS DECIMAL(36,10))
 
-					ELSE CAST(dbo.FNARemoveTrailingZeroes(CAST(SUM(sdd.total_volume) AS Decimal(36,10))) AS DECIMAL(36,10))
+				--	ELSE CAST(dbo.FNARemoveTrailingZeroes(CAST(SUM(sdd.total_volume) AS Decimal(36,10))) AS DECIMAL(36,10))
 
-				END [Total Quantity],			
+				--END [Total Quantity],			
+
+				sdd_tol_vol.total_volume [Total Quantity],			
 
 				ISNULL(MAX(spcd.curve_name), MAX(risk_spcd.curve_name)) AS [Price Index],
 
@@ -690,7 +707,7 @@ BEGIN
 
 					, MAX(su.uom_name) deal_volume_uom
 
-					, CAST(MAX(sdd.deal_volume) as Numeric(28,10)) deal_volume
+					, sdd_tol_vol.deal_volume  [deal_volume]
 
 					, MAX(sdd.price_adder) price_adder
 
@@ -894,6 +911,7 @@ BEGIN
 
 					INTO #temp_final_data	''
 
+
 			SET @_sql3 = CAST('''' AS VARCHAR(MAX)) + '' 
 
 				 FROM source_deal_header sdh 
@@ -901,6 +919,13 @@ BEGIN
 			INNER JOIN #deal_confirmation_tbl dct on dct.source_deal_header_id = sdh.source_deal_header_id
 
 			INNER JOIN source_deal_detail sdd ON sdh.source_deal_header_id=sdd.source_deal_header_id 
+
+			OUTER APPLY ( SELECT SUM(sdd1.total_volume) total_volume,
+                                 SUM(sdd1.deal_volume) deal_volume
+                          FROM source_deal_detail sdd1
+                          WHERE sdh.source_deal_header_id = sdd1.source_deal_header_id
+                          GROUP BY sdd1.source_deal_header_id           
+            ) sdd_tol_vol
 
 			INNER JOIN source_system_book_map ssbm ON 	ssbm.source_system_book_id1 = sdh.source_system_book_id1 
 
@@ -1304,6 +1329,11 @@ BEGIN
 
 			WHERE sdd.Leg = 1
 
+				AND CASE WHEN sdh.internal_desk_id = 17302 THEN COALESCE(sddh.volume, sddh.price,0) ELSE 1 END <> 0
+                --AND CASE WHEN sdh.internal_desk_id = 17302 then ISNULL(sddh.price, 0) ELSE 1 END <> 0
+                AND CASE WHEN sdh.internal_desk_id = 17302 THEN COALESCE(sddh_shp.volume, sddh_shp.price, 0) ELSE 1 END <> 0
+                --AND CASE WHEN sdh.internal_desk_id = 17302 then ISNULL(sddh_shp.price, 0) ELSE 1 END <> 0   				
+
 			GROUP BY st.trader_name ,sdh.deal_date,sdt.source_deal_type_name,
 
 				sdh.header_buy_sell_flag,sdh.source_deal_type_id,sdh.option_type,sdh.verified_by,sdh.verified_date,
@@ -1311,6 +1341,8 @@ BEGIN
 				au2.user_f_name, au2.user_m_name, au2.user_l_name,st.user_login_id,sml.Location_Name,scp1.counterparty_name
 
 				,a.is_confirm, sdh.source_deal_header_id,sdd.price_multiplier, sddh_shp.volume, sddh_shp.price, sddh_shp.term_date, sddh_shp.hr,sddh_shp.hr_from	
+
+				,sdd_tol_vol.total_volume, sdd_tol_vol.deal_volume
 
 				order by sddh_shp.term_date, sort_col
 
