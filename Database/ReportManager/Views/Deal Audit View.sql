@@ -222,7 +222,7 @@ SET @_sql = ''INSERT INTO #tmp_batch_report
 
 		SELECT [User Action],
 
-			[Update_Timestamp],
+			DATEADD(day, DATEDIFF(day, 0, CAST(dbo.FNAClientToSqlDate([Update_Timestamp]) AS DATETIME)), RIGHT([Update_Timestamp], 8)),
 
 			[Update User],
 
