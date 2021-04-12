@@ -8353,22 +8353,24 @@ SELECT sddh.source_deal_detail_id ,sddh.term_date,
 	SUM(CASE WHEN hr=22 THEN sddh.price ELSE 0 END) hr22,
 	SUM(CASE WHEN hr=23 THEN sddh.price ELSE 0 END) hr23,
 	SUM(CASE WHEN hr=24 THEN sddh.price ELSE 0 END) hr24,
-	SUM(CASE WHEN hr=25 THEN sddh.price ELSE 0 END) hr25
+	SUM(CASE WHEN hr=25 THEN sddh.price ELSE 0 END) hr25,
+	sddh.[period]
 INTO #sddh1
 FROM 
 (
 select sddh.source_deal_detail_id,
 	sddh.term_date,
 	case when is_dst=1 then 25 else cast(left(sddh.hr,2) as int) end hr, 
-	price
+	price,
+	CAST(RIGHT(hr, 2) AS INT) [period]
 	from #tmp_deal_info tdi
 	inner join #temp_deals a on a.source_deal_header_id = tdi.source_deal_header_id
 	inner join source_deal_detail_hour sddh ON sddh.source_deal_detail_id=a.source_deal_detail_id
 		and sddh.term_date between a.term_start and a.term_end
-	group by sddh.source_deal_detail_id,sddh.term_date,case when is_dst=1 then 25 else cast(left(sddh.hr,2) as int) end, price
+	group by sddh.source_deal_detail_id,sddh.term_date,case when is_dst=1 then 25 else cast(left(sddh.hr,2) as int) end, price, CAST(RIGHT(hr, 2) AS INT)
 	) sddh
 where sddh.price is not null
-group by sddh.source_deal_detail_id,sddh.term_date
+group by sddh.source_deal_detail_id,sddh.term_date, sddh.[period]
 
 SET @sql= ' SELECT 
 	source_deal_header_id,
@@ -8445,7 +8447,9 @@ FROM(
 	INNER JOIN '+@position_table_name+' vol ON vol.source_deal_detail_id = td.source_deal_detail_id
 	inner join #vwDealTimezone tz on  vol.source_deal_header_id=tz.source_deal_header_id
 		and tz.curve_id=vol.curve_id  and tz.location_id=vol.location_id 
-	left join #sddh1 sddh on sddh.source_deal_detail_id=vol.source_deal_detail_id and sddh.term_date=vol.term_start
+	left join #sddh1 sddh on sddh.source_deal_detail_id=vol.source_deal_detail_id 
+		and sddh.term_date=vol.term_start
+		and sddh.period = ISNULL(vol.period, 0)
 	LEFT JOIN #tmp_hourly_price_only t on t.rowid=vol.rowid
 	OUTER APPLY(SELECT CASE WHEN td.physical_financial_flag = ''p'' THEN t.hr1_c ELSE t.hr1 END price
 				WHERE 1 = 1
