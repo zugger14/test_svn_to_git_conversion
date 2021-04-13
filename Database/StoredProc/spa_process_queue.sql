@@ -214,7 +214,6 @@ BEGIN
 		LEFT JOIN msdb.dbo.sysjobactivity activity ON job.job_id = activity.job_id
 		WHERE job.name = @queue_job_name AND activity.session_id IS NULL)
 		BEGIN
-			DECLARE @del_job_id VARCHAR(100)
 			SELECT @del_job_id = job.job_id FROM msdb.dbo.sysjobs_view job
 			WHERE job.name = @queue_job_name
 
