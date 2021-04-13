@@ -135,6 +135,7 @@ BEGIN
 		CAST(delivery_adjust_factor AS FLOAT) [DeliveryAdjustFactor]
 		, CAST(d.term_start AS DATETIME) [TermStart]
 		, ISNULL(d.hour, 0) [Hour]
+		, d.is_dst [IsDST]
 		, d.granularity [Granularity]
 		
 		, [SupplyPosition] = ABS(CAST(ISNULL(IIF(d.from_loc_grp_name = ''storage'', sp_w.position, d.supply_position), 0) AS FLOAT))
@@ -172,6 +173,7 @@ BEGIN
 		AND di.path_id = d.path_id
 		AND di.contract_id = d.contract_id
 		AND ISNULL(di.[hour], 0) = ISNULL(d.[hour], 0)
+		AND ISNULL(di.is_dst, 0) = ISNULL(d.is_dst, 0)
 	'
 
 	EXEC(@sql)

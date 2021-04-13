@@ -3369,6 +3369,7 @@ EXEC(@sql)
 			[as_of_date] DATETIME DEFAULT GETDATE(),
 			[term_start] DATETIME NULL,
 			[hour] INT NULL,
+			[is_dst] TINYINT NULL,
 			[granularity] INT NULL,
 			[supply_position] NUMERIC(38, 20) NULL,
 			[demand_position] NUMERIC(38, 20) NULL
