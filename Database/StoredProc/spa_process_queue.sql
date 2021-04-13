@@ -184,6 +184,7 @@ BEGIN
 		DECLARE @queue_job_name NVARCHAR(100) = DB_NAME() + ' - Process Queue ' + @queue_job_type
 		DECLARE @queue_job_query NVARCHAR(1000) = ' spa_process_queue @flag = ''execute_process_queue'', @process_queue_type = ' + CAST(@process_queue_type AS NVARCHAR) + ', @output_status = NULL '
 		
+		DECLARE @del_job_id VARCHAR(200)
 		-- Sometime dupliate jobs are created with no steps. Added this code to delete those jobs with no steps.
 		IF EXISTS(SELECT 1 FROM msdb.dbo.sysjobs_view sj
 		LEFT JOIN msdb.dbo.sysjobsteps sjs ON sj.job_id = sjs.job_id
@@ -198,7 +199,7 @@ BEGIN
 			LEFT JOIN msdb.dbo.sysjobsteps sjs ON sj.job_id = sjs.job_id
 			WHERE sjs.job_id IS NULL AND sj.name = @queue_job_name
 
-			DECLARE @del_job_id VARCHAR(200)
+			SET @del_job_id = NULL
 			WHILE EXISTS (SELECT 1 FROM #temp_job_list)
 			BEGIN
 				SELECT TOP(1) @del_job_id = job_id FROM #temp_job_list
@@ -207,6 +208,17 @@ BEGIN
 
 				DELETE FROM #temp_job_list WHERE job_id = @del_job_id
 			END
+		END
+
+		IF EXISTS(SELECT 1 FROM msdb.dbo.sysjobs_view job
+		LEFT JOIN msdb.dbo.sysjobactivity activity ON job.job_id = activity.job_id
+		WHERE job.name = @queue_job_name AND activity.session_id IS NULL)
+		BEGIN
+			DECLARE @del_job_id VARCHAR(100)
+			SELECT @del_job_id = job.job_id FROM msdb.dbo.sysjobs_view job
+			WHERE job.name = @queue_job_name
+
+			EXEC msdb.dbo.sp_delete_job  @job_id = @del_job_id;
 		END
 
 		DECLARE @queue_job_name_temp VARCHAR(1000) = 'Process Queue Import'
