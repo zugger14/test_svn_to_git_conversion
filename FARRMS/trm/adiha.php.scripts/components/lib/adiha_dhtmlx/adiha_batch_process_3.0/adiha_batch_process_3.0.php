@@ -754,7 +754,6 @@ echo "
         var schedule_type = job_type;
         
         batch_layout_namespace.general_form.checkItem('rdo_one_time', 'ONE_TIME');
-        batch_layout_namespace.general_form.disableItem('txt_job_name');
         batch_layout_namespace.general_form.enableItem('schedule_type');
         batch_layout_namespace.general_form.enableItem('one_time_occurance');
         batch_layout_namespace.general_form.hideItem('grp_as_of_date');
@@ -1053,6 +1052,7 @@ echo $layout->close_layout();
     var report_type = '<?php echo $report_type; ?>';
     var exec_call = "<?php echo ($flag == 'x') ? addslashes($exec_call) : $exec_call; ?>";
     var is_stmt = '<?php echo $is_stmt; ?>';
+    var batch_type = '<?php echo $batch_type;?>';
     
     $(function() {
         batch_layout_namespace.batch_process_tabs.setTabsMode("bottom");        
@@ -1103,6 +1103,11 @@ echo $layout->close_layout();
             batch_layout_namespace.report_form.hideItem('cmb_delimiter_c');
             batch_layout_namespace.report_form.showItem('cmb_xml_format_c');
             batch_layout_namespace.report_form.hideItem('chk_display_header');
+        }
+
+        if(batch_type == 'i'){
+            batch_layout_namespace.batch_process_tabs.tabs('a2').hide();
+            batch_layout_namespace.notification_form.disableItem('chk_attach_report');
         }
 
         var cmb_export_format_obj = batch_layout_namespace.report_form.getCombo('cmb_export_format');

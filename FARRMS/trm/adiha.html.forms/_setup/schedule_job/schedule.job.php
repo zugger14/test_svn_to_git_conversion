@@ -47,7 +47,7 @@
             echo $view_scheduled_job_layout->attach_grid_cell($grid_name, 'a');
             $grid_view_scheduled_job = new GridTable('view_scheduled_job');
             echo $grid_view_scheduled_job->init_grid_table($grid_name, $name_space);
-            echo $grid_view_scheduled_job->set_search_filter(false, '#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#combo_filter,#combo_filter,#text_filter,#text_filter,#text_filter');
+            echo $grid_view_scheduled_job->set_search_filter(false, '#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#combo_filter,#combo_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter');
             echo $grid_view_scheduled_job->enable_multi_select(true);
             echo $grid_view_scheduled_job->return_init();
             echo $grid_view_scheduled_job->load_grid_data("EXEC spa_get_schedule_job @flag='s'");
@@ -61,7 +61,12 @@
 
             $toolbar_json = '[
                 {id:"refresh", img:"refresh.gif", text:"Refresh", title:"Refresh"},
-                {id:"Run", img:"run.gif", imgdis:"run_dis.gif", text:"Run", title:"Run", disabled: true},
+                {id: "process", text: "Process", img:"process.gif", items: [
+                    {id:"Run", img:"run.gif", imgdis:"run_dis.gif", text:"Run", title:"Run", disabled: true},
+                    {id:"enable", img:"tick.gif", imgdis:"tick_dis.gif", text:"Enable", title:"Enable", disabled: true},
+                    {id:"disable", img:"close.gif", imgdis:"close_dis.gif", text:"Disable", title:"Disable", disabled: true},
+                    {id:"stop", img:"stop.gif", imgdis:"stop_dis.gif", text:"Stop", title:"Stop", disabled: true}
+                ]},    
                 {id:"t1", text:"Edit", img:"edit.gif", items:[
                     {id:"Update", img:"edit.gif", imgdis:"edit_dis.gif", text:"Update", title:"Update", disabled: true},
                     {id:"delete", img:"trash.gif", imgdis:"trash_dis.gif", text:"Delete", title:"Delete", disabled: true},
@@ -89,7 +94,9 @@
             function grd_scheduled_jobs_click(row_id) {
                 var job_next_run_col_id = view_scheduled_job.grd_view_scheduled_job.getColIndexById('next_scheduled_run_date');
                 var job_next_run = view_scheduled_job.grd_view_scheduled_job.cells(row_id, job_next_run_col_id).getValue();
-                var user_name_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('user_name');
+                var is_enabled_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('is_enabled');
+                var is_enabled = view_scheduled_job.grd_view_scheduled_job.cells(row_id, is_enabled_col_index).getValue();
+				var user_name_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('user_name');
                 var user_name = view_scheduled_job.grd_view_scheduled_job.cells(row_id, user_name_col_index).getValue();
                 var run_status_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('run_status');
                 var run_status = view_scheduled_job.grd_view_scheduled_job.cells(row_id, run_status_col_index).getValue();
@@ -100,24 +107,54 @@
                 if (row_id != '' && js_user_name.toLowerCase() == user_name.toLowerCase()) {
                     view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
                     view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
-                    if (job_next_run != '') {
+                    if (job_next_run != '') {                        
+                        if(run_status.toLowerCase() == 'in progress'){
+                            view_scheduled_job.jobs_toolbar.setItemEnabled('stop');
+                        } else {
+                            view_scheduled_job.jobs_toolbar.setItemDisabled('stop');
+                        }
+                        if(is_enabled == 'n') {
+                            view_scheduled_job.jobs_toolbar.setItemEnabled('enable');
+                            view_scheduled_job.jobs_toolbar.setItemDisabled('disable');
+                        } else {
+                            view_scheduled_job.jobs_toolbar.setItemEnabled('disable');
+                            view_scheduled_job.jobs_toolbar.setItemDisabled('enable');
+                        }
                         view_scheduled_job.jobs_toolbar.setItemEnabled('Update');
                     }
                 }  else {
-                    if (has_rights_scheduled_job_del && job_owner != 'adminuser' && job_owner != 'systemjob') 
+                    if (has_rights_scheduled_job_del && job_owner != 'adminuser' && job_owner != 'systemjob') {
                         view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
-                    else 
+                    }
+                    else {
                         view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
+                    }
                     
-                    if (job_next_run != '' && has_rights_scheduled_job_edit && job_owner != 'adminuser' && job_owner != 'systemjob')
+                    if (job_next_run != '' && has_rights_scheduled_job_edit && job_owner != 'adminuser' && job_owner != 'systemjob'){
+                        if(run_status.toLowerCase() == 'in progress'){
+                            view_scheduled_job.jobs_toolbar.setItemEnabled('stop');
+                        } else {
+                            view_scheduled_job.jobs_toolbar.setItemDisabled('stop');
+                        }
+                        if(is_enabled == 'n') {
+                            view_scheduled_job.jobs_toolbar.setItemEnabled('enable');
+                            view_scheduled_job.jobs_toolbar.setItemDisabled('disable');
+                        } else {
+                            view_scheduled_job.jobs_toolbar.setItemEnabled('disable');
+                            view_scheduled_job.jobs_toolbar.setItemDisabled('enable');
+                        }
                         view_scheduled_job.jobs_toolbar.setItemEnabled('Update');          
-                    else
+                        
+                    } else{
                         view_scheduled_job.jobs_toolbar.setItemDisabled('Update');
+                    }
 
-                    if (has_rights_scheduled_job_run && row_id != '' && run_status.toLowerCase() != 'in progress') 
+                    if (has_rights_scheduled_job_run && row_id != '' && run_status.toLowerCase() != 'in progress') {
                         view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
-                    else 
+                    }
+                    else {
                         view_scheduled_job.jobs_toolbar.setItemDisabled('Run');
+                    }
                 }
                 
             }
@@ -129,9 +166,14 @@
                         break;
                     case 'Update':
                         var row_id = view_scheduled_job.grd_view_scheduled_job.getSelectedRowId();
-                        var user_name_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('user_name');
-                        var user_name = view_scheduled_job.grd_view_scheduled_job.cells(row_id, user_name_col_index).getValue();
+                        var batch_type_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('batch_type');
+                        var batch_type = view_scheduled_job.grd_view_scheduled_job.cells(row_id, batch_type_col_index).getValue();
                         var job_row_id = view_scheduled_job.grd_view_scheduled_job.getSelectedRowId();
+                        var job_next_run_col_id = view_scheduled_job.grd_view_scheduled_job.getColIndexById('next_scheduled_run_date');
+                        var job_next_run = view_scheduled_job.grd_view_scheduled_job.cells(job_row_id, job_next_run_col_id).getValue();
+                        if (job_next_run == '') {
+                            return;
+                        }
                         var job_id_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('job_id');
                         var job_id = view_scheduled_job.grd_view_scheduled_job.cells(job_row_id, job_id_col_index).getValue();
                         var job_name_col_id = view_scheduled_job.grd_view_scheduled_job.getColIndexById('name');
@@ -148,6 +190,7 @@
                         }
                         
                         var param = 'job_id=' + job_id + '&flag=u&job=' + job + '&job_name=' + job_name;
+                        param += (batch_type != '') ? '&batch_type=' + batch_type : '';
                         adiha_run_batch_process(exec_call, param, title);
                         break;
                     case 'Run':
@@ -162,18 +205,7 @@
                         adiha_run_batch_process(exec_call, param, title);            
                         break;                        
                     case 'delete':
-                        var job_row_id = view_scheduled_job.grd_view_scheduled_job.getSelectedRowId();
-                        job_row_id = job_row_id.indexOf(",") > -1 ? job_row_id.split(",") : [job_row_id];
-                        var job_id_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('job_id');
-                        var job_id = '';
-                        var count = job_row_id.length;
-                        for (var i = 0; i < count; i++) {
-                            job_id += view_scheduled_job.grd_view_scheduled_job.cells(job_row_id[i], job_id_col_index).getValue();
-                            job_id += ',';
-                        }
-
-                        job_id = job_id.slice(0, -1);
-
+                        var job_id = get_selected_job_id();
                         data = {
                             'action': 'batch_report_process',
                             'flag': 'd',
@@ -190,6 +222,36 @@
                         path = js_php_path + 'components/lib/adiha_dhtmlx/grid-pdf-php/generate.php';
                         view_scheduled_job.grd_view_scheduled_job.toPDF(path);
                         break;
+                    case 'enable':
+                        var job_id = get_selected_job_id();
+                        data = {
+                            'action': 'spa_get_schedule_job',
+                            'flag': 'e',
+                            'job_id': job_id,
+                            'enable' : 'y'
+                        }
+                        adiha_post_data('confirm', data, '', '', 'continue_to_refresh', '', 'Are you sure you want to enable?');
+                        break;
+                    case 'disable':
+                        var job_id = get_selected_job_id();
+                        data = {
+                            'action': 'spa_get_schedule_job',
+                            'flag': 'e',
+                            'job_id': job_id,
+                            'enable' : 'n'
+                        }
+                        adiha_post_data('confirm', data, '', '', 'continue_to_refresh', '', 'Are you sure you want to disable?');
+                        break;
+                    case 'stop':
+                        var job_id = get_selected_job_id();
+                        data = {
+                            'action': 'spa_get_schedule_job',
+                            'flag': 'f',
+                            'job_id': job_id,
+                            'stop' : 'y'
+                        }
+                        adiha_post_data('confirm', data, '', '', 'continue_to_refresh', '', 'Are you sure you want to stop?');
+                        break;
                 }
             }
 
@@ -198,11 +260,29 @@
                     view_scheduled_job.refresh_grid('', disable_menu_items);
                 }
             }
+
+            function get_selected_job_id() {
+                var job_row_id = view_scheduled_job.grd_view_scheduled_job.getSelectedRowId();
+                job_row_id = job_row_id.indexOf(",") > -1 ? job_row_id.split(",") : [job_row_id];
+                var job_id_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('job_id');
+                var job_id = '';
+                var count = job_row_id.length;
+                for (var i = 0; i < count; i++) {
+                    job_id += view_scheduled_job.grd_view_scheduled_job.cells(job_row_id[i], job_id_col_index).getValue();
+                    job_id += ',';
+                }
+                job_id = job_id.slice(0, -1);
+                return job_id;
+            }
             
             function disable_menu_items() {
                 view_scheduled_job.jobs_toolbar.setItemDisabled('Run');
                 view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
                 view_scheduled_job.jobs_toolbar.setItemDisabled('Update');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('enable');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('disable');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('stop');
+
             }
         </script>
     </body>

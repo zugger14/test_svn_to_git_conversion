@@ -398,25 +398,25 @@ BEGIN
 
 		INSERT INTO batch_process_notifications (
 			user_login_id, role_id, process_id, notification_type, attach_file, scheduled, csv_file_path, holiday_calendar_id, non_sys_user_email, export_table_name,
-			compress_file, delimiter, report_header, xml_format,output_file_format, ftp_folder_path, export_web_services_id, file_transfer_endpoint_id	
+			compress_file, delimiter, report_header, xml_format,output_file_format, ftp_folder_path, export_web_services_id, file_transfer_endpoint_id, batch_type	
 		)	
 		SELECT @user_login_id, NULL, @batch_unique_id, @notification_type, @send_attachment, @is_scheduled, @csv_path, @holiday_calendar_id, NULL,
-			   @export_table_name, @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id		   
+			   @export_table_name, @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id, @batch_type		   
 		UNION 
 		SELECT a.item, NULL, @batch_unique_id, @notification_type, @send_attachment, @is_scheduled, @csv_path, @holiday_calendar_id, NULL, @export_table_name,
-			   @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id
+			   @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id, @batch_type
 		FROM dbo.SplitCommaSeperatedValues(@notify_users) a
 		LEFT JOIN application_users au ON au.user_login_id = a.item
 		WHERE @notify_users IS NOT NULL
 			AND au.user_active = 'y'
 		UNION
 		SELECT NULL, a.item, @batch_unique_id, @notification_type, @send_attachment, @is_scheduled, @csv_path, @holiday_calendar_id, NULL, @export_table_name,
-			   @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path	, @export_web_services_id, @file_transfer_endpoint_id
+			   @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path	, @export_web_services_id, @file_transfer_endpoint_id, @batch_type
 		FROM dbo.SplitCommaSeperatedValues(@notify_roles) a
 		WHERE @notify_roles IS NOT NULL
 		UNION	
 		SELECT NULL, NULL, @batch_unique_id, @notification_type, @send_attachment, @is_scheduled, @csv_path, @holiday_calendar_id, a.item, @export_table_name,
-			   @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path	, @export_web_services_id, @file_transfer_endpoint_id
+			   @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path	, @export_web_services_id, @file_transfer_endpoint_id, @batch_type
 		FROM dbo.SplitCommaSeperatedValues(@non_sys_users) a
 	END
 
@@ -696,6 +696,42 @@ BEGIN
 END
 ELSE IF @computed_flag = 'u'
 BEGIN
+	DECLARE @db_name NVARCHAR(50)
+	DECLARE @new_name NVARCHAR(200) = ''
+	DECLARE @orignal_process_id NVARCHAR(100) = ''
+	DECLARE @original_job_name NVARCHAR(200) = ''
+	DECLARE @new_sch_name NVARCHAR(200) = ''
+
+	SET @db_name = db_name()
+
+	SELECT @original_job_name = name FROM msdb.dbo.sysjobs WHERE job_id = @jobId
+	SELECT @orignal_process_id = RIGHT(@original_job_name, 50)
+	IF(@original_job_name <> @report_name)
+	BEGIN
+		IF ISNULL(@batch_type, '') = 'r' 
+		BEGIN
+			SET @new_name = IIF(@report_name IS NOT NULL, 'Report_Batch_' + @report_name + '_' + @orignal_process_id, 'Report_Batch_' + @orignal_process_id)
+		END 
+		ELSE IF ISNULL(@batch_type, '') = 'i' 
+		BEGIN
+			SET @new_name = IIF(@report_name IS NOT NULL, 'ImportData_' + @report_name + '_' + @orignal_process_id, 'ImportData_' + @orignal_process_id)		
+		END
+		ELSE IF ISNULL(@batch_type, '') = 'e' 
+		BEGIN
+			SET @new_name = IIF(@report_name IS NOT NULL, 'ExportData_' + @report_name + '_' + @orignal_process_id, 'ExportData_' + @orignal_process_id)
+		END
+		ELSE IF ISNULL(@batch_type, '') = 's' 
+		BEGIN
+			SET @new_name = IIF(@report_name IS NOT NULL, 'Report_Snapshot_Job_' + @report_name + '_' + @orignal_process_id, 'Report_Snapshot_Job_' + @orignal_process_id)
+		END
+		ELSE
+		BEGIN
+			SET @new_name = IIF(@report_name IS NOT NULL, 'batch_' + @report_name + '_' + @orignal_process_id, 'batch_' + @orignal_process_id)
+		END
+
+		SET @new_name = @db_name + ' - ' + @new_name
+	END
+
 	SET @user_date_time = CAST(CONVERT(VARCHAR(10), @active_start_date, 101) + ' ' + 
 						  CAST(LEFT(@active_start_time, 2) AS VARCHAR(10)) + ':' +
 						  CAST(SUBSTRING(@active_start_time, 3, 2) AS VARCHAR(10)) + ':' +
@@ -725,10 +761,15 @@ BEGIN
 		   @active_end_date_int = ISNULL(@active_end_date_int, 000000),
 		   @active_start_time = ISNULL(@active_start_time, 99991231),
 		   @active_end_time = ISNULL(@active_end_time, 235959)
-	
-	EXEC msdb.dbo.sp_update_schedule @schedule_id =  @scheduleId, @freq_type = @freq_type, @freq_interval = @freq_interval, @freq_subday_type = @freq_subday_type,
-									 @freq_subday_interval = @freq_subday_interval, @freq_relative_interval = @freq_relative_interval, @freq_recurrence_factor = @freq_recurrence_factor,
-									 @active_start_date = @active_start_date_int, @active_end_date = @active_end_date_int, @active_start_time = @active_start_time, @active_end_time = @active_end_time;
+	IF(@original_job_name <> @report_name)
+	BEGIN
+		EXEC msdb.dbo.sp_update_job @job_id = @jobId, @new_name = @new_name	
+		SET @new_sch_name = 'schedule_' + @new_name
+		EXEC msdb.dbo.sp_update_schedule @schedule_id =  @scheduleId, @new_name = @new_sch_name
+	END
+
+	EXEC msdb.dbo.sp_update_schedule @schedule_id =  @scheduleId, @freq_type = @freq_type, @freq_interval = @freq_interval, @freq_subday_type = @freq_subday_type, @freq_subday_interval = @freq_subday_interval, @freq_relative_interval = @freq_relative_interval, @freq_recurrence_factor = @freq_recurrence_factor, @active_start_date = @active_start_date_int, @active_end_date = @active_end_date_int, @active_start_time = @active_start_time, @active_end_time = @active_end_time;
+
 
 	IF @@ERROR <> 0
 		EXEC spa_ErrorHandler @@ERROR, 'Manage Job', 'batch_report_process', 'DB Error', 'Failed to update requested job.', ''
@@ -749,23 +790,23 @@ BEGIN
 		
 		INSERT INTO batch_process_notifications(
 			user_login_id, role_id, process_id, notification_type, attach_file, scheduled, csv_file_path, holiday_calendar_id, non_sys_user_email,
-			export_table_name, compress_file, delimiter, report_header, xml_format, output_file_format, ftp_folder_path, export_web_services_id, file_transfer_endpoint_id	
+			export_table_name, compress_file, delimiter, report_header, xml_format, output_file_format, ftp_folder_path, export_web_services_id, file_transfer_endpoint_id, batch_type
 		)
 		SELECT @user_login_id, NULL, @batch_unique_id, @notification_type, @send_attachment, @is_scheduled, @csv_path, @holiday_calendar_id, NULL,
-			   @export_table_name, @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id	   
+			   @export_table_name, @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id, @batch_type   
 		UNION
 		SELECT a.item, NULL, @batch_unique_id, @notification_type, @send_attachment, @is_scheduled, @csv_path, @holiday_calendar_id, NULL,
-			   @export_table_name, @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id				   
+			   @export_table_name, @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id, @batch_type				   
 		FROM dbo.SplitCommaSeperatedValues(@notify_users) a
 		WHERE @notify_users IS NOT NULL
 		UNION
 		SELECT NULL, a.item, @batch_unique_id, @notification_type, @send_attachment, @is_scheduled, @csv_path, @holiday_calendar_id, NULL,
-			   @export_table_name, @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id				   
+			   @export_table_name, @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id, @batch_type				   
 		FROM dbo.SplitCommaSeperatedValues(@notify_roles) a
 		WHERE @notify_roles IS NOT NULL
 		UNION	
 		SELECT NULL, NULL, @batch_unique_id, @notification_type, @send_attachment, @is_scheduled, @csv_path, @holiday_calendar_id, a.item,
-		   @export_table_name, @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id
+		   @export_table_name, @compress_file, @delim, @is_header, @xml_format, @export_file_format, @ftp_folder_path, @export_web_services_id, @file_transfer_endpoint_id, @batch_type
 		FROM  dbo.SplitCommaSeperatedValues(@non_sys_users) a
 	END
 END

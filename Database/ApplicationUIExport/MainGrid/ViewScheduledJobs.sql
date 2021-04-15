@@ -112,7 +112,9 @@ BEGIN
 											SELECT 26,'date_modified','Date Modified','ro',NULL,'y','y','7','n',NULL,NULL,NULL,'200','date',NULL,'left' UNION ALL 
 											SELECT 26,'user_name','User Name','ro',NULL,'y','y','8','n',NULL,NULL,NULL,'200','str',NULL,'left' UNION ALL
 											SELECT 26,'description','Description','ro',NULL,'y','y','9','n',NULL,NULL,NULL,'300','str',NULL,'left' UNION ALL
-											SELECT 26,'job_id','Job ID','ro',NULL,'y','y','10','y',NULL,NULL,NULL,'300','str',NULL,'left' 
+											SELECT 26,'job_id','Job ID','ro',NULL,'y','y','10','y',NULL,NULL,NULL,'300','str',NULL,'left' UNION ALL
+											SELECT 26,'is_enabled','Enabled','ro',NULL,'y','y','11','y',NULL,NULL,NULL,'200','str',NULL,'left' UNION ALL
+											SELECT 26,'batch_type','Batch Type','ro',NULL,'y','y','12','y',NULL,NULL,NULL,'200','str',NULL,'left'
 
 							
 						UPDATE tagc
