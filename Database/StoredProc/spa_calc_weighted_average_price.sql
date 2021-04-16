@@ -765,7 +765,7 @@ SET @sql = 'INSERT INTO #source_price_curve(source_curve_def_id,maturity_date,as
 	INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = d.curve_id
 	INNER JOIN source_price_curve spc ON  spc.source_curve_def_id = spcd.source_curve_def_id
 	WHERE spc.curve_source_value_id = 4500
-		AND spc.maturity_date BETWEEN ''' + @min_term + ''' AND ''' + @max_term + '''
+		AND CONVERT(date, spc.maturity_date) BETWEEN ''' + @min_term + ''' AND ''' + @max_term + '''
 	GROUP BY spc.source_curve_def_id, spc.maturity_date, spc.is_dst
 	UNION
 	SELECT spc.source_curve_def_id, spc.maturity_date, MAX(spc.as_of_date) as_of_date, spc.is_dst,MAX(spcd.granularity) granularity
@@ -773,14 +773,14 @@ SET @sql = 'INSERT INTO #source_price_curve(source_curve_def_id,maturity_date,as
 	INNER JOIN source_price_curve_def spcd ON spcd.curve_id = d.[index]
 	INNER JOIN source_price_curve spc ON  spc.source_curve_def_id = spcd.source_curve_def_id
 	WHERE spc.curve_source_value_id = 4500
-			AND spc.maturity_date BETWEEN ''' + @min_term + ''' AND ''' + @max_term + '''
+			AND CONVERT(date, spc.maturity_date) BETWEEN ''' + @min_term + ''' AND ''' + @max_term + '''
 	GROUP BY spc.source_curve_def_id, spc.maturity_date, spc.is_dst
 	UNION
 	SELECT spc.source_curve_def_id, spc.maturity_date, MAX(spc.as_of_date) as_of_date, spc.is_dst,MAX(spcd.granularity) granularity
 	FROM #generic_mapping_values gmv
 	INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = gmv.clm18_value
 	INNER JOIN source_price_curve spc ON  spc.source_curve_def_id = spcd.source_curve_def_id
-		AND spc.maturity_date BETWEEN ''' + @min_term + ''' AND ''' + @max_term + '''
+		AND CONVERT(date, spc.maturity_date) BETWEEN ''' + @min_term + ''' AND ''' + @max_term + '''
 	WHERE spc.curve_source_value_id = 4500
 	GROUP BY spc.source_curve_def_id, spc.maturity_date, spc.is_dst
 	'
