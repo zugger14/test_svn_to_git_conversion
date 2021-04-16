@@ -2428,7 +2428,7 @@ BEGIN
 	LEFT JOIN #path_mdq_info path_mdq_info
 		ON path_mdq_info.path_id = t.path_id
 		AND path_mdq_info.[hour] = hr_values.[hour]
-		AND path_mdq_info.is_dst = hr_values.is_dst
+		AND ISNULL(path_mdq_info.is_dst, 0) = ISNULL(hr_values.is_dst, 0)
 	OUTER APPLY (
 		SELECT 
 			IIF(hr_values.is_dst = 1
@@ -2692,7 +2692,7 @@ BEGIN
 		WHERE c1.box_id = t.box_id
 			AND c1.path_id = t.path_id
 			AND c1.hour = cdh.hour
-			AND c1.is_dst = cdh.is_dst
+			AND ISNULL(c1.is_dst, 0) = ISNULL(cdh.is_dst, 0)
 	) path_mdq_info
 	GROUP BY t.box_id
 			, t.from_loc_id
@@ -4293,7 +4293,7 @@ BEGIN
 			AND scv.path_id = cd.path_id 
 			AND scv.contract_id = cd.contract_id
 			AND scv.[hour] = cd.[hour] 
-			AND scv.[is_dst] = cd.[is_dst]
+			AND ISNULL(scv.[is_dst], 0) = ISNULL(cd.[is_dst], 0)
 		'
 		--print(@sql)
 		EXEC(@sql)
