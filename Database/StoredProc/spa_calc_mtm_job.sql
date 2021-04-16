@@ -8310,21 +8310,27 @@ EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+
 --For Positive/Negative Commodity Charges
 IF OBJECT_ID('tempdb..#tmp_deal_info') IS NOT NULL DROP TABLE #tmp_deal_info
 
-SELECT DISTINCT td.source_deal_header_id --, td.source_deal_detail_id
+SELECT DISTINCT td.source_deal_header_id, sdh.template_id --, td.source_deal_detail_id
 INTO #tmp_deal_info
-FROM #temp_deals td
-INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
-INNER JOIN #uddft uddft ON uddft.template_id=sdh.template_id 
-	and td.leg= ISNULL(uddft.leg,td.leg)	
-INNER JOIN #udft udft ON udft.udf_template_id = uddft.udf_user_field_id 
-	and td.leg= ISNULL(udft.leg,td.leg)
-	AND udft.internal_field_type IN (18742,18743)
-INNER JOIN user_defined_deal_fields uddf1 ON uddf1.source_deal_header_id = sdh.source_deal_header_id
-	AND uddf1.udf_template_id = uddft.udf_template_id 
-	AND uddft.field_type<>'w'
+FROM source_deal_header sdh
+INNER JOIN #temp_deals td ON td.source_deal_header_id = sdh.source_deal_header_id
+	AND sdh.pricing_type IN (46700,46701)
+	AND td.physical_financial_flag = 'p'
+INNER JOIN source_deal_header_template sdht ON sdht.template_id = sdh.template_id
+	AND ISNULL(split_positive_and_negative_commodity, 'n') = 'y'
 WHERE @calc_type = 's' 
-AND sdh.pricing_type IN (46700,46701)
-AND td.physical_financial_flag = 'p'
+AND EXISTS(SELECT 1 FROM #udft WHERE internal_field_type IN (18742,18743))
+
+IF EXISTS(SELECT 1 FROM #tmp_deal_info)
+BEGIN
+	--Inersted UDF information to make the condition true in the logic because now onwards for positive/negative commodity value calculaiton UDF will not be mapped and it's calculated based on the internal type and split_positive_and_negative_commodity column value equal to 'y' of source_deal_header_template table.
+	INSERT INTO #uddft(udf_template_id, template_id, field_name, field_label, field_id, udf_user_field_id)
+	SELECT DISTINCT t.udf_template_id, tdi.template_id, t.field_name, t.field_label, t.field_id, t.udf_template_id
+	FROM #udft t 
+	CROSS APPLY(SELECT DISTINCT template_id
+				FROM #tmp_deal_info) tdi
+	WHERE t.internal_field_type IN (18742,18743)
+END
 
 IF OBJECT_ID('tempdb..#sddh1') IS NOT NULL DROP TABLE #sddh1
 
