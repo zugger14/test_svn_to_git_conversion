@@ -657,6 +657,32 @@ declare @ErrorCode varchar(50),
 	@description varchar(1000),
 	@nextstep varchar(250)
 
+
+DECLARE @formula_table2 VARCHAR(100)
+DECLARE @calc_result_table2 VARCHAR(100)
+DECLARE @calc_result_table_breakdown2 VARCHAR(100)
+DECLARE @process_id2 VARCHAR(100)
+
+DECLARE @formula_table3 VARCHAR(100)
+DECLARE @calc_result_table3 VARCHAR(100)
+DECLARE @calc_result_table_breakdown3 VARCHAR(100)
+DECLARE @process_id3 VARCHAR(100)
+
+DECLARE @formula_table4 VARCHAR(100)
+DECLARE @calc_result_table4 VARCHAR(100)
+DECLARE @calc_result_table_breakdown4 VARCHAR(100)
+DECLARE @process_id4 VARCHAR(100)
+
+SET @process_id2 = REPLACE(newid(),'-','_')	
+SET @formula_table2=dbo.FNAProcessTableName('curve_formula_table2', @user_login_id, @process_id2)
+
+
+SET @process_id3 = REPLACE(newid(),'-','_')
+SET @formula_table3=dbo.FNAProcessTableName('curve_formula_table3', @user_login_id, @process_id3)
+
+SET @process_id4 = REPLACE(newid(),'-','_')
+SET @formula_table4=dbo.FNAProcessTableName('curve_formula_table4', @user_login_id, @process_id3)
+
 DECLARE @storage_inventory_template_id VARCHAR(350) -- for these  template, only save the fees without mtm/settlement.
 select @storage_inventory_template_id=isnull(@storage_inventory_template_id+',','')+cast(template_id as varchar) 
 from source_deal_header_template where template_name in ('Actual Storage Inventory','Forward Storage Inventory')
@@ -1265,7 +1291,7 @@ create table #temp_deals(
 	[source_deal_header_id] [int]  NOT NULL ,
 	[source_deal_detail_id] [int]  NOT NULL ,
 	[source_system_id] [int] NOT NULL ,
-	[deal_id] [varchar] (200) COLLATE DATABASE_DEFAULT  NOT NULL ,
+	[deal_id] [varchar] (200) COLLATE DATABASE_DEFAULT ,
 	[deal_date] [datetime] NOT NULL ,
 	[ext_deal_id] [varchar] (150) COLLATE DATABASE_DEFAULT  NULL ,
 	[physical_financial_flag] [char] (10) COLLATE DATABASE_DEFAULT NOT NULL ,
@@ -8946,33 +8972,10 @@ END
 -- If pricing is 1603 which is Daily Wght Avg
 -- If pricing is 1604 which is Hourly Wght Avg (Not implemented now but for the future - needs to be added to static data value if required)
 
-DECLARE @formula_table2 VARCHAR(100)
-DECLARE @calc_result_table2 VARCHAR(100)
-DECLARE @calc_result_table_breakdown2 VARCHAR(100)
-DECLARE @process_id2 VARCHAR(100)
-
-SET @process_id2 = REPLACE(newid(),'-','_')
-
-	
-SET @formula_table2=dbo.FNAProcessTableName('curve_formula_table2', @user_login_id, @process_id2)
 
 CREATE TABLE #tx2([ID] INT IDENTITY, as_of_date DATETIME, term_start DATETIME, formula_id INT, granularity INT, contract_id INT, source_deal_detail_id INT, volume FLOAT)
 
-DECLARE @formula_table3 VARCHAR(100)
-DECLARE @calc_result_table3 VARCHAR(100)
-DECLARE @calc_result_table_breakdown3 VARCHAR(100)
-DECLARE @process_id3 VARCHAR(100)
 
-SET @process_id3 = REPLACE(newid(),'-','_')
-SET @formula_table3=dbo.FNAProcessTableName('curve_formula_table3', @user_login_id, @process_id3)
-
-DECLARE @formula_table4 VARCHAR(100)
-DECLARE @calc_result_table4 VARCHAR(100)
-DECLARE @calc_result_table_breakdown4 VARCHAR(100)
-DECLARE @process_id4 VARCHAR(100)
-
-SET @process_id4 = REPLACE(newid(),'-','_')
-SET @formula_table4=dbo.FNAProcessTableName('curve_formula_table4', @user_login_id, @process_id3)
 
 /* not found using this temp table..
 CREATE TABLE #formula_value_daily_wght_avg
