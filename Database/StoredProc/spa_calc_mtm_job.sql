@@ -674,14 +674,11 @@ DECLARE @calc_result_table_breakdown4 VARCHAR(100)
 DECLARE @process_id4 VARCHAR(100)
 
 SET @process_id2 = REPLACE(newid(),'-','_')	
-SET @formula_table2=dbo.FNAProcessTableName('curve_formula_table2', @user_login_id, @process_id2)
 
 
 SET @process_id3 = REPLACE(newid(),'-','_')
-SET @formula_table3=dbo.FNAProcessTableName('curve_formula_table3', @user_login_id, @process_id3)
 
 SET @process_id4 = REPLACE(newid(),'-','_')
-SET @formula_table4=dbo.FNAProcessTableName('curve_formula_table4', @user_login_id, @process_id3)
 
 DECLARE @storage_inventory_template_id VARCHAR(350) -- for these  template, only save the fees without mtm/settlement.
 select @storage_inventory_template_id=isnull(@storage_inventory_template_id+',','')+cast(template_id as varchar) 
@@ -865,6 +862,15 @@ BEGIN
 	SET @index_fees_settlement_table = dbo.FNAProcessTableName('index_fees_settlement', @user_id, @process_id)
 
 END
+
+
+
+SET @formula_table2=dbo.FNAProcessTableName('curve_formula_table2', @user_id, @process_id2)
+SET @formula_table3=dbo.FNAProcessTableName('curve_formula_table3', @user_id, @process_id3)
+SET @formula_table4=dbo.FNAProcessTableName('curve_formula_table4', @user_id, @process_id3)
+
+
+
 
 --#######################
 
