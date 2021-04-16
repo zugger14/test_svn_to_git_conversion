@@ -194,12 +194,14 @@
                         adiha_run_batch_process(exec_call, param, title);
                         break;
                     case 'Run':
+                        var row_id = view_scheduled_job.grd_view_scheduled_job.getSelectedRowId();
                         var job_row_id = view_scheduled_job.grd_view_scheduled_job.getSelectedRowId();
                         var job_id_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('job_id');
                         var job_id = view_scheduled_job.grd_view_scheduled_job.cells(job_row_id, job_id_col_index).getValue();
+                        var batch_type_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('batch_type');
+                        var batch_type = view_scheduled_job.grd_view_scheduled_job.cells(row_id, batch_type_col_index).getValue();
                         var title = 'Run Job';          
-                        
-                        var param = 'job_id=' + job_id + '&call_from=view_schedule';
+                        var param = 'job_id=' + job_id + '&call_from=view_schedule&batch_type=' + batch_type;
                         var exec_call = '';
                         
                         adiha_run_batch_process(exec_call, param, title);            
