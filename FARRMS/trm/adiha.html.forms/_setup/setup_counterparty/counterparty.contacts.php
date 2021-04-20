@@ -106,7 +106,7 @@
                         var xml = '<Root function_id="10105815" object_id="' + object_id + '"><FormXML ';
 
                         for (var a in form_data) {
-                            if (form_data[a] != '' && form_data[a] != null&&a!='counterparty_contact_id'&&a!='counterparty_id') {
+                            if (a!='counterparty_contact_id'&&a!='counterparty_id') {
                                 if (counterpartyContacts.form_counterparty_contacts.getItemType(a) == 'calendar') {
                                     value = counterpartyContacts.form_counterparty_contacts.getItemValue(a, true);
                                 } else {
