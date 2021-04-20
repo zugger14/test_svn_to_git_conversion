@@ -954,7 +954,7 @@ BEGIN
 							spcd.curve_name [curve_name],
 							[dbo].[FNARemoveTrailingZeroes](ABS(ISNULL(dd.fixed_price,(COALESCE(ds.settlement_amount, dp.und_pnl_set)/NULLIF(ISNULL(ds.sds_volume, dp.dp_volume), 0))))) deal_price,
 							CASE WHEN ISNULL(dd.fixed_price,(COALESCE(ds.settlement_amount, dp.und_pnl_set)/NULLIF(dd.deal_volume, 0))) IS NULL THEN NULL ELSE scu.currency_name END [Currency],
-							STR(COALESCE(ds.settlement_amount, dp.und_pnl_set),20,2) deal_value,
+							COALESCE(ds.settlement_amount, dp.und_pnl_set) deal_value,
 							CASE
 								WHEN cfv.finalized = ''y'' THEN ''Final'' 
 								ELSE ''Estimate''						
@@ -1003,7 +1003,7 @@ BEGIN
 			SET @sql_select += '
 							[dbo].[FNARemoveTrailingZeroes](ABS(ISNULL(dd.fixed_price,(COALESCE(ds.settlement_amount, dp.und_pnl_set)/NULLIF(ISNULL(ds.sds_volume, dp.dp_volume), 0))))) deal_price,
 							CASE WHEN ISNULL(dd.fixed_price,(COALESCE(ds.settlement_amount, dp.und_pnl_set)/NULLIF(ISNULL(ds.sds_volume, dp.dp_volume), 0))) IS NULL THEN NULL ELSE scu.currency_name END [currency],
-							STR(COALESCE(ds.settlement_amount, dp.und_pnl_set),20,2) deal_value,
+							COALESCE(ds.settlement_amount, dp.und_pnl_set) deal_value,
 							CASE
 								WHEN cfv.finalized = ''y'' THEN ''Final'' 
 								ELSE ''Estimate''						
