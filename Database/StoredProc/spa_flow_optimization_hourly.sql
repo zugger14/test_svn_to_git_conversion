@@ -3416,6 +3416,7 @@ EXEC(@sql)
 					AND g.contract_id = c.contract_id
 					AND g.term_start = c.term_start
 					AND g.hour = c.hour
+					AND ISNULL(g.is_dst, 0) = ISNULL(c.is_dst, 0)
 				WHERE c.group_path = ''n''
 
 				-- FOR SINGLE PATH
