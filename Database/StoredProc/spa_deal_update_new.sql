@@ -1482,17 +1482,19 @@ BEGIN
  				DECLARE @block_json NVARCHAR(2000) = '{type:"block", blockOffset:0, offsetLeft:' + CAST(@default_offsetleft AS NCHAR(3)) + ', list:'
  
  				SET @form_xml = (   
- 								SELECT CASE [type]
- 											WHEN 'c' THEN 'combo'
- 											WHEN 'd' THEN 'combo'
- 											WHEN 'l' THEN 'input'
- 											WHEN 't' THEN 'input'
-										WHEN 'e' THEN 'time'
- 											WHEN 'a' THEN 'calendar'
- 											WHEN 'w' THEN 'input'
- 											WHEN 'm' THEN 'input'
-											WHEN 'z' THEN 'template'
- 										END [type],
+ 								SELECT CASE WHEN data_type IN ('float','numeric', 'numeric(38,20)') THEN 'numeric'
+									   ELSE CASE [type]
+ 												WHEN 'c' THEN 'combo'
+ 												WHEN 'd' THEN 'combo'
+ 												WHEN 'l' THEN 'input'
+ 												WHEN 't' THEN 'input'
+												WHEN 'e' THEN 'time'
+ 												WHEN 'a' THEN 'calendar'
+ 												WHEN 'w' THEN 'input'
+ 												WHEN 'm' THEN 'input'
+												WHEN 'z' THEN 'template'
+ 											END
+										END[type],
  										CASE [type]
  											WHEN 'c' THEN 'true'
  											WHEN 'd' THEN 'true'
@@ -1530,7 +1532,7 @@ BEGIN
 											ELSE CASE 
 													WHEN [type] = 'a' THEN dbo.FNAGetSQLStandardDate(NULLIF(deal_value, ''))
 													ELSE CASE 
-														WHEN data_type IN ('price','number','numeric')THEN dbo.FNARemoveTrailingZero(NULLIF(deal_value, ''))
+														WHEN data_type IN ('price','number','numeric', 'numeric(38,20)')THEN dbo.FNARemoveTrailingZero(NULLIF(deal_value, ''))
 														ELSE CAST(NULLIF(deal_value, '') AS NVARCHAR(MAX))
 														END
 													END
@@ -1539,11 +1541,12 @@ BEGIN
  										seq_no,
  										CASE WHEN [type] = 'a' THEN '%Y-%m-%d' ELSE NULL END + CASE WHEN name IN ('update_ts', 'create_ts') THEN ' %H:%i:%s' ELSE '' END [serverDateFormat],
  										CASE WHEN [type] = 'a' THEN COALESCE(dbo.FNAChangeDateFormat(), '%Y-%m-%d') ELSE NULL END + CASE WHEN name IN ('update_ts', 'create_ts') THEN ' %H:%i:%s' ELSE '' END [dateFormat],
- 										CASE WHEN value_required = 'true' THEN 'NotEmptywithSpace' ELSE NULL END + CASE WHEN data_type = 'int' THEN ',ValidInteger' WHEN data_type IN ('price','number') THEN ',ValidNumeric' ELSE '' END [validate],
+ 										CASE WHEN value_required = 'true' THEN 'NotEmptywithSpace' ELSE NULL END + CASE WHEN data_type = 'int' THEN ',ValidInteger' WHEN data_type IN ('price','number','numeric', 'numeric(38,20)') THEN ',ValidNumeric' ELSE '' END [validate],
  										'{' +
 										CASE
 											WHEN [type] = 'w' THEN '"is_formula": "y", "formula_id": "' + ISNULL(deal_value, '') + '"'
 											WHEN value_required = 'true' THEN '"validation_message": "Invalid data", "is_formula": "n"'
+											WHEN data_type IN ('int','price', 'float', 'numeric','numeric(38,20)') THEN '"validation_message": "Invalid Number", "is_formula": "n"'
 											ELSE '"is_formula": "n"'
 										END + 
 										IIF(open_ui_function_id IS NOT NULL, ', "data_window_info": "' + af.file_path + '"', '') + '}' [userdata],
