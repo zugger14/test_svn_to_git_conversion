@@ -3809,8 +3809,8 @@ BEGIN
 	CREATE TABLE #tmp_report_data (
 		[term_start] DATE NULL,
 		[source_deal_header_id] INT NULL,
-		[deal_id] VARCHAR(200) NULL,
-		[deal_ref_id] VARCHAR(50) NULL,
+		[deal_id] VARCHAR(1000) NULL,
+		[deal_ref_id] VARCHAR(200) NULL,
 		[location] VARCHAR(200) NULL,
 		[counterparty_name] VARCHAR(200) NULL,
 		[to_location] VARCHAR(200) NULL,
