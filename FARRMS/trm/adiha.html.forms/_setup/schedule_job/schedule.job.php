@@ -104,59 +104,34 @@
                 var job_owner = view_scheduled_job.grd_view_scheduled_job.cells(row_id, job_owner_col_index).getValue();
                 job_owner = job_owner.trim().split(' ').join('').toLowerCase();
 
-                if (row_id != '' && js_user_name.toLowerCase() == user_name.toLowerCase()) {
-                    view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
-                    view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
-                    if (job_next_run != '') {                        
-                        if(run_status.toLowerCase() == 'in progress'){
-                            view_scheduled_job.jobs_toolbar.setItemEnabled('stop');
-                        } else {
-                            view_scheduled_job.jobs_toolbar.setItemDisabled('stop');
-                        }
-                        if(is_enabled == 'n') {
+                //Job stop
+                if(row_id != '' && has_rights_scheduled_job_edit) {
+                    if (run_status.toLowerCase() == 'in progress') view_scheduled_job.jobs_toolbar.setItemEnabled('stop');
+                    else view_scheduled_job.jobs_toolbar.setItemDisabled('stop');    
+                }
+
+                if (row_id != '' && (js_user_name.toLowerCase() == user_name.toLowerCase() || (job_owner != 'adminuser' && job_owner != 'systemjob'))) {
+                    // Job update/enable/disable
+                    if(has_rights_scheduled_job_edit) {
+                        if (is_enabled == 'n') {
                             view_scheduled_job.jobs_toolbar.setItemEnabled('enable');
                             view_scheduled_job.jobs_toolbar.setItemDisabled('disable');
                         } else {
                             view_scheduled_job.jobs_toolbar.setItemEnabled('disable');
                             view_scheduled_job.jobs_toolbar.setItemDisabled('enable');
                         }
-                        view_scheduled_job.jobs_toolbar.setItemEnabled('Update');
-                    }
-                }  else {
-                    if (has_rights_scheduled_job_del && job_owner != 'adminuser' && job_owner != 'systemjob') {
-                        view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
-                    }
-                    else {
-                        view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
-                    }
-                    
-                    if (job_next_run != '' && has_rights_scheduled_job_edit && job_owner != 'adminuser' && job_owner != 'systemjob'){
-                        if(run_status.toLowerCase() == 'in progress'){
-                            view_scheduled_job.jobs_toolbar.setItemEnabled('stop');
-                        } else {
-                            view_scheduled_job.jobs_toolbar.setItemDisabled('stop');
-                        }
-                        if(is_enabled == 'n') {
-                            view_scheduled_job.jobs_toolbar.setItemEnabled('enable');
-                            view_scheduled_job.jobs_toolbar.setItemDisabled('disable');
-                        } else {
-                            view_scheduled_job.jobs_toolbar.setItemEnabled('disable');
-                            view_scheduled_job.jobs_toolbar.setItemDisabled('enable');
-                        }
-                        view_scheduled_job.jobs_toolbar.setItemEnabled('Update');          
-                        
-                    } else{
-                        view_scheduled_job.jobs_toolbar.setItemDisabled('Update');
+                        if (job_next_run != '') view_scheduled_job.jobs_toolbar.setItemEnabled('Update');
+                        else view_scheduled_job.jobs_toolbar.setItemDisabled('Update');
                     }
 
-                    if (has_rights_scheduled_job_run && row_id != '' && run_status.toLowerCase() != 'in progress') {
-                        view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
-                    }
-                    else {
-                        view_scheduled_job.jobs_toolbar.setItemDisabled('Run');
-                    }
+                    //Job run
+                    if (has_rights_scheduled_job_run && run_status.toLowerCase() != 'in progress') view_scheduled_job.jobs_toolbar.setItemEnabled('Run');
+                    else view_scheduled_job.jobs_toolbar.setItemDisabled('Run');
+                    
+                    //Job delete
+                    if (has_rights_scheduled_job_del) view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
+                    else view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
                 }
-                
             }
 
             function run_toolbar_click(id) {    
