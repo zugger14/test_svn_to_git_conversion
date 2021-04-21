@@ -332,10 +332,46 @@ create table #deal_detail_dst_group(
 	deal_detail_id int, dst_group_value_id int
 )
 
+--select ISNULL(@insert_type,0),isnull(@call_from,0)
 IF  ISNULL(@insert_type,0) NOT IN (1,2)
 BEGIN 		
 	IF isnull(@call_from,0)IN (0,2)
 	BEGIN
+
+
+	------ except recursive calling from job, the message through in message board.-----------------------
+
+		DECLARE @report_page_tablix_id VARCHAR(1000)
+		DECLARE @paramset_id VARCHAR(1000)
+
+		SELECT @report_page_tablix_id = report_page_tablix_id, @paramset_id = report_paramset_id
+		FROM report_page_tablix  rpt 
+		INNER JOIN report_paramset rp ON rpt.page_id = rp.page_id
+		WHERE rpt.name  =  'Position Process Log_tablix'
+		
+		set @desc = '	&report_filter=login_user_id=' + @user_login_id + ',process_status_id= NULL,source_deal_header_id= NULL,as_of_date= NULL,from_hhmm=NULL,to_hhmm=NULL'
+										+ '&is_refresh=0'
+										+ '&items_combined=ITEM_PositionProcessLog_tablix:' + @report_page_tablix_id + '&paramset_id=' + @paramset_id + '&export_type=HTML4.0'
+										+ '&__user_name__=' + @user_login_id + '&close_progress=1'
+		DECLARE @description VARCHAR(MAX)			
+
+		SELECT @description = '<a target="_blank" href="' + @desc + '</a>'   
+		SET @desc = ISNULL(@desc,'no message')
+		SET @sql = '		 EXEC [spa_message_board]
+									@flag = ''i'',
+									@user_login_id = ''' + @user_login_id + ''',
+									@source=''Position Process Log'',
+									@description =''Position calculation has started.<a href="javascript:void();" onclick="TRMHyperlink(10202210, ''''' + @desc + ''''', ''''Position Calculation Status Report_Position Calculation Status Report'''')" >Click</a> here to view the status. '',
+									@type = ''s''
+						'
+		
+		EXEC spa_print @sql 
+		EXEC(@sql)
+		--return
+		----------------------------------------------------------------------------------------------------
+
+
+
 
 		SET @sql='IF COL_LENGTH('''+@effected_deals+''', ''source_deal_detail_id'') IS NULL
 					ALTER TABLE '+@effected_deals+' ADD source_deal_detail_id INT
@@ -507,9 +543,11 @@ BEGIN
 		
 	EXEC spa_print @sql
 	EXEC(@sql)		
-		
-
 	EXEC('CREATE INDEX indx_tmp_header_deal_id_1_qqq ON #tmp_header_deal_id_1(source_deal_detail_id,source_deal_header_id)')
+
+
+
+
 END	
 
 -------End collecting deal to process-----------------------------------------------------------------------------------------------
