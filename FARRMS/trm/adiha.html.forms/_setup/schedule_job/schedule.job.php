@@ -131,6 +131,12 @@
                     //Job delete
                     if (has_rights_scheduled_job_del) view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
                     else view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
+                } else {
+                    view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
+                    view_scheduled_job.jobs_toolbar.setItemDisabled('Run');
+                    view_scheduled_job.jobs_toolbar.setItemDisabled('Update');
+                    view_scheduled_job.jobs_toolbar.setItemDisabled('disable');
+                    view_scheduled_job.jobs_toolbar.setItemDisabled('enable');
                 }
             }
 
