@@ -1,4 +1,4 @@
- BEGIN TRY
+BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'SCVN'
@@ -279,8 +279,8 @@ SET @_sql1 = ''
 	MAX(sec_sc.counterparty_name) secondary_counterparty_name,
 	MAX(d_sc.source_commodity_id) source_commodity_id,
 	MAX(d_sc.commodity_name) commodity_name,
-	MAX(vt.vat_percentage) vat_percentage,
-	MAX(vt.vat_remarks)  vat_remarks,
+	NULL vat_percentage,
+	NULL  vat_remarks,
 	MAX(epa.external_value) counterparty_external_value,
 	MAX(sec_cc.secondary_cc_address1) secondary_cc_address1, 
 	MAX(sec_cc.secondary_cc_address2) secondary_cc_address2, 
@@ -479,22 +479,21 @@ OUTER APPLY (SELECT
 LEFT JOIN static_data_value sdv_state ON sdv_state.value_id= ISNULL(cc_receivables.state, cc.cc_state) 
 LEFT JOIN static_data_value sdv_p_state ON sdv_p_state.value_id= ccs.state
 LEFT JOIN source_commodity d_sc ON d_sc.source_commodity_id = sdh.commodity_id
-OUTER APPLY(
-	SELECT gmv.clm10_value vat_type, gmv.clm3_value [counterparty_type], gmv.clm1_value [effective_date], gmv.clm2_value [region_id], r_sdv.code [region], gmv.clm4_value [commodity_id] , scm.commodity_name, gmv.clm12_value [vat_percentage] , gmv.clm13_value [vat_remarks]
-	FROM generic_mapping_values gmv
-	INNER JOIN generic_mapping_definition gmd ON gmv.mapping_table_id = gmd.mapping_table_id
-	INNER JOIN generic_mapping_header gmh ON gmh.mapping_table_id = gmd.mapping_table_id
-	LEFT JOIN static_data_value r_sdv ON r_sdv.value_id =  gmv.clm2_value
-	LEFT JOIN source_commodity scm On scm.source_commodity_id = gmv.clm4_value
-	WHERE 1=1 AND gmh.mapping_name = ''''Tax Rules'''' AND  gmv.clm10_value = ''''v'''' AND (ISNULL(gmv.clm3_value,-1) = ISNULL(sc.int_ext_flag, -1) AND ISNULL(gmv.clm2_value,-1) = ISNULL(cc.cc_region, -1)
-	AND ISNULL(gmv.clm4_value, -1) = ISNULL(sdh.commodity_id,-1) AND  ISNULL(gmv.clm1_value, -1) <= ISNULL(sdd.term_start,-1))
-	) vt
+--OUTER APPLY(
+--	SELECT gmv.clm10_value vat_type, gmv.clm3_value [counterparty_type], gmv.clm1_value [effective_date], gmv.clm2_value [region_id], r_sdv.code [region], gmv.clm4_value [commodity_id] , scm.commodity_name, gmv.clm12_value [vat_percentage] , gmv.clm13_value [vat_remarks]
+--	FROM generic_mapping_values gmv
+--	INNER JOIN generic_mapping_definition gmd ON gmv.mapping_table_id = gmd.mapping_table_id
+--	INNER JOIN generic_mapping_header gmh ON gmh.mapping_table_id = gmd.mapping_table_id
+--	LEFT JOIN static_data_value r_sdv ON r_sdv.value_id =  gmv.clm2_value
+--	LEFT JOIN source_commodity scm On scm.source_commodity_id = gmv.clm4_value
+--	WHERE 1=1 AND gmh.mapping_name = ''''Tax Rules'''' AND  gmv.clm10_value = ''''v'''' AND (ISNULL(gmv.clm3_value,-1) = ISNULL(sc.int_ext_flag, -1) AND ISNULL(gmv.clm2_value,-1) = ISNULL(cc.cc_region, -1)
+--	AND ISNULL(gmv.clm4_value, -1) = ISNULL(sdh.commodity_id,-1) AND  ISNULL(gmv.clm1_value, -1) <= ISNULL(sdd.term_start,-1))
+--	) vt
 OUTER APPLY (
 	SELECT TOP 1 cea.external_value 
 	FROM counterparty_epa_account cea 
 	WHERE cea.counterparty_id = sc.source_counterparty_id AND cea.external_type_id = 2200
 ) epa
-
 WHERE 1 = 1 AND sco.create_ts = sco1.mx_create_ts AND ISNULL(sco.is_ignore, -1) <> 1
 '' 
 SET @_sql3 = '''' +
@@ -565,7 +564,6 @@ AND (( tmp1.accrual_or_final = ''''f'''' AND tmp1.stmt_invoice_id IS NOT NULL) O
 SET @_sql6 = ''
 UPDATE #temp_all_final
 SET show_accounting_month = '' + CASE WHEN @_accounting_month IS NULL THEN '' accounting_month '' ELSE '''''''' + CAST(@_accounting_month AS VARCHAR(10)) + '''''''' END + ''
-
 SELECT tf.* 
 --[__batch_report__]
 FROM (
@@ -5548,7 +5546,7 @@ EXEC (@_sql + @_sql1 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6)', report_id =
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Vat Percentage'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -5561,7 +5559,7 @@ EXEC (@_sql + @_sql1 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6)', report_id =
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'vat_percentage' AS [name], 'Vat Percentage' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'vat_percentage' AS [name], 'Vat Percentage' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Settlement Checkout View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -5581,7 +5579,7 @@ EXEC (@_sql + @_sql1 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6)', report_id =
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Vat Remarks'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -5594,7 +5592,7 @@ EXEC (@_sql + @_sql1 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6)', report_id =
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'vat_remarks' AS [name], 'Vat Remarks' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'vat_remarks' AS [name], 'Vat Remarks' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Settlement Checkout View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
