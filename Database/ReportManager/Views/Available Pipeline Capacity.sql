@@ -62,7 +62,7 @@ SELECT
 	path_name ,
 	hr ,
 	hr + IIF(hr <= 18, 6, -18) [gas_hr],
-	IIF(hr >= 19, DATEADD(DAY, 1, effective_date), effective_date) [gas_hr_term],
+	CAST(IIF(hr >= 19, DATEADD(DAY, 1, effective_date), effective_date) AS DATE) [gas_hr_term],
 	total_volume ,
 	available_volume,
 	@_from_date from_date,
