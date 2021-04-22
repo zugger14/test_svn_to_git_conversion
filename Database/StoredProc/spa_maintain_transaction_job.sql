@@ -2250,10 +2250,12 @@ BEGIN TRY
 			--* CASE WHEN sdh.product_id=4100 THEN CASE WHEN sdd.pay_opposite=''y'' THEN -1 ELSE 1 END ELSE 1 END 
 			--ELSE CASE WHEN buy_sell_flag=''b'' THEN 1 ELSE -1 END END  as numeric(22,16))*ISNULL(rvuc.conversion_factor, 1))   AS calc_volume,
 
-			sum(cast(sddp.total_volume as numeric(26,10))*CASE WHEN buy_sell_flag=''b'' THEN 1 ELSE -1 END
+			sum(cast(sddp.total_volume as numeric(26,10))
+			*CASE WHEN buy_sell_flag=''b'' THEN 1 ELSE -1 END
+			*CASE WHEN buy_sell_flag = ''b'' AND sddp.total_volume < 0 THEN -1 ELSE 1 END
 			*cast(CASE WHEN dpbd.curve_id IS NOT NULL THEN COALESCE((dpbd.del_vol_multiplier/nullif(abs(dpbd.multiplier),0))
 				*case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,dpbd.del_vol_multiplier,1)  
-				--*CASE WHEN sdd.pay_opposite=''y'' THEN -1 ELSE 1 END 
+				*CASE WHEN sdd.pay_opposite=''y'' THEN -1 ELSE 1 END 
 				ELSE 1 END  as numeric(22,16))*ISNULL(rvuc.conversion_factor, 1)) AS calc_volume,
 			ISNULL(dpbd.fin_term_end,sdd.term_end) term_end,COALESCE(h_grp.exp_date,dpbd.fin_expiration_date,sdd.term_end) expiration_date,MAX(dpbd.formula) formula,thdi.source_deal_detail_id,max(thdi.rowid) rowid' 
 			+ @report_hourly_position_breakdown_main + '
