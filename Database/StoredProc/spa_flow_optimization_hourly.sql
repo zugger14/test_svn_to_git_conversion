@@ -163,27 +163,20 @@ declare @flag CHAR(50),
 	
 EXEC dbo.spa_drop_all_temp_table
 
-EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'adangol';
 
---	SELECT @flag='s1'
---,@process_id='D003DE78_9BC4_4A11_9A35_CC0C8EA097EC'
---,@delivery_path='330'
---,@contract_id='8347'
---,@flow_date_from='2027-10-30'
---,@granularity='982'
---,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
---,@from_location='2857'
---,@to_location='2854'
---,@round='4'
---,@dst_case='1'
-
-select @flag='VOL_LIMIT'
-,@from_location='2857'
+select @flag='c'
+,@flow_date_from='2025-10-25'
+,@flow_date_to='2025-10-25'
+,@from_location='2853'
 ,@to_location='2854'
-,@process_id='D003DE78_9BC4_4A11_9A35_CC0C8EA097EC'
-,@flow_date_from='2027-10-30'
-,@path_ids='330'
-,@xml_manual_vol='1'
+,@path_priority='-31400'
+,@opt_objective='38301'
+,@uom='1158'
+,@process_id='0C3BC7B1_3F37_4F7A_AF60_EFF316818F65'
+,@reschedule='0'
+,@granularity='982'
+,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -2448,7 +2441,7 @@ BEGIN
 	OUTER APPLY (
 		SELECT 
 			IIF(hr_values.is_dst = 1
-				, MAX(dst_pos.position) --for dst hour actual position
+				, SUM(dst_pos.position) --for dst hour actual position
 				, SUM(hp.position - ISNULL(dst_pos.position,0))
 			) [position]
 		FROM ' + @hourly_pos_info + ' hp
