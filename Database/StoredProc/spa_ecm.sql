@@ -1173,7 +1173,7 @@ BEGIN
 					FROM ( SELECT  CAST(@xml_file_content AS xml) RawXml) b
 					CROSS APPLY b.RawXml.nodes('/Envelope') x(xml_col)
 
-					IF EXISTS(SELECT 1 FROM #temp_ecm_payload_xml_data  WHERE (ISNULL([state],'-1') IN ('MATCHED', 'PENDING') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING')) AND download_file_name = @dir_file)
+					IF EXISTS(SELECT 1 FROM #temp_ecm_payload_xml_data  WHERE (ISNULL([state],'-1') IN ('MATCHED', 'PENDING', 'PRELIMINARY_MATCHED') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING', 'PRELIMINARY_MATCHED')) AND download_file_name = @dir_file)
 					BEGIN
 						SELECT @success_files += IIF(NULLIF(@success_files,'') IS NULL, @dir_file, ',' + @dir_file)
 		
@@ -1190,7 +1190,7 @@ BEGIN
 			DEALLOCATE db_cursor
 
 			IF EXISTS(SELECT 1 FROM #temp_ecm_payload_xml_data temp
-					WHERE (ISNULL([state],'-1') IN ('MATCHED', 'PENDING') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING')) 
+					WHERE (ISNULL([state],'-1') IN ('MATCHED', 'PENDING', 'PRELIMINARY_MATCHED') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING', 'PRELIMINARY_MATCHED')) 
 					OR (ISNULL([state],'-1') IN ('FAILED') OR ISNULL([broker_state],'-1') IN ('FAILED'))
 			)
 			BEGIN
@@ -1221,7 +1221,7 @@ BEGIN
 					 , reason_code
 					 , reason_text
 				FROM #temp_ecm_payload_xml_data
-				WHERE (ISNULL([state],'-1') IN ('MATCHED', 'PENDING') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING')) 
+				WHERE (ISNULL([state],'-1') IN ('MATCHED', 'PENDING', 'PRELIMINARY_MATCHED') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING', 'PRELIMINARY_MATCHED')) 
 				OR (ISNULL([state],'-1') IN ('FAILED') OR ISNULL([broker_state],'-1') IN ('FAILED'))
 
 				SELECT @process_id = dbo.FNAGETNEWID()
@@ -1238,7 +1238,7 @@ BEGIN
 					  ,[broker_state] ,[transfer_id] ,[transmission_timestamp] ,[conversation_id] ,[sender_organisation] ,[receiver_organisation] ,[download_file_name]
 					  INTO ' + @process_table + ' FROM #temp_ecm_payload_xml_data
 					  WHERE (ISNULL([state],''-1'') IN (''FAILED'') OR ISNULL([broker_state],''-1'') IN (''FAILED''))
-					  OR (ISNULL([state],''-1'') IN (''MATCHED'', ''PENDING'') OR ISNULL([broker_state],''-1'') IN (''MATCHED'', ''PENDING''))
+					  OR (ISNULL([state],''-1'') IN (''MATCHED'', ''PENDING'', ''PRELIMINARY_MATCHED'') OR ISNULL([broker_state],''-1'') IN (''MATCHED'', ''PENDING'', ''PRELIMINARY_MATCHED''))
 					  ')
 
 
@@ -1251,7 +1251,7 @@ BEGIN
 					SELECT @process_id, temp.[state], 'ECM Feedback', 'ECM Feedback', ISNULL([state],[broker_state]), temp.[reason_code]
 					FROM #temp_ecm_payload_xml_data temp
 					WHERE (ISNULL([state],'-1') IN ('FAILED') OR ISNULL([broker_state],'-1') IN ('FAILED'))
-					  OR (ISNULL([state],'-1') IN ('MATCHED', 'PENDING') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING'))
+					  OR (ISNULL([state],'-1') IN ('MATCHED', 'PENDING', 'PRELIMINARY_MATCHED') OR ISNULL([broker_state],'-1') IN ('MATCHED', 'PENDING', 'PRELIMINARY_MATCHED'))
 					SELECT @url = '../../adiha.php.scripts/dev/spa_html.php?__user_name__=' + @user_name + '&spa=exec spa_get_import_process_status ''' + @process_id + ''','''+@user_name+''''
 					SELECT @desc_success = 'ECM Feedback captured with error. <a target="_blank" href="' + @url + '">Click here.</a>'
 				END
@@ -1299,74 +1299,81 @@ BEGIN
 			END
 		END
 		
-		DECLARE @response_deal_id INT, @response_status NVARCHAR(100)
+		DECLARE @response_deal_id VARCHAR(MAX), @response_status NVARCHAR(100)
 		
 		IF ISNULL(NULLIF(@result, ''), '0') <> '0'
 		BEGIN
-			DECLARE c CURSOR FOR		
-				SELECT DISTINCT se.source_deal_header_id, r.state
-				FROM source_ecm se		   
-				INNER JOIN #temp_ecm_payload_xml_data doc ON doc.document_id = se.document_id
-				CROSS APPLY (
-					SELECT TOP 1 *
-					FROM ecm_response_log erl
-					WHERE erl.document_id = se.document_id
-						AND erl.document_version = se.document_version
-					ORDER BY erl.create_ts DESC
-				) r
-			   WHERE r.state IN ('Matched', 'PENDING')
-	   		OPEN c
-			FETCH NEXT FROM c INTO @response_deal_id, @response_status
-			WHILE @@FETCH_STATUS = 0
-			BEGIN
-				IF OBJECT_ID('tempdb..#temp_update_confirm_status') IS NOT NULL
+			
+			IF OBJECT_ID('tempdb..#temp_deal_status') IS NOT NULL
+					DROP TABLE #temp_deal_status
+			SELECT DISTINCT se.source_deal_header_id, r.state [response_status]
+			INTO #temp_deal_status
+			FROM source_ecm se		   
+			INNER JOIN #temp_ecm_payload_xml_data doc ON doc.document_id = se.document_id
+			CROSS APPLY (
+				SELECT MAX([time_stamp]) [time_stamp]
+				FROM #temp_ecm_payload_xml_data
+				WHERE document_id = se.document_id
+					AND document_version = se.document_version
+					AND ISNULL([state], '-1') IN ('Matched', 'PENDING')
+			) temp
+			CROSS APPLY (
+				SELECT MIN([state]) [state]
+				FROM #temp_ecm_payload_xml_data
+				WHERE document_id = se.document_id
+					AND document_version = se.document_version
+					AND [time_stamp] = temp.[time_stamp]
+					AND ISNULL([state], '-1') IN ('Matched', 'PENDING')
+			) r
+
+			IF OBJECT_ID('tempdb..#temp_update_confirm_status') IS NOT NULL
 					DROP TABLE #temp_update_confirm_status
 
-				CREATE TABLE #temp_update_confirm_status (
-					id VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-					deal_id INT,
-					as_of_date DATETIME,
-					confirm_status INT,
-					comment1 VARCHAR(5000) COLLATE DATABASE_DEFAULT ,
-					comment2 VARCHAR(5000) COLLATE DATABASE_DEFAULT ,
-					confirm_id VARCHAR(200) COLLATE DATABASE_DEFAULT 
-				)
+			CREATE TABLE #temp_update_confirm_status (
+				id VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+				deal_id INT,
+				as_of_date DATETIME,
+				confirm_status INT,
+				comment1 VARCHAR(5000) COLLATE DATABASE_DEFAULT ,
+				comment2 VARCHAR(5000) COLLATE DATABASE_DEFAULT ,
+				confirm_id VARCHAR(200) COLLATE DATABASE_DEFAULT 
+			)
 
-				INSERT INTO #temp_update_confirm_status (id, deal_id, as_of_date, confirm_status, comment1, comment2, confirm_id)
-				SELECT '', CAST(@response_deal_id AS VARCHAR(10)), CONVERT(VARCHAR(10), @create_ts, 120), IIF(@response_status = 'Matched',17202,17215), '', '', ''
+			INSERT INTO #temp_update_confirm_status (id, deal_id, as_of_date, confirm_status, comment1, comment2, confirm_id)
+			SELECT '', CAST(source_deal_header_id AS VARCHAR(10)), CONVERT(VARCHAR(10), @create_ts, 120), IIF(response_status = 'Matched',17202,17215), '', '', ''
+			FROM #temp_deal_status
 				
-				INSERT INTO confirm_status (source_deal_header_id, type, as_of_date)
-				SELECT t.deal_id, t.confirm_status, t.as_of_date
-				FROM #temp_update_confirm_status t
+			INSERT INTO confirm_status (source_deal_header_id, type, as_of_date)
+			SELECT t.deal_id, t.confirm_status, t.as_of_date
+			FROM #temp_update_confirm_status t
 
-				INSERT INTO confirm_status_recent (source_deal_header_id, type, as_of_date)
-				SELECT t.deal_id, t.confirm_status, t.as_of_date
-				FROM #temp_update_confirm_status t 
-				LEFT JOIN confirm_status_recent csr ON csr.source_deal_header_id = t.deal_id
-				WHERE csr.source_deal_header_id IS NULL
+			INSERT INTO confirm_status_recent (source_deal_header_id, type, as_of_date)
+			SELECT t.deal_id, t.confirm_status, t.as_of_date
+			FROM #temp_update_confirm_status t 
+			LEFT JOIN confirm_status_recent csr ON csr.source_deal_header_id = t.deal_id
+			WHERE csr.source_deal_header_id IS NULL
 
-				UPDATE csr
-				SET [type] = t.confirm_status
-				FROM #temp_update_confirm_status t 
-				LEFT JOIN confirm_status_recent csr ON csr.source_deal_header_id = t.deal_id
-				WHERE csr.source_deal_header_id IS NOT NULL
+			UPDATE csr
+			SET [type] = t.confirm_status
+			FROM #temp_update_confirm_status t 
+			LEFT JOIN confirm_status_recent csr ON csr.source_deal_header_id = t.deal_id
+			WHERE csr.source_deal_header_id IS NOT NULL
 				
-				UPDATE source_deal_header
-				SET confirm_status_type = t.confirm_status,
-					update_ts = GETDATE(),
-					update_user = dbo.FNADBUSer()
-				FROM source_deal_header sdh
-				INNER JOIN (
-					SELECT TOP(1) t.id, t.deal_id, t.confirm_status FROM #temp_update_confirm_status t ORDER BY CAST(t.id AS INT)  DESC
-				) t ON t.deal_id = sdh.source_deal_header_id
+			UPDATE source_deal_header
+			SET confirm_status_type = t.confirm_status,
+				update_ts = GETDATE(),
+				update_user = dbo.FNADBUSer()
+			FROM #temp_update_confirm_status t
+			INNER JOIN source_deal_header sdh
+				ON sdh.source_deal_header_id = t.deal_id
+			
 				
-				
-				EXEC spa_insert_update_audit 'u', @response_deal_id				
-				
-				FETCH NEXT FROM c INTO @response_deal_id, @response_status
-			END
-			CLOSE c
-			DEALLOCATE c			
+			SELECT @response_deal_id = STUFF((SELECT DISTINCT ',' +  CAST(source_deal_header_id AS NVARCHAR(20))
+											  FROM #temp_deal_status
+									   FOR XML PATH('')), 1, 1, '') 	
+			EXEC spa_insert_update_audit 'u', @response_deal_id
+
+			
 		END	   
 	END TRY
 	BEGIN CATCH
