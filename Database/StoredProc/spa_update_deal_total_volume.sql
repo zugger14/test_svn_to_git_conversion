@@ -7,7 +7,6 @@ GO
 /****** Object:  StoredProcedure [dbo].[spa_update_deal_total_volume]    Script Date: 01/30/2012 02:20:37 ******/
 SET ANSI_NULLS ON
 GO
-
 SET QUOTED_IDENTIFIER ON
 GO
 
@@ -347,12 +346,12 @@ BEGIN
 		SELECT @report_page_tablix_id = report_page_tablix_id, @paramset_id = report_paramset_id
 		FROM report_page_tablix  rpt 
 		INNER JOIN report_paramset rp ON rpt.page_id = rp.page_id
-		WHERE rpt.name  =  'Position Process Log_tablix'
+		WHERE rpt.name  =  'Position calc status report test_tablix'
 		
-		set @desc = '	&report_filter=login_user_id=' + @user_login_id + ',process_status_id= NULL,source_deal_header_id= NULL,as_of_date= NULL,from_hhmm=NULL,to_hhmm=NULL'
+		set @desc = '	&report_filter=source_deal_header_id=NULL,as_of_date_from=NULL,as_of_date_to=NULL,login_user_id=' + @user_login_id + ',process_status_id=NULL,from_hhmm=NULL,to_hhmm=NULL'
 										+ '&is_refresh=0'
-										+ '&items_combined=ITEM_PositionProcessLog_tablix:' + @report_page_tablix_id + '&paramset_id=' + @paramset_id + '&export_type=HTML4.0'
-										+ '&__user_name__=' + @user_login_id + '&close_progress=1'
+										+ '&items_combined=ITEM_Positioncalcstatusreporttest_tablix:' + @report_page_tablix_id + '&paramset_id=' + @paramset_id + '&export_type=HTML4.0'
+										+ '&__user_name__=' + @user_login_id + '&close_progress=0'
 		DECLARE @description VARCHAR(MAX)			
 
 		SELECT @description = '<a target="_blank" href="' + @desc + '</a>'   
@@ -361,7 +360,7 @@ BEGIN
 									@flag = ''i'',
 									@user_login_id = ''' + @user_login_id + ''',
 									@source=''Position Process Log'',
-									@description =''Position calculation has started.<a href="javascript:void();" onclick="TRMHyperlink(10202210, ''''' + @desc + ''''', ''''Position Calculation Status Report_Position Calculation Status Report'''')" >Click</a> here to view the status. '',
+									@description =''Position calculation has started.<a href="javascript:void();" onclick="TRMHyperlink(10202210, ''''' + @desc + ''''', ''''Position Calculation Status Report_Position Calculation Status Report'''')" > Click Here </a> to view the status. '',
 									@type = ''s''
 						'
 		
