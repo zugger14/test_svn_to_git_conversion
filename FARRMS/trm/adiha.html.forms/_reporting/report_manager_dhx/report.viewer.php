@@ -1078,7 +1078,7 @@
                 //$.post( $(this).val(), { sec_filters_info : "<?php echo $sec_filters_info;?>" } );
                 view_report_form = document.createElement('form');
                 view_report_form.setAttribute('method', 'POST');
-                view_report_form.setAttribute('action', url+'&close_progress=1&rs:execution_id='+execution_id);
+                view_report_form.setAttribute('action', url+'&close_progress='+close_progress+'&rs:execution_id='+execution_id);
                 view_report_input = document.createElement('input');
                 view_report_input.setAttribute('name', 'sec_filters_info');
                 view_report_input.setAttribute('type', 'hidden');
