@@ -173,7 +173,7 @@ select @flag='c'
 ,@path_priority='-31400'
 ,@opt_objective='38301'
 ,@uom='1158'
-,@process_id='0C3BC7B1_3F37_4F7A_AF60_EFF316818F65'
+,@process_id='3970A6B5_34DB_4BB0_B918_ED5573CFAB0F'
 ,@reschedule='0'
 ,@granularity='982'
 ,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
@@ -2425,7 +2425,7 @@ BEGIN
 	OUTER APPLY (
 		SELECT 
 			IIF(hr_values.is_dst = 1
-				, MAX(dst_pos.position) --for dst hour actual position
+				, SUM(dst_pos.position) --for dst hour actual position
 				, SUM(hp.position - ISNULL(dst_pos.position,0))
 			) [position]
 		FROM ' + @hourly_pos_info + ' hp
@@ -2457,6 +2457,8 @@ BEGIN
 	'
 	
 	EXEC(@sql)
+
+	--EXEC('select * from ' + @contractwise_detail_mdq_hourly)
 	--PRINT(@sql)
 	--RETURN
 
@@ -2704,7 +2706,7 @@ BEGIN
 		, t.to_rank
 		, t.to_loc_id
 	'
-	print(@sql)
+	--print(@sql)
 	EXEC(@sql)
 	--print '@flag = ''c'', final: ' + convert(varchar(50),getdate() ,21)
 END
@@ -3401,8 +3403,8 @@ EXEC(@sql)
 			
 				-- FOR SINGLE PATH (HOURLY TABLE)
 				UPDATE c
-					SET c.received = g.received, 
-						c.delivered = g.delivered
+					SET c.received = ISNULL(g.received, 0), 
+						c.delivered = ISNULL(g.delivered, 0)
 				FROM ' + @contractwise_detail_mdq_hourly + ' c
 				INNER JOIN ' + @contractwise_detail_mdq_group + ' g ON g.box_id = c.box_id
 					AND g.path_id = c.path_id
