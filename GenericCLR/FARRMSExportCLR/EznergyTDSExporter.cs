@@ -360,7 +360,7 @@ namespace FARRMSExportCLR
                                 timeSerieId = Convert.ToInt64(dtResult.Rows[i]["time series id"]),
                                 startDate = dtResult.Rows[i]["term start"].ToString(),
                                 endDate = dtResult.Rows[i]["term end"].ToString(),
-                                value = Math.Round(Convert.ToDecimal(dtResult.Rows[i]["value"]), 2)
+                                value = Math.Round(Convert.ToDecimal(dtResult.Rows[i]["value"]), 3)
                             });
                         }
                     }
