@@ -14,8 +14,7 @@ GO
 CREATE PROC [dbo].[spa_get_schedule_job]
 	@flag VARCHAR(1),
 	@job_id VARCHAR(2000) = NULL,
-	@enable NCHAR(1) = NULL,
-	@stop NCHAR(1) = NULL
+	@enable NCHAR(1) = NULL
 AS
 
 SET NOCOUNT ON
@@ -30,7 +29,7 @@ SET @enable = 'y'
 ---------------------------------------------------------*/
 
 DECLARE @sql_string VARCHAR(MAX) = ''
-DECLARE @user_name VARCHAR(200) = dbo.FNADBUser()
+DECLARE @db_user VARCHAR(200) = dbo.FNADBUser()
 DECLARE @error_no INT,
 		@error_msg NVARCHAR(1000)
 IF @flag='s'
@@ -75,16 +74,18 @@ BEGIN
 							 WHEN 1 THEN 'Succeeded'
 							 WHEN 2 THEN 'Retry'
 							 WHEN 3 THEN 'Canceled'
-							 ELSE CASE WHEN h.run_status IS NULL AND h.next_scheduled_run_date > '' + CAST(GETDATE() AS VARCHAR) + '' THEN 'Job in queue'
-								  ELSE 'In progress'
+							 ELSE CASE 
+									WHEN h.run_status IS NULL AND h.next_scheduled_run_date > '' + CAST(GETDATE() AS VARCHAR) + '' THEN 'Job in queue'
+									WHEN h.run_status IS NULL AND h.start_execution_date IS NOT NULL AND h.stop_execution_date IS NULL THEN 'In progress'
+									ELSE 'Unknown'
 						     END
 			END [run_status],
 			dbo.FNADateTimeFormat(a.date_modified, 1) [date_modified],
 			i.user_login_id [user_name],
 			i.[description] [description],
-			v.job_id [Job ID],
-			CASE sj.enabled WHEN 1 THEN 'y' ELSE 'n' END [is_enabled],
-			bpn.batch_type [Batch Type]
+			v.job_id [job_id],
+			CASE sj.enabled WHEN 1 THEN 'Yes' ELSE 'No' END [is_enabled],
+			bpn.batch_type [batch_type]
 
 	FROM msdb.dbo.sysjobs_view v 
 	INNER JOIN #tmp_job h ON v.job_id = h.job_id
@@ -102,11 +103,13 @@ BEGIN
 	) a
 	WHERE 1 = 1
 		AND jp.database_name = DB_NAME()
-		AND	((h.next_scheduled_run_date IS NOT NULL OR h.run_status IN (0, 2, 4)) 
+		AND	((h.next_scheduled_run_date IS NOT NULL OR h.run_status IN (0, 2, 3, 4)) 
 			OR (h.next_scheduled_run_date IS NULL AND h.start_execution_date IS NOT NULL AND h.stop_execution_date IS NULL))
 
 	ORDER BY [date_modified]
 END
+
+--Delete job
 ELSE IF @flag = 'd'
 BEGIN
 	BEGIN TRY
@@ -123,6 +126,8 @@ BEGIN
 		EXEC spa_ErrorHandler @error_no, 'Schedule Job', 'spa_get_schedule_job', 'DB Error', @error_msg, ''
 	END CATCH
 END
+
+--Enable / Disable job
 ELSE IF @flag = 'e'
 BEGIN 
 	BEGIN TRY
@@ -158,6 +163,7 @@ BEGIN
 	END CATCH
 END
 
+--Stop job
 ELSE IF @flag = 'f'
 BEGIN
 	BEGIN TRY
@@ -166,7 +172,7 @@ BEGIN
 			FROM dbo.SplitCommaSeperatedValues(@job_id)
 		END
 		EXEC (@sql_string)
-		EXEC spa_ErrorHandler 0, 'Schedule Job', 'spa_get_schedule_job', 'Success', 'Scheduled Job successfully stopped.', ''
+		EXEC spa_ErrorHandler 0, 'Schedule Job', 'spa_get_schedule_job', 'Success', 'Job stopped successfully.', ''
 	END TRY
 	BEGIN CATCH 
 		SELECT @error_msg = 'Failed to stop: ' 
@@ -178,4 +184,31 @@ BEGIN
 	END CATCH
 END
 
+--Start job
+ELSE IF @flag = 'g'
+BEGIN
+	BEGIN TRY
+		BEGIN
+			SELECT @sql_string = @sql_string + 'EXEC msdb.dbo.sp_start_job @job_id=''' + item + '''; '
+			FROM dbo.SplitCommaSeperatedValues(@job_id)
+		END
+		EXEC (@sql_string)
+		EXEC spa_ErrorHandler 0, 'Schedule Job', 'spa_get_schedule_job', 'Success', 'Job started successfully.', ''
+	END TRY
+	BEGIN CATCH 
+		SELECT @error_msg = 'Failed to start: ' 
+			
+		SELECT @error_no = ERROR_NUMBER(),
+		       @error_msg = @error_msg + ERROR_MESSAGE()
+		
+		EXEC spa_ErrorHandler @error_no, 'Schedule Job', 'spa_get_schedule_job', 'DB Error', @error_msg, ''
+	END CATCH
+END
+
+--Check if user is in admin group
+IF @flag = 'h'
+BEGIN
+	select dbo.FNAIsUserOnAdminGroup(@db_user, 0);
+END
 GO
+
