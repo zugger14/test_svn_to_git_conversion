@@ -62,10 +62,10 @@
             $toolbar_json = '[
                 {id:"refresh", img:"refresh.gif", text:"Refresh", title:"Refresh"},
                 {id: "process", text: "Process", img:"process.gif", items: [
-                    {id:"Run", img:"run.gif", imgdis:"run_dis.gif", text:"Run", title:"Run", disabled: true},
-                    {id:"enable", img:"tick.gif", imgdis:"tick_dis.gif", text:"Enable", title:"Enable", disabled: true},
-                    {id:"disable", img:"close.gif", imgdis:"close_dis.gif", text:"Disable", title:"Disable", disabled: true},
-                    {id:"stop", img:"stop.gif", imgdis:"stop_dis.gif", text:"Stop", title:"Stop", disabled: true}
+                    {id:"Run", img:"run.png", imgdis:"run_dis.png", text:"Run", title:"Run", disabled: true},
+                    {id:"enable", img:"enable.png", imgdis:"enable_dis.png", text:"Enable", title:"Enable", disabled: true},
+                    {id:"disable", img:"disable.png", imgdis:"disable_dis.png", text:"Disable", title:"Disable", disabled: true},
+                    {id:"stop", img:"stop.png", imgdis:"stop_dis.png", text:"Stop", title:"Stop", disabled: true}
                 ]},    
                 {id:"t1", text:"Edit", img:"edit.gif", items:[
                     {id:"Update", img:"edit.gif", imgdis:"edit_dis.gif", text:"Update", title:"Update", disabled: true},
