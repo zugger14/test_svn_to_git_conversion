@@ -156,8 +156,6 @@ SELECT si_b.stmt_invoice_id , a.[stmt_checkout_id], sdd.source_deal_header_id FR
 		LEFT JOIN  source_deal_detail sdd on sdd.source_deal_detail_id = stck.source_deal_detail_id
 		INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = cv.stmt_invoice_id AND ISNULL(si_b.is_voided,''n'') = ISNULL(si.is_voided,''n'')
         WHERE ISNULL(si_b.is_backing_sheet,''n'') = ''y'' and si.stmt_invoice_id = @_stmt_invoice_id
-
-
 IF NOT EXISTS(select 1 from #stmt_cross_invoice)
 BEGIN
 SET @_sql = ''
@@ -175,7 +173,7 @@ SELECT
 	MAX(sco.contract_id) [contract_id],
 	MAX(charge_type.description) AS [charge_type],
 	sid.invoice_line_item_id [charge_type_id],
-	CAST(dbo.FNARemoveTrailingZeroes(ROUND(AVG(ISNULL(sco.settlement_volume, 0)), 2)) AS DECIMAL(10,2)) * max(svd_m.multiplier)  [volume],
+	CAST(dbo.FNARemoveTrailingZeroes(AVG(ISNULL(sco.settlement_volume, 0))) AS NUMERIC(38,20)) * max(svd_m.multiplier)  [volume],
 	MAX(su.uom_name) [uom],
 	AVG(sdd.deal_volume) * max(svd_m.multiplier) [deal_volume],
 	AVG(sco.settlement_amount) * max(svd_m.multiplier) [settlement_amount],
@@ -570,7 +568,7 @@ SELECT
 	MAX(sco.contract_id) [contract_id],
 	MAX(charge_type.description) AS [charge_type],
 	sid.invoice_line_item_id [charge_type_id],
-	CAST(dbo.FNARemoveTrailingZeroes(ROUND(AVG(ISNULL(sco.settlement_volume, 0)), 2)) AS DECIMAL(10,2)) * max(svd_m.multiplier)  [volume],
+	CAST(dbo.FNARemoveTrailingZeroes(AVG(ISNULL(sco.settlement_volume, 0))) AS NUMERIC(38,20)) * max(svd_m.multiplier)  [volume],
 	MAX(su.uom_name) [uom],
 	AVG(sdd.deal_volume) * max(svd_m.multiplier) [deal_volume],
 	AVG(sco.settlement_amount) * max(svd_m.multiplier) [settlement_amount],
@@ -1253,7 +1251,6 @@ else NULL end vat_remarks,
 counterparty_external_value,	secondary_cc_address1,	secondary_cc_address2,	secondary_cc_city,	Accrual_Final_Reversal,	update_ts_from,	update_ts_to,	create_ts_from,	create_ts_to,	primary_counterparty_country,	primary_counterparty_bank_currency_id,	primary_counterparty_bank_currency,	primary_counterparty_bank_currency_name,	total_volume,	net_total, (Vat) as vat, case when settlement_amount <0 THEN -1* (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) else 1 * (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) end gross_total,	void_status,	abs(commodity_energy_tax_value) commodity_energy_tax_value
 --[__batch_report__]   
 FROM  #tempt_last_finals''
-
 EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_sql7)', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106500' 
@@ -6069,4 +6066,5 @@ EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_
 	END CATCH
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
-		DROP TABLE #data_source_column
+		DROP TABLE #data_source_column	
+	
