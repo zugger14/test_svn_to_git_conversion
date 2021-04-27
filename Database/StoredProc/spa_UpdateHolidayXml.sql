@@ -200,23 +200,6 @@ BEGIN TRY
 		IF (@static_data_value_id = '')
 			SET @static_data_value_id = SCOPE_IDENTITY()
 
-		
-		IF( SELECT top 1 COUNT(hol_group_id)
-			FROM #ztbl_xmlvalue
-			GROUP BY [hol_group_value_id], [hol_date], [exp_date], [hol_date_to]
-			HAVING COUNT(hol_group_id) > 1
-		) > 1
-		BEGIN 
-			EXEC spa_ErrorHandler -1
-					, 'Source Deal Detail'
-					, 'spa_UpdateHolidayXml'
-					, 'DB Error'
-					, 'Dupliclate value in Date From, Date To and Expiration Calendar.'
-					, 'Failed Inserting Record'
-			ROLLBACK TRAN
-			RETURN;
-		END
-
 		MERGE holiday_group AS hb
 		USING (
 			SELECT [hol_group_ID]
