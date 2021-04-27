@@ -163,20 +163,19 @@ declare @flag CHAR(50),
 	
 EXEC dbo.spa_drop_all_temp_table
 
-EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'adangol';
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
-select @flag='c'
-,@flow_date_from='2025-10-25'
-,@flow_date_to='2025-10-25'
-,@from_location='2853'
-,@to_location='2854'
-,@path_priority='-31400'
-,@opt_objective='38301'
-,@uom='1158'
-,@process_id='3970A6B5_34DB_4BB0_B918_ED5573CFAB0F'
-,@reschedule='0'
+select @flag='s1'
+,@process_id='9243CCDB_58CD_46B4_8C46_F789504DD532'
+,@delivery_path='330'
+,@contract_id='8347'
+,@flow_date_from='2021-03-01'
 ,@granularity='982'
 ,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
+,@from_location='2857'
+,@to_location='2854'
+,@round='4'
+,@dst_case='0'
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -4034,7 +4033,7 @@ BEGIN
 		DECLARE @hour_column_headers VARCHAR(500)
 			,@hour_column_ids VARCHAR(500)
 			,@hour_count TINYINT
-			,@hour_column_types VARCHAR(100)
+			,@hour_column_types VARCHAR(500)
 			,@hour_column_widths VARCHAR(100)
 
 		DROP TABLE IF EXISTS #function_data
@@ -4145,8 +4144,8 @@ BEGIN
 		, v.item [volume]
 		, CASE v.item 
 			WHEN ''PMDQ/PRMDQ'' 
-				THEN  CAST(dbo.FNARemoveTrailingZero(CAST(cd.path_mdq AS NUMERIC(38,20))) AS VARCHAR(100)) + ''/'' 
-						+ CAST(dbo.FNARemoveTrailingZero(CAST(
+				THEN  dbo.FNANumberFormat(cd.path_mdq, ''v'') + ''/'' 
+						+ dbo.FNANumberFormat(
 							(
 								cd.path_ormdq 
 								-
@@ -4156,8 +4155,7 @@ BEGIN
 									, 0
 								)
 							)
-
-							AS NUMERIC(38,20))) AS VARCHAR(100)) 
+							, ''v'') 
 			WHEN ''Fuel'' THEN CAST(cd.loss_factor AS VARCHAR(100))
 			WHEN ''Rec'' THEN	CAST(
 									CAST(

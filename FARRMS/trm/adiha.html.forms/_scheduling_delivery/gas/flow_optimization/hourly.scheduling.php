@@ -569,7 +569,7 @@ echo $sch_obj->close_layout();
 					'" is_dst="' + is_dst +
                     '" received="' + cellObj.getValue() +
                     '" delivered="' + subgrid.cells2(del_row_index, cid).getValue() +
-                    '" path_rmdq="' + subgrid.cells2(0, cid).getValue().split('/')[1] +
+                    '" path_rmdq="' + getNumberFormat(subgrid.cells2(0, cid).getValue().split('/')[1], '', 1) +
                     '" storage_asset_id="' + sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('storage_contract')).getValue() +
                     '"></PSRecordset>';
             }
@@ -924,7 +924,7 @@ echo $sch_obj->close_layout();
 
             var new_path_rmdq = parseFloat(hourly_info[0]['path_ormdq']) - parseFloat(new_del_volume);
             //path_mdq_display = path_mdq_display[0] + '/' + new_path_rmdq.toString();
-            subgrid.cells(subgrid.getRowId(0), cInd).setValue(path_mdq_display[0] + '/' + new_path_rmdq.toString());
+            subgrid.cells(subgrid.getRowId(0), cInd).setValue(path_mdq_display[0] + '/' + getNumberFormat(new_path_rmdq, 'v'));
             
             if(APPLY_VALIDATION_MESSAGE) {
                 //Check for path MDQ
@@ -991,7 +991,7 @@ echo $sch_obj->close_layout();
 
            	var new_path_rmdq = parseFloat(hourly_info[0]['path_ormdq']) - nValue;
             //path_mdq_display = path_mdq_display[0] + '/' + new_path_rmdq.toString();
-            subgrid.cells(subgrid.getRowId(0), cInd).setValue(path_mdq_display[0] + '/' + new_path_rmdq.toString());
+            subgrid.cells(subgrid.getRowId(0), cInd).setValue(path_mdq_display[0] + '/' + getNumberFormat(new_path_rmdq, 'v'));
             
             if(APPLY_VALIDATION_MESSAGE) {
                 //Check for path MDQ
@@ -1108,14 +1108,15 @@ echo $sch_obj->close_layout();
         var total_column_count = subgrid.getColumnsNum();
         var total_row_count = subgrid.getRowsNum();
 
-        var fxi_set_cell_type = function(rid) {
+        var fxi_set_cell_type = function(rid, readonly) {
             for (i = col_index_volume + 1; i < total_column_count; i++) {
-                subgrid.setCellExcellType(rid, i, "ed");
+                subgrid.setCellExcellType(rid, i, ((readonly) ? "ro_v" : "ed_v"));
             }
         }
 
         if (total_row_count == 4) { //for single path case
             fxi_set_cell_type(rec_row_index);
+            fxi_set_cell_type(fuel_row_index, true);
             fxi_set_cell_type(del_row_index);
         } else if (total_row_count > 4) { //for group path case
             subgrid.forEachRow(function(rid) {
