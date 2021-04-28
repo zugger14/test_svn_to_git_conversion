@@ -70,7 +70,8 @@ SET NOCOUNT ON
 	declare 
 	@sub_entity_id VARCHAR(MAX) = NULL, 
 	@strategy_entity_id VARCHAR(MAX) = NULL, 
-	@book_entity_id VARCHAR(MAX) = NULL, 
+	@book_entity_id VARCHAR(MAX) = NULL,
+	@sub_book_id VARCHAR(MAX) = NULL,
 	@commodity_id INT = NULL,
 	@curve_id INT = NULL,
 	@contract_id INT = NULL,
@@ -84,6 +85,7 @@ SET NOCOUNT ON
 	@drill_contract_id INT = NULL, ---i=injection,w=withdraw
 	@deal_type VARCHAR(MAX) = NULL,
 	@call_from VARCHAR(50) = NULL,
+	@round TINYINT = 18,
 	@batch_process_id VARCHAR(250) = NULL,
 	@batch_report_param VARCHAR(500) = NULL, 
 	@enable_paging INT = 0,		--'1' = enable, '0' = disable
@@ -91,9 +93,7 @@ SET NOCOUNT ON
 	@page_no INT = NULL,
 	@is_pivot char = NULL,
 	@volume_conversion INT = NULL,
-	@counterparty_id VARCHAR(5000) = NULL,
-	@sub_book_id VARCHAR(MAX) = NULL,
-	@round TINYINT = 18
+	@counterparty_id VARCHAR(5000) = NULL
 
 EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
@@ -103,8 +103,8 @@ EXEC dbo.spa_drop_all_temp_table
 	--select  @location_id = '2887', @term_start = '2010-01-01 00:00:00.000',@term_end = '2010-01-01 00:00:00.000', @uom = '1158', @volume_conversion = '1158', @call_from='optimization'
 	--EXEC spa_storage_position_report @location_id = '2852,2887,2852,2887', @term_start = '2010-01-01 00:00:00.000',@term_end = '2010-01-01 00:00:00.000', @uom = '1158', @volume_conversion = '1158', @call_from='optimization'
 
-	select @call_from='optimization',@commodity_id='-1',@location_id='2887',@term_start='2021-01-01',@term_end='2021-01-01'
-
+	--select @call_from='optimization',@sub_entity_id='46',@strategy_entity_id='48',@book_entity_id='167',@sub_book_id='120',@commodity_id='-1',@term_start='2033-06-01',@term_end='2033-09-30'
+	select @sub_book_id='120',@commodity_id=-1,@term_start='2033-06-01',@term_end='2033-09-30',@drill_location=2887,@drill_term='2033-07-01',@drill_contract_id=8358
 	--term link report
 	--select @commodity_id='-1', @location_id='2887', @term_start='2010-01-01', @term_end='2010-01-01', @drill_location=2887, @drill_term='2010-01-01', @drill_contract_id=8358, @round=18
 		
@@ -163,7 +163,6 @@ SET @font_tag_start = '<font color=#0000ff><b><i>'
 SET @font_tag_end = '</b></i></font>'
 
 SET @round = ISNULL(@round, 18)
-DECLARE @format_round VARCHAR(5) = 'N' + CAST(@round AS VARCHAR(2))
 
 
 --DECLARE @INTernal_deal_subtype_value_id VARCHAR(30)
@@ -953,15 +952,15 @@ BEGIN
 				[dbo].[FNAHyperHTML](@spa + CAST(MAX(a.location_id) AS VARCHAR(30)) + ','''
 					+ CASE WHEN a.[Date] = '1900-01-01' THEN '<' + CONVERT(VARCHAR(10), @term_start, 120) ELSE CONVERT(VARCHAR(10), a.[Date], 120) END
 					+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL') + ',''i'',NULL,' + CAST(@round AS VARCHAR(10)) + '&rnd=' + CAST(@round AS VARCHAR(10)),
-					FORMAT(SUM(a.[Injection]), @format_round) , NULL)  
+					dbo.FNANumberFormat(SUM(a.[Injection]), 'v') , NULL)  
 				  [Injection],
 				SUM(uv.Injection) InjectionAmount,
 				[dbo].[FNAHyperHTML](@spa + CAST(MAX(a.location_id) AS VARCHAR(30)) + ','''
 					+ CASE WHEN a.[Date] = '1900-01-01' THEN '<' + CONVERT(VARCHAR(10), @term_start, 120) ELSE CONVERT(VARCHAR(10), a.[Date], 120) END
 					+ ''',''NULL'',' + ISNULL(CAST(MAX(a.contract_id) AS VARCHAR(30)), 'NULL') + ',''w'',NULL,' + CAST(@round AS VARCHAR(10)) + '&rnd=' + CAST(@round AS VARCHAR(10)),
-					FORMAT(SUM(a.[Withdrawal]), @format_round) , NULL) [Withdrawal],
-				FORMAT(SUM(uv.Withdrawal), @format_round) [WithdrawalAmount],
-				FORMAT(AVG(uv.fixed_price), @format_round) WACOG,--ROUND(SUM(wa.wacog), 4)  WACOG,
+					dbo.FNANumberFormat(SUM(a.[Withdrawal]), 'v') , NULL) [Withdrawal],
+				SUM(uv.Withdrawal) [WithdrawalAmount],
+				AVG(uv.fixed_price) WACOG,--ROUND(SUM(wa.wacog), 4)  WACOG,
 				--SUM(a.[Daily Average Balance]) [Balance],
 				--CASE WHEN SUM(ISNULL(deal_volume, 0)) = 0 THEN NULL ELSE SUM(ISNULL(deal_volume, 0)) END [Balance],
 				ABS(SUM(a.[Injection])) - ABS(SUM(a.[Withdrawal])) [Balance],
@@ -1006,12 +1005,12 @@ BEGIN
 							  [Contract],
 							  Term, 
 							  [Injection] [Inj Vol],
-							  FORMAT([InjectionAmount], ''' + @format_round + ''') [Inj Amt],
+							  dbo.FNANumberFormat([InjectionAmount], ''a'') [Inj Amt],
 							  [Withdrawal] [With Vol],
-							  FORMAT([WithdrawalAmount], ''' + @format_round + ''') [With Amt],
-							  FORMAT([WACOG], ''' + @format_round + ''') [WACOG],
+							  dbo.FNANumberFormat([WithdrawalAmount], ''a'') [With Amt],
+							  dbo.FNANumberFormat([WACOG], ''p'') [WACOG],
 							  b.[Balance] [Daily Balance], 
-							  FORMAT(b.[BalanceAmount], ''' + @format_round + ''') [Inventory Value],
+							  dbo.FNANumberFormat(b.[BalanceAmount], ''a'') [Inventory Value],
 							  [UOM]
 							  '
 			END
