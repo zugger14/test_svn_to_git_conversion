@@ -1015,7 +1015,7 @@
     //FORMAT NUMBER DATA TO EN-US NUMBER FORMAT
     function format_number_to_comma_separated(num) {
         // return parseInt(num).toLocaleString('en-US').split('.', 1);
-        return (parseInt(num).toLocaleString('en-US').split('.', 1)[0]).replace(',',global_group_separator);
+        return (parseInt(num).toLocaleString('en-US').split('.', 1)[0]).replaceAll(',',global_group_separator);
     }
     //## FILL UP GRID WITH CORRESPONDING BEGINNING INVENTORY
     
