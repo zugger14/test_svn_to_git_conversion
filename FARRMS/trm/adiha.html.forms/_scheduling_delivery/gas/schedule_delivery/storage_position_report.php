@@ -182,6 +182,9 @@
                     }
                 });                                   
             });
+
+            //passing round parameter to sp on basis of global rounding value, as this round value will propagate to storage position level1 and level2 drill reports.
+            param_list.push("@round='" + global_volume_rounding + "'"); 
             
             form_obj.forEachItem(function(name) {
                 var item_type = form_obj.getItemType(name);

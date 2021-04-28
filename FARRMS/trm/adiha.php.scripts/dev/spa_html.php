@@ -768,7 +768,7 @@ $build_exec_code = [];
 				} elseif (strpos($sql, "spa_storage_position_report") != false) {
                     $report_name = "spa_storage_position_report ";
 					//if call from optimization (level 0) set format as number with rounding parmeterized, else drill reports (level 1) will have link on inj/with vol column hence column format set to "N" [Note: if report column data is link which is text, "$.N" will give issue, hence use "N"]
-                    if ($arrayR[18] == "'Optimization'") {
+                    if (strtolower($arrayR[18]) == "'optimization'") {
 						$col_frmat_inj_with_vol_col = "$." . str_replace("'", "", $round_no);
 					} else {
 						$col_frmat_inj_with_vol_col = "N";
