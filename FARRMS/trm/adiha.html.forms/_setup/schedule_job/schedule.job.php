@@ -172,9 +172,17 @@
                     if (has_rights_scheduled_job_del) view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
                     else view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
 
-                    if (has_rights_scheduled_job_run && run_status != 'in progress') view_scheduled_job.jobs_toolbar.showItem('run');
-                    else view_scheduled_job.jobs_toolbar.hideItem('run');
-                    view_scheduled_job.jobs_toolbar.showItem('run_as_copy');
+                    if (has_rights_scheduled_job_run) {
+                        if(run_status != 'in progress') {
+                            view_scheduled_job.jobs_toolbar.showItem('run');
+                        } else {
+                            view_scheduled_job.jobs_toolbar.hideItem('run');
+                        }
+                        view_scheduled_job.jobs_toolbar.showItem('run_as_copy');
+                    }
+                    else {
+                        view_scheduled_job.jobs_toolbar.showItem('run_as_copy');
+                    }
                     
                 }
             }
