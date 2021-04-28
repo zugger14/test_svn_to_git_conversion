@@ -171,7 +171,7 @@
 
                     if (has_rights_scheduled_job_del) view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
                     else view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
-
+                    console.log(has_rights_scheduled_job_run);
                     if (has_rights_scheduled_job_run) {
                         if(run_status != 'in progress') {
                             view_scheduled_job.jobs_toolbar.showItem('run');
@@ -179,11 +179,9 @@
                             view_scheduled_job.jobs_toolbar.hideItem('run');
                         }
                         view_scheduled_job.jobs_toolbar.showItem('run_as_copy');
-                    }
-                    else {
-                        view_scheduled_job.jobs_toolbar.showItem('run_as_copy');
-                    }
-                    
+                    } else {
+                        view_scheduled_job.jobs_toolbar.hideItem('run_as_copy');
+                    }   
                 }
             }
 
