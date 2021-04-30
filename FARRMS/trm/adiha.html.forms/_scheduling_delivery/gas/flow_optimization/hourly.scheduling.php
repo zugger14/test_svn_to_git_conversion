@@ -915,6 +915,7 @@ echo $sch_obj->close_layout();
         //console.log(hour);
     	var loss = 0;
     	var path_mdq_display = subgrid.cells(0, cInd).getValue().split('/');
+        var path_mdq_number = getNumberFormat(path_mdq_display[0], 1);
         if (subgrid.cells(rId, subgrid.getColIndexById('volume')).getValue() == 'Rec') {
 
             loss = subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 1), cInd).getValue();
@@ -923,12 +924,11 @@ echo $sch_obj->close_layout();
             subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 2), cInd).setValue(new_del_volume);
 
             var new_path_rmdq = parseFloat(hourly_info[0]['path_ormdq']) - parseFloat(new_del_volume);
-            //path_mdq_display = path_mdq_display[0] + '/' + new_path_rmdq.toString();
             subgrid.cells(subgrid.getRowId(0), cInd).setValue(path_mdq_display[0] + '/' + getNumberFormat(new_path_rmdq, 'v'));
             
             if(APPLY_VALIDATION_MESSAGE) {
                 //Check for path MDQ
-                if(parseFloat(path_mdq_display[0]) < parseFloat(nValue)) {
+                if(parseFloat(path_mdq_number) < parseFloat(nValue)) {
                     success_call('Received Volume exceeded path MDQ.');				
                     subgrid.cells(subgrid.getRowId(0), cInd).setTextColor('red');
                 } else {
@@ -956,7 +956,7 @@ echo $sch_obj->close_layout();
                     if(v.hr == hour) {
                         this.position_exceed_rec = (parseFloat(hourly_info[0]['supply_position']) < parseFloat(nValue) ? '1' : '0');
                         this.position_exceed_del = ((parseFloat(hourly_info[0]['demand_position']) < parseFloat(new_del_volume) && get_param.storage_type != 'i') ? '1' : '0');
-                        this.pmdq_exceed_rec = (parseFloat(path_mdq_display[0]) < parseFloat(nValue) ? '1' : '0');
+                        this.pmdq_exceed_rec = (parseFloat(path_mdq_number) < parseFloat(nValue) ? '1' : '0');
                     }
                 });
             }
@@ -990,12 +990,11 @@ echo $sch_obj->close_layout();
            	subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) - 2), cInd).setValue(new_rec_volume);
 
            	var new_path_rmdq = parseFloat(hourly_info[0]['path_ormdq']) - nValue;
-            //path_mdq_display = path_mdq_display[0] + '/' + new_path_rmdq.toString();
             subgrid.cells(subgrid.getRowId(0), cInd).setValue(path_mdq_display[0] + '/' + getNumberFormat(new_path_rmdq, 'v'));
             
             if(APPLY_VALIDATION_MESSAGE) {
                 //Check for path MDQ
-                if(parseFloat(path_mdq_display[0]) < new_rec_volume) {
+                if(parseFloat(path_mdq_number) < new_rec_volume) {
                     success_call('Received Volume exceeded path MDQ.');
                     subgrid.cells(subgrid.getRowIndex(0),cInd).setTextColor('red');
                 } else {
@@ -1023,7 +1022,7 @@ echo $sch_obj->close_layout();
                     if(v.hr == hour) {
                         this.position_exceed_rec = (parseFloat(hourly_info[0]['supply_position']) < parseFloat(new_rec_volume) ? '1' : '0');
                         this.position_exceed_del = ((parseFloat(hourly_info[0]['demand_position']) < parseFloat(nValue) && get_param.storage_type != 'i') ? '1' : '0');
-                        this.pmdq_exceed_rec = (parseFloat(path_mdq_display[0]) < new_rec_volume ? '1' : '0');
+                        this.pmdq_exceed_rec = (parseFloat(path_mdq_number) < new_rec_volume ? '1' : '0');
                     }
                 });
             }
