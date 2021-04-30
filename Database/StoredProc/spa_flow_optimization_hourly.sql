@@ -4186,7 +4186,7 @@ BEGIN
 	OUTER APPLY (
 		SELECT 
 			IIF(cd.is_dst = 1
-				, MAX(dst_pos.position) --for dst hour actual position
+				, SUM(dst_pos.position) --for dst hour actual position
 				, SUM(hp.position - ISNULL(dst_pos.position,0))
 			) [position]
 		FROM ' + @hourly_pos_info +  ' hp
@@ -4203,7 +4203,7 @@ BEGIN
 	OUTER APPLY (
 		SELECT 
 			IIF(cd.is_dst = 1
-				, MAX(dst_pos.position) --for dst hour actual position
+				, SUM(dst_pos.position) --for dst hour actual position
 				, SUM(hp.position - ISNULL(dst_pos.position,0))
 			) [position]
 		FROM ' + @hourly_pos_info +  ' hp
