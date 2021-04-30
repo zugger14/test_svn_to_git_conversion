@@ -915,7 +915,7 @@ echo $sch_obj->close_layout();
         //console.log(hour);
     	var loss = 0;
     	var path_mdq_display = subgrid.cells(0, cInd).getValue().split('/');
-        var path_mdq_number = getNumberFormat(path_mdq_display[0], 1);
+        var path_mdq_number = getNumberFormat(path_mdq_display[0], '', 1);
         if (subgrid.cells(rId, subgrid.getColIndexById('volume')).getValue() == 'Rec') {
 
             loss = subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 1), cInd).getValue();
