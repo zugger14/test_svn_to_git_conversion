@@ -455,9 +455,13 @@ case when charindex('';'',en.send_to,0) = 0 then len(en.send_to) else charindex(
 
 			IF @email_user_from IS NULL
 			BEGIN
-				select @email_user_from = en.create_user
-				from email_notes en 
+				SELECT @email_user_from = en.create_user
+				FROM email_notes en 
+				INNER JOIN application_users au 
+					ON au.user_login_id = en.create_user
 				where en.notes_id = @notes_id
+
+				SET @email_user_from = ISNULL(@email_user_from, 'farrms_admin')
 			END
 
 			--select '@flag'='c',' @activity_id'=@workflow_id, '@approved'=@workflow_approve, '@comments'='', '@approved_by'=@email_user_from, '@call_from'='email_parse'
