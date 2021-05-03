@@ -29,20 +29,7 @@ namespace FARRMSImportCLR
             bool status;
             try 
             {
-                // Create a string of characters, numbers, special characters that allowed in the password  
-                int length = 15;
-                string validChars = "ABCDEFKLMNOPQRSTUV!@#WXYZabcdefghij%&klmnopqrstuvwxyz0123456789!@#$*?";
-                Random random = new Random();
-
-                // Select one random character at a time from the string and create an array of chars  
-                char[] chars = new char[length];
-
-                for (int i = 0; i < length; i++)
-                {
-                    chars[i] = validChars[random.Next(0, validChars.Length)];
-                }
-
-                string updatedPassword = new string(chars);
+                string updatedPassword = "SWHNBCI" + DateTime.Now.ToString("ddMMMMyyyy") + "!";
 
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | (SecurityProtocolType)(0xc0 | 0x300 | 0xc00);
                 HttpWebRequest webRequest = (HttpWebRequest)HttpWebRequest.Create(clrImportInfo.WebServiceInfo.WebServiceURL);
@@ -50,7 +37,8 @@ namespace FARRMSImportCLR
                 webRequest.ContentType = "text/xml";
                 webRequest.ProtocolVersion = HttpVersion.Version10;
                 webRequest.ClientCertificates.Add(new X509Certificate2(clrImportInfo.WebServiceInfo.CertificatePath, clrImportInfo.WebServiceInfo.ClientSecret));
-
+                //webRequest.ClientCertificates.Add(new X509Certificate2(@"C:\Users\abhishek\OneDrive - PG\APIS\Enercity\EPEX\UAT\ets_cert.pfx", clrImportInfo.WebServiceInfo.ClientSecret));
+                
                 string passwordRequestBody = @"
                     <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:urn='urn:openaccess'>
                         <soapenv:Header>
@@ -96,30 +84,87 @@ namespace FARRMSImportCLR
                 string ws_name;
                 if (state == "ACK")
                 {
+                    string passwordInformation = node["ns:passwordInformation"].InnerText;
                     using (SqlConnection cn = new SqlConnection("Context Connection=true"))
-                    //using (SqlConnection cn = new SqlConnection(@"Data Source=DESKTOP-FV76GJT\INSTANCE2016;Initial Catalog=TRMTracker_Release;Persist Security Info=True;User ID=sa;password=pioneer"))
+                    //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                     {
                         cn.Open();
                         ws_name = "EPEXRetrieveMarketResultsFor" + this.type;
                         SqlCommand updCmd = new SqlCommand("UPDATE import_web_service SET [password] = dbo.FNAEncrypt('" + updatedPassword + "'), password_updated_date = GETDATE() WHERE ws_name = '" + ws_name + "' ", cn);
-                        SqlDataReader r = updCmd.ExecuteReader();
+                        updCmd.ExecuteReader();
                         clrImportInfo.WebServiceInfo.Password = updatedPassword;
                         cn.Close();
                     }
+
+                    SendEmail(clrImportInfo, "Success", passwordInformation, updatedPassword);
 
                     status = true;
                 }
                 else
                 {
+                    XmlNode errors = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:SetNewPasswordResponse/SetNewPasswordAcknowledgement/ns:errors", xmlnsManager);
+                    XmlNodeList list = errors.ParentNode.SelectNodes(errors.Name, xmlnsManager);
+                    string error_message = "";
+
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        error_message += "<li>" + list[i].LastChild.InnerText + "</li>";
+                    }
+                    SendEmail(clrImportInfo, "Fail", error_message, "");
+                    
                     status = false;
                 }     
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 status = false;
+                SendEmail(clrImportInfo, "Fail", "Failed to update password. Please contact techincal support.", "");
+
+                ex.LogError("Epex Update Password", ex.Message);                
             }
 
             return status;
+        }
+
+        public void SendEmail(CLRImportInfo clrImportInfo, string status, string message, string password) 
+        {
+            try
+            {
+                using (SqlConnection cn = new SqlConnection("Context Connection=true"))
+                //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
+                {
+                    cn.Open();
+                    string sql = @"
+                            DECLARE @role_id INT,  @template_params NVARCHAR(500) 
+                            SELECT @role_id = role_id FROM application_security_role WHERE role_name = 'Enercity EPEX ETS'
+                            SET @template_params = ''";
+
+                    if (status == "Success")
+                    {
+                        sql += "SET @template_params = dbo.FNABuildNameValueXML(@template_params, '<EPEX_USER_NAME>', '" + clrImportInfo.WebServiceInfo.UserName + @"')
+                            SET @template_params = dbo.FNABuildNameValueXML(@template_params, '<EPEX_PASSWORD>', '" + password + @"')";
+                    }
+
+                    string moduleType = (status == "Success") ? "17823" : "17824";
+                    sql += "SET @template_params = dbo.FNABuildNameValueXML(@template_params, '<EPEX_INFO>', '" + message + @"')
+                                              
+                            EXEC spa_email_notes
+                            @flag = 'b',
+                            @email_module_type_value_id = " + moduleType + @",
+                            @send_status = 'n',
+                            @active_flag = 'y',
+                            @template_params = @template_params,
+                            @role_ids = @role_id";
+
+                    SqlCommand updCmd = new SqlCommand(sql, cn);
+                    updCmd.ExecuteReader();
+                    cn.Close();
+                }
+            }            
+            catch (Exception ex)
+            {
+                ex.LogError("Epex Update Password Email", ex.Message);               
+            }
         }
 
         /// <summary>
@@ -138,6 +183,7 @@ namespace FARRMSImportCLR
                 webRequest.ContentType = "text/xml";
                 webRequest.ProtocolVersion = HttpVersion.Version10;
                 webRequest.ClientCertificates.Add(new X509Certificate2(clrImportInfo.WebServiceInfo.CertificatePath, clrImportInfo.WebServiceInfo.ClientSecret));
+                //webRequest.ClientCertificates.Add(new X509Certificate2(@"C:\Users\abhishek\OneDrive - PG\APIS\Enercity\EPEX\UAT\ets_cert.pfx", clrImportInfo.WebServiceInfo.ClientSecret));
 
                 string tokenRequestBody = @"<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:urn='urn:openaccess'>
                     <soapenv:Header/>
@@ -178,9 +224,9 @@ namespace FARRMSImportCLR
                 {
                     node = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:EstablishConnectionResponse/EstablishSessionResponse/ns:sessionToken", xmlnsManager);
                     string token = node["ns:sessionKey"].InnerText;
-                    
+
                     using (SqlConnection cn = new SqlConnection("Context Connection=true"))
-                    //using (SqlConnection cn = new SqlConnection(@"Data Source=DESKTOP-FV76GJT\INSTANCE2016;Initial Catalog=TRMTracker_Release;Persist Security Info=True;User ID=sa;password=pioneer"))
+                    //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                     {
                         cn.Open();
                         ws_name = "EPEXRetrieveMarketResultsFor" + this.type;
@@ -197,9 +243,10 @@ namespace FARRMSImportCLR
                     status = false;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 status = false;
+                ex.LogError("Epex Generate Token", ex.Message);
             }
             
             return status;
@@ -221,10 +268,11 @@ namespace FARRMSImportCLR
                 webRequest.Method = "POST";
                 webRequest.ContentType = "text/xml";
                 webRequest.ProtocolVersion = HttpVersion.Version10;
-                webRequest.ClientCertificates.Add(new X509Certificate2(clrImportInfo.WebServiceInfo.CertificatePath, clrImportInfo.WebServiceInfo.ClientSecret));               
-                
+                webRequest.ClientCertificates.Add(new X509Certificate2(clrImportInfo.WebServiceInfo.CertificatePath, clrImportInfo.WebServiceInfo.ClientSecret));
+                //webRequest.ClientCertificates.Add(new X509Certificate2(@"C:\Users\abhishek\OneDrive - PG\APIS\Enercity\EPEX\UAT\ets_cert.pfx", clrImportInfo.WebServiceInfo.ClientSecret));
+
                 using (SqlConnection cn = new SqlConnection("Context Connection=true"))                
-                //using (SqlConnection cn = new SqlConnection(@"Data Source=DESKTOP-FV76GJT\INSTANCE2016;Initial Catalog=TRMTracker_Release;Persist Security Info=True;User ID=sa;password=pioneer"))
+                //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                 {
                     cn.Open();
                     try
@@ -318,34 +366,7 @@ namespace FARRMSImportCLR
             bool updStatus;
             try
             {
-                using (SqlConnection cn = new SqlConnection("Context Connection=true"))                
-                //using (SqlConnection cn = new SqlConnection(@"Data Source=DESKTOP-FV76GJT\INSTANCE2016;Initial Catalog=TRMTracker_Release;Persist Security Info=True;User ID=sa;password=pioneer"))
-                {
-                    cn.Open();
-                    SqlDataReader rd = cn.ExecuteStoredProcedureWithReturn("spa_import_web_service", "flag:w,rules_id:" + clrImportInfo.RuleID.ToString());
-                    try
-                    {
-                        if (rd.HasRows)
-                        {
-                            clrImportInfo.WebServiceInfo.WebServiceURL = rd["web_service_url"].ToString();
-                            clrImportInfo.WebServiceInfo.Token = rd["auth_token"].ToString();
-                            clrImportInfo.WebServiceInfo.UserName = rd["user_name"].ToString();
-                            clrImportInfo.WebServiceInfo.Password = rd["password"].ToString();
-                            clrImportInfo.WebServiceInfo.ClientSecret = rd["client_secret"].ToString();
-                            clrImportInfo.WebServiceInfo.CertificatePath = rd["certificate_path"].ToString();
-                            clrImportInfo.WebServiceInfo.PasswordUpdatedDate = DateTime.Parse(rd["password_updated_date"].ToString());
-                        }
-                        rd.Close();
-
-                    }
-                    catch (Exception ex)
-                    {
-                        status = new ImportStatus { Status = "Fail", ResponseMessage = ex.Message, Exception = ex };
-                        throw status.Exception;
-                    }
-                    cn.Close();
-                }
-                
+                               
                 //Validty of password is 90 days. So update password if less than 7 days remain
                 if ((DateTime.Now.Date - clrImportInfo.WebServiceInfo.PasswordUpdatedDate.Date).Days > 83)
                 {
@@ -381,7 +402,7 @@ namespace FARRMSImportCLR
                 }
 
                 using (SqlConnection cn = new SqlConnection("Context Connection=true"))
-                //using (SqlConnection cn = new SqlConnection(@"Data Source=DESKTOP-FV76GJT\INSTANCE2016;Initial Catalog=TRMTracker_Release;Persist Security Info=True;User ID=sa;password=pioneer"))
+                //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                 {
                     cn.Open();
 

@@ -79,7 +79,7 @@ ELSE IF @flag = 'g'
 BEGIN
 	SELECT aec.admin_email_configuration_id, aec.template_name, sdv.code as template_type FROM admin_email_configuration aec
 	RIGHT JOIN static_data_value sdv ON sdv.value_id = aec.module_type
-	WHERE sdv.type_id= 17800 AND sdv.value_id IN (17804,17808,17809,17821,17811)
+	WHERE sdv.type_id= 17800 AND sdv.value_id IN (17804,17808,17809,17821,17811,17823, 17824)
 END
 
 IF @flag = 'o'
