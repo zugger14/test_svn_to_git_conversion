@@ -425,7 +425,7 @@ LEFT JOIN source_counterparty sec_sc ON sec_sc.source_counterparty_id = cca.seco
 LEFT JOIN counterparty_contacts cc_payable ON cc_payable.counterparty_contact_id = ISNULL(cca.payables, sc_parent.payables)
 LEFT JOIN counterparty_contacts cc_receivables ON cc_receivables.counterparty_contact_id = ISNULL(cca.receivables, sc_parent.receivables)
 OUTER APPLY (
-	SELECT address1 [cc_address1]
+	SELECT TOP 1 address1 [cc_address1]
 		, address2 [cc_address2]
 		, zip [cc_zip]
 		, city [cc_city]
@@ -444,13 +444,17 @@ OUTER APPLY (
 	WHERE cc.counterparty_id = sco.counterparty_id AND cc.is_primary = ''''y'''' AND cc.is_active = ''''y''''
 ) cc
 OUTER APPLY (
-	SELECT address1 [secondary_cc_address1], address2 [secondary_cc_address2], city [secondary_cc_city]
+	SELECT TOP 1 address1 [secondary_cc_address1], address2 [secondary_cc_address2], city [secondary_cc_city]
 	FROM counterparty_contacts cc
 	WHERE cc.counterparty_id = sec_sc.source_counterparty_id AND cc.is_primary = ''''y'''' AND cc.is_active = ''''y''''
 ) sec_cc
 LEFT JOIN fas_subsidiaries fs ON ISNULL(cg.sub_id, -1) = fs.fas_subsidiary_id
 LEFT JOIN source_counterparty fs_counterparty ON fs.counterparty_id = fs_counterparty.source_counterparty_id
-LEFT JOIN counterparty_contacts AS ccs ON CCS.counterparty_id = fs_counterparty.source_counterparty_id AND ccs.is_primary = ''''y''''
+OUTER APPLY (
+	SELECT TOP 1 name, address1 , address2, city, zip, telephone, email, fax, state
+	FROM counterparty_contacts
+	WHERE counterparty_id = fs_counterparty.source_counterparty_id AND is_primary = ''''y''''
+) ccs
 LEFT JOIN source_currency scu ON scu.source_currency_id = ISNULL(cg.currency, sdd.fixed_price_currency_id)
 OUTER APPLY (
 	SELECT TOP 1 cbi01.wire_ABA
