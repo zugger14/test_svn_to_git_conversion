@@ -6455,13 +6455,18 @@ function roundTo(n, digits) {
  * @return  {string}     comma separated number format
  */
 function numberWithCommas(x) {
-    return x.toString().split('.').map(function(e, i) {
-        if (i == 0) {
-            return e.match(/\d{1,3}(?=(\d{3})*$)/g)
-        } else {
-            return e;
-        }
-    }).join('.')
+    // return x.toString().split('.').map(function(e, i) {
+    //     if (i == 0) {
+    //         return e.match(/\d{1,3}(?=(\d{3})*$)/g)
+    //     } else {
+    //         return e;
+    //     }
+    // }).join('.')
+
+    //above code not supported for negative values
+    var parts = x.toString().split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
 }
 
 /**
