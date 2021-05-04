@@ -193,7 +193,7 @@ BEGIN
 			,@location_group_id INT
 
 	--set @volume_conversion if @uom is passed
-	set @volume_conversion = coalesce(@volume_conversion,@uom)
+	set @volume_conversion = NULLIF(COALESCE(@volume_conversion,@uom), '')
 
 	SET @location_group	= 'Storage'
 
@@ -469,7 +469,7 @@ BEGIN
 	--	AND hbt.block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id, ' + cast(@block_define_id_base_load as varchar(10)) + ')
 	--	and hbt.dst_group_value_id = tz.dst_group_value_id
 	LEFT JOIN rec_volume_unit_conversion rvuc 
-		ON rvuc.to_source_uom_id = ' + IIF(@volume_conversion IS NULL,'rvuc.to_source_uom_id',CAST(@volume_conversion AS VARCHAR(10))) + ' AND rvuc.from_source_uom_id = sdd.deal_volume_uom_id
+		ON ' + ISNULL('rvuc.to_source_uom_id = ' + CAST(@volume_conversion AS VARCHAR(10)) + ' AND rvuc.from_source_uom_id = sdd.deal_volume_uom_id', '1 = 2') + '
 	OUTER APPLY (
 		SELECT SUM(sddh1.volume) [hourly_vol]
 		FROM source_deal_detail_hour sddh1 with (NOLOCK)
@@ -623,7 +623,7 @@ BEGIN
 	--	AND hbt.block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id, ' + cast(@block_define_id_base_load as varchar(10)) + ')
 	--	and hbt.dst_group_value_id = tz.dst_group_value_id
 	LEFT JOIN rec_volume_unit_conversion rvuc 
-		ON rvuc.to_source_uom_id = ' + IIF(@volume_conversion IS NULL,'rvuc.to_source_uom_id',CAST(@volume_conversion AS VARCHAR(10))) + ' AND rvuc.from_source_uom_id = sdd.deal_volume_uom_id
+		ON ' + ISNULL('rvuc.to_source_uom_id = ' + CAST(@volume_conversion AS VARCHAR(10)) + ' AND rvuc.from_source_uom_id = sdd.deal_volume_uom_id', '1 = 2') + '
 	OUTER APPLY (
 		SELECT SUM(sddh1.volume) [hourly_vol]
 		FROM source_deal_detail_hour sddh1 with (nolock)
