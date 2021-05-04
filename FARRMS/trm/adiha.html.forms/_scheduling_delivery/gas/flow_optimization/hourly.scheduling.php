@@ -440,7 +440,7 @@ echo $sch_obj->close_layout();
 
                 total_rec += rec_hrly;
                 total_del += del_hrly;
-                total_path_rmdq += parseInt(subgrid.cells2(0, cid).getValue().split('/')[1]);
+                total_path_rmdq += parseInt(getNumberFormat(subgrid.cells2(0, cid).getValue().split('/')[1], '', 1));
             }
         });
 
