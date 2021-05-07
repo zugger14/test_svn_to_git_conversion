@@ -50,14 +50,16 @@ CREATE PROC [dbo].[spa_get_limits_report]
  AS
 
 /** * DEBUG QUERY START *
-	SET NOCOUNT ON
+DECLARE @_contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
+SET CONTEXT_INFO @_contextinfo
+SET NOCOUNT off
 	
 	--EXEC spa_get_limits_report '2013-02-06', NULL, 1581, '2', 'n', NULL, NULL, NULL
 
-DECLARE   @as_of_date DATETIME='2020-03-30',
+DECLARE   @as_of_date DATETIME='2021-04-26',
 	@limit_for int=null,-- 'l' for limit, 'b' book,'a' all
-	@limit_type INT = 1598,
-	@limit_id VARCHAR(MAX) = NULL,
+    @limit_type INT = 1588,
+    @limit_id VARCHAR(MAX) = 94,
 	@show_exception_only CHAR(1) = NULL,
 	@trader_id INT = NULL,
 	@commodity_id INT = NULL,
@@ -267,11 +269,11 @@ CREATE TABLE #collect_deals (maintain_limit_id INT, source_deal_header_id INT,de
 DECLARE @maintain_limit_id INT,@c_limit_for INT,@c_party_id INT ,@c_book_id VARCHAR(1000) ,@c_var_criteria_id INT
 	,@c_book1 INT,@c_book2 INT,@c_book3 INT,@c_book4 INT,@c_deal_type INT,@c_curve_id INT, @c_limit_id INT, @c_effective_date DATETIME, @c_deal_subtype INT
 
-DECLARE #collect_deals CURSOR FOR 
+DECLARE cur_collect_deals CURSOR FOR 
 	SELECT maintain_limit_id,limit_for,party_id ,book_id ,var_criteria_id,book1,book2,book3,book4,deal_type,curve_id, limit_id, effective_date, deal_subtype FROM #limit_info
 	WHERE limit_type IN (1580, 1581, 1587, 1588, 1596, 1598, 1599, 1597) --mtm & position
-OPEN #collect_deals
-FETCH NEXT FROM #collect_deals INTO @maintain_limit_id ,@c_limit_for ,@c_party_id ,@c_book_id ,@c_var_criteria_id 
+OPEN cur_collect_deals
+FETCH NEXT FROM cur_collect_deals INTO @maintain_limit_id ,@c_limit_for ,@c_party_id ,@c_book_id ,@c_var_criteria_id 
 	,@c_book1 ,@c_book2 ,@c_book3 ,@c_book4 ,@c_deal_type ,@c_curve_id , @c_limit_id, @c_effective_date, @c_deal_subtype
 WHILE @@FETCH_STATUS = 0
 BEGIN	
@@ -336,14 +338,14 @@ BEGIN
 	WHERE cd.maintain_limit_id = @maintain_limit_id
 	AND ml.limit_id = @c_limit_id
 
-	FETCH NEXT FROM #collect_deals INTO @maintain_limit_id ,@c_limit_for ,@c_party_id ,@c_book_id ,@c_var_criteria_id 
+	FETCH NEXT FROM cur_collect_deals INTO @maintain_limit_id ,@c_limit_for ,@c_party_id ,@c_book_id ,@c_var_criteria_id 
 		,@c_book1 ,@c_book2 ,@c_book3 ,@c_book4 ,@c_deal_type ,@c_curve_id , @c_limit_id, @c_effective_date, @c_deal_subtype
 	
 	EXEC('DELETE FROM ' + @std_deal_table)
 			
 END
-CLOSE #collect_deals
-DEALLOCATE #collect_deals
+CLOSE cur_collect_deals
+DEALLOCATE cur_collect_deals
 
 --SELECT * FROM #limit_info
 --RETURN
@@ -372,7 +374,7 @@ DEALLOCATE #collect_deals
 989	978	30Min	30Min
 987	978	15Min	15Min
  
- select * FROM #collect_deals
+ select * FROM cur_collect_deals
  
  select * FROM   #limit_info
  
@@ -408,11 +410,12 @@ OUTER APPLY
 		ISNULL(conv.conversion_factor,1)*(hr1+hr2+hr3+hr4+hr5+hr6+hr7+hr8+hr9+hr10+hr11+hr12+hr13+hr14+hr15+hr16+hr17+hr18+hr19+hr20+hr21+hr22+hr23+hr24)) vol
 	FROM source_deal_header sdh
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id  
-	INNER JOIN report_hourly_position_profile r ON r.term_start BETWEEN ISNULL(cd.term_start, sdd.term_start) AND ISNULL(cd.term_end, sdd.term_end)
+	INNER JOIN report_hourly_position_profile r ON r.term_start BETWEEN coalesce(cd.term_start,li.term_start, sdd.term_start) AND coalesce(cd.term_end,li.term_end, sdd.term_end)
 		AND r.source_deal_detail_id=sdd.source_deal_detail_id
 		AND ISNULL(li.party_id, r.commodity_id) = CASE WHEN li.limit_for IN(20203, 20200) THEN ISNULL(r.commodity_id, li.party_id) ELSE ISNULL(li.party_id, r.commodity_id) END
 		AND sdd.curve_id = ISNULL(li.curve_id, r.curve_id) 
 		AND r.source_deal_header_id = cd.source_deal_header_id 
+	inner JOIN deal_status_group dsg ON dsg.status_value_id = sdh.deal_status 
 	LEFT JOIN rec_volume_unit_conversion conv ON conv.from_source_uom_id = r.deal_volume_uom_id
 		AND conv.to_source_uom_id = li.limit_uom
 	OUTER APPLY(
@@ -425,7 +428,7 @@ OUTER APPLY
 	WHERE r.term_start > ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''' 
 		AND expiration_date >= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''  
 		AND sdh.deal_date <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
-		AND r.term_start BETWEEN li.term_start AND  li.term_end
+		--AND r.term_start BETWEEN li.term_start AND  li.term_end
 		AND li.limit_type IN (1581, 1588)
 		AND sdh.trader_id = CASE WHEN li.limit_for = 20200 THEN ISNULL(li.trader_id, sdh.trader_id) ELSE sdh.trader_id END 
 		AND sdh.counterparty_id = CASE WHEN li.limit_for = 20204 THEN ISNULL(li.party_id, sdh.counterparty_id) ELSE sdh.counterparty_id END 
@@ -435,11 +438,12 @@ OUTER APPLY
 		ISNULL(conv.conversion_factor,1)*(hr1+hr2+hr3+hr4+hr5+hr6+hr7+hr8+hr9+hr10+hr11+hr12+hr13+hr14+hr15+hr16+hr17+hr18+hr19+hr20+hr21+hr22+hr23+hr24)) vol
 	FROM source_deal_header sdh 
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id 
-	INNER JOIN  report_hourly_position_deal r ON r.term_start BETWEEN ISNULL(cd.term_start, sdd.term_start) AND ISNULL(cd.term_end, sdd.term_end) 
+	INNER JOIN  report_hourly_position_deal r ON r.term_start BETWEEN coalesce(cd.term_start,li.term_start, sdd.term_start) AND coalesce(cd.term_end,li.term_end, sdd.term_end) 
 		AND r.source_deal_detail_id=sdd.source_deal_detail_id
 		AND ISNULL(li.party_id, r.commodity_id) = CASE WHEN li.limit_for IN(20203, 20200) THEN ISNULL(r.commodity_id, li.party_id) ELSE ISNULL(li.party_id, r.commodity_id) END
 		AND sdd.curve_id = ISNULL(li.curve_id, r.curve_id)
 		AND r.source_deal_header_id = cd.source_deal_header_id
+	inner JOIN deal_status_group dsg ON dsg.status_value_id = sdh.deal_status 
 	LEFT JOIN rec_volume_unit_conversion conv ON conv.from_source_uom_id = r.deal_volume_uom_id
 		AND conv.to_source_uom_id = li.limit_uom
 	OUTER APPLY(
@@ -452,14 +456,15 @@ OUTER APPLY
 	WHERE r.term_start > ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''' 
 		AND expiration_date >= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''  
 		AND sdh.deal_date <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
-		AND r.term_start >= CASE WHEN li.limit_type <> 1588 THEN li.term_start ELSE r.term_start END							
-		AND  r.term_start <= CASE WHEN li.limit_type <> 1588 THEN li.term_end ELSE  r.term_start  END
+		--AND r.term_start >= CASE WHEN li.limit_type <> 1588 THEN li.term_start ELSE r.term_start END							
+		--AND  r.term_start <= CASE WHEN li.limit_type <> 1588 THEN li.term_end ELSE  r.term_start  END
 		AND sdh.trader_id = CASE WHEN li.limit_for = 20200 THEN ISNULL(li.trader_id, sdh.trader_id) ELSE sdh.trader_id END
 		AND sdh.counterparty_id = CASE WHEN li.limit_for = 20204 THEN ISNULL(li.party_id, sdh.counterparty_id) ELSE sdh.counterparty_id END 
 ) 	vol	
 LEFT JOIN source_uom su ON su.source_uom_id = li.limit_uom
 GROUP BY li.maintain_limit_id '  + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN ',cd.source_deal_header_id ' ELSE '' END 
 
+EXEC spa_print @sql_str1
 EXEC(@sql_str1)
  
   
