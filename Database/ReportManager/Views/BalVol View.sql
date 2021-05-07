@@ -3,7 +3,7 @@ BEGIN TRY
 	
 	declare @new_ds_alias varchar(10) = 'BalVol'
 	/** IF DATA SOURCE ALIAS ALREADY EXISTS ON DESTINATION, RAISE ERROR **/
-	if exists(select top 1 1 from data_source where alias = 'BalVol' and name <> 'balvol')
+	if exists(select top 1 1 from data_source where alias = 'BalVol' and name <> 'BalVol')
 	begin
 		select top 1 @new_ds_alias = 'BalVol' + cast(s.n as varchar(5))
 		from seq s
@@ -32,551 +32,423 @@ BEGIN TRY
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = ''
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_calc_process_table VARCHAR(500)
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_source_deal_header_id VARCHAR(100) 
 
 DECLARE @_st VARCHAR(MAX)
 
 DECLARE @_template_id INT
 
-DECLARE @_source_deal_header_id VARCHAR(1000)
-
---DECLARE @_source_deal_detail_id INT
-
---DECLARE @_counterparty_id INT
-
 DECLARE @_subbook_id INT=NULL
 
+Declare @_sql varchar(max) 
 
-IF OBJECT_ID(''tempdb..#temp_pen_tran_buy_deals'') IS NOT NULL
+----System Paramer:
 
-DROP TABLE #temp_pen_tran_buy_deals
+	,@_calc_type varchar(10) --= ''m'' --''s''
 
-SET @_calc_process_table = nullif(isnull(@_calc_process_table, nullif(''@calc_process_table'', replace(''@_calc_process_table'', ''@_'', ''@''))), ''null'')
+	,@_as_of_date varchar(10)
+
+	,@_fcpt varchar(250)
+
+ 
 
 
-IF NULLIF(@_calc_process_table,''1900'') is null  -- debug mode only
+SET @_fcpt = nullif(isnull(@_fcpt, nullif(''@farrms_calc_process_table'', replace(''@_fcpt'', ''@_'', ''@''))), ''null'')
+
+SET @_calc_type = nullif(isnull(@_calc_type, nullif(''@calc_type'', replace(''@_calc_type'', ''@_'', ''@''))), ''null'')
+
+SET @_as_of_date = nullif(isnull(@_as_of_date, nullif(''@as_of_date'', replace(''@_as_of_date'', ''@_'', ''@''))), ''null'')
+
+SET @_source_deal_header_id = nullif(isnull(@_source_deal_header_id, nullif(''@source_deal_header_id'', replace(''@_source_deal_header_id'', ''@_'', ''@''))), ''null'')
+
+ 
+
+IF OBJECT_ID(@_fcpt) is null 
+
+BEGIN 
+
+	SELECT 1 source_deal_header_id INTO #a 
+
+	From seq WHERE n=1
+
+END 
+
+ELSE 
 
 BEGIN
 
-SET @_source_deal_header_id = ''102618''--,7342,7343,7344,7345,7346''
+	SELECT @_template_id = template_id FROM source_deal_header_template WHERE template_name = ''Transportation NG''
 
-DECLARE @_user_login_id varchar(50), @_process_id  varchar(100)
+	IF OBJECT_ID(''tempdb..#location_id'') IS NOT NULL DROP TABLE #location_id 
 
-SET @_user_login_id=dbo.FNADBUser()
 
-IF @_process_id IS NULL
+	CREATE TABLE #location_id (location_id int, location_name varchar(1000) COLLATE DATABASE_DEFAULT, granularity INT, term_start datetime, term_end datetime)
 
-SET @_process_id=REPLACE(NEWID(), ''-'', ''_'')
 
-SET @_calc_process_table=dbo.FNAProcessTableName(''calc_process_table'', @_user_login_id, @_process_id)
+	set @_st = ''INSERT INTO #location_id  
 
+				SELECT  sdd.location_id, sml.location_name , s.granularity, MIN(s.prod_date) term_start, MAX(s.prod_date) term_end
 
-SET @_st = ''
+				FROM ''+ @_fcpt +'' s 
 
-CREATE TABLE ''+@_calc_process_table+''(
+				INNER JOIN source_deal_detail sdd on sdd.source_deal_detail_id = s.source_deal_detail_id
 
-rowid INT IDENTITY(1,1),
+				INNER JOIN source_minor_location sml ON sml.source_minor_location_id = sdd.location_id
 
-counterparty_id INT,
+				GROUP BY  sdd.location_id, sml.location_name , s.granularity
 
-contract_id INT,
+	''
 
-curve_id INT,
+	EXEC spa_print @_st
 
-prod_date DATETIME,
+	EXEC(@_st)
 
-as_of_date DATETIME,
 
-volume FLOAT,
+	IF OBJECT_ID(''tempdb..#temp_pen_tran_buy_deals'') IS NOT NULL
 
-onPeakVolume FLOAT,
+		DROP TABLE #temp_pen_tran_buy_deals
 
-source_deal_detail_id INT,
 
-formula_id INT,
+	CREATE TABLE #temp_pen_tran_buy_deals (location_id	INT
 
-invoice_Line_item_id INT,			
+											, transport_deal_id	 INT
 
-invoice_line_item_seq_id INT,
+											, buy_deal_id	INT
 
-price FLOAT,			
+											, location_name	VARCHAR(1000)
 
-granularity INT,
+											, term_start DATETIME	
 
-volume_uom_id INT,
+											, term_end	 DATETIME	
 
-generator_id INT,
+											, leg	 INT
 
-[Hour] INT,
+											, buy_sell_flag	 CHAR(1)
 
-commodity_id INT,
+											, granularity	 INT 
 
-meter_id INT,
+											, deal_volume NUMERIC(38, 18))
 
-curve_source_value_id INT,
 
-[mins] INT,
+	SET @_st = ''INSERT INTO #temp_pen_tran_buy_deals
 
-source_deal_header_id INT,
+				SELECT DISTINCT sml.location_id,
 
-term_start DATETIME,
+					sdh.source_deal_header_id transport_deal_id
 
-term_end DATETIME 
+					--od.source_deal_header_id buy_deal_id
 
-)	''
+					, NULL buy_deal_id
 
-EXEC(@_st)	
+					, sml.location_name
 
+					,sdd.term_start,sdd.term_end
 
-SET @_st='' 
+					, sdd.leg
 
-INSERT INTO ''+@_calc_process_table+''(counterparty_id, contract_id, curve_id, prod_date, as_of_date
+					, buy_sell_flag   
 
-	, volume, onPeakVolume, source_deal_detail_id, formula_id
+					, granularity
 
-	, invoice_Line_item_id, invoice_line_item_seq_id, price, granularity, volume_uom_id
+					, sdd.deal_volume
 
-	, generator_id, [Hour], commodity_id, meter_id
+				FROM source_deal_header sdh
 
-	, curve_source_value_id, [mins], source_deal_header_id, term_start, term_end
+				INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id 
 
-)
+				INNER JOIN #location_id sml on sml.location_id = sdd.location_id 
 
-SELECT 	sdh.counterparty_id, sdh.contract_id, sdd.curve_id, cast(t.term_start as date), sdh.deal_date		
+				INNER JOIN optimizer_detail od ON od.transport_deal_id = sdh.source_deal_header_id  
 
-	,  CASE WHEN sdd.buy_sell_flag = ''''s'''' THEN -1 ELSE 1 END * sdd.deal_volume, NULL onPeakVolume, sdd.source_deal_detail_id,
+				INNER JOIN source_system_book_map ssbm on ssbm.source_system_book_id1=sdh.source_system_book_id1
 
-	sdd.position_formula_id, NULL invoice_Line_item_id, NULL invoice_line_item_seq_id, NULL price, sdht.hourly_position_breakdown granularity, NULL volume_uom_id,
+					AND ssbm.source_system_book_id2 = sdh.source_system_book_id2
 
-	NULL generator_id, CASE WHEN sdht.hourly_position_breakdown IN ( 982, 987) THEN DATEPART(hh, t.term_start)+1 ELSE NULL END [hour],
+					AND ssbm.source_system_book_id3 = sdh.source_system_book_id3
 
-	sdh.commodity_id, NULL meter_id, 4500 curve_source_value_id,  
+					AND ssbm.source_system_book_id4 = sdh.source_system_book_id4 ''
 
-	CASE WHEN sdht.hourly_position_breakdown IN (987) THEN DATEPART(MINUTE, t.term_start) ELSE 0 END [mins], sdh.source_deal_header_id, sdd.term_start, sdd.term_end
+					+ CASE WHEN @_subbook_id  IS NOT NULL THEN '' AND book_deal_type_map_id = ISNULL('' + CAST(@_subbook_id AS VARCHAR(1000)) + '', book_deal_type_map_id)'' ELSE '''' END 
 
-FROM  source_deal_header sdh 
+					+ ''  INNER JOIN source_deal_type sdt ON sdh.source_deal_type_id = sdt.source_deal_type_id
 
-INNER JOIN dbo.FNASplit('''''' + @_source_deal_header_id + '''''', '''','''') i ON i.item = sdh.source_deal_header_id
+				WHERE  sdt.deal_type_id = ''''Transportation''''
 
-INNER JOIN source_deal_header_template sdht ON sdht.template_id = sdh.template_id
+					AND sdd.term_start >= sml.term_start
 
-INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+					AND sdd.term_end <= sml.term_end ''
 
-CROSS APPLY [dbo].[FNATermBreakdown] (CASE sdht.hourly_position_breakdown WHEN 982 THEN ''''h'''' WHEN 980 THEN ''''m'''' 
 
-WHEN 987 THEN ''''f'''' WHEN 993 THEN ''''a'''' ELSE ''''d'''' END, sdd.term_start, CASE sdht.hourly_position_breakdown WHEN 982 THEN DATEADD(hh, 23, sdd.term_end) ELSE sdd.term_end END ) t
+	EXEC spa_print @_st
 
-''
-
-exec spa_print @_st
-
-EXEC(@_st)
-
-end
-
-
-SELECT @_template_id = template_id FROM source_deal_header_template WHERE template_name = ''Transportation NG''
-
-IF OBJECT_ID(''tempdb..#location_id'') IS NOT NULL DROP TABLE #location_id 
-
-
-CREATE TABLE #location_id (location_id int, location_name varchar(1000) COLLATE DATABASE_DEFAULT, granularity INT, term_start datetime, term_end datetime)
-
-
-set @_st = ''INSERT INTO #location_id  
-
-			SELECT  sdd.location_id, sml.location_name , s.granularity, MIN(s.term_start) term_start, MAX(s.term_end) term_end
-
-			FROM ''+ @_calc_process_table +'' s 
-
-			INNER JOIN source_deal_detail sdd on sdd.source_deal_detail_id = s.source_deal_detail_id
-
-			INNER JOIN source_minor_location sml ON sml.source_minor_location_id = sdd.location_id
-
-			GROUP BY  sdd.location_id, sml.location_name , s.granularity
-
-''
-
-EXEC spa_print @_st
-
-EXEC(@_st)
-
-
-IF OBJECT_ID(''tempdb..#temp_pen_tran_buy_deals'') IS NOT NULL
-
-DROP TABLE #temp_pen_tran_buy_deals
-
-
-CREATE TABLE #temp_pen_tran_buy_deals (location_id	INT
-
-										, transport_deal_id	 INT
-
-										, buy_deal_id	INT
-
-										, location_name	VARCHAR(1000)
-
-										, term_start DATETIME	
-
-										, term_end	 DATETIME	
-
-										, leg	 INT
-
-										, buy_sell_flag	 CHAR(1)
-
-										, granularity	 INT 
-
-										, deal_volume NUMERIC(38, 18))
-
-
-SET @_st = ''INSERT INTO #temp_pen_tran_buy_deals
-
-			SELECT DISTINCT sml.location_id,
-
-				sdh.source_deal_header_id transport_deal_id
-
-				--od.source_deal_header_id buy_deal_id
-
-				, NULL buy_deal_id
-
-				, sml.location_name
-
-				,sdd.term_start,sdd.term_end
-
-				, sdd.leg
-
-				, buy_sell_flag   
-
-				, granularity
-
-				, sdd.deal_volume
-
-			FROM source_deal_header sdh
-
-			INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id 
-
-			INNER JOIN #location_id sml on sml.location_id = sdd.location_id 
-
-			--INNER JOIN optimizer_detail od ON od.transport_deal_id = sdh.source_deal_header_id  
-
-			INNER JOIN source_system_book_map ssbm on ssbm.source_system_book_id1=sdh.source_system_book_id1
-
-				AND ssbm.source_system_book_id2 = sdh.source_system_book_id2
-
-				AND ssbm.source_system_book_id3 = sdh.source_system_book_id3
-
-				AND ssbm.source_system_book_id4 = sdh.source_system_book_id4 ''
-
-				+ CASE WHEN @_subbook_id  IS NOT NULL THEN '' AND book_deal_type_map_id = ISNULL('' + CAST(@_subbook_id AS VARCHAR(1000)) + '', book_deal_type_map_id)'' ELSE '''' END 
-
-				+ ''  INNER JOIN source_deal_type sdt ON sdh.source_deal_type_id = sdt.source_deal_type_id
-
-			WHERE  sdt.deal_type_id = ''''Transportation''''
-
-				AND sdd.term_start >= sml.term_start
-
-				AND sdd.term_end <= sml.term_end ''
-
-
-EXEC spa_print @_st
-
-EXEC(@_st)
+	EXEC(@_st)
 
   
 
 
-IF OBJECT_ID(''tempdb..#final_trans_deals_coll'') IS NOT NULL
+	IF OBJECT_ID(''tempdb..#final_trans_deals_coll'') IS NOT NULL
 
-DROP TABLE #final_trans_deals_coll
+	DROP TABLE #final_trans_deals_coll
 
 
-SELECT location_id	
+	SELECT location_id	
 
-, transport_deal_id	
+		, transport_deal_id	
 
-, buy_deal_id	
+		, buy_deal_id	
 
-, location_name	
+		, location_name	
 
-, term_start	
+		, term_start	
 
-, term_end	 
+		, term_end	 
 
-, granularity 
+		, granularity 
 
-INTO #final_trans_deals_coll
+	INTO #final_trans_deals_coll
 
-FROM (
+	FROM (
 
-	SELECT DISTINCT location_id	
+		SELECT DISTINCT location_id	
 
-	, transport_deal_id	
+		, transport_deal_id	
 
-	, buy_deal_id	
+		, buy_deal_id	
 
-	, location_name	
+		, location_name	
 
-	, term_start	
+		, term_start	
 
-	, term_end	
+		, term_end	
 
-	, granularity
+		, granularity
 
-	FROM #temp_pen_tran_buy_deals 
+		FROM #temp_pen_tran_buy_deals 
 
-	INTERSECT
+		INTERSECT
 
-	SELECT DISTINCT t.location_id	
+		SELECT DISTINCT t.location_id	
 
-	, t.transport_deal_id	
+		, t.transport_deal_id	
 
-	, t.buy_deal_id	
+		, t.buy_deal_id	
 
-	, t.location_name	
+		, t.location_name	
 
-	, t.term_start	
+		, t.term_start	
 
-	, t.term_end	
+		, t.term_end	
 
-	, t.granularity
+		, t.granularity
 
-	--, sml.location_id
+		--, sml.location_id
 
-	FROM #temp_pen_tran_buy_deals t
+		FROM #temp_pen_tran_buy_deals t
 
-	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = t.transport_deal_id
+		INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = t.transport_deal_id
 
-		--AND sdd.leg = CASE WHEN t.leg = 1 THEN 2 ELSE 1 END
+			--AND sdd.leg = CASE WHEN t.leg = 1 THEN 2 ELSE 1 END
 
-	INNER JOIN source_minor_location sml ON sml.Location_Name = CASE WHEN t.location_name = ''NCGL'' THEN ''NCGH'' ELSE ''GPLH'' END 
+		INNER JOIN source_minor_location sml ON sml.Location_Name = CASE WHEN t.location_name = ''NCGL'' THEN ''NCGH'' ELSE ''GPLH'' END 
 
-		AND sdd.location_id = sml.source_minor_location_id
+			AND sdd.location_id = sml.source_minor_location_id
 
-) z 
+	) z 
 
+
+	IF OBJECT_ID(''tempdb..#position'') IS NOT NULL
+
+	DROP TABLE #position
+
+
+	SELECT t1.location_id,rhpd.term_start
+
+	--,  rhpd.hr1
+
+	--,  rhpd.curve_id , sdd01.curve_id
+
+		, SUM(rhpd.hr1) hr1 
+
+		, SUM(rhpd.hr2) hr2 
+
+		, SUM(rhpd.hr3) hr3 
+
+		, SUM(rhpd.hr4) hr4 
+
+		, SUM(rhpd.hr5) hr5 
+
+		, SUM(rhpd.hr6) hr6 
+
+		, SUM(rhpd.hr7) hr7 
+
+		, SUM(rhpd.hr8) hr8 
+
+		, SUM(rhpd.hr9 ) hr9 
+
+		, SUM(rhpd.hr10) hr10
+
+		, SUM(rhpd.hr11) hr11
+
+		, SUM(rhpd.hr12) hr12
+
+		, SUM(rhpd.hr13) hr13
+
+		, SUM(rhpd.hr14) hr14
+
+		, SUM(rhpd.hr15) hr15
+
+		, SUM(rhpd.hr16) hr16
+
+		, SUM(rhpd.hr17) hr17
+
+		, SUM(rhpd.hr18) hr18
+
+		, SUM(rhpd.hr19) hr19
+
+		, SUM(rhpd.hr20) hr20
+
+		, SUM(rhpd.hr21) hr21
+
+		, SUM(rhpd.hr22) hr22
+
+		, SUM(rhpd.hr23) hr23
+
+		, SUM(rhpd.hr24) hr24
+
+	INTO #position
+
+	FROM #final_trans_deals_coll t1  
+
+	INNER JOIN source_deal_detail sdd01 ON sdd01.source_deal_header_id = t1.transport_deal_id
+
+	INNER JOIN report_hourly_position_deal rhpd on rhpd.source_deal_header_id = t1.transport_deal_id
+
+		AND rhpd.location_id = t1.location_id 
+
+		AND rhpd.term_start = t1.term_start 
+
+		AND rhpd.curve_id = sdd01.curve_id
+
+		AND rhpd.term_start BETWEEN sdd01.term_start AND sdd01.term_end
+
+	GROUP BY t1.location_id,rhpd.term_start;
+
+	--select * from #position
+
+	----select * from report_hourly_position_deal where source_deal_header_id IN ( 7402, 7403)
+
+	--return 
+
+	IF OBJECT_ID(''tempdb..#position_unpvt'') IS NOT NULL
+
+	DROP TABLE #position_unpvt
+
+	SELECT unpvt.location_id,unpvt.term_start,unpvt.[hour],unpvt.[value]
+
+	INTO #position_unpvt
+
+	FROM
+
+	(
+
+	SELECT location_id,term_start,hr1 [1],hr2 [2],hr3 [3],hr4 [4],hr5 [5],hr6 [6]
+
+	,hr7 [7],hr8 [8],hr9 [9],hr10 [10],hr11 [11],hr12 [12],hr13 [13],hr14 [14]
+
+	,hr15 [15],hr16 [16],hr17 [17],hr18 [18],hr19 [19],hr20 [20],hr21 [21],hr22 [22],hr23 [23],hr24 [24]	
+
+	FROM #position 
+
+	) P
+
+	UNPIVOT (value for hour IN ([1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13]
+
+	,[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24])
+
+	) as unpvt;
+
+
+
+	--select * from #position 
+
+	--return 
+
+
+	IF OBJECT_ID(''tempdb..#check_positive_negetive'')  IS NOT NULL
+
+		DROP TABLE #check_positive_negetive
+
+
+	SELECT location_id
+
+		, term_start
+
+		, SUM(value) [value]
+
+	INTO #check_positive_negetive
+
+	FROM #position_unpvt 
+
+	GROUP BY term_start, location_id
+
+	HAVING SUM(value) <= 0
 
  
 
---select * from #temp_pen_tran_buy_deals
+	UPDATE pu 
 
---select * from #final_trans_deals_coll 
+	SET pu.value = 0 
 
---return 
+	FROM #check_positive_negetive cpn 
 
+	INNER JOIN #position_unpvt  pu ON pu.term_start = cpn.term_start
 
-IF OBJECT_ID(''tempdb..#position'') IS NOT NULL
+		AND pu.location_id = cpn.location_id
 
-DROP TABLE #position
 
-SELECT t1.location_id,rhpd.term_start
+	SET @_sql = ''select p.func_rowid,  u.*
 
---,  rhpd.hr1
+				INTO #func_output_value
 
---,  rhpd.curve_id , sdd01.curve_id
+				from #position_unpvt u 
 
-, SUM(rhpd.hr1) hr1 
+				INNER JOIN '' + @_fcpt + '' p ON u.term_start = p.prod_date
 
-, SUM(rhpd.hr2) hr2 
+					and p.Hour = u.hour
 
-, SUM(rhpd.hr3) hr3 
 
-, SUM(rhpd.hr4) hr4 
+				''
 
-, SUM(rhpd.hr5) hr5 
 
-, SUM(rhpd.hr6) hr6 
+	-- Final Evaluation in process table
 
-, SUM(rhpd.hr7) hr7 
+	set @_sql=@_sql+''
 
-, SUM(rhpd.hr8) hr8 
+		update p set temp_eval_value=CAST(fov.value AS NUMERIC(38, 18))
 
-, SUM(rhpd.hr9 ) hr9 
+		FROM ''+ @_fcpt+'' p
 
-, SUM(rhpd.hr10) hr10
+			inner join #func_output_value fov on fov.func_rowid=p.func_rowid 
 
-, SUM(rhpd.hr11) hr11
+	''	
 
-, SUM(rhpd.hr12) hr12
+	exec spa_print @_sql
 
-, SUM(rhpd.hr13) hr13
+	exec(@_sql)
 
-, SUM(rhpd.hr14) hr14
+END	
 
-, SUM(rhpd.hr15) hr15
+--Select user input parameters only
 
-, SUM(rhpd.hr16) hr16
-
-, SUM(rhpd.hr17) hr17
-
-, SUM(rhpd.hr18) hr18
-
-, SUM(rhpd.hr19) hr19
-
-, SUM(rhpd.hr20) hr20
-
-, SUM(rhpd.hr21) hr21
-
-, SUM(rhpd.hr22) hr22
-
-, SUM(rhpd.hr23) hr23
-
-, SUM(rhpd.hr24) hr24
-
-INTO #position
-
-FROM #final_trans_deals_coll t1  
-
-INNER JOIN source_deal_detail sdd01 ON sdd01.source_deal_header_id = t1.transport_deal_id
-
-INNER JOIN report_hourly_position_deal rhpd on rhpd.source_deal_header_id = t1.transport_deal_id
-
-	AND rhpd.location_id = t1.location_id 
-
-	AND rhpd.term_start = t1.term_start 
-
-	AND rhpd.curve_id = sdd01.curve_id
-
-	AND rhpd.term_start BETWEEN sdd01.term_start AND sdd01.term_end
-
-GROUP BY t1.location_id,rhpd.term_start;
-
---select * from #position
-
-----select * from report_hourly_position_deal where source_deal_header_id IN ( 7402, 7403)
-
---return 
-
-IF OBJECT_ID(''tempdb..#position_unpvt'') IS NOT NULL
-
-DROP TABLE #position_unpvt
-
-SELECT unpvt.location_id,unpvt.term_start,unpvt.[hour],unpvt.[value]
-
-INTO #position_unpvt
-
-FROM
-
-(
-
-SELECT location_id,term_start,hr1 [1],hr2 [2],hr3 [3],hr4 [4],hr5 [5],hr6 [6]
-
-,hr7 [7],hr8 [8],hr9 [9],hr10 [10],hr11 [11],hr12 [12],hr13 [13],hr14 [14]
-
-,hr15 [15],hr16 [16],hr17 [17],hr18 [18],hr19 [19],hr20 [20],hr21 [21],hr22 [22],hr23 [23],hr24 [24]	
-
-FROM #position 
-
-) P
-
-UNPIVOT (value for hour IN ([1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12],[13]
-
-,[14],[15],[16],[17],[18],[19],[20],[21],[22],[23],[24])
-
-) as unpvt;
-
-
-
-IF OBJECT_ID(''tempdb..#check_positive_negetive'')  IS NOT NULL
-
-	DROP TABLE #check_positive_negetive
-
-
-SELECT location_id
-
-	, term_start
-
-	, SUM(value) [value]
-
-INTO #check_positive_negetive
-
-FROM #position_unpvt 
-
-GROUP BY term_start, location_id
-
-HAVING SUM(value) <= 0
-
- 
-
-UPDATE pu 
-
-SET pu.value = 0 
-
-FROM #check_positive_negetive cpn 
-
-INNER JOIN #position_unpvt  pu ON pu.term_start = cpn.term_start
-
-	AND pu.location_id = cpn.location_id
-
-
-SET @_st = ''
-
-UPDATE sdd 
-
-SET sdd.deal_volume = pos.[value]  
-
---select *
-
-FROM ''+ @_calc_process_table +'' s
-
-INNER JOIN source_deal_detail sdd on sdd.source_deal_detail_id=s.source_deal_detail_id
-
-INNER JOIN (SELECT location_id
-
-, term_start
-
-, MAX([value]) value
-
-FROM #position_unpvt 
-
-GROUP BY location_id, term_start
-
-) pos on pos.location_id= sdd.location_id and pos.term_start = s.prod_date  ''
-
-EXEC spa_print @_st
-
-EXEC(@_st)
-
-
---select * from source_deal_detail where source_deal_header_id =7429 
-
-SET @_st=''
-
-SELECT 
-
-s.source_deal_header_id,
-
-s.source_deal_detail_id,
-
-s.counterparty_id,
-
-s.contract_id,
-
-s.prod_date,
-
-s.[hour],
-
-s.[mins],
-
-pos.[value]   [value] ,
-
-''''''+ @_calc_process_table +'''''' calc_process_table
+	select @_source_deal_header_id source_deal_header_id
 
 --[__batch_report__]
 
-from ''+ @_calc_process_table +'' s
+From seq WHERE n=1
 
-inner join source_deal_detail sdd on sdd.source_deal_detail_id=s.source_deal_detail_id
+ 
 
-inner join #position_unpvt pos on pos.location_id= sdd.location_id and pos.term_start=s.prod_date and pos.[hour]=s.[hour]
-
---order by 5,6
-
-''
-
-EXEC spa_print @_st
-
-EXEC(@_st)
-
-', report_id = @report_id_data_source_dest,
+ ', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106501' 
 	WHERE [name] = 'BalVol'
@@ -590,243 +462,12 @@ EXEC(@_st)
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
 	           WHERE ds.[name] = 'BalVol'
-	            AND dsc.name =  'calc_process_table'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Calc Process Table'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'BalVol'
-			AND dsc.name =  'calc_process_table'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'calc_process_table' AS [name], 'Calc Process Table' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'BalVol'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'BalVol'
-	            AND dsc.name =  'contract_id'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Contract ID'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'BalVol'
-			AND dsc.name =  'contract_id'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'contract_id' AS [name], 'Contract ID' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'BalVol'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'BalVol'
-	            AND dsc.name =  'counterparty_id'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Counterparty ID'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'BalVol'
-			AND dsc.name =  'counterparty_id'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'counterparty_id' AS [name], 'Counterparty ID' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'BalVol'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'BalVol'
-	            AND dsc.name =  'hour'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Hour'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'BalVol'
-			AND dsc.name =  'hour'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'hour' AS [name], 'Hour' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'BalVol'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'BalVol'
-	            AND dsc.name =  'mins'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Mins'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'BalVol'
-			AND dsc.name =  'mins'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'mins' AS [name], 'Mins' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'BalVol'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'BalVol'
-	            AND dsc.name =  'prod_date'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Prod Date'
-			   , reqd_param = NULL, widget_id = 6, datatype_id = 2, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 4, key_column = 0, required_filter = NULL
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'BalVol'
-			AND dsc.name =  'prod_date'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'prod_date' AS [name], 'Prod Date' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 2 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, NULL AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'BalVol'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'BalVol'
-	            AND dsc.name =  'source_deal_detail_id'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Source Deal Detail Id'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'BalVol'
-			AND dsc.name =  'source_deal_detail_id'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'source_deal_detail_id' AS [name], 'Source Deal Detail Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'BalVol'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'BalVol'
 	            AND dsc.name =  'source_deal_header_id'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Deal ID'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -839,40 +480,7 @@ EXEC(@_st)
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'source_deal_header_id' AS [name], 'Deal ID' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
-		FROM sys.objects o
-		INNER JOIN data_source ds ON ds.[name] = 'BalVol'
-			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		LEFT JOIN report r ON r.report_id = ds.report_id
-			AND ds.[type_id] = 2
-			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
-		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
-	END 
-	
-	
-	IF EXISTS (SELECT 1 
-	           FROM data_source_column dsc 
-	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
-	           WHERE ds.[name] = 'BalVol'
-	            AND dsc.name =  'value'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		UPDATE dsc  
-		SET alias = 'Value'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 3, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		FROM data_source_column dsc
-		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
-		WHERE ds.[name] = 'BalVol'
-			AND dsc.name =  'value'
-			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
-	END	
-	ELSE
-	BEGIN
-		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
-		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
-		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'value' AS [name], 'Value' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 3 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'source_deal_header_id' AS [name], 'Deal ID' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'BalVol'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -903,4 +511,4 @@ EXEC(@_st)
 	END CATCH
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
-		DROP TABLE #data_source_column
+		DROP TABLE #data_source_column	
