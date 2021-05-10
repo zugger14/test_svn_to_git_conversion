@@ -430,8 +430,8 @@ echo $sch_obj->close_layout();
         var first_hour_del_vol = 0;
         subgrid.forEachCell(subgrid.getRowId(rec_row_index), function(cellObj, cid) {
             if (cid > 6) { //only for hour columns
-                var rec_hrly = parseInt(cellObj.getValue() == '' ? 0 : cellObj.getValue()); 
-                var del_hrly = parseInt(subgrid.cells2(del_row_index, cid).getValue() == '' ? 0 : subgrid.cells2(del_row_index, cid).getValue());
+                var rec_hrly = parseFloat(cellObj.getValue() == '' ? 0 : cellObj.getValue()); 
+                var del_hrly = parseFloat(subgrid.cells2(del_row_index, cid).getValue() == '' ? 0 : subgrid.cells2(del_row_index, cid).getValue());
 
                 if (cid == 7) {
                     first_hour_rec_vol = rec_hrly;
@@ -440,7 +440,7 @@ echo $sch_obj->close_layout();
 
                 total_rec += rec_hrly;
                 total_del += del_hrly;
-                total_path_rmdq += parseInt(getNumberFormat(subgrid.cells2(0, cid).getValue().split('/')[1], '', 1));
+                total_path_rmdq += parseFloat(getNumberFormat(subgrid.cells2(0, cid).getValue().split('/')[1], '', 1));
             }
         });
 
