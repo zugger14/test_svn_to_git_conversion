@@ -428,6 +428,7 @@ echo $sch_obj->close_layout();
         var total_path_rmdq = 0;
         var first_hour_rec_vol = 0;
         var first_hour_del_vol = 0;
+        var hr_count = 0;
         subgrid.forEachCell(subgrid.getRowId(rec_row_index), function(cellObj, cid) {
             if (cid > 6) { //only for hour columns
                 var rec_hrly = parseFloat(cellObj.getValue() == '' ? 0 : cellObj.getValue()); 
@@ -441,8 +442,14 @@ echo $sch_obj->close_layout();
                 total_rec += rec_hrly;
                 total_del += del_hrly;
                 total_path_rmdq += parseFloat(getNumberFormat(subgrid.cells2(0, cid).getValue().split('/')[1], '', 1));
+                hr_count++;
             }
         });
+
+        //console.log(total_rec+':'+hr_count);
+        //setting avg for first hr volume
+        first_hour_rec_vol = total_rec / hr_count;
+        first_hour_del_vol = total_del / hr_count;
 
         var storage_asset_id = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('storage_contract')).getValue();
         var storage_violate = '0';
