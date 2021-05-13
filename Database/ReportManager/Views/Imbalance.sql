@@ -33,18 +33,74 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Imbalance'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + '
+
 DECLARE 
-		@_farrms_calc_process_table varchar(250), 
-		@_farrms_formula_id VARCHAR(100)
+----User Parameter:
+	----System Paramer:
+	@_calc_type VARCHAR(10)
+	,@_as_of_date varchar(10)
+	,@_farrms_calc_process_table VARCHAR(250) --=''adiha_process.dbo.UDV_func_input_table_DEBUG_MODE_ON_2A41E6F9_6B13_4630_B48A_4BEB64931F73__1787__1__1''  --''adiha_process.dbo.curve_formula_table3_DEBUG_MODE_ON_BC52B9D9_1AB5_423D_B78B_B39D2834B8A7'' -- The required granularity of data should be in this process table with function required columns as system parameter.
 
-SET @_farrms_calc_process_table = nullif(isnull(@_farrms_calc_process_table, nullif(''@farrms_calc_process_table'', replace(''@_farrms_calc_process_table'', ''@_'', ''@''))), ''null'')
-SET @_farrms_formula_id = nullif(isnull(@_farrms_formula_id, nullif(''@farrms_formula_id'', replace(''@_farrms_formula_id'', ''@_'', ''@''))), ''null'')
+
+SET @_calc_type = NULLIF(ISNULL(@_calc_type, NULLIF(''@calc_type'', REPLACE(''@_calc_type'', ''@_'', ''@''))), ''NULL'')
+SET @_as_of_date = nullif(isnull(@_as_of_date, nullif(''@as_of_date'', replace(''@_as_of_date'', ''@_'', ''@''))), ''null'')
+SET @_farrms_calc_process_table = NULLIF(ISNULL(@_farrms_calc_process_table, NULLIF(''@farrms_calc_process_table'', REPLACE(''@_farrms_calc_process_table'', ''@_'', ''@''))), ''NULL'')
 
 
+DECLARE @_sql VARCHAR(MAX),@_table_name VARCHAR(250)
 
- DECLARE @_curve_id NVARCHAR(200) = ''POWER.DE.TENNET.QH.Imbalance''
-  DECLARE @_sql NVARCHAR(max) 
+IF @_farrms_calc_process_table = ''1900''  goto level_end_function
+--------------------- Debug Mode-------------------------------------------------------------------------------
+IF OBJECT_ID(@_farrms_calc_process_table) IS NULL 
+BEGIN
+-- Most of these columns are exist in process table.
+	SET @_sql=''
+		select  func_rowid=identity(int,1,1), 
+		cast(''''2020-01-01'''' as date) as_of_date,
+		4500 curve_source_value_id, 
+		cast(sdd.term_start as date) prod_date,
+		cast(sdd.term_end as date) prod_date_to,
+		cast(sdd.formula_id as int) formula_id,
+		cast(null as int) granularity,
+		cast(sdh.contract_id as int) contract_id,
+		cast(sdd.source_deal_detail_id as int) source_deal_detail_id,
+		cast(null as int) [Hours],
+		cast(null as int) is_dst,
+		cast(null as int) [period],
+		cast(null as int) [mins],
+		cast(null as  numeric(20,8)) volume,
+		cast(sdh.counterparty_id as int) counterparty_id ,
+		cast(sdd.curve_id as int) curve_id,
+		cast(null as numeric(20,8)) onPeakVolume,
+		cast(null as int) invoice_Line_item_id,			
+		cast(null as int) invoice_line_item_seq_id,
+		cast(null as float)	price,			
+		cast(null as int) volume_uom_id,
+		cast(null as int) generator_id,
+		cast(null as int) commodity_id,
+		cast(null as int) meter_id,
+		cast(sdh.source_deal_header_id as int) source_deal_header_id,
+		''''n'''' calc_aggregation,
+		cast(null as int) internal_field_type,
+		cast(null as int) sequence_order,
+		cast(null as int) udf_template_id,
+		cast(null as int) ticket_detail_id ,
+		cast(null as int) shipment_id,
+		cast(null as int) deal_price_type_id
+		into '' + @_farrms_calc_process_table
+		+'' 
+		from source_deal_header sdh inner join source_deal_detail sdd on sdh.source_deal_header_id=sdd.source_deal_header_id
+		where sdh.source_deal_header_id = 33188
+			-- and sdh.source_deal_detail_id = 33188
+	''
+	EXEC spa_print @_sql
+END
+--------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
+----------------Start Function Logic -------------------------------------------------------------
 
+
+DECLARE @_curve_id NVARCHAR(200) = ''POWER.DE.TENNET.QH.Imbalance''
 
 IF OBJECT_ID(''tempdb..#temp_source_price_curve'') IS NOT NULL
 	DROP TABLE #temp_source_price_curve
@@ -89,13 +145,11 @@ PIVOT
 ) unpvt
 
 
-
-
 set @_sql=''
-	update p set temp_eval_value= CASE WHEN sdh.header_buy_sell_flag = ''''b'''' THEN 1 ELSE -1 END * (ISNULL(mdh.meter_volume,0) - ISNULL(pf.profile_volume,0))
+	select p.func_rowid ,CASE WHEN sdh.header_buy_sell_flag = ''''b'''' THEN 1 ELSE -1 END * (ISNULL(mdh.meter_volume,0) - ISNULL(pf.profile_volume,0)) eval_value
+	INTO #func_output_value
 	FROM ''+ @_farrms_calc_process_table+'' p
 	inner join source_deal_header sdh on p.source_deal_header_id=sdh.source_deal_header_id 
-		and p.formula_id=''+@_farrms_formula_id+''
 	 INNER JOIN source_deal_detail sdd
 		ON p.source_deal_detail_id = sdd.source_deal_detail_id
 	 INNER JOIN  mv90_data mv ON sdd.meter_id = mv.meter_id AND mv.from_date = sdd.term_start
@@ -181,13 +235,33 @@ set @_sql=''
 	 ) pf
 ''
 
-	exec spa_print @_sql
-	exec(@_sql)
+
+--exec spa_print @_sql
+--exec(@_sql)
+--return
+----------------End Function Logic -----------------------------------------------------------------
+--------------------------------------------------------------------------------------------------
+-- Final Evaluation in process table
+SET @_sql=@_sql+''
+	--SELECT * FROM #func_output_value ORDER BY prod_date ASC
+	UPDATE p SET temp_eval_value = fov.eval_value
+	FROM ''+ @_farrms_calc_process_table+'' p
+		INNER JOIN #func_output_value fov 
+			ON fov.func_rowid=p.func_rowid 
+''	
+EXEC spa_print @_sql
+EXEC(@_sql)
 
 
-if OBJECT_ID(''tempdb..#formula_breakdown'') IS NULL  
-select 1 process_status
+
+level_end_function:
+--Select user input parameters only
+SELECT 1 process_status
 --[__batch_report__]
+From seq WHERE n=1
+
+
+
 
 ', report_id = @report_id_data_source_dest,
 	system_defined = '0'
