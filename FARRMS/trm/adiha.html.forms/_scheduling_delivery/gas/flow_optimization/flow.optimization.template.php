@@ -2901,11 +2901,11 @@
         if($('.total_end_inv_rec').filter('[common_proxy_pos]').filter('[proxy_type="cv"]').length > 0) {
             common_proxy_vol_used = 1;
             var common_proxy_pos = $('.total_end_inv_rec').filter('[common_proxy_pos]').filter('[loc_id="' + box_div.attr('from_loc_id') + '"]').attr('common_proxy_pos');
-            total_inv = parseInt(common_proxy_pos);
+            total_inv = parseFloat(common_proxy_pos);
             if($('.edited_info_detail', box_div).length > 0) {
                 var manual_sch_vol_own = 0;
                 $('.edited_info_detail', box_div).each(function(i) {
-                    manual_sch_vol_own += parseInt($(this).attr('delivery'));
+                    manual_sch_vol_own += parseFloat($(this).attr('delivery'));
                 });
                 
                 //alert(manual_sch_vol_own);
@@ -2917,15 +2917,15 @@
         }
         /* proxy adjust */
         
-        var sum_of_rec = parseInt(rec_value);
+        var sum_of_rec = parseFloat(rec_value);
         $('.rec_del_div1', box_div.closest('tr')).each(function(index) {
             if ($(this).closest('td').index() != td_index) {
                 if(granularity == '982') {// if hourly case pick first hour volume only
-                    var box_rec_vol = parseInt($(this).closest('.box_div').attr('first_hour_rec_vol'));
+                    var box_rec_vol = parseFloat($(this).closest('.box_div').attr('first_hour_rec_vol'));
                     box_rec_vol = (isNaN(box_rec_vol) ? 0 : box_rec_vol);
                     sum_of_rec += box_rec_vol;
                 } else {
-                    var box_rec_vol = parseInt($(this).attr('value'));
+                    var box_rec_vol = parseFloat($(this).attr('value'));
                     box_rec_vol = (isNaN(box_rec_vol) ? 0 : box_rec_vol);
                     sum_of_rec += box_rec_vol;
                 }
@@ -2941,26 +2941,26 @@
         }
         //alert(total_inv+':'+sum_of_rec);
         if(common_proxy_vol_used == 1) {
-            sum_of_del = parseInt(rec_value) - box_div.attr('solver_result_rec'); //all sum has been on common proxy vol
+            sum_of_del = parseFloat(rec_value) - box_div.attr('solver_result_rec'); //all sum has been on common proxy vol
         }
         var rec_end_inv = total_inv - sum_of_rec;
         //alert(rec_end_inv);
-        return parseInt(rec_end_inv);
+        return parseInt(roundTo(rec_end_inv, 0));
     }
     function violation_available_inv_del(box_div, del_value) {
         var td_index = box_div.closest('td').index();
-        var total_inv = parseInt($('.total_beg_inv_del').filter('[loc_id="' + box_div.attr('to_loc_id') + '"]').attr('value'));
+        var total_inv = parseFloat($('.total_beg_inv_del').filter('[loc_id="' + box_div.attr('to_loc_id') + '"]').attr('value'));
         var total_inv_compare = total_inv;
         var common_proxy_vol_used = 0;
         /* proxy adjust */
         if($('.total_end_inv_del').filter('[common_proxy_pos]').filter('[proxy_type="cv"]').length > 0) {
             common_proxy_vol_used = 1;
             var common_proxy_pos = $('.total_end_inv_del').filter('[common_proxy_pos]').filter('[loc_id="' + box_div.attr('to_loc_id') + '"]').attr('common_proxy_pos');
-            total_inv = parseInt(common_proxy_pos);
+            total_inv = parseFloat(common_proxy_pos);
             if($('.edited_info_detail', box_div).length > 0) {
                 var manual_sch_vol_own = 0;
                 $('.edited_info_detail', box_div).each(function(i) {
-                    manual_sch_vol_own += parseInt($(this).attr('delivery'));
+                    manual_sch_vol_own += parseFloat($(this).attr('delivery'));
                 });
                 //alert(manual_sch_vol_own);
                 total_inv -= manual_sch_vol_own;
@@ -2969,16 +2969,16 @@
         /* proxy adjust */
         
         var tr_index = box_div.closest('tr').index();//alert('tr_indx:'+(tr_index-1));alert('td_indx:'+(td_index + 1));
-        var sum_of_del = parseInt(del_value);
+        var sum_of_del = parseFloat(del_value);
         var tr_context = $('.frame_tbl tbody tr:gt(' + END_POS + ') td:nth-child(' + (td_index + 1) + ') .rec_del_div2');
         tr_context.each(function(index) {
             if ($(this).closest('tr').index() != tr_index) {
                 if(granularity == '982') {// if hourly case pick first hour volume only
-                    var box_del_vol = parseInt($(this).closest('.box_div').attr('first_hour_del_vol'));
+                    var box_del_vol = parseFloat($(this).closest('.box_div').attr('first_hour_del_vol'));
                     box_del_vol = (isNaN(box_del_vol) ? 0 : box_del_vol);
                     sum_of_del += box_del_vol;
                 } else {
-                    var box_del_vol = parseInt($(this).attr('value'));
+                    var box_del_vol = parseFloat($(this).attr('value'));
                     box_del_vol = (isNaN(box_del_vol) ? 0 : box_del_vol);
                     sum_of_del += box_del_vol;
                 }
@@ -2993,12 +2993,12 @@
             success_call('Delivery Volume limit exceeded.', 'error');
         }
         if(common_proxy_vol_used == 1) {
-            sum_of_del = parseInt(del_value) - box_div.attr('solver_result_del'); //all sum has been on common proxy vol
+            sum_of_del = parseFloat(del_value) - box_div.attr('solver_result_del'); //all sum has been on common proxy vol
         }
         var del_end_inv = (total_inv + sum_of_del);
         
         //alert(del_end_inv);
-        return parseInt(del_end_inv);
+        return parseInt(roundTo(del_end_inv, 0));
     }
     
     //## CORNER CHECK EVENT
