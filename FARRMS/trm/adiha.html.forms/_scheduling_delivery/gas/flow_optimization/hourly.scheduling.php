@@ -455,8 +455,12 @@ echo $sch_obj->close_layout();
         var storage_violate = '0';
 
         if (get_param.storage_type != '') {//avoid validation for non-storage case
-            first_hour_rec_vol = total_rec;
-            first_hour_del_vol = total_del;
+            //console.log('get_param.storage_type:'+get_param.storage_type);
+            if (get_param.storage_type == 'i') {
+                first_hour_del_vol = total_del;
+            } else {
+                first_hour_rec_vol = total_rec;
+            }
 
             storage_violate = sch.fx_storage_validation(storage_asset_id, total_rec, total_del);
 
