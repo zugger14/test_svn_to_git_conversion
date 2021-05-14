@@ -1277,6 +1277,9 @@ BEGIN
 	'
 	
 	EXEC(@sql)
+
+	--round total position and begining position
+	UPDATE #locwise_range_total SET [beg_pos] = ROUND([beg_pos], 0), [total_position] = ROUND([total_position], 0)
 	--print(@sql)
 	--return
 	--CALCULATE TOTAL POSITION FOR RANGE OF TERMS END
@@ -1520,7 +1523,7 @@ BEGIN
 		--changed logic to show daily balance for that term on storage location (modified on:2019-08-12, for TRMTracker_Gas_Demo, Consulted BA: Sulav Nepal, Dev: Sangam Ligal)
 		SELECT
 			--sum(cast(sp.injection as float) - cast(sp.withdrawal as float)) [storage_position]
-			sum(cast(sp.balance AS NUMERIC(38,20))) [storage_position]
+			ROUND(sum(cast(sp.balance AS NUMERIC(38,20))),0) [storage_position]
 		FROM #storage_position sp
 		WHERE sp.location = minor.Location_Name
 			AND sp.term = isnull(@flow_date_to, @flow_date_from)
