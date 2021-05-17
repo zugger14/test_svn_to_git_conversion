@@ -1202,7 +1202,7 @@
                 }
                 
                 $('.paramset-region .normal-sort .param-relation', context_par).show();
-                $('.paramset-region .normal-sort .param-relation', context_par).val('1');
+                // $('.paramset-region .normal-sort .param-relation', context_par).val('1');
                 $('.paramset-region .normal-sort .param-relation:first', context_par).hide();
                 $('.paramset-region .normal-sort .param-relation:first', context_par).val('');
             }
