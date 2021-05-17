@@ -194,9 +194,9 @@ BEGIN
 		FROM source_deal_header
 		WHERE source_deal_header_id = @copy_deal_id
 
-		UPDATE #temp_copy_sdh 
-		SET close_reference_id = @copy_deal_id 
-		WHERE source_deal_header_id = @copy_deal_id
+		--UPDATE #temp_copy_sdh 
+		--SET close_reference_id = @copy_deal_id 
+		--WHERE source_deal_header_id = @copy_deal_id
 		
 		IF OBJECT_ID('tempdb..#temp_header_columns') IS NOT NULL
 			DROP TABLE #temp_header_columns
@@ -217,6 +217,14 @@ BEGIN
 		
 		INSERT INTO #temp_header_columns	
 		EXEC spa_Transpose @table_name, NULL, 1
+
+		--update deal_id if deal reference id is null with copy
+		UPDATE thc
+		SET columns_value = 'COPY_' + CONVERT(VARCHAR(10), original.source_deal_header_id)-- + '_' + CONVERT(VARCHAR(10), copi.source_deal_header_id)
+		FROM #temp_header_columns thc
+		CROSS APPLY (SELECT source_deal_header_id source_deal_header_id FROM #temp_copy_sdh) original
+		CROSS APPLY (SELECT MAX(source_deal_header_id) + 1 source_deal_header_id FROM source_deal_header) copi
+		WHERE thc.columns_name = 'deal_id'
 
 		INSERT INTO #temp_sdh
 		SELECT column_name,
