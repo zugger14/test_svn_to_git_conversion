@@ -545,7 +545,8 @@ FROM (
 	UNPIVOT
 	(on_off FOR Hr IN (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24)	
 ) upv	
-WHERE on_off=1
+WHERE 1 = IIF(@generic_mapping_process = 'Storage', 1, -1)
+	OR on_off = 1
 GROUP BY block_define_id,term_date,term_start,hr
 ORDER BY term_start,term_date,hr
 --select count(1) from #hour_block_term
