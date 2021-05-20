@@ -163,19 +163,9 @@ declare @flag CHAR(50),
 	
 EXEC dbo.spa_drop_all_temp_table
 
-EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'adangol';
 
-select @flag='s1'
-,@process_id='9243CCDB_58CD_46B4_8C46_F789504DD532'
-,@delivery_path='330'
-,@contract_id='8347'
-,@flow_date_from='2021-03-01'
-,@granularity='982'
-,@period_from='1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25'
-,@from_location='2857'
-,@to_location='2854'
-,@round='4'
-,@dst_case='0'
+select @flag='p', @receipt_delivery='TO', @flow_date_from='2021-03-01', @minor_location='2854', @process_id='EA35A4CC_BA5E_4E6D_AB49_5FAFF93BB1AE', @flow_date_to='2021-03-01', @uom=1158, @reschedule='0'
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -3881,16 +3871,24 @@ BEGIN
 	--print(@sql)
 	--select * from #tmp_report_data
 	--return
-	SELECT @pivot_cols = STUFF(( SELECT DISTINCT '],[' + [hour]
-		FROM #tmp_report_data
+	SELECT @pivot_cols = STUFF(( SELECT '],[' + [hour]
+		FROM #tmp_report_data 
+		GROUP BY [hour] 
+		ORDER BY [hour]
 		FOR XML PATH('')),1,2,'') + ']'
 		
+		
 	SELECT @pivot_cols_alias = STUFF(( 
-		SELECT DISTINCT ',MAX([' + [hour] + ']) AS [' + [gas_hour] + ']'
+		SELECT ',MAX([' + [hour] + ']) AS [' + MAX([gas_hour]) + ']'
 		FROM #tmp_report_data
-		FOR XML PATH('')
-	
+		GROUP BY [hour] 
+		ORDER BY [hour]
+		FOR XML PATH('')	
 	),1,1,'')	
+
+	--print @pivot_cols
+	--print @pivot_cols_alias
+	--return
 
 	SET @sql = '
 	SELECT dbo.FNADateFormat(piv.term_start) [Term]
