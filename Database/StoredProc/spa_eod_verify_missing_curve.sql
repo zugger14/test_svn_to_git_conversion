@@ -30,10 +30,15 @@ AS
 DECLARE @contextinfo VARBINARY(128)= CONVERT(VARBINARY(128), 'DEBUG_MODE_ON');
 SET CONTEXT_INFO @contextinfo;
 
+
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'farrms_admin'
+
 DECLARE @flag           CHAR(10) = 'COPY',
-        @as_of_date     DATETIME = '2019-03-12',
-        @process_id     VARCHAR(300) = dbo.FNAGETNEWID()
---*/
+        @as_of_date     DATETIME = '2021-04-26',
+        @process_id     VARCHAR(300) = dbo.FNAGETNEWID(),
+		@curve_value_id NVARCHAR(4000) = NULL
+		
+		--*/
 SET NOCOUNT ON 
 IF OBJECT_ID('tempdb..#temp_all_curves') IS NOT NULL
 	DROP TABLE #temp_all_curves
@@ -115,6 +120,7 @@ INNER JOIN source_price_curve_def spcd ON CAST(spcd.source_curve_def_id AS VARCH
 +' WHERE gmh.mapping_name = ''EOD Price Copy'''
 
 EXEC(@sql)
+
 INSERT INTO #temp_all_vol_cor_curves ([vol_cor_flag], [curve_id_from], [curve_id_to], [holiday_calendar_id], [expected_start_maturity], [expected_end_maturity], maturity_start_date, maturity_end_date,[Halt_process],[Copy Missing])
 SELECT gmv.clm1_value [vol_cor_flag],
 	   gmv.clm2_value [curve_id],
@@ -183,7 +189,21 @@ IF OBJECT_ID('tempdb..#temp_copy_curve_holiday') IS NOT NULL
 
 IF OBJECT_ID('tempdb..#temp_copy_curve_expiration') IS NOT NULL 
 	DROP TABLE #temp_copy_curve_expiration
-		
+
+DROP TABLE IF EXISTS #max_spc
+CREATE TABLE #max_spc(as_of_date DATETIME, maturity_date DATETIME, source_curve_def_id INT, curve_source_value_id INT)
+INSERT INTO #max_spc(as_of_date, maturity_date, source_curve_def_id, curve_source_value_id)
+SELECT MAX(spc.as_of_date) as_of_date, spc.maturity_date, spc.source_curve_def_id,  spc.curve_source_value_id
+FROM   source_price_curve spc
+INNER JOIN #temp_all_curves tac ON (tac.curve_id = spc.source_curve_def_id 
+	OR  tac.holiday_curve_id = spc.source_curve_def_id 
+	OR  tac.expiration_curve_id = spc.source_curve_def_id)
+	AND spc.maturity_date BETWEEN tac.maturity_start_date and tac.maturity_end_date
+WHERE spc.as_of_date < @as_of_date
+	AND curve_source_value_id = 4500
+	AND spc.is_dst =0
+GROUP BY maturity_date, source_curve_def_id, curve_source_value_id
+
 CREATE TABLE #temp_maturity_date (
 	source_curve_def_id     INT,
 	maturity_date           DATETIME,
@@ -256,7 +276,7 @@ DECLARE eod_price_copy_cursor CURSOR FOR
 SELECT tac.curve_id
 FROM #temp_all_curves tac
 INNER JOIN source_price_curve_def spcd ON tac.curve_id = spcd.source_curve_def_id
-WHERE spcd.curve_id <> 'Bloomberg US Treasury Rates'
+WHERE spcd.curve_id <> 'Bloomberg US Treasury Rates' 
 		
 OPEN eod_price_copy_cursor
 FETCH NEXT FROM eod_price_copy_cursor
@@ -321,14 +341,10 @@ BEGIN
 				FROM source_price_curve_def spcd 
 				INNER JOIN source_price_curve spc ON spcd.source_curve_def_id = spc.source_curve_def_id ' + 
 				CASE WHEN @flag = 'CHECK' THEN  '
-				OUTER APPLY(
-					SELECT MAX(as_of_date) min_as_of_date 
-					FROM source_price_curve spc1 
-					WHERE spc1.source_curve_def_id = spcd.source_curve_def_id 
+				LEFT JOIN #max_spc spc_min_as_of_date ON spc_min_as_of_date.source_curve_def_id = spcd.source_curve_def_id 
 					AND spcd.effective_date = ''y'' 
-					AND spc1.maturity_date = spc.maturity_date	
-					AND spc1.as_of_date < ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
-				) spc_min_as_of_date
+					AND spc_min_as_of_date.maturity_date = spc.maturity_date
+				
 				OUTER APPLY(
 					SELECT as_of_date original_as_of_date 
 					FROM source_price_curve spc1 
@@ -353,6 +369,8 @@ BEGIN
 		CASE WHEN @flag = 'CHECK' THEN ' COALESCE(spc_actual_as_of_date.original_as_of_date, spc_min_as_of_date.min_as_of_date,''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''')'
 		ELSE '''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''' END
 	END
+
+
 	EXEC spa_print @sql	
 	EXEC (@sql)
 
@@ -395,13 +413,9 @@ BEGIN
 		INNER JOIN #temp_copy_curves tcc ON tmmd.source_curve_def_id = tcc.curve_id
 		INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = tcc.curve_id
 		INNER JOIN holiday_group hg ON hg.hol_group_value_id = tcc.holiday_calendar_id AND tmmd.as_of_date = hg.hol_date
-		OUTER APPLY (SELECT MAX(as_of_date) as_of_date
-		             FROM   source_price_curve cp_spc
-		             WHERE  tmmd.maturity_date = cp_spc.maturity_date
-		                    AND cp_spc.source_curve_def_id = tcc.holiday_curve_id
-		                    AND cp_spc.curve_source_value_id = 4500
-		                    AND cp_spc.as_of_date < @as_of_date
-		) tamd
+		LEFT JOIN #max_spc tamd ON tamd.maturity_date = tmmd.maturity_date
+			AND tamd.source_curve_def_id = tcc.holiday_curve_id
+		
 		
 		--select * from #temp_missing_maturity_date
 		INSERT INTO #temp_copy_curve_expiration (source_curve_def_id, as_of_date, maturity_date, copy_from_curve)
@@ -410,14 +424,9 @@ BEGIN
 		INNER JOIN #temp_copy_curves tcc ON tmmd.source_curve_def_id = tcc.curve_id
 		INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = tcc.curve_id
 		INNER JOIN holiday_group hg ON hg.hol_group_value_id = tcc.expiration_calendar_id AND tmmd.maturity_date = hg.hol_date AND tmmd.as_of_date > hg.exp_date
-		OUTER APPLY (SELECT MAX(as_of_date) as_of_date
-		             FROM   source_price_curve cp_spc
-		             WHERE  tmmd.maturity_date = cp_spc.maturity_date
-		                    AND cp_spc.source_curve_def_id = tcc.expiration_curve_id
-		                    AND cp_spc.as_of_date < @as_of_date
-		                    AND cp_spc.curve_source_value_id = 4500
-		) tamd
-		
+		LEFT JOIN #max_spc tamd ON tamd.maturity_date = tmmd.maturity_date
+			AND tamd.source_curve_def_id = tcc.expiration_curve_id
+				
 		EXEC spa_print  'COPY hol'
 		
 		INSERT INTO source_price_curve (
@@ -487,7 +496,7 @@ BEGIN
 			AND spc.as_of_date = tcce.as_of_date
 			AND spc.maturity_date = tcce.maturity_date
 		WHERE tcce.source_curve_def_id = @curve_id
-
+		 
 		/* Copy value from existing data if not present*/
 		INSERT INTO source_price_curve (
 		    source_curve_def_id,
@@ -510,19 +519,20 @@ BEGIN
 		       ,tbl.ask_value
 		       ,tbl.is_dst
 		FROM #temp_missing_maturity_date tmmd
-		CROSS APPLY (
-			SELECT TOP 1 as_of_date, curve_source_value_id, curve_value ,bid_value ,ask_value ,tmmd.is_dst, Assessment_curve_type_value_id
-			FROM source_price_curve
-			WHERE maturity_date = tmmd.maturity_date
-			AND source_curve_def_id = tmmd.source_curve_def_id
-			AND as_of_date < tmmd.as_of_date
-			ORDER BY as_of_date DESC
-		) tbl
+		INNER JOIN #max_spc mx_spc ON mx_spc.source_curve_def_id = tmmd.source_curve_def_id
+			AND mx_spc.maturity_date = tmmd.maturity_date
+		INNER JOIN source_price_curve tbl ON tbl.source_curve_def_id = mx_spc.source_curve_def_id 
+			AND tbl.maturity_date = tmmd.maturity_date
+			AND tbl.as_of_date = mx_spc.as_of_date
+			AND tbl.is_dst = tmmd.is_dst
+		
 		LEFT JOIN source_price_curve spc
 			ON spc.source_curve_def_id = tmmd.source_curve_def_id
 			AND spc.as_of_date = tmmd.as_of_date
 			AND spc.maturity_date = tmmd.maturity_date
+			AND spc.is_dst = tmmd.is_dst
 		WHERE spc.source_curve_def_id IS NULL
+		
 	END	
 	
 	FETCH NEXT FROM eod_price_copy_cursor INTO @curve_id
