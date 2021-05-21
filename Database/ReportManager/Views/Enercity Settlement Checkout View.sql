@@ -61,9 +61,10 @@ DECLARE @_payment_date_from AS VARCHAR(100)
 DECLARE @_payment_date_to AS VARCHAR(100)
 DECLARE @_period_from VARCHAR(100)  --- not used
 DECLARE @_period_to VARCHAR(100) --- not used
-DECLARE @_stmt_invoice_id  VARCHAR(100) --= 213
+DECLARE @_stmt_invoice_id  VARCHAR(100) = 687
 DECLARE @_accrual_or_final  VARCHAR(100)
 DECLARE @_accounting_month VARCHAR(10) --=''2019-01-01''
+
 SET NOCOUNT ON
 IF ''@period_from'' <> ''NULL''
 	SET @_period_from = ''@period_from''
@@ -113,29 +114,38 @@ IF ''@accounting_month'' <> ''NULL''
 --SET @_prod_date_from = ''2019-01-01''
 --SET @_prod_date_to = ''2019-01-31''
 --SET @_accounting_month = ''2019-04-01''
+
 IF OBJECT_ID(''tempdb..#stmt_void_data'') IS NOT NULL
 BEGIN
 	DROP TABLE #stmt_void_data
 END
+
 IF OBJECT_ID(''tempdb..#stmt_cross_invoice'') IS NOT NULL
 BEGIN
 	DROP TABLE #stmt_cross_invoice
 END
+
 IF OBJECT_ID(''tempdb..#checkout_void'') IS NOT NULL
 BEGIN
 	DROP TABLE #checkout_void
 END
+
 DECLARE @_stmt_orignal_invoice_id VARCHAR(100)
+
 SET @_stmt_orignal_invoice_id = (select ISNULL(original_id_for_void,stmt_invoice_id)  from stmt_invoice where stmt_invoice_id = @_stmt_invoice_id)
-create table #stmt_void_data
+
+CREATE TABLE #stmt_void_data
 (stmt_invoice_orignal_void_id Nvarchar(500), stmt_invoice_id Nvarchar(500),  multiplier int, void_status Nvarchar(500), as_of_date date)
+
 INSERT INTO #stmt_void_data
 SELECT ISNULL(original_id_for_void,stmt_invoice_id)stmt_invoice_orignal_void_id , stmt_invoice_id, case when original_id_for_void is not null then -1 else 1 end,
 CASE WHEN  original_id_for_void is not nULL then ''Voided'' else NULL end
 , si.as_of_date
 FROM  stmt_invoice  si where si.stmt_invoice_id = @_stmt_invoice_id
+
 Create table #checkout_void
 (stmt_checkout_id int , stmt_invoice_id int)
+
 Insert into #checkout_void
 SELECT a.stmt_checkout_id , stid.stmt_invoice_id FROM stmt_invoice si
         INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
@@ -146,6 +156,7 @@ SELECT a.stmt_checkout_id , stid.stmt_invoice_id FROM stmt_invoice si
 		
 Create table #stmt_cross_invoice
 (stmt_invoice_id int, stmt_checkout_id int, source_deal_header_id int)
+
 INSERT INTO #stmt_cross_invoice
 --INNER JOIN dbo.FNASplit(@_source_deal_header_id, '','') a ON a.item = sdh.source_deal_header_id
 SELECT si_b.stmt_invoice_id , a.[stmt_checkout_id], sdd.source_deal_header_id FROM stmt_invoice si
@@ -156,6 +167,7 @@ SELECT si_b.stmt_invoice_id , a.[stmt_checkout_id], sdd.source_deal_header_id FR
 		LEFT JOIN  source_deal_detail sdd on sdd.source_deal_detail_id = stck.source_deal_detail_id
 		INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = cv.stmt_invoice_id AND ISNULL(si_b.is_voided,''n'') = ISNULL(si.is_voided,''n'')
         WHERE ISNULL(si_b.is_backing_sheet,''n'') = ''y'' and si.stmt_invoice_id = @_stmt_invoice_id
+
 IF NOT EXISTS(select 1 from #stmt_cross_invoice)
 BEGIN
 SET @_sql = ''
@@ -323,7 +335,9 @@ SET @_sql1 = ''
 	MAX(epa.external_value) counterparty_external_value,
 	MAX(sec_cc.secondary_cc_address1) secondary_cc_address1, 
 	MAX(sec_cc.secondary_cc_address2) secondary_cc_address2, 
-	MAX(sec_cc.secondary_cc_city) secondary_cc_city
+	MAX(sec_cc.secondary_cc_city) secondary_cc_city,
+	MAX(sec_cc.secondary_cc_zip) secondary_cc_zip,
+	MAX(sec_cc.secondary_cc_country) secondary_cc_country
 	, MAX(sdvc_css.description) primary_counterparty_country
 , max(cbi1.primary_counterparty_bank_currency_id) [primary_counterparty_bank_currency_id]
 , max(cbi1.primary_counterparty_bank_currency) [primary_counterparty_bank_currency]
@@ -391,6 +405,7 @@ LEFT JOIN stmt_invoice_netting sin ON sin.stmt_invoice_id = si.stmt_invoice_id
 --INNER JOIN index_fees_breakdown_settlement ifbs ON sdd.source_deal_header_id = ifbs.source_deal_header_id AND sdd.leg = ifbs.leg AND sdd.term_start = ifbs.term_start AND sdd.term_end = ifbs.term_end AND ifbs.field_id > 0
 LEFT JOIN adjustment_default_gl_codes adgc ON adgc.default_gl_id = CASE WHEN ISNULL(sco.accrual_or_final,''''f'''') IN(''''a'''', ''''r'''') THEN acg.estimate_gl ELSE acg.final_gl END
 ''
+
 SET @_sql11 =  ''
 LEFT JOIN gl_system_mapping gsm ON gsm.gl_number_id = 
 	CASE 
@@ -430,6 +445,7 @@ LEFT JOIN source_deal_type AS sdt ON  sdt.source_deal_type_id = sdh.source_deal_
 LEFT JOIN source_traders st ON  st.source_trader_id = sdh.trader_id
 LEFT JOIN static_data_value sdv_cnty ON  sdv_cnty.value_id = sml.country
 LEFT JOIN static_data_value sdv_region ON  sdv_region.value_id = sml.region ''
+
 SET @_sql2 =''
 OUTER APPLY(
 	SELECT TOP 1 
@@ -489,9 +505,11 @@ OUTER APPLY (
 	WHERE cc.counterparty_id = sco.counterparty_id AND cc.is_primary = ''''y'''' AND cc.is_active = ''''y''''
 ) cc
 OUTER APPLY (
-	SELECT address1 [secondary_cc_address1], address2 [secondary_cc_address2], city [secondary_cc_city]
+	SELECT address1 [secondary_cc_address1], address2 [secondary_cc_address2], city [secondary_cc_city], zip [secondary_cc_zip], description [secondary_cc_country]
 	FROM counterparty_contacts cc
-	WHERE cc.counterparty_id = sec_sc.source_counterparty_id AND cc.is_primary = ''''y'''' AND cc.is_active = ''''y''''
+	LEFT JOIN static_data_value sdv_coun
+		ON cc.country = sdv_coun.value_id
+	WHERE cc.counterparty_id = sec_sc.source_counterparty_id AND cc.is_primary = ''''y'''' AND cc.is_active = ''''y'''' AND cc.contact_type = -32203 --account_recievables
 ) sec_cc
 LEFT JOIN fas_subsidiaries fs ON ISNULL(cg.sub_id, -1) = fs.fas_subsidiary_id
 LEFT JOIN source_counterparty fs_counterparty ON fs.counterparty_id = fs_counterparty.source_counterparty_id
@@ -693,6 +711,7 @@ SELECT
 	MAX(cbi1.reference) AS primary_reference,
 	MAX(sdh.internal_deal_subtype_value_id) internal_deal_subtype_value_id,
 ''
+
 SET @_sql1 = ''
 	MAX(sdh.deal_date) deal_date,
 	MAX(cbi1.Address1) AS primary_counterparty_bank_address1,
@@ -716,7 +735,9 @@ SET @_sql1 = ''
 	MAX(epa.external_value) counterparty_external_value,
 	MAX(sec_cc.secondary_cc_address1) secondary_cc_address1, 
 	MAX(sec_cc.secondary_cc_address2) secondary_cc_address2, 
-	MAX(sec_cc.secondary_cc_city) secondary_cc_city
+	MAX(sec_cc.secondary_cc_city) secondary_cc_city,
+	MAX(sec_cc.secondary_cc_zip) secondary_cc_zip,
+	MAX(sec_cc.secondary_cc_country) secondary_cc_country
 	, MAX(sdvc_css.description) primary_counterparty_country
 , max(cbi1.primary_counterparty_bank_currency_id) [primary_counterparty_bank_currency_id]
 , max(cbi1.primary_counterparty_bank_currency) [primary_counterparty_bank_currency]
@@ -785,6 +806,7 @@ LEFT JOIN gl_system_mapping gsm_d_minus ON gsm_d_minus.gl_number_id = adgc2.debi
 LEFT JOIN #stmt_void_data svd_m ON svd_m.stmt_invoice_orignal_void_id = sid.stmt_invoice_id
 LEFT JOIN stmt_invoice_netting sin ON sin.stmt_invoice_id = si.stmt_invoice_id
 	and sin.contract_id = cg.contract_id ''
+
 SET @_sql11 = ''
 LEFT JOIN adjustment_default_gl_codes adgc ON adgc.default_gl_id = CASE WHEN ISNULL(sco.accrual_or_final,''''f'''') IN(''''a'''', ''''r'''') THEN acg.estimate_gl ELSE acg.final_gl END
 LEFT JOIN gl_system_mapping gsm ON gsm.gl_number_id = 
@@ -825,6 +847,7 @@ LEFT JOIN source_deal_type AS sdt ON  sdt.source_deal_type_id = sdh.source_deal_
 LEFT JOIN source_traders st ON  st.source_trader_id = sdh.trader_id
 LEFT JOIN static_data_value sdv_cnty ON  sdv_cnty.value_id = sml.country
 LEFT JOIN static_data_value sdv_region ON  sdv_region.value_id = sml.region ''
+
 SET @_sql2 =''
 OUTER APPLY(
 	SELECT TOP 1 
@@ -884,9 +907,11 @@ OUTER APPLY (
 	WHERE cc.counterparty_id = sco.counterparty_id AND cc.is_primary = ''''y'''' AND cc.is_active = ''''y''''
 ) cc
 OUTER APPLY (
-	SELECT address1 [secondary_cc_address1], address2 [secondary_cc_address2], city [secondary_cc_city]
+	SELECT address1 [secondary_cc_address1], address2 [secondary_cc_address2], city [secondary_cc_city], zip [secondary_cc_zip], description [secondary_cc_country]
 	FROM counterparty_contacts cc
-	WHERE cc.counterparty_id = sec_sc.source_counterparty_id AND cc.is_primary = ''''y'''' AND cc.is_active = ''''y''''
+	LEFT JOIN static_data_value sdv_coun
+		ON cc.country = sdv_coun.value_id
+	WHERE cc.counterparty_id = sec_sc.source_counterparty_id AND cc.is_primary = ''''y'''' AND cc.is_active = ''''y'''' AND cc.contact_type = -32203 --account_recievables
 ) sec_cc
 LEFT JOIN fas_subsidiaries fs ON ISNULL(cg.sub_id, -1) = fs.fas_subsidiary_id
 LEFT JOIN source_counterparty fs_counterparty ON fs.counterparty_id = fs_counterparty.source_counterparty_id
@@ -1005,6 +1030,7 @@ AND CASE
 END IS NOT NULL''
 + CASE WHEN @_accounting_month IS NULL THEN '''' ELSE '' AND tmp1.accounting_month = '''''' + CAST(@_accounting_month AS VARCHAR(10)) + '''''''' END
 + '' ORDER BY  tmp1.accounting_month''
+
 SET @_sql5 = ''
 INSERT INTO #temp_all_final
 SELECT tmp1.* 
@@ -1014,6 +1040,7 @@ WHERE 1=1 AND tmp1.accrual_or_final <> ''''a'''' AND tmp1.accrual_or_final <> ''
 AND (( tmp1.accrual_or_final = ''''f'''' AND tmp1.stmt_invoice_id IS NOT NULL) OR tmp1.accrual_or_final = ''''d'''')''
 + CASE WHEN @_accounting_month IS NULL THEN '''' ELSE '' AND CASE WHEN tmp1.accrual_or_final = ''''d'''' THEN DATEADD(m, -1, tmp1.accounting_month) ELSE tmp1.accounting_month END < '''''' + CAST(@_accounting_month AS VARCHAR(10)) + '''''''' END
 + '' ORDER BY  tmp1.accounting_month''
+
 SET @_sql6 = ''
 UPDATE #temp_all_final
 SET show_accounting_month = '' + CASE WHEN @_accounting_month IS NULL THEN '' accounting_month '' ELSE '''''''' + CAST(@_accounting_month AS VARCHAR(10)) + '''''''' END + ''
@@ -1155,6 +1182,8 @@ SELECT MAX(taf.stmt_invoice_id) stmt_invoice_id
 	,MAX(taf.secondary_cc_address1) secondary_cc_address1
 	,MAX(taf.secondary_cc_address2) secondary_cc_address2
 	,MAX(taf.secondary_cc_city) secondary_cc_city
+	,MAX(taf.secondary_cc_zip) secondary_cc_zip
+	,MAX(taf.secondary_cc_country) secondary_cc_country
 	, NULL [Accrual_Final_Reversal]
 	,MAX(taf.update_ts_from) update_ts_from
 	,MAX(taf.update_ts_to) update_ts_to
@@ -1244,14 +1273,17 @@ where
 		taf.source_deal_header_id = COALESCE(ppcv.source_deal_header_id,npcv.source_deal_header_id, taf.source_deal_header_id) 
 		and	taf.source_deal_header_id = COALESCE(cet.source_deal_header_id,taf.source_deal_header_id)
 GROUP BY taf.source_deal_header_id,ppcv.positive_commodity_vat_value,ppcv.source_deal_header_id,cet.commodity_energy_tax_value,npcv.negative_commodity_vat_value,npcv.source_deal_header_id
+
 select stmt_invoice_id,	as_of_date,	to_as_of_date,	prod_date_from,	prod_date_to,	settlement_date,	counterparty_name,	counterparty_accounting_code,	counterparty_id,	contract_name,	contract_id,	charge_type,	charge_type_id,	volume,	uom,	deal_volume,	settlement_amount,	amount,	currency,	price,	invoice_number,	invoice_type,	invoice_status,	invoice_notes,	invoice_subject,	cash_received,	cash_receive_variance_amount,	cash_received_date,	charge_type_alias,	receive_pay,	accounting_status,	invoice_date,	invoice_payment_date,	invoice_template,	lock_status,	source_deal_header_id,	payment_date_from,	payment_date_to,	pnl_line_item,	deal_reference,	Leg	buy_sell,	invoicing_charge_type,	Payment_Dr_GL_Code,	Payment_Cr_GL_Code,	Payment_Dr_GL_Name,	Payment_Cr_GL_Name,	Debit_GL_Number,	Credit_GL_Number,	Debit_account_name,	Credit_account_name,	payment_status,	book,	strategy,	subsidary,	sub_book,	subsidiary_accounting_code,	strategy_accounting_code,	book_accounting_code,	sub_book_accounting_code,	location_name,	location_accounting_code,	location_group,	commodity,	commodity_accounting_code,	commodity_description,	accounting_receivable_id,	accounting_payable_id,	[index],	template_name,	deal_type_name,	trader,	country,	region,	term_start,	term_end,	term_start_year_month,	actual_forward, term_quarter,	pnl_date,	physical_financial_flag,	invoice_id,	counterparty_description,	counterparty_contact,	counterparty_address1,	counterparty_address2,	counterparty_city,	counterparty_state,	counterparty_zip,	counterparty_phone,	counterparty_email,	counterparty_fax,	primary_counterparty,	primary_counterparty_description,	primary_counterparty_contact_name,	primary_counterparty_address1,	primary_counterparty_address2,	primary_counterparty_city,	primary_counterparty_state,	primary_counterparty_zip,	primary_counterparty_contact_telephone,	primary_counterparty_email_address,	primary_counterparty_fax,	primary_bank_name,	primary_account_name,	primary_account_no,	primary_iban,	primary_swift_no,	primary_reference,	internal_deal_subtype_value_id	,deal_date,	primary_counterparty_bank_address1,	primary_counterparty_bank_address2,	accounting_month,	accrual_or_final,	Deal_Charge_Type_ID	Deal_Charge_Type,	Calc_Type,	reversal_stmt_checkout_id,	show_accounting_month,	counterparty_country_name,	counterparty_region_name,	secondary_counterparty_id,	secondary_counterparty_name,	source_commodity_id,	commodity_name,	abs(vat_percentage) vat_percentage,
 case when vat is null  and replace(charge_type,''''Price Commodity'''', '''''''') =  price_description then vat_remarks
 when vat is null and price_description = ''''Both'''' then vat_remarks
 else NULL end vat_remarks,
-counterparty_external_value,	secondary_cc_address1,	secondary_cc_address2,	secondary_cc_city,	Accrual_Final_Reversal,	update_ts_from,	update_ts_to,	create_ts_from,	create_ts_to,	primary_counterparty_country,	primary_counterparty_bank_currency_id,	primary_counterparty_bank_currency,	primary_counterparty_bank_currency_name,	total_volume,	net_total, (Vat) as vat, case when settlement_amount <0 THEN -1* (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) else 1 * (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) end gross_total,	void_status,	abs(commodity_energy_tax_value) commodity_energy_tax_value
+counterparty_external_value,	secondary_cc_address1,	secondary_cc_address2,	secondary_cc_city, secondary_cc_zip, secondary_cc_country,	Accrual_Final_Reversal,	update_ts_from,	update_ts_to,	create_ts_from,	create_ts_to,	primary_counterparty_country,	primary_counterparty_bank_currency_id,	primary_counterparty_bank_currency,	primary_counterparty_bank_currency_name,	total_volume,	net_total, (Vat) as vat, case when settlement_amount <0 THEN -1* (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) else 1 * (ISNULL(ABS(vat),0) +ABS(settlement_amount) + ISNULL(ABS(commodity_energy_tax_value), 0)) end gross_total,	void_status,	abs(commodity_energy_tax_value) commodity_energy_tax_value
 --[__batch_report__]   
 FROM  #tempt_last_finals''
-EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_sql7)', report_id = @report_id_data_source_dest,
+
+EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_sql7)
+', report_id = @report_id_data_source_dest,
 	system_defined = '0'
 	,category = '106500' 
 	WHERE [name] = 'Enercity Settlement Checkout View'
@@ -6046,6 +6078,72 @@ EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_
 	END 
 	
 	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Enercity Settlement Checkout View'
+	            AND dsc.name =  'secondary_cc_country'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Secondary Cc Country'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Enercity Settlement Checkout View'
+			AND dsc.name =  'secondary_cc_country'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'secondary_cc_country' AS [name], 'Secondary Cc Country' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Enercity Settlement Checkout View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Enercity Settlement Checkout View'
+	            AND dsc.name =  'secondary_cc_zip'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Secondary Cc Zip'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Enercity Settlement Checkout View'
+			AND dsc.name =  'secondary_cc_zip'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'secondary_cc_zip' AS [name], 'Secondary Cc Zip' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Enercity Settlement Checkout View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
 	DELETE dsc
 	FROM data_source_column dsc 
 	INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -6067,4 +6165,3 @@ EXEC (@_sql + @_sql1 + @_sql11 + @_sql2 + @_sql3 + @_sql4 + @_sql5 + @_sql6 + @_
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
-	
