@@ -41,11 +41,12 @@ SET NOCOUNT ON
 --EXEC spa_maintain_transaction_job 'EE1CC915_2180_4241_81A8_7D9C88779535',0,null,'farrms_admin'
 
 
+--F8786D31_0415_4B77_BA17_36C894F74AAF
 drop table #tmp_header_deal_id
 drop table #tmp_position_breakdown
 declare @process_id varchar(50),@insert_type int,@partition_no int,@user_login_id varchar(30),@deal_delete varchar(1)
 drop table #source_deal_detail_hour
-select  @process_id='FF42DB81_35FF_426E_B303_797D72E3120E',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
+select  @process_id='F8786D31_0415_4B77_BA17_36C894F74AAF',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
 --report_position_farrms_admin_49AFBFA8_BC35_404B_8590_78F087008D35
 --TRUNCATE TABLE select * from adiha_process.dbo.report_position_farrms_admin_E5D1C26F_C332_4A0A_8082_F3936706EEA8
 --insert into adiha_process.dbo.report_position_farrms_admin_testing select 4100,'d'
@@ -60,6 +61,9 @@ SET CONTEXT_INFO @contextinfo
 	from source_deal_detail where source_deal_header_id=95679
 
 --*/
+
+
+
 
 
 DROP TABLE #report_hourly_position_profile
@@ -2104,7 +2108,7 @@ BEGIN TRY
 			--* CASE WHEN term.buy_sell_flag = 'b' AND rp.term_volume < 0 THEN -1 ELSE 1 END
 			fin_term_vol = cast(isnull(term.multiplier, 1) AS NUMERIC(24, 16)) * cast(rp.term_volume AS NUMERIC(22, 10)) 
 			* CASE WHEN term.buy_sell_flag = 'b' AND rp.term_volume < 0 THEN -1 ELSE 1 END
-			,del_vol_multiplier = cast(isnull(term.del_vol_multiplier, 1) AS NUMERIC(24, 16)) * CASE WHEN pay_opposite = 'y' THEN - 1 ELSE 1 END
+			,del_vol_multiplier = cast(isnull(term.del_vol_multiplier, 1) AS NUMERIC(24, 16)) --* CASE WHEN pay_opposite = 'y' THEN - 1 ELSE 1 END
 			,multiplier2 =  CASE WHEN pay_opposite = 'y' THEN -1 ELSE 1 END
 			,volume_uom_id=rp.deal_volume_uom_id
 		FROM #tmp_financial_term term
@@ -2234,6 +2238,8 @@ BEGIN TRY
 		EXEC (@st_sql)
 
 
+
+
 		--save the record month level volume for 17601	TOU Allocation	
 		SET @st_sql = @destination_tbl + 
 			'
@@ -2251,11 +2257,11 @@ BEGIN TRY
 			--ELSE CASE WHEN buy_sell_flag=''b'' THEN 1 ELSE -1 END END  as numeric(22,16))*ISNULL(rvuc.conversion_factor, 1))   AS calc_volume,
 
 			sum(cast(sddp.total_volume as numeric(26,10))
-			*CASE WHEN buy_sell_flag=''b'' THEN 1 ELSE -1 END
+			--*CASE WHEN buy_sell_flag=''b'' THEN 1 ELSE -1 END
 			*CASE WHEN buy_sell_flag = ''b'' AND sddp.total_volume < 0 THEN -1 ELSE 1 END
 			*cast(CASE WHEN dpbd.curve_id IS NOT NULL THEN COALESCE((dpbd.del_vol_multiplier/nullif(abs(dpbd.multiplier),0))
 				*case when sdd.physical_financial_flag=''p'' then dm.physical_density_mult else dm.financial_density_mult end,dpbd.del_vol_multiplier,1)  
-				*CASE WHEN sdd.pay_opposite=''y'' THEN -1 ELSE 1 END 
+				--*CASE WHEN sdd.pay_opposite=''y'' THEN -1 ELSE 1 END 
 				ELSE 1 END  as numeric(22,16))*ISNULL(rvuc.conversion_factor, 1)) AS calc_volume,
 			ISNULL(dpbd.fin_term_end,sdd.term_end) term_end,COALESCE(h_grp.exp_date,dpbd.fin_expiration_date,sdd.term_end) expiration_date,MAX(dpbd.formula) formula,thdi.source_deal_detail_id,max(thdi.rowid) rowid' 
 			+ @report_hourly_position_breakdown_main + '
@@ -2539,8 +2545,3 @@ BEGIN CATCH
 END CATCH
 	/************************************* Object: 'spa_maintain_transaction_job' END *************************************/
 	
-
-
-
-
-
