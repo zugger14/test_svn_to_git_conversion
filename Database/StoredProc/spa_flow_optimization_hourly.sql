@@ -4068,7 +4068,7 @@ BEGIN
 
 		SELECT @hour_column_types = STUFF((REPLICATE(',ro', @hour_count)), 1, 1, '')
 
-		SELECT @hour_column_widths = STUFF((REPLICATE(',70', @hour_count)), 1, 1, '')
+		SELECT @hour_column_widths = STUFF((REPLICATE(',150', @hour_count)), 1, 1, '')
 
 		SELECT 'delivery_path_detail_id,path_id,path,contract_id,contract,group_path_id,volume,' + @hour_column_ids [column_ids]
 			,'Path Detail ID,Path ID,Path,Contract ID,Contract,Group Path ID,Volume,' + @hour_column_headers [column_headers]

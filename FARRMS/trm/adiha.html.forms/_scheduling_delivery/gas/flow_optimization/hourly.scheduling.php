@@ -787,6 +787,7 @@ echo $sch_obj->close_layout();
 
         sch.fx_progress_load(1);
         sch.hourly_sch_grid.clearAndLoad(param_url, function(data) {
+            sch.hourly_sch_grid.callEvent('onGridReconstructed',[]);
         	if(sch.hourly_sch_grid.getRowsNum() > 0) {
                 sch.sch_load_all_grid_cmbo(sch.hourly_sch_grid);
                 sch.hourly_sch_grid.forEachRow(function(rid) {
@@ -880,7 +881,7 @@ echo $sch_obj->close_layout();
             //enable auto width mode, set the maximal and minimal allowed width
             subgrid.enableAutoWidth(true,2600,100);
             subgrid.enableContextMenu(ds_context_menu);
-			
+			subgrid.enableAutoWidth(true);
 			subgrid.init();
             subgrid.enableAutoHeight(true);
             subgrid.enableHeaderMenu();
@@ -905,6 +906,8 @@ echo $sch_obj->close_layout();
 					//setting number format of edited cell, according to rounding value after edit
 					subgrid.cells(rId, cInd).setValue(roundTo(nValue, ROUNDING_VALUE).toFixed(ROUNDING_VALUE))
                     fx_change_vol(rId, cInd, subgrid, nValue);
+                } else if (stage == 1 && this.editor && this.editor.obj) {
+                    this.editor.obj.select();
                 }
                 return true;
             });
@@ -1088,7 +1091,7 @@ echo $sch_obj->close_layout();
         if (typeof subgrid !== 'undefined') {
             sch.fx_progress_load(1);
             subgrid.clearAndLoad(header_url, function(data) {
-
+                subgrid.callEvent('onGridReconstructed',[]);
                 var fx_callback = function() {
                     subgrid.forEachCell(rec_row_index, function(cellObj, ind) {
                         if (ind > 6) {
