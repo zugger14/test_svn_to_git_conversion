@@ -879,9 +879,9 @@ echo $sch_obj->close_layout();
             subgrid.enableColumnMove(true);
             subgrid.setColumnsVisibility("true,true,false,true,false,true");
             //enable auto width mode, set the maximal and minimal allowed width
-            subgrid.enableAutoWidth(true,2600,100);
+            //subgrid.enableAutoWidth(true,2600,100);
             subgrid.enableContextMenu(ds_context_menu);
-			subgrid.enableAutoWidth(true);
+			//subgrid.enableAutoWidth(true);
 			subgrid.init();
             subgrid.enableAutoHeight(true);
             subgrid.enableHeaderMenu();
@@ -1092,6 +1092,9 @@ echo $sch_obj->close_layout();
             sch.fx_progress_load(1);
             subgrid.clearAndLoad(header_url, function(data) {
                 subgrid.callEvent('onGridReconstructed',[]);
+
+                fx_adjust_grid_all_column_size(subgrid);
+                
                 var fx_callback = function() {
                     subgrid.forEachCell(rec_row_index, function(cellObj, ind) {
                         if (ind > 6) {
@@ -1164,6 +1167,19 @@ echo $sch_obj->close_layout();
         get_param.path_id_toggle = id;
         sch.toggle_click(0);
     };
+
+    /**
+     * function to adjust column size of grid
+     *
+     * @param   grid_obj    dhtmlx grid object
+     *
+     * @return  void      return nothing
+     */
+    function fx_adjust_grid_all_column_size(grid_obj) {
+        grid_obj.forEachCell(grid_obj.getRowId(0), function(cell_obj, col_ind) {
+            grid_obj.adjustColumnSize(col_ind);
+        });
+    }
 
     //ajax setup for default values
     $.ajaxSetup({
