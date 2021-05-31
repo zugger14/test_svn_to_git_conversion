@@ -176,7 +176,7 @@ SET @calc_explain_type ='p'
 
 
 
--- select * from  source_deal_pnl_breakdown where source_deal_detail _id=6212 and pnl_as_of_date='2018-03-31'
+-- select * from  source_deal_settlement_breakdown where source_deal_header_id=79742 and pnl_as_of_date='2018-03-31'
 --		delete select * from source_deal_pnl_detail where pnl_as_of_date='2013-03-25'
 --delete index_fees_breakdown_settlement where as_of_date='2013-03-25'
 
@@ -203,8 +203,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =165082   ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2021-03-15' , --'2017-02-15',
+	@source_deal_header_id =79742   ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2021-02-28' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -221,9 +221,9 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2020-01-01' ,
-	@term_end = '2020-01-31' ,
-	@calc_type = 'm',
+	@term_start = '2021-02-01' ,
+	@term_end = '2021-02-28' ,
+	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
 	@deal_list_table = null,
@@ -353,10 +353,6 @@ select original_formula_currency, formula_Currency, contract_id, formula_id, *
 
 
 
-
-
-
-
 SET @table_name  = null --'adiha_process.dbo.explain_position_detail_farrms_admin_F60E7B51_DAB6_4FFE_A2E1_99BBCDC4619C'
 set @print_diagnostic = 1
 --set @curve_as_of_date = NULL
@@ -462,6 +458,7 @@ if OBJECT_ID('tempdb..#curve_uom_conv_factor') is not null  drop table #curve_uo
 if OBJECT_ID('tempdb..#tx') is not null  drop table #tx
 if OBJECT_ID('tempdb..#tx2') is not null  drop table #tx2
 if OBJECT_ID('tempdb..#formula_value') is not null  drop table #formula_value
+if OBJECT_ID('tempdb..#formula_value_at_low') is not null  drop table #formula_value_at_low
 if OBJECT_ID('tempdb..#formula_value2') is not null  drop table #formula_value2
 if OBJECT_ID('tempdb..#fx_curve_ids') is not null drop table #fx_curve_ids
 if OBJECT_ID('tempdb..#fx_curves') is not null  drop table #fx_curves
@@ -2837,6 +2834,8 @@ CREATE TABLE #tx(
 CREATE TABLE #formula_value
 	(term_start datetime, formula_id INT, contract_expiration_date datetime, formula_value float,contract_id INT, source_deal_detail_id INT)
 
+CREATE TABLE #formula_value_at_low
+	(term_start datetime, formula_id INT, contract_expiration_date datetime, formula_value float,contract_id INT, source_deal_detail_id INT,hr int,period int,is_dst int)
 DECLARE @sql VARCHAR(8000)
 
 DECLARE @formula_table VARCHAR(250)
@@ -5623,7 +5622,7 @@ where  st.source_deal_detail_id is null
 --   select * from process_generation_unit_cost where location_id=1587
 
 select curve_id,Assessment_curve_type_value_id,curve_source_value_id,Granularity
-	, maturity_date,datepart(minute,maturity_date)  period
+	, maturity_date,period
 	,min(as_of_date) as_of_date,
 	max([0]) [0], 
 	max([1]) [1], 
@@ -5669,7 +5668,7 @@ group by
 curve_id,Assessment_curve_type_value_id,curve_source_value_id,Granularity,maturity_date,period
 
 select curve_id,Assessment_curve_type_value_id,curve_source_value_id,Granularity
-	, maturity_date,datepart(minute,maturity_date)  period
+	, maturity_date,period
 	,min(as_of_date) as_of_date,
 	max([0]) [0], 
 	max([1]) [1], 
@@ -5714,7 +5713,7 @@ group by
 curve_id,Assessment_curve_type_value_id,curve_source_value_id,Granularity,maturity_date,period
 
 select curve_id,Assessment_curve_type_value_id,curve_source_value_id,Granularity
-	, maturity_date,datepart(minute,maturity_date)  period
+	, maturity_date,period
 	,min(as_of_date) as_of_date,
 	max([0]) [0], 
 	max([1]) [1], 
@@ -9068,6 +9067,10 @@ END
 
 CREATE TABLE #tx2([ID] INT IDENTITY, as_of_date DATETIME, term_start DATETIME, formula_id INT, granularity INT, contract_id INT, source_deal_detail_id INT, volume FLOAT)
 
+INSERT INTO #formula_value_at_low
+(term_start, formula_id , contract_expiration_date, formula_value,contract_id, source_deal_detail_id ,hr ,period,is_dst )
+select term_start, formula_id , contract_expiration_date, formula_value,contract_id, source_deal_detail_id,null hr,0 period,0 is_dst
+from #formula_value 
 
 
 /* not found using this temp table..
@@ -9124,6 +9127,19 @@ begin
 
 	exec spa_print @sql
 	exec(@sql)
+
+	SET @sql='INSERT INTO #formula_value_at_low
+		(term_start, formula_id , contract_expiration_date, formula_value,contract_id, source_deal_detail_id ,hr ,period,is_dst )
+		select crt.prod_date, crt.formula_id, NULL contract_expiration_date, 
+			nullif(crt.formula_value, 0) formula_value, 
+			ISNULL(crt.contract_id,-1) contract_id,td.source_deal_detail_id,-1 hr,0 period,0 is_dst
+		from #temp_deals td
+		inner join ' +  @calc_result_table2 + ' crt on crt.source_deal_detail_id=td.source_deal_detail_id
+			and td.save_mtm_at_calculation_granularity=''y''
+		'
+	exec spa_print @sql
+	exec (@sql)
+
 
 	/*
 	--### Annal - 10-10-2012 Logic to apply rounding to CURVED - individual formula component
@@ -9228,6 +9244,32 @@ begin
 	exec spa_print @sql
 	exec (@sql)
 
+
+	SET @sql='INSERT INTO #formula_value_at_low
+		(term_start, formula_id , contract_expiration_date, formula_value,contract_id, source_deal_detail_id ,hr ,period,is_dst )
+		select crt.prod_date, crt.formula_id, NULL contract_expiration_date, 
+			nullif(crt.formula_eval_value, 0) formula_value, 
+			ISNULL(crt.contract_id,-1) contract_id,td.source_deal_detail_id,[Hour] hr,0 period,crt.is_dst
+		from #temp_deals td
+		inner join ' +  @calc_result_table3 + ' crt on crt.source_deal_detail_id=td.source_deal_detail_id
+			and td.save_mtm_at_calculation_granularity=''y''
+		'
+	exec spa_print @sql
+	exec (@sql)
+
+
+
+	--set @sql='update h set curve_value_c=f.formula_eval_value,avg_curve_value_c=f.formula_eval_value,contract_value=f.formula_eval_value*h.volume
+	--from '+ @hourly_price_vol_at_low+' h 
+	--inner join '+@calc_result_table3+' f on  f.source_deal_detail_id=h.source_deal_detail_id
+	--	and h.hours=f.[Hour] --and f.period=h.period 
+	--	and h.formula_curve_id is null
+	--	--and h.save_mtm_at_calculation_granularity=''y'''
+
+	--exec spa_print @sql
+	--exec(@sql)
+
+
 	If @print_diagnostic = 1
 	BEGIN
 		print  @pr_name+': '+cast(datediff(ss,@log_time,getdate()) as varchar) +'*************************************'
@@ -9308,6 +9350,19 @@ begin
 
 	exec spa_print @sql
 	exec(@sql)
+
+
+	SET @sql='INSERT INTO #formula_value_at_low
+		(term_start, formula_id , contract_expiration_date, formula_value,contract_id, source_deal_detail_id ,hr ,period,is_dst )
+		select td.term_start, crt.formula_id, NULL contract_expiration_date, 
+			nullif(crt.formula_eval_value, 0) formula_value, 
+			ISNULL(crt.contract_id,-1) contract_id,td.source_deal_detail_id,[Hour] hr,mins period,crt.is_dst
+		from #temp_deals td
+		inner join ' +  @calc_result_table4 + ' crt on crt.source_deal_detail_id=td.source_deal_detail_id
+			and td.save_mtm_at_calculation_granularity=''y''
+		'
+	exec spa_print @sql
+	exec (@sql)
 
 	If @print_diagnostic = 1
 	BEGIN
@@ -17825,8 +17880,9 @@ save_mtm_at_low_granularity:
 							cucf.deal_volume_uom_id = a.deal_volume_uom_id and cucf.curve_uom_id  = a.curve_uom_id
 					LEFT OUTER JOIN #curve_uom_conv_factor cucfP ON  
 							cucfP.deal_volume_uom_id = a.deal_volume_uom_id and cucfP.curve_uom_id  = a.price_uom_id
-					LEFT OUTER JOIN #formula_value f ON a.source_deal_detail_id = f.source_deal_detail_id AND
-							a.term_start = f.term_start
+			LEFT OUTER JOIN #formula_value_at_low f ON a.source_deal_detail_id = f.source_deal_detail_id AND
+					f.term_start=hv.term_start and f.period=hv.period 
+				AND isnull(f.[hr],hv.[hours])=hv.[hours] AND f.is_dst=hv.is_dst
 					LEFT OUTER JOIN #lag_curves_values_fx lfx ON lfx.fx_currency_id = a.fixed_price_currency_id AND 
 							lfx.func_cur_id = a.func_cur_id AND lfx.source_system_id = a.source_system_id AND
 							lfx.as_of_date= a.exp_curve_as_of_date AND --lfx.maturity_date= a.monthly_maturity AND
@@ -17977,6 +18033,99 @@ save_mtm_at_low_granularity:
 			)
 
 		END 
+
+		---------------------------------------------------------
+		-- convert into invoice currency from deal currency
+		---------------------------------------------------------
+		set @sqlstmt=' 
+			update tlm  
+			set
+				market_value_inv=market_value_deal *coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,contract_value_inv=contract_value_deal *coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,simple_formula_curve_value_inv=simple_formula_curve_value_deal *coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,formula_conv_factor_inv=formula_conv_factor_deal *coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,leg_mtm_inv=leg_mtm_deal *coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,leg_set_inv=leg_set_deal *coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+	
+				,price_inv=price_deal *coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,extrinsic_value_inv=extrinsic_value_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1) 
+				,contract_price_inv=contract_price_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,market_price_inv=market_price_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+
+				,price_adder2_fx_conv_factor_inv=price_adder2_fx_conv_factor_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,price_adder1_fx_conv_factor_inv=price_adder1_fx_conv_factor_deal *coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,formula_fx_conv_factor_inv=formula_fx_conv_factor_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,fixed_cost_fx_conv_factor_inv=fixed_cost_fx_conv_factor_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,curve_fx_conv_factor_inv=curve_fx_conv_factor_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,price_fx_conv_factor_inv=price_fx_conv_factor_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+	
+				,formula_value_inv=formula_value_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,price_adder_inv=price_adder_deal *coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,price_adder2_inv=price_adder2_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,fixed_cost_inv=fixed_cost_deal *coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,fixed_price_inv=fixed_price_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+				,curve_value_inv=curve_value_deal*coalesce(a.invoice_fx_rate,fx.price_fx_conv_factor,1)
+			from '+CASE WHEN @calc_type='m' THEN ' dbo.source_deal_pnl_breakdown ' ELSE  ' dbo.source_deal_settlement_breakdown ' END + ' tlm
+				inner join #temp_deals a on a.source_deal_detail_id=tlm.source_deal_detail_id
+				outer apply
+				(	select round(avg(price_fx_conv_factor),a.fx_rounding)  price_fx_conv_factor from #fx_curves 
+					where fx_currency_id =  coalesce(a.fixed_price_currency_id,a.curve_currency_id,a.formula_currency)
+						AND func_cur_id = a.settlement_currency AND source_system_id = a.source_system_id
+						AND maturity_date between case when '''+@calc_type+'''=''m'' and granularity=980 then convert(varchar(8),a.term_start,120)+''01'' else a.term_start end and a.term_end
+						and market_value_desc=a.fx_conversion_market
+						AND as_of_date>= case when '''+@calc_type+'''=''s'' then '''+@term_start+''' else '''+@curve_as_of_date+''' end 
+						AND as_of_date<= case when'''+ @calc_type+'''=''s'' then '''+@term_end+''' else '''+@curve_as_of_date+''' end 
+				) fx
+		'
+		EXEC spa_print  @sqlstmt
+		exec(@sqlstmt)
+		--------------------------------------------------------------	
+		-- convert into functional currency from  deal currency
+		--------------------------------------------------------------
+		set @sqlstmt=' 
+			update tlm  
+			set
+				market_value=market_value_deal *isnull(fx.price_fx_conv_factor,1)
+				,contract_value=contract_value_deal *isnull(fx.price_fx_conv_factor,1)
+				,simple_formula_curve_value=simple_formula_curve_value_deal *isnull(fx.price_fx_conv_factor,1)
+				,formula_conv_factor=formula_conv_factor_deal *isnull(fx.price_fx_conv_factor,1)
+				,leg_mtm=leg_mtm_deal *isnull(fx.price_fx_conv_factor,1)
+				,leg_set=leg_set_deal *isnull(fx.price_fx_conv_factor,1)
+				,price=price_deal *isnull(fx.price_fx_conv_factor,1)
+				,extrinsic_value=extrinsic_value_deal*isnull(fx.price_fx_conv_factor,1) 
+				,contract_price=contract_price_deal*isnull(fx.price_fx_conv_factor,1)
+				,market_price=market_price_deal*isnull(fx.price_fx_conv_factor,1)
+				,price_adder2_fx_conv_factor=price_adder2_fx_conv_factor_deal*isnull(fx.price_fx_conv_factor,1)
+				,price_adder1_fx_conv_factor=price_adder1_fx_conv_factor_deal *isnull(fx.price_fx_conv_factor,1)
+				,formula_fx_conv_factor=formula_fx_conv_factor_deal*isnull(fx.price_fx_conv_factor,1)
+				,fixed_cost_fx_conv_factor=fixed_cost_fx_conv_factor_deal*isnull(fx.price_fx_conv_factor,1)
+				,curve_fx_conv_factor=curve_fx_conv_factor_deal*isnull(fx.price_fx_conv_factor,1)
+				,price_fx_conv_factor=price_fx_conv_factor_deal*isnull(fx.price_fx_conv_factor,1)
+				,formula_value=formula_value_deal*isnull(fx.price_fx_conv_factor,1)
+				,price_adder=price_adder_deal *isnull(fx.price_fx_conv_factor,1)
+				,price_adder2=price_adder2_deal*isnull(fx.price_fx_conv_factor,1)
+				,fixed_cost=fixed_cost_deal *isnull(fx.price_fx_conv_factor,1)
+				,fixed_price=fixed_price_deal*isnull(fx.price_fx_conv_factor,1)
+				,curve_value=curve_value_deal*isnull(fx.price_fx_conv_factor,1)
+			from '+CASE WHEN @calc_type='m' THEN ' dbo.source_deal_pnl_breakdown ' ELSE  ' dbo.source_deal_settlement_breakdown ' END + ' tlm
+				inner join #temp_deals a on a.source_deal_detail_id=tlm.source_deal_detail_id
+				outer apply
+				(	
+					select round(avg(price_fx_conv_factor),a.fx_rounding)  price_fx_conv_factor from #fx_curves 
+					where fx_currency_id =  coalesce(a.fixed_price_currency_id,a.curve_currency_id,a.formula_currency) 
+						AND func_cur_id = a.func_cur_id AND source_system_id = a.source_system_id
+						AND maturity_date between case when '''+ @calc_type+'''=''m'' and granularity=980 then convert(varchar(8),a.term_start,120)+''01'' else a.term_start end and a.term_end
+						and market_value_desc=a.fx_conversion_market
+						AND as_of_date>= case when '''+@calc_type+'''=''s'' then '''+@term_start+''' else '''+@curve_as_of_date+''' end 
+						AND as_of_date<= case when'''+ @calc_type+'''=''s'' then '''+@term_end+''' else '''+@curve_as_of_date+''' end 
+
+				) fx
+		'
+		EXEC spa_print  @sqlstmt
+		exec(@sqlstmt)
+
+		--------------------------------------------------------------------------------------
+
 
 		If @print_diagnostic = 1
 		BEGIN
