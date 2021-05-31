@@ -4348,12 +4348,15 @@ SELECT
 , reporting_group5.code [reporting_group5_name]
 
 , ISNULL(cca.settlement_date, cg.settlement_date) AS settlement_date
+
 , ISNULL(cca.settlement_days, cg.settlement_days) AS settlement_days
 
 , ISNULL(cca.settlement_due_date,cg.invoice_due_date) pnl_invoice_due_date
+
 , ISNULL(cca.settlement_payment_days,cg.payment_days) pnl_payment_days
 
 , ISNULL(cca.settlement_due_date,cg.invoice_due_date) cf_invoice_due_date
+
 , ISNULL(cca.settlement_payment_days,cg.payment_days) cf_payment_days
 
 , cg.holiday_calendar_id
@@ -4736,256 +4739,497 @@ LEFT JOIN static_data_value sdv ON sdv.[type_id] = 400
 	AND books.transaction_type = sdv.value_id
 
 IF OBJECT_ID(''tempdb..#req_param'') IS NOT NULL DROP TABLE #req_param
+
 SELECT DISTINCT 
+
 	contract_id
+
 	, source_counterparty_id
+
 	, term_start
+
 	, term_end
+
 	, settlement_date
+
 	, settlement_days
+
 	, pnl_invoice_due_date
+
 	, pnl_payment_days
+
 	, cf_invoice_due_date
+
 	, holiday_calendar_id
+
 	, cf_payment_days
+
 INTO #req_param
+
 FROM #tmp_final_data
 
 IF OBJECT_ID(''tempdb..#tmp_pay_dt'') IS NOT NULL DROP TABLE #tmp_pay_dt
 
 SELECT DISTINCT
+
 	sdd.contract_id
+
 	, sdd.source_counterparty_id
+
 	, sdd.term_start
+
 	, sdd.term_end 
+
 	, COALESCE(dbo.FNAInvoiceDueDate(sdd.term_start, settlement_date, holiday_calendar_id, settlement_days), sdd.term_end) [pnl_date]
+
 	, COALESCE(dbo.FNAInvoiceDueDate(sdd.term_start, pnl_invoice_due_date, holiday_calendar_id,pnl_payment_days),sdd.term_end) [payment_date]
+
 	, CONVERT(VARCHAR(7), COALESCE(dbo.FNAInvoiceDueDate(sdd.term_start, cf_invoice_due_date, holiday_calendar_id,cf_payment_days),sdd.term_end), 120) [cash_flow_year_month]
+
 INTO #tmp_pay_dt
+
 FROM #req_param sdd
 
 
 CREATE INDEX indx_mul_columns on #tmp_pay_dt (contract_id, source_counterparty_id, term_start, term_end)
+
 CREATE INDEX indx_mul_columns_fd on #tmp_final_data (contract_id, source_counterparty_id, term_start, term_end)
 
 
 SELECT 
+
 	  tfd.sub_id
+
 	, tfd.stra_id
+
 	, tfd.book_id
+
 	, tfd.subsidiary
+
 	, tfd.strategy
+
 	, tfd.book
+
 	, tfd.sub_book
+
 	, tfd.source_deal_header_id
+
 	, tfd.deal_ref_id
+
 	, tfd.deal_date_from
+
 	, tfd.deal_date_to
+
 	, tfd.trader_id
+
 	, tfd.trader_name
+
 	, tfd.counterparty_name
+
 	, tfd.parent_counterparty_name
+
 	, tfd.contract_id
+
 	, tfd.[contract_name]
+
 	, tfd.source_deal_type_id
+
 	, tfd.deal_type_name
+
 	, tfd.deal_sub_type_type_id
+
 	, tfd.deal_sub_type_name
+
 	, tfd.product_id
+
 	, tfd.commodity_id
+
 	, tfd.product_desc
+
 	, tfd.block_definition
+
 	, tfd.buy_sell_flag
+
 	, tfd.country_id
+
 	, tfd.country
+
 	, tfd.grid
+
 	, tfd.region_id
+
 	, tfd.region
+
 	, tfd.source_major_location_ID
+
 	, tfd.location_group
+
 	, tfd.location_id
+
 	, tfd.location_name
+
 	, tfd.location_description
+
 	, tfd.from_as_of_date
+
 	, tfd.und_intrinsic_pnl
+
 	, tfd.und_extrinsic_pnl
+
 	, tfd.dis_pnl
+
 	, tfd.dis_intrinsic_pnl
+
 	, tfd.dis_extrinisic_pnl
+
 	, tfd.dis_market_value
+
 	, tfd.dis_contract_value
+
 	, tfd.discount_factor
+
 	, tfd.discount_amount
+
 	, tfd.commodity
+
 	, tfd.deal_volume
+
 	, tfd.volume_uom
+
 	, tfd.template_name
+
 	, tfd.curve_name
+
 	, tfd.index_tou
+
 	, tfd.formula
+
 	, tfd.total_volume
+
 	, tfd.position_uom
+
 	, tfd.CVA
+
 	, tfd.DVA
+
 	, tfd.market_price
+
 	, tfd.formula_price
+
 	, tfd.net_price
+
 	, tfd.physical_financial_flag
+
 	, tfd.block_definition_id
+
 	, tfd.leg
+
 	, tfd.source_counterparty_id
+
 	, tfd.counterparty_id
+
 	, tfd.index_id
+
 	, tfd.credit_adjusted_mtm
+
 	, tfd.discounted_credit_adjusted_mtm
+
 	, tfd.term_start_day
+
 	, tfd.term_start_month
+
 	, tfd.term_start_month_name
+
 	, tfd.term_start_year
+
 	, tfd.term_start_year_month
+
 	, tfd.term_quarter
+
 	, tfd.to_as_of_date
+
 	, tfd.sub_book_id
+
 	, tfd.transaction_type
+
 	, tfd.transaction_type_name
+
 	, tfd.period_from
+
 	, tfd.period_to
+
 	, tfd.probability
+
 	, tfd.credit_reserve
+
 	, tfd.dis_credit_reserve
+
 	, tfd.fair_value
+
 	, tfd.dis_fair_value
+
 	, tfd.model_reserve
+
 	, tfd.pnl_conversion_factor
+
 	, tfd.pnl_adjustment_value
+
 	, tfd.internal_deal_type_id
+
 	, tfd.internal_deal_type
+
 	, tfd.internal_deal_sub_type_id
+
 	, tfd.internal_deal_sub_type
+
 	, tfd.fixed_cost
+
 	, tfd.fixed_price
+
 	, tfd.formula_value
+
 	, tfd.price_adder
+
 	, tfd.price_multiplier
+
 	, tfd.strike_price
+
 	, tfd.formula_curve_id
+
 	, tfd.formula_curve_name
+
 	, tfd.internal_desk_id
+
 	, tfd.internal_desk
+
 	, tfd.internal_portfolio_id
+
 	, tfd.internal_portfolio
+
 	, tfd.broker_id
+
 	, tfd.broker_name
+
 	, tfd.type_of_entity_id
+
 	, tfd.type_of_entity
+
 	, tfd.int_ext_flag_id
+
 	, tfd.int_ext_flag
+
 	, tfd.deal_status_id
+
 	, tfd.deal_status_name
+
 	, tfd.confirm_status_id
+
 	, tfd.confirm_status
+
 	, tfd.pnl_source_value_id
+
 	, tfd.pnl_source_name
+
 	, tfd.description1
+
 	, tfd.description2
+
 	, tfd.description3
+
 	, tfd.description4
+
 	, tfd.counterparty_id2
+
 	, tfd.counterparty_name2
+
 	, tfd.ext_deal_id
+
 	, tfd.reference
+
 	, tfd.create_by
+
 	, tfd.create_ts
+
 	, tfd.update_by
+
 	, tfd.update_ts
+
 	, tfd.broker_fixed_cost
+
 	, tfd.confirm_date
+
 	, tfd.sub_book_group1_id
+
 	, tfd.sub_book_group2_id
+
 	, tfd.sub_book_group3_id
+
 	, tfd.sub_book_group4_id
+
 	, tfd.sub_book_group1
+
 	, tfd.sub_book_group2
+
 	, tfd.sub_book_group3
+
 	, tfd.sub_book_group4
+
 	, tfd.book_identifier1_id
+
 	, tfd.book_identifier2_id
+
 	, tfd.book_identifier3_id
+
 	, tfd.book_identifier4_id
+
 	, tfd.book_identifier1
+
 	, tfd.book_identifier2
+
 	, tfd.book_identifier3
+
 	, tfd.book_identifier4
+
 	, tfd.deal_price
+
 	, tfd.float_price
+
 	, tfd.Volume
+
 	, tfd.close_reference_id
+
 	, tfd.agg_term
+
 	, tfd.recovery_rate
+
 	, tfd.fv_level
+
 	, tfd.current_non_current
+
 	, tfd.deal_category_id
+
 	, tfd.deal_category
+
 	, tfd.internal_counterparty_id
+
 	, tfd.internal_couterparty
+
 	, tfd.template_id
+
 	, tfd.volume_profile
+
 	, tfd.price_adder2
+
 	, tfd.volume_multiplier
+
 	, tfd.volume_multiplier2
+
 	, tfd.debt_rating
+
 	, tfd.volume_frequency
+
 	, tfd.currency_id
+
 	, tfd.is_expired
+
 	, tfd.entire_term_start
+
 	, tfd.entire_term_end
+
 	, tfd.contract_expiration_date
+
 	, tfd.structured_id
+
 	, tfd.pricing_type_id
+
 	, tfd.must_run_volume
+
 	, tfd.dispatch_volume
+
 	, tfd.must_run_market_value
+
 	, tfd.must_run_contract_value
+
 	, tfd.dispatch_market_value
+
 	, tfd.dispatch_contract_value
+
 	, tfd.charge_type_id
+
 	, tfd.charge_type
+
 	, tfd.actual_forward
+
 	, tfd.currency
+
 	, tfd.term_start
+
 	, tfd.term_end
+
 	, tfd.und_pnl_set
+
 	, tfd.market_value
+
 	, tfd.contract_value
+
 	, tfd.Amount
+
 	, tfd.cash_flow
+
 	, tfd.deal_status_group
+
 	, tfd.pricing_type
+
 	, tfd.Cur_type
+
 	, tfd.invoice_currency
+
 	, tfd.deal_currency
+
 	, tfd.amount_inv
+
 	, tfd.amount_deal
+
 	, tfd.reporting_group1
+
 	, tfd.reporting_group2
+
 	, tfd.reporting_group3
+
 	, tfd.reporting_group4
+
 	, tfd.reporting_group5
+
 	, tfd.reporting_group1_name
+
 	, tfd.reporting_group2_name
+
 	, tfd.reporting_group3_name
+
 	, tfd.reporting_group4_name
+
 	, tfd.reporting_group5_name
+
 	, IIF(actual_forward= ''f'', IIF(ISNULL(tfd.deal_type_name, ''Non'') = ''Physical'', tfd.contract_value, tfd.und_pnl_set ),contract_value)	pnl
+
 	, tpd.payment_date
+
 	, tpd.cash_flow_year_month
+
 	, tpd.pnl_date
+
 	, CONVERT(VARCHAR(7), tpd.pnl_date, 120) [PNL_year_month] 
+
 --[__batch_report__]  
+
 FROM #tmp_final_data tfd
+
 LEFT JOIN #tmp_pay_dt tpd ON tpd.contract_id = tfd.contract_id
+
 	AND tpd.source_counterparty_Id = tfd.source_counterparty_id
+
 	AND tpd.term_start = tfd.term_start
+
 	AND tpd.term_end = tfd.term_end', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
@@ -7183,7 +7427,7 @@ LEFT JOIN #tmp_pay_dt tpd ON tpd.contract_id = tfd.contract_id
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Internal/External ID'
-			   , reqd_param = 0, widget_id = 1, datatype_id = 1, param_data_source = NULL, param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+			   , reqd_param = 0, widget_id = 2, datatype_id = 1, param_data_source = 'SELECT ''c'' as value,''Clearing'' as Code' + CHAR(10) + 'UNION' + CHAR(10) + 'SELECT ''e'' as value, ''External'' as Code' + CHAR(10) + 'UNION' + CHAR(10) + 'SELECT ''i'' as value, ''Internal'' as Code' + CHAR(10) + 'UNION' + CHAR(10) + 'SELECT ''b'' as value, ''Broker'' as Code', param_default_value = NULL, append_filter = 1, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -7196,7 +7440,7 @@ LEFT JOIN #tmp_pay_dt tpd ON tpd.contract_id = tfd.contract_id
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'int_ext_flag_id' AS [name], 'Internal/External ID' AS ALIAS, 0 AS reqd_param, 1 AS widget_id, 1 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'int_ext_flag_id' AS [name], 'Internal/External ID' AS ALIAS, 0 AS reqd_param, 2 AS widget_id, 1 AS datatype_id, 'SELECT ''c'' as value,''Clearing'' as Code' + CHAR(10) + 'UNION' + CHAR(10) + 'SELECT ''e'' as value, ''External'' as Code' + CHAR(10) + 'UNION' + CHAR(10) + 'SELECT ''i'' as value, ''Internal'' as Code' + CHAR(10) + 'UNION' + CHAR(10) + 'SELECT ''b'' as value, ''Broker'' as Code' AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Settlement Mega View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
