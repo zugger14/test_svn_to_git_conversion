@@ -47,7 +47,6 @@ DECLARE @as_of_date VARCHAR(10)
 DECLARE @curve_as_of_date VARCHAR(10)
 DECLARE @term_start VARCHAR(20)
 DECLARE @term_end VARCHAR(20)
-DECLARE @book_entity_id VARCHAR(MAX)
 DECLARE @counterparty_ids VARCHAR(MAX)
 DECLARE @user_name VARCHAR(50)
 SET @user_name = dbo.FNADBUser()
@@ -91,17 +90,11 @@ BEGIN
 							  NULL, NULL, NULL, NULL, NULL
 	
 	
-		SELECT @book_entity_id = COALESCE(@book_entity_id + ',', '') + CAST(sb.fas_book_id AS VARCHAR(10)),
-			   @counterparty_ids = COALESCE(@counterparty_ids + ',', '') + CAST(sdh.counterparty_id AS VARCHAR(10))
+		SELECT @counterparty_ids = COALESCE(@counterparty_ids + ',', '') + CAST(sdh.counterparty_id AS VARCHAR(10))
 		FROM   source_deal_header sdh
 		INNER JOIN dbo.SplitCommaSeperatedValues(@source_deal_header_id) scsv ON  scsv.item = sdh.source_deal_header_id
-		INNER JOIN source_system_book_map sb
-			ON  sb.source_system_book_id1 = sdh.source_system_book_id1
-			AND sb.source_system_book_id2 = sdh.source_system_book_id2
-			AND sb.source_system_book_id3 = sdh.source_system_book_id3
-			AND sb.source_system_book_id4 = sdh.source_system_book_id4
 	
-		EXEC spa_Calc_Credit_Netting_Exposure @as_of_date, @user_name, 4500, NULL,  NULL, @book_entity_id, 
+		EXEC spa_Calc_Credit_Netting_Exposure @as_of_date, @user_name, 4500, NULL,  NULL, --@book_entity_id, 
 											  @counterparty_ids, 'n', 'n', NULL, NULL, NULL, NULL, NULL
 
 		FETCH NEXT FROM mtm_deal_cursor INTO @source_deal_header_id, @as_of_date
