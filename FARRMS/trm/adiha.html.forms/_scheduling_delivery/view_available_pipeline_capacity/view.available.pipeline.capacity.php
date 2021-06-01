@@ -111,7 +111,7 @@
 				}
 			}
 			
-			available_pipeline_capacity_refresh();
+			available_pipeline_capacity_refresh_pre();
 		}
 	}
    
@@ -120,16 +120,38 @@
 	 */
     function available_pipeline_capacity_toolbar_onclick(name) {
         if (name == 'refresh') {
-            available_pipeline_capacity_refresh();
+            available_pipeline_capacity_refresh_pre();
 		} else if (name == 'pivot') {
 			available_pipeline_capacity_pivot();
         }  
+	}
+
+	available_pipeline_capacity_refresh_pre = function() {
+		if (granularity == 982) {
+			var date_from = available_pipeline_capacity.available_pipeline_capacity_form.getItemValue('date_from', true);
+			var date_to = available_pipeline_capacity.available_pipeline_capacity_form.getItemValue('date_to', true);
+			var param = {
+							'flag': 'x',
+							'action': 'spa_mdq_available',
+							'flow_date_start': date_from,
+							'flow_date_end': date_to
+						};
+
+			var fx_callback = function(result) {
+				//console.log(result);
+				available_pipeline_capacity_refresh(result);
+			};
+			
+			adiha_post_data('return_array', param, '', '', fx_callback, '');
+		} else {
+			available_pipeline_capacity_refresh();
+		}
 	}
 	
 	/*
 	 * [Refresh Function]
 	 */
-	available_pipeline_capacity_refresh = function() {
+	available_pipeline_capacity_refresh = function(hour_data_arr) {
 		if (!validate_form(available_pipeline_capacity.available_pipeline_capacity_form)) {
 			return false;
 		}
@@ -185,11 +207,11 @@
 			col_align += ',"text-align:center;","text-align:center;"';
 			
 			if (granularity == 982) {
-				col_header3 += ',' + ('0' + (hr_start) + ':00').slice(-5) + ',#cspan';
-				for (var j = 1; j < 24; j++) {
+				col_header3 += ',' + hour_data_arr[0][2] + ',#cspan';
+				for (var j = 1; j < hour_data_arr.length; j++) {
 					col_header1 += ',#cspan,#cspan';
 					col_header2 += ',MDQ Vol, MDQ Avail';
-					col_header3 += ',' + ('0' + (j + (j < 18 ? hr_start : -17)) + ':00').slice(-5) + ',#cspan';
+					col_header3 += ',' + hour_data_arr[j][2] + ',#cspan';
 					col_type += ',ro_v,ro_v';
 					col_sorting += ',str,str';
 					col_visibility += ',false,false';

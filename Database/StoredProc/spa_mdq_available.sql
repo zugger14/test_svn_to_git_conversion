@@ -63,7 +63,7 @@ DECLARE @flag CHAR(1),
 	EXEC [spa_drop_all_temp_table] 
 	
 	-- SPA parameter values
-	SELECT @flag = 'h', @contract_ids = '', @flow_date_start = '2027-08-01', @flow_date_end = '2027-08-01', @uom_id = '', @pipeline = '', @path_ids = '159'
+	SELECT @flag = 'x', @flow_date_start = '2027-10-30', @flow_date_end = '2027-10-30', @path_ids = '330'
 
 --*/
 
@@ -457,27 +457,27 @@ BEGIN
 		INNER JOIN delivery_path dp ON dp.[contract] = c.item
 	END
 
-	SELECT mdq.term_start [effective_date], mdq.contract_id, mdq.path_id, dp.path_name, mdq.hour [hr], mdq.mdq [total_volume], mdq.rmdq [available_volume]
+	SELECT mdq.term_start [effective_date], mdq.contract_id, mdq.path_id, dp.path_name, cast(mdq.hour as varchar(2)) + IIF(mdq.is_dst = 1, '_DST', '')  [hr], mdq.mdq [total_volume], mdq.rmdq [available_volume]
 	INTO #final_total_available_mdq
 	FROM #temp_path_list path_list
 	INNER JOIN delivery_path dp ON dp.path_id = path_list.path_id
 	CROSS APPLY (
 		SELECT * FROM [dbo].[FNAGetPathMDQHourly] (dp.path_id, @flow_date_start, ISNULL(@flow_date_end, @flow_date_start), 'path_term_hour')
-	) mdq
-
-
-
+	) mdq	
+	
 	SELECT @pvt_include = STUFF((SELECT DISTINCT ',' + '[' + CAST(hr AS VARCHAR) + ']'
 									FROM #final_total_available_mdq ft
 									FOR XML PATH (''))
-									, 1, 1, '') 
+									, 1, 1, '') 	
 	
 	SELECT @pvt_select = STUFF((SELECT  ',' + 'a.[' + CAST(hr AS VARCHAR) + '] AS [' + CAST(CONVERT(DATE, effective_date, 120) AS VARCHAR) + '::'  + CAST(hr AS VARCHAR) + '::mdq_volume]' + 
 									',b.[' + CAST(hr AS VARCHAR) + ']  AS [' + CAST(CONVERT(DATE, effective_date, 120) AS VARCHAR) + '::' + CAST(hr AS VARCHAR) + '::mdq_available]'
 									FROM #final_total_available_mdq ft
 									GROUP BY effective_date, hr
+									ORDER BY CAST(LEFT(hr,2) AS INT)
 									FOR XML PATH (''))
 									, 1, 1, '')
+
 	IF @flag = 'v'
 	BEGIN
 		SELECT * FROM #final_total_available_mdq
@@ -519,4 +519,15 @@ BEGIN
 	'
 
 	EXEC(@sql)
+END
+ELSE IF @flag = 'x'
+BEGIN
+	DECLARE @hr_data_json NVARCHAR(2000)
+	SET @hr_data_json = (
+	SELECT CAST(LEFT(clm_name, 2) AS INT) [hour], is_dst, alias_name [gas_hour]
+	FROM dbo.FNAGetDisplacedPivotGranularityColumn(@flow_date_start,  ISNULL(@flow_date_end, @flow_date_start), 982, 102201, 6)
+	FOR JSON PATH
+	)
+
+	SELECT @hr_data_json [hr_data_json]
 END
