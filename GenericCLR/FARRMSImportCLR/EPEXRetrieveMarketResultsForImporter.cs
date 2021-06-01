@@ -29,7 +29,7 @@ namespace FARRMSImportCLR
             bool status;
             try 
             {
-                string updatedPassword = "SWHNBCI" + DateTime.Now.ToString("ddMMMMyyyy") + "!";
+                string updatedPassword = clrImportInfo.WebServiceInfo.UserName.Substring(0, 7) + DateTime.Now.ToString("ddMMMMyyyy") + "!";
 
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | (SecurityProtocolType)(0xc0 | 0x300 | 0xc00);
                 HttpWebRequest webRequest = (HttpWebRequest)HttpWebRequest.Create(clrImportInfo.WebServiceInfo.WebServiceURL);
