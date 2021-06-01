@@ -225,6 +225,7 @@ BEGIN
 		CROSS APPLY (SELECT source_deal_header_id source_deal_header_id FROM #temp_copy_sdh) original
 		CROSS APPLY (SELECT MAX(source_deal_header_id) + 1 source_deal_header_id FROM source_deal_header) copi
 		WHERE thc.columns_name = 'deal_id'
+			AND thc.columns_value IS NULL
 
 		INSERT INTO #temp_sdh
 		SELECT column_name,
