@@ -94,7 +94,7 @@ BEGIN
 		FROM   source_deal_header sdh
 		INNER JOIN dbo.SplitCommaSeperatedValues(@source_deal_header_id) scsv ON  scsv.item = sdh.source_deal_header_id
 	
-		EXEC spa_Calc_Credit_Netting_Exposure @as_of_date, @user_name, 4500, NULL,  NULL, --@book_entity_id, 
+		EXEC spa_Calc_Credit_Netting_Exposure @as_of_date, @user_name, 4500, NULL,  NULL, NULL, 
 											  @counterparty_ids, 'n', 'n', NULL, NULL, NULL, NULL, NULL
 
 		FETCH NEXT FROM mtm_deal_cursor INTO @source_deal_header_id, @as_of_date
