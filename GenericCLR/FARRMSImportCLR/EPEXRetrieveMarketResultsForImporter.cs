@@ -126,6 +126,13 @@ namespace FARRMSImportCLR
             return status;
         }
 
+        /// <summary>
+        /// Send email to a role about password change
+        /// </summary>
+        /// <param name="clrImportInfo"></param>
+        /// <param name="status"></param>
+        /// <param name="message"></param>
+        /// <param name="password"></param>
         public void SendEmail(CLRImportInfo clrImportInfo, string status, string message, string password) 
         {
             try
@@ -136,7 +143,7 @@ namespace FARRMSImportCLR
                     cn.Open();
                     string sql = @"
                             DECLARE @role_id INT,  @template_params NVARCHAR(500) 
-                            SELECT @role_id = role_id FROM application_security_role WHERE role_name = 'Enercity EPEX ETS'
+                            SELECT @role_id = role_id FROM application_security_role WHERE role_name LIKE '%EPEX ETS'
                             SET @template_params = ''";
 
                     if (status == "Success")
