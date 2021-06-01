@@ -63,7 +63,7 @@ DECLARE @flag CHAR(1),
 	EXEC [spa_drop_all_temp_table] 
 	
 	-- SPA parameter values
-	SELECT @flag = 'x', @flow_date_start = '2027-10-30', @flow_date_end = '2027-10-30', @path_ids = '330'
+	SELECT @flag = 'h', @flow_date_start = '2027-10-30', @flow_date_end = '2027-10-30', @path_ids = '330'
 
 --*/
 
@@ -522,12 +522,12 @@ BEGIN
 END
 ELSE IF @flag = 'x'
 BEGIN
-	DECLARE @hr_data_json NVARCHAR(2000)
-	SET @hr_data_json = (
+	--DECLARE @hr_data_json NVARCHAR(2000)
+	--SET @hr_data_json = (
 	SELECT CAST(LEFT(clm_name, 2) AS INT) [hour], is_dst, alias_name [gas_hour]
 	FROM dbo.FNAGetDisplacedPivotGranularityColumn(@flow_date_start,  ISNULL(@flow_date_end, @flow_date_start), 982, 102201, 6)
-	FOR JSON PATH
-	)
+	--FOR JSON PATH
+	--)
 
-	SELECT @hr_data_json [hr_data_json]
+	--SELECT @hr_data_json [hr_data_json]
 END
