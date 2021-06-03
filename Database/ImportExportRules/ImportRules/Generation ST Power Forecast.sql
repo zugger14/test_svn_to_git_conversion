@@ -408,12 +408,12 @@ LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
 UNION ALL
 SELECT 
-	fp_sell.external_id
+	IIF(CAST(calc.[Volume] AS NUMERIC(38,10)) < 0.00, fp_buy.external_id, fp_sell.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(CAST(calc.[Volume] AS NUMERIC(38,20)))
+    , 0.00
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON calc.[Profile Name] = tp.[profile_name]
@@ -421,9 +421,10 @@ INNER JOIN #temp_position tp
 	AND calc.hour = tp.hr
 	AND calc.Minute = tp.period
 	AND calc.[Is DST] = tp.is_dst
+LEFT JOIN forecast_profile fp_buy
+	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-WHERE cast(calc.[Volume] as numeric(38,20)) = 0.00
 UNION ALL
 SELECT IIF(CAST(a.Volume AS NUMERIC(38,20)) >= 0.00, gm.dest_buy_profile, gm.dest_sell_profile) [profile name]
 	, a.Term
@@ -854,12 +855,12 @@ LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
 UNION ALL
 SELECT 
-	fp_sell.external_id
+	IIF(CAST(calc.[Volume] AS NUMERIC(38,10)) < 0.00, fp_buy.external_id, fp_sell.external_id)
     , calc.[Term]
     , calc.[Hour]
     , calc.[Minute]
     , calc.[Is DST]
-    , ABS(CAST(calc.[Volume] AS NUMERIC(38,20)))
+    , 0.00
 FROM [temp_process_table]_calc calc
 INNER JOIN #temp_position tp
 	ON calc.[Profile Name] = tp.[profile_name]
@@ -867,9 +868,10 @@ INNER JOIN #temp_position tp
 	AND calc.hour = tp.hr
 	AND calc.Minute = tp.period
 	AND calc.[Is DST] = tp.is_dst
+LEFT JOIN forecast_profile fp_buy
+	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-WHERE cast(calc.[Volume] as numeric(38,20)) = 0.00
 UNION ALL
 SELECT IIF(CAST(a.Volume AS NUMERIC(38,20)) >= 0.00, gm.dest_buy_profile, gm.dest_sell_profile) [profile name]
 	, a.Term
@@ -934,7 +936,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity_Test\temp_Note\0',
+						   '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
 						   NULL,
 						   ';',
 						   2,
@@ -954,7 +956,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   '0',
 						   '0',
 						   NULL,
-						   '/home/pioneer/Import/2_Generation'
+						   NULL
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
 					LEFT JOIN ixp_soap_functions isf ON isf.ixp_soap_functions_name = '' 
@@ -1013,3 +1015,4 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
+		
