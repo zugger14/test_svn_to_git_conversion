@@ -33,224 +33,439 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = ''
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + '	DECLARE @_from_as_date VARCHAR(50)-- =''2020-07-31'' 
+
 	DECLARE @_to_as_date VARCHAR(50)
+
 	DECLARE @_sql VARCHAR(MAX)
+
 	DECLARE @_term_start  VARCHAR(MAX)
+
 	DECLARE @_term_end  VARCHAR(MAX)
+
 	DECLARE 
+
 		@_deal_date_from VARCHAR(50), 
+
 		@_deal_date_to VARCHAR(50), 
+
 		@_source_counterparty_id VARCHAR(MAX), 
+
 		@_source_deal_type_id VARCHAR(MAX), 
+
 		@_deal_sub_type_type_id VARCHAR(MAX), 
+
 		@_physical_financial_flag VARCHAR(20), 
+
 		@_contract_id VARCHAR(MAX), 
+
 		@_trader_id VARCHAR(MAX), 
+
 		@_block_definition_id VARCHAR(50), 
+
 		@_location_id VARCHAR(MAX), 
+
 		@_index_id VARCHAR(MAX),
+
 		@_source_deal_header_id VARCHAR(50),--=1317, 
+
 		@_commodity_id VARCHAR(MAX),
+
 		@_buy_sell_flag VARCHAR(20),
+
 	    @_stmt_invoice_id  VARCHAR(MAX)--=11
+
 	
+
 	IF ''@as_of_date'' <> ''NULL''
+
 		SET @_from_as_date = ''@as_of_date''
+
 	IF ''@to_as_of_date'' <> ''NULL''
+
 		SET @_to_as_date = ''@to_as_of_date''
+
 	IF ''@term_start''<> ''NULL''
+
 	 SET @_term_start= ''@term_start''
+
 	IF ''@term_end''<> ''NULL''
+
 	 SET @_term_end= ''@term_end'' 
+
 	IF ''@deal_date_from'' <> ''NULL''
+
 		SET @_deal_date_from = ''@deal_date_from''
+
 	IF ''@deal_date_to'' <> ''NULL''
+
 		SET @_deal_date_to = ''@deal_date_to''
+
 	IF ''@source_counterparty_id'' <> ''NULL''
+
 		SET @_source_counterparty_id = ''@source_counterparty_id''
+
 	IF ''@source_deal_type_id'' <> ''NULL''
+
 		SET @_source_deal_type_id = ''@source_deal_type_id''
+
 	IF ''@deal_sub_type_type_id'' <> ''NULL''
+
 		SET @_deal_sub_type_type_id = ''@deal_sub_type_type_id''	
+
 	IF ''@physical_financial_flag'' <> ''NULL''
+
 		SET @_physical_financial_flag = ''@physical_financial_flag''
+
 	IF ''@contract_id'' <> ''NULL''
+
 		SET @_contract_id = ''@contract_id''
+
 	IF ''@trader_id'' <> ''NULL''
+
 		SET @_trader_id = ''@trader_id''
+
 	IF ''@location_id'' <> ''NULL''
+
 		SET @_location_id = ''@location_id''
+
 	IF ''@index_id'' <> ''NULL''
+
 		SET @_index_id = ''@index_id''
+
 	IF ''@source_deal_header_id'' <> ''NULL''
+
 		SET @_source_deal_header_id = ''@source_deal_header_id''
+
 	IF ''@commodity_id'' <> ''NULL''
+
 		SET @_commodity_id = ''@commodity_id''
+
 	IF ''@buy_sell_flag'' <> ''NULL''
+
 		SET @_buy_sell_flag = ''@buy_sell_flag''
+
 		
+
     IF ''@stmt_invoice_id'' <> ''NULL''
+
 		SET @_stmt_invoice_id = ''@stmt_invoice_id''
 
+
 		
+
 IF OBJECT_ID(N''tempdb..#books'') IS NOT NULL
+
 	DROP TABLE #books
+
 	
+
 	SELECT sub.entity_id sub_id,
+
 	  stra.entity_id stra_id,
+
 	  book.entity_id book_id,
+
 	  sub.entity_name AS sub_name,
+
 	  stra.entity_name AS stra_name,
+
 	  book.entity_name AS book_name,
+
 	  ssbm.source_system_book_id1, 
+
 	  ssbm.source_system_book_id2, 
+
 	  ssbm.source_system_book_id3, 
+
 	  ssbm.source_system_book_id4,
+
       ssbm.logical_name,
+
       ssbm.book_deal_type_map_id [sub_book_id]
+
 INTO  #books
+
 FROM   portfolio_hierarchy book(NOLOCK)
+
 INNER JOIN Portfolio_hierarchy stra(NOLOCK)
+
 	ON  book.parent_entity_id = stra.entity_id
+
 INNER JOIN portfolio_hierarchy sub (NOLOCK)
+
 	ON  stra.parent_entity_id = sub.entity_id
+
 INNER JOIN source_system_book_map ssbm
+
 	ON  ssbm.fas_book_id = book.entity_id
+
 --AND (''@sub_id'' = ''NULL'' OR sub.entity_id IN (@sub_id)) 
+
 --AND (''@stra_id'' = ''NULL'' OR stra.entity_id IN (@stra_id)) 
+
 --AND (''@book_id'' = ''NULL'' OR book.entity_id IN (@book_id))	
+
 --AND (''@sub_book_id'' = ''NULL'' OR ssbm.book_deal_type_map_id IN (@sub_book_id))
 
+
 --IF ''@as_of_date'' <> ''NULL'' AND ''@source_deal_header_id'' <> ''NULL''
+
 --	select  @_from_as_date =  MAX(CONVERT(char(10), as_of_date,126)) FROM  dbo.source_deal_settlement_breakdown  WHERE  as_of_date <= ''@as_of_date''  and  source_deal_header_id = ''@source_deal_header_id''
+
 
 --SET @_from_as_date  = ISNULL(@_from_as_date, ''@as_of_date'')
 
+
 SET @_sql =''
+
 SELECT sdsb.as_of_date,
+
 		books.[sub_id],
+
 		books.[stra_id],
+
 		books.[book_id],
+
 		books.sub_name [sub],
+
 		books.stra_name [stra],
+
 		books.book_name [book],
+
 		books.logical_name [sub_book],
+
        sdsb.leg,
+
        sdsb.deal_id ,
+
        CASE 
+
             WHEN sdh.physical_financial_flag = ''''p'''' THEN ''''Physical''''
+
             ELSE ''''Financial''''
+
        END [physical_financial_flag],
+
        sdd.location_id,
+
        sml.Location_Name [location],
+
        spcd.curve_name [curve_name],
+
        sdsb.curve_id [curve_id],
+
        sdsb.hours,       
+
        sdsb.period,
+
        sdsb.term_start,
+
        sdsb.term_date,
+
        sdsb.term_end,
+
        sdsb.source_deal_header_id,
+
        CASE WHEN sdd.buy_sell_flag=''''b'''' then 1
+
 			ELSE 1 END *sdsb.market_value_deal [market_value],
-       sdsb.contract_value,
+
+       sdsb.contract_value_deal [contract_value],
+
        CASE WHEN sdd.buy_sell_flag=''''b'''' AND sdh.physical_financial_flag=''''p''''then -1*sdsb.price_deal * sdsb.volume  
+
 			WHEN sdd.buy_sell_flag=''''s'''' AND sdh.physical_financial_flag=''''p''''then sdsb.price_deal * sdsb.volume
+
 			WHEN sdd.buy_sell_flag=''''s'''' AND sdh.physical_financial_flag=''''f''''then (-sdsb.fixed_price_deal * sdsb.volume - sdsb.market_value_deal)*-1
+
 				ELSE sdsb.market_value_deal- sdsb.contract_price_deal * sdsb.volume  END [settlement_value],   
+
        sdsb.as_of_date  to_as_of_date,   
+
        ABS(sdsb.market_price_deal-sdsb.contract_price_deal) [net_price] ,
+
        sdsb.market_price_deal market_price,
-       sdsb.formula_value contract_price,
+
+       sdsb.formula_value_deal contract_price,
+
        sdsb.volume,
+
        CAST(sdsb.is_dst as INT) is_dst,
+
        books.[sub_book_id],
+
 	   source_book.source_book_id book_identifier1_id,
+
 	   source_book_1.source_book_id  book_identifier2_id,
+
 	   source_book_2.source_book_id  book_identifier3_id,
+
 	   source_book_3.source_book_id  book_identifier4_id,
+
 	   source_book.source_book_name  book_identifier1,
+
 	   source_book_1.source_book_name  book_identifier2,
+
 	   source_book_2.source_book_name  book_identifier3,
+
 	   source_book_3.source_book_name  book_identifier4,
+
 	   DAY(sdd.term_start) [term_start_day],       
+
 	   RIGHT(''''0''''+ CAST(MONTH(sdd.term_start) AS VARCHAR(2)), 2)   [term_start_month],
+
 	   DATENAME(m,sdd.term_start) [term_start_month_name],
+
 	   YEAR(sdd.term_start) [term_start_year],
+
 	   CAST(YEAR(sdd.term_start) AS VARCHAR(5)) + ''''-'''' + RIGHT(''''0''''+ CAST(MONTH(sdd.term_start) AS VARCHAR(2)), 2)   [term_start_year_month],
+
 	   ''''Q'''' + CAST(DATEPART(q,sdd.term_start) AS VARCHAR) [term_quarter],
+
 	   ag_t.agg_term,
+
 	   CASE WHEN sdd.buy_sell_flag = ''''b'''' THEN ''''Buy'''' ELSE ''''Sell'''' END buy_sell_flag
+
 	   ,NULL deal_date_from
+
 ,NULL deal_date_to
+
 ,NULL source_counterparty_id
+
 ,NULL source_deal_type_id
+
 ,NULL deal_sub_type_type_id
+
 ,NULL trader_id
+
 ,NULL contract_id
+
 ,NULL index_id
+
 ,NULL commodity_id
+
 ,NULL stmt_invoice_id 
+
 ,sdv1.code reporting_group1
+
 ,sdv2.code reporting_group2
+
 ,sdv3.code reporting_group3
+
 ,sdv4.code reporting_group4
+
 ,sdv5.code reporting_group5 
+
 	   --[__batch_report__]
+
 FROM   source_deal_settlement_breakdown sdsb
+
        INNER JOIN source_deal_header sdh
+
             ON  sdh.source_deal_header_id = sdsb.source_deal_header_id
+
             
+
        INNER JOIN source_deal_detail sdd
+
             ON  sdd.source_deal_header_id = sdsb.source_deal_header_id
+
             AND sdd.term_start = sdsb.term_start
+
             AND sdd.term_end = sdsb.term_end
+
             AND sdd.leg = sdsb.leg
+
         INNER JOIN #books books 
+
 			ON books.source_system_book_id1 = sdh.source_system_book_id1
+
 			AND books.source_system_book_id2 = sdh.source_system_book_id2
+
 			AND books.source_system_book_id3 = sdh.source_system_book_id3
+
 			AND books.source_system_book_id4 = sdh.source_system_book_id4
+
 		INNER JOIN source_book ON books.source_system_book_id1 = source_book.source_book_id 
+
 		INNER JOIN source_book source_book_1 ON books.source_system_book_id2 = source_book_1.source_book_id 
+
 		INNER JOIN source_book source_book_2 ON books.source_system_book_id3 = source_book_2.source_book_id 
+
 		INNER JOIN source_book source_book_3 ON books.source_system_book_id4 = source_book_3.source_book_id 		
+
 		LEFT JOIN source_minor_location sml ON  sml.source_minor_location_id = sdd.location_id
+
 		LEFT JOIN source_price_curve_def spcd ON  spcd.source_curve_def_id = sdsb.curve_id
+
 		LEFT JOIN static_data_value sdv1 on sdv1.value_id = sdh.reporting_group1
+
 		LEFT JOIN static_data_value sdv2 on sdv2.value_id = sdh.reporting_group2
+
 		LEFT JOIN static_data_value sdv3 on sdv3.value_id = sdh.reporting_group3
+
 		LEFT JOIN static_data_value sdv4 on sdv4.value_id = sdh.reporting_group4
+
 		LEFT JOIN static_data_value sdv5 on sdv5.value_id = sdh.reporting_group5		
+
 		OUTER APPLY(SELECT TOP 1 CASE WHEN sdd.term_start<=''''''+@_from_as_date+'''''' THEN CAST(YEAR(sdd.term_start) AS VARCHAR) + ''''-YTD''''
+
 			WHEN DATEDIFF(d,''''''+@_from_as_date+'''''',sdd.term_start)=1 THEN  ''''Day - 1''''
+
 			WHEN MONTH(''''''+@_from_as_date+'''''') = MONTH(sdd.term_start) AND YEAR(''''''+@_from_as_date+'''''') =  YEAR(sdd.term_start) THEN ''''Week - ''''+ CAST(DATEDIFF(week,''''''+@_from_as_date+'''''',sdd.term_start) AS VARCHAR)
+
 			WHEN DATEPART(q,''''''+@_from_as_date+'''''') =  DATEPART(q,sdd.term_start) AND YEAR(''''''+@_from_as_date+'''''') =  YEAR(sdd.term_start) THEN ''''Month - '''' + CAST(DATEDIFF(m,''''''+@_from_as_date+'''''',sdd.term_start) AS VARCHAR) 
+
 			WHEN YEAR(''''''+@_from_as_date+'''''') =  YEAR(sdd.term_start) THEN ''''Quarter - '''' + CAST(DATEPART(q,sdd.term_start) AS VARCHAR) 
+
 			ELSE  ''''Year - '''' +CAST(YEAR(sdd.term_start) AS VARCHAR) 
+
 			END agg_term  FROM portfolio_mapping_tenor) ag_t 
+
 WHERE 1=1 
+
       ''    
+
 + CASE WHEN @_term_start IS NOT NULL THEN '' AND sdsb.term_date >= '''''' + @_term_start + '''''''' ELSE '''' END
+
 + CASE WHEN @_term_end IS NOT NULL THEN '' AND sdsb.term_date <= '''''' + @_term_end + '''''''' ELSE '''' END
+
 + CASE WHEN @_from_as_date IS NOT NULL THEN '' AND sdsb.as_of_date = '''''' + @_from_as_date + '''''''' ELSE '''' END
+
 + CASE	WHEN @_deal_date_from IS NULL AND  @_deal_date_to IS NULL THEN '''' 
+
 			WHEN @_deal_date_to IS NULL THEN '' AND sdh.deal_date = CAST('''''' + @_deal_date_from + '''''' AS DATETIME)''
+
 			WHEN @_deal_date_from IS NULL THEN '' AND sdh.deal_date <= CAST('''''' + @_deal_date_to + '''''' AS DATETIME)''
+
 			ELSE '' AND sdh.deal_date BETWEEN CAST('''''' + @_deal_date_from + '''''' AS DATETIME) AND CAST('''''' + @_deal_date_to + '''''' AS DATETIME)''
+
 		END + 
+
 	CASE WHEN @_source_counterparty_id IS NULL THEN '''' ELSE '' AND sdh.counterparty_id IN ('' + @_source_counterparty_id + '')'' END + 
+
 	CASE WHEN @_source_deal_type_id IS NULL THEN '''' ELSE '' AND sdh.source_deal_type_id IN ('' + @_source_deal_type_id + '')'' END +  
+
 	CASE WHEN @_deal_sub_type_type_id IS NULL THEN '''' ELSE '' AND sdh.deal_sub_type_type_id IN ('' + @_deal_sub_type_type_id + '')'' END + 
+
 	CASE WHEN @_physical_financial_flag IS NULL THEN '''' ELSE '' AND sdd.physical_financial_flag = '''''' + @_physical_financial_flag + '''''''' END + 
+
 	CASE WHEN @_contract_id IS NULL THEN '''' ELSE '' AND sdh.contract_id IN ('' + @_contract_id + '')'' END + 
+
 	CASE WHEN @_trader_id IS NULL THEN '''' ELSE '' AND sdh.trader_id IN ('' + @_trader_id + '')'' END + 
+
 	CASE WHEN @_block_definition_id IS NULL THEN '''' ELSE '' AND sdh.block_define_id = '' + @_block_definition_id END + 
+
 	CASE WHEN @_location_id IS NULL THEN '''' ELSE '' AND sdd.location_id IN ('' + @_location_id + '')'' END + 
+
 	CASE WHEN @_index_id IS NULL THEN '''' ELSE '' AND sdd.curve_id IN ('' + @_index_id + '')'' END + 
+
 	CASE WHEN @_source_deal_header_id IS NULL THEN '''' ELSE '' AND sdh.source_deal_header_id IN ('' + @_source_deal_header_id + '')'' END + 
+
 	CASE WHEN @_commodity_id IS NULL THEN '''' ELSE '' AND sdh.commodity_id IN ('' + @_commodity_id + '')'' END + 
+
 	CASE WHEN @_buy_sell_flag IS NULL THEN '''' ELSE '' AND sdh.header_buy_sell_flag = '''''' + @_buy_sell_flag + '''''''' END 
+
 EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
