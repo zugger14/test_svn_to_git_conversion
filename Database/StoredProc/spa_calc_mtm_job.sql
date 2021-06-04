@@ -2147,9 +2147,11 @@ OUTER APPLY(
 	select max(exp_date) exp_date,max(case when aa=0 then exp_date else null end) exp_date_market from (
 		SELECT max(hg.exp_date) exp_date,0 aa FROM holiday_group hg 
 			WHERE hg.hol_group_value_id = spcd.exp_calendar_id  AND ' + @maturity_date + ' BETWEEN hg.hol_date AND hg.hol_date_to
+			and 1= case when ''m''='''+ @calc_type+''' and sdd.physical_financial_flag=''p'' and isnull(sdh.internal_deal_subtype_value_id,-1)<>'+@CFD_id+' then 2 else 1 end	
 		union all
 		SELECT max(hg.exp_date) exp_date,1 aa FROM holiday_group hg 
 			WHERE hg.hol_group_value_id = spcd_f.exp_calendar_id  AND ' + @maturity_date + ' BETWEEN hg.hol_date AND hg.hol_date_to
+			and 1= case when ''m''='''+ @calc_type+''' and sdd.physical_financial_flag=''p'' and isnull(sdh.internal_deal_subtype_value_id,-1)<>'+@CFD_id+' then 2 else 1 end
 		) a
 ) cexp '
 
