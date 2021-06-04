@@ -2344,7 +2344,7 @@ BEGIN TRY
 				,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr19,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr20,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr21
 				,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr22,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr23,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr24,CASE WHEN tft.pay_opposite=''y'' THEN -1 ELSE 1 END *hr25
 			,getdate() [create_ts],''' 
-			+ @user_login_id + ''' [create_user],thdi.source_deal_detail_id,thdi.rowid,thdi.granularity,vol.[period],tft.curve_id,tft.expiration_date ' + @report_hourly_position_financial_main + '
+			+ @user_login_id + ''' [create_user],thdi.source_deal_detail_id,thdi.rowid,thdi.granularity,vol.[period],tft.curve_id,vol.expiration_date ' + @report_hourly_position_financial_main + '
 		FROM  #tmp_header_deal_id thdi
 		INNER JOIN  #tmp_financial_term tft ON tft.source_deal_detail_id=thdi.source_deal_detail_id  and isnull(tft.hourly_volume_allocation,17601)=17605 -- and fixing<>4100
 		cross  apply (
