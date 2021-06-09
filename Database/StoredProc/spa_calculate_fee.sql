@@ -450,7 +450,7 @@ CREATE TABLE #fees_breakdown_tax
 
 	SET @qry7b='
 	LEFT JOIN '+@calc_result_table5+' udf_formula ON udf_formula.source_deal_detail_id = td.source_deal_detail_id
-		and uddft.udf_template_id=udf_formula.source_id AND udf_formula.is_final_result = ''y'' 	
+		and uddft.udf_template_id=udf_formula.udf_template_id AND udf_formula.is_final_result = ''y'' 	
 	LEFT JOIN user_defined_deal_fields_template ud ON ud.template_id = sdh.template_id
 		AND ud.field_id = 305013
 	LEFT JOIN user_defined_deal_fields_template ud1 on ud1.template_id = sdh.template_id
