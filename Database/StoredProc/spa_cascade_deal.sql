@@ -36,13 +36,12 @@ DECLARE @max_as_of_date DATETIME =  '2019-12-27'
 DECLARE @flag VARCHAR(1000)
 DECLARE  @result_output VARCHAR(125) 
 
---SELECT @parent_deal_ids = '20,85,105,123,124,125,126,127,132,142,153,170,173,174,191,196,199,208,209,212,223,229,232,233,244,249,250,256,264,268,270,274,288,295,297,298,299,304,312,313,314,321,329,332,361,362,363,379,384,388,394,395,1066,1068,1080,1083,1108,1114,1117,1144,1147,1155,1161,1167,1170,1171,1174,1175,1199,1203,1205,1206,1207,1208,1209,1219,1223,1227,1229,1238,1241,1248,1249,1250,1252,1264,1271,1274,1304,1305,1317,1318,1328,1347,1350,1369,1378,1407,1410,1421,1422,1432,1433,1447,2006,2065,2091,2094,2103,2106,2121,2127,2128,2130,2147,2152,2160,2168,2177,2179,2181,2182,2184,2193,2228,2235,2237,2255,2259,2273,2287,2298,2308,2309,2310,2311,2317,2329,2339,2342,2349,2350,2363,2395,2398,2399,2405,2407,2412,2413,2419,2424,2432,2444,2446,2452,2476,2483,2484,2489,2493,2506,2511,2533,2553,2564,3022,3056,3079,3148,3149,3157,3164,3182,3197,3213,3223,3224,3279,3283,3293,3310,3345,3351,3372,3376,3380,3382,3395,3418,3425,3426,3436,3452,3457,3458,3471,3488,3491,3508,3509,3524,3525,3534,3535,3616,4077,4117,4118,4167,4168,4177,4183,4203,4204,4212,4214,4227,4231,4238,4249,4252,4253,4257,4260,4276,4278,4284,4288,4292,4302,4304,4311,4313,4320,4325,4326,4327,4332,4336,4346,4348,4367,4378,4380,4387,4388,4392,4393,4398,4402,4424,4434,4437,4438,4443,4444,4445,4453,4461,4467,4468,4480,4487,4491,4497,4502,4516,4520,4523,4524,4529,4534,4535,4536,4537,4541,4545,4548,4555,4559,4560,4579,4589,4590,4636,4637,5157,5174,5194,5208,5215,5246,5248,5251,5254,5258,5259,5263,5268,5286,5288,5289,5290,5294,5295,5299,5319,5323,5345,5393,5405,5410,5453,5456,5459,5461,5467,5468,5469,5472,5474,5475,5477,5484,5485,5498,5507,5514,6038,6050,6066,6067,6085,6109,6116,6138,6143,6147,6156,6162,6165,6167,6173,6192,6198,6199,6201,6202,6206,6211,6214,6215,6221,6224,6226,6231,6232,6242,6243,6249,6252,6259,6260,6276,6277,6285,6317,6325,6334,6348,6356,6364,6365,6371,6381,6382,6383,6384,6388,6393,6398,6416,6417,6418,6419,6427,6442,6445,6448,6472,6477,6479,6486,6501,6504,6515,6516,6522,6523,6526,6541,6555,7088,7101,7105,7107,7113,7114,7116,7117,7121,7126,7128,7132,7133,7134,7141,7142,7146,7150,7151,7153,7156,7163,7184,7187,7189,7191,7192,7200,7201,7210,7213,7233,7236,7241,7243,7248,7252,7254,7256,7282,7287,7288,7298,7300,7302,7310,7311,7312,7326,7329,7335,7337,7338,7346,7347,7351,7357,7361,7362,7363,7365,7378,7380,7385,7447,7456,7465,7471,7482,7485,8024,8114,8121,8145,8193,8197,8198,8204,8205,8218,8230,8242,8252,8262,8266,8267,8268,8269,8270,8271,8274,8277,8278,8288,8291,8292,8294,8313,8315,8316,8322,8323,8324,8325,8342,8344,8360,8371,8388,8391,8400,8404,8419,8420,8423,8426,8427,8434,8443,8444,8446,8449,8450,8451,8452,8453,8460,8463,8467,8485,8488,8512,8514,8537,8551,8552,8553,8560,8565,8567,8571,8576,8589,9178,9200,9221,9225,9233,9237,9243,9246,9247,9253,9254,9262,9265,9266,9268,9269,9271,9281,9286,9287,9288,9293,9305,9310,9320,9323,9325,9333,9334,9335,9340,9344,9346,9350,9357,9362,9369,9388,9396,9401,9403,9404,9416,9425,9427,9428,9432,9433,9438,9450,9458,9459,9461,9467,9472,9476,9499,9509,9511,9517,9524,9532,9536,9550,9557,9614,9641,10166,10185,10203,10219,10229,10268,10281,10284,10286,10307,10317,10330,10341,10343,10344,10355,10356,10357,10359,10360,10375,10378,10392,10393,10411,10452,10473,10492,10493,10494,10500,10508,10550,10574,10578,10583,10586,10588,10590,10609,10615,10619,10621,10627,10628,10640,10644,10681,10688,10689,10694,10701,10721,10725,10741,10743,10769,11231,11236,11269,11270,11306,11307,11309,11310,11311,11312,11314,11329,11336,11344,11352,11353,11355,11357,11365,11366,11367,11369,11370,11372,11393,11396,11402,11404,11405,11406,11413,11414,11438,11454,11460,11470,11473,11481,11503,11506,11507,11511,11515,11516,11525,11529,11533,11537,11547,11559,11563,11565,11578,11583,11584,11600,11603,11605,11616,11619,11629,11638,11639,11655,11658,11662,11673,11686,11693,11720,11721,12250,12275,12304,12364,12447,12450,12468,12470,12472,12474,12478,12482,12483,12490,12493,12499,12510,12518,12520,12521,12524,12525,12526,12527,12528,12531,12532,12537,12544,12545,12553,12556,12565,12566,12573,12601,12604,12621,12632,12666,12668,12669,12671,12678,12681,12712,12714,12721,12753,12774,12782,12796,12797,12798,12799,12807,12809,12816,12819,12821,12824,12832,12851,12852,12885,12901,12915,12928,12934,12958,12963,13494,13511,13525,13544,13599,13600,13601,13602,13612,13620,13621,13626,13627,13638,13641,13648,13667,13669,13674,13679,13682,13689,13694,13695,13696,13704,13724,13743,13758,13760,13775,13791,13796,13801,13812,13821,13833,13835,13844,13848,13866,13871,13872,13878,13890,13893,13905,13906,13909,13934,13935,13943,13945,13948,13952,13966,13974,13975,13976,13990,14537,14610,14639,14640,14644,14652,14655,14656,14658,14659,14667,14670,14671,14672,14677,14701,14703,14704,14711,14716,14717,14720,14737,14743,14749,14753,14772,14784,14813,14844,14846,14847,14863,14867,14883,14894,14923,14924,14926,14944,14962,14986,14990,14994,15014,15017,15020,15025,15047,15488,15497,15507,15511,15512,15537,15564,15571,15573,15578,15581,15582,15586,15606,15607,15612,15619,15623,15632,15650,15651,15656,15658,15667,15668,15669,15683,15685,15690,15707,15708,15714,15742,15745,15758,15759,15802,15803,15807,15808,15809,15812,15816,15833,15836,15858,15865,15869,15873,15878,15880,15896,15907,15910,15911,15913,15914,15915,15916,15929,15944,15955,15956'
 SELECT @parent_deal_ids = '134398'
-SELECT @parent_deal_ids = '170805'
-SELECT @parent_deal_ids = '170923'
+SELECT @parent_deal_ids = '170805' -- new case deal id 
+--SELECT @parent_deal_ids = '170969' -- old case deal id 
 
 SET @flag = 'cascade'
---SET @flag = 'rewind_cascade'
+SET @flag = 'rewind_cascade'
 --select *from static_data_value where type_id = 5600
 --select deal_status, * from source_deal_header where source_deal_header_id=359
 --update source_deal_header set deal_status=5604 where source_deal_header_id=359
@@ -50,8 +49,8 @@ SET @flag = 'cascade'
   
 SET NOCOUNT ON
 
-DECLARE @user_name VARCHAR(30) = dbo.FNADBUser(),
-		@process_id VARCHAR(100) = dbo.FNAGetNewID()
+DECLARE @user_name VARCHAR(30) = dbo.FNADBUser()
+DECLARE	@process_id VARCHAR(100) = dbo.FNAGetNewID()
 
 DECLARE @sdv_from_deal INT, @sdv_to_deal INT, @sql VARCHAR(MAX), @err_status VARCHAR(10) = 's', @url VARCHAR(3000), @url_desc VARCHAR(MAX), @term_start DATETIME,
 		@term_end DATETIME, @source_deal_header_id INT, @parent_curve INT, @granularity INT, @deal_id VARCHAR(200), @deal_id_status INT, @mapping_name VARCHAR(100) = 'Cascading'
@@ -61,6 +60,7 @@ DECLARE @clm1_value VARCHAR(50), @clm2_value VARCHAR(50), @clm3_value VARCHAR(50
 
 DECLARE @after_update_process_table VARCHAR(300), @job_name VARCHAR(200), @job_process_id VARCHAR(200) = dbo.FNAGETNEWID()
 DECLARE @error_message VARCHAR(1000)
+DECLARE @term_frequency_type CHAR(1)
 
 IF OBJECT_ID(N'tempdb..#mapping') IS NOT NULL
 	DROP TABLE #mapping
@@ -89,7 +89,8 @@ BEGIN
 		curve_id INT,
 		term_start DATETIME,
 		term_end DATETIME,
-		deal_status INT
+		deal_status INT,
+		term_frequency_type CHAR(1)  COLLATE DATABASE_DEFAULT
 	)
   
 	IF OBJECT_ID(N'tempdb..#tmp_deals') IS NOT NULL
@@ -105,8 +106,8 @@ BEGIN
 		DROP TABLE #tmp_header
 
 	SET @sql = '
-			INSERT INTO #deal_info (source_deal_header_id, deal_id, curve_id, term_start, term_end, deal_status)
-			SELECT sdh.source_deal_header_id, sdh.deal_id, sdd.curve_id, sdh.entire_term_start, sdh.entire_term_end, sdh.deal_status
+			INSERT INTO #deal_info (source_deal_header_id, deal_id, curve_id, term_start, term_end, deal_status, term_frequency_type)
+			SELECT sdh.source_deal_header_id, sdh.deal_id, sdd.curve_id, sdh.entire_term_start, sdh.entire_term_end, sdh.deal_status, MAX(sdh.term_frequency)
 			FROM source_deal_header sdh
 			INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
 			INNER JOIN dbo.FNASplit(''' + @parent_deal_ids + ''', '','') dea ON dea.item = sdh.source_deal_header_id
@@ -140,11 +141,11 @@ BEGIN
 	CREATE TABLE #child_deal_detail(term_start DATETIME, term_end DATETIME, parent_id INT, id VARCHAR(2) COLLATE DATABASE_DEFAULT)
 
 	DECLARE c CURSOR FOR 
-	SELECT source_deal_header_id, deal_id, curve_id, term_start, term_end, deal_status 
+	SELECT source_deal_header_id, deal_id, curve_id, term_start, term_end, deal_status, term_frequency_type
 	FROM #deal_info
-	GROUP BY source_deal_header_id, deal_id, curve_id, term_start, term_end, deal_status 
+	GROUP BY source_deal_header_id, deal_id, curve_id, term_start, term_end, deal_status,term_frequency_type
 	OPEN c 
-	FETCH NEXT FROM c INTO @source_deal_header_id, @deal_id, @parent_curve, @term_start, @term_end, @deal_id_status 
+	FETCH NEXT FROM c INTO @source_deal_header_id, @deal_id, @parent_curve, @term_start, @term_end, @deal_id_status, @term_frequency_type
 	WHILE @@FETCH_STATUS = 0
 	BEGIN
 		IF @deal_id_status  = 5607
@@ -158,7 +159,7 @@ BEGIN
 			EXEC(@sql)
 
 			EXEC spa_print 'Cannot disintegrate voided deal ', @deal_id
-			FETCH NEXT FROM c INTO @source_deal_header_id, @deal_id, @parent_curve, @term_start, @term_end, @deal_id_status
+			FETCH NEXT FROM c INTO @source_deal_header_id, @deal_id, @parent_curve, @term_start, @term_end, @deal_id_status, @term_frequency_type
 			CONTINUE
 		END
 
@@ -305,8 +306,9 @@ BEGIN
 			GROUP BY di.source_deal_header_id, di.curve_id, spc.maturity_date
 
 			INSERT INTO #child_deal_detail(term_start, term_end, parent_id, id)
-			SELECT *, @source_deal_header_id parent_id, CASE WHEN @clm9_value = 2 THEN 'M' + CAST(DATEPART(MONTH, term_start) AS VARCHAR(2)) ELSE 'Q' + CAST(DATEPART(QUARTER, term_start) AS VARCHAR(2)) END id
-			FROM dbo.[FNATermBreakdown]('m', @term_start, @term_end)
+			SELECT *, @source_deal_header_id parent_id
+				, CASE WHEN @clm9_value = 2 THEN 'M' + CAST(DATEPART(MONTH, term_start) AS VARCHAR(2)) ELSE 'Q' + CAST(DATEPART(QUARTER, term_start) AS VARCHAR(2)) END id
+			FROM dbo.[FNATermBreakdown](CASE WHEN @term_frequency_type = 'm' THEN 'm' ELSE CASE WHEN @clm9_value = 2 THEN 'm' ELSE 'q' END END , @term_start, @term_end)
 
 			IF NOT EXISTS(SELECT 1	FROM source_price_curve spc 
 				INNER JOIN #deal_info di ON di.curve_id = spc.source_curve_def_id
@@ -324,7 +326,7 @@ BEGIN
 				EXEC spa_print 'Cannot disintegrate ', @deal_id
 			END
 		END
-	FETCH NEXT FROM c INTO @source_deal_header_id, @deal_id, @parent_curve, @term_start, @term_end, @deal_id_status
+	FETCH NEXT FROM c INTO @source_deal_header_id, @deal_id, @parent_curve, @term_start, @term_end, @deal_id_status, @term_frequency_type
 	END
 	CLOSE c
 	DEALLOCATE c 
@@ -356,7 +358,7 @@ BEGIN
 	IF OBJECT_ID('tempdb..#exclude_parent_source_deal_detail_id') IS NOT NULL 
 		DROP TABLE #exclude_parent_source_deal_detail_id
 
-	SELECT DISTINCT sdd.[source_deal_header_id] 
+	SELECT DISTINCT sdd.[source_deal_header_id] ,  sdd.term_start, sdd.term_end
 		INTO #exclude_parent_source_deal_detail_id
 	FROM source_deal_detail sdd
 	INNER JOIN #curve_ids_value cidv ON cidv.source_deal_header_id = sdd.[source_deal_header_id]
@@ -372,9 +374,9 @@ BEGIN
 	--select * from #parent_source_deal_detail_id
 	--select @clm9_value
 	--select * from #curve_ids_value
-	-- select * from #mapping
-	----select * from #tmp_deals
-	----select * from #exclude_parent_source_deal_detail_id
+	--  select * from #mapping
+	--select * from #tmp_deals
+	--select * from #exclude_parent_source_deal_detail_id
 	--select * from #child_deal_detail
 	-- return 
 
@@ -420,7 +422,7 @@ BEGIN
 		WHERE m.deal_id = h.deal_id + '_' + m.gran + '_CASCADE'
 		ORDER BY m.term_start, h.source_deal_header_id 
 
-		--select * from #tmp_header
+		--select * from #tmp_header order by deal_id 
 		--rollback tran return 
  
 		INSERT INTO [dbo].[source_deal_detail] (
@@ -452,37 +454,40 @@ BEGIN
 		INNER JOIN #child_deal_detail cdd ON cdd.parent_id = m.source_deal_header_id
 			AND cdd.id = m.gran
 		LEFT JOIN #curve_ids_value cidv ON cidv.source_deal_header_id = th.ext_deal_id
-			
-		/*
+
+		--/*
 		UNION ALL  -- logic changed
-		---- adding breakdown leg to the parent deal
+		---- adding breakdown leg to the parent deal for yearly deals
 		SELECT DISTINCT sdd.[source_deal_header_id], aa.[term_start], aa.[term_end], 1 [Leg], @clm11_value [contract_expiration_date], [fixed_float_leg]
 			, sdd.[buy_sell_flag], sdd.[curve_id]
 			, sdd.[fixed_price] [fixed_price] 
 			, [fixed_price_currency_id],
 			[option_strike_price], [deal_volume], [deal_volume_frequency], [deal_volume_uom_id], [block_description], [deal_detail_description], [formula_id], [volume_left], [settlement_volume],
-			[settlement_uom], [create_user], [create_ts], [update_user], [update_ts], [price_adder], [price_multiplier], [settlement_date], [day_count_id], [location_id], [meter_id],
-			[physical_financial_flag], [Booked], [process_deal_status], [fixed_cost], [multiplier], [adder_currency_id], [fixed_cost_currency_id], [formula_currency_id], [price_adder2],
+			[settlement_uom], @user_name [create_user], GETDATE() [create_ts], NULL [update_user], NULL [update_ts], [price_adder], [price_multiplier], [settlement_date], [day_count_id], [location_id], [meter_id],
+			sdd.[physical_financial_flag], [Booked], [process_deal_status], [fixed_cost], [multiplier], [adder_currency_id], [fixed_cost_currency_id], [formula_currency_id], [price_adder2],
 			[price_adder_currency2], [volume_multiplier2] , [pay_opposite], [capacity], [settlement_currency], [standard_yearly_volume], [formula_curve_id], [price_uom_id],
 			[category], [profile_code], [pv_party], [status], [lock_deal_detail], [detail_commodity_id], [position_uom]
  		FROM source_deal_detail sdd
 		INNER JOIN #curve_ids_value cidv ON cidv.source_deal_header_id = sdd.[source_deal_header_id]
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
 		CROSS APPLY(SELECT * FROM dbo.[FNATermBreakdown]('m', sdd.term_start, sdd.term_end)) aa
-		WHERE aa.term_start NOT IN (SELECT sdd_inn.term_start FROM source_deal_detail sdd_inn 
+		WHERE 1 = 1
+			AND aa.term_start NOT IN (SELECT sdd_inn.term_start FROM source_deal_detail sdd_inn 
 									INNER JOIN #parent_source_deal_detail_id ps ON ps.source_deal_detail_id = sdd_inn.source_deal_detail_id
 										AND sdd.source_deal_header_id NOT IN (SELECT source_deal_header_id FROM #exclude_parent_source_deal_detail_id))
 			AND cidv.source_deal_header_id NOT IN (SELECT source_deal_header_id FROM #exclude_parent_source_deal_detail_id)
-		*/
-		
+			AND sdh.term_frequency = 't'
+		--*/
+
 		--rollback tran
 		--return 
 				
 		UPDATE sdd_inn 
-		SET   --sdd_inn.term_end = dbo.FNAGetTermEndDate('m', sdd_inn.term_start, 0)	
-			--, 
-			sdd_inn.[contract_expiration_date] = @clm11_value
+		SET sdd_inn.term_end = CASE WHEN sdh.term_frequency = 't' THEN dbo.FNAGetTermEndDate('m', sdd_inn.term_start, 0) ELSE sdd_inn.term_end END 	
+			, sdd_inn.[contract_expiration_date] = @clm11_value
 		FROM source_deal_detail sdd_inn
 		INNER JOIN #parent_source_deal_detail_id ps ON ps.source_deal_detail_id = sdd_inn.source_deal_detail_id
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd_inn.source_deal_header_id 
 
 		--rollback tran return
 
@@ -520,12 +525,12 @@ BEGIN
 		FROM source_deal_detail sdd
 		INNER JOIN #tmp_header t ON sdd.source_deal_header_id = t.source_deal_header_id
 
-		UPDATE sdd
-		SET sdd.contract_expiration_date = ISNULL(hg.exp_date, sdd.term_end)
-		FROM source_deal_detail sdd
-		INNER JOIN #tmp_header t ON sdd.source_deal_header_id = t.source_deal_header_id
-		INNER JOIN source_price_curve_Def spcd ON spcd.source_curve_def_id = sdd.curve_id AND spcd.granularity = 980
-		INNER JOIN holiday_group hg ON hg.hol_group_value_id = spcd.exp_calendar_id AND hg.hol_date = sdd.term_start AND hg.hol_date_to = sdd.term_end
+		--UPDATE sdd
+		--SET sdd.contract_expiration_date = ISNULL(hg.exp_date, sdd.term_end)
+		--FROM source_deal_detail sdd
+		--INNER JOIN #tmp_header t ON sdd.source_deal_header_id = t.source_deal_header_id
+		--INNER JOIN source_price_curve_Def spcd ON spcd.source_curve_def_id = sdd.curve_id AND spcd.granularity = 980
+		--INNER JOIN holiday_group hg ON hg.hol_group_value_id = spcd.exp_calendar_id AND hg.hol_date = sdd.term_start AND hg.hol_date_to = sdd.term_end
 
 		--shipper code1
 		--select * from  #tmp_header
@@ -711,7 +716,8 @@ BEGIN
 		FROM #detail_collection_reverse_cascade r
 		INNER JOIN dbo.FNASplit(@parent_deal_ids, ',') i ON i.item = r.source_deal_header_id
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = r.source_deal_header_id 
-		GROUP BY i.item, r.leg, r.term_end
+		--WHERE sdh.term_frequency = 't'
+		GROUP BY i.item, r.leg, CASE WHEN sdh.term_frequency = 't' THEN 1 ELSE r.term_end END
 	
 	 	--select * from #min_parent_term_start 
 		--select * from #data_collection_reverse_cascade 
@@ -722,8 +728,8 @@ BEGIN
 		SET @report_position = dbo.FNAProcessTableName('report_position', @user_login_id, @process_id)
  
 		-- delete position of all parent leg except leg, also delete all child cascade deals position
-		SET @sql = 'CREATE TABLE ' + @report_position + ' (source_deal_header_id INT, source_deal_detail_id INT)
-				
+		SET @sql = '
+					CREATE TABLE ' + @report_position + ' (source_deal_header_id INT, source_deal_detail_id INT)
 					INSERT INTO ' + @report_position + ' 
 					SELECT source_deal_header_id, source_deal_detail_id
 					FROM (SELECT source_deal_header_id, source_deal_detail_id, term_start FROM #detail_collection_reverse_cascade dc
@@ -736,9 +742,11 @@ BEGIN
 					) z '
 		EXEC spa_print @sql
 		EXEC(@sql)
+
 		--EXEC('select * from ' + @report_position)
 
-		--select * from #min_parent_term_start
+		----select * from #min_parent_term_start
+		--select * from #detail_collection_reverse_cascade
 		--rollback tran
 		--return 
 		--position delete
@@ -750,15 +758,19 @@ BEGIN
 		--	--* 
 		UPDATE sdd
 		SET		
-			--sdd.term_start					= m.term_start,
-			--sdd.term_end					= m.term_end,
-			--sdd.contract_expiration_date	= m.term_end,
+			sdd.term_start					= CASE WHEN sdh.term_frequency = 't' THEN m.term_start ELSE sdd.term_start	 END,
+			sdd.term_end					= CASE WHEN sdh.term_frequency = 't' THEN m.term_end ELSE sdd.term_end END,
+			sdd.contract_expiration_date	= m.term_end,
 			sdd.price_adder 				= NULL,	
 			sdd.formula_curve_id			= NULL
 		FROM #min_parent_term_start m
 		INNER JOIN source_deal_detail sdd ON m.source_deal_header_id = sdd.source_deal_header_id
 			AND sdd.Leg = m.leg
 			AND sdd.term_start = m.term_start
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id 
+
+		--select * from #min_parent_term_start
+		--rollback tran return 
 
 		-- update parent header
 		UPDATE sdh
@@ -814,18 +826,22 @@ BEGIN
 		--SELECT @to_delete_deal_ids
 		EXEC spa_source_deal_header @flag = 'd', @deal_ids = @to_delete_deal_ids, @comments='cascasde rewind', @call_from = 'scheduling', @call_from_import = 'y'
 
-		/*
+		--/*
 		--delete other legs for parent
 		SET @sql = '
 					--SELECT * 
 					DELETE sdd 
 					FROM ' + @report_position + ' rp
 					INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = rp.source_deal_detail_id 
-					INNER JOIN dbo.FNASplit(''' + @parent_deal_ids + ''' , '','') i ON i.item = sdd.source_deal_header_id '
+					INNER JOIN dbo.FNASplit(''' + @parent_deal_ids + ''' , '','') i ON i.item = sdd.source_deal_header_id 
+					INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id 
+					WHERE sdh.term_frequency = ''t'''
+
 
 		EXEC spa_print @sql
 		EXEC(@sql)
-		*/
+		--*/
+
 		SET @after_update_process_table = dbo.FNAProcessTableName('after_insert_process_table', @user_name, @job_process_id)
 
 		IF OBJECT_ID(@after_update_process_table) IS NOT NULL
