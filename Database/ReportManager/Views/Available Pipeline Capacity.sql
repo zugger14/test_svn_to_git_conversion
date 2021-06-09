@@ -42,18 +42,22 @@ SET @_from_date = NULLIF( ISNULL(@_from_date,NULLIF(''@from_date'', REPLACE(''@_
 SET @_to_date = NULLIF(ISNULL(@_to_date,NULLIF(''@to_date'', REPLACE(''@_to_date'',''@_'',''@''))),''null'')
 SET @_path_id = NULLIF(ISNULL(@_path_id,NULLIF(''@path_id'', REPLACE(''@_path_id'',''@_'',''@''))),''null'')
 
+DROP TABLE IF EXISTS #temp_mdq
 CREATE TABLE #temp_mdq (			
 	effective_date DATETIME,
 	contract_ids INT ,
 	path_id INT ,
 	path_name VARCHAR(1000) , 
-	hr INT,
+	hr VARCHAR(6),
+	is_dst TINYINT,
 	total_volume NUMERIC(38,18),
 	available_volume NUMERIC(38,18)
 )
 
-INSERT INTO #temp_mdq
+INSERT INTO #temp_mdq (effective_date, contract_ids, path_id, path_name, hr, total_volume, available_volume)
 EXEC spa_mdq_available ''v'',  '''',  @_from_date,  @_to_date, '''', ''n'','''', @_path_id
+
+UPDATE #temp_mdq SET is_dst = IIF(CHARINDEX(''DST'', hr, 0) > 0, 1, 0), hr = REPLACE(hr, ''_DST'', '''')
 
 SELECT 	
 	effective_date,
@@ -61,7 +65,7 @@ SELECT
 	path_id ,
 	path_name ,
 	hr ,
-	hr + IIF(hr <= 18, 6, -18) [gas_hr],
+	CAST(hr + IIF(hr <= 18, 6, -18) AS VARCHAR(2)) + IIF(is_dst = 1, ''_DST'', '''') [gas_hr],
 	CAST(IIF(hr >= 19, DATEADD(DAY, 1, effective_date), effective_date) AS DATE) [gas_hr_term],
 	total_volume ,
 	available_volume,
@@ -193,7 +197,7 @@ FROM #temp_mdq
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Hr'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -206,7 +210,7 @@ FROM #temp_mdq
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'hr' AS [name], 'Hr' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'hr' AS [name], 'Hr' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Available Pipeline Capacity'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -397,7 +401,7 @@ FROM #temp_mdq
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'Gas Hr'
-			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -410,7 +414,7 @@ FROM #temp_mdq
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'gas_hr' AS [name], 'Gas Hr' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'gas_hr' AS [name], 'Gas Hr' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Available Pipeline Capacity'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
