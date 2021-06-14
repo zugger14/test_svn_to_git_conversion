@@ -114,12 +114,20 @@ INNER JOIN [temp_process_table]_calc a
 	ON fp.external_id = a.[Profile Name]
 INNER JOIN source_deal_header sdh
 	ON  sdh.sub_book = gmv.sub_book
+
+CROSS APPLY(
+    SELECT ISNULL(MAX(profile_id), ''-1'') profile_id
+    FROM source_deal_detail
+    WHERE source_deal_header_id = sdh.source_deal_header_id
+) sdd_profile_id
 WHERE --sdh.deal_reference_type_id IN (12500, 12503)
  gmv.source_profile2 IS NULL
 AND sdh.commodity_id=123 and sdh.source_deal_type_id in (2261, 2290)
+AND CAST(sdd_profile_id.profile_id AS VARCHAR(10)) NOT IN (gmv.dest_buy_profile,gmv.dest_sell_profile)
 GROUP BY sdh.source_deal_header_id, fp.external_id
 
---select * from source_deal_type
+--select profile_id,* from source_deal_detail where profile_id in (299,300)
+--select * from source_deal_type where source_deal_type_id in (2261, 2290)
 
 IF OBJECT_ID(N''tempdb..#collect_profiles'') IS NOT NULL
 	DROP TABLE #collect_profiles
@@ -561,12 +569,20 @@ INNER JOIN [temp_process_table]_calc a
 	ON fp.external_id = a.[Profile Name]
 INNER JOIN source_deal_header sdh
 	ON  sdh.sub_book = gmv.sub_book
+
+CROSS APPLY(
+    SELECT ISNULL(MAX(profile_id), ''-1'') profile_id
+    FROM source_deal_detail
+    WHERE source_deal_header_id = sdh.source_deal_header_id
+) sdd_profile_id
 WHERE --sdh.deal_reference_type_id IN (12500, 12503)
  gmv.source_profile2 IS NULL
 AND sdh.commodity_id=123 and sdh.source_deal_type_id in (2261, 2290)
+AND CAST(sdd_profile_id.profile_id AS VARCHAR(10)) NOT IN (gmv.dest_buy_profile,gmv.dest_sell_profile)
 GROUP BY sdh.source_deal_header_id, fp.external_id
 
---select * from source_deal_type
+--select profile_id,* from source_deal_detail where profile_id in (299,300)
+--select * from source_deal_type where source_deal_type_id in (2261, 2290)
 
 IF OBJECT_ID(N''tempdb..#collect_profiles'') IS NOT NULL
 	DROP TABLE #collect_profiles
@@ -936,7 +952,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
+						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity_Test\temp_Note\0',
 						   NULL,
 						   ';',
 						   2,
@@ -955,8 +971,8 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   '', 
 						   '0',
 						   '0',
-						   NULL,
-						   NULL
+						   '11',
+						   'Import2TRM/CONV_GEN_KWEP/DEAL_Generation_ST_Power_Forecast'
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
 					LEFT JOIN ixp_soap_functions isf ON isf.ixp_soap_functions_name = '' 
