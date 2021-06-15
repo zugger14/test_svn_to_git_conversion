@@ -36,12 +36,11 @@ DECLARE @max_as_of_date DATETIME =  '2019-12-27'
 DECLARE @flag VARCHAR(1000)
 DECLARE  @result_output VARCHAR(125) 
 
-SELECT @parent_deal_ids = '134398'
 SELECT @parent_deal_ids = '170805' -- new case deal id 
---SELECT @parent_deal_ids = '170969' -- old case deal id 
+SELECT @parent_deal_ids = '170969,170805' -- old case deal id 
 
 SET @flag = 'cascade'
-SET @flag = 'rewind_cascade'
+--SET @flag = 'rewind_cascade'
 --select *from static_data_value where type_id = 5600
 --select deal_status, * from source_deal_header where source_deal_header_id=359
 --update source_deal_header set deal_status=5604 where source_deal_header_id=359
@@ -380,6 +379,65 @@ BEGIN
 	--select * from #child_deal_detail
 	-- return 
 
+	-- collect detail for parents
+	IF OBJECT_ID('tempdb..#parent_deal_break_down') IS NOT NULL 
+		DROP TABLE #parent_deal_break_down
+
+	SELECT * 
+	INTO #parent_deal_break_down
+	FROM source_deal_detail where 1 = 2
+
+	DECLARE @parentid INT
+	DECLARE @getparentid CURSOR
+	SET @getparentid = CURSOR FOR
+		SELECT source_deal_header_id
+		FROM #curve_ids_value
+	OPEN @getparentid
+	FETCH NEXT
+	FROM @getparentid INTO @parentid
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		INSERT INTO #parent_deal_break_down(
+		 [source_deal_header_id],  [term_start], [term_end],   [Leg], [contract_expiration_date], [fixed_float_leg]
+			, [buy_sell_flag], [curve_id]
+			, [fixed_price]  
+			, [fixed_price_currency_id],
+			[option_strike_price], [deal_volume], [deal_volume_frequency], [deal_volume_uom_id], [block_description], [deal_detail_description], [formula_id], [volume_left], [settlement_volume],
+			[settlement_uom],  [create_user], [create_ts], [update_user],  [update_ts], [price_adder], [price_multiplier], [settlement_date], [day_count_id], [location_id], [meter_id],
+			[physical_financial_flag], [Booked], [process_deal_status], [fixed_cost], [multiplier], [adder_currency_id], [fixed_cost_currency_id], [formula_currency_id], [price_adder2],
+			[price_adder_currency2], [volume_multiplier2] , [pay_opposite], [capacity], [settlement_currency], [standard_yearly_volume], [formula_curve_id], [price_uom_id],
+			[category], [profile_code], [pv_party], [status], [lock_deal_detail], [detail_commodity_id], [position_uom]
+		)
+		SELECT DISTINCT sdd.[source_deal_header_id], aa.[term_start], aa.[term_end], 1 [Leg], @clm11_value [contract_expiration_date], [fixed_float_leg]
+			, sdd.[buy_sell_flag], sdd.[curve_id]
+			, sdd.[fixed_price]  
+			, [fixed_price_currency_id],
+			[option_strike_price], [deal_volume], [deal_volume_frequency], [deal_volume_uom_id], [block_description], [deal_detail_description], [formula_id], [volume_left], [settlement_volume],
+			[settlement_uom], @user_name [create_user], GETDATE() [create_ts], NULL [update_user], NULL [update_ts], [price_adder], [price_multiplier], [settlement_date], [day_count_id], [location_id], [meter_id],
+			sdd.[physical_financial_flag], [Booked], [process_deal_status], [fixed_cost], [multiplier], [adder_currency_id], [fixed_cost_currency_id], [formula_currency_id], [price_adder2],
+			[price_adder_currency2], [volume_multiplier2] , [pay_opposite], [capacity], [settlement_currency], [standard_yearly_volume], [formula_curve_id], [price_uom_id],
+			[category], [profile_code], [pv_party], [status], [lock_deal_detail], [detail_commodity_id], [position_uom]
+ 		FROM source_deal_detail sdd
+		INNER JOIN #curve_ids_value cidv ON cidv.source_deal_header_id = sdd.[source_deal_header_id]
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+		CROSS APPLY(SELECT * FROM dbo.[FNATermBreakdown]('m', sdd.term_start, sdd.term_end)) aa
+		WHERE 1 = 1
+			AND aa.term_start NOT IN (SELECT sdd_inn.term_start FROM source_deal_detail sdd_inn 
+									INNER JOIN #parent_source_deal_detail_id ps ON ps.source_deal_detail_id = sdd_inn.source_deal_detail_id
+										AND sdd.source_deal_header_id NOT IN (SELECT source_deal_header_id FROM #exclude_parent_source_deal_detail_id)
+										WHERE sdd_inn.source_deal_header_id  = @parentid)
+			AND cidv.source_deal_header_id NOT IN (SELECT source_deal_header_id FROM #exclude_parent_source_deal_detail_id)
+			AND sdh.term_frequency = 't'
+	FETCH NEXT
+	FROM @getparentid INTO @parentid
+	END
+	CLOSE @getparentid
+	DEALLOCATE @getparentid
+	--select *from #parent_deal_break_down
+	--return 
+
+	
+
 	BEGIN TRY
 		BEGIN TRANSACTION
 		INSERT INTO [dbo].[source_deal_header] (
@@ -458,25 +516,17 @@ BEGIN
 		--/*
 		UNION ALL  -- logic changed
 		---- adding breakdown leg to the parent deal for yearly deals
-		SELECT DISTINCT sdd.[source_deal_header_id], aa.[term_start], aa.[term_end], 1 [Leg], @clm11_value [contract_expiration_date], [fixed_float_leg]
-			, sdd.[buy_sell_flag], sdd.[curve_id]
-			, sdd.[fixed_price] [fixed_price] 
+		SELECT 
+			 [source_deal_header_id],  [term_start], [term_end],   [Leg], [contract_expiration_date], [fixed_float_leg]
+			, [buy_sell_flag], [curve_id]
+			, [fixed_price]  
 			, [fixed_price_currency_id],
 			[option_strike_price], [deal_volume], [deal_volume_frequency], [deal_volume_uom_id], [block_description], [deal_detail_description], [formula_id], [volume_left], [settlement_volume],
-			[settlement_uom], @user_name [create_user], GETDATE() [create_ts], NULL [update_user], NULL [update_ts], [price_adder], [price_multiplier], [settlement_date], [day_count_id], [location_id], [meter_id],
-			sdd.[physical_financial_flag], [Booked], [process_deal_status], [fixed_cost], [multiplier], [adder_currency_id], [fixed_cost_currency_id], [formula_currency_id], [price_adder2],
+			[settlement_uom],  [create_user], [create_ts], [update_user],  [update_ts], [price_adder], [price_multiplier], [settlement_date], [day_count_id], [location_id], [meter_id],
+			[physical_financial_flag], [Booked], [process_deal_status], [fixed_cost], [multiplier], [adder_currency_id], [fixed_cost_currency_id], [formula_currency_id], [price_adder2],
 			[price_adder_currency2], [volume_multiplier2] , [pay_opposite], [capacity], [settlement_currency], [standard_yearly_volume], [formula_curve_id], [price_uom_id],
 			[category], [profile_code], [pv_party], [status], [lock_deal_detail], [detail_commodity_id], [position_uom]
- 		FROM source_deal_detail sdd
-		INNER JOIN #curve_ids_value cidv ON cidv.source_deal_header_id = sdd.[source_deal_header_id]
-		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
-		CROSS APPLY(SELECT * FROM dbo.[FNATermBreakdown]('m', sdd.term_start, sdd.term_end)) aa
-		WHERE 1 = 1
-			AND aa.term_start NOT IN (SELECT sdd_inn.term_start FROM source_deal_detail sdd_inn 
-									INNER JOIN #parent_source_deal_detail_id ps ON ps.source_deal_detail_id = sdd_inn.source_deal_detail_id
-										AND sdd.source_deal_header_id NOT IN (SELECT source_deal_header_id FROM #exclude_parent_source_deal_detail_id))
-			AND cidv.source_deal_header_id NOT IN (SELECT source_deal_header_id FROM #exclude_parent_source_deal_detail_id)
-			AND sdh.term_frequency = 't'
+		FROM #parent_deal_break_down
 		--*/
 
 		--rollback tran
@@ -490,7 +540,6 @@ BEGIN
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd_inn.source_deal_header_id 
 
 		--rollback tran return
-
 		UPDATE sdh
 		SET 
 			--sdh.deal_status = 5607
