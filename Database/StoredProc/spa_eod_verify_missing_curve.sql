@@ -36,9 +36,7 @@ EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'farrms_admin'
 DECLARE @flag           CHAR(10) = 'COPY',
         @as_of_date     DATETIME = '2021-04-26',
         @process_id     VARCHAR(300) = dbo.FNAGETNEWID(),
-		@curve_value_id NVARCHAR(4000) = NULL
-		
-		--*/
+@curve_value_id NVARCHAR(4000)=NULL--*/
 SET NOCOUNT ON 
 IF OBJECT_ID('tempdb..#temp_all_curves') IS NOT NULL
 	DROP TABLE #temp_all_curves
@@ -345,6 +343,14 @@ BEGIN
 					AND spcd.effective_date = ''y'' 
 					AND spc_min_as_of_date.maturity_date = spc.maturity_date
 				
+				--OUTER APPLY(
+				--	SELECT MAX(as_of_date) min_as_of_date 
+				--	FROM source_price_curve spc1 
+				--	WHERE spc1.source_curve_def_id = spcd.source_curve_def_id 
+				--	AND spcd.effective_date = ''y'' 
+				--	AND spc1.maturity_date = spc.maturity_date	
+				--	AND spc1.as_of_date < ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
+				--) spc_min_as_of_date
 				OUTER APPLY(
 					SELECT as_of_date original_as_of_date 
 					FROM source_price_curve spc1 
@@ -361,14 +367,16 @@ BEGIN
 	--taking max as of date if passed as of date is not present on table is not required
 	IF @forward_settle = 's' AND @granularity = 'MONTH'
 	BEGIN
-		SET @sql = @sql + ' AND CONVERT(VARCHAR(10), as_of_date, 120) <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''''
+		SET @sql = @sql + ' AND CONVERT(VARCHAR(10), spc.as_of_date, 120) <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''''
 	END
 	ELSE 
 	BEGIN
-		SET @sql = @sql + ' AND CONVERT(VARCHAR(10), as_of_date, 120) = ' +
-		CASE WHEN @flag = 'CHECK' THEN ' COALESCE(spc_actual_as_of_date.original_as_of_date, spc_min_as_of_date.min_as_of_date,''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''')'
+		SET @sql = @sql + ' AND CONVERT(VARCHAR(10), spc.as_of_date, 120) = ' +
+		CASE WHEN @flag = 'CHECK' THEN ' COALESCE(spc_actual_as_of_date.original_as_of_date, spc_min_as_of_date.as_of_date,''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''')'
 		ELSE '''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''' END
 	END
+
+
 
 
 	EXEC spa_print @sql	
@@ -415,7 +423,13 @@ BEGIN
 		INNER JOIN holiday_group hg ON hg.hol_group_value_id = tcc.holiday_calendar_id AND tmmd.as_of_date = hg.hol_date
 		LEFT JOIN #max_spc tamd ON tamd.maturity_date = tmmd.maturity_date
 			AND tamd.source_curve_def_id = tcc.holiday_curve_id
-		
+		--OUTER APPLY (SELECT MAX(as_of_date) as_of_date
+		--             FROM   source_price_curve cp_spc
+		--             WHERE  tmmd.maturity_date = cp_spc.maturity_date
+		--                    AND cp_spc.source_curve_def_id = tcc.holiday_curve_id
+		--                    AND cp_spc.curve_source_value_id = 4500
+		--                    AND cp_spc.as_of_date < @as_of_date
+		--) tamd
 		
 		--select * from #temp_missing_maturity_date
 		INSERT INTO #temp_copy_curve_expiration (source_curve_def_id, as_of_date, maturity_date, copy_from_curve)
@@ -426,7 +440,14 @@ BEGIN
 		INNER JOIN holiday_group hg ON hg.hol_group_value_id = tcc.expiration_calendar_id AND tmmd.maturity_date = hg.hol_date AND tmmd.as_of_date > hg.exp_date
 		LEFT JOIN #max_spc tamd ON tamd.maturity_date = tmmd.maturity_date
 			AND tamd.source_curve_def_id = tcc.expiration_curve_id
-				
+		--OUTER APPLY (SELECT MAX(as_of_date) as_of_date
+		--             FROM   source_price_curve cp_spc
+		--             WHERE  tmmd.maturity_date = cp_spc.maturity_date
+		--                    AND cp_spc.source_curve_def_id = tcc.expiration_curve_id
+		--                    AND cp_spc.as_of_date < @as_of_date
+		--                    AND cp_spc.curve_source_value_id = 4500
+		--) tamd
+		
 		EXEC spa_print  'COPY hol'
 		
 		INSERT INTO source_price_curve (
@@ -525,7 +546,14 @@ BEGIN
 			AND tbl.maturity_date = tmmd.maturity_date
 			AND tbl.as_of_date = mx_spc.as_of_date
 			AND tbl.is_dst = tmmd.is_dst
-		
+		--CROSS APPLY (
+		--	SELECT TOP 1 as_of_date, curve_source_value_id, curve_value ,bid_value ,ask_value ,tmmd.is_dst, Assessment_curve_type_value_id
+		--	FROM source_price_curve
+		--	WHERE maturity_date = tmmd.maturity_date
+		--	AND source_curve_def_id = tmmd.source_curve_def_id
+		--	AND as_of_date < tmmd.as_of_date
+		--	ORDER BY as_of_date DESC
+		--) tbl
 		LEFT JOIN source_price_curve spc
 			ON spc.source_curve_def_id = tmmd.source_curve_def_id
 			AND spc.as_of_date = tmmd.as_of_date
