@@ -850,7 +850,7 @@ BEGIN TRY
 	EXEC spa_parse_json @flag = 'simple_parse', @filter_tag = 'workflow_link', @json_string = @import_string, @json_full_path=@import_file, @output_process_table = @workflow_link_table, @return_output = 0, @input_process_table  = @input_alert_sql_table
 	EXEC spa_parse_json @flag = 'simple_parse', @filter_tag = 'workflow_link_where_clause', @json_string = @import_string, @json_full_path=@import_file, @output_process_table = @workflow_link_where_clause_table, @return_output = 0, @input_process_table  = @input_alert_sql_table
 
-	EXEC('	IF COL_LENGTH(''' + @workflow_event_message_documents_table + ''', ''use_generated_document'') IS NULL 
+	EXEC ('IF OBJECT_ID(N''' + @workflow_event_message_documents_table + ''', N''U'') IS NOT NULL AND COL_LENGTH(''' + @workflow_event_message_documents_table + ''', ''use_generated_document'') IS NULL 
 			ALTER TABLE ' + @workflow_event_message_documents_table + ' ADD [use_generated_document] NCHAR(1) NULL')
 
 	EXEC('	IF COL_LENGTH(''' + @workflow_event_message_table  + ''', ''skip_log'') IS NULL 
