@@ -46,7 +46,8 @@ CREATE PROC [dbo].[spa_get_limits_report]
     @drillflag VARCHAR(1) = NULL,
     @drillTenorLimit FLOAT = NULL,
 	@deal_level CHAR(1) = 'n',
-	@source_deal_header_id  VARCHAR(MAX) = NULL
+	@source_deal_header_id  VARCHAR(MAX) = NULL,
+	@as_of_date_to DATETIME = NULL
  AS
 
 /** * DEBUG QUERY START *
@@ -58,8 +59,8 @@ SET NOCOUNT off
 
 DECLARE   @as_of_date DATETIME='2021-04-26',
 	@limit_for int=null,-- 'l' for limit, 'b' book,'a' all
-    @limit_type INT = 1588,
-    @limit_id VARCHAR(MAX) = 94,
+    @limit_type INT = 1597,
+    @limit_id VARCHAR(MAX) = NULL,
 	@show_exception_only CHAR(1) = NULL,
 	@trader_id INT = NULL,
 	@commodity_id INT = NULL,
@@ -73,8 +74,9 @@ DECLARE   @as_of_date DATETIME='2021-04-26',
     @drillPosLimitType VARCHAR(10) = NULL,
     @drillflag VARCHAR(1) = NULL,
     @drillTenorLimit FLOAT = NULL,
-	@deal_level CHAR(1) = 'n'
+	@deal_level CHAR(1) = 'y'
    , @source_deal_header_id  VARCHAR(MAX) = NULL
+   , @as_of_date_to DATETIME = '2021-04-28'
     
 --select @as_of_date='2012-06-22', @limit_for=NULL, @limit_type=NULL, @limit_id=8, @show_exception_only='n', @trader_id=NULL, @commodity_id=NULL, @role_id=NULL
 
@@ -280,7 +282,10 @@ BEGIN
 	IF OBJECT_ID(@std_deal_table) IS NOT NULL
 		EXEC('DROP TABLE ' + @std_deal_table)
 		
-	EXEC spa_collect_mapping_deals @as_of_date, 23200, @c_limit_id, @std_deal_table
+	IF @as_of_date_to IS NULL
+		EXEC spa_collect_mapping_deals @as_of_date, 23200, @c_limit_id, @std_deal_table
+	ELSE 
+		EXEC spa_collect_mapping_deals @as_of_date_to, 23200, @c_limit_id, @std_deal_table
 	
 --select @maintain_limit_id ,@c_limit_for ,@c_party_id ,@c_book_id ,@c_var_criteria_id 
 --	,@c_book1 ,@c_book2 ,@c_book3 ,@c_book4 ,@c_deal_type ,@c_curve_id 
@@ -311,7 +316,11 @@ BEGIN
 			ELSE '' END 
 		
 		ELSE '' END
-		+ CASE WHEN @c_effective_date IS NOT NULL THEN ' AND ''' + CONVERT(VARCHAR(10), @c_effective_date, 120) + ''' <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''''  ELSE '' END
+		+ CASE
+			WHEN @c_effective_date IS NOT NULL AND @as_of_date_to IS NULL THEN ' AND ''' + CONVERT(VARCHAR(10), @c_effective_date, 120) + ''' <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''' 
+			WHEN @c_effective_date IS NOT NULL AND @as_of_date_to IS NOT NULL THEN ' AND ''' + CONVERT(VARCHAR(10), @c_effective_date, 120) + ''' <= ''' + CONVERT(VARCHAR(10), @as_of_date_to, 120) + ''''
+			ELSE '' 
+		END
 
 		+' GROUP BY sdh.source_deal_header_id,sdh.deal_date '
 		--+CASE WHEN @c_curve_id is not null THEN ' AND sdd.curve_id ='+cast(@c_curve_id AS VARCHAR) ELSE '' END
@@ -502,8 +511,9 @@ min(
 		WHEN 991 THEN datediff(quarter, ''' + CONVERT(VARCHAR(10), dbo.[FNAGetTermEndDate]('q', @as_of_date, 0), 120) + ''', sdd.term_end) 
 		WHEN 992 THEN datediff(month, ''' + CONVERT(VARCHAR(10),dbo.[FNAGetTermEndDate]('s', @as_of_date,0),120)+''', dbo.[FNAGetTermEndDate](''s'', sdd.term_end, 0)) / 6 
 		WHEN 993 THEN datediff(year, ''' + CONVERT(VARCHAR(10),dbo.[FNAGetTermEndDate]('a', @as_of_date,0),120)+''', sdd.term_end) 
-		ELSE  datediff(month, ''' + CONVERT(VARCHAR(10),dbo.[FNAGetTermEndDate]('m', @as_of_date, 0),120)+''', sdd.term_end)  END)
-  max_tenor
+		ELSE  datediff(month, ''' + CONVERT(VARCHAR(10),dbo.[FNAGetTermEndDate]('m', @as_of_date, 0),120)+''', sdd.term_end)  
+	END
+) max_tenor
 , ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'sdh.source_deal_header_id ' ELSE 'NULL ' END + ' source_deal_header_id
 FROM #limit_info li 
 INNER JOIN #collect_deals cd on li.maintain_limit_id=cd.maintain_limit_id 
@@ -654,7 +664,14 @@ FROM (
 	INNER JOIN maintain_limit ml ON ml.maintain_limit_id = cd.maintain_limit_id
 	LEFT JOIN source_currency sc ON sc.source_currency_id = ml.limit_currency
 	INNER JOIN #limit_info li ON li.maintain_limit_id = cd.maintain_limit_id AND li.limit_type = 1597
-	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = cd.source_deal_header_id AND sdh.deal_date <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
+	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = cd.source_deal_header_id '
+
+IF @as_of_date_to IS NULL
+	SET @sql_str += 'AND sdh.deal_date <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''''
+ELSE
+	SET @sql_str += 'AND sdh.deal_date between  ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''AND ''' + CONVERT(VARCHAR(10), @as_of_date_to, 120) + ''''
+
+SET @sql_str +=	'
 	AND ISNULL(sdh.trader_id, -9999999) = CASE WHEN li.limit_for = 20200 THEN COALESCE(li.trader_id, sdh.trader_id, -9999999) ELSE ISNULL(sdh.trader_id, -9999999) END 
 	AND sdh.source_deal_header_id IN (
 		SELECT DISTINCT sdh.source_deal_header_id
@@ -666,13 +683,17 @@ FROM (
 	)
 	LEFT JOIN ' + dbo.FNAGetProcessTableName(@as_of_date, 'source_deal_pnl_detail') + ' sdpd ON sdpd.source_deal_header_id = sdh.source_deal_header_id
 	AND (cd.term_start IS NULL OR sdpd.term_start >= cd.term_start) AND (cd.term_end IS NULL OR sdpd.term_end <= cd.term_end)
-	AND sdpd.pnl_as_of_date >= sdh.deal_date
-	AND sdpd.term_start >= ''' + CONVERT(VARCHAR(7), @as_of_date, 120) + '-01''
-	AND sdpd.pnl_as_of_date = ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''' 
-
-WHERE li.maintain_limit_id IS NOT NULL
+	AND sdpd.term_start >= ''' + CONVERT(VARCHAR(7), @as_of_date, 120) + '-01'' '
+	
+IF @as_of_date_to IS NULL
+	SET @sql_str += 'AND sdpd.pnl_as_of_date >= sdh.deal_date AND sdpd.pnl_as_of_date = ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''''
+ELSE
+	SET @sql_str += 'AND sdpd.pnl_as_of_date = sdh.deal_date AND sdpd.pnl_as_of_date between ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + ''' AND ''' + CONVERT(VARCHAR(10), @as_of_date_to, 120)+ ''''
+	
+SET @sql_str += '
+WHERE li.maintain_limit_id IS NOT NULL AND sdpd.source_deal_header_id IS NOT NULL
 ) mtm GROUP BY maintain_limit_id ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN ', source_deal_header_id ' ELSE '' END
-	 
+
 EXEC(@sql_str)
 
 -- Notional Value 
@@ -1000,14 +1021,16 @@ SET @sql_str = CASE WHEN OBJECT_ID('tempdb..#temp_limit_report') IS NOT NULL THE
 				CAST(dbo.FNANumberFormat(ISNULL(ml.limit_percentage, 0), ''n'') AS VARCHAR(50)) + '' ~ '' + CAST(dbo.FNANumberFormat(ISNULL(ml.limit_value, 0), ''n'') AS VARCHAR(50))
 			ELSE CAST(ISNULL(ml.limit_value, 0) AS VARCHAR(50))		
 		END Limit,
-		CASE WHEN li.limit_type IN (1587, 1598) AND ISNULL(ml.limit_value, 0) = 0 THEN 
+		
+		CASE 
+			WHEN li.limit_type IN (1587, 1598) AND ISNULL(ml.limit_value, 0) = 0 THEN 
 				CASE WHEN lit.min_tenor is null THEN cast(lit.max_tenor AS VARCHAR(50)) 
 					ELSE  cast(lit.min_tenor AS VARCHAR) + '' ~ '' + cast(lit.max_tenor AS VARCHAR)  
 				END
 			WHEN li.limit_type = 1597 THEN
 					CAST(dbo.FNANumberFormat(ISNULL(liv.value2, 0), ''n'') AS VARCHAR(50)) + '' ~ '' + CAST(dbo.FNANumberFormat(ISNULL(liv.total_value, 0), ''n'') AS VARCHAR(50))
-		ELSE
-			CAST(ISNULL(liv.total_value, 0) AS VARCHAR(50))
+			ELSE
+				CAST(ISNULL(liv.total_value, 0) AS VARCHAR(50))
 		END [Total Value],
 		CASE WHEN li.limit_type IN (1587, 1598) AND ISNULL(ml.limit_value,0) = 0 THEN NULL
 			 WHEN li.limit_type = 1597 THEN NULL
