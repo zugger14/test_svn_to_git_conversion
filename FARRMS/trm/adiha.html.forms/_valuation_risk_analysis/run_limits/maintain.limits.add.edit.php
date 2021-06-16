@@ -176,6 +176,23 @@
                     form_name.hideItem('limit_percentage');
                     form_name.showItem('deal_subtype');
                 break;
+                case '10000513':
+                    form_name.showItem('limit_value');
+                    form_name.setRequired("limit_value", true);
+                    form_name.showItem('min_limit_value');
+                    form_name.hideItem('tenor_month_from');
+                    form_name.hideItem('tenor_month_to');
+                    form_name.hideItem('var_criteria_det_id');
+                    form_name.showItem('deal_type');
+                    form_name.hideItem('curve_id');
+                    form_name.hideItem('limit_uom');
+                    form_name.showItem('limit_currency');
+                    form_name.hideItem('tenor_granularity');
+                    form_name.hideItem('delivery_duration');
+                    form_name.hideItem('tenor_duration');
+                    form_name.hideItem('limit_percentage');
+                    form_name.showItem('deal_subtype');
+                break;
                 case '1581':
                     form_name.showItem('limit_value');
                     form_name.setRequired("limit_value", true);
