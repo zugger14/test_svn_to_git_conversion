@@ -51,15 +51,15 @@ BEGIN
 	DELETE FROM alert_output_status WHERE create_ts < @one_week
 END
 
-IF EXISTS (
-	SELECT 1
-	FROM INFORMATION_SCHEMA.COLUMNS
-	WHERE TABLE_NAME = ''email_notes''
-		AND COLUMN_NAME = ''create_ts''
-)
-BEGIN
-	DELETE FROM email_notes WHERE create_ts < @one_month
-END
+--IF EXISTS (
+--	SELECT 1
+--	FROM INFORMATION_SCHEMA.COLUMNS
+--	WHERE TABLE_NAME = ''email_notes''
+--		AND COLUMN_NAME = ''create_ts''
+--)
+--BEGIN
+--	DELETE FROM email_notes WHERE create_ts < @one_month
+--END
 
 IF EXISTS (
 	SELECT 1
