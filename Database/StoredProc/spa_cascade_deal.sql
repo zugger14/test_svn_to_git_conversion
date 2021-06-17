@@ -39,6 +39,8 @@ DECLARE  @result_output VARCHAR(125)
 SELECT @parent_deal_ids = '170805' -- new case deal id 
 SELECT @parent_deal_ids = '170969,170805' -- old case deal id 
 
+SELECT @parent_deal_ids = 170951 
+
 SET @flag = 'cascade'
 --SET @flag = 'rewind_cascade'
 --select *from static_data_value where type_id = 5600
@@ -587,6 +589,7 @@ BEGIN
 		--select *
 		UPDATE sdd
 		SET sdd.shipper_code1 = scmd1_default.shipper_code_mapping_detail_id
+		--select *   
 		FROM source_deal_detail sdd
 		INNER JOIN #tmp_header t ON sdd.source_deal_header_id = t.source_deal_header_id
 		INNER JOIN source_deal_header sddh ON sddh.source_deal_header_id = t.source_deal_header_id
@@ -600,19 +603,25 @@ BEGIN
 					scmd1_def.effective_date,
 					ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY scmd1_def.effective_date DESC) rn
 				FROM shipper_code_mapping_detail scmd1_def
-				WHERE scmd1_def.location_id = sdd.location_id 
+				WHERE 1 = 1
+					AND scmd1_def.location_id = sdd.location_id 
 					AND scmd1_def.shipper_code_id = scm.shipper_code_id
 					AND scmd1_def.effective_date <= CAST(sdd.term_start AS DATE)
 					AND scmd1_def.is_active = 'y'
+					AND ISNULL(NULLIF(scmd1_def.shipper_code1_is_default, ''), 'n') = 'y'
 				ORDER BY scmd1_def.effective_date DESC
 				) a WHERE rn =1
 			) b 
-			INNER JOIN shipper_code_mapping_detail scmd1_fil ON
-				b.effective_date = scmd1_fil.effective_date  AND scmd1_fil.location_id = sdd.location_id 
-				AND scmd1_fil.is_active = 'y' AND scmd1_fil.shipper_code_id = scm.shipper_code_id
+			INNER JOIN shipper_code_mapping_detail scmd1_fil ON 1 = 1
+				AND b.effective_date = scmd1_fil.effective_date 
+				AND scmd1_fil.location_id = sdd.location_id 
+				AND scmd1_fil.is_active = 'y' 
+				AND scmd1_fil.shipper_code_id = scm.shipper_code_id
 			AND ISNULL(NULLIF(scmd1_fil.shipper_code1_is_default, ''), 'n') = 'y'
 		) scmd1_default
 		WHERE sddh.physical_financial_flag = 'p'
+
+		--rollback tran return 
 
 		--shipper code2
 		UPDATE sdd
@@ -635,6 +644,7 @@ BEGIN
 					AND scmd2_def.effective_date <= CAST(sdd.term_start AS DATE)
 					AND scmd2_def.shipper_code_id = scm.shipper_code_id
 					AND scmd2_def.is_active = 'y'	
+					AND ISNULL(NULLIF(scmd2_def.is_default, ''), 'n') = 'y'	
 				ORDER BY scmd2_def.effective_date DESC
 				) a WHERE rn =1
 			) b 
