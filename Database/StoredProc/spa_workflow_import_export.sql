@@ -853,7 +853,7 @@ BEGIN TRY
 	EXEC ('IF OBJECT_ID(N''' + @workflow_event_message_documents_table + ''', N''U'') IS NOT NULL AND COL_LENGTH(''' + @workflow_event_message_documents_table + ''', ''use_generated_document'') IS NULL 
 			ALTER TABLE ' + @workflow_event_message_documents_table + ' ADD [use_generated_document] NCHAR(1) NULL')
 
-	EXEC('	IF COL_LENGTH(''' + @workflow_event_message_table  + ''', ''skip_log'') IS NULL 
+	EXEC('	IF OBJECT_ID(N''' + @workflow_event_message_table + ''', N''U'') IS NOT NULL AND COL_LENGTH(''' + @workflow_event_message_table  + ''', ''skip_log'') IS NULL 
 			ALTER TABLE ' + @workflow_event_message_table  + ' ADD [skip_log] NCHAR(1) NULL')
 
 
@@ -1132,7 +1132,7 @@ BEGIN TRY
 							aa.sql_statement
 					FROM ' + @alert_actions_table + ' aa
 					CROSS APPLY( SELECT DISTINCT asl.alert_sql_id, asl.new_alert_sql_id FROM ' + @alert_sql_table + ' asl WHERE aa.alert_id = asl.alert_sql_id) asl
-					INNER JOIN ' + @alert_rule_table_table + ' art ON art.alert_rule_table_id = aa.table_id
+					LEFT JOIN ' + @alert_rule_table_table + ' art ON art.alert_rule_table_id = aa.table_id
 					INNER JOIN ' + @alert_conditions_table + ' ac ON ac.alert_conditions_id = aa.condition_id
 					LEFT JOIN alert_table_definition atd ON atd.logical_table_name = art.logical_table_name
 					LEFT JOIN data_source_column dsc ON dsc.source_id = atd.data_source_id AND dsc.[name] = aa.[data_source_column_name]
