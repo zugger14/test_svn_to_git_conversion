@@ -39,7 +39,7 @@ DECLARE  @result_output VARCHAR(125)
 SELECT @parent_deal_ids = '170805' -- new case deal id 
 SELECT @parent_deal_ids = '170969,170805' -- old case deal id 
 
-SELECT @parent_deal_ids = 170951 
+SELECT @parent_deal_ids = '171597,171599' 
 
 SET @flag = 'cascade'
 --SET @flag = 'rewind_cascade'
@@ -392,8 +392,10 @@ BEGIN
 	DECLARE @parentid INT
 	DECLARE @getparentid CURSOR
 	SET @getparentid = CURSOR FOR
-		SELECT source_deal_header_id
-		FROM #curve_ids_value
+		SELECT c.source_deal_header_id
+		FROM #curve_ids_value c
+		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = c.source_deal_header_id
+		WHERE sdh.term_frequency = 't'
 	OPEN @getparentid
 	FETCH NEXT
 	FROM @getparentid INTO @parentid
@@ -422,8 +424,10 @@ BEGIN
  		FROM source_deal_detail sdd
 		INNER JOIN #curve_ids_value cidv ON cidv.source_deal_header_id = sdd.[source_deal_header_id]
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
+		
 		CROSS APPLY(SELECT * FROM dbo.[FNATermBreakdown]('m', sdd.term_start, sdd.term_end)) aa
 		WHERE 1 = 1
+			AND sdh.source_deal_header_id = @parentid
 			AND aa.term_start NOT IN (SELECT sdd_inn.term_start FROM source_deal_detail sdd_inn 
 									INNER JOIN #parent_source_deal_detail_id ps ON ps.source_deal_detail_id = sdd_inn.source_deal_detail_id
 										AND sdd.source_deal_header_id NOT IN (SELECT source_deal_header_id FROM #exclude_parent_source_deal_detail_id)
@@ -435,8 +439,11 @@ BEGIN
 	END
 	CLOSE @getparentid
 	DEALLOCATE @getparentid
-	--select *from #parent_deal_break_down
-	--return 
+
+--	select term_frequency,* from source_deal_header where source_deal_header_id in (171597
+--,171599) 
+--	select * from #parent_deal_break_down
+--	return 
 
 	
 
