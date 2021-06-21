@@ -18,7 +18,7 @@
    
     $sub_book = $_POST['sub_book'];
     $filter = $_POST['book_filter'];
-    $deals = get_sanitized_value($_POST['deals']);
+    $deals = $_POST['deals'];
     
     $is_tenor_enable = get_sanitized_value($_POST['is_tenor_enable'] ?? false ,'boolean');
 
