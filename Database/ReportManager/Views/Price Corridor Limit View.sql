@@ -34,11 +34,11 @@ BEGIN TRY
 	SET alias = @new_ds_alias, description = ''
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + '
 DECLARE @_sql VARCHAR(MAX),
-	@_as_of_date DATETIME, --= ''2021-04-26'',
-	@_to_as_of_date DATETIME, --= ''2021-04-28'',
+	@_as_of_date DATETIME,-- = ''2021-04-26'',
+	@_to_as_of_date DATETIME,-- = ''2021-04-28'',
 	@_limit_for VARCHAR(MAX), 
 	@_show_exception CHAR(1) = ''n'', 
-	@_limit_type VARCHAR(MAX), -- = 1597, 
+	@_limit_type VARCHAR(MAX),-- = 1597, 
 	@_limit_group_id VARCHAR(MAX),
 	@_limit_exceed CHAR(1),
 	@_create_ts DATETIME ,
@@ -88,7 +88,7 @@ CREATE TABLE #temp_limit_report (
 EXEC spa_get_limits_report @_as_of_date, @_limit_for, @_limit_type, NULL --@_LimitId
 , @_show_exception, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ''y'', null, @_to_as_of_date
 
---select * from #temp_limit_report
+
 SET @_sql = ''
 	SELECT 
 	CAST(CAST(spdp1.pnl_as_of_date AS DATE) AS VARCHAR(50)) as_of_date, 
@@ -143,6 +143,8 @@ SET @_sql = ''
 		sdv2.code [deal_status],
 		sdv3.code [volume_type],
 		CAST(cast(sdh.create_ts as date) AS VARCHAR) [create_ts],
+		sml.location_name, 
+		spcd.curve_name,
 		NULL  to_as_of_date,
 		NULL  to_create_ts
 	--[__batch_report__]
@@ -154,11 +156,19 @@ SET @_sql = ''
 	LEFT JOIN static_data_value sdv on sdv.value_id = sdh.block_define_id
 	LEFT JOIN static_data_value sdv2 on sdv2.value_id = sdh.deal_status
 	LEFT JOIN static_data_value sdv3 on sdv3.value_id = sdh.internal_desk_id
+	OUTER APPLY 
+		(SELECT leg, MAX(location_id) location_id, MAX(curve_id) curve_id 
+		FROM source_deal_detail sdd 
+		WHERE sdd.source_deal_header_id = sdh.source_deal_header_id 
+		GROUP BY leg
+	) out1
 	OUTER APPLY
 		(SELECT AVG(sdpd.curve_value ) market_price,  AVG(sdpd.fixed_price+sdpd.formula_value+sdpd.price_adder)contract_price,sum(sdpd.deal_volume) total_volume, sdpd.pnl_as_of_date pnl_as_of_date
 		FROM source_deal_pnl_detail  sdpd WHERE sdpd.source_deal_header_id = sdh.source_deal_header_id AND sdpd.pnl_as_of_date between ''''''+ CAST(CAST (@_as_of_date AS DATE) AS VARCHAR) +'''''' and ''''''+ CAST(CAST (@_to_as_of_date AS DATE) AS VARCHAR) +'''''' AND sdh.deal_date = sdpd.pnl_as_of_date
 		GROUP BY pnl_as_of_date
-		) spdp1
+	) spdp1
+	LEFT JOIN source_minor_location sml ON sml.source_minor_location_id = out1.location_id
+	LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = out1.curve_id
 	WHERE 1 = 1  and tlr.TotalValue <> ''''0'''' 
 	AND sdh.deal_date >= '''''' + CAST(CAST (@_as_of_date AS DATE) AS VARCHAR) + '''''''' + 
 	CASE WHEN @_limit_exceed IS NOT NULL THEN '' AND tlr.LimitExceed = '''''' + CASE @_limit_exceed WHEN ''y'' THEN ''Yes'' WHEN ''n'' THEN ''No'' ELSE '''' END + '''''''' ELSE '''' END +
@@ -174,7 +184,6 @@ SET @_sql = ''
 	CASE WHEN @_to_create_ts IS NOT NULL THEN '' AND sdh.create_ts <= '''''' + CAST(CAST (@_to_create_ts AS DATE) AS VARCHAR) + ''''''''  ELSE '''' END +
 	CASE WHEN @_counterparty_type IS NOT NULL THEN '' AND sc1.int_ext_flag IN (SELECT item FROM dbo.SplitCommaSeperatedValues('''''' + @_counterparty_type +'''''')) ''  ELSE '''' END +
 	CASE WHEN @_deal_status IS NOT NULL THEN '' AND sdh.deal_status IN ('' + @_deal_status + '')''  ELSE '''' END  
-
 EXEC(@_sql)
 ', report_id = @report_id_data_source_dest,
 	system_defined = '0'
@@ -1331,6 +1340,72 @@ EXEC(@_sql)
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'to_create_ts' AS [name], 'To Create Ts' AS ALIAS, NULL AS reqd_param, 6 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,4 AS column_template, 0 AS key_column, 0 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Price Corridor Limit View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Price Corridor Limit View'
+	            AND dsc.name =  'curve_name'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Index'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Price Corridor Limit View'
+			AND dsc.name =  'curve_name'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'curve_name' AS [name], 'Index' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Price Corridor Limit View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Price Corridor Limit View'
+	            AND dsc.name =  'location_name'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Location Name'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Price Corridor Limit View'
+			AND dsc.name =  'location_name'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'location_name' AS [name], 'Location Name' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Price Corridor Limit View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
