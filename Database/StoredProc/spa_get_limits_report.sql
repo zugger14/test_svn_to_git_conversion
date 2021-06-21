@@ -273,7 +273,7 @@ DECLARE @maintain_limit_id INT,@c_limit_for INT,@c_party_id INT ,@c_book_id VARC
 
 DECLARE cur_collect_deals CURSOR FOR 
 	SELECT maintain_limit_id,limit_for,party_id ,book_id ,var_criteria_id,book1,book2,book3,book4,deal_type,curve_id, limit_id, effective_date, deal_subtype FROM #limit_info
-	WHERE limit_type IN (1580, 1581, 1587, 1588, 1596, 1598, 1599, 1597) --mtm & position
+	WHERE limit_type IN (1580, 1581, 1587, 1588, 1596, 1598, 1599, 1597, 10000513) --mtm & position
 OPEN cur_collect_deals
 FETCH NEXT FROM cur_collect_deals INTO @maintain_limit_id ,@c_limit_for ,@c_party_id ,@c_book_id ,@c_var_criteria_id 
 	,@c_book1 ,@c_book2 ,@c_book3 ,@c_book4 ,@c_deal_type ,@c_curve_id , @c_limit_id, @c_effective_date, @c_deal_subtype
@@ -404,6 +404,7 @@ DEALLOCATE cur_collect_deals
  */
  --declare   @as_of_date DATETIME='2012-11-27'
  CREATE TABLE #limit_info_value (maintain_limit_id INT, total_value NUMERIC(38,2), unit VARCHAR(100) COLLATE DATABASE_DEFAULT, source_deal_header_id INT, value2 FLOAT)
+  CREATE TABLE #pnl_limit_info_value (maintain_limit_id INT, total_value NUMERIC(38,2), unit VARCHAR(100) COLLATE DATABASE_DEFAULT, source_deal_header_id INT, value2 FLOAT)
  CREATE TABLE #limit_info_value_reserve (maintain_limit_id INT, total_value NUMERIC(38,2), unit VARCHAR(100) COLLATE DATABASE_DEFAULT, source_deal_header_id INT, value2 FLOAT,source_counterparty_id int, contract_id int)
 SET @sql_str1 = '
 INSERT INTO #limit_info_value (maintain_limit_id, total_value, unit, source_deal_header_id)
@@ -611,7 +612,7 @@ SET @sql_str='INSERT INTO #limit_info_value(maintain_limit_id,total_value, unit,
 			AND (cd.term_start IS NULL OR sdpd.term_start >= cd.term_start)
 			AND (cd.term_end IS NULL OR sdpd.term_end <= cd.term_end)
 		INNER JOIN #limit_info li ON cd.maintain_limit_id = li.maintain_limit_id
-			AND li.limit_type = 1580 and li.curve_source_value_id = sdpd.pnl_source_value_id
+			AND li.limit_type IN (1580, 10000513) and li.curve_source_value_id = sdpd.pnl_source_value_id
 		--INNER JOIN source_price_curve_def spcd on sdpd.curve_id = spcd.source_curve_def_id
 		--	AND ISNULL(spcd.commodity_id, -9999999) = CASE WHEN li.limit_for = 20200 THEN COALESCE(li.party_id, spcd.commodity_id, -9999999) ELSE ISNULL(spcd.commodity_id, -9999999) END 	
 		INNER JOIN maintain_limit ml ON cd.maintain_limit_id = ml.maintain_limit_id	
@@ -651,6 +652,72 @@ SET @sql_str='INSERT INTO #limit_info_value(maintain_limit_id,total_value, unit,
 exec spa_print @sql_str
 EXEC(@sql_str)
 
+	SET @sql_str='INSERT INTO #pnl_limit_info_value(maintain_limit_id,total_value, unit, source_deal_header_id)
+		SELECT maintain_limit_id, SUM(total_value), MAX(unit), ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'source_deal_header_id ' ELSE 'NULL ' END + ' 
+		FROM (
+			SELECT li.maintain_limit_id,  
+				settlement_amount AS total_value, 
+				sc.currency_name AS unit, 
+				' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'cd.source_deal_header_id ' ELSE 'NULL ' END + ' source_deal_header_id
+			FROM #collect_deals cd
+			INNER JOIN source_deal_settlement sds ON sds.source_deal_header_id = cd.source_deal_header_id
+				AND (cd.term_start IS NULL OR sds.term_start >= cd.term_start)
+				AND (cd.term_end IS NULL OR sds.term_end <= cd.term_end)
+				AND sds.as_of_date <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
+			INNER JOIN #limit_info li ON cd.maintain_limit_id = li.maintain_limit_id
+				AND li.limit_type = 10000513 
+			INNER JOIN maintain_limit ml ON cd.maintain_limit_id = ml.maintain_limit_id	
+			LEFT JOIN source_currency sc ON sc.source_currency_id = ml.limit_currency
+			) mtm 
+		GROUP BY maintain_limit_id ' + 
+		CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN ', 
+			source_deal_header_id ' 
+		ELSE '' END
+
+	exec spa_print @sql_str
+	EXEC(@sql_str)
+
+	SET @sql_str='INSERT INTO #pnl_limit_info_value(maintain_limit_id,total_value, unit, source_deal_header_id)
+		SELECT maintain_limit_id, SUM(total_value), MAX(unit), ' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'source_deal_header_id ' ELSE 'NULL ' END + ' 
+		FROM (
+			SELECT li.maintain_limit_id,  
+				value AS total_value, 
+				sc.currency_name AS unit, 
+				' + CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN 'cd.source_deal_header_id ' ELSE 'NULL ' END + ' source_deal_header_id
+			FROM #collect_deals cd
+			INNER JOIN index_fees_breakdown_settlement ifbs ON ifbs.source_deal_header_id = cd.source_deal_header_id
+				AND (cd.term_start IS NULL OR ifbs.term_start >= cd.term_start)
+				AND (cd.term_end IS NULL OR ifbs.term_end <= cd.term_end)
+				AND ifbs.field_id IN (-10000368,-10000369)
+				AND ifbs.as_of_date <= ''' + CONVERT(VARCHAR(10), @as_of_date, 120) + '''
+			INNER JOIN #limit_info li ON cd.maintain_limit_id = li.maintain_limit_id
+				AND li.limit_type = 10000513 
+			INNER JOIN maintain_limit ml ON cd.maintain_limit_id = ml.maintain_limit_id	
+			LEFT JOIN source_currency sc ON sc.source_currency_id = ml.limit_currency
+			) mtm 
+		GROUP BY maintain_limit_id ' + 
+		CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN ', 
+			source_deal_header_id ' 
+		ELSE '' END
+
+	exec spa_print @sql_str
+	EXEC(@sql_str)
+
+	INSERT INTO #pnl_limit_info_value(maintain_limit_id,total_value, unit, source_deal_header_id, value2)
+	SELECT liv.* 
+	FROM #limit_info_value liv
+	INNER JOIN #pnl_limit_info_value pliv ON pliv.maintain_limit_id = liv.maintain_limit_id
+		AND ISNULL(pliv.source_deal_header_id, -1) = ISNULL(liv.source_deal_header_id, -1)
+
+	DELETE liv 
+	FROM #limit_info_value liv
+	INNER JOIN #pnl_limit_info_value pliv ON pliv.maintain_limit_id = liv.maintain_limit_id
+		AND ISNULL(pliv.source_deal_header_id, -1) = ISNULL(liv.source_deal_header_id, -1)
+
+	INSERT INTO #limit_info_value(maintain_limit_id,total_value, unit, source_deal_header_id, value2)
+	SELECT pliv.maintain_limit_id, SUM(total_value), unit, source_deal_header_id, SUM(value2)
+	FROM #pnl_limit_info_value pliv 
+	GROUP BY maintain_limit_id, source_deal_header_id, unit
 
 -- Price Corridor
 SET @sql_str='
@@ -1046,7 +1113,7 @@ SET @sql_str = CASE WHEN OBJECT_ID('tempdb..#temp_limit_report') IS NOT NULL THE
 			WHEN 1580 THEN scu.currency_name
 			WHEN 1585 THEN scu.currency_name
 			WHEN 1586 THEN scu.currency_name
-			--WHEN 1583 THEN scu.currency_name
+			WHEN 10000513 THEN scu.currency_name
 			--WHEN 1582 THEN scu.currency_name
 			WHEN 1584 THEN scu.currency_name
 			ELSE liv.unit
@@ -1067,7 +1134,7 @@ SET @sql_str = CASE WHEN OBJECT_ID('tempdb..#temp_limit_report') IS NOT NULL THE
 			END 
 		END [Limit Exceed],
 		ISNULL(ml.min_limit_value, 0) min_limit_value,
-		CASE WHEN li.limit_type IN (1580,1584,1596,1599,1588) AND ml.min_limit_value IS NOT NULL AND 1 = ' + CASE WHEN ISNULL(@deal_level, 'n') = 'n' THEN '1' ELSE '2' END + ' THEN	
+		CASE WHEN li.limit_type IN (1580,1584,1596,1599,1588,10000513) AND ml.min_limit_value IS NOT NULL AND 1 = ' + CASE WHEN ISNULL(@deal_level, 'n') = 'n' THEN '1' ELSE '2' END + ' THEN	
 				CASE WHEN (ISNULL(liv.total_value, 0) <= ISNULL(ml.min_limit_value, -99999999))
 				THEN ''Yes'' ELSE ''No'' END
 		ELSE NULL
@@ -1098,7 +1165,7 @@ SET @sql_str = CASE WHEN OBJECT_ID('tempdb..#temp_limit_report') IS NOT NULL THE
 		WHEN li.limit_type IN(1597) THEN
 			CASE WHEN (liv.value2 > ml.limit_percentage OR liv.value2 < (-1*ml.limit_percentage) ) OR (liv.total_value > ml.limit_value OR liv.total_value < (-1*ml.limit_value) )
 				THEN ''Yes'' ELSE ''No'' END
-		WHEN li.limit_type IN (1580,1584,1596,1599,1588) AND 1 = ' + CASE WHEN ISNULL(@deal_level, 'n') = 'n' THEN '1' ELSE '2' END + ' THEN	
+		WHEN li.limit_type IN (1580,1584,1596,1599,1588,10000513) AND 1 = ' + CASE WHEN ISNULL(@deal_level, 'n') = 'n' THEN '1' ELSE '2' END + ' THEN	
 				CASE WHEN (ISNULL(liv.total_value, 0) >= ISNULL(ml.limit_value, 0)) OR (ISNULL(liv.total_value, 0) <= ISNULL(ml.min_limit_value, -99999999))
 				THEN ''Yes'' ELSE ''No'' END
 	ELSE
