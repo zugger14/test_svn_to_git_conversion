@@ -94,7 +94,26 @@ SET @process_id = dbo.FNAGetNewID()
 SET @user_name = dbo.FNADBUser()
 SET @std_deal_table = dbo.FNAProcessTableName('std_limit_deals', @user_name, @process_id)
 
+IF OBJECT_ID(N'tempdb..#limit_ids', N'U') IS NOT NULL
+	DROP TABLE #limit_ids
 
+IF OBJECT_ID(N'tempdb..#limit_info', N'U') IS NOT NULL
+	DROP TABLE #limit_info
+
+IF OBJECT_ID(N'tempdb..#collect_deals', N'U') IS NOT NULL
+	DROP TABLE #collect_deals
+
+IF OBJECT_ID(N'tempdb..#limit_info_value', N'U') IS NOT NULL
+	DROP TABLE #limit_info_value
+
+IF OBJECT_ID(N'tempdb..#pnl_limit_info_value', N'U') IS NOT NULL
+	DROP TABLE #pnl_limit_info_value
+
+IF OBJECT_ID(N'tempdb..#limit_info_value_reserve', N'U') IS NOT NULL
+	DROP TABLE #limit_info_value_reserve
+
+IF OBJECT_ID(N'tempdb..#limit_info_tenor', N'U') IS NOT NULL
+	DROP TABLE #limit_info_tenor
 --select * FROM static_data_value WHERE type_id=20200
 
 --select * FROM static_data_value WHERE type_id=20200
@@ -668,7 +687,15 @@ EXEC(@sql_str)
 				AND li.limit_type = 10000513 
 			INNER JOIN maintain_limit ml ON cd.maintain_limit_id = ml.maintain_limit_id	
 			LEFT JOIN source_currency sc ON sc.source_currency_id = ml.limit_currency
-			) mtm 
+			WHERE EXISTS (
+				SELECT sdd.source_deal_header_id
+				FROM source_deal_detail sdd 
+				INNER JOIN source_price_curve_def spcd ON sdd.curve_id = spcd.source_curve_def_id
+				WHERE sds.source_deal_header_id = sdd.source_deal_header_id  
+				AND spcd.commodity_id = CASE WHEN li.limit_for IN(20200, 20203) AND li.party_id IS NOT NULL THEN 
+						li.party_id  ELSE spcd.commodity_id  END
+					AND sdd.Leg = CASE WHEN li.limit_for IN(20200, 20203) AND li.party_id IS NOT NULL THEN 1 ELSE sdd.Leg END)
+			) sds 
 		GROUP BY maintain_limit_id ' + 
 		CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN ', 
 			source_deal_header_id ' 
@@ -694,7 +721,15 @@ EXEC(@sql_str)
 				AND li.limit_type = 10000513 
 			INNER JOIN maintain_limit ml ON cd.maintain_limit_id = ml.maintain_limit_id	
 			LEFT JOIN source_currency sc ON sc.source_currency_id = ml.limit_currency
-			) mtm 
+			WHERE EXISTS (
+				SELECT sdd.source_deal_header_id
+				FROM source_deal_detail sdd 
+				INNER JOIN source_price_curve_def spcd ON sdd.curve_id = spcd.source_curve_def_id
+				WHERE ifbs.source_deal_header_id = sdd.source_deal_header_id  
+				AND spcd.commodity_id = CASE WHEN li.limit_for IN(20200, 20203) AND li.party_id IS NOT NULL THEN 
+						li.party_id  ELSE spcd.commodity_id  END
+					AND sdd.Leg = CASE WHEN li.limit_for IN(20200, 20203) AND li.party_id IS NOT NULL THEN 1 ELSE sdd.Leg END)
+			) ifbs 
 		GROUP BY maintain_limit_id ' + 
 		CASE WHEN ISNULL(@deal_level, 'n') = 'y' THEN ', 
 			source_deal_header_id ' 
