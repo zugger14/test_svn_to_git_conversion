@@ -400,11 +400,10 @@ BEGIN
 		--PRINT @sql 
 		EXEC (@sql)
 
-		SET @sql = 'spa_deal_position_breakdown ''u'',null,''' + @user_login_id+''',''' +@report_position_process_id+''''
-		SET @job_name = 'spa_deal_position_breakdown' + @report_position_process_id 
-		EXEC spa_run_sp_AS_job @job_name, @sql, 'spa_deal_position_breakdown', @user_login_id
+		--SET @sql = 'spa_deal_position_breakdown ''u'',null,''' + @user_login_id+''',''' +@report_position_process_id+''''
+		--SET @job_name = 'spa_deal_position_breakdown' + @report_position_process_id 
+		--EXEC spa_run_sp_AS_job @job_name, @sql, 'spa_deal_position_breakdown', @user_login_id
  
-
 		IF OBJECT_ID('tempdb..#deal_to_calc') IS NOT NULL
 			DROP TABLE #deal_to_calc
 		CREATE TABLE #deal_to_calc (source_deal_header_id INT)
@@ -420,9 +419,12 @@ BEGIN
 				GROUP BY sdd.source_deal_detail_id '
 		EXEC (@sql)
 
-		IF EXISTS(SELECT 1 FROM #deal_to_calc)
-			EXEC dbo.spa_calc_pending_deal_position @call_from = 1	
+		EXEC spa_deal_position_breakdown 'u',null, @user_login_id,@report_position_process_id
 
+		IF EXISTS(SELECT 1 FROM #deal_to_calc)
+		BEGIN
+			EXEC dbo.spa_calc_pending_deal_position @call_from = 1	
+		END
 		SELECT @count = COUNT(*) 
 		FROM formula_breakdown fb 
 		WHERE fb.formula_id = @formula_id 
