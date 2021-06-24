@@ -41,9 +41,15 @@ WHERE ifbs.field_id = @negative_price_commodity_value_id
 --Updating value based on the existing UDF 
 UPDATE sdht SET split_positive_and_negative_commodity = 'y'
 FROM source_deal_header_template sdht
-INNER JOIN (SELECT DISTINCT template_id FROM user_defined_deal_fields_template WHERE field_id IN (-10000369, -10000368)
-			UNION ALL
-			SELECT DISTINCT template_id FROM user_defined_deal_fields_template_main WHERE field_id IN (-10000369, -10000368)) t ON t.template_id = sdht.template_id
+INNER JOIN (SELECT uddft.template_id 
+			FROM user_defined_deal_fields_template uddft
+			INNER JOIN user_defined_deal_fields uddf ON uddf.udf_template_id = uddft.udf_template_id
+			WHERE uddft.field_id IN (-10000369, -10000368)
+			UNION 
+			SELECT uddftm.template_id 
+			FROM user_defined_deal_fields_template_main uddftm
+			INNER JOIN user_defined_deal_fields uddf ON uddf.udf_template_id = uddftm.udf_template_id
+			WHERE uddftm.field_id IN (-10000369, -10000368)) t ON t.template_id = sdht.template_id
 
 --Deleting existing mapped UDF as these are not required now because we using the checkbox option as "split_positive_and_negative_commodity" from "table source_deal_header_template" to calculate positive/negative commodity value calculation
 
