@@ -33,12 +33,12 @@
     	$paramset_id = $db_param[0]['paramset_id'];
     	$component_id = $db_param[0]['component_id'];
     	$report_filter = $db_param[0]['params'];
-    	$report_name = $db_param[0]['report_name'];
+    	$report_name = $db_param[0]['report_name']. '_' . $cell_id;
     	$paramset_hash = $db_param[0]['paramset_hash'];
     	$has_permission = $db_param[0]['has_permission'];
     	$excel_sheet_id = $db_param[0]['excel_sheet_id'];
     }
-	
+
 	$server_path = $BATCH_FILE_EXPORT_PATH;	   
     if ($has_permission == 'y') {
     	if ($excel_sheet_id != null && $excel_sheet_id != '') {
