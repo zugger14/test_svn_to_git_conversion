@@ -63,9 +63,6 @@ SET CONTEXT_INFO @contextinfo
 --*/
 
 
-
-
-
 DROP TABLE #report_hourly_position_profile
 drop table #report_hourly_position_breakdown_main_inserted
 drop table #report_hourly_position_breakdown_main_old
@@ -1288,10 +1285,6 @@ BEGIN TRY
 	END --ISNULL(@insert_type, 0) IN (0,12)
 
 
-
-
-
-
 	-----------------------------------------------------------------------------------------------------
 	--profile & forcaste data inserting
 	--------------------------------------------------------------------------------------------------------
@@ -1555,7 +1548,8 @@ BEGIN TRY
 				CASE WHEN hb.Hr24=0  THEN 0 ELSE  cast(ISNULL( ddh.Hr24 ,0) as numeric(24,14))*cast(tph.Hr_factor as numeric(26,16)) END Hr24,
 				Cast(cast(ISNULL(ddh.Hr25,0) as numeric(24,14))*isnull(' 
 					+ @dst_column + ',0) as numeric(24,14))*cast(tph.Hr_factor as numeric(26,16)) AS Hr25 
-				,getdate() create_ts,thdi.create_user,COALESCE(h_grp.exp_date,tph.expiration_date,tph.term_start) expiration_date
+				,getdate() create_ts,thdi.create_user  --,COALESCE(h_grp.exp_date,tph.expiration_date,tph.term_start) expiration_date
+				,isnull(h_grp.exp_date,ddh.term_date) expiration_date
 				,isnull(ddh.period,0) period,thdi.granularity,tph.source_deal_detail_id,tph.rowid
 			'
 			SET @st_from = @report_hourly_position_profile_main + '
@@ -1618,7 +1612,10 @@ BEGIN TRY
 				CASE WHEN hb1.Hr5=0  THEN 0 ELSE  cast(ISNULL( ddh1.Hr5 ,0) as numeric(24,14))*cast(tph.Hr_factor as numeric(26,16)) END Hr23,
 				CASE WHEN hb1.Hr6=0  THEN 0 ELSE  cast(ISNULL( ddh1.Hr6 ,0) as numeric(24,14))*cast(tph.Hr_factor as numeric(26,16)) END Hr24,
 				Cast(cast(ISNULL(ddh1.Hr25,0) as numeric(24,14))*isnull(' 
-				+ @dst_column + ',0) as numeric(24,14))*cast(tph.Hr_factor as numeric(26,16)) AS Hr25 ,getdate() create_ts,thdi.create_user,COALESCE(h_grp.exp_date,tph.expiration_date,tph.term_start) expiration_date,isnull(ddh.period,0) period,thdi.granularity,tph.source_deal_detail_id,tph.rowid
+				+ @dst_column + ',0) as numeric(24,14))*cast(tph.Hr_factor as numeric(26,16)) AS Hr25 ,getdate() create_ts,thdi.create_user
+				--,COALESCE(h_grp.exp_date,tph.expiration_date,tph.term_start) expiration_date
+				,isnull(h_grp.exp_date,ddh.term_date) expiration_date
+				,isnull(ddh.period,0) period,thdi.granularity,tph.source_deal_detail_id,tph.rowid
 			'
 			SET @st_from = @report_hourly_position_profile_main + '
 			FROM  #tmp_profile_header tph  
@@ -1681,11 +1678,15 @@ BEGIN TRY
 			 (cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN tph.commodity_id=-1 THEN 5 ELSE 23  END THEN 1.000 else 0 end + isnull(CASE WHEN tph.commodity_id=-1 THEN hb.hr5 ELSE hb.hr23 END,0) as numeric(1,0)))*tph.Hr_factor/isnull(mb.factor,1) Hr23,
 			 (cast(CASE WHEN isnull(hb.add_dst_hour,0)=CASE WHEN tph.commodity_id=-1 THEN 6 ELSE 24  END THEN 1.000 else 0 end + isnull(CASE WHEN tph.commodity_id=-1 THEN hb.hr6 ELSE hb.hr24 END,0) as numeric(1,0)))*tph.Hr_factor/isnull(mb.factor,1)/isnull(mb.factor,1) Hr24,
 			 isnull(' 
-				+ @dst_column + ',0)*tph.Hr_factor/isnull(mb.factor,1) AS Hr25 ,getdate() create_ts,thdi.create_user,COALESCE(h_grp.exp_date,tph.expiration_date,tph.term_start) expiration_date,isnull(mb.period,0) period,thdi.granularity,tph.source_deal_detail_id,tph.rowid'
+				+ @dst_column + ',0)*tph.Hr_factor/isnull(mb.factor,1) AS Hr25 ,getdate() create_ts,thdi.create_user
+				--,COALESCE(h_grp.exp_date,tph.expiration_date,tph.term_start) expiration_date
+				,isnull(h_grp.exp_date,hb.term_date) expiration_date
+				,isnull(mb.period,0) period,thdi.granularity,tph.source_deal_detail_id,tph.rowid'
 		SET @st_from = @report_hourly_position_profile_main + 
 		'
 		FROM  #tmp_profile_header tph  
-			LEFT JOIN hour_block_term hb  on hb.dst_group_value_id=tph.dst_group_value_id and hb.block_define_id=tph.block_define_id 			and hb.term_date between tph.term_start AND tph.term_end 
+			LEFT JOIN hour_block_term hb  on hb.dst_group_value_id=tph.dst_group_value_id and hb.block_define_id=tph.block_define_id
+			and hb.term_date between tph.term_start AND tph.term_end 
 			LEFT OUTER JOIN hour_block_term hb1  ON hb1.dst_group_value_id=tph.dst_group_value_id
 				AND hb1.block_define_id=hb.block_define_id AND hb1.term_date-1=hb.term_date
 			LEFT JOIN #tmp_header_deal_id thdi ON tph.source_deal_detail_id=thdi.source_deal_detail_id
@@ -2543,5 +2544,11 @@ BEGIN CATCH
 		DEALLOCATE netting
 	END
 END CATCH
+
+
+if object_id(@effected_deals) is not null
+	exec('drop table '+@effected_deals)
+
+
 	/************************************* Object: 'spa_maintain_transaction_job' END *************************************/
 	
