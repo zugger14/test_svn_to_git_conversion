@@ -1212,7 +1212,7 @@ SET @sql = '
 		INNER JOIN application_ui_filter f 
 			ON f.application_ui_filter_id = fd.application_ui_filter_id
 		INNER JOIN #paramset_map pm 
-			ON pm.inserted_paramset_id = isnull(f.report_id, -1)
+			ON pm.inserted_paramset_id = ISNULL(f.report_id, -1)
 		LEFT JOIN #sql_source_filter_detail_column_mapping map
 			ON map.column_id = ABS(fd.report_column_id)
 		WHERE ABS(fd.report_column_id) NOT IN (
@@ -1227,9 +1227,11 @@ SET @sql = '
 		AND map.column_id IS NULL
 
 		
-		--update filters for sql datasource columns
-		UPDATE fd
-			SET fd.report_column_id = dsc.data_source_column_id		
+		--store data to update and delete application filter details row for sql datasource only
+		DROP TABLE IF EXISTS #filter_details_to_update_sql_datasource
+
+		SELECT fd.application_ui_filter_details_id, fd.report_column_id, dsc.data_source_column_id, fd.field_value
+		INTO #filter_details_to_update_sql_datasource
 		FROM application_ui_filter_details fd
 		INNER JOIN application_ui_filter f 
 			ON f.application_ui_filter_id = fd.application_ui_filter_id
@@ -1240,6 +1242,8 @@ SET @sql = '
 			AND map.column_id = ABS(fd.report_column_id) --used ABS for browser columns label row.
 		INNER JOIN report_dataset_paramset rdp 
 			ON rdp.paramset_id = rp.report_paramset_id
+		INNER JOIN report_param rpr
+			ON rpr.dataset_paramset_id = rdp.report_dataset_paramset_id
 		INNER JOIN report_dataset rd 
 			ON rd.report_dataset_id = rdp.root_dataset_id
 		INNER JOIN data_source ds 
@@ -1247,9 +1251,29 @@ SET @sql = '
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 		WHERE dsc.name = map.column_name
+			AND rpr.column_id = dsc.data_source_column_id
+
+		DROP TABLE IF EXISTS #filter_details_to_delete_sql_datasource
+
+		SELECT fdmap.application_ui_filter_details_id
+		INTO #filter_details_to_delete_sql_datasource
+		FROM #sql_source_filter_detail_column_mapping fdmap
+		EXCEPT
+		SELECT fdup.application_ui_filter_details_id
+		FROM #filter_details_to_update_sql_datasource fdup
+		
+		--update filters for sql datasource columns
+		UPDATE fd
+			SET fd.report_column_id = IIF(fd.report_column_id < 0, -1, 1) * fdup.data_source_column_id		
+		FROM application_ui_filter_details fd
+		INNER JOIN #filter_details_to_update_sql_datasource fdup
+			ON fdup.application_ui_filter_details_id = fd.application_ui_filter_details_id
 
 		--delete unmatched columns from filter detail for sql data source
-		--todo
+		DELETE fd
+		FROM application_ui_filter_details fd
+		INNER JOIN #filter_details_to_delete_sql_datasource fddel
+			ON fddel.application_ui_filter_details_id = fd.application_ui_filter_details_id
 
 		--RETAIN APPLICATION FILTER DETAILS END (PART2)
 	''
