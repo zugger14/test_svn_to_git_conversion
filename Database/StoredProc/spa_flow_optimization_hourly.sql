@@ -3975,6 +3975,7 @@ BEGIN
 	FROM ' + @contractwise_detail_mdq_hourly + ' cd
 	WHERE cd.from_loc_id IN (' + @from_location + ')
 		AND cd.to_loc_id IN (' + @to_location + ')
+		' + ISNULL('AND cd.path_id = ' + @path_ids, '') + '
 	GROUP BY cd.contract_id, cd.contract_name
 	'
 	EXEC(@sql)

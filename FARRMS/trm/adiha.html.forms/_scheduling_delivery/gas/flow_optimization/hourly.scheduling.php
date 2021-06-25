@@ -385,7 +385,7 @@ echo $sch_obj->close_layout();
      */
     function load_path_contract (rids, callback) { 
     	$.each(rids.split(','), function(rid) {
-            var selected_path_id = sch.hourly_sch_grid.cells(rid,sch.hourly_sch_grid.getColIndexById('path')).getValue();
+            var selected_path_id = sch.hourly_sch_grid.cells(rid,sch.hourly_sch_grid.getColIndexById('path')).getValue().toString();
             var set_grid_value_contract = function () {
                 var selected_contract = sch.hourly_sch_grid.getColumnCombo(sch.hourly_sch_grid.getColIndexById('contract')).getOptionByIndex(0).value;
 
@@ -398,7 +398,7 @@ echo $sch_obj->close_layout();
                     callback();
                 }
             }
-            sch.load_dropdown("EXEC spa_flow_optimization_hourly @flag='c1', @from_location='" + get_param.rec_location_id + "', @to_location='" + get_param.del_location_id + "', @process_id='" + get_param.process_id + "', @xml_manual_vol='" + (get_param.parent_call_from == 'book_out' ? '-1' : '') + "'", sch.hourly_sch_grid.getColIndexById('contract'), set_grid_value_contract, sch.hourly_sch_grid);
+            sch.load_dropdown("EXEC spa_flow_optimization_hourly @flag='c1', @from_location='" + get_param.rec_location_id + "', @to_location='" + get_param.del_location_id + "', @path_ids='" + selected_path_id + "', @process_id='" + get_param.process_id + "', @xml_manual_vol='" + (get_param.parent_call_from == 'book_out' ? '-1' : '') + "'", sch.hourly_sch_grid.getColIndexById('contract'), set_grid_value_contract, sch.hourly_sch_grid);
 
         });
     }
