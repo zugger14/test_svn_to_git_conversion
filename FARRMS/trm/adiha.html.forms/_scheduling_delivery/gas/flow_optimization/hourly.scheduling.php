@@ -425,7 +425,7 @@ echo $sch_obj->close_layout();
         var contract_id_selected = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('contract')).getValue();
         var total_rec = 0;
         var total_del = 0;
-        var total_path_rmdq = 0;
+        //var total_path_rmdq = 0;
         var first_hour_rec_vol = 0;
         var first_hour_del_vol = 0;
         var hr_count = 0;
@@ -441,7 +441,7 @@ echo $sch_obj->close_layout();
 
                 total_rec += rec_hrly;
                 total_del += del_hrly;
-                total_path_rmdq += parseFloat(getNumberFormat(subgrid.cells2(0, cid).getValue().split('/')[1], '', 1));
+                //total_path_rmdq += parseFloat(getNumberFormat(subgrid.cells2(0, cid).getValue().split('/')[1], '', 1));
                 hr_count++;
             }
         });
@@ -489,7 +489,7 @@ echo $sch_obj->close_layout();
                 limit_exceeded = '1';
             }
 
-            IFRAME_FLOW_OPT_TEMPLATE.contentWindow.set_box_value(get_param.box_id, total_rec, total_del, total_path_rmdq, path_id_selected, contract_id_selected, call_from, first_hour_rec_vol, first_hour_del_vol, limit_exceeded);
+            IFRAME_FLOW_OPT_TEMPLATE.contentWindow.set_box_value(get_param.box_id, total_rec, total_del, path_id_selected, contract_id_selected, call_from, first_hour_rec_vol, first_hour_del_vol, limit_exceeded);
 
         }        
     }
