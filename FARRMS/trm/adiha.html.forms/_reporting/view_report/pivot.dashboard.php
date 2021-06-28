@@ -33,7 +33,7 @@
     	$paramset_id = $db_param[0]['paramset_id'];
     	$component_id = $db_param[0]['component_id'];
     	$report_filter = $db_param[0]['params'];
-    	$report_name = $db_param[0]['report_name']. '_' . $cell_id;
+    	$report_name = $db_param[0]['report_name']. '_' . $cell_id . '_' . $app_user_name;
     	$paramset_hash = $db_param[0]['paramset_hash'];
     	$has_permission = $db_param[0]['has_permission'];
     	$excel_sheet_id = $db_param[0]['excel_sheet_id'];
