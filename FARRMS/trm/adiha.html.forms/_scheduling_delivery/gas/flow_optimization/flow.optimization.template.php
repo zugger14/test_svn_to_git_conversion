@@ -3462,7 +3462,7 @@
 
     }
 
-    function set_box_value(box_id, receipt_value, delivery_value, path_rmdq, path_id_selected, contract_id_selected, call_from, first_hour_rec_vol, first_hour_del_vol, limit_exceeded) { 
+    function set_box_value(box_id, receipt_value, delivery_value, path_id_selected, contract_id_selected, call_from, first_hour_rec_vol, first_hour_del_vol, limit_exceeded) { 
          //write final value to cell
         
         var box_div = $('.box_div').filter('[route_id="' + box_id + '"]');
@@ -3499,15 +3499,11 @@
         $('.rec_del_div2', box_div).attr('value', delivery_value);
         $('.rec_del_div2', box_div).text(format_number_to_comma_separated(delivery_value));
 
-        if(path_rmdq !== undefined) {
-            path_rmdq = $('.mdq_info1', box_div).attr('value') - delivery_value;
-            $('.mdq_info2', box_div).attr('value', path_rmdq);
-            $('.mdq_info2', box_div).text(format_number_to_comma_separated(path_rmdq));
-        }
+        var path_rmdq = $('.mdq_info1', box_div).attr('value') - delivery_value;
+        $('.mdq_info2', box_div).attr('value', path_rmdq);
+        $('.mdq_info2', box_div).text(format_number_to_comma_separated(path_rmdq));
         
-        var td_index = box_div.closest('td').index();
-        
-        
+        var td_index = box_div.closest('td').index();        
        
         //adjust received inv
         $('.total_end_inv_rec', box_div.closest('tr')).attr('value', rec_end_inv);
