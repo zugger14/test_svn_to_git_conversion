@@ -4332,9 +4332,10 @@ BEGIN
 				, CAST(AVG(cdh.delivered) AS NUMERIC(20,4)) [box_avg_del]
 			FROM ' + @contractwise_detail_mdq_hourly + ' cdh
 			INNER JOIN #hourly_schd_vol hsv
-				ON cdh.from_loc_id = hsv.from_loc_id
-				AND cdh.to_loc_id = hsv.to_loc_id 
-				AND cdh.hour = hsv.hour
+				ON hsv.from_loc_id = cdh.from_loc_id
+				AND hsv.to_loc_id = cdh.to_loc_id 
+				AND hsv.hour = cdh.hour
+				AND ISNULL(hsv.[is_dst], 0) = ISNULL(cdh.[is_dst], 0)
 			FOR JSON PATH
 			, INCLUDE_NULL_VALUES
 			, WITHOUT_ARRAY_WRAPPER
