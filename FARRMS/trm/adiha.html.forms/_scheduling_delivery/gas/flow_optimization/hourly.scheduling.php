@@ -764,6 +764,7 @@ echo $sch_obj->close_layout();
             if (callback_function != '') {
                 callback_function();
            	}
+            fx_adjust_grid_all_column_size(obj_grid);
         });
     };
    

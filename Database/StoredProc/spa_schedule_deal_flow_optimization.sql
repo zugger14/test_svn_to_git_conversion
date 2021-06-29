@@ -766,41 +766,6 @@ END --END OF INSERTING TEMPLATE DEAL
 
 BEGIN --Data Prepararion
 	
-	
-	--Update contract_detail process table with sum of hourly received and delivered volume 
-	IF @is_hourly_calc = 1
-	BEGIN 
-		SET @sql = 'UPDATE c
-						SET received = ISNULL(NULLIF(c.received, 0), h.received), 
-							delivered = ISNULL(NULLIF(c.delivered, 0), h.delivered)
-					FROM ' + @contract_detail + ' c
-					CROSS APPLY(
-						SELECT SUM(ch.received) received 
-							, SUM(ch.delivered)  delivered
-						FROM ' + @contract_detail_hourly + ' ch
-						WHERE 	ch.box_id = c.box_id
-						GROUP BY box_id
-					) h
-					'
-		--print @sql
-		EXEC(@sql)
-
-		SET @sql = 'UPDATE c
-					SET received = ISNULL(NULLIF(c.received, 0), h.received), 
-						delivered = ISNULL(NULLIF(c.delivered, 0), h.delivered)
-				FROM ' + @contract_detail_fresh + ' c
-				CROSS APPLY(
-					SELECT SUM(ch.received) received 
-						, SUM(ch.delivered)  delivered
-					FROM ' + @contract_detail_hourly + ' ch
-					WHERE 	ch.box_id = c.box_id
-					GROUP BY box_id
-				) h
-				'
-		--print @sql
-		EXEC(@sql)
-	END
-
 	/**** INSERT COLLECT DEALS 1 ****/
 	SET @sql = '
 		INSERT INTO #collect_deals (
