@@ -120,7 +120,7 @@
     $run_deal_settlement_toolbar = new AdihaToolbar();
     echo $run_deal_settlement_toolbar->init_by_attach('run_deal_settlement_toolbar', $name_space);
     echo $run_deal_settlement_toolbar->load_toolbar($toolbar_json);
-    echo $run_deal_settlement_toolbar->attach_event('', 'onClick', 'run_deal_settlement_onclick');
+    echo $run_deal_settlement_toolbar->attach_event('', 'onClick', 'run_deal_settlement');
     
     $toolbar_json = '[  
                         {id:"Refresh", img:"refresh.gif", text:"Refresh", title:"Refresh"},                                
@@ -194,32 +194,6 @@
        
     });
     
-    /**
-    * Check Lock As Of Date
-    */
-    function run_deal_settlement_onclick() { 
-        var sub_ids = (run_deal_settlement.get_subsidiary('browser')) ? run_deal_settlement.get_subsidiary('browser') : 'NULL';
-        var close_date = run_deal_settlement.form_run_deal_settlement.getItemValue('as_of_date',true);
-
-        data = { "action": "spa_lock_as_of_date",
-                    "flag": "c",
-                    "sub_ids":sub_ids,
-                    "close_date": close_date
-        };
-        
-        adiha_post_data('return_array', data, '', '', 'run_deal_settlement_callback', 'tree_run_deal_settlement');
-
-    } 
-
-    function run_deal_settlement_callback(result){
-        if (result[0][0] == 'Error') {
-            show_messagebox(result[0][4]);
-            return;
-        } else {
-           run_deal_settlement();
-        }
-        
-    }
 
     function run_deal_settlement() {
         var sub_book_id = run_deal_settlement.get_subbook(); 
