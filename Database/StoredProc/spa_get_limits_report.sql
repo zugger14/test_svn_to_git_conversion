@@ -738,16 +738,20 @@ EXEC(@sql_str)
 	exec spa_print @sql_str
 	EXEC(@sql_str)
 
+	DECLARE @limit_ids VARCHAR(2000)
+
+	SELECT @limit_ids = COALESCE(@limit_ids + ',', '') + CAST(maintain_limit_id AS VARCHAR)
+	FROM #pnl_limit_info_value
+	GROUP BY maintain_limit_id
+
 	INSERT INTO #pnl_limit_info_value(maintain_limit_id,total_value, unit, source_deal_header_id, value2)
-	SELECT liv.* 
+	SELECT liv.*
 	FROM #limit_info_value liv
-	INNER JOIN #pnl_limit_info_value pliv ON pliv.maintain_limit_id = liv.maintain_limit_id
-		AND ISNULL(pliv.source_deal_header_id, -1) = ISNULL(liv.source_deal_header_id, -1)
+	INNER JOIN dbo.FNASplit(@limit_ids, ',') li ON li.item = liv.maintain_limit_id
 
 	DELETE liv 
 	FROM #limit_info_value liv
-	INNER JOIN #pnl_limit_info_value pliv ON pliv.maintain_limit_id = liv.maintain_limit_id
-		AND ISNULL(pliv.source_deal_header_id, -1) = ISNULL(liv.source_deal_header_id, -1)
+	INNER JOIN dbo.FNASplit(@limit_ids, ',') li ON li.item = liv.maintain_limit_id
 
 	INSERT INTO #limit_info_value(maintain_limit_id,total_value, unit, source_deal_header_id, value2)
 	SELECT pliv.maintain_limit_id, SUM(total_value), unit, source_deal_header_id, SUM(value2)
