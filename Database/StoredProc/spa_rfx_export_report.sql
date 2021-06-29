@@ -211,7 +211,8 @@ BEGIN
 		CREATE TABLE #sql_source_filter_detail_column_mapping (
 			paramset_hash VARCHAR(36),
 			column_id INT,
-			column_name VARCHAR(1000)
+			column_name VARCHAR(1000),
+			application_ui_filter_details_id INT NULL
 		)
 
 		IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash=''' + @report_hash + ''')
@@ -225,8 +226,8 @@ BEGIN
 			INNER JOIN report_page pg ON pg.report_page_id = rp.page_id
 			WHERE pg.report_id = @report_id_to_delete
 
-			INSERT INTO #sql_source_filter_detail_column_mapping(paramset_hash, column_id, column_name)
-			SELECT DISTINCT rpm.paramset_hash, aufd.report_column_id, dsc.name
+			INSERT INTO #sql_source_filter_detail_column_mapping(paramset_hash, column_id, column_name, application_ui_filter_details_id)
+			SELECT DISTINCT rpm.paramset_hash, aufd.report_column_id, dsc.name, aufd.application_ui_filter_details_id
 			FROM application_ui_filter_details aufd
 			INNER JOIN application_ui_filter auf
 				ON auf.application_ui_filter_id = aufd.application_ui_filter_id
