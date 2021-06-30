@@ -3499,7 +3499,7 @@
         $('.rec_del_div2', box_div).attr('value', delivery_value);
         $('.rec_del_div2', box_div).text(format_number_to_comma_separated(delivery_value));
 
-        var path_rmdq = $('.mdq_info1', box_div).attr('value') - delivery_value;
+        var path_rmdq = $('.mdq_info2', box_div).attr('value') - delivery_value;
         $('.mdq_info2', box_div).attr('value', path_rmdq);
         $('.mdq_info2', box_div).text(format_number_to_comma_separated(path_rmdq));
         
