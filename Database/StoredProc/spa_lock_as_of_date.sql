@@ -210,20 +210,21 @@ BEGIN
 	IF OBJECT_ID('tempdb..#date_subs') IS NOT NULL
 		DROP TABLE #date_subs
 
+/** ISNULL(@sub_ids,0)  to create sub_id and check lock as of date even when sub_id is NULL*/
 	SELECT d.item, @close_date close_date
 		INTO #date_subs	
-	FROM dbo.FNASplit(@sub_ids, ',') d
+	FROM dbo.FNASplit(ISNULL(@sub_ids,0), ',') d
 
 	IF EXISTS(SELECT 1 
 				FROM #date_subs	ds
-				INNER JOIN lock_as_of_date lock_dates ON lock_dates.close_date = @close_date
-				WHERE lock_dates.close_date = @close_date
-					AND ISNULL(lock_dates.sub_ids, 0) = CASE WHEN lock_dates.sub_ids IS NULL THEN ISNULL(lock_dates.sub_ids, 0)
-														ELSE 
-															CASE WHEN @sub_ids = 'NULL'   
-															THEN ISNULL(lock_dates.sub_ids, 0) ELSE ds.item 
-															END
-														END)
+					INNER JOIN lock_as_of_date ld ON ld.close_date = ds.close_date
+				WHERE ISNULL(ld.sub_ids, 0) = CASE WHEN ld.sub_ids IS NULL THEN  0
+												ELSE 
+													CASE WHEN NULLIF(@sub_ids,'NULL' ) IS NULL  
+														THEN ISNULL(ld.sub_ids, 0)
+													ELSE ds.item 
+													END
+												END)
 	BEGIN
 		EXEC spa_ErrorHandler -1
 			, 'lock_as_of_date' 
