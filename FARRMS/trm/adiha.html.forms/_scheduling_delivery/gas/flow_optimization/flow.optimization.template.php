@@ -1672,8 +1672,8 @@
                 ,modal: true
                 ,text: win_text
                 ,center: true
-                //,height: 500
-                //,width: 1250
+                ,height: 500
+                ,width: 1250
             });
             parent.flow_deal_match_window.window('window_hourly_schd').maximize();
             //parent.flow_deal_match_window.window('window_hourly_schd').denyResize();
