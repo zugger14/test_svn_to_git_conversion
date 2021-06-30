@@ -1672,10 +1672,10 @@
                 ,modal: true
                 ,text: win_text
                 ,center: true
-                ,height: 500
-                ,width: 1250
+                //,height: 500
+                //,width: 1250
             });
-            //parent.flow_deal_match_window.window('window_hourly_schd').maximize();
+            parent.flow_deal_match_window.window('window_hourly_schd').maximize();
             //parent.flow_deal_match_window.window('window_hourly_schd').denyResize();
             //console.log(post_params);
             var path_id_selected = (box_div.attr('path_id_selected') == "" ? box_div.attr('path_ids').split(',')[0] : box_div.attr('path_id_selected'));
