@@ -52,23 +52,6 @@ BEGIN
 	END CATCH
 END
 
-IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'FAARMSFileTransferService')
-BEGIN
-	CREATE ASSEMBLY [FAARMSFileTransferService]
-	FROM @library_path + 'FAARMSFileTransferService.dll'
-	WITH PERMISSION_SET = UNSAFE	
-END
-ELSE
-BEGIN
-	BEGIN TRY  
-		ALTER ASSEMBLY FAARMSFileTransferService FROM @library_path + 'FAARMSFileTransferService.dll' WITH PERMISSION_SET = UNSAFE  
-	END TRY  
-	BEGIN CATCH  
-		--	Suppressing Error, according to MVID, identical to an assembly that is already registered under the name "FAARMSFileTransferService".
-		PRINT 'FAARMSFileTransferService is already registered according to MVID.'
-	END CATCH
-END
-
 IF NOT EXISTS(SELECT 1 FROM sys.assemblies a WHERE [name] LIKE 'FARRMSImportCLR')
 BEGIN
 	CREATE ASSEMBLY FARRMSImportCLR

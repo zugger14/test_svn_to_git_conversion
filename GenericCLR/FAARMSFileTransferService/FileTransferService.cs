@@ -693,8 +693,8 @@ namespace FAARMSFileTransferService
                     //  Move
                     try
                     {
-                        //if (_sftpClient.Exists(_targetRemoteDirectory + "/" + file))
-                        //    _sftpClient.DeleteFile( _targetRemoteDirectory + "/" + file);
+                        if (_sftpClient.Exists(_targetRemoteDirectory + "/" + file))
+                            _sftpClient.DeleteFile( _targetRemoteDirectory + "/" + file);
                         _sftpClient.RenameFile(file, _targetRemoteDirectory + "/" + file);
                     }
                     catch (Exception ex)
