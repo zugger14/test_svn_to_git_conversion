@@ -124,11 +124,11 @@ BEGIN TRY
 	*/
 
 	/*delete date of already exists*/
-		DELETE FROM lock_as_of_date where close_date = @retention_date -1
+		DELETE FROM lock_as_of_date where close_date = DAY(@retention_date) -1 
 
 	/*insert*/
 		INSERT INTO lock_as_of_date(close_date)
-		SELECT @retention_date -1
+		SELECT DAY(@retention_date) -1
 	
 
 COMMIT TRAN
