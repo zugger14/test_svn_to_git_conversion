@@ -24,7 +24,7 @@ EXEC [dbo].[spa_calc_gas_nomination_submission]
 '
 DECLARE @jobId BINARY(16)
 EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=@job_name, 
-		@enabled=0, 
+		@enabled=1, 
 		@notify_level_eventlog=0, 
 		@notify_level_email=0, 
 		@notify_level_netsend=0, 

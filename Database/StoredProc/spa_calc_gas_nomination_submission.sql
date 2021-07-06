@@ -16,7 +16,8 @@ CREATE PROC [dbo].[spa_calc_gas_nomination_submission]
 AS
 
 DECLARE  @process_id VARCHAR(100) = REPLACE(NEWID(),'-','_')
-DECLARE @batch_unique_id VARCHAR(50) = SUBSTRING(REPLACE(NEWID(),'-',''), 1, 13), @error_role_id INT, @success_role_id INT
+DECLARE @batch_unique_id VARCHAR(50) = SUBSTRING(REPLACE(NEWID(),'-',''), 1, 13)
+, @error_role_id INT, @success_role_id INT
 
 DECLARE  @report_path VARCHAR(300), @report_file_full_path VARCHAR(300) -- '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\' 
 SELECT @report_path = document_path + '\temp_Note\' FROM connection_string
@@ -49,7 +50,7 @@ SELECT @component_id = report_page_tablix_id from report_page_tablix where name 
 
 IF(CAST(CAST(@current_datetime AS TIME) AS VARCHAR(5)) = '02:45' OR CAST(CAST(@current_datetime AS TIME) AS VARCHAR(5)) = '03:45')
 BEGIN
-	SET @report_file_full_path = @report_path + 'Enercity Nomination Report_2_farrms_admin.xlsx'
+	SET @report_file_full_path = @report_path + 'Nomination Report Enercity_2_' + REPLACE(REPLACE(REPLACE(CONVERT(VARCHAR(20), GETDATE(), 120), ':', ''), ' ', '_'), '-', '_') + '_farrms_admin.xlsx'
 	SET @_as_of_date = CONVERT(VARCHAR(10), DATEADD(DAY, -1, @as_of_date), 120)
 	SET @term_start = @_as_of_date
 	SET @term_end = @_as_of_date
@@ -57,7 +58,7 @@ BEGIN
 	SET @report_param = 'report_filter:''''as_of_date=' + @_as_of_date + ', ' + @common_param + ', term_start=' + @term_start + ',term_end=' + @term_end + ' '''',is_refresh:0,report_region:en-US,runtime_user:farrms_admin,global_currency_format:$,global_date_format:dd.M.yyyy,global_thousand_format:,#,global_rounding_format:#0.0000,global_price_rounding_format:#0.0000,global_volume_rounding_format:#0.00,global_amount_rounding_format:#0.00,global_science_rounding_format:2,global_negative_mark_format:1,global_number_format_region:de-DE,is_html:n'
 
 	SET @_desc = 'EXEC spa_rfx_export_report_job @report_param = ''' + REPLACE(@report_param, '''', '''''') + '''
-	, @proc_desc = ''BatchReport'', @user_login_id = ''farrms_admin'', @report_RDL_name = ''Nomination Report Enercity2_Nomination Report Enercity2'' 
+	, @proc_desc = ''BatchReport'', @user_login_id = ''farrms_admin'', @report_RDL_name = ''Nomination Report Enercity_Nomination Report Enercity'' 
 	, @report_file_name = ''Nomination Report Enercity_2_farrms_admin.xlsx''
 	, @report_file_full_path = ''' + @report_file_full_path + '''
 	, @output_file_format = ''EXCELOPENXML'', @paramset_hash = ''84DA7562_09A8_4C52_98B4_377D362D44DF'''
@@ -76,13 +77,15 @@ BEGIN
 	EXEC(@_desc)
 
 END
-
-SET @process_id = REPLACE(NEWID(),'-','_')
+ SET @process_id = REPLACE(NEWID(),'-','_')
 SET @batch_unique_id = SUBSTRING(REPLACE(NEWID(),'-',''), 1, 13)
-SET @_as_of_date = CONVERT(VARCHAR(10), @as_of_date, 120)
+SET @_as_of_date = CASE WHEN (CAST(CAST(@current_datetime AS TIME) AS VARCHAR(5)) = '00:45' OR CAST(CAST(@current_datetime AS TIME) AS VARCHAR(5)) = '01:45') THEN
+					CONVERT(VARCHAR(10), DATEADD(DAY, -1, @as_of_date), 120) ELSE CONVERT(VARCHAR(10), @as_of_date, 120) END
+
+
 SET @term_start = @_as_of_date
 SET @term_end = @_as_of_date
-SET @report_file_full_path = @report_path + 'Enercity Nomination Report_farrms_admin.xlsx'
+SET @report_file_full_path = @report_path + 'Nomination Report Enercity_' + REPLACE(REPLACE(REPLACE(CONVERT(VARCHAR(20), GETDATE(), 120), ':', ''), ' ', '_'), '-', '_') + '_farrms_admin.xlsx'
 
 SET @report_param = 'report_filter:''''as_of_date=' + @_as_of_date + ', ' + @common_param + ', term_start=' + @term_start + ',term_end=' + @term_end + ' '''',is_refresh:0,report_region:en-US,runtime_user:farrms_admin,global_currency_format:$,global_date_format:dd.M.yyyy,global_thousand_format:,#,global_rounding_format:#0.0000,global_price_rounding_format:#0.0000,global_volume_rounding_format:#0.00,global_amount_rounding_format:#0.00,global_science_rounding_format:2,global_negative_mark_format:1,global_number_format_region:de-DE,is_html:n'
 
