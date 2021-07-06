@@ -152,7 +152,8 @@ SET @export_extension = CASE WHEN CHARINDEX('.', REVERSE(@report_file_name)) > 1
 
 SET @report_final_file_name = @proc_desc + ' - '		--append @proc_desc value (normally "BatchReport - ") in report file name	
 	+ REPLACE(@report_file_name, '.' + @export_extension, '')	--remove extension, which will be added later
-	+ '_' + REPLACE(REPLACE(REPLACE(CONVERT(VARCHAR(20), GETDATE(), 120), ':', ''), ' ', '_'), '-', '_') --add timestamp
+	+ '_#TIMESTAMP#' --add timestamp
+	--+ '_' + REPLACE(REPLACE(REPLACE(CONVERT(VARCHAR(20), GETDATE(), 120), ':', ''), ' ', '_'), '-', '_') --add timestamp
 	+ '.' + @export_extension									--add extension
 	
 IF ISNULL(@call_from_invoice, '') <> 'call_from_invoice' AND @save_invoice <> 'y'
@@ -294,33 +295,57 @@ BEGIN
 						<b> Click Here</b></a> to download.'
 END
 
+--set timestamp part on messaging on step2
+SET @report_param_success = '	
+	DECLARE @time_stamp VARCHAR(17)
+	DECLARE @job_desc VARCHAR(1000)
+
+	--grab timestamp of file path from job desc
+	SELECT @job_desc = description
+	FROM msdb.dbo.sysjobs
+	WHERE name = ''$(ESCAPE_SQUOTE(JOBNAME))'';
+
+	SELECT @time_stamp = REPLACE(spt.clm2, ''TimeStamp: '', '''')
+	FROM dbo.FNASplitAndTranspose(@job_desc, CHAR(13)) spt
+
+	DECLARE @output_file_full_path_p VARCHAR(1000) = REPLACE(''' + @output_file_full_path + ''', ''#TIMESTAMP#'', @time_stamp)
+	DECLARE @desc_success_p VARCHAR(1000) = REPLACE(''' + @desc_success + ''', ''#TIMESTAMP#'', @time_stamp)
+'
+
 --(File generation including compression for csv, xml and txt is handled by spa_dump_csv in spa_message_board)
 IF @export_extension = 'xlsx'
 BEGIN
 	IF @report_export_custom_dir IS NOT NULL
 	BEGIN
 		SET @desc_success = 'Batch process completed for <b>' + @trimmed_report_name + '</b>. Report has been saved at <b>' + @final_output_full_file_path + '</b>.'
+		SET @report_param_success += '
+		--when export custom dir is set
+		SET @desc_success_p = REPLACE(''' + @desc_success + ''', ''#TIMESTAMP#'', @time_stamp)
+		'
 	END
 	-- Added logic to delete source file after compression
 	IF @compress_file = 'y'
 	BEGIN
 		SET @export_extension = @zip_ext
 
-		SET @report_param_success = '			
-		EXEC spa_compress_file  ''' + @final_output_full_file_path  + ''',  ''' + @output_file_full_path  + '''
+		SET @report_param_success += '
+		DECLARE @final_output_full_file_path_p VARCHAR(1000) = REPLACE(''' + @final_output_full_file_path + ''', ''#TIMESTAMP#'', @time_stamp)
+		EXEC spa_compress_file @final_output_full_file_path_p,  @output_file_full_path_p
 		GO
 		Declare @output_msg nvarchar(1024)
-		EXEC spa_delete_file ''' + @output_file_full_path + ''', @output_msg OUTPUT 
+		EXEC spa_delete_file @output_file_full_path_p, @output_msg OUTPUT 
 		GO 
 		'
 	END
 
-	SET @report_param_success += 'EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description =''' + @desc_success + ''', @url_desc='''', @url ='''', @type = ''s'', @job_name='''+@export_job_name+''', @process_id= ''' + @process_id + ''', @email_enable =''y'', @email_description=''' + @email_description + ''', @email_subject=''' + @email_subject + ''',@file_name =''' + @final_output_full_file_path  + ''',@report_sp =' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ''
+	SET @report_param_success += '	
+	EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name='''+@export_job_name+''', @process_id= ''' + @process_id + ''', @email_enable =''y'', @email_description=''' + @email_description + ''', @email_subject=''' + @email_subject + ''',@file_name = @output_file_full_path_p,@report_sp =' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ''
 END
 ELSE
 BEGIN
 	IF @save_invoice <> 'y' 
-		SET @report_param_success = 'EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = ''' + @desc_success + ''', @url_desc='''', @url ='''', @type = ''s'', @job_name= '''+@export_job_name+''', @process_id= ''' + @process_id + ''', @email_enable =''y'', @email_description=''' + @email_description + ''',@report_sp =' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ',@file_name =''' + @output_file_full_path  + ''', @email_subject=''' + @email_subject + ''', @is_aggregate = '+@is_aggregate_var+''
+		SET @report_param_success += '
+		EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name= '''+@export_job_name+''', @process_id= ''' + @process_id + ''', @email_enable =''y'', @email_description=''' + @email_description + ''',@report_sp =' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ',@file_name = @output_file_full_path_p, @email_subject=''' + @email_subject + ''', @is_aggregate = '+@is_aggregate_var+''
 END
 
 SET @elapsed_time_msg = '
@@ -344,7 +369,7 @@ IF  EXISTS (SELECT job_id FROM msdb.dbo.sysjobs_view WHERE name = @export_job_na
 DECLARE @job_delete_level INT
 DECLARE @job_description NVARCHAR(1000) 
 
-SET @job_description = 'Created by: ' + @user_name + CHAR(13) + 'No description available.' --CHAR(13) used to seperate username and description
+SET @job_description = 'Created by: ' + @user_name + CHAR(13) + 'TimeStamp: #TIMESTAMP#' + CHAR(13) + 'No description available.' --CHAR(13) used to seperate username,timestamp and description
 SET @job_delete_level = 1
 --if job is scheduled, set @delete_level = 0 to prevent auto deletion after first run
 SET @job_delete_level = IIF((@freq_type <> '' AND @freq_interval <> 0), 0, 1)
@@ -357,7 +382,23 @@ BEGIN
 	SET @proxy_name = NULL
 	
 	DECLARE @export_sql_cmd VARCHAR(MAX)
-	SET @export_sql_cmd =  'EXEC spa_export_RDL @report_RDL_name =''' +  @report_RDL_name + ''', @parameters =''' +  @report_param + ''', @OutputFileFormat = ''' + @output_file_format + ''', @output_filename = ''' +@output_file_full_path+ ''', @process_id ='''+ @process_id + ''', @paramset_hash=''' + ISNULL(@paramset_hash, '') + ''''
+	SET @export_sql_cmd =  '
+	DECLARE @time_stamp VARCHAR(17) = REPLACE(REPLACE(REPLACE(CONVERT(VARCHAR(20), GETDATE(), 120), '':'', ''''), '' '', ''_''), ''-'', ''_'')
+	DECLARE @output_file_full_path_p VARCHAR(1000) = REPLACE(''' + @output_file_full_path + ''', ''#TIMESTAMP#'', @time_stamp)
+
+	DECLARE @job_desc VARCHAR(1000)
+	SELECT @job_desc = description
+	FROM msdb.dbo.sysjobs
+	WHERE name = ''$(ESCAPE_SQUOTE(JOBNAME))'';
+
+	--append step run timestamp on job description which will be extracted on step2 for filename
+	SET @job_desc = REPLACE(@job_desc, ''#TIMESTAMP#'', @time_stamp)
+
+	-- update the job description with fullfile path so that step 2 can use exactly same fullfile path name
+	EXEC msdb.dbo.sp_update_job @job_name = ''$(ESCAPE_SQUOTE(JOBNAME))''
+		, @description = @job_desc;
+
+	EXEC spa_export_RDL @report_RDL_name =''' +  @report_RDL_name + ''', @parameters =''' +  @report_param + ''', @OutputFileFormat = ''' + @output_file_format + ''', @output_filename = @output_file_full_path_p, @process_id ='''+ @process_id + ''', @paramset_hash=''' + ISNULL(@paramset_hash, '') + ''''
 	
 	IF @custom_xml_format = 1 
 	BEGIN
