@@ -217,7 +217,7 @@ BEGIN
 
 	IF EXISTS(SELECT 1 
 				FROM #date_subs	ds
-					INNER JOIN lock_as_of_date ld ON ld.close_date = ds.close_date
+					INNER JOIN lock_as_of_date ld ON  ds.close_date <= ld.close_date
 				WHERE ISNULL(ld.sub_ids, 0) = CASE WHEN ld.sub_ids IS NULL THEN  0
 												ELSE 
 													CASE WHEN NULLIF(@sub_ids,'NULL' ) IS NULL  
