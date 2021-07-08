@@ -296,7 +296,8 @@ BEGIN
 END
 
 --set timestamp part on messaging on step2
-SET @report_param_success = '	
+SET @report_param_success = '
+	/* getting timstamp part -start */	
 	DECLARE @time_stamp VARCHAR(17)
 	DECLARE @job_desc VARCHAR(1000)
 
@@ -310,6 +311,7 @@ SET @report_param_success = '
 
 	DECLARE @output_file_full_path_p VARCHAR(1000) = REPLACE(''' + @output_file_full_path + ''', ''#TIMESTAMP#'', @time_stamp)
 	DECLARE @desc_success_p VARCHAR(1000) = REPLACE(''' + @desc_success + ''', ''#TIMESTAMP#'', @time_stamp)
+	/* getting timstamp part -end */
 '
 
 --(File generation including compression for csv, xml and txt is handled by spa_dump_csv in spa_message_board)
@@ -330,11 +332,46 @@ BEGIN
 
 		SET @report_param_success += '
 		DECLARE @final_output_full_file_path_p VARCHAR(1000) = REPLACE(''' + @final_output_full_file_path + ''', ''#TIMESTAMP#'', @time_stamp)
-		EXEC spa_compress_file @final_output_full_file_path_p,  @output_file_full_path_p
+		EXEC spa_compress_file @final_output_full_file_path_p, @output_file_full_path_p
 		GO
-		Declare @output_msg nvarchar(1024)
+		DECLARE @output_msg nvarchar(1024)
+
+		--since after GO statement variables are not in scope
+		/* getting timstamp part -start */
+		DECLARE @time_stamp VARCHAR(17)
+		DECLARE @job_desc VARCHAR(1000)
+
+		--grab timestamp of file path from job desc
+		SELECT @job_desc = description
+		FROM msdb.dbo.sysjobs
+		WHERE name = ''$(ESCAPE_SQUOTE(JOBNAME))'';
+
+		SELECT @time_stamp = REPLACE(spt.clm2, ''TimeStamp: '', '''')
+		FROM dbo.FNASplitAndTranspose(@job_desc, CHAR(13)) spt
+
+		DECLARE @output_file_full_path_p VARCHAR(1000) = REPLACE(''' + @output_file_full_path + ''', ''#TIMESTAMP#'', @time_stamp)
+		DECLARE @desc_success_p VARCHAR(1000) = REPLACE(''' + @desc_success + ''', ''#TIMESTAMP#'', @time_stamp)
+		/* getting timstamp part -end */
+
 		EXEC spa_delete_file @output_file_full_path_p, @output_msg OUTPUT 
 		GO 
+
+		--since after GO statement variables are not in scope
+		/* getting timstamp part -start */
+		DECLARE @time_stamp VARCHAR(17)
+		DECLARE @job_desc VARCHAR(1000)
+
+		--grab timestamp of file path from job desc
+		SELECT @job_desc = description
+		FROM msdb.dbo.sysjobs
+		WHERE name = ''$(ESCAPE_SQUOTE(JOBNAME))'';
+
+		SELECT @time_stamp = REPLACE(spt.clm2, ''TimeStamp: '', '''')
+		FROM dbo.FNASplitAndTranspose(@job_desc, CHAR(13)) spt
+
+		DECLARE @output_file_full_path_p VARCHAR(1000) = REPLACE(''' + @output_file_full_path + ''', ''#TIMESTAMP#'', @time_stamp)
+		DECLARE @desc_success_p VARCHAR(1000) = REPLACE(''' + @desc_success + ''', ''#TIMESTAMP#'', @time_stamp)
+		/* getting timstamp part -end */
 		'
 	END
 
@@ -392,7 +429,14 @@ BEGIN
 	WHERE name = ''$(ESCAPE_SQUOTE(JOBNAME))'';
 
 	--append step run timestamp on job description which will be extracted on step2 for filename
-	SET @job_desc = REPLACE(@job_desc, ''#TIMESTAMP#'', @time_stamp)
+	IF CHARINDEX(''#TIMESTAMP#'', @job_desc) <> -1 --first time run of job will have pattern on job description
+	BEGIN
+		SET @job_desc = REPLACE(@job_desc, ''#TIMESTAMP#'', @time_stamp)
+	END
+	ELSE
+	BEGIN --other than first time run will already have timestamp on job description so replace that timestamp value with new one
+		SET @job_desc = STUFF(@job_desc, CHARINDEX(''TimeStamp: '', @job_desc), 28, ''TimeStamp: '' + @time_stamp)		
+	END
 
 	-- update the job description with fullfile path so that step 2 can use exactly same fullfile path name
 	EXEC msdb.dbo.sp_update_job @job_name = ''$(ESCAPE_SQUOTE(JOBNAME))''
