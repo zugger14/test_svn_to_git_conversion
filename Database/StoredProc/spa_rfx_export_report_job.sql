@@ -429,7 +429,7 @@ BEGIN
 	WHERE name = ''$(ESCAPE_SQUOTE(JOBNAME))'';
 
 	--append step run timestamp on job description which will be extracted on step2 for filename
-	IF CHARINDEX(''#TIMESTAMP#'', @job_desc) <> -1 --first time run of job will have pattern on job description
+	IF CHARINDEX(''#TIMESTAMP#'', @job_desc) > 0 --first time run of job will have pattern on job description
 	BEGIN
 		SET @job_desc = REPLACE(@job_desc, ''#TIMESTAMP#'', @time_stamp)
 	END
