@@ -188,6 +188,15 @@ DECLARE @report_param_success       	VARCHAR(MAX) = '',
 		@elapsed_time_msg			VARCHAR(1000),
         @xml_format 				INT = NULL
 
+--take information from batch table
+SELECT TOP 1 @compress_file = bpn.compress_file
+	, @xml_format = bpn.xml_format
+	, @export_web_services_id = export_web_services_id
+	, @holiday_calendar_id = holiday_calendar_id
+FROM   batch_process_notifications bpn
+LEFT JOIN application_role_user aru ON  bpn.role_id = aru.role_Id
+WHERE  bpn.process_id = RIGHT(@process_id, 13)
+
 --store destination path to create final report file 
 
 SELECT @output_file_full_path = CASE WHEN @report_export_custom_dir IS NULL THEN @report_file_full_path 
@@ -239,14 +248,6 @@ SET @trimmed_report_name = REPLACE(
 								REPLACE(@report_file_name, '_' + @user_name, '')
 								, '.' + @export_extension, '')
 SET @trimmed_report_name = ISNULL(@trimmed_report_name, @proc_desc)
-
-SELECT TOP 1 @compress_file = bpn.compress_file
-	, @xml_format = bpn.xml_format
-	, @export_web_services_id = export_web_services_id
-	, @holiday_calendar_id = holiday_calendar_id
-FROM   batch_process_notifications bpn
-	LEFT JOIN application_role_user aru ON  bpn.role_id = aru.role_Id
-WHERE  bpn.process_id = RIGHT(@process_id, 13)
 
 DECLARE @ext VARCHAR(5)
 
