@@ -61,7 +61,7 @@ BEGIN TRY
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'Margin Summary Report' [name], 'dev_admin' [owner], 0 is_system, 1 is_excel, 0 is_mobile, '8319E961_79AA_4AF0_BB9E_09E834DB6D05' report_hash, 'Margin Summary Report' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'Margin Summary Report' [name], 'dev_admin' [owner], 1 is_system, 1 is_excel, 0 is_mobile, '8319E961_79AA_4AF0_BB9E_09E834DB6D05' report_hash, 'Margin Summary Report' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'MTM' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
@@ -78,7 +78,7 @@ BEGIN TRY
 		
 
 	INSERT INTO report_page(report_id, [name], report_hash, width, height)
-	SELECT @report_id_dest AS report_id, 'Margin Summary Report' [name], '4BF31021_A2A6_4A6A_A55E_8C94AACB823E' report_hash, 11.5 width,5.5 height
+	SELECT @report_id_dest AS report_id, 'Margin Summary Report' [name], '8319E961_79AA_4AF0_BB9E_09E834DB6D05' report_hash, 11.5 width,5.5 height
 	
 
 		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
