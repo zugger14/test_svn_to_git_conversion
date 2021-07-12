@@ -49,7 +49,8 @@ namespace FARRMSImportCLR
                 clrImportInfo.ProcessID = processId;
 
                 //using (SqlConnection cn = new SqlConnection(@"Data Source=PSDL20\INSTANCE2016;Initial Catalog=TRMTracker_Release;Persist Security Info=True;User ID=sa;password=pioneer"))
-                using (SqlConnection cn = new SqlConnection("Context Connection=true"))
+                 using (SqlConnection cn = new SqlConnection("Context Connection=true"))
+                //using (SqlConnection cn = new SqlConnection("Data Source=EU-D-SQL01.farrms.us,2033;Initial Catalog=TRMTracker_Enercity;Persist Security Info=True;User ID=Dev_Admin;password=Admin2929"))
                 {
                     try
                     {

@@ -42,6 +42,8 @@ namespace FARRMSImportCLR
                     return new EPEXRetrieveMarketResultsForImporter("DayAhead");
                 case "LikronImporter":
                     return new LikronImporter();
+                case "PrismaImporter":
+                    return new PrismaImporter();
                 default:
                     throw new InvalidOperationException(String.Format("Class {0} not found", clrImportInfo.MethodName));
             }

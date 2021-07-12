@@ -83,6 +83,7 @@
     <Compile Include="PowerfactorMntlyVolsImporter.cs" />
     <Compile Include="PowerTrackMntlyVolsImporter.cs" />
     <Compile Include="TreasuryImporter.cs" />
+    <Compile Include="PrismaImporter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FAARMSFileTransferService\FAARMSFileTransferService.csproj">

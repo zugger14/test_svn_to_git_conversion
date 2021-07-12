@@ -24,7 +24,7 @@ namespace FARRMSImportCLR
                 //TODO: load ImportWebServiceInfo
                 this.WebServiceInfo  = new ImportWebServiceInfo();
                 using (SqlConnection cn = new SqlConnection("Context Connection=true"))
-                //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
+                //using (SqlConnection cn = new SqlConnection("Data Source=EU-D-SQL01.farrms.us,2033;Initial Catalog=TRMTracker_Enercity;Persist Security Info=True;User ID=Dev_Admin;password=Admin2929"))
                 {
                     cn.Open();
 
@@ -43,7 +43,10 @@ namespace FARRMSImportCLR
                             WebServiceInfo.ClientId = rd["client_id"].ToString();
                             WebServiceInfo.ClientSecret = rd["client_secret"].ToString();
                             WebServiceInfo.CertificatePath = rd["certificate_path"].ToString();
-                            WebServiceInfo.PasswordUpdatedDate = DateTime.Parse(rd["password_updated_date"].ToString());
+                            if (rd["password_updated_date"].ToString() != "")
+                            {
+                                WebServiceInfo.PasswordUpdatedDate = DateTime.Parse(rd["password_updated_date"].ToString());
+                            }
                             rd.Close();
                         }
 
