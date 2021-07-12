@@ -377,13 +377,17 @@ BEGIN
 	END
 
 	SET @report_param_success += '	
-	EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name='''+@export_job_name+''', @process_id= ''' + @process_id + ''', @email_enable =''y'', @email_description=''' + @email_description + ''', @email_subject=''' + @email_subject + ''',@file_name = @output_file_full_path_p,@report_sp =' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ''
+	DECLARE @process_id_p VARCHAR(100) = dbo.FNAGetNewID()
+	DECLARE @job_name_p VARCHAR(1000) = ''' + @export_job_name + ''' + ''_'' + @process_id_p + ''_' + @batch_unique_id + '''
+	EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name = @job_name_p, @process_id = @process_id_p, @email_enable =''y'', @email_description=''' + @email_description + ''', @email_subject=''' + @email_subject + ''',@file_name = @output_file_full_path_p,@report_sp =' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ''
 END
 ELSE
 BEGIN
 	IF @save_invoice <> 'y' 
 		SET @report_param_success += '
-		EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name= '''+@export_job_name+''', @process_id= ''' + @process_id + ''', @email_enable =''y'', @email_description=''' + @email_description + ''',@report_sp =' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ',@file_name = @output_file_full_path_p, @email_subject=''' + @email_subject + ''', @is_aggregate = '+@is_aggregate_var+''
+		DECLARE @process_id_p VARCHAR(100) = dbo.FNAGetNewID()
+		DECLARE @job_name_p VARCHAR(1000) = ''' + @export_job_name + ''' + ''_'' + @process_id_p + ''_' + @batch_unique_id + '''
+		EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name = @job_name_p, @process_id = @process_id_p, @email_enable =''y'', @email_description=''' + @email_description + ''',@report_sp =' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ',@file_name = @output_file_full_path_p, @email_subject=''' + @email_subject + ''', @is_aggregate = '+@is_aggregate_var+''
 END
 
 SET @elapsed_time_msg = '
