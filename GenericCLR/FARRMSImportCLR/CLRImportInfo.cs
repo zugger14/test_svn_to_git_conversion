@@ -43,7 +43,10 @@ namespace FARRMSImportCLR
                             WebServiceInfo.ClientId = rd["client_id"].ToString();
                             WebServiceInfo.ClientSecret = rd["client_secret"].ToString();
                             WebServiceInfo.CertificatePath = rd["certificate_path"].ToString();
-                            WebServiceInfo.PasswordUpdatedDate = DateTime.Parse(rd["password_updated_date"].ToString());
+                            if (rd["password_updated_date"].ToString() != "")
+                            {
+                                WebServiceInfo.PasswordUpdatedDate = DateTime.Parse(rd["password_updated_date"].ToString());
+                            }
                             rd.Close();
                         }
 
