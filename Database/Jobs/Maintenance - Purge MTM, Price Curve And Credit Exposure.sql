@@ -7,7 +7,7 @@ DECLARE @job_name NVARCHAR(250) = @job_db_name + N' - ' + @job_category + ' - Pu
 DECLARE @command1 NVARCHAR(4000) = N'
 	DECLARE @as_of_date AS DATETIME = NULL
 
-	EXEC spa_purge_MTM_credit_price_data @as_of_date
+	EXEC spa_purge_MTM_credit_price_curve_data @as_of_date
 
 '
 
