@@ -123,11 +123,11 @@ BEGIN TRY
 	@retention_date - 1 to get previous date of @retention_date 
 	*/
 	DECLARE @lock_as_of_date DATETIME = DATEADD(day,-1,@retention_date)
-	/*delete date if already exists*/
 
-		DELETE FROM lock_as_of_date where close_date = @lock_as_of_date 
+	/*delete all data from table*/
+		DELETE FROM lock_as_of_date 
 
-	/*insert*/
+	/*insert new lock_as_of_date*/
 		INSERT INTO lock_as_of_date(close_date)
 		SELECT @lock_as_of_date
 	
