@@ -26,9 +26,27 @@ namespace FARRMSImportCLR
                 string processTable = "adiha_process.dbo.prisma_import_" + clrImportInfo.ProcessID;
                 ImportStatus importStatus = new ImportStatus();
                 var responseString = "";
-                    string auctionId = clrImportInfo.Params[0].paramValue;
-                    string bookedAt =  clrImportInfo.Params[1].paramValue;
-                    string bookedSince = (clrImportInfo.Params[2].paramValue != "") ? System.Convert.ToDateTime(clrImportInfo.Params[2].paramValue).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + ".000Z" : "";
+                    string auctionId =  clrImportInfo.Params[0].paramValue;
+                    if (auctionId == "null"){
+                        auctionId = "";
+                      }
+                    string bookedAt =   clrImportInfo.Params[1].paramValue;
+                        if (bookedAt == "null")
+                        {
+                            bookedAt = "";
+                        }
+                    string bookedSince = clrImportInfo.Params[2].paramValue;
+                        if (bookedSince == "null")
+                        {
+                             bookedSince = "";
+                        }
+                    string bookedBefore = clrImportInfo.Params[3].paramValue;
+                        if (bookedBefore == "null")
+                        {
+                            bookedBefore = "";
+                        }
+                    bookedSince = (bookedSince != "") ? System.Convert.ToDateTime(bookedSince).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + ".000Z" : "";
+                    bookedBefore = (bookedBefore != "") ? System.Convert.ToDateTime(bookedBefore).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + ".000Z" : "";
                     clrImportInfo.WebServiceInfo.WebServiceURL = (bookedAt != "") ? clrImportInfo.WebServiceInfo.WebServiceURL + "?bookedAt=" + bookedAt : clrImportInfo.WebServiceInfo.WebServiceURL;
                   
                     if (!string.IsNullOrEmpty(bookedAt)){
@@ -36,14 +54,20 @@ namespace FARRMSImportCLR
                     } else {
                         clrImportInfo.WebServiceInfo.WebServiceURL = (auctionId != "") ? clrImportInfo.WebServiceInfo.WebServiceURL + "?auctionId=" + auctionId : clrImportInfo.WebServiceInfo.WebServiceURL;
                     }
-
                     if (!string.IsNullOrEmpty(bookedAt) || !string.IsNullOrEmpty(auctionId)){
                         clrImportInfo.WebServiceInfo.WebServiceURL = (bookedSince != "") ? clrImportInfo.WebServiceInfo.WebServiceURL + "&bookedSince=" + bookedSince : clrImportInfo.WebServiceInfo.WebServiceURL;
                     } else {
                         clrImportInfo.WebServiceInfo.WebServiceURL = (bookedSince != "") ? clrImportInfo.WebServiceInfo.WebServiceURL + "?bookedSince=" + bookedSince : clrImportInfo.WebServiceInfo.WebServiceURL;
                     }
-
-                try
+                    if (!string.IsNullOrEmpty(bookedAt) || !string.IsNullOrEmpty(auctionId)|| !string.IsNullOrEmpty(bookedSince))
+                    {
+                        clrImportInfo.WebServiceInfo.WebServiceURL = (bookedBefore != "") ? clrImportInfo.WebServiceInfo.WebServiceURL + "&bookedBefore=" + bookedBefore : clrImportInfo.WebServiceInfo.WebServiceURL;
+                    }
+                    else
+                    {
+                        clrImportInfo.WebServiceInfo.WebServiceURL = (bookedBefore != "") ? clrImportInfo.WebServiceInfo.WebServiceURL + "?bookedBefore=" + bookedBefore : clrImportInfo.WebServiceInfo.WebServiceURL;
+                    }
+                    try
                     {
                     string credentialsValue = Convert.ToBase64String(Encoding.Default.GetBytes(clrImportInfo.WebServiceInfo.UserName + ":" + clrImportInfo.WebServiceInfo.Password));
                     //Proper Secure Sockets Layer (SSL) or Transport Layer Security (TLS) protocol to use for new connections 
@@ -76,31 +100,27 @@ namespace FARRMSImportCLR
                
                 string dataSourceAlias = "prisma_interface";
                 string processTableName = "";
-                processTableName = "adiha_process.dbo.temp_import_data_" + dataSourceAlias + "_" + clrImportInfo.ProcessID;
+                processTableName = "adiha_process.dbo.prisma_data_json_" + dataSourceAlias + "_" + clrImportInfo.ProcessID;
 
                 //using (SqlConnection cn = new SqlConnection("Data Source=EU-D-SQL01.farrms.us,2033;Initial Catalog=TRMTracker_Enercity;Persist Security Info=True;User ID=Dev_Admin;password=Admin2929"))
                 using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                 //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                 {
                     cn.Open();
-                    SqlCommand insertCmd = new SqlCommand("Select '" + responseString + "' as response into " + processTableName, cn);
-                    insertCmd.ExecuteReader();
-                    cn.Close();
-                }
-
-                //using (SqlConnection cn = new SqlConnection("Data Source=EU-D-SQL01.farrms.us,2033;Initial Catalog=TRMTracker_Enercity;Persist Security Info=True;User ID=Dev_Admin;password=Admin2929"))
-                    using (SqlConnection cn = new SqlConnection("Context Connection=true"))
+                    using (SqlCommand insertCmd = new SqlCommand("Select '" + responseString + "' as response into " + processTableName, cn))
                     {
-                        using (SqlCommand cmd = new SqlCommand("spa_prisma_interface", cn))
-                        {
-                            cmd.CommandType = CommandType.StoredProcedure;
-                            cmd.Parameters.AddWithValue("flag", "prisma");
-                            cmd.Parameters.AddWithValue("process_id", clrImportInfo.ProcessID);
-                            cn.Open();
-                            cmd.ExecuteNonQuery();
-                            cn.Close();
-                        }
+                        insertCmd.ExecuteNonQuery();
                     }
+                    //using (SqlConnection cn = new SqlConnection("Data Source=EU-D-SQL01.farrms.us,2033;Initial Catalog=TRMTracker_Enercity;Persist Security Info=True;User ID=Dev_Admin;password=Admin2929"))
+                    using (SqlCommand cmd = new SqlCommand("spa_prisma_interface", cn))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("flag", "prisma");
+                        cmd.Parameters.AddWithValue("response_data", responseString);
+                        cmd.Parameters.AddWithValue("process_id", clrImportInfo.ProcessID);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
                    
                 importStatus.Status = (statusResult == "Success") ? "Success" : "Failed";
                     importStatus.ProcessTableName = processTable;
