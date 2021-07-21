@@ -684,7 +684,6 @@ namespace FAARMSFileTransferService
                         _sftpClient.CreateDirectory(dirName);
                 }
 
-
                 //  Change current working directory
                 _sftpClient.ChangeDirectory(this.FileTransferEndpoint.WorkingDirectory);
                 foreach (string file in arrFiles)
@@ -693,8 +692,13 @@ namespace FAARMSFileTransferService
                     //  Move
                     try
                     {
-                        if (_sftpClient.Exists(_targetRemoteDirectory + "/" + file))
-                            _sftpClient.DeleteFile( _targetRemoteDirectory + "/" + file);
+                        // Check if source file exists before deleting from destination if already exists in destination.
+                        if (_sftpClient.Exists(file)) 
+                        {
+                            if (_sftpClient.Exists(_targetRemoteDirectory + "/" + file))
+                                _sftpClient.DeleteFile(_targetRemoteDirectory + "/" + file);
+                           
+                        }
                         _sftpClient.RenameFile(file, _targetRemoteDirectory + "/" + file);
                     }
                     catch (Exception ex)
