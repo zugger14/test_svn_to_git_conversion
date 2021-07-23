@@ -87,8 +87,6 @@ WHERE gmh.mapping_name = ''Retail Power Delta Volume''
 	and gmv.clm1_value = 112701
 	and gmv.mapping_table_id = @mapping_table_id
 
--- select * from static_data_value where value_id = 112701
--- select * from #generic_mapping_values
 
 IF OBJECT_ID(N''tempdb..#deal_max_term'') IS NOT NULL
 	DROP TABLE #deal_max_term
@@ -121,7 +119,7 @@ INNER JOIN source_deal_detail sdd
 	ON sdd.source_deal_header_id = sdh.source_deal_header_id 
 WHERE 1 = 1
 	AND gmv.source_profile1 IS NOT NULL
-	--AND sdh.deal_reference_type_id IN (12500, 12503)
+	AND sdh.deal_reference_type_id IN (12500, 12503)
 	AND sdd.location_id = gmv.location_id
 	AND (gmv.main_profile IS NULL OR
 		(gmv.main_profile IS NOT NULL 
@@ -129,15 +127,12 @@ WHERE 1 = 1
 		)
 GROUP BY sdh.source_deal_header_id, gmv.location_id, fp.external_id
 
--- select * from static_data_value where value_id in (12500, 12503)
 
 IF OBJECT_ID(N''tempdb..#collect_profiles'') IS NOT NULL
 	DROP TABLE #collect_profiles
 SELECT MIN(a.Term) term_start, MAX(a.Term) term_end, max(fp.external_id) main_profile, max(fp2.external_id) source_profile1
 	, MAX(gmv.dest_buy_profile) [dest_buy_profile], MAX(gmv.dest_sell_profile) [dest_sell_profile]
 INTO #collect_profiles
---  select * from [temp_process_table]_calc  select * from forecast_profile where external_id = ''Source_RETAIL_ST_ID-AUC_FC-CONS_01_Tennet''
--- select * from #collect_profiles
 FROM #generic_mapping_values gmv
 LEFT JOIN forecast_profile fp
 	ON gmv.main_profile = fp.profile_id
@@ -187,6 +182,8 @@ INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal
 	AND ((sdd.term_start >= dmt.term_start or dmt.term_start between sdd.term_start and sdd.term_end)
 		AND (sdd.term_end <= dmt.term_end or dmt.term_end between sdd.term_start and sdd.term_end))
 WHERE dmt.location_id = sdd.location_id
+AND ISNULL(sdd.profile_id, -1) <> dmt.dest_buy_profile
+AND ISNULL(sdd.profile_id, -1) <> dmt.dest_sell_profile
 CREATE INDEX indx_collect_deals_ps ON #collect_deals(source_deal_header_id, term_start, term_end)
 
 DECLARE @dst_group_value_id INT
@@ -226,9 +223,6 @@ SELECT clm_name, is_dst, REPLACE(alias_name,''DST'','''') [user_clm],
 INTO #temp_hour_breakdown
 FROM dbo.[FNAGetDisplacedPivotGranularityColumn](@min_term,@max_term,987,@dst_group_value_id,0)
 
--- select * from #collect_profiles
--- select * from #collect_deals
--- select * from #temp_hour_breakdown
 
 DROP TABLE IF EXISTS #temp_position
 SELECT DISTINCT rs.term_start [Term]
@@ -324,7 +318,6 @@ INTO #temp_position
 ) rs
 GROUP BY rs.source_profile1, rs.term_start, rs.hr, rs.period, rs.is_dst
 
-
 UPDATE tp
 SET position = (tp.position - (tpd.position))
 FROM #temp_position tp
@@ -354,8 +347,9 @@ OUTER APPLY (
 	AND CAST(RIGHT(thb.process_clm,2) AS INT) = tp.period
 ) hb  
 
+
 UPDATE a
-SET [Volume] = CAST((a.Volume + tp.position) AS NUMERIC(38, 20))
+SET [Volume] = CAST((a.Volume - tp.position) AS NUMERIC(38, 20))--*4
 FROM [temp_process_table]_calc a
 INNER JOIN #temp_position tp
 	ON (a.[profile Name] = tp.main_profile
@@ -368,7 +362,6 @@ LEFT JOIN forecast_profile fp_buy
 	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-
 
 INSERT INTO [temp_process_table](
     	[Profile Name]
@@ -528,8 +521,6 @@ WHERE gmh.mapping_name = ''Retail Power Delta Volume''
 	and gmv.clm1_value = 112701
 	and gmv.mapping_table_id = @mapping_table_id
 
--- select * from static_data_value where value_id = 112701
--- select * from #generic_mapping_values
 
 IF OBJECT_ID(N''tempdb..#deal_max_term'') IS NOT NULL
 	DROP TABLE #deal_max_term
@@ -562,7 +553,7 @@ INNER JOIN source_deal_detail sdd
 	ON sdd.source_deal_header_id = sdh.source_deal_header_id 
 WHERE 1 = 1
 	AND gmv.source_profile1 IS NOT NULL
-	--AND sdh.deal_reference_type_id IN (12500, 12503)
+	AND sdh.deal_reference_type_id IN (12500, 12503)
 	AND sdd.location_id = gmv.location_id
 	AND (gmv.main_profile IS NULL OR
 		(gmv.main_profile IS NOT NULL 
@@ -570,15 +561,12 @@ WHERE 1 = 1
 		)
 GROUP BY sdh.source_deal_header_id, gmv.location_id, fp.external_id
 
--- select * from static_data_value where value_id in (12500, 12503)
 
 IF OBJECT_ID(N''tempdb..#collect_profiles'') IS NOT NULL
 	DROP TABLE #collect_profiles
 SELECT MIN(a.Term) term_start, MAX(a.Term) term_end, max(fp.external_id) main_profile, max(fp2.external_id) source_profile1
 	, MAX(gmv.dest_buy_profile) [dest_buy_profile], MAX(gmv.dest_sell_profile) [dest_sell_profile]
 INTO #collect_profiles
---  select * from [temp_process_table]_calc  select * from forecast_profile where external_id = ''Source_RETAIL_ST_ID-AUC_FC-CONS_01_Tennet''
--- select * from #collect_profiles
 FROM #generic_mapping_values gmv
 LEFT JOIN forecast_profile fp
 	ON gmv.main_profile = fp.profile_id
@@ -628,6 +616,8 @@ INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal
 	AND ((sdd.term_start >= dmt.term_start or dmt.term_start between sdd.term_start and sdd.term_end)
 		AND (sdd.term_end <= dmt.term_end or dmt.term_end between sdd.term_start and sdd.term_end))
 WHERE dmt.location_id = sdd.location_id
+AND ISNULL(sdd.profile_id, -1) <> dmt.dest_buy_profile
+AND ISNULL(sdd.profile_id, -1) <> dmt.dest_sell_profile
 CREATE INDEX indx_collect_deals_ps ON #collect_deals(source_deal_header_id, term_start, term_end)
 
 DECLARE @dst_group_value_id INT
@@ -667,9 +657,6 @@ SELECT clm_name, is_dst, REPLACE(alias_name,''DST'','''') [user_clm],
 INTO #temp_hour_breakdown
 FROM dbo.[FNAGetDisplacedPivotGranularityColumn](@min_term,@max_term,987,@dst_group_value_id,0)
 
--- select * from #collect_profiles
--- select * from #collect_deals
--- select * from #temp_hour_breakdown
 
 DROP TABLE IF EXISTS #temp_position
 SELECT DISTINCT rs.term_start [Term]
@@ -765,7 +752,6 @@ INTO #temp_position
 ) rs
 GROUP BY rs.source_profile1, rs.term_start, rs.hr, rs.period, rs.is_dst
 
-
 UPDATE tp
 SET position = (tp.position - (tpd.position))
 FROM #temp_position tp
@@ -795,8 +781,9 @@ OUTER APPLY (
 	AND CAST(RIGHT(thb.process_clm,2) AS INT) = tp.period
 ) hb  
 
+
 UPDATE a
-SET [Volume] = CAST((a.Volume + tp.position) AS NUMERIC(38, 20))
+SET [Volume] = CAST((a.Volume - tp.position) AS NUMERIC(38, 20))--*4
 FROM [temp_process_table]_calc a
 INNER JOIN #temp_position tp
 	ON (a.[profile Name] = tp.main_profile
@@ -809,7 +796,6 @@ LEFT JOIN forecast_profile fp_buy
 	ON tp.dest_buy_profile = fp_buy.profile_id
 LEFT JOIN forecast_profile fp_sell
 	ON tp.dest_sell_profile = fp_sell.profile_id
-
 
 INSERT INTO [temp_process_table](
     	[Profile Name]
@@ -924,7 +910,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity_Test\temp_Note\0',
+						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
 						   NULL,
 						   ';',
 						   2,
