@@ -64,6 +64,8 @@ DECLARE @_field VARCHAR(1000)
 
 DECLARE @_sql VARCHAR(5000)
 
+DECLARE @_delete CHAR(1)
+
 SET @_user_login_id = dbo.FNADBUser()   
 
 IF ''@sub_id'' <> ''NULL''
@@ -103,6 +105,15 @@ IF ''@field'' <> ''NULL''
 	SET @_field = ''@field''
 
 SET @_process_id = dbo.FNAGetNewID()
+
+IF @_user_action = ''delete''
+BEGIN
+	SET @_delete = ''y''
+END
+ELSE 
+BEGIN
+	SET @_delete = ''n''
+END
 
 EXEC spa_Create_Deal_Audit_Report ''c'',
 
@@ -182,7 +193,7 @@ EXEC spa_Create_Deal_Audit_Report ''c'',
 
 	NULL,
 
-	''n'',
+	@_delete,
 
 	@_process_id
 
@@ -1006,4 +1017,3 @@ COMMIT TRAN
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
-	
