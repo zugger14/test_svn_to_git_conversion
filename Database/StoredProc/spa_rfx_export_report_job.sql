@@ -262,7 +262,9 @@ WHERE rp.paramset_hash = @paramset_hash
 
 IF @export_web_services_id IS NOT NULL
 BEGIN
-    SELECT @report_executable_sp = [dbo].[FNABuildRfxQueryFromReportParameter]((ISNULL(@report_item_ids, '') + @report_param), @process_id, 'y')
+   --SELECT @report_executable_sp = [dbo].[FNABuildRfxQueryFromReportParameter]((ISNULL(@report_item_ids, '') + @report_param), @process_id, 'y')
+   -- ADDED Placeholder for process_id as #EXPORT_PROCESS_ID# to fix the issue of break in webservice while separate message on message board for each report batch scheduled job run
+   SELECT @report_executable_sp = [dbo].[FNABuildRfxQueryFromReportParameter]((ISNULL(@report_item_ids, '') + @report_param), '#EXPORT_PROCESS_ID#', 'y')
 END
 ELSE
 BEGIN
@@ -376,18 +378,29 @@ BEGIN
 		'
 	END
 
+	-- New id is added in process id in order to support new job name with new messages
+	-- Added @batch_unique_id into new proces id, in order keep identified the data row in batch_process_notifications where process_id is fetched as RIGHT(@process_id,13), used for Notification
 	SET @report_param_success += '	
-	DECLARE @process_id_p VARCHAR(100) = ''' + @process_id + ''' --dbo.FNAGetNewID()
-	DECLARE @job_name_p VARCHAR(1000) = ''' + @export_job_name + ''' -- + ''_'' + @process_id_p + ''_' + @batch_unique_id + '''
-	EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name = @job_name_p, @process_id = @process_id_p, @email_enable =''y'', @email_description=''' + @email_description + ''', @email_subject=''' + @email_subject + ''',@file_name = @output_file_full_path_p,@report_sp =' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ''
+	DECLARE @process_id_p VARCHAR(100) = dbo.FNAGetNewID() + ''' + '_' + @batch_unique_id + ''' 
+
+	UPDATE message_board SET process_id = @process_id_p  WHERE process_id = '''+@process_id+'''
+
+	DECLARE @job_name_p VARCHAR(1000) = ''' + @export_job_name + ''' + ''_'' + @process_id_p
+	DECLARE @report_sp_p VARCHAR(1000) = ' + CASE WHEN @report_executable_sp IS NOT NULL THEN 'REPLACE(''' + REPLACE(@report_executable_sp, '''','''''') + ''',''#EXPORT_PROCESS_ID#'',@process_id_p)' ELSE 'NULL' END + '
+	
+	EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name = @job_name_p, @process_id = @process_id_p, @email_enable =''y'', @email_description=''' + @email_description + ''', @email_subject=''' + @email_subject + ''',@file_name = @output_file_full_path_p,@report_sp =@report_sp_p'
 END
 ELSE
 BEGIN
 	IF @save_invoice <> 'y' 
 		SET @report_param_success += '
-		DECLARE @process_id_p VARCHAR(100) = ''' + @process_id + ''' --dbo.FNAGetNewID()
-		DECLARE @job_name_p VARCHAR(1000) = ''' + @export_job_name + ''' -- + ''_'' + @process_id_p + ''_' + @batch_unique_id + '''
-		EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name = @job_name_p, @process_id = @process_id_p, @email_enable =''y'', @email_description=''' + @email_description + ''',@report_sp =' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ',@file_name = @output_file_full_path_p, @email_subject=''' + @email_subject + ''', @is_aggregate = '+@is_aggregate_var+''
+		DECLARE @process_id_p VARCHAR(100) = dbo.FNAGetNewID() + ''' + '_' + @batch_unique_id + ''' 
+		
+		UPDATE message_board SET process_id = @process_id_p  WHERE process_id = '''+@process_id+'''
+
+		DECLARE @job_name_p VARCHAR(1000) = ''' + @export_job_name + ''' + ''_'' + @process_id_p
+		DECLARE @report_sp_p VARCHAR(1000) = ' + CASE WHEN @report_executable_sp IS NOT NULL THEN 'REPLACE(''' + REPLACE(@report_executable_sp, '''','''''') + ''',''#EXPORT_PROCESS_ID#'',@process_id_p)' ELSE 'NULL' END + '
+		EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name = @job_name_p, @process_id = @process_id_p, @email_enable =''y'', @email_description=''' + @email_description + ''',@report_sp =@report_sp_p,@file_name = @output_file_full_path_p, @email_subject=''' + @email_subject + ''', @is_aggregate = '+@is_aggregate_var+''
 END
 
 SET @elapsed_time_msg = '
@@ -451,7 +464,7 @@ BEGIN
 	
 	IF @custom_xml_format = 1 
 	BEGIN
-		SET @export_sql_cmd =  'EXEC ' + @db_name + '.dbo.spa_message_board ''u'', ''' + @user_name + ''', NULL, ''' + @proc_desc  + ''', ''' + @desc_success + ''', '''', '''', ''s'', '''+ @export_job_name+''',NULL, ''' + @process_id + ''',NULL,NULL,NULL,''y'',''' + @email_description + ''',' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ',NULL,NULL,NULL,NULL,NULL,NULL,''' + @email_subject + ''', '+@is_aggregate_var+',NULL,' + CASE WHEN @invoice_file_name IS NOT NULL THEN '''' + @invoice_file_name + '''' ELSE 'NULL' END 	 		
+		SET @export_sql_cmd =  'EXEC ' + @db_name + '.dbo.spa_message_board ''u'', ''' + @user_name + ''', NULL, ''' + @proc_desc  + ''', ''' + @desc_success + ''', '''', '''', ''s'', '''+ @export_job_name+''',NULL, ''' + @process_id + ''',NULL,NULL,NULL,''y'',''' + @email_description + ''',' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(REPLACE(@report_executable_sp, '''',''''''),'#EXPORT_PROCESS_ID#', @process_id) + '''' ELSE 'NULL' END + ',NULL,NULL,NULL,NULL,NULL,NULL,''' + @email_subject + ''', '+@is_aggregate_var+',NULL,' + CASE WHEN @invoice_file_name IS NOT NULL THEN '''' + @invoice_file_name + '''' ELSE 'NULL' END 	 		
 	END
 	
 	IF (@call_from_invoice = 'call_from_invoice')
@@ -477,7 +490,7 @@ BEGIN
 		BEGIN
 			IF @save_invoice <> 'y'	
 			SET @report_param_success += @elapsed_time_msg + '
-			EXEC ' + @db_name + '.dbo.spa_message_board ''u'', ''' + @user_name + ''', NULL, ''' + @proc_desc  + ''', @desc_success_with_time, '''', '''', ''s'', '''+ @export_job_name+''',NULL, ''' + @process_id + ''',NULL,NULL,NULL,''y'',''' + @email_description + ''',' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(@report_executable_sp, '''','''''') + '''' ELSE 'NULL' END + ',NULL,NULL,NULL,NULL,NULL,' + CASE WHEN @invoice_file_name IS NOT NULL THEN '''' + @invoice_file_name + '''' ELSE 'NULL' END + ',''' + @email_subject + ''', '+@is_aggregate_var+''	 		
+			EXEC ' + @db_name + '.dbo.spa_message_board ''u'', ''' + @user_name + ''', NULL, ''' + @proc_desc  + ''', @desc_success_with_time, '''', '''', ''s'', '''+ @export_job_name+''',NULL, ''' + @process_id + ''',NULL,NULL,NULL,''y'',''' + @email_description + ''',' + CASE WHEN @report_executable_sp IS NOT NULL THEN '''' + REPLACE(REPLACE(@report_executable_sp, '''',''''''),'#EXPORT_PROCESS_ID#', @process_id) + '''' ELSE 'NULL' END + ',NULL,NULL,NULL,NULL,NULL,' + CASE WHEN @invoice_file_name IS NOT NULL THEN '''' + @invoice_file_name + '''' ELSE 'NULL' END + ',''' + @email_subject + ''', '+@is_aggregate_var+''	 		
 
 		END
 	END
