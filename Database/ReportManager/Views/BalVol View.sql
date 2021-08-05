@@ -413,7 +413,7 @@ BEGIN
 				from #position_unpvt u 
 
 				INNER JOIN '' + @_fcpt + '' p ON u.term_start = p.prod_date
-
+					and p.location_id = u.location_id
 					and p.Hour = u.hour
 
 
