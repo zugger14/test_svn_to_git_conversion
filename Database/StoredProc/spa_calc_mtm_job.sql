@@ -167,8 +167,8 @@ declare	@sub_id varchar(1000),
 	,@ignore_deal_date BIT = 0
 	,@calc_settlement_adjustment BIT = 0
 	,@process_linear_options_delta CHAR(1) = NULL
-	,@look_term CHAR(1)='d'
-,@trigger_workflow NCHAR(1) =  'n'
+	,@look_term CHAR(1)='s'
+	,@trigger_workflow NCHAR(1) =  'n'
 	--,@batch_process_id	VARCHAR(120) = '212aaaaaaaaaaaaaaaaaa',
 	--@batch_report_param	varchar(5000) = NULL
 
@@ -184,7 +184,7 @@ SET @calc_explain_type ='p'
 
 select *  from source_deal_HEADER   where source_deal_header_id=104416
 select *  from source_deal_pnl_detail   where source_deal_header_id=1600
-select *  from source_deal_settlement   where source_deal_header_id=104416
+select *  from source_deal_settlement   where source_deal_header_id=104791
 select * from index_fees_breakdown   where source_deal_header_id=1600
 select * from index_fees_breakdown_settlement   where source_deal_header_id=145462
 delete index_fees_breakdown_settlement   where source_deal_header_id=1600
@@ -192,6 +192,7 @@ delete index_fees_breakdown_settlement   where source_deal_header_id=1600
 select *  from source_deal_pnl_breakdown   where source_deal_header_id=7876
 select *  from source_deal_pnl_detail   where source_deal_header_id=7876
 
+select *  from source_deal_settlement   where source_deal_header_id=104791
 
 
 */
@@ -203,8 +204,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =79742   ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2021-02-28' , --'2017-02-15',
+	@source_deal_header_id =510982   ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2021-08-02' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -221,9 +222,9 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2021-02-01' ,
-	@term_end = '2021-02-28' ,
-	@calc_type = 's',
+	@term_start = '2019-12-01' ,
+	@term_end = '2019-12-28' ,
+	@calc_type = 'm',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
 	@deal_list_table = null,
@@ -232,8 +233,6 @@ SELECT
 	@ref_id=null,
 	@process_linear_options_delta = NULL
 	,@look_term= 's' -- 'd'-> delivered term 's'-> settled term
-
-
 
 
 /*
@@ -268,8 +267,6 @@ select original_formula_currency, formula_Currency, contract_id, formula_id, *
 
 
 */
-
-
 
 --select * from deal_position_break_down where source_deal_header_id=36740
 --select * from #wght_curve_value
@@ -330,6 +327,8 @@ select original_formula_currency, formula_Currency, contract_id, formula_id, *
 -- select * from #calc_status
 -- select * from source_deal_settlement where source_deal_header_id = 1667
 -- select * from source_deal_settlement where source_deal_header_id = 1667
+
+
 
 /*
 
@@ -430,13 +429,13 @@ DECLARE @calc_price_change_at_tou_level varchar(1)
 set @calc_price_change_at_tou_level='n'
 SET @process_linear_options_delta = ISNULL(@process_linear_options_delta, 'y')
 SET @trigger_workflow = ISNULL(@trigger_workflow, 'y')
-declare @derive_on_calculation varchar(1),@CFD_id varchar(30)
+declare @derive_on_calculation varchar(1),@CFD_id varchar(30),@phy_future varchar(30)
 
 select @CFD_id=internal_deal_type_subtype_id from internal_deal_type_subtype_types where internal_deal_type_subtype_type='CFD'
 set @CFD_id=isnull(@CFD_id,'-1')
  -- exec spa_drop_all_temp_table
-
-
+ select @phy_future= internal_deal_type_subtype_id from internal_deal_type_subtype_types where internal_deal_type_subtype_type='Physical Future'
+set @phy_future=isnull(@phy_future,'-1')
 
 if OBJECT_ID('tempdb..#source_deal_pnl_detail_options') is not null drop table #source_deal_pnl_detail_options
 if OBJECT_ID('tempdb..#option_leg2') is not null drop table #option_leg2
@@ -535,7 +534,6 @@ if OBJECT_ID('tempdb..#mv_data_15min_30') is not null drop table #mv_data_15min_
 if OBJECT_ID('tempdb..#mv_data_15min_45') is not null drop table #mv_data_15min_45
 if OBJECT_ID('tempdb..#tmp_hour_list') is not null drop table #tmp_hour_list
 if OBJECT_ID('tempdb..#temp_deals_filter') is not null drop table #temp_deals_filter
-if OBJECT_ID('tempdb..#temp_deals_filter_c') is not null drop table #temp_deals_filter_c
 if OBJECT_ID('tempdb..#index_fees_breakdown0001') is not null drop table #index_fees_breakdown0001
 if OBJECT_ID('tempdb..#hrly_price_curves1') is not null drop table #hrly_price_curves1
 if OBJECT_ID('tempdb..#hrly_price_curves2') is not null drop table #hrly_price_curves2
@@ -1449,6 +1447,8 @@ create table #temp_deals(
 	,exception_handle bit
 	,mtm_sett_calc bit
 	,curve_as_of_date date
+	,calc_physical_financial_flag CHAR(1) COLLATE DATABASE_DEFAULT --calculate mtm/settlement on this physical/financial flag. Sometime it is required to calculate mtm/settlement as financial deal though it is physical deal.
+
 ) 
 
 CREATE TABLE #fees_breakdown 
@@ -1586,7 +1586,7 @@ begin
 		   else  
 			   CASE WHEN sdh.option_flag = ''y'' THEN ned.option_settlement_date
 				else 
-					case when sdd.physical_financial_flag=''f'' or (sdd.physical_financial_flag=''p'' and sdh.internal_deal_subtype_value_id='+@CFD_id+')  then COALESCE(cexp.exp_date,sdd.settlement_date,sdd.term_start) else sdd.term_start end 
+					case when calc_physical_financial_flag.calc_physical_financial_flag =''f'' THEN COALESCE(cexp.exp_date,sdd.settlement_date,sdd.term_start) else sdd.term_start end 
 				end
 			end BETWEEN ''' + @term_start + ''' AND ''' + @term_end + ''''
 	else
@@ -1609,7 +1609,7 @@ IF @calc_type <> 's'
 
 IF @calc_type <> 's'
 	SET @where_clause = @where_clause + ' AND (sdh.is_environmental = ''y'' OR ISNULL(case when sdh.option_flag=''y''
-	 or sdd.physical_financial_flag=''f'' or (sdd.physical_financial_flag=''p'' and sdh.internal_deal_subtype_value_id='+@CFD_id+') then ISNULL(cexp.exp_date,sdd.contract_expiration_date) else null end,sdd.term_end) > ''' +  @as_of_date  + ''')'
+	 or calc_physical_financial_flag.calc_physical_financial_flag=''f'' then ISNULL(cexp.exp_date,sdd.contract_expiration_date) else null end,sdd.term_end) > ''' +  @as_of_date  + ''')'
 
 
 
@@ -2141,19 +2141,40 @@ set @maturity_date_s =
 	END 		 
 '
 
+
 --IF @calc_type = 'm' 
 SET @from_clause = @from_clause + ' 
 OUTER APPLY(
-	select max(exp_date) exp_date,max(case when aa=0 then exp_date else null end) exp_date_market from (
+	select max(exp_date) exp_date ,max(case when aa=0 then exp_date else null end) exp_date_market   
+	from (
 		SELECT max(hg.exp_date) exp_date,0 aa FROM holiday_group hg 
-			WHERE hg.hol_group_value_id = spcd.exp_calendar_id  AND ' + @maturity_date + ' BETWEEN hg.hol_date AND hg.hol_date_to
-			and 1= case when ''m''='''+ @calc_type+''' and sdd.physical_financial_flag=''p'' and isnull(sdh.internal_deal_subtype_value_id,-1)<>'+@CFD_id+' then 2 else 1 end	
+		WHERE hg.hol_group_value_id = spcd.exp_calendar_id  AND ' + @maturity_date + ' BETWEEN hg.hol_date AND hg.hol_date_to
+			and 1= case when ''s''='''+ @calc_type+''' then
+						case when isnull(sdh.internal_deal_subtype_value_id,-1)='+@phy_future+' and sdd.physical_financial_flag=''p'' then 
+							case when hg.exp_date='''+@as_of_date+''' then 1 else 2 end 
+						else 1 end
+					
+					else -- calc_type=m
+						case when sdd.physical_financial_flag=''p'' then 
+							case when isnull(sdh.internal_deal_subtype_value_id,-1) in ('+@CFD_id+')  then 1 
+							when isnull(sdh.internal_deal_subtype_value_id,-1) in ('+@phy_future+') then
+								case when hg.exp_date='''+@as_of_date+''' then 1 else 2 end 
+							else 2 end
+						else 1 end
+					end					
 		union all
 		SELECT max(hg.exp_date) exp_date,1 aa FROM holiday_group hg 
 			WHERE hg.hol_group_value_id = spcd_f.exp_calendar_id  AND ' + @maturity_date + ' BETWEEN hg.hol_date AND hg.hol_date_to
 			and 1= case when ''m''='''+ @calc_type+''' and sdd.physical_financial_flag=''p'' and isnull(sdh.internal_deal_subtype_value_id,-1)<>'+@CFD_id+' then 2 else 1 end
 		) a
-) cexp '
+) cexp 
+outer apply ( 
+select
+	case when ''s''='''+ @calc_type+''' and isnull(sdh.internal_deal_subtype_value_id,-1)='+@phy_future+' and cexp.exp_date='''+@as_of_date+''' then ''f''
+			when  ''s''='''+ @calc_type+''' and isnull(sdh.internal_deal_subtype_value_id,-1)='+@CFD_id+' then  ''f''
+			else sdd.physical_financial_flag end calc_physical_financial_flag
+) calc_physical_financial_flag  --calculate mtm/settlement on this physical/financial flag. Sometime it is required to calculate mtm/settlement as financial deal though  physical deal.
+' 
 
 set @sqlstmt='insert into #temp_deals  
 		SELECT -- top(100)
@@ -2167,7 +2188,7 @@ set @sqlstmt='insert into #temp_deals
 		sdd.term_start, 
 		sdd.term_end,
 		sdd.leg, 
-		ISNULL(' + CASE WHEN @calc_type = 'm' THEN 'cexp.exp_date' ELSE 'NULL' END + ', sdd.contract_expiration_date), 
+		ISNULL(CASE WHEN '''+@calc_type+''' = ''m'' or isnull(sdh.internal_deal_subtype_value_id,-1)='+@phy_future+' THEN cexp.exp_date ELSE NULL END, sdd.contract_expiration_date), 
 		sdd.fixed_float_leg,sdd.buy_sell_flag,
 		ISNULL(pd.price_index, spcd.source_curve_def_id), 
 		case when sdh.source_deal_type_id=1228 then 1.00/COALESCE(wacog.wght_avg_cost, sdd.fixed_price, 0)  -- Check FX
@@ -2294,7 +2315,9 @@ set @sqlstmt4='
 	+ CASE WHEN @calc_type = 's' THEN 'rec.match_info_id' ELSE 'NULL' END
 	+', case when sdht.template_id in ('+@storage_inventory_template_id +') then 0 else 1 end exception_handle
 	,case when sdht.template_id in ('+ @storage_inventory_template_id+') then 0 else 1 end  mtm_sett_calc
-	,isnull(case when sdd.physical_financial_flag=''f'' and ''s''='''+@calc_type +''' then  isnull(cexp.exp_date_market,sdd.settlement_date) else null end,'''+@curve_as_of_date+''')  curve_as_of_date
+	,isnull(case when calc_physical_financial_flag.calc_physical_financial_flag =''f'' and '''+ @calc_type+''' = ''s'' then  isnull(cexp.exp_date_market,sdd.settlement_date) else null end,'''+@curve_as_of_date+''')  curve_as_of_date
+	,calc_physical_financial_flag.calc_physical_financial_flag  
+
 '
 
 SET @from_clause1 = ISNULL(@from_clause1,'')
@@ -5888,7 +5911,7 @@ FROM source_deal_detail sdd
 		AND (td.location_id=-1 OR (td.location_id<>-1 AND sdd.leg = td.Leg)) 
 	inner join source_deal_type sdt on sdt.source_deal_type_id=td.source_deal_type_id 
 		--and (sdt.deal_type_id like 'Physical%' OR sdt.deal_type_id like 'Generation%') -- include meter data for Physical and Generation deal type only
-		--and td.physical_financial_flag = 'p'
+		--and td.calc_physical_financial_flag = 'p'
 
 Create index indx_meter_location on  #meter_location (source_deal_detail_id)
 create index indx_temp_deals000001 on  #temp_deals (source_deal_detail_id)
@@ -6410,6 +6433,7 @@ select
 	tier_value_id,
 	match_info_id
 	,commodity_id
+	,calc_physical_financial_flag
 into #temp_deals_filter 
 from [#temp_deals] where hourly_position_breakdown in(982,987,989,997) and ISNULL(variable_swap, 'n') = 'n'
 	
@@ -6565,7 +6589,9 @@ SET @sqlstmt= '
 	' AND case when ISNULL(spcd.hourly_volume_allocation,17601) =17606  or rp.term_start<rp.expiration_date then rp.expiration_date  else rp.term_start end  between td.filter_term_start and td.filter_term_end and rp.expiration_date  > '''+@as_of_date+''''
 	else
 	case when  @cpt_type='b' THEN '' else case when isnull(@look_term,'d')='s' then ' 
-		and case when td.physical_financial_flag=''f'' or (td.physical_financial_flag=''p'' and td.internal_deal_subtype_value_id='+@CFD_id+') then rp.expiration_date else rp.term_start end ' else ' and rp.term_start '  end +' BETWEEN '''+@term_start+''' and '''+@term_end+'''' end 
+		and case when td.calc_physical_financial_flag =''f'' then 
+			case when isnull(td.internal_deal_subtype_value_id,-1)='+@phy_future+' then td.contract_expiration_date else rp.expiration_date end else rp.term_start end' 
+	else ' and rp.term_start '  end +' BETWEEN '''+@term_start+''' and '''+@term_end+'''' end 
 	 end +';'
 			
 
@@ -6686,7 +6712,8 @@ from report_hourly_position_deal_main rd  inner join #temp_deals_filter td on rd
 	+
 	'
 	WHERE 1=1 '+case when @calc_type = 's' then case when isnull(@look_term,'d')='s' then '
-	 and case when td.physical_financial_flag=''f'' or (td.physical_financial_flag=''p'' and td.internal_deal_subtype_value_id='+@CFD_id+') then rd.expiration_date else rd.term_start end ' else ' and rd.term_start '  end 
+	 and case when td.calc_physical_financial_flag =''f'' then
+	 case when isnull(td.internal_deal_subtype_value_id,-1)='+@phy_future+' then td.contract_expiration_date else rd.expiration_date end else rd.term_start end ' else ' and rd.term_start '  end 
 		+' BETWEEN '''+@term_start+''' and '''+@term_end+'''-- AND ISNULL(td.actualization_flag,'''') <> ''d'' '
 		  	else ' 
 				 AND case when ISNULL(spcd.hourly_volume_allocation,17601) =17606 or rd.term_start<rd.expiration_date then rd.expiration_date  else rd.term_start end  between td.filter_term_start and td.filter_term_end 
@@ -6749,8 +6776,9 @@ SET @sqlstmt3= ' --UNION ALL
 			  AND td.location_id = md.location_id and md.period= case when rd.granularity IN(987,989) then isnull(rd.period,0) else md.period end  '
 	end+'
 	WHERE 1=1 '+case when @calc_type = 's' then case when isnull(@look_term,'d')='s' then '
-	 and case when td.physical_financial_flag=''f'' or (td.physical_financial_flag=''p'' and td.internal_deal_subtype_value_id='+@CFD_id+') then rd.expiration_date else rd.term_start end ' else ' and rd.term_start ' end 
-			+' BETWEEN '''+@term_start+''' and '''+@term_end+'''' 
+	 and case when td.calc_physical_financial_flag =''f'' then 
+	 case when isnull(td.internal_deal_subtype_value_id,-1)='+@phy_future+' then td.contract_expiration_date else rd.expiration_date end else rd.term_start end ' else ' and rd.term_start ' end 
+		+' BETWEEN '''+@term_start+''' and '''+@term_end+'''' 
 		else ' AND rd.term_start  between td.filter_term_start and td.filter_term_end and rd.expiration_date  > '''+@as_of_date+'''' end +';'
 			
 EXEC spa_print  @sqlstmt	
@@ -8352,6 +8380,66 @@ SET @sql= ' into ' + @tmp_hourly_price_vol + '
 
 --PRINT(@sql) RETURN
 
+EXEC spa_print  @select_clms
+EXEC spa_print  @qry1g
+EXEC spa_print  @qry2g
+EXEC spa_print  @qry3g
+EXEC spa_print  @qry4g
+EXEC spa_print  @qry5g
+EXEC spa_print  @qry6g
+EXEC spa_print  @qry7g
+EXEC spa_print  @qry8g
+EXEC spa_print  @qry1
+EXEC spa_print  @qry2
+EXEC spa_print  @qry3
+EXEC spa_print  @qry4
+EXEC spa_print  @qry5
+EXEC spa_print  @qry6
+EXEC spa_print  @qry7
+EXEC spa_print  @qry8
+EXEC spa_print  @qry1b
+EXEC spa_print  @qry2b
+EXEC spa_print  @qry3b
+EXEC spa_print  @qry4b
+EXEC spa_print  @qry5b
+EXEC spa_print  @qry6b
+EXEC spa_print  @qry7b
+EXEC spa_print  @qry8b
+EXEC spa_print  @qry1c
+EXEC spa_print  @qry2c
+EXEC spa_print  @qry3c
+EXEC spa_print  @qry4c
+EXEC spa_print  @qry5c
+EXEC spa_print  @qry6c
+EXEC spa_print  @qry7c
+EXEC spa_print  @qry8c
+EXEC spa_print  @qry1d
+EXEC spa_print  @qry2d
+EXEC spa_print  @qry3d
+EXEC spa_print  @qry4d
+EXEC spa_print  @qry5d
+EXEC spa_print  @qry6d
+EXEC spa_print  @qry7d
+EXEC spa_print  @qry8d
+EXEC spa_print  @qry1e
+EXEC spa_print  @qry2e
+EXEC spa_print  @qry3e
+EXEC spa_print  @qry4e
+EXEC spa_print  @qry5e
+EXEC spa_print  @qry6e
+EXEC spa_print  @qry7e
+EXEC spa_print  @qry8e
+EXEC spa_print  @qry1f
+EXEC spa_print  @qry2f
+EXEC spa_print  @qry3f
+EXEC spa_print  @qry4f
+EXEC spa_print  @qry5f
+EXEC spa_print  @qry6f
+EXEC spa_print  @qry7f
+EXEC spa_print  @qry8f
+EXEC spa_print  @sql
+
+
 EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+
 @select_clms
 +@qry1g
@@ -8426,6 +8514,9 @@ EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+
 +@sql)
 
 --exec('select * from ' + @tmp_hourly_price_vol) 
+--return
+
+
 
 --For Positive/Negative Commodity Charges
 IF OBJECT_ID('tempdb..#tmp_deal_info') IS NOT NULL DROP TABLE #tmp_deal_info
@@ -8435,7 +8526,7 @@ INTO #tmp_deal_info
 FROM source_deal_header sdh
 INNER JOIN #temp_deals td ON td.source_deal_header_id = sdh.source_deal_header_id
 	AND sdh.pricing_type IN (46700,46701)
-	AND td.physical_financial_flag = 'p'
+	AND td.calc_physical_financial_flag = 'p'
 INNER JOIN source_deal_header_template sdht ON sdht.template_id = sdh.template_id
 	AND ISNULL(split_positive_and_negative_commodity, 'n') = 'y'
 WHERE @calc_type = 's' 
@@ -8522,31 +8613,31 @@ FROM(
 		vol.source_deal_detail_id,
 		vol.term_start,
 		td.buy_sell_flag,
-		ISNULL(CASE WHEN sddh.hr1 <> 0 THEN sddh.hr1 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN t.hr1_c ELSE t.hr1 END END, 0) hr1,
-		ISNULL(CASE WHEN sddh.hr2 <> 0 THEN sddh.hr2 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr2_c) ELSE ISNULL(pr.price, t.hr2) END END, 0) hr2,
-		ISNULL(CASE WHEN sddh.hr3 <> 0 THEN sddh.hr3 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr3_c) ELSE ISNULL(pr.price, t.hr3) END END, 0) hr3,
-		ISNULL(CASE WHEN sddh.hr4 <> 0 THEN sddh.hr4 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr4_c) ELSE ISNULL(pr.price, t.hr4) END END, 0) hr4,
-		ISNULL(CASE WHEN sddh.hr5 <> 0 THEN sddh.hr5 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr5_c) ELSE ISNULL(pr.price, t.hr5) END END, 0) hr5,
-		ISNULL(CASE WHEN sddh.hr6 <> 0 THEN sddh.hr6 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr6_c) ELSE ISNULL(pr.price, t.hr6) END END, 0) hr6,
-		ISNULL(CASE WHEN sddh.hr7 <> 0 THEN sddh.hr7 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr7_c) ELSE ISNULL(pr.price, t.hr7) END END, 0) hr7,
-		ISNULL(CASE WHEN sddh.hr8 <> 0 THEN sddh.hr8 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr8_c) ELSE ISNULL(pr.price, t.hr8) END END, 0) hr8,
-		ISNULL(CASE WHEN sddh.hr9 <> 0 THEN sddh.hr9 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr9_c) ELSE ISNULL(pr.price, t.hr9) END END, 0) hr9,
-		ISNULL(CASE WHEN sddh.hr10 <> 0 THEN sddh.hr10 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr10_c) ELSE ISNULL(pr.price, t.hr10) END END, 0) hr10,
-		ISNULL(CASE WHEN sddh.hr11 <> 0 THEN sddh.hr11 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr11_c) ELSE ISNULL(pr.price, t.hr11) END END, 0) hr11,
-		ISNULL(CASE WHEN sddh.hr12 <> 0 THEN sddh.hr12 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr12_c) ELSE ISNULL(pr.price, t.hr12) END END, 0) hr12,
-		ISNULL(CASE WHEN sddh.hr13 <> 0 THEN sddh.hr13 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr13_c) ELSE ISNULL(pr.price, t.hr13) END END, 0) hr13,
-		ISNULL(CASE WHEN sddh.hr14 <> 0 THEN sddh.hr14 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr14_c) ELSE ISNULL(pr.price, t.hr14) END END, 0) hr14,
-		ISNULL(CASE WHEN sddh.hr15 <> 0 THEN sddh.hr15 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr15_c) ELSE ISNULL(pr.price, t.hr15) END END, 0) hr15,
-		ISNULL(CASE WHEN sddh.hr16 <> 0 THEN sddh.hr16 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr16_c) ELSE ISNULL(pr.price, t.hr16) END END, 0) hr16,
-		ISNULL(CASE WHEN sddh.hr17 <> 0 THEN sddh.hr17 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr17_c) ELSE ISNULL(pr.price, t.hr17) END END, 0) hr17,
-		ISNULL(CASE WHEN sddh.hr18 <> 0 THEN sddh.hr18 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr18_c) ELSE ISNULL(pr.price, t.hr18) END END, 0) hr18,
-		ISNULL(CASE WHEN sddh.hr19 <> 0 THEN sddh.hr19 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr19_c) ELSE ISNULL(pr.price, t.hr19) END END, 0) hr19,
-		ISNULL(CASE WHEN sddh.hr20 <> 0 THEN sddh.hr20 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr20_c) ELSE ISNULL(pr.price, t.hr20) END END, 0) hr20,
-		ISNULL(CASE WHEN sddh.hr21 <> 0 THEN sddh.hr21 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr21_c) ELSE ISNULL(pr.price, t.hr21) END END, 0) hr21,
-		ISNULL(CASE WHEN sddh.hr22 <> 0 THEN sddh.hr22 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr22_c) ELSE ISNULL(pr.price, t.hr22) END END, 0) hr22,
-		ISNULL(CASE WHEN sddh.hr23 <> 0 THEN sddh.hr23 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr23_c) ELSE ISNULL(pr.price, t.hr23) END END, 0) hr23,
-		ISNULL(CASE WHEN sddh.hr24 <> 0 THEN sddh.hr24 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr24_c) ELSE ISNULL(pr.price, t.hr24) END END, 0) hr24,
-		ISNULL(CASE WHEN sddh.hr25 <> 0 THEN sddh.hr25 ELSE CASE WHEN td.physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr25_c) ELSE ISNULL(pr.price, t.hr25) END END, 0) hr25,
+		ISNULL(CASE WHEN sddh.hr1 <> 0 THEN sddh.hr1 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN t.hr1_c ELSE t.hr1 END END, 0) hr1,
+		ISNULL(CASE WHEN sddh.hr2 <> 0 THEN sddh.hr2 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr2_c) ELSE ISNULL(pr.price, t.hr2) END END, 0) hr2,
+		ISNULL(CASE WHEN sddh.hr3 <> 0 THEN sddh.hr3 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr3_c) ELSE ISNULL(pr.price, t.hr3) END END, 0) hr3,
+		ISNULL(CASE WHEN sddh.hr4 <> 0 THEN sddh.hr4 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr4_c) ELSE ISNULL(pr.price, t.hr4) END END, 0) hr4,
+		ISNULL(CASE WHEN sddh.hr5 <> 0 THEN sddh.hr5 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr5_c) ELSE ISNULL(pr.price, t.hr5) END END, 0) hr5,
+		ISNULL(CASE WHEN sddh.hr6 <> 0 THEN sddh.hr6 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr6_c) ELSE ISNULL(pr.price, t.hr6) END END, 0) hr6,
+		ISNULL(CASE WHEN sddh.hr7 <> 0 THEN sddh.hr7 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr7_c) ELSE ISNULL(pr.price, t.hr7) END END, 0) hr7,
+		ISNULL(CASE WHEN sddh.hr8 <> 0 THEN sddh.hr8 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr8_c) ELSE ISNULL(pr.price, t.hr8) END END, 0) hr8,
+		ISNULL(CASE WHEN sddh.hr9 <> 0 THEN sddh.hr9 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr9_c) ELSE ISNULL(pr.price, t.hr9) END END, 0) hr9,
+		ISNULL(CASE WHEN sddh.hr10 <> 0 THEN sddh.hr10 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr10_c) ELSE ISNULL(pr.price, t.hr10) END END, 0) hr10,
+		ISNULL(CASE WHEN sddh.hr11 <> 0 THEN sddh.hr11 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr11_c) ELSE ISNULL(pr.price, t.hr11) END END, 0) hr11,
+		ISNULL(CASE WHEN sddh.hr12 <> 0 THEN sddh.hr12 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr12_c) ELSE ISNULL(pr.price, t.hr12) END END, 0) hr12,
+		ISNULL(CASE WHEN sddh.hr13 <> 0 THEN sddh.hr13 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr13_c) ELSE ISNULL(pr.price, t.hr13) END END, 0) hr13,
+		ISNULL(CASE WHEN sddh.hr14 <> 0 THEN sddh.hr14 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr14_c) ELSE ISNULL(pr.price, t.hr14) END END, 0) hr14,
+		ISNULL(CASE WHEN sddh.hr15 <> 0 THEN sddh.hr15 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr15_c) ELSE ISNULL(pr.price, t.hr15) END END, 0) hr15,
+		ISNULL(CASE WHEN sddh.hr16 <> 0 THEN sddh.hr16 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr16_c) ELSE ISNULL(pr.price, t.hr16) END END, 0) hr16,
+		ISNULL(CASE WHEN sddh.hr17 <> 0 THEN sddh.hr17 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr17_c) ELSE ISNULL(pr.price, t.hr17) END END, 0) hr17,
+		ISNULL(CASE WHEN sddh.hr18 <> 0 THEN sddh.hr18 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr18_c) ELSE ISNULL(pr.price, t.hr18) END END, 0) hr18,
+		ISNULL(CASE WHEN sddh.hr19 <> 0 THEN sddh.hr19 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr19_c) ELSE ISNULL(pr.price, t.hr19) END END, 0) hr19,
+		ISNULL(CASE WHEN sddh.hr20 <> 0 THEN sddh.hr20 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr20_c) ELSE ISNULL(pr.price, t.hr20) END END, 0) hr20,
+		ISNULL(CASE WHEN sddh.hr21 <> 0 THEN sddh.hr21 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr21_c) ELSE ISNULL(pr.price, t.hr21) END END, 0) hr21,
+		ISNULL(CASE WHEN sddh.hr22 <> 0 THEN sddh.hr22 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr22_c) ELSE ISNULL(pr.price, t.hr22) END END, 0) hr22,
+		ISNULL(CASE WHEN sddh.hr23 <> 0 THEN sddh.hr23 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr23_c) ELSE ISNULL(pr.price, t.hr23) END END, 0) hr23,
+		ISNULL(CASE WHEN sddh.hr24 <> 0 THEN sddh.hr24 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr24_c) ELSE ISNULL(pr.price, t.hr24) END END, 0) hr24,
+		ISNULL(CASE WHEN sddh.hr25 <> 0 THEN sddh.hr25 ELSE CASE WHEN td.calc_physical_financial_flag = ''p'' THEN ISNULL(pr.price, t.hr25_c) ELSE ISNULL(pr.price, t.hr25) END END, 0) hr25,
 		vol.hr1   vol1,
 		vol.hr2   vol2,
 		CAST((vol.hr3-case when td.commodity_id<>-1 and isnull(vol.hr25,0)<>0 then isnull(vol.hr25,0) else 0 end) AS NUMERIC(28,13))   vol3,
@@ -8582,10 +8673,10 @@ FROM(
 		and sddh.term_date=vol.term_start
 		and sddh.period = ISNULL(vol.period, 0)
 	LEFT JOIN #tmp_hourly_price_only t on t.rowid=vol.rowid
-	OUTER APPLY(SELECT CASE WHEN td.physical_financial_flag = ''p'' THEN t.hr1_c ELSE t.hr1 END price
+	OUTER APPLY(SELECT CASE WHEN td.calc_physical_financial_flag = ''p'' THEN t.hr1_c ELSE t.hr1 END price
 				WHERE 1 = 1
-				AND ((td.physical_financial_flag = ''p'' AND t.granularity_c IN (980,981)) OR
-						(td.physical_financial_flag <> ''p'' AND t.granularity IN (980,981)))
+				AND ((td.calc_physical_financial_flag = ''p'' AND t.granularity_c IN (980,981)) OR
+						(td.calc_physical_financial_flag <> ''p'' AND t.granularity IN (980,981)))
 				) pr
 		) v
 UNPIVOT(
@@ -9509,7 +9600,7 @@ begin
 	 Select a.source_deal_header_id, a.deal_id, a.term_start, a.term_end,  a.leg,a.curve_id,hv.tou_id tou_id,
 	 cast(CASE WHEN (a.fas_deal_type_value_id = 409) THEN 0 
 			WHEN (a.product_id=4101) THEN
-				CASE WHEN (a.physical_financial_flag=''p'' and '''+ @calc_type+'''=''s'') THEN 0 ELSE 1 END *
+				CASE WHEN (a.calc_physical_financial_flag=''p'' and '''+ @calc_type+'''=''s'') THEN 0 ELSE 1 END *
 				CASE when isnull(hv.curve_id,-1)=-1 then
 					case when --a.pay_opposite = ''y'' and 
 					a.buy_sell_flag=''s'' then -1 else 1 end *	a.deal_volume 
@@ -9593,7 +9684,7 @@ begin
 			WHEN (a.product_id=4101) THEN
 				(				
 					( --Market Side
-						CASE WHEN('''+ @calc_type+'''=''s'' AND a.physical_financial_flag=''p'') THEN 0 ELSE 1 END * 
+						CASE WHEN('''+ @calc_type+'''=''s'' AND a.calc_physical_financial_flag=''p'') THEN 0 ELSE 1 END * 
 					CASE when  a.curve_id is not NULL  and a.fixed_float_leg=''t'' then 
 							case when isnull(hv.curve_id,-1)=-1 then
 								case when (lcv.lag_curve_value is not null) then lcv.lag_curve_value * isnull(cucf.curve_uom_conv_factor, 1)
@@ -9821,7 +9912,6 @@ outer apply
 UPDATE #temp_deals SET option_flag = 'n' WHERE internal_deal_type_value_id IN (103) AND internal_deal_subtype_value_id = 102 AND @process_linear_options_delta = 'y'
 
 
-
 IF exists(select 1 from #temp_deals where option_flag = 'n' or (internal_deal_type_value_id IN (103) AND internal_deal_subtype_value_id = 102 AND @process_linear_options_delta = 'y'))
 BEGIN
 
@@ -9834,7 +9924,7 @@ BEGIN
 			WHEN (a.product_id=4101) THEN
 				(								
 					( --Market Value
-						CASE WHEN (a.physical_financial_flag=''p'' and '''+ @calc_type+'''=''s'' and a.internal_deal_subtype_value_id<>156) THEN 0 ELSE	1 END * 
+						CASE WHEN  '''+ @calc_type+'''=''m'' or ('''+ @calc_type+'''=''s'' and  a.calc_physical_financial_flag =''f'') THEN 1 ELSE 0 END * 
 						case when isnull(hv.curve_id,-1)=-1 then
 							case when a.buy_sell_flag=''s'' then -1 else 1 end *					
 							isnull(a.deal_volume,0)   --total_volume already has multiplier
@@ -9896,7 +9986,7 @@ BEGIN
 		round(cast(CASE WHEN (a.fas_deal_type_value_id = 409) THEN 0 
 		WHEN (a.product_id=4101) THEN			
 			(	
-				CASE WHEN (a.physical_financial_flag=''p'' and a.internal_deal_subtype_value_id<>156) THEN 0 ELSE	-- and @calc_type=''s''	
+				case when a.calc_physical_financial_flag =''f'' THEN  
 				( --Market Value
 					case when isnull(hv.curve_id,-1)=-1 then
 						case when --a.pay_opposite = ''y'' and 
@@ -9915,7 +10005,7 @@ BEGIN
 							case when (a.Pricing not in (1601,1602)) then b.cfcf_price_fx_conv_factor_deal  else 1 end * isnull(cucf.curve_uom_conv_factor,1)																			
 						END 	* case when a.pay_opposite = ''n''  then isnull(a.price_multiplier, 1) else 1 end
 					else 0 end 
-				) END
+				)  ELSE 0 END ---end
 				+		
 				(	--Contract Value		
 					CASE WHEN a.buy_sell_flag=''b'' THEN 1 ELSE -1 END * CASE WHEN a.pay_opposite = ''y'' THEN -1 ELSE 1 END
@@ -9979,7 +10069,7 @@ BEGIN
 		WHEN (a.product_id=4101) THEN
 			(				
 				( --Market Side
-					CASE WHEN( '''+ @calc_type+'''=''s'' AND a.physical_financial_flag=''p''  and a.internal_deal_subtype_value_id<>156) THEN 0 ELSE 1 END * 
+					case when '''+ @calc_type+'''=''m'' or ('''+ @calc_type+'''=''s'' and  a.calc_physical_financial_flag =''f'') THEN 1 ELSE 0 END * 
 					CASE when isnull(hv.curve_id,-1)=-1 then
 						case when a.buy_sell_flag=''s'' then -1 else 1 end 					
 					ELSE 1 END *	
@@ -10032,7 +10122,7 @@ BEGIN
 			case when isnull(hv.curve_id,-1)=-1 then
 				coalesce(lcv.lag_curve_value, atc.avg_curve_value,market.curve_value) * isnull(cucf.curve_uom_conv_factor, 1) * b.cfcf_price_fx_conv_factor_deal			
 			ELSE
-				case when (( '''+ @calc_type+'''<>''s'' OR a.physical_financial_flag=''f'') AND hv.volume <> 0 AND isnull(hv.market_value,0) = 0 and hv.curve_value is null) then NULL
+				case when (( '''+ @calc_type+'''<>''s'' OR a.calc_physical_financial_flag=''f'') AND hv.volume <> 0 AND isnull(hv.market_value,0) = 0 and hv.curve_value is null) then NULL
 					 when a.Pricing in (1606,1607) then ROUND(hv.avg_curve_value, ISNULL(cr.index_round_value,100)) else hv.curve_value end *
 				case when (a.Pricing not in (1601,1602)) then b.cfcf_price_fx_conv_factor_deal  else 1 end * isnull(cucf.curve_uom_conv_factor, 1)
 			END	
@@ -10056,12 +10146,12 @@ BEGIN
 		
 	set @mtm_value_10='
 	case when a.exception_handle=1 then
-		CASE WHEN (( '''+ @calc_type+'''<>''s'' OR a.physical_financial_flag=''f'') AND a.product_id=4101 AND ISNULL(hv.volume, a.deal_volume) <> 0 AND a.curve_id IS NOT NULL AND (coalesce(hv.curve_value,market.curve_value, NULL) IS NULL OR
+		CASE WHEN (( '''+ @calc_type+'''<>''s'' OR a.calc_physical_financial_flag=''f'') AND a.product_id=4101 AND ISNULL(hv.volume, a.deal_volume) <> 0 AND a.curve_id IS NOT NULL AND (coalesce(hv.curve_value,market.curve_value, NULL) IS NULL OR
 			(hv.volume IS NOT NULL AND isnull(hv.market_value,0) = 0 '+case when @calc_type='s' then ' AND hv.curve_value<>0 ' else ' AND hv.curve_value is null ' end + ' ))) THEN NULL 
 				WHEN (a.curve_uom_id IS NOT NULL AND a.curve_uom_id <> a.deal_volume_uom_id AND cucf.curve_uom_conv_factor IS NULL) THEN NULL
 				WHEN (a.price_uom_id IS NOT NULL AND a.price_uom_id <> a.deal_volume_uom_id AND cucfP.curve_uom_conv_factor IS NULL) THEN NULL
-		WHEN (a.pricing NOT IN (1600, 1601, 1602,1607) AND ((a.physical_financial_flag=''p'' and  '''+ @calc_type+'''<>''s'') OR (a.physical_financial_flag=''f'' AND a.product_id=4101) OR
-						 (a.physical_financial_flag=''f'' AND a.product_id=4100 AND a.formula_id IS NULL)) AND
+		WHEN (a.pricing NOT IN (1600, 1601, 1602,1607) AND ((a.calc_physical_financial_flag=''p'' and  '''+ @calc_type+'''<>''s'') OR (a.calc_physical_financial_flag=''f'' AND a.product_id=4101) OR
+						 (a.calc_physical_financial_flag=''f'' AND a.product_id=4100 AND a.formula_id IS NULL)) AND
 			a.curve_currency_id IS NOT NULL AND a.fixed_price_currency_id <> a.curve_currency_id AND b.cfcf_price_fx_conv_factor_deal IS NULL)  THEN NULL
 		WHEN (a.fixed_price_currency_id IS NOT NULL AND a.fixed_price_currency_id <> a.fixed_price_currency_id AND ISNULL(lfx.price_fx_conv_factor, b.pfcf_price_fx_conv_factor_deal) IS NULL) THEN NULL
 		WHEN (a.fixed_cost_currency IS NOT NULL AND a.fixed_price_currency_id <> a.fixed_cost_currency AND b.fcucf_price_fx_conv_factor_deal IS NULL) THEN NULL
@@ -10073,12 +10163,12 @@ BEGIN
 		ELSE 0 END 
 	else 0 end error_deal,
 	case when a.exception_handle=1 then
-		CASE	WHEN (( '''+ @calc_type+'''<>''s'' OR a.physical_financial_flag=''f'') AND a.product_id=4101 AND ISNULL(hv.volume, a.deal_volume) <> 0 AND a.curve_id IS NOT NULL AND 
+		CASE	WHEN (( '''+ @calc_type+'''<>''s'' OR a.calc_physical_financial_flag=''f'') AND a.product_id=4101 AND ISNULL(hv.volume, a.deal_volume) <> 0 AND a.curve_id IS NOT NULL AND 
 			(coalesce(hv.curve_value, market.curve_value, NULL) IS NULL OR (hv.volume IS NOT NULL AND hv.market_value = 0))) THEN '' Price Curve'' ELSE '''' END +
 		CASE	WHEN (a.curve_uom_id IS NOT NULL AND a.curve_uom_id <> a.deal_volume_uom_id AND cucf.curve_uom_conv_factor IS NULL) THEN '', UOM conversion'' ELSE '''' END +
 		CASE	WHEN (a.price_uom_id IS NOT NULL AND a.price_uom_id <> a.deal_volume_uom_id AND cucfP.curve_uom_conv_factor IS NULL) THEN '', Price UOM conversion'' ELSE '''' END +
 		CASE	WHEN (a.pricing NOT IN (1600, 1601, 1602,1607) AND 
-			((a.physical_financial_flag=''p'' and '''+ @calc_type+'''<>''s'') OR (a.physical_financial_flag=''f'' AND a.product_id=4101) OR (a.physical_financial_flag=''f'' AND a.product_id=4100 AND a.formula_id IS NULL)) AND 
+			((a.calc_physical_financial_flag=''p'' and '''+ @calc_type+'''<>''s'') OR (a.calc_physical_financial_flag=''f'' AND a.product_id=4101) OR (a.calc_physical_financial_flag=''f'' AND a.product_id=4100 AND a.formula_id IS NULL)) AND 
 			a.curve_currency_id IS NOT NULL AND a.fixed_price_currency_id <> a.curve_currency_id AND b.cfcf_price_fx_conv_factor_deal IS NULL) 	THEN '', Price FX conversion'' ELSE '''' END +
 		CASE WHEN (a.fixed_price_currency_id IS NOT NULL AND a.fixed_price_currency_id <> a.fixed_price_currency_id AND ISNULL(lfx.price_fx_conv_factor, b.pfcf_price_fx_conv_factor_deal) IS NULL) THEN '', Fixed Price FX conversion'' ELSE '''' END +CASE	WHEN (a.fixed_cost_currency IS NOT NULL AND a.fixed_price_currency_id <> a.fixed_cost_currency AND b.fcucf_price_fx_conv_factor_deal IS NULL) THEN '', Fixed Cost FX conversion'' ELSE '''' END +
 		CASE WHEN (a.formula_currency IS NOT NULL AND a.fixed_price_currency_id <> a.formula_currency AND b.foucf_price_fx_conv_factor_deal IS NULL) THEN '', Formula FX conversion'' ELSE '''' END +
@@ -10095,7 +10185,7 @@ BEGIN
 		,cast(0.00 as float) market_value,
 		cast(CASE WHEN (a.fas_deal_type_value_id = 409) THEN 0 
 			WHEN (a.product_id=4101) THEN
-				CASE WHEN (a.physical_financial_flag=''p'' and '''+ @calc_type+'''=''s''  and a.internal_deal_subtype_value_id<>156) THEN 0 ELSE 1 END *
+				case when '''+ @calc_type+'''=''m'' or ('''+ @calc_type+'''=''s'' and  a.calc_physical_financial_flag =''f'') THEN 1 ELSE 0 END *
 				CASE when isnull(hv.curve_id,-1)=-1 then
 					case when a.buy_sell_flag=''s'' then -1 else 1 end * a.deal_volume 
 				ELSE
@@ -10190,7 +10280,7 @@ BEGIN
 		WHEN (a.product_id=4101) THEN
 			(				
 				( --Market Side
-					CASE WHEN('''+ @calc_type+'''=''s'' AND a.physical_financial_flag=''p'' and a.internal_deal_subtype_value_id<>156) THEN 0 ELSE 1 END * 
+					case when '''+ @calc_type+'''=''m'' or ('''+ @calc_type+'''=''s'' and  a.calc_physical_financial_flag =''f'') THEN 1 ELSE 0 END * 
 					CASE when  a.curve_id is not NULL  and a.fixed_float_leg=''t'' then 
 						case when isnull(hv.curve_id,-1)=-1 then
 							case when (lcv.lag_curve_value is not null) then lcv.lag_curve_value * isnull(cucf.curve_uom_conv_factor, 1)
@@ -11937,7 +12027,7 @@ BEGIN
 					end	
 		END as leg_mtm_deal,cast(0 as float) leg_mtm_inv
 		,cast(0 as float) leg_set,
-		case when a.physical_financial_flag = ''f'' then isnull(opd1.leg_set,0) else 0 end leg_set_deal,cast(0 as float) leg_set_inv, '
+		case when a.calc_physical_financial_flag = ''f'' then isnull(opd1.leg_set,0) else 0 end leg_set_deal,cast(0 as float) leg_set_inv, '
 				
 	SET @mtm_value_03_opt = '
 		CASE WHEN (a.leg) <> 1 THEN 0 ELSE
@@ -12111,7 +12201,7 @@ BEGIN
 					(isnull(a.price_adder, 0)*isnull(b.pa1ucf_price_fx_conv_factor_deal, 1)) + (isnull(a.price_adder2, 0)*isnull(b.pa2ucf_price_fx_conv_factor_deal, 1)) + 
 					(coalesce(atc.avg_curve_value,f.formula_value, 0)*isnull(a.price_multiplier, 1)*isnull(b.foucf_price_fx_conv_factor_deal, 1)))
 					else
-						case when (a.physical_financial_flag = ''f'') then
+						case when (a.calc_physical_financial_flag = ''f'') then
 					case when (a.option_type = ''c'' AND a.buy_sell_flag = ''s'') then dbo.FNAMax((isnull(b.pfcf_price_fx_conv_factor_deal, 1) * isnull(a.option_strike_price, 0)+ isnull(ol.strike_price, 0)), 0)
 							when (a.option_type = ''c'' AND a.buy_sell_flag = ''b'') then -1 * (isnull(b.pfcf_price_fx_conv_factor_deal, 1) * isnull(a.option_strike_price, 0)+ isnull(ol.strike_price, 0))
 							when (a.option_type = ''p'' AND a.buy_sell_flag = ''b'') then dbo.FNAMax(isnull(cucf.curve_uom_conv_factor, 1) * isnull(b.cfcf_price_fx_conv_factor_deal, 1) * market.curve_value , 0) 
@@ -12129,7 +12219,7 @@ BEGIN
 					case when (a.contract_expiration_date > a.curve_as_of_date) then	--forward months				
 						case when a.internal_deal_type_value_id = 3 then 1 else case when a.buy_sell_flag=''s'' then -1 else 1 end end*op.PREMIUM 
 					else
-						case when (a.physical_financial_flag = ''f'') then
+						case when (a.calc_physical_financial_flag = ''f'') then
 					case when (a.option_type = ''c'' AND a.buy_sell_flag = ''b'') then dbo.FNAMax(isnull(cucf.curve_uom_conv_factor, 1) * isnull(b.cfcf_price_fx_conv_factor_deal, 1) * market.curve_value , 0)
 							when (a.option_type = ''c'' AND a.buy_sell_flag = ''s'') then (isnull(cucf.curve_uom_conv_factor, 1) * isnull(b.cfcf_price_fx_conv_factor_deal, 1) * market.curve_value )
 							when (a.option_type = ''p'' AND a.buy_sell_flag = ''b'') then dbo.FNAMax((isnull(b.pfcf_price_fx_conv_factor_deal, 1) * isnull(a.option_strike_price, 0)+ isnull(ol.strike_price, 0)) , 0) 
@@ -12849,7 +12939,7 @@ begin
 	inner join (select distinct source_deal_detail_id from #component_price) cp 
 		on cp.source_deal_detail_id=t.source_deal_detail_id
 	left join #temp_deals td on td.source_deal_detail_id = t.source_deal_detail_id -- 	,counterparty_id,contract_id
-	WHERE ISNULL(t.product_id, 4101) <> 4100 and t.physical_financial_flag='f'
+	WHERE ISNULL(t.product_id, 4101) <> 4100 and td.calc_physical_financial_flag='f'
 	GROUP BY t.source_deal_header_id, t.leg, t.term_start, t.term_end,t.shipment_id ,t.ticket_detail_id, t.match_info_id 	 
 		having MAX(abs(t.volume)) <> 0 AND ABS(MAX(t.market_value)) > 0.001		
 end
@@ -14512,14 +14602,15 @@ BEGIN
 		group by f.source_deal_header_id, f.leg, f.term_start, f.term_end
 		OPTION (MAXRECURSION 32767, MAXDOP 8 )
 					
-		select  td.curve_as_of_date as_of_date,
+		select  --td.curve_as_of_date as_of_date,
+				case when td.calc_physical_financial_flag='f' then td.curve_as_of_date else @as_of_date end   as_of_date,
 				CASE WHEN t.match_info_id IS NOT NULL THEN MAX(td.settlement_date) ELSE 
 				MAX(COALESCE(s.delivery_date,  s.expiration_date,td.curve_as_of_date)) END settlement_date,
 				NULL payment_Date, 
 				t.source_deal_header_id, 
 				s.term_start,
 				s.term_end, 
-				--SUM(case when(t.physical_financial_flag='p') then volume else 0 end) volume, 				
+				--SUM(case when(t.calc_physical_financial_flag='p') then volume else 0 end) volume, 				
 				SUM(volume) volume, 
 				avg(ABS(price) + ISNULL(p.premium_price, 0)) net_price, 
 				SUM(leg_set + ISNULL(p.premium_value, 0))  settlement_amount, 
@@ -14527,13 +14618,15 @@ BEGIN
 				GETDATE() create_ts,
 			--	@user_id create_user,
 				MAX(t.deal_volume_uom_id) volume_uom,
-				SUM(case when(t.physical_financial_flag='f') then t.volume else 0 end) fin_volume,
-				MAX(case when(t.physical_financial_flag='f') then t.deal_volume_uom_id else NULL end) fin_volume_uom, 
-				sum(case when t.physical_financial_flag='p' and t.internal_deal_subtype_value_id<>156 then 0 else ABS(market_price) end*volume)/nullif(sum(volume),0) float_Price,
+				SUM(case when(td.calc_physical_financial_flag='f') then t.volume else 0 end) fin_volume,
+				MAX(case when(td.calc_physical_financial_flag='f') then t.deal_volume_uom_id else NULL end) fin_volume_uom, 
+				sum(
+				case when  @calc_type='m' or (@calc_type='s' and td.calc_physical_financial_flag ='f') THEN
+				ABS(market_price) ELSE 0 END*volume)/nullif(sum(volume),0) float_Price,
 				sum((ABS(contract_price) + ISNULL(p.premium_price, 0))*volume)/nullif(sum(volume),0) deal_Price,
 				MAX(t.func_cur_id) price_currency,
 				t.leg,
-				--CASE WHEN (t.physical_financial_flag='p') THEN t.leg ELSE 1 END leg				
+				--CASE WHEN (t.calc_physical_financial_flag='p') THEN t.leg ELSE 1 END leg				
 				sum(t.market_value) market_value,
 				sum(t.contract_value) contract_value,
 				SUM(t.allocation_volume) allocation_volume
@@ -14558,13 +14651,14 @@ BEGIN
 	where error_deal=0 and leg_set is not null 
 	--	and isnull(td.option_flag,'n')='n'
 	group by td.curve_as_of_date, t.source_deal_header_id, s.term_start, s.term_end, 
-				t.leg, t.physical_financial_flag,t.shipment_id, t.ticket_detail_id, t.match_info_id
+				t.leg, td.calc_physical_financial_flag,t.shipment_id, t.ticket_detail_id, t.match_info_id
 
-	select  td.curve_as_of_date as_of_date,
+	select  --td.curve_as_of_date as_of_date,
+			case when td.calc_physical_financial_flag='f' then td.curve_as_of_date else @as_of_date end   as_of_date,
 			MAX( isnull(s.expiration_date,td.curve_as_of_date)) settlement_date, --expiration_date 
 			NULL payment_Date, 
 			t.source_deal_header_id, s.term_start, s.term_end, 
-			--SUM(case when(t.physical_financial_flag='p') then volume else 0 end) volume, 				
+			--SUM(case when(t.calc_physical_financial_flag='p') then volume else 0 end) volume, 				
 			SUM(volume) volume, 
 			avg(ABS(price) + ISNULL(p.premium_price, 0)) net_price, 
 			SUM(leg_set + ISNULL(p.premium_value, 0))  settlement_amount, 
@@ -14572,13 +14666,14 @@ BEGIN
 			GETDATE() create_ts,
 		--	@user_id create_user,
 			MAX(t.deal_volume_uom_id) volume_uom,
-			SUM(case when(t.physical_financial_flag='f') then t.volume else 0 end) fin_volume,
-			MAX(case when(t.physical_financial_flag='f') then t.deal_volume_uom_id else NULL end) fin_volume_uom, 
-			sum(case when t.physical_financial_flag='p' and t.internal_deal_subtype_value_id<>156 then 0 else ABS(market_price) end*volume)/nullif(sum(volume),0) float_Price,
+			SUM(case when(td.calc_physical_financial_flag='f') then t.volume else 0 end) fin_volume,
+			MAX(case when(td.calc_physical_financial_flag='f') then t.deal_volume_uom_id else NULL end) fin_volume_uom, 
+			sum(case when @calc_type='m' or (@calc_type='s' and  td.calc_physical_financial_flag ='f') THEN
+				ABS(market_price) ELSE 0 END*volume)/nullif(sum(volume),0) float_Price,
 			sum((ABS(contract_price) + ISNULL(p.premium_price, 0))*volume)/nullif(sum(volume),0) deal_Price,
 			MAX(t.func_cur_id) price_currency,
 			t.leg,
-			--CASE WHEN (t.physical_financial_flag='p') THEN t.leg ELSE 1 END leg				
+			--CASE WHEN (t.calc_physical_financial_flag='p') THEN t.leg ELSE 1 END leg				
 			sum(t.market_value) market_value,
 			max(t.contract_value) contract_value,
 			SUM(t.allocation_volume) allocation_volume
@@ -14602,14 +14697,16 @@ BEGIN
 	where error_deal=0 and leg_set is not null and isnull(td.option_flag,'n')='y'
 		--and not ( isnull(t.internal_deal_subtype_value_id,1) in (1,2)  and isnull(t.internal_deal_type_value_id,1) in (1,2))
 	group by td.curve_as_of_date, t.source_deal_header_id, s.term_start, s.term_end, 
-		t.leg, t.physical_financial_flag,t.shipment_id, t.ticket_detail_id, t.match_info_id
+		t.leg, td.calc_physical_financial_flag,t.shipment_id, t.ticket_detail_id, t.match_info_id
 
 
 		 
-				 --CASE WHEN (t.physical_financial_flag='p') THEN t.leg ELSE 1 END
+				 --CASE WHEN (t.calc_physical_financial_flag='p') THEN t.leg ELSE 1 END
 	SET @total_set_count = @total_error_count
 	select @total_set_count=@total_set_count+isnull(count(1),0) from #source_deal_settlement1
 	select @total_set_count=@total_set_count+isnull(count(1),0) from #source_deal_settlement
+
+
 
 
 		
@@ -14699,15 +14796,15 @@ BEGIN
 		SET @sql = 
 		'DELETE top(100000) sds 
 		from source_Deal_settlement sds 
-			INNER JOIN (select distinct source_deal_header_id,term_start,term_end from #temp_leg_mtm) s on s.source_deal_header_id = sds.source_deal_header_id 
+			INNER JOIN (select distinct source_deal_header_id,term_start,term_end,internal_deal_subtype_value_id from #temp_leg_mtm) s on s.source_deal_header_id = sds.source_deal_header_id 
 				AND convert(varchar(10),sds.term_start,120)>=convert(varchar(10),s.term_start,120)
 			    AND convert(varchar(10),sds.term_start,120)<=convert(varchar(10),s.term_end,120)
 				AND '
-				+ CASE @save_settlement_data WHEN 209 THEN 
+		+ CASE @save_settlement_data WHEN 209 THEN 
 				' CAST(sds.as_of_date AS DATE) = ''' + @as_of_date + ''''
-				WHEN 211 THEN
+			WHEN 211 THEN
 				' CAST(sds.as_of_date AS DATE) <= ''' + @as_of_date + ''' AND EOMONTH(sds.as_of_date) = ''' + CONVERT(VARCHAR(10), EOMONTH(@as_of_date), 120) + ''''
-					ELSE 
+		ELSE 
 						CASE WHEN @as_of_date = EOMONTH(@as_of_date) THEN ' sds.as_of_date <= ''' ELSE ' sds.as_of_date = ''' END + CONVERT(VARCHAR(10),@as_of_date,120) + '''' END
 
 			exec spa_print @sql
@@ -14751,7 +14848,7 @@ BEGIN
 			 isnull(s.expiration_date,td.curve_as_of_date) settlement_date, --expiration_date 
 			NULL payment_Date, 
 			t.source_deal_header_id, s.term_start, s.term_end, 
-			--SUM(case when(t.physical_financial_flag='p') then volume else 0 end) volume, 				
+			--SUM(case when(t.calc_physical_financial_flag='p') then volume else 0 end) volume, 				
 			t.volume volume, 
 			ABS(price + ISNULL(p.premium_price, 0)) net_price, 
 			CASE WHEN ((sds.settlement_amount + ISNULL(p.premium_value, 0)) < 0 AND td.internal_deal_type_value_id = 103 AND td.internal_deal_subtype_value_id <> 102) THEN 0 
@@ -14763,9 +14860,10 @@ BEGIN
 			GETDATE() create_ts,
 			@user_id create_user,
 			t.deal_volume_uom_id volume_uom,
-			case when t.physical_financial_flag='f' then t.volume else 0 end fin_volume,
-			case when t.physical_financial_flag='f' then t.deal_volume_uom_id else NULL end fin_volume_uom, 
-			ABS(case when t.physical_financial_flag='p' and t.internal_deal_subtype_value_id<>156 then 0 else market_price end ) float_Price,
+			case when td.calc_physical_financial_flag='f' then t.volume else 0 end fin_volume,
+			case when td.calc_physical_financial_flag='f' then t.deal_volume_uom_id else NULL end fin_volume_uom, 
+			case when @calc_type='m' or (@calc_type='s' and td.calc_physical_financial_flag ='f') THEN
+				ABS(market_price) ELSE 0 END float_Price,
 			ABS(contract_price + ISNULL(p.premium_price, 0)) deal_Price,
 			t.func_cur_id price_currency,t.leg,
 			t.market_value,
@@ -14814,6 +14912,9 @@ BEGIN
 			) sds
 		WHERE error_deal=0 and leg_set is not null AND t.calc_mtm_at_tou_level='y'
 	END
+
+
+
 
 if @calc_type='s'
 begin
@@ -14906,20 +15007,20 @@ begin
 					sds.match_info_id
 			'+CASE WHEN @calc_settlement_adjustment = 1 THEN ' INTO '+@deal_settlement_table+' ' ELSE '' END +'
 			FROM #source_deal_settlement sds 
-			LEFT OUTER JOIN source_deal_settlement sett ON 
-					sett.source_deal_header_id = sds.source_deal_header_id 
-					AND sett.term_start = sds.term_start 
-					AND sett.term_end = sds.term_end
-					AND ISNULL(sds.shipment_id, -1) = ISNULL(sett.shipment_id, -1)
-					AND ISNULL(sds.ticket_detail_id, -1) = ISNULL(sett.ticket_detail_id, -1)
-					AND ISNULL(sds.match_info_id, -1) = ISNULL(sett.match_info_id, -1)
-					AND (
-						DATEADD(m,1,CAST(CAST(YEAR(sds.term_end) AS VARCHAR)+''-''+CAST(MONTH(sds.term_end) AS VARCHAR)+''-01'' AS DATETIME))-1 <= '''+@as_of_date+''' 
-						OR 
-							(
-							DATEADD(m,1,CAST(CAST(YEAR(sds.term_end) AS VARCHAR)+''-''+CAST(MONTH(sds.term_end) AS VARCHAR)+''-01'' AS DATETIME))-1 > '''+@as_of_date+''' AND sett.as_of_date = '''+@as_of_date+'''
-							)
-					)
+			--LEFT OUTER JOIN source_deal_settlement sett ON 
+			--		sett.source_deal_header_id = sds.source_deal_header_id 
+			--		AND sett.term_start = sds.term_start 
+			--		AND sett.term_end = sds.term_end
+			--		AND ISNULL(sds.shipment_id, -1) = ISNULL(sett.shipment_id, -1)
+			--		AND ISNULL(sds.ticket_detail_id, -1) = ISNULL(sett.ticket_detail_id, -1)
+			--		AND ISNULL(sds.match_info_id, -1) = ISNULL(sett.match_info_id, -1)
+			--		AND (
+			--			DATEADD(m,1,CAST(CAST(YEAR(sds.term_end) AS VARCHAR)+''-''+CAST(MONTH(sds.term_end) AS VARCHAR)+''-01'' AS DATETIME))-1 <= '''+@as_of_date+''' 
+			--			OR 
+			--				(
+			--				DATEADD(m,1,CAST(CAST(YEAR(sds.term_end) AS VARCHAR)+''-''+CAST(MONTH(sds.term_end) AS VARCHAR)+''-01'' AS DATETIME))-1 > '''+@as_of_date+''' AND sett.as_of_date = '''+@as_of_date+'''
+			--				)
+			--		)
 				OUTER APPLY(
 					SELECT NULLIF(SUM(volume_mult), 0) volume_mult FROM hour_block_term 
 						WHERE block_define_id ='+cast(@baseload_block_definition as varchar)+'
@@ -14930,8 +15031,9 @@ begin
 						internal_deal_type_value_id idtvi,
 						internal_deal_subtype_value_id idsvi
 					FROM #temp_deals td WHERE td.source_deal_header_id = sds.source_deal_header_id) inal
-			where 1=1 '+CASE WHEN @calc_settlement_adjustment = 0 THEN ' AND sett.term_start IS NULL ' ELSE '' END + '
-			OPTION (MAXRECURSION 32767, MAXDOP 8 ) 	'
+			--where 1=1 '+CASE WHEN @calc_settlement_adjustment = 0 THEN ' AND sett.term_start IS NULL ' ELSE '' END + '
+			--OPTION (MAXRECURSION 32767, MAXDOP 8 ) 
+				'
 
 
 	exec spa_print @sql
@@ -17823,7 +17925,7 @@ save_mtm_at_low_granularity:
 				WHEN (a.product_id=4101) THEN
 				(				
 					( --Market Side
-						CASE WHEN('''+ @calc_type+'''=''s'' AND a.physical_financial_flag=''p'' and a.internal_deal_subtype_value_id<>156) THEN 0 ELSE 1 END * 
+						case when '''+ @calc_type+'''=''m'' or ('''+ @calc_type+'''=''s'' and  a.calc_physical_financial_flag =''f'') THEN 1 ELSE 0 END * 
 						CASE when  a.curve_id is not NULL  and a.fixed_float_leg=''t'' then 
 							case when isnull(hv.curve_id,-1)=-1 then
 								case when (lcv.lag_curve_value is not null) then lcv.lag_curve_value * isnull(cucf.curve_uom_conv_factor, 1)
@@ -17995,7 +18097,7 @@ save_mtm_at_low_granularity:
 							end,0)
 						 leg_set,abs(opd.volume) tot_volume  from #option_param opd
 					 inner JOIN #temp_deals b ON opd.source_deal_header_id = b.source_deal_header_id and opd.term_start = b.term_start AND  b.leg=1
-						and opd.rowid=op.rowid and opd.source_deal_header_id = a.source_deal_header_id and opd.term_start = a.term_start and a.leg=1 AND a.physical_financial_flag = ''f''
+						and opd.rowid=op.rowid and opd.source_deal_header_id = a.source_deal_header_id and opd.term_start = a.term_start and a.leg=1 AND a.calc_physical_financial_flag = ''f''
 				) opd1 '
 						
 			set @qry6g=  replace(REPLACE(replace(@qry4g,'[hv].term_start','[op1].term_day'),'[hv].','[op1].'),'.[hours]','.[hr]')+ @qry6g
