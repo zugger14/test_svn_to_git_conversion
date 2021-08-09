@@ -252,7 +252,7 @@ BEGIN
 		   td.deal_id deal_id,
 		   MAX(td.sub_book_id) sub_book_id,
 		   MAX(td.physical_financial_flag) physical_financial_flag,
-		   'CNF_' + CONVERT(VARCHAR(10), GETDATE(), 112) + '_' + REPLICATE('0', 10 - LEN(RTRIM(td.source_deal_header_id))) + RTRIM(td.source_deal_header_id) + '@' + MAX(tcuv.[Sub EIC]) document_id,
+		   'CNF_' + CONVERT(VARCHAR(10), MAX(td.deal_date), 112) + '_' + REPLICATE('0', 10 - LEN(RTRIM(td.source_deal_header_id))) + RTRIM(td.source_deal_header_id) + '@' + MAX(tcuv.[Sub EIC]) document_id,
 		   ISNULL(@document_usage, 'Test') document_usage,
 		    IIF(MAX(ssr.rule_id) IS NOT NULL,MAX(tcuv.[Sub EIC]),MAX(tcuv.[Broker EIC])) sender_id,
 		    MAX(tcuv.[Deal EIC]) receiver_id,
@@ -820,7 +820,7 @@ BEGIN
 				   td.deal_id deal_id,
 				   MAX(td.sub_book_id) sub_book_id,
 				   MAX(td.physical_financial_flag) physical_financial_flag,
-				   'BFI_' + CONVERT(VARCHAR(10), GETDATE(), 112) + '_' + REPLICATE('0', 10 - LEN(RTRIM(td.source_deal_header_id))) + RTRIM(td.source_deal_header_id) + '@' + MAX(tcuv.[Sub EIC]) document_id,
+				   'BFI_' + CONVERT(VARCHAR(10), MAX(td.deal_date), 112) + '_' + REPLICATE('0', 10 - LEN(RTRIM(td.source_deal_header_id))) + RTRIM(td.source_deal_header_id) + '@' + MAX(tcuv.[Sub EIC]) document_id,
 				   CAST(CASE MAX(sdv_r.code) WHEN 'PTTA' THEN 0
 										WHEN 'PTTP' THEN 0
 				   ELSE 0
@@ -962,7 +962,7 @@ BEGIN
 			   td.deal_id deal_id,
 			   MAX(td.sub_book_id) sub_book_id,
 			   MAX(td.physical_financial_flag) physical_financial_flag,
-			   'CAN_' + CONVERT(VARCHAR(10), GETDATE(), 112) + '_' + REPLICATE('0', 10-LEN(RTRIM(td.source_deal_header_id))) + RTRIM(td.source_deal_header_id) + '@' + MAX(tcuv.[Sub EIC]) document_id,
+			   'CAN_' + CONVERT(VARCHAR(10), MAX(td.deal_date), 112) + '_' + REPLICATE('0', 10-LEN(RTRIM(td.source_deal_header_id))) + RTRIM(td.source_deal_header_id) + '@' + MAX(tcuv.[Sub EIC]) document_id,
 			   ISNULL(@document_usage, 'Test') document_usage,
 			   MAX(tcuv.[Sub EIC]) sender_id,
 			   MAX(tcuv.[Deal EIC]) receiver_id,
