@@ -59,6 +59,7 @@
              //Attaching Layout  
             $layout_obj = new AdihaLayout();
             echo $layout_obj->init_layout('lock_as_of_date_layout', '', '2E', $layout_json, $form_namespace);
+            echo $layout_obj->attach_status_bar('b', true);
 
             //Attaching Toolbar 
             echo $layout_obj->attach_toolbar_cell('lock_as_of_date_toolbar', 'a');
@@ -82,7 +83,8 @@
             echo $grid_obj->set_search_filter(true, "");
             echo $grid_obj->enable_multi_select(true);
 			echo $grid_obj->return_init();
-            //echo $grid_obj->enable_paging(25, 'pagingArea_c');   
+            echo $grid_obj->enable_paging(25, 'pagingArea_b');   
+            echo $grid_obj->split_grid(2);
             echo $grid_obj->attach_event('', 'onRowSelect', 'grid_row_click');
 
             echo $layout_obj->close_layout();
