@@ -84,7 +84,7 @@
             echo $grid_obj->enable_multi_select(true);
 			echo $grid_obj->return_init();
             echo $grid_obj->enable_paging(25, 'pagingArea_b');   
-            echo $grid_obj->split_grid(2);
+            echo $grid_obj->split_grid(1);
             echo $grid_obj->attach_event('', 'onRowSelect', 'grid_row_click');
 
             echo $layout_obj->close_layout();
