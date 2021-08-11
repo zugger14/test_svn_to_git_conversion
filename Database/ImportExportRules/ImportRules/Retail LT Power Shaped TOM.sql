@@ -50,124 +50,43 @@ FROM [temp_process_table] a
 INNER JOIN vw_date_details dd
 	ON a.[Term Date] = dd.user_date
 
-IF OBJECT_ID(N''tempdb..#curve_max_term'') IS NOT NULL
-	DROP TABLE #curve_max_term
--- DEAL List
-CREATE TABLE #curve_max_term (
-	  term_start DATE
-	, term_end DATE
-	, as_of_date DATE
-	, pfc_curve INT
-	, curve_granularity INT
-	, deal_granularity INT
-)
+IF OBJECT_ID(N''tempdb..#generic_mapping_values'') IS NOT NULL
+DROP TABLE #generic_mapping_values
 
+DECLARE @mapping_table_id INT
+SELECT @mapping_table_id = mapping_table_id FROM generic_mapping_header 
+WHERE mapping_name = ''Transfer Volume Mapping''
 
-INSERT INTO #curve_max_term (term_start, term_end, as_of_date, pfc_curve, curve_granularity, deal_granularity)
-SELECT min([Term Date]) term_start, max(sdd.[Term_end]) term_end, max(mx.as_of_date), (sdd.curve_id),
-	max(mx.Granularity), max(sdh.profile_granularity)
-FROM [temp_process_table] a
-INNER JOIN source_deal_header sdh
-	ON sdh.deal_id = a.[Deal Ref ID]
-INNER JOIN source_deal_detail sdd
-	ON sdd.source_deal_header_id = sdh.source_deal_header_id
-	AND sdd.leg = a.leg
-	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
-OUTER APPLY (
-	SELECT top 1 spc.as_of_date as_of_date, spc.curve_value, spc.source_curve_def_id pfc_curve , spcd.Granularity Granularity
-	FROM source_price_curve spc
-	INNER JOIN source_price_curve_def spcd
-		ON spcd.source_curve_def_id = spc.source_curve_def_id
-	WHERE spc.source_curve_def_id = sdd.curve_id
-	and spc.maturity_date = sdd.term_start
-	AND spc.curve_source_value_id = 4500
-	ORDER BY spc.as_of_date DESC
+SELECT gmv.clm18_value [curve_id]
+INTO #generic_mapping_values
+FROM  generic_mapping_header gmh
+INNER JOIN generic_mapping_definition gmd ON gmd.mapping_table_id = gmh.mapping_table_id
+CROSS APPLY (
+	SELECT clm1_value, clm2_value, clm3_value, clm4_value, clm5_value
+	FROM generic_mapping_values gmv 
+	WHERE gmv.mapping_table_id = gmh.mapping_table_id
+	GROUP BY clm1_value, clm2_value, clm3_value, clm4_value, clm5_value
 ) mx
-WHERE sdd.curve_id IS NOT NULL
-group by sdd.curve_id
+INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id 
+	AND gmv.clm1_value = mx.clm1_value
+WHERE gmh.mapping_name = ''Transfer Volume Mapping'' 
+	AND gmv.clm1_value = 112708
+	AND gmv.mapping_table_id = @mapping_table_id
 
-
-
-IF OBJECT_ID(N''tempdb..#price_from_curve'') IS NOT NULL
-	DROP TABLE #price_from_curve
--- @@ dataset1  PFC
-CREATE TABLE #price_from_curve (
-	  term_date date
-	, curve_value float(53)
-	, is_dst int
-	, Granularity int
-	, hour	int
-	, minute int
-)
-IF EXISTS (
-		SELECT 1
-		FROM #curve_max_term
-		WHERE deal_granularity = 987
-			AND curve_granularity = 982
-		)
-BEGIN
-	INSERT INTO #price_from_curve
-	SELECT 
-		CAST(spc.maturity_date AS DATE) [term_date],
-		spc.curve_value,
-		spc.is_dst,
-		spcd.Granularity,
-		IIF(minute <> 0, DATEPART(HH,maturity_date), (DATEPART(HH,maturity_date) + 1))  [hour],
-		--DATEPART(MINUTE,maturity_date) [minute],
-		minute
-	FROM #curve_max_term cmt
-	INNER JOIN source_price_curve_def spcd
-		ON  spcd.source_curve_def_id = cmt.pfc_curve
-	INNER JOIN source_price_curve spc
-		ON spc.source_curve_def_id = spcd.source_curve_def_id
-	CROSS JOIN (
-			VALUES (0),(15),(30),(45)
-	) rs (minute)
-	WHERE spc.as_of_date = cmt.as_of_date
-		AND spc.maturity_date >= cmt.term_start
-		AND spc.maturity_date <= DATEADD(dd,1,cmt.term_end)
-		AND spc.source_curve_def_id = cmt.pfc_curve
-		AND spc.curve_source_value_id = 4500
-END
-ELSE
-BEGIN
-	INSERT INTO #price_from_curve
-	SELECT 
-		CAST(spc.maturity_date AS DATE) [term_date],
-		spc.curve_value,
-		spc.is_dst,
-		spcd.Granularity,
-		(DATEPART(HH,maturity_date) + 1)  [hour],
-		DATEPART(MINUTE,maturity_date) [minute]
-	FROM #curve_max_term cmt
-	INNER JOIN source_price_curve_def spcd
-		ON  spcd.source_curve_def_id = cmt.pfc_curve
-	INNER JOIN source_price_curve spc
-		ON spc.source_curve_def_id = spcd.source_curve_def_id
-	WHERE spc.as_of_date = cmt.as_of_date
-		AND spc.maturity_date >= cmt.term_start
-		AND spc.maturity_date <= DATEADD(dd,1,cmt.term_end)
-		AND spc.source_curve_def_id = cmt.pfc_curve
-		AND spc.curve_source_value_id = 4500
-END
-
-
-DECLARE @dst_group_value_id INT 
-	, @granularity INT 
+DECLARE @dst_group_value_id INT  
 	, @min_term DATETIME 
 	, @max_term DATETIME
 
-SELECT @dst_group_value_id = tz.dst_group_value_id	--102201
+SELECT @dst_group_value_id = tz.dst_group_value_id
 FROM adiha_default_codes_values adcv
 INNER JOIN time_zones tz ON tz.timezone_id = adcv.var_value
 WHERE adcv.default_code_id = 36
 
-SELECT @granularity = deal_granularity
-	, @min_term = term_start
-	, @max_term = term_end
-FROM #curve_max_term
+SELECT @min_term = MIN([Term Date])
+	,@max_term = MAX([Term Date])
+FROM [temp_process_table]
+GROUP BY [Term Date]
 
--- Granularity Column
 IF OBJECT_ID(''tempdb..#temp_hour_breakdown'') IS NOT NULL
 	DROP TABLE #temp_hour_breakdown
 
@@ -177,13 +96,15 @@ SELECT clm_name, is_dst, REPLACE(alias_name,''DST'','''') [user_clm],
 		ELSE RIGHT(''0'' + CAST(LEFT(clm_name, 2) + 1 AS VARCHAR(10)), 2) + '':'' + RIGHT(clm_name, 2) 
 	END [process_clm]
 INTO #temp_hour_breakdown
-FROM dbo.FNAGetPivotGranularityColumn(@min_term,@max_term,@granularity,@dst_group_value_id) 
+FROM dbo.FNAGetPivotGranularityColumn(@min_term,@max_term,987,@dst_group_value_id)
 
+DROP TABLE IF EXISTS adiha_process.dbo.temp_process_table_output_schema
 DECLARE @col INT
 EXEC spa_get_output_schema_or_data @sql_query = ''SELECT * FROM [temp_process_table]''
 ,@process_table_name = ''adiha_process.dbo.temp_process_table_output_schema''
 ,@data_output_col_count = @col OUTPUT
 ,@flag = ''schema''
+
 
 IF NOT EXISTS (
 	SELECT 1 
@@ -194,6 +115,68 @@ BEGIN
 	ALTER TABLE [temp_process_table]
 	ADD price nvarchar(600)
 END
+
+ALTER TABLE [temp_process_table]
+ADD term_datetime datetime
+
+ALTER TABLE [temp_process_table]
+ADD curve_value float(53)
+
+UPDATE a
+SET term_datetime = IIF(spcd.Granularity = 980, CAST(sdd.term_start AS DATE), CAST( a.[Term Date] + '' '' + IIF(spcd.Granularity = 982, dt.[hr], ''00'') + '':00''  AS DATETIME))
+-- SELECT sdd.* 
+FROM [temp_process_table] a
+INNER JOIN source_deal_header sdh
+	ON sdh.deal_id = a.[Deal Ref ID]
+INNER JOIN source_deal_detail sdd
+	ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	AND sdd.leg = a.leg
+	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+OUTER APPLY (
+	SELECT curve_id
+	FROM #generic_mapping_values
+) gmv
+INNER JOIN source_price_curve_def spcd
+	ON spcd.source_curve_def_id = COALESCE(gmv.curve_id ,sdd.curve_id)
+OUTER APPLY (
+	SELECT LEFT(clm_name, 2) [hr], RIGHT(clm_name, 2) [min]
+	FROM #temp_hour_breakdown
+	WHERE CAST(LEFT(user_clm, 2) AS INT) = a.[Hour]
+		AND CAST(RIGHT(user_clm, 2) AS INT) = a.[Minute]
+		AND is_dst = a.[Is DST]
+) dt
+
+
+UPDATE a
+SET a.curve_value = spc.curve_value
+FROM [temp_process_table] a
+INNER JOIN source_deal_header sdh
+	ON sdh.deal_id = a.[Deal Ref ID]
+INNER JOIN source_deal_detail sdd
+	ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	AND sdd.leg = a.leg
+	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+OUTER APPLY (
+	SELECT curve_id
+	FROM #generic_mapping_values
+) gmv
+INNER JOIN source_price_curve_def spcd
+	ON spcd.source_curve_def_id = COALESCE(gmv.curve_id, sdd.curve_id)
+OUTER APPLY (
+	SELECT maturity_date [maturity_date], MAX(as_of_date) as_of_date
+	FROM source_price_curve
+	WHERE source_curve_def_id = spcd.source_curve_def_id
+	and maturity_date = a.[term_datetime] --BETWEEN sdd.term_start AND sdd.term_end
+	AND curve_source_value_id = 4500
+	AND is_dst = IIF(spcd.Granularity = 980, 0, a.[Is DST])
+	GROUP BY maturity_date
+) mx
+INNER JOIN source_price_curve spc
+	ON spc.source_curve_def_id = spcd.source_curve_def_id
+	and spc.maturity_date = a.[term_datetime] 
+	AND curve_source_value_id = 4500
+	AND spc.is_dst = IIF(spcd.Granularity = 980, 0, a.[Is DST])
+	AND spc.as_of_date = mx.as_of_date
 
 IF OBJECT_ID(''tempdb..#deal_data'') IS NOT NULL
 	DROP TABLE #deal_data
@@ -252,16 +235,11 @@ INSERT INTO [temp_process_table] (
 	,[Leg]
 )
 SELECT  DISTINCT dd.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
-	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
+	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * a.curve_value)/ISNULL(NULLIF(a.volume, ''0''), 0.01) as numeric(38,10)) [Price], a.Leg
 FROM [temp_process_table] a
 INNER JOIN #deal_data dd	
 	ON dd.parent_deal_id = a.[Deal Ref ID]
 	AND dd.term_date = a.[Term Date]
-INNER JOIN #price_from_curve  pfc
-	ON a.[Term Date] = pfc.term_date
-	and a.Hour = pfc.hour
-	and a.Minute = pfc.minute
-	and a.[Is DST] = pfc.is_dst
 INNER JOIN #source_deal_detail_hour sddh
 	ON sddh.source_deal_header_id = dd.source_deal_header_id
 	AND sddh.term_date = dd.term_date
@@ -273,16 +251,11 @@ INNER JOIN #temp_hour_breakdown thb
 	AND thb.is_dst = a.[Is DST]
 UNION ALL
 SELECT  DISTINCT dd.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
-	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
+	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (ISNULL(NULLIF(a.volume, ''0''), 0.01) - ISNULL(sddh.volume,0)) * a.curve_value)/ISNULL(NULLIF(a.volume, ''0''), 0.01) as numeric(38,10)) [Price], a.Leg
 FROM [temp_process_table] a
 INNER JOIN #deal_data dd	
 	ON dd.parent_deal_id = a.[Deal Ref ID]
 	AND dd.term_date = a.[Term Date]
-INNER JOIN #price_from_curve  pfc
-	ON a.[Term Date] = pfc.term_date
-	and a.Hour = pfc.hour
-	and a.Minute = pfc.minute
-	and a.[Is DST] = pfc.is_dst
 LEFT JOIN #source_deal_detail_hour sddh
 	ON sddh.source_deal_header_id = dd.source_deal_header_id
 	AND sddh.term_date = dd.term_date
@@ -290,7 +263,8 @@ LEFT JOIN #temp_hour_breakdown thb
 	ON thb.process_clm = sddh.hr
 	AND thb.is_dst = sddh.is_dst
 WHERE sddh.source_deal_detail_id IS NULL
-	  AND thb.clm_name IS NULL',
+	  AND thb.clm_name IS NULL
+',
 					NULL,
 					'i' ,
 					'y' ,
@@ -327,124 +301,43 @@ FROM [temp_process_table] a
 INNER JOIN vw_date_details dd
 	ON a.[Term Date] = dd.user_date
 
-IF OBJECT_ID(N''tempdb..#curve_max_term'') IS NOT NULL
-	DROP TABLE #curve_max_term
--- DEAL List
-CREATE TABLE #curve_max_term (
-	  term_start DATE
-	, term_end DATE
-	, as_of_date DATE
-	, pfc_curve INT
-	, curve_granularity INT
-	, deal_granularity INT
-)
+IF OBJECT_ID(N''tempdb..#generic_mapping_values'') IS NOT NULL
+DROP TABLE #generic_mapping_values
 
+DECLARE @mapping_table_id INT
+SELECT @mapping_table_id = mapping_table_id FROM generic_mapping_header 
+WHERE mapping_name = ''Transfer Volume Mapping''
 
-INSERT INTO #curve_max_term (term_start, term_end, as_of_date, pfc_curve, curve_granularity, deal_granularity)
-SELECT min([Term Date]) term_start, max(sdd.[Term_end]) term_end, max(mx.as_of_date), (sdd.curve_id),
-	max(mx.Granularity), max(sdh.profile_granularity)
-FROM [temp_process_table] a
-INNER JOIN source_deal_header sdh
-	ON sdh.deal_id = a.[Deal Ref ID]
-INNER JOIN source_deal_detail sdd
-	ON sdd.source_deal_header_id = sdh.source_deal_header_id
-	AND sdd.leg = a.leg
-	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
-OUTER APPLY (
-	SELECT top 1 spc.as_of_date as_of_date, spc.curve_value, spc.source_curve_def_id pfc_curve , spcd.Granularity Granularity
-	FROM source_price_curve spc
-	INNER JOIN source_price_curve_def spcd
-		ON spcd.source_curve_def_id = spc.source_curve_def_id
-	WHERE spc.source_curve_def_id = sdd.curve_id
-	and spc.maturity_date = sdd.term_start
-	AND spc.curve_source_value_id = 4500
-	ORDER BY spc.as_of_date DESC
+SELECT gmv.clm18_value [curve_id]
+INTO #generic_mapping_values
+FROM  generic_mapping_header gmh
+INNER JOIN generic_mapping_definition gmd ON gmd.mapping_table_id = gmh.mapping_table_id
+CROSS APPLY (
+	SELECT clm1_value, clm2_value, clm3_value, clm4_value, clm5_value
+	FROM generic_mapping_values gmv 
+	WHERE gmv.mapping_table_id = gmh.mapping_table_id
+	GROUP BY clm1_value, clm2_value, clm3_value, clm4_value, clm5_value
 ) mx
-WHERE sdd.curve_id IS NOT NULL
-group by sdd.curve_id
+INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id 
+	AND gmv.clm1_value = mx.clm1_value
+WHERE gmh.mapping_name = ''Transfer Volume Mapping'' 
+	AND gmv.clm1_value = 112708
+	AND gmv.mapping_table_id = @mapping_table_id
 
-
-
-IF OBJECT_ID(N''tempdb..#price_from_curve'') IS NOT NULL
-	DROP TABLE #price_from_curve
--- @@ dataset1  PFC
-CREATE TABLE #price_from_curve (
-	  term_date date
-	, curve_value float(53)
-	, is_dst int
-	, Granularity int
-	, hour	int
-	, minute int
-)
-IF EXISTS (
-		SELECT 1
-		FROM #curve_max_term
-		WHERE deal_granularity = 987
-			AND curve_granularity = 982
-		)
-BEGIN
-	INSERT INTO #price_from_curve
-	SELECT 
-		CAST(spc.maturity_date AS DATE) [term_date],
-		spc.curve_value,
-		spc.is_dst,
-		spcd.Granularity,
-		IIF(minute <> 0, DATEPART(HH,maturity_date), (DATEPART(HH,maturity_date) + 1))  [hour],
-		--DATEPART(MINUTE,maturity_date) [minute],
-		minute
-	FROM #curve_max_term cmt
-	INNER JOIN source_price_curve_def spcd
-		ON  spcd.source_curve_def_id = cmt.pfc_curve
-	INNER JOIN source_price_curve spc
-		ON spc.source_curve_def_id = spcd.source_curve_def_id
-	CROSS JOIN (
-			VALUES (0),(15),(30),(45)
-	) rs (minute)
-	WHERE spc.as_of_date = cmt.as_of_date
-		AND spc.maturity_date >= cmt.term_start
-		AND spc.maturity_date <= DATEADD(dd,1,cmt.term_end)
-		AND spc.source_curve_def_id = cmt.pfc_curve
-		AND spc.curve_source_value_id = 4500
-END
-ELSE
-BEGIN
-	INSERT INTO #price_from_curve
-	SELECT 
-		CAST(spc.maturity_date AS DATE) [term_date],
-		spc.curve_value,
-		spc.is_dst,
-		spcd.Granularity,
-		(DATEPART(HH,maturity_date) + 1)  [hour],
-		DATEPART(MINUTE,maturity_date) [minute]
-	FROM #curve_max_term cmt
-	INNER JOIN source_price_curve_def spcd
-		ON  spcd.source_curve_def_id = cmt.pfc_curve
-	INNER JOIN source_price_curve spc
-		ON spc.source_curve_def_id = spcd.source_curve_def_id
-	WHERE spc.as_of_date = cmt.as_of_date
-		AND spc.maturity_date >= cmt.term_start
-		AND spc.maturity_date <= DATEADD(dd,1,cmt.term_end)
-		AND spc.source_curve_def_id = cmt.pfc_curve
-		AND spc.curve_source_value_id = 4500
-END
-
-
-DECLARE @dst_group_value_id INT 
-	, @granularity INT 
+DECLARE @dst_group_value_id INT  
 	, @min_term DATETIME 
 	, @max_term DATETIME
 
-SELECT @dst_group_value_id = tz.dst_group_value_id	--102201
+SELECT @dst_group_value_id = tz.dst_group_value_id
 FROM adiha_default_codes_values adcv
 INNER JOIN time_zones tz ON tz.timezone_id = adcv.var_value
 WHERE adcv.default_code_id = 36
 
-SELECT @granularity = deal_granularity
-	, @min_term = term_start
-	, @max_term = term_end
-FROM #curve_max_term
+SELECT @min_term = MIN([Term Date])
+	,@max_term = MAX([Term Date])
+FROM [temp_process_table]
+GROUP BY [Term Date]
 
--- Granularity Column
 IF OBJECT_ID(''tempdb..#temp_hour_breakdown'') IS NOT NULL
 	DROP TABLE #temp_hour_breakdown
 
@@ -454,13 +347,15 @@ SELECT clm_name, is_dst, REPLACE(alias_name,''DST'','''') [user_clm],
 		ELSE RIGHT(''0'' + CAST(LEFT(clm_name, 2) + 1 AS VARCHAR(10)), 2) + '':'' + RIGHT(clm_name, 2) 
 	END [process_clm]
 INTO #temp_hour_breakdown
-FROM dbo.FNAGetPivotGranularityColumn(@min_term,@max_term,@granularity,@dst_group_value_id) 
+FROM dbo.FNAGetPivotGranularityColumn(@min_term,@max_term,987,@dst_group_value_id)
 
+DROP TABLE IF EXISTS adiha_process.dbo.temp_process_table_output_schema
 DECLARE @col INT
 EXEC spa_get_output_schema_or_data @sql_query = ''SELECT * FROM [temp_process_table]''
 ,@process_table_name = ''adiha_process.dbo.temp_process_table_output_schema''
 ,@data_output_col_count = @col OUTPUT
 ,@flag = ''schema''
+
 
 IF NOT EXISTS (
 	SELECT 1 
@@ -471,6 +366,68 @@ BEGIN
 	ALTER TABLE [temp_process_table]
 	ADD price nvarchar(600)
 END
+
+ALTER TABLE [temp_process_table]
+ADD term_datetime datetime
+
+ALTER TABLE [temp_process_table]
+ADD curve_value float(53)
+
+UPDATE a
+SET term_datetime = IIF(spcd.Granularity = 980, CAST(sdd.term_start AS DATE), CAST( a.[Term Date] + '' '' + IIF(spcd.Granularity = 982, dt.[hr], ''00'') + '':00''  AS DATETIME))
+-- SELECT sdd.* 
+FROM [temp_process_table] a
+INNER JOIN source_deal_header sdh
+	ON sdh.deal_id = a.[Deal Ref ID]
+INNER JOIN source_deal_detail sdd
+	ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	AND sdd.leg = a.leg
+	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+OUTER APPLY (
+	SELECT curve_id
+	FROM #generic_mapping_values
+) gmv
+INNER JOIN source_price_curve_def spcd
+	ON spcd.source_curve_def_id = COALESCE(gmv.curve_id ,sdd.curve_id)
+OUTER APPLY (
+	SELECT LEFT(clm_name, 2) [hr], RIGHT(clm_name, 2) [min]
+	FROM #temp_hour_breakdown
+	WHERE CAST(LEFT(user_clm, 2) AS INT) = a.[Hour]
+		AND CAST(RIGHT(user_clm, 2) AS INT) = a.[Minute]
+		AND is_dst = a.[Is DST]
+) dt
+
+
+UPDATE a
+SET a.curve_value = spc.curve_value
+FROM [temp_process_table] a
+INNER JOIN source_deal_header sdh
+	ON sdh.deal_id = a.[Deal Ref ID]
+INNER JOIN source_deal_detail sdd
+	ON sdd.source_deal_header_id = sdh.source_deal_header_id
+	AND sdd.leg = a.leg
+	AND a.[Term Date] BETWEEN sdd.term_start AND sdd.term_end
+OUTER APPLY (
+	SELECT curve_id
+	FROM #generic_mapping_values
+) gmv
+INNER JOIN source_price_curve_def spcd
+	ON spcd.source_curve_def_id = COALESCE(gmv.curve_id, sdd.curve_id)
+OUTER APPLY (
+	SELECT maturity_date [maturity_date], MAX(as_of_date) as_of_date
+	FROM source_price_curve
+	WHERE source_curve_def_id = spcd.source_curve_def_id
+	and maturity_date = a.[term_datetime] --BETWEEN sdd.term_start AND sdd.term_end
+	AND curve_source_value_id = 4500
+	AND is_dst = IIF(spcd.Granularity = 980, 0, a.[Is DST])
+	GROUP BY maturity_date
+) mx
+INNER JOIN source_price_curve spc
+	ON spc.source_curve_def_id = spcd.source_curve_def_id
+	and spc.maturity_date = a.[term_datetime] 
+	AND curve_source_value_id = 4500
+	AND spc.is_dst = IIF(spcd.Granularity = 980, 0, a.[Is DST])
+	AND spc.as_of_date = mx.as_of_date
 
 IF OBJECT_ID(''tempdb..#deal_data'') IS NOT NULL
 	DROP TABLE #deal_data
@@ -529,16 +486,11 @@ INSERT INTO [temp_process_table] (
 	,[Leg]
 )
 SELECT  DISTINCT dd.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
-	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
+	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * a.curve_value)/ISNULL(NULLIF(a.volume, ''0''), 0.01) as numeric(38,10)) [Price], a.Leg
 FROM [temp_process_table] a
 INNER JOIN #deal_data dd	
 	ON dd.parent_deal_id = a.[Deal Ref ID]
 	AND dd.term_date = a.[Term Date]
-INNER JOIN #price_from_curve  pfc
-	ON a.[Term Date] = pfc.term_date
-	and a.Hour = pfc.hour
-	and a.Minute = pfc.minute
-	and a.[Is DST] = pfc.is_dst
 INNER JOIN #source_deal_detail_hour sddh
 	ON sddh.source_deal_header_id = dd.source_deal_header_id
 	AND sddh.term_date = dd.term_date
@@ -550,16 +502,11 @@ INNER JOIN #temp_hour_breakdown thb
 	AND thb.is_dst = a.[Is DST]
 UNION ALL
 SELECT  DISTINCT dd.deal_id, a.[Term Date], a.Hour, a.Minute, a.[Is DST], a.Volume,
-	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (a.Volume - ISNULL(sddh.volume,0)) * pfc.curve_value)/a.volume as numeric(38,10)) [Price], a.Leg
+	cast((ISNULL(sddh.volume,0) * ISNULL(sddh.price,0) + (ISNULL(NULLIF(a.volume, ''0''), 0.01) - ISNULL(sddh.volume,0)) * a.curve_value)/ISNULL(NULLIF(a.volume, ''0''), 0.01) as numeric(38,10)) [Price], a.Leg
 FROM [temp_process_table] a
 INNER JOIN #deal_data dd	
 	ON dd.parent_deal_id = a.[Deal Ref ID]
 	AND dd.term_date = a.[Term Date]
-INNER JOIN #price_from_curve  pfc
-	ON a.[Term Date] = pfc.term_date
-	and a.Hour = pfc.hour
-	and a.Minute = pfc.minute
-	and a.[Is DST] = pfc.is_dst
 LEFT JOIN #source_deal_detail_hour sddh
 	ON sddh.source_deal_header_id = dd.source_deal_header_id
 	AND sddh.term_date = dd.term_date
@@ -567,7 +514,8 @@ LEFT JOIN #temp_hour_breakdown thb
 	ON thb.process_clm = sddh.hr
 	AND thb.is_dst = sddh.is_dst
 WHERE sddh.source_deal_detail_id IS NULL
-	  AND thb.clm_name IS NULL'
+	  AND thb.clm_name IS NULL
+'
 				, after_insert_trigger = NULL
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
@@ -596,7 +544,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
+						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity_Test\temp_Note\0',
 						   NULL,
 						   ';',
 						   2,
@@ -698,4 +646,3 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-		
