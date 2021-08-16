@@ -654,7 +654,7 @@ BEGIN
 			   ('trade_date', 'trade date must not be NULL'),
 			   ('delivery_start','delivery start must not be NULL'),
 			   ('delivery_end', 'delivery end must not be NULL'),
-			   ('contract_capacity', 'contract capacity must not be NULL'),
+			   --('contract_capacity', 'contract capacity must not be NULL'),
 			   ('ecm_document_type', 'ecm document type must not be NULL')
 
 		DECLARE @column_name VARCHAR(200), @msg VARCHAR(1000)
@@ -719,6 +719,15 @@ BEGIN
 		CLOSE c
 		DEALLOCATE c
 
+		INSERT INTO #temp_messages(source_deal_header_id, [column], [messages])
+		SELECT se.source_deal_header_id, 'contract_capacity','contract capacity must not be NULL'
+		FROM source_ecm se
+		INNER JOIN source_deal_header sdh
+			ON sdh.source_deal_header_id = se.source_deal_header_id
+		WHERE sdh.internal_desk_id = 17300
+			AND se.process_id = @process_id
+			AND NULLIF(se.contract_capacity,0) IS NULL
+		
 		INSERT INTO #temp_messages(source_deal_header_id, [column], [messages])
 		SELECT source_deal_header_id, 'document_id','document ID Must not exceed 255 characters'
 		FROM source_ecm

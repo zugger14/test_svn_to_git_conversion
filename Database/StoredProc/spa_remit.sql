@@ -886,6 +886,8 @@ BEGIN
 			WHERE [TYPE_ID] = 10018 
 				AND code LIKE 'Base Load' -- External Static Data
 
+			IF OBJECT_ID('tempdb..#tempblock') IS NOT NULL
+				DROP TABLE #tempblock
 			CREATE TABLE #tempblock (
 				id INT IDENTITY(1, 1), 
 				hr INT, 
@@ -894,6 +896,43 @@ BEGIN
 				hr_mult INT
 			)
 
+			IF OBJECT_ID('tempdb..#tempblock1') IS NOT NULL
+				DROP TABLE #tempblock1
+			CREATE TABLE #tempblock1 (
+							id INT IDENTITY(1, 1), 
+							hr INT, 
+							source_deal_header_id INT, 
+							term_date DATETIME, 
+							hr_mult INT,
+							granularity INT,
+							volume FLOAT,
+							price FLOAT 
+						)
+
+			IF OBJECT_ID('tempdb..#tempblock2') IS NOT NULL
+				DROP TABLE #tempblock2
+			CREATE TABLE #tempblock2 (
+					max_hr INT, 
+					source_deal_header_id INT, 
+					term_date DATETIME, 
+					hr_mult INT,
+					hr1 INT
+				)
+
+
+			
+			DECLARE @default_dst_group VARCHAR(50)
+
+			SELECT  @default_dst_group = tz.dst_group_value_id
+			FROM
+				(
+					SELECT var_value default_timezone_id 
+					FROM dbo.adiha_default_codes_values (NOLOCK) 
+					WHERE instance_no = 1 AND default_code_id = 36 AND seq_no = 1
+				) df  
+			INNER JOIN dbo.time_zones tz (NOLOCK) ON tz.timezone_id = df.default_timezone_id
+
+			
 			DECLARE c1 CURSOR FOR 
 			    SELECT source_deal_Header_id, document_id, document_usage, sender_id, receiver_id, receiver_role, 
 					   document_version, market, commodity, transaction_type, delivery_point_area, buyer_party, 
@@ -913,6 +952,8 @@ BEGIN
 		    WHILE @@FETCH_STATUS = 0
 		    BEGIN
 				TRUNCATE TABLE #tempblock
+				TRUNCATE TABLE #tempblock1
+				TRUNCATE TABLE #tempblock2
 				
 				SELECT @include_broker = 'y'
 				FROM source_deal_header sdh
@@ -986,7 +1027,126 @@ BEGIN
 
 				IF @col_commodity = 'Gas'
 				BEGIN
-					IF NOT EXISTS (
+					IF EXISTS(SELECT 1 FROM source_deal_header sdh
+						  INNER JOIN source_deal_detail sdd
+							ON sdd.source_deal_header_id = sdh.source_deal_header_id
+						  INNER JOIN source_deal_detail_hour sddh
+							ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+						  WHERE sdh.source_deal_header_id = @col_source_deal_header_id
+						  AND sdh.internal_desk_id = 17302
+					)
+					BEGIN
+						INSERT INTO #tempblock1(hr, source_deal_header_id, term_date, hr_mult,granularity,volume,price)
+						SELECT CAST(SUBSTRING([hour], 3, 5) AS INT) hr,
+								unpvt.source_deal_header_id,
+								DATEADD(MINUTE, CAST(LTRIM(DATEDIFF(MINUTE, 0, CASE WHEN CHARINDEX(':', sddh.hr) > 0 THEN RIGHT('00' + CAST((LEFT(sddh.hr, 2) - 1) AS VARCHAR(10)), 2) + RIGHT(sddh.hr, 3) ELSE RIGHT(('00' + (sddh.hr -1)), 2) + ':00' END)) AS INT), unpvt.term_date) term_date,
+								hr_mult, sddh.granularity, sddh.volume, sddh.price
+						FROM (
+							SELECT se.process_id, se.ecm_document_type, se.error_validation_message, se.source_deal_header_id, hb.term_date,
+									hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13, hr14, hr15, hr16, hr17, hr18, hr19,
+									hr20, hr21, hr22, hr23, hr24
+							FROM source_ecm se
+							INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id =  se.source_deal_header_id
+	
+							CROSS APPLY	(
+								SELECT h.hr7 AS hr1, h.hr8 AS hr2, h.hr9 AS hr3, h.hr10 AS hr4, h.hr11 AS hr5, h.hr12 AS hr6, h.hr13 AS hr7,
+										h.hr14 AS hr8, h.hr15 AS hr9, h.hr16 AS hr10, h.hr17 AS hr11, h.hr18 AS hr12, h.hr19 AS hr13, h.hr20 AS hr14,
+										h.hr21 AS hr15, h.hr22 AS hr16, h.hr23 AS hr17, h.hr24 AS hr18, h1.hr1 AS hr19, h1.hr2 AS hr20, h1.hr3 AS hr21,
+										h1.hr4 AS hr22, h1.hr5 AS hr23, h1.hr6 AS hr24, h.term_Date
+								FROM hour_block_term h WITH (NOLOCK) 
+								LEFT JOIN hour_block_term h1 (NOLOCK) 
+									ON h1.block_define_id = h.block_define_id
+									AND h1.block_type = 12000
+									AND h1.term_date = h.term_date + 1
+									AND h1.dst_group_value_id = h.dst_group_value_id
+								WHERE h.block_define_id = sdh.block_define_id
+									AND h.block_type = 12000
+									AND h.term_date BETWEEN CAST(se.delivery_start AS DATE) AND CAST(se.delivery_end AS DATE) 
+									AND h.dst_group_value_id = @default_dst_group
+							) hb 	
+							WHERE se.source_deal_header_id = @col_source_deal_header_id
+							AND se.process_id = @process_id
+						) p UNPIVOT (hr_mult FOR [hour] IN (
+								hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13,
+								hr14, hr15, hr16, hr17, hr18, hr19, hr20, hr21, hr22, hr23, hr24
+							)
+						) AS unpvt
+						INNER JOIN source_deal_detail sdd 
+							ON sdd.source_deal_header_id = unpvt.source_deal_header_id
+							AND unpvt.term_date BETWEEN CAST(sdd.term_start AS DATE) AND CAST(sdd.term_end AS DATE) 
+						LEFT JOIN source_deal_detail_hour sddh
+								ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+								AND sddh.term_date = unpvt.term_date
+								AND CAST(SUBSTRING([hour], 3, 5) AS INT) = CAST(CASE WHEN CHARINDEX(':', sddh.hr) > 0 THEN CAST((LEFT(sddh.hr, 2)) AS VARCHAR(10)) ELSE '0' END AS INT)
+						WHERE unpvt.source_deal_header_id = @col_source_deal_header_id
+							AND unpvt.process_id = @process_id
+							AND unpvt.ecm_document_type = @ecm_document_type
+							AND unpvt.error_validation_message IS NULL
+
+						SELECT @xml_inner3 = (
+								SELECT CONVERT(VARCHAR(19), DATEADD(hour, 6, term_date), 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
+								CASE WHEN  granularity = 982 THEN CONVERT(VARCHAR(19), DATEADD(hour, 6, DATEADD(hour, 1, term_date)), 126) 
+									WHEN granularity = 987  THEN CONVERT(VARCHAR(19), DATEADD(hour, 6, DATEADD(minute, 15, term_date)), 126) 
+									ELSE CONVERT(VARCHAR(19), term_date, 126) END
+								 AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+								CAST(ISNULL(volume,@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+								CAST(ISNULL(price,@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+						FROM #tempblock1
+						WHERE hr_mult = 1
+						ORDER BY term_date
+						FOR XML PATH(''), ROOT('TimeIntervalQuantities')
+						)
+					END
+					ELSE IF EXISTS(SELECT 1 FROM source_deal_header sdh
+						  INNER JOIN source_deal_detail sdd
+							ON sdd.source_deal_header_id = sdh.source_deal_header_id
+						  WHERE sdh.source_deal_header_id = @col_source_deal_header_id
+						  AND sdh.internal_desk_id = 17301
+						  AND sdd.profile_id IS NOT NULL
+					)
+					BEGIN
+						INSERT INTO #tempblock1(hr, source_deal_header_id, term_date, hr_mult,granularity,volume, price)
+						SELECT unpvt.[Hour], unpvt.source_deal_header_id, DATEADD(MINUTE,unpvt.period,DATEADD(HOUR,CAST(unpvt.[Hour] AS INT) - 1,term_date)), 1, unpvt.profile_granularity, unpvt.Volume, NULL
+						FROM
+						(SELECT 
+						se.source_deal_header_id, sdh.profile_granularity, ddh.[profile_id], term_date, period, hr1 [1], hr2 [2], hr3 [3], hr4 [4], hr5 [5], hr6 [6], hr7 [7], hr8 [8], hr9 [9], hr10 [10], hr11 [11], hr12 [12], hr13 [13], hr14 [14], hr15 [15], hr16 [16], hr17 [17], hr18 [18], hr19 [19], hr20 [20], hr21 [21], hr22 [22], hr23 [23], hr24 [24]
+						--, hr25 [25], hr25 [dd] 
+						FROM source_ecm se
+						INNER JOIN source_deal_header sdh 
+							ON sdh.source_deal_header_id =  se.source_deal_header_id
+						INNER JOIN source_deal_detail sdd 
+							ON sdd.source_deal_header_id = sdh.source_deal_header_id 
+						INNER JOIN deal_detail_hour ddh
+							ON ddh.profile_id = sdd.profile_id
+							AND ddh.term_date BETWEEN sdd.term_start AND sdd.term_end
+						WHERE se.source_deal_header_id = @col_source_deal_header_id
+							AND se.process_id = @process_id
+							AND se.ecm_document_type = @ecm_document_type
+							AND se.error_validation_message IS NULL
+						) p
+						UNPIVOT
+						(Volume for [Hour] IN
+							([1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15], [16], [17], [18], [19], [20], [21], [22], [23], [24]
+							--, [25]
+							)
+						) AS unpvt
+
+
+						SELECT @xml_inner3 = (
+								SELECT CONVERT(VARCHAR(19), DATEADD(hour, 6, term_date), 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
+								CASE WHEN  granularity = 982 THEN CONVERT(VARCHAR(19), DATEADD(hour, 6, DATEADD(hour, 1, term_date)), 126) 
+									WHEN granularity = 987  THEN CONVERT(VARCHAR(19), DATEADD(hour, 6, DATEADD(minute, 15, term_date)), 126) 
+									ELSE CONVERT(VARCHAR(19), term_date, 126) END
+								 AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+								CAST(ISNULL(volume,@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+								CAST(ISNULL(price,@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+						FROM #tempblock1
+						WHERE hr_mult = 1
+						ORDER BY term_date
+						FOR XML PATH(''), ROOT('TimeIntervalQuantities'))
+
+					END
+					ELSE IF NOT EXISTS (
 						SELECT 1 
 						FROM source_deal_header 
 						WHERE source_deal_header_id = @col_source_deal_header_id
@@ -1013,11 +1173,15 @@ BEGIN
 								LEFT JOIN hour_block_term h1 (NOLOCK) ON h1.block_define_id = h.block_define_id
 									AND h1.block_type = 12000
 									AND h1.term_date = h.term_date + 1
+									AND h1.dst_group_value_id = h.dst_group_value_id
 								WHERE h.block_define_id = sdh.block_define_id
 									AND h.block_type = 12000
 									AND h.term_date BETWEEN CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_start AS DATE)) IN (1,7) THEN dbo.FNAGetBusinessDay('n',CAST(sdh.entire_term_start AS DATE), NULL) ELSE CAST(sdh.entire_term_start AS DATE) END
 									AND CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_end AS DATE) ) IN (1,7) THEN dbo.FNAGetBusinessDay('p',CAST(sdh.entire_term_end AS DATE), NULL) ELSE CAST(sdh.entire_term_end AS DATE)  END
+									AND h.dst_group_value_id = @default_dst_group
 							) hb
+							WHERE se.process_id = @process_id
+							AND se.source_deal_header_id = @col_source_deal_header_id
 						)p UNPIVOT (hr_mult FOR [hour] IN (
 								hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13, 
 								hr14, hr15, hr16, hr17, hr18, hr19, hr20, hr21, hr22, hr23, hr24
@@ -1028,13 +1192,31 @@ BEGIN
 							AND unpvt.ecm_document_type = @ecm_document_type
 							AND unpvt.error_validation_message IS NULL
 
+						INSERT INTO #tempblock2(max_hr,source_deal_header_id,term_date,hr_mult,hr1)
+						SELECT tb.hr, tb.source_deal_header_id, tb.term_date, tb.hr_mult, LAG (tb.hr) OVER(PARTITION BY tb.source_deal_header_id,tb.term_date ORDER BY tb.hr) hr1
+						FROM #tempblock tb
+						LEFT JOIN #tempblock tb1
+							ON tb1.hr = (tb.hr + 1)
+							AND tb1.term_date = tb.term_date
+							AND tb1.source_deal_header_id = tb.source_deal_header_id
+						WHERE CASE WHEN tb.hr_mult = tb1.hr_mult THEN 1 ELSE 2 END = 2
+						AND tb.hr_mult = 1
+
+
  						SELECT @xml_inner3 = (
-							SELECT CONVERT(VARCHAR(19), DATEADD(hh, min(hr-1), term_date), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
-									CONVERT(VARCHAR(19), DATEADD(hh, max(hr), term_date), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+							SELECT CONVERT(VARCHAR(19), DATEADD(hh, min_hr -1 , term_date), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
+									CONVERT(VARCHAR(19), DATEADD(hh, max_hr, term_date), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
 									@col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
 									@col_price AS [TimeIntervalQuantity/Price]
-							FROM #tempblock WHERE hr_mult = 1
-							GROUP BY term_date
+							FROM #tempblock2 t1
+							OUTER APPLY(
+								SELECT MIN(hr) min_hr
+								FROM #tempblock
+								WHERE hr_mult = 1
+								AND source_deal_header_id = t1.source_deal_header_id
+								AND term_date = t1.term_date
+								AND hr > ISNULL(t1.hr1,0) AND hr < t1.max_hr 
+							) tbl
 							ORDER BY term_date
 							FOR XML PATH(''), ROOT('TimeIntervalQuantities')
 						)
@@ -1088,7 +1270,118 @@ BEGIN
 				END
 				ELSE 
 				BEGIN  -- Power does not contain HubCodificationInformation
-					IF NOT EXISTS (
+					IF EXISTS(SELECT 1 FROM source_deal_header sdh
+						  INNER JOIN source_deal_detail sdd
+							ON sdd.source_deal_header_id = sdh.source_deal_header_id
+						  INNER JOIN source_deal_detail_hour sddh
+							ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+						  WHERE sdh.source_deal_header_id = @col_source_deal_header_id
+						  AND sdh.internal_desk_id = 17302
+					)
+					BEGIN
+						INSERT INTO #tempblock1(hr, source_deal_header_id, term_date, hr_mult,granularity,volume,price)
+						SELECT CAST(SUBSTRING([hour], 3, 5) AS INT) hr,
+								unpvt.source_deal_header_id,
+								DATEADD(MINUTE, CAST(LTRIM(DATEDIFF(MINUTE, 0, CASE WHEN CHARINDEX(':', sddh.hr) > 0 THEN RIGHT('00' + CAST((LEFT(sddh.hr, 2) - 1) AS VARCHAR(10)), 2) + RIGHT(sddh.hr, 3) ELSE RIGHT(('00' + (sddh.hr -1)), 2) + ':00' END)) AS INT), unpvt.term_date) term_date,
+								hr_mult, sddh.granularity, sddh.volume, sddh.price
+						FROM (
+							SELECT se.process_id, se.ecm_document_type, se.error_validation_message, se.source_deal_header_id, hb.term_date,
+									hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13, hr14, hr15, hr16, hr17, hr18, hr19,
+									hr20, hr21, hr22, hr23, hr24
+							FROM source_ecm se
+							INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id =  se.source_deal_header_id
+	
+							CROSS APPLY	(
+								SELECT h.*
+								FROM hour_block_term h WITH (NOLOCK)
+								WHERE block_define_id = sdh.block_define_id
+									AND h.block_type = 12000
+									AND term_date BETWEEN CAST(se.delivery_start AS DATE) AND CAST(se.delivery_end AS DATE) 
+									AND dst_group_value_id = @default_dst_group
+							) hb 	
+							WHERE se.source_deal_header_id = @col_source_deal_header_id
+							AND se.process_id = @process_id
+						) p UNPIVOT (hr_mult FOR [hour] IN (
+								hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13,
+								hr14, hr15, hr16, hr17, hr18, hr19, hr20, hr21, hr22, hr23, hr24
+							)
+						) AS unpvt
+						INNER JOIN source_deal_detail sdd 
+							ON sdd.source_deal_header_id = unpvt.source_deal_header_id
+							AND unpvt.term_date BETWEEN CAST(sdd.term_start AS DATE) AND CAST(sdd.term_end AS DATE) 
+						LEFT JOIN source_deal_detail_hour sddh
+								ON sddh.source_deal_detail_id = sdd.source_deal_detail_id
+								AND sddh.term_date = unpvt.term_date
+								AND CAST(SUBSTRING([hour], 3, 5) AS INT) = CAST(CASE WHEN CHARINDEX(':', sddh.hr) > 0 THEN CAST((LEFT(sddh.hr, 2)) AS VARCHAR(10)) ELSE '0' END AS INT)
+						WHERE unpvt.source_deal_header_id = @col_source_deal_header_id
+							AND unpvt.process_id = @process_id
+							AND unpvt.ecm_document_type = @ecm_document_type
+							AND unpvt.error_validation_message IS NULL
+
+						SELECT @xml_inner3 = (
+								SELECT CONVERT(VARCHAR(19), term_date, 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
+								CASE WHEN  granularity = 982 THEN CONVERT(VARCHAR(19), DATEADD(hour, 1, term_date), 126) 
+									WHEN granularity = 987  THEN CONVERT(VARCHAR(19), DATEADD(minute, 15, term_date), 126) 
+									ELSE CONVERT(VARCHAR(19), term_date, 126) END
+								 AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+								CAST(ISNULL(volume,@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+								CAST(ISNULL(price,@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+						FROM #tempblock1
+						WHERE hr_mult = 1
+						ORDER BY term_date
+						FOR XML PATH(''), ROOT('TimeIntervalQuantities')
+						)
+					END
+					ELSE IF EXISTS(SELECT 1 FROM source_deal_header sdh
+						  INNER JOIN source_deal_detail sdd
+							ON sdd.source_deal_header_id = sdh.source_deal_header_id
+						  WHERE sdh.source_deal_header_id = @col_source_deal_header_id
+						  AND sdh.internal_desk_id = 17301
+						  AND sdd.profile_id IS NOT NULL
+					)
+					BEGIN
+						INSERT INTO #tempblock1(hr, source_deal_header_id, term_date, hr_mult,granularity,volume, price)
+						SELECT unpvt.[Hour], unpvt.source_deal_header_id, DATEADD(MINUTE,unpvt.period,DATEADD(HOUR,CAST(unpvt.[Hour] AS INT) - 1,term_date)), 1, unpvt.profile_granularity, unpvt.Volume, NULL
+						FROM
+						(SELECT 
+						se.source_deal_header_id, sdh.profile_granularity, ddh.[profile_id], term_date, period, hr1 [1], hr2 [2], hr3 [3], hr4 [4], hr5 [5], hr6 [6], hr7 [7], hr8 [8], hr9 [9], hr10 [10], hr11 [11], hr12 [12], hr13 [13], hr14 [14], hr15 [15], hr16 [16], hr17 [17], hr18 [18], hr19 [19], hr20 [20], hr21 [21], hr22 [22], hr23 [23], hr24 [24]
+						--, hr25 [25], hr25 [dd] 
+						FROM source_ecm se
+						INNER JOIN source_deal_header sdh 
+							ON sdh.source_deal_header_id =  se.source_deal_header_id
+						INNER JOIN source_deal_detail sdd 
+							ON sdd.source_deal_header_id = sdh.source_deal_header_id 
+						INNER JOIN deal_detail_hour ddh
+							ON ddh.profile_id = sdd.profile_id
+							AND ddh.term_date BETWEEN sdd.term_start AND sdd.term_end
+						WHERE se.source_deal_header_id = @col_source_deal_header_id
+							AND se.process_id = @process_id
+							AND se.ecm_document_type = @ecm_document_type
+							AND se.error_validation_message IS NULL
+						) p
+						UNPIVOT
+						(Volume for [Hour] IN
+							([1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15], [16], [17], [18], [19], [20], [21], [22], [23], [24]
+							--, [25]
+							)
+						) AS unpvt
+
+
+						SELECT @xml_inner3 = (
+								SELECT CONVERT(VARCHAR(19), term_date, 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
+								CASE WHEN  granularity = 982 THEN CONVERT(VARCHAR(19), DATEADD(hour, 1, term_date), 126) 
+									WHEN granularity = 987  THEN CONVERT(VARCHAR(19), DATEADD(minute, 15, term_date), 126) 
+									ELSE CONVERT(VARCHAR(19), term_date, 126) END
+								 AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+								CAST(ISNULL(volume,@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+								CAST(ISNULL(price,@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+						FROM #tempblock1
+						WHERE hr_mult = 1
+						ORDER BY term_date
+						FOR XML PATH(''), ROOT('TimeIntervalQuantities'))
+
+					END
+					ELSE IF NOT EXISTS (
 						SELECT 1 
 						FROM source_deal_header 
 						WHERE source_deal_header_id = @col_source_deal_header_id 
@@ -1113,7 +1406,10 @@ BEGIN
 									AND h.block_type = 12000
 									AND term_date BETWEEN CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_start AS DATE)) IN (1,7) THEN dbo.FNAGetBusinessDay('n',CAST(sdh.entire_term_start AS DATE), NULL) ELSE CAST(sdh.entire_term_start AS DATE) END
 									AND CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_end AS DATE) ) IN (1,7) THEN dbo.FNAGetBusinessDay('p',CAST(sdh.entire_term_end AS DATE), NULL) ELSE CAST(sdh.entire_term_end AS DATE)  END
+									AND h.dst_group_value_id = @default_dst_group
 							) hb --todo
+							WHERE se.process_id = @process_id
+							AND se.source_deal_header_id = @col_source_deal_header_id
 						) p UNPIVOT (hr_mult FOR [hour] IN (
 								hr1, hr2, hr3, hr4, hr5, hr6, hr7, hr8, hr9, hr10, hr11, hr12, hr13,
 								hr14, hr15, hr16, hr17, hr18, hr19, hr20, hr21, hr22, hr23, hr24
@@ -1124,14 +1420,30 @@ BEGIN
 							AND unpvt.ecm_document_type = @ecm_document_type
 							AND unpvt.error_validation_message IS NULL
 
- 						SELECT @xml_inner3 = (
-							SELECT CONVERT(VARCHAR(19), DATEADD(hh, min(hr-1), term_date), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
-									CONVERT(VARCHAR(19), DATEADD(hh, max(hr), term_date), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+ 						INSERT INTO #tempblock2(max_hr,source_deal_header_id,term_date,hr_mult,hr1)
+						SELECT tb.hr, tb.source_deal_header_id, tb.term_date, tb.hr_mult, LAG (tb.hr) OVER(PARTITION BY tb.source_deal_header_id,tb.term_date ORDER BY tb.hr) hr1
+						FROM #tempblock tb
+						LEFT JOIN #tempblock tb1
+							ON tb1.hr = (tb.hr + 1)
+							AND tb1.term_date = tb.term_date
+							AND tb1.source_deal_header_id = tb.source_deal_header_id
+						WHERE CASE WHEN tb.hr_mult = tb1.hr_mult THEN 1 ELSE 2 END = 2
+						AND tb.hr_mult = 1
+						
+						SELECT @xml_inner3 = (
+							SELECT CONVERT(VARCHAR(19), DATEADD(hh, min_hr -1 , term_date), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
+									CONVERT(VARCHAR(19), DATEADD(hh, max_hr, term_date), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
 									@col_contract_capacity AS [TimeIntervalQuantity/ContractCapacity],
 									@col_price AS [TimeIntervalQuantity/Price]
-							FROM #tempblock
-							WHERE hr_mult = 1
-							GROUP BY term_date
+							FROM #tempblock2 t1
+							OUTER APPLY(
+								SELECT MIN(hr) min_hr
+								FROM #tempblock
+								WHERE hr_mult = 1
+								AND source_deal_header_id = t1.source_deal_header_id
+								AND term_date = t1.term_date
+								AND hr > ISNULL(t1.hr1,0) AND hr < t1.max_hr 
+							) tbl
 							ORDER BY term_date
 							FOR XML PATH(''), ROOT('TimeIntervalQuantities')
 						)
