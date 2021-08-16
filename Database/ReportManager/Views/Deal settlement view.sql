@@ -526,7 +526,8 @@ SET @_sql_from1 = ''
 	LEFT JOIN source_counterparty AS sid2 ON sid2.source_counterparty_id = sdh.counterparty_id2
 	LEFT JOIN source_deal_type AS sdt ON  sdt.source_deal_type_id = sdh.source_deal_type_id
 	LEFT JOIN source_deal_type AS sdts ON  sdts.source_deal_type_id = sdh.deal_sub_type_type_id
-	LEFT JOIN static_data_value sprod ON  sprod.value_id = sdh.product_id                  
+	LEFT JOIN static_data_value sprod ON  sprod.value_id = sdh.product_id   
+	LEFT JOIN internal_deal_type_subtype_types idtst ON idtst.internal_deal_type_subtype_id = sdh.internal_deal_subtype_value_id
 	LEFT JOIN source_price_curve_def AS spcd ON  spcd.source_curve_def_id = sdd.curve_id
 	LEFT JOIN static_data_value sdv_index_group
 		ON sdv_index_group.value_id = spcd.index_group
@@ -557,10 +558,13 @@ SET @_sql_from1 = ''
 SET  @_sql_from2 = '' 
 	outer apply
 	(
-		select max(as_of_date) as_of_date from source_deal_settlement
-			where source_deal_header_id=sdd.source_deal_header_id and 
+		select max(as_of_date) as_of_date 
+		from source_deal_settlement
+		where source_deal_header_id=sdd.source_deal_header_id and 
 			term_start=sdd.term_start and leg=sdd.leg --and set_type=''''s''''
 			and as_of_date<=''''''+ @_from_as_of_date +''''''
+		GROUP BY CASE WHEN sdt.deal_type_id = ''''Future'''' AND idtst.internal_deal_type_subtype_type = ''''Physical Future'''' AND sdh.physical_financial_flag = ''''p'''' AND spcd.granularity = 980 THEN set_type ELSE ''''1'''' END
+
 	)	aod
 '' 
 set @_sql_from3 = ''
@@ -5593,4 +5597,4 @@ WHERE 1=1', report_id = @report_id_data_source_dest,
 	END CATCH
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
-		DROP TABLE #data_source_column	
+		DROP TABLE #data_source_column

@@ -236,7 +236,8 @@ CREATE TABLE #final_values (
 	deal_cur_id INT,
 	credit_adjusted_mtm FLOAT,
 	credit_reserve FLOAT,
-	fair_value FLOAT)
+	fair_value FLOAT,
+	price_curve_granularity INT)
 SET @_sql_select1 = 
 	''SELECT 
 		sdh.source_deal_header_id
@@ -315,7 +316,8 @@ SET @_sql_select2 = ''
 		, sdpd.deal_cur_id
 		, ISNULL('' + @_col_sdpd_pnl + '',0) - (ISNULL('' + @_col_sdpd_pnl + '',0)* ISNULL(dp.probability, 0) * (1 - ISNULL(drr.rate, 0))) [credit_adjusted_mtm]
 		, ISNULL('' + @_col_sdpd_pnl + '', 0) * ISNULL(dp.probability, 0) * (1 - ISNULL(drr.rate, 0)) [credit_reserve]
-		,'' + @_col_sdpd_pnl + '' - (ISNULL('' + @_col_sdpd_pnl + '', 0)* ISNULL(dp.probability, 0) * (1 - ISNULL(drr.rate, 0))) [fair_value] ''
+		,'' + @_col_sdpd_pnl + '' - (ISNULL('' + @_col_sdpd_pnl + '', 0)* ISNULL(dp.probability, 0) * (1 - ISNULL(drr.rate, 0))) [fair_value] 
+		, spcd.granularity ''
 SET @_sql_from1 = '' INTO #tmp_final_values
 	FROM source_deal_header sdh --#tmp_deals td
 	INNER JOIN #books books ON books.source_system_book_id1 = sdh.source_system_book_id1 
@@ -438,12 +440,16 @@ INTO #settlement_value -- select * from #settlement_value
 FROM #final_values fv
 CROSS APPLY (SELECT 
 				Max(as_of_date) as_of_date
-			FROM source_deal_settlement
-			WHERE source_deal_header_id = fv.source_deal_header_id 
+			FROM source_deal_header sdh
+			INNER JOIN source_deal_settlement sds ON sds.source_deal_header_id = sdh.source_deal_header_id
+			LEFT JOIN internal_deal_type_subtype_types idtst ON idtst.internal_deal_type_subtype_id = sdh.internal_deal_subtype_value_id
+			LEFT JOIN source_deal_type sdt ON sdt.source_deal_type_id = sdh.source_deal_type_id
+			WHERE sds.source_deal_header_id = fv.source_deal_header_id 
 			AND term_start = fv.term_start 
 			AND leg = fv.leg --and set_type=''''s''''
 			--AND term_start <= @_from_as_of_date 
 			AND as_of_date <= @_from_as_of_date
+			GROUP BY CASE WHEN sdt.deal_type_id = ''Future'' AND idtst.internal_deal_type_subtype_type = ''Physical Future'' AND sdh.physical_financial_flag = ''p'' AND fv.price_curve_granularity = 980 THEN set_type ELSE ''1'' END
 			) aod
 CROSS APPLY (SELECT 
 				volume volume_s, 
