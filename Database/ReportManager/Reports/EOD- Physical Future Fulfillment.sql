@@ -104,272 +104,149 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sql NVARCHAR(MAX) = ''''
-
  , @_deal_count INT
-
  , @_counterparty_id NVARCHAR(MAX)
-
-
 
  , @_deal_type NVARCHAR(MAX)
 
-
-
  , @_physical_financial_flag NVARCHAR(2)
-
-
 
  , @_commodity_id NVARCHAR(MAX)
 
-
-
  , @_as_of_date DATE = ''@as_of_date''
-
-
+ --, @_as_of_date DATE = ''2019-12-30''
 
  , @_process_id NVARCHAR(50) = ''@process_id''
-
  
-
 IF ''@counterparty_id'' <> ''NULL''
-
  SET @_counterparty_id = ''@counterparty_id''
 
-
-
 IF ''@deal_type'' <> ''NULL''
-
  SET @_deal_type = ''@deal_type''
 
-
-
 IF ''@physical_financial_flag'' <> ''NULL''
-
  SET @_physical_financial_flag = ''@physical_financial_flag''
 
-
-
 IF ''@commodity_id'' <> ''NULL''
-
  SET @_commodity_id = ''@commodity_id''
 
-
+--SELECT source_counterparty_id , counterparty_id + '' - '' + counterparty_name AS counterparty_id FROM source_counterparty WHERE counterparty_id IN (''EEX'',''ICE'')
+--SELECT @_counterparty_id = ''7734,7729''
+--SELECT source_commodity_id from source_commodity where commodity_id in (''Gas'')
+--SELECT @_commodity_id = ''-1''
+--SELECT  source_deal_type_id from source_deal_type where deal_type_id in (''future'')
+--SELECT @_deal_type = ''1172''
+--SELECT @_physical_financial_flag = ''p''
+--select * from static_data_value where value_id = 980
 
 SET @_counterparty_id = REPLACE(@_counterparty_id,''!'','','')
-
 SET @_commodity_id = REPLACE(@_commodity_id,''!'','','')
 
-
-
 IF OBJECT_ID(''tempdb..#tmp_deals'') IS NOT NULL 
-
 	DROP TABLE #tmp_deals 
 
-
-
 CREATE TABLE #tmp_deals (
-
 	[source_deal_header_id]		INT,
-
 	[source_deal_detail_id]		INT,
-
 	[term_start]				DATE,
-
 	[term_end]					DATE,
-
 	[curve_value]				FLOAT,
-
 	[fixed_price]				FLOAT,
-
 )
-
-
 
 -- Calculation for price_adder : Difference between market price (curve value) and deal price (fixed price)
-
 SET @_sql = ''
-
 INSERT INTO #tmp_deals(
-
 	[source_deal_header_id],	
-
 	[source_deal_detail_id],	
-
 	[term_start],			
-
 	[term_end],				
-
 	[curve_value],			
-
 	[fixed_price]			
-
 )
-
 SELECT 
-
 	sdh.source_deal_header_id
-
 	,sdd.source_deal_detail_id
-
 	,sdd.term_start
-
 	,sdd.term_end
-
 	,spc.curve_value
-
 	,sdd.fixed_price
-
 FROM source_deal_header sdh 
-
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
-
 INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
-
 OUTER APPLY(
-
 	SELECT TOP 1
-
 		h1.exp_date
-
 	FROM holiday_group h1 WHERE 
-
 	h1.hol_group_value_id = spcd.exp_calendar_id
-
 	AND h1.hol_date = sdd.term_start AND h1.hol_date_to = sdd.term_end
-
 		AND h1.exp_date = '''''' + CONVERT(NVARCHAR(20),@_as_of_date,120) + '''''' 
-
 ) holiday_group
-
 OUTER APPLY (
-
 	SELECT TOP 1
-
 		s1.curve_value
-
 	FROM source_price_curve s1 
-
 	WHERE s1.source_curve_def_id = sdd.curve_id
-
 	AND s1.as_of_date = holiday_group.exp_date
-
 	AND s1.maturity_date = sdd.term_start
-
 ) spc
-
 WHERE 1 = 1 
-
 AND spcd.granularity = 980
-
 AND holiday_group.exp_date IS NOT NULL
-
 AND spc.curve_value IS NOT NULL
-
+AND spcd.curve_id NOT IN (''''GAS.GPH.EEX.S.Fut'''',''''GAS.TTF.EEX.S.Fut'''',''''GAS.NCH.EEX.S.Fut'''')
 ''
-
 IF NULLIF(@_counterparty_id,'''') IS NOT NULL
-
 	SET @_sql += '' AND sdh.counterparty_id IN ('' + @_counterparty_id + '')''
-
 IF NULLIF(@_deal_type,'''') IS NOT NULL
-
 	SET @_sql += '' AND sdh.source_deal_type_id IN ('' + @_deal_type + '')''
-
 IF NULLIF(@_physical_financial_flag,'''') IS NOT NULL
-
 	SET @_sql += '' AND sdh.physical_financial_flag = '''''' + @_physical_financial_flag + ''''''''
-
 IF NULLIF(@_counterparty_id,'''') IS NOT NULL
-
 	SET @_sql += '' AND spcd.commodity_id IN ('' + @_commodity_id + '')''
 
 
-
-
-
 SET @_sql += ''
-
 	UPDATE sdd SET sdd.price_adder = t1.curve_value - t1.fixed_price
-
 	FROM #tmp_deals t1
-
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_detail_id = t1.source_deal_detail_id
-
 		AND sdd.term_start = t1.term_start
-
 		AND sdd.term_end = t1.term_end
-
 ''
-
 EXEC(@_sql)
-
-
 
 SELECT @_deal_count = COUNT(source_deal_header_id) FROM #tmp_deals
 
-
-
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL 
-
 	DROP TABLE #tmp_result 
 
-
-
 CREATE TABLE #tmp_result (
-
 	[errorcode]			NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
 	[module]			NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
 	[area]				NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
 	[status]			NVARCHAR(200) COLLATE DATABASE_DEFAULT ,
-
 	[message]			NVARCHAR(1000) COLLATE DATABASE_DEFAULT ,
-
 	[recommendation]	NVARCHAR(200) COLLATE DATABASE_DEFAULT 
-
 )
 
-
-
 INSERT INTO #tmp_result (errorcode, module, area, [status], [message], recommendation) 
-
 SELECT ''Success'' ErrorCode, ''Deal'' Module, ''physical future fulfillment'' Area, ''Success'' [Status]
-
-				, ''Physical Future Fulfillment successfully completed on '' + CONVERT(NVARCHAR(20),@_as_of_date,120) + '' for '' + CAST(ISNULL(@_deal_count,0) AS NVARCHAR(10)) + '' Deal(s).'' [Message], '''' Recommendation
-
+				, ''Physical Future Fulfillment successfully completed for As of Date '' + CONVERT(NVARCHAR(20),@_as_of_date,120) + '' for '' + CAST(ISNULL(@_deal_count,0) AS NVARCHAR(10)) + '' Deal(s).'' [Message], '''' Recommendation
 				
-
 SELECT @_as_of_date as_of_date,
-
      @_counterparty_id counterparty_id,    
-
      @_deal_type deal_type,    
-
      @_physical_financial_flag physical_financial_flag,    
-
      @_commodity_id commodity_id,
-
      @_process_id process_id,
-
      [ErrorCode],
-
 	[Module],
-
 	[Area],
-
 	[Status],
-
 	[Message],
-
 	[Recommendation]
 
-
-
 --[__batch_report__]
-
-
 
 FROM #tmp_result', report_id = @report_id_data_source_dest,
 	system_defined = NULL
