@@ -141,6 +141,7 @@ namespace FARRMSImportCLR
                             cmd.Parameters.AddWithValue("process_table", processTable);
                             cmd.ExecuteNonQuery();
                         }
+                        cn.Close();
                     }
                    
                     importStatus.Status = (statusResult == "Success") ? "Success" : "Failed";
