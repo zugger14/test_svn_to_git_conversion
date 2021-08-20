@@ -1083,16 +1083,18 @@ BEGIN
 							AND unpvt.ecm_document_type = @ecm_document_type
 							AND unpvt.error_validation_message IS NULL
 
+						-- Aggregate functions used for Volume and Price, in order to handle duplicate term  dates where DST influenced
 						SELECT @xml_inner3 = (
 								SELECT CONVERT(VARCHAR(19), DATEADD(hour, 6, term_date), 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
 								CASE WHEN  granularity = 982 THEN CONVERT(VARCHAR(19), DATEADD(hour, 6, DATEADD(hour, 1, term_date)), 126) 
 									WHEN granularity = 987  THEN CONVERT(VARCHAR(19), DATEADD(hour, 6, DATEADD(minute, 15, term_date)), 126) 
 									ELSE CONVERT(VARCHAR(19), term_date, 126) END
 								 AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
-								CAST(ISNULL(volume,@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
-								CAST(ISNULL(price,@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+								CAST(ISNULL(SUM(volume),@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+								CAST(ISNULL(AVG(price),@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
 						FROM #tempblock1
 						WHERE hr_mult = 1
+						GROUP BY term_date, granularity
 						ORDER BY term_date
 						FOR XML PATH(''), ROOT('TimeIntervalQuantities')
 						)
@@ -1131,17 +1133,18 @@ BEGIN
 							)
 						) AS unpvt
 
-
+						-- Aggregate functions used for Volume and Price, in order to handle duplicate term  dates where DST influenced
 						SELECT @xml_inner3 = (
 								SELECT CONVERT(VARCHAR(19), DATEADD(hour, 6, term_date), 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
 								CASE WHEN  granularity = 982 THEN CONVERT(VARCHAR(19), DATEADD(hour, 6, DATEADD(hour, 1, term_date)), 126) 
 									WHEN granularity = 987  THEN CONVERT(VARCHAR(19), DATEADD(hour, 6, DATEADD(minute, 15, term_date)), 126) 
 									ELSE CONVERT(VARCHAR(19), term_date, 126) END
 								 AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
-								CAST(ISNULL(volume,@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
-								CAST(ISNULL(price,@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+								CAST(ISNULL(SUM(volume),@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+								CAST(ISNULL(AVG(price),@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
 						FROM #tempblock1
 						WHERE hr_mult = 1
+						GROUP BY term_date, granularity
 						ORDER BY term_date
 						FOR XML PATH(''), ROOT('TimeIntervalQuantities'))
 
@@ -1318,16 +1321,18 @@ BEGIN
 							AND unpvt.ecm_document_type = @ecm_document_type
 							AND unpvt.error_validation_message IS NULL
 
+						-- Aggregate functions used for Volume and Price, in order to handle duplicate term  dates where DST influenced
 						SELECT @xml_inner3 = (
 								SELECT CONVERT(VARCHAR(19), term_date, 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
 								CASE WHEN  granularity = 982 THEN CONVERT(VARCHAR(19), DATEADD(hour, 1, term_date), 126) 
 									WHEN granularity = 987  THEN CONVERT(VARCHAR(19), DATEADD(minute, 15, term_date), 126) 
 									ELSE CONVERT(VARCHAR(19), term_date, 126) END
 								 AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
-								CAST(ISNULL(volume,@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
-								CAST(ISNULL(price,@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+								CAST(ISNULL(SUM(volume),@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+								CAST(ISNULL(AVG(price),@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
 						FROM #tempblock1
 						WHERE hr_mult = 1
+						GROUP BY term_date, granularity
 						ORDER BY term_date
 						FOR XML PATH(''), ROOT('TimeIntervalQuantities')
 						)
@@ -1366,17 +1371,18 @@ BEGIN
 							)
 						) AS unpvt
 
-
+						-- Aggregate functions used for Volume and Price, in order to handle duplicate term  dates where DST influenced
 						SELECT @xml_inner3 = (
 								SELECT CONVERT(VARCHAR(19), term_date, 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
 								CASE WHEN  granularity = 982 THEN CONVERT(VARCHAR(19), DATEADD(hour, 1, term_date), 126) 
 									WHEN granularity = 987  THEN CONVERT(VARCHAR(19), DATEADD(minute, 15, term_date), 126) 
 									ELSE CONVERT(VARCHAR(19), term_date, 126) END
 								 AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
-								CAST(ISNULL(volume,@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
-								CAST(ISNULL(price,@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+								CAST(ISNULL(SUM(volume),@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+								CAST(ISNULL(AVG(price),@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
 						FROM #tempblock1
 						WHERE hr_mult = 1
+						GROUP BY term_date, granularity
 						ORDER BY term_date
 						FOR XML PATH(''), ROOT('TimeIntervalQuantities'))
 
