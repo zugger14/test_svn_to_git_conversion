@@ -61,7 +61,7 @@ BEGIN TRY
 		
 
 		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-		SELECT TOP 1 'EOD- Physical Future Fulfillment' [name], 'dev_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, '24E8DBB4_9596_427E_B92E_69D29F906BF1' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		SELECT TOP 1 'EOD- Physical Future Fulfillment' [name], 'farrms_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, '24E8DBB4_9596_427E_B92E_69D29F906BF1' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 		FROM sys.objects o
 		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
 		SET @report_id_dest = SCOPE_IDENTITY()
@@ -109,15 +109,13 @@ BEGIN TRY
 
  , @_counterparty_id NVARCHAR(MAX)
 
-
+ , @_audit_ids NVARCHAR(MAX)
 
  , @_deal_type NVARCHAR(MAX)
 
-
+ , @_internal_deal_subtype_value_id NVARCHAR(MAX)
 
  , @_physical_financial_flag NVARCHAR(2)
-
-
 
  , @_commodity_id NVARCHAR(MAX)
 
@@ -129,8 +127,8 @@ BEGIN TRY
 
 
 
- , @_process_id NVARCHAR(50) = ''@process_id''
-
+ , @_process_id NVARCHAR(100) = ''@process_id''
+ , @_process_table_name NVARCHAR(2000)
  
 
 IF ''@counterparty_id'' <> ''NULL''
@@ -154,6 +152,10 @@ IF ''@physical_financial_flag'' <> ''NULL''
 IF ''@commodity_id'' <> ''NULL''
 
  SET @_commodity_id = ''@commodity_id''
+
+ IF ''@internal_deal_subtype_value_id'' <> ''NULL''
+
+ SET @_internal_deal_subtype_value_id = ''@internal_deal_subtype_value_id''
 
 
 
@@ -287,6 +289,8 @@ AND spc.curve_value IS NOT NULL
 
 AND spcd.curve_id NOT IN (''''GAS.GPH.EEX.S.Fut'''',''''GAS.TTF.EEX.S.Fut'''',''''GAS.NCH.EEX.S.Fut'''')
 
+AND ISNULL(sdd.price_adder,0) <> ISNULL((spc.curve_value - sdd.fixed_price),0)
+
 ''
 
 IF NULLIF(@_counterparty_id,'''') IS NOT NULL
@@ -301,9 +305,13 @@ IF NULLIF(@_physical_financial_flag,'''') IS NOT NULL
 
 	SET @_sql += '' AND sdh.physical_financial_flag = '''''' + @_physical_financial_flag + ''''''''
 
-IF NULLIF(@_counterparty_id,'''') IS NOT NULL
+IF NULLIF(@_commodity_id,'''') IS NOT NULL
 
 	SET @_sql += '' AND spcd.commodity_id IN ('' + @_commodity_id + '')''
+
+IF NULLIF(@_internal_deal_subtype_value_id,'''') IS NOT NULL
+
+	SET @_sql += '' AND sdh.internal_deal_subtype_value_id IN ('' + @_internal_deal_subtype_value_id + '')''
 
 
 
@@ -329,10 +337,22 @@ EXEC(@_sql)
 
 SELECT @_deal_count = COUNT(source_deal_header_id) FROM #tmp_deals
 
+SELECT @_process_id = dbo.FNAGETNewID() 
 
+SELECT @_process_table_name  = dbo.FNAProcessTableName(''deal_audit'', dbo.fnadbUser(), @_process_id)
+
+SELECT @_sql = ''
+	SELECT source_deal_header_id 
+	INTO '' + @_process_table_name + ''
+	FROM #tmp_deals
+''
+EXEC(@_sql)
+
+EXEC spa_insert_update_audit ''u'', '''',NULL, @_process_table_name
+
+EXEC spa_clear_all_temp_table NULL,@_process_id
 
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL 
-
 	DROP TABLE #tmp_result 
 
 
@@ -367,7 +387,9 @@ SELECT @_as_of_date as_of_date,
 
      @_counterparty_id counterparty_id,    
 
-     @_deal_type deal_type,    
+     @_deal_type deal_type,
+	 
+	 @_internal_deal_subtype_value_id internal_deal_subtype_value_id,
 
      @_physical_financial_flag physical_financial_flag,    
 
@@ -813,6 +835,40 @@ FROM #tmp_result', report_id = @report_id_data_source_dest,
 	
 	
 
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'EOD- Physical Future Fulfillment Sql'
+	            AND dsc.name =  'internal_deal_subtype_value_id'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Internal Deal Subtype Value Id'
+			   , reqd_param = NULL, widget_id = 9, datatype_id = 5, param_data_source = 'select internal_deal_type_subtype_id, internal_deal_type_subtype_type from internal_deal_type_subtype_types ORDER BY internal_deal_type_subtype_type', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'EOD- Physical Future Fulfillment Sql'
+			AND dsc.name =  'internal_deal_subtype_value_id'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'internal_deal_subtype_value_id' AS [name], 'Internal Deal Subtype Value Id' AS ALIAS, NULL AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'select internal_deal_type_subtype_id, internal_deal_type_subtype_type from internal_deal_type_subtype_types ORDER BY internal_deal_type_subtype_type' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'EOD- Physical Future Fulfillment Sql'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
 	DELETE dsc
 	FROM data_source_column dsc 
 	INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -907,7 +963,7 @@ COMMIT TRAN
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 6 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'EOD- Physical Future Fulfillment'
@@ -1043,6 +1099,34 @@ COMMIT TRAN
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'physical_financial_flag'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '166' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, 'Internal Deal Sub Type' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'EOD- Physical Future Fulfillment'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'EOD- Physical Future Fulfillment'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'EOD- Physical Future Fulfillment'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'EODPFF'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'EODPFF'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'EOD- Physical Future Fulfillment Sql' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'internal_deal_subtype_value_id'	
 	
 
 		INSERT INTO report_page_tablix(page_id,root_dataset_id, [name], width, height, [top], [left], group_mode, border_style, page_break, type_id, cross_summary, no_header, export_table_name, is_global)
