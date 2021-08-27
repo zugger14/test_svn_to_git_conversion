@@ -35,78 +35,43 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Standard Deal Audit View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sub_id VARCHAR(MAX) --= 1162
-
 DECLARE @_stra_id VARCHAR(MAX) --= 1164
-
 DECLARE @_book_id VARCHAR(MAX) --= 2175
-
 DECLARE @_sub_book_id VARCHAR(MAX) --= 37
-
 DECLARE @_update_from VARCHAR(50) =  ''@update_date_from'' --''2015-10-06''--
-
 DECLARE @_update_to VARCHAR(50) = ''@update_date_to'' --''2015-10-06'' --
-
 DECLARE @_flow_start VARCHAR(50)
-
 DECLARE @_flow_end VARCHAR(50)
-
 DECLARE @_source_deal_header_id VARCHAR(50)
-
 DECLARE @_process_id VARCHAR(50)
-
 DECLARE @_table_name varchar(200)
-
 DECLARE @_user_login_id VARCHAR(50)
-
 DECLARE @_user_action VARCHAR(50)
-
 DECLARE @_field VARCHAR(1000) 
-
 DECLARE @_sql VARCHAR(5000)
-
 DECLARE @_delete CHAR(1)
-
 SET @_user_login_id = dbo.FNADBUser()   
-
 IF ''@sub_id'' <> ''NULL''
-
 	SET @_sub_id = ''@sub_id''
-
 IF ''@stra_id'' <> ''NULL''
-
 	SET @_stra_id = ''@stra_id''
-
 IF ''@book_id'' <> ''NULL''
-
 	SET @_book_id = ''@book_id''
-
 IF ''@sub_book_id'' <> ''NULL''
-
 	SET @_sub_book_id = ''@sub_book_id''
-
 IF ''@flow_start'' <> ''NULL''
-
 	SET @_flow_start = ''@flow_start''
-
 IF ''@flow_end'' <> ''NULL''
-
 	SET @_flow_end = ''@flow_end''
-
 IF ''@source_deal_header_id'' <> ''NULL''
-
 	SET @_source_deal_header_id = ''@source_deal_header_id''
-
 IF ''@user_action'' <> ''NULL''
-
 	SET @_user_action = ''@user_action''
-
 IF ''@field'' <> ''NULL''
-
 	SET @_field = ''@field''
 
 SET @_process_id = dbo.FNAGetNewID()
-
-IF @_user_action = ''delete''
+IF CHARINDEX(''delete'', @_user_action) > 0 OR @_user_action IS NULL
 BEGIN
 	SET @_delete = ''y''
 END
@@ -114,195 +79,100 @@ ELSE
 BEGIN
 	SET @_delete = ''n''
 END
-
 EXEC spa_Create_Deal_Audit_Report ''c'',
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	@_update_from, --@update_date_from
-
 	@_update_to, --@update_date_to
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	@_source_deal_header_id, --@source_deal_header_id
-
 	@_flow_start, --@tenor_from
-
 	@_flow_end, --@tenor_to
-
 	@_sub_book_id, --@book_deal_type_map_id
-
 	@_sub_id, --@sub_id
-
 	@_stra_id, --@sub_id
-
 	@_book_id,--@book_id
-
 	NULL,
-
 	@_user_action,--@user_action
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	NULL,
-
 	@_delete,
-
 	@_process_id
-
 SET @_table_name = dbo.FNAProcessTableName(''batch_report'', @_user_login_id, @_process_id)
-
 IF OBJECT_ID(''tempdb..#tmp_batch_report'') IS NOT NULL
-
 	DROP TABLE #tmp_batch_report
-
 CREATE TABLE #tmp_batch_report(
-
 	[User Action] VARCHAR(100) COLLATE DATABASE_DEFAULT,
-
 	[Update_Timestamp] DATETIME,
-
 	[Update User] NVARCHAR(100) COLLATE DATABASE_DEFAULT,
-
 	[Deal ID] INT,
-
 	[Ref ID] NVARCHAR(200) COLLATE DATABASE_DEFAULT,
-
 	[Term_Start] VARCHAR(50) COLLATE DATABASE_DEFAULT,
-
 	[Leg] INT,
-
 	[Header Detail]	NVARCHAR(50) COLLATE DATABASE_DEFAULT,
-
 	[Field]	NVARCHAR(100) COLLATE DATABASE_DEFAULT,
-
 	[Prior value] VARCHAR(200) COLLATE DATABASE_DEFAULT,
-
 	[Current Value]	NVARCHAR(200) COLLATE DATABASE_DEFAULT
-
 )
-
 SET @_sql = ''INSERT INTO #tmp_batch_report
-
 		SELECT [User Action],
-
 			DATEADD(day, DATEDIFF(day, 0, CAST(dbo.FNAClientToSqlDate([Update_Timestamp]) AS DATETIME)), RIGHT([Update_Timestamp], 8)),
-
 			[Update User],
-
 			[Deal ID],
-
 			[Ref ID],
-
 			[Term_Start],
-
 			[Leg],
-
 			[Header Detail],
-
 			[Field],
-
 			[Prior value],
-
 			[Current Value]
-
 		FROM '' + @_table_name
-
 EXEC(@_sql)
-
 --exec (''select * from '' + @_table_name)
-
 SELECT	@_sub_id [sub_id], 
-
 	@_stra_id [stra_id], 
-
 	@_book_id [book_id], 
-
 	@_sub_book_id [sub_book_id], 
-
 	[user action] [user_action],
-
 	pt.[term_start] [flow_start], 
-
 	pt.[term_start] [flow_end], 
-
 	[deal id] [source_deal_header_id],
-
 	pt.[Update_Timestamp] [update_date_from],
-
 	pt.[Update_Timestamp] [update_date_to],
-
 	pt.[Update_Timestamp] [update_timestamp],
-
 	[Update User],
-
 	[Deal ID],
-
 	[Ref ID],
-
 	pt.[term_start],
-
 	pt.leg,
-
 	[Header Detail],
-
 	field,
-
     CASE WHEN TRY_CONVERT(NUMERIC(38,12),[prior value]) IS NOT NULL THEN dbo.FNANUMBERFORMAT(CAST ([prior value] AS NUMERIC(38,12)), ''w'')ELSE [prior value] END [prior value],
-
     CASE WHEN TRY_CONVERT(NUMERIC(38,12),[current value]) IS NOT NULL THEN dbo.FNANUMBERFORMAT(CAST ([current value] AS NUMERIC(38,12)), ''w'')ELSE [current value] END [current value]
-
 --[__batch_report__]
-
 FROM #tmp_batch_report pt
-
 WHERE 1=1', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
@@ -902,7 +772,7 @@ WHERE 1=1', report_id = @report_id_data_source_dest,
 	BEGIN
 		UPDATE dsc  
 		SET alias = 'User Action'
-			   , reqd_param = 1, widget_id = 2, datatype_id = 5, param_data_source = 'SELECT ''insert'', ''Insert'' UNION ALL SELECT ''update'', ''Update'' UNION ALL SELECT ''delete'', ''Delete''', param_default_value = NULL, append_filter = 0, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+			   , reqd_param = 1, widget_id = 9, datatype_id = 5, param_data_source = 'SELECT ''insert'', ''Insert'' UNION ALL SELECT ''update'', ''Update'' UNION ALL SELECT ''delete'', ''Delete''', param_default_value = NULL, append_filter = 0, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		FROM data_source_column dsc
 		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -915,7 +785,7 @@ WHERE 1=1', report_id = @report_id_data_source_dest,
 		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
-		SELECT TOP 1 ds.data_source_id AS source_id, 'user_action' AS [name], 'User Action' AS ALIAS, 1 AS reqd_param, 2 AS widget_id, 5 AS datatype_id, 'SELECT ''insert'', ''Insert'' UNION ALL SELECT ''update'', ''Update'' UNION ALL SELECT ''delete'', ''Delete''' AS param_data_source, NULL AS param_default_value, 0 AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		SELECT TOP 1 ds.data_source_id AS source_id, 'user_action' AS [name], 'User Action' AS ALIAS, 1 AS reqd_param, 9 AS widget_id, 5 AS datatype_id, 'SELECT ''insert'', ''Insert'' UNION ALL SELECT ''update'', ''Update'' UNION ALL SELECT ''delete'', ''Delete''' AS param_data_source, NULL AS param_default_value, 0 AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Deal Audit View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
@@ -1017,3 +887,4 @@ COMMIT TRAN
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
+	
