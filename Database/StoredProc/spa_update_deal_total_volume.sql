@@ -60,6 +60,8 @@ SET nocount on
 --DELETE  report_hourly_position_fixed WHERE source_deal_header_id=39859
 
 
+
+
 declare @source_deal_header_ids VARCHAR(MAX), 
 	@process_id VARCHAR(128),
 	@insert_type int, 
@@ -107,7 +109,7 @@ SET CONTEXT_INFO @contextinfo
 -- select * from  process_deal_position_breakdown set process_status=0
 -- delete process_deal_position_breakdown
 
-select @source_deal_header_ids=163855 , 
+select @source_deal_header_ids=172504 , 
 	@process_id = null, --'52C2B537_BDBA_41DB_BE8D_B657F070A041',
 	@insert_type =1,
 	@partition_no =1,
@@ -317,7 +319,7 @@ IF  OBJECT_ID('tempdb..#is_total_volume_only_update') is  NULL
 CREATE table #is_total_volume_only_update(yn bit) 
 
 if OBJECT_ID('tempdb..#tmp_header_deal_id_1') is null
-CREATE TABLE #tmp_header_deal_id_1 (source_deal_header_id INT ,create_user varchar(50) COLLATE DATABASE_DEFAULT,source_deal_detail_id int,rowid int,dst_group_value_id int )
+CREATE TABLE #tmp_header_deal_id_1 (source_deal_header_id INT ,create_user varchar(50) COLLATE DATABASE_DEFAULT,source_deal_detail_id int,rowid int,dst_group_value_id int,commodity_id int )
 
 if object_id('tempdb..#run_status_break') is null
 create table #run_status_break(
@@ -368,8 +370,6 @@ BEGIN
 		EXEC(@sql)
 		--return
 		----------------------------------------------------------------------------------------------------
-
-
 
 
 		SET @sql='IF COL_LENGTH('''+@effected_deals+''', ''source_deal_detail_id'') IS NULL
@@ -536,8 +536,8 @@ BEGIN
 			
 	END --else isnull(@call_from,0)IN (0,2)
 	
-	set @sql='INSERT INTO #tmp_header_deal_id_1 (source_deal_detail_id,source_deal_header_id,create_user) 
-		select  source_deal_detail_id,max(source_deal_header_id),max(create_user) from '+@effected_deals +'
+	set @sql='INSERT INTO #tmp_header_deal_id_1 (source_deal_detail_id,source_deal_header_id,create_user,commodity_id) 
+		select  source_deal_detail_id,max(source_deal_header_id),max(create_user),max(commodity_id) commodity_id from '+@effected_deals +'
 		GROUP BY source_deal_detail_id'
 		
 	EXEC spa_print @sql
@@ -724,10 +724,19 @@ BEGIN TRY
 			INNER JOIN #tmp_header_deal_id_1 ed ON ed.source_deal_detail_id = sdd.source_deal_detail_id 
 			INNER JOIN '+@source_deal_header +' sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id and ISNULL(sdh.internal_desk_id,17300)=17300 --and ISNULL(sdh.product_id,-1)<>9501
 			LEFT JOIN source_price_curve_def spcd  ON spcd.source_curve_def_id = sdd.curve_id 
-			outer apply ( SELECT sum( volume_mult) volume_mult FROM hour_block_term where
-	 			dst_group_value_id=isnull(ed.dst_group_value_id,'+@default_dst_group+')
-				AND block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id,'+@baseload_block_define_id+')
-				and term_date BETWEEN sdd.term_start AND sdd.term_end 
+			outer apply ( SELECT 
+					case when ed.commodity_id=-1 then
+					   sum(isnull(hb.hr7,0)+isnull(hb.hr8,0)+isnull(hb.hr9,0)+isnull(hb.hr10,0)+isnull(hb.hr11,0)+isnull(hb.hr12,0)
+					   +isnull(hb.hr13,0)+isnull(hb.hr14,0)+isnull(hb.hr15,0)+isnull(hb.hr16,0)+isnull(hb.hr17,0)+isnull(hb.hr18,0)
+					   +isnull(hb.hr19,0)+isnull(hb.hr20,0)+isnull(hb.hr21,0)+isnull(hb.hr22,0)+isnull(hb.hr23,0)+isnull(hb.hr24,0)
+					   +isnull(hb1.hr1,0)+isnull(hb1.hr2,0)+isnull(hb1.hr3,0)+isnull(hb1.hr4,0)+isnull(hb1.hr5,0)+isnull(hb1.hr6,0))
+					 else sum(isnull(hb.volume_mult,0)) end  volume_mult
+				FROM hour_block_term hb
+				inner join hour_block_term hb1  ON hb1.dst_group_value_id=hb.dst_group_value_id
+					AND hb1.block_define_id=hb.block_define_id AND hb1.term_date-1=hb.term_date
+					and hb.dst_group_value_id=isnull(ed.dst_group_value_id,'+@default_dst_group+')
+					AND hb.block_define_id = COALESCE(spcd.block_define_id, sdh.block_define_id,'+@baseload_block_define_id+')
+					and hb.term_date BETWEEN sdd.term_start AND sdd.term_end 
 			) vft
 			LEFT JOIN rec_volume_unit_conversion conv  ON conv.from_source_uom_id=sdd.deal_volume_uom_id
 				AND to_source_uom_id=COALESCE(sdd.position_uom,spcd.display_uom_id,spcd.uom_id)
@@ -774,8 +783,7 @@ BEGIN TRY
 		EXEC(@sql)	
 	end
 
-
-
+	
 	run_job_breakdown:
 	--Populate report tables
 	IF ISNULL(@insert_type,0)=0 AND isnull(@insert_process_table,'n')='n'
@@ -789,7 +797,7 @@ BEGIN TRY
 		print '#########################################################################################'
 			print @spa
 		print '#########################################################################################'
-		EXEC(@spa)
+	EXEC(@spa)
 		 
 	END
 
