@@ -3581,6 +3581,8 @@
 
         if (limit_exceeded == '1') {
             $('.bottom_div', box_div).addClass('limit_exceeded_box');
+        } else {
+            $('.bottom_div', box_div).removeClass('limit_exceeded_box');
         }
 
     }

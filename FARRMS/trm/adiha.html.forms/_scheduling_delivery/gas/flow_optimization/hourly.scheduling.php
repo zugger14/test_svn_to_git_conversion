@@ -204,11 +204,11 @@ echo $sch_obj->attach_grid_cell($sch_grid_name, 'a');
 $sch_grid_obj = new AdihaGrid();
 echo $sch_grid_obj->init_by_attach($sch_grid_name, $form_namespace);
 
-$column_text = "&nbsp;,Path,Contract,Storage Contract,Book,Term From,Term To,New";
-$column_id = "sub,path,contract,storage_contract,book,term_from,term_to,new";
-$column_width = "30,170,*,*,*,*,*,*";
-$column_type = "sub_row_grid,combo,combo,combo,combo,ro_dhxCalendarA,ro_dhxCalendarA,ro";
-$column_visbility = "false,false,false,$hide_storage_contract_col,false,false,false,true";
+$column_text = "&nbsp;,path_id,Path,Contract,Storage Contract,Book,Term From,Term To,New";
+$column_id = "sub,path_id,path_name,contract,storage_contract,book,term_from,term_to,new";
+$column_width = "30,80,170,*,*,*,*,*,*";
+$column_type = "sub_row_grid,ro,ro,combo,combo,combo,ro_dhxCalendarA,ro_dhxCalendarA,ro";
+$column_visbility = "false,true,false,false,$hide_storage_contract_col,false,false,false,true";
 
 echo $sch_grid_obj->set_header($column_text);
 echo $sch_grid_obj->set_columns_ids($column_id);
@@ -296,12 +296,17 @@ echo $sch_obj->close_layout();
     
     STORAGE_ASSET_INFO = JSON.parse('<?php echo json_encode($storage_asset_info_arr) ?>');
     SUBGRID_HEADER_DEFINITION = JSON.parse('<?php echo json_encode($subgrid_header_definition) ?>')[0];
+
+    PROGRESS_COUNTER_ON_GBL = 0; //loading objects like combo,subgrid
+
+    BOX_PATH_IDS_GBL = [];
+    PARENT_GRID_ROW_IDS = [];
     
     var rec_row_index = 1;
     var fuel_row_index = 2;
     var del_row_index = 3;
 
-    var hourly_info_json_gbl = '';
+    var HOURLY_INFO_JSON_GBL = [];
     var APPLY_VALIDATION_MESSAGE = (get_param.parent_call_from == 'book_out' ? false : true);
 	
 	var ROUNDING_VALUE = 4;
@@ -337,20 +342,11 @@ echo $sch_obj->close_layout();
         	if (stage == 2 && (grid_obj.getColumnId(cid) == 'path' || grid_obj.getColumnId(cid) == 'contract')) {
                 if (isNaN(n_val) || n_val == '') {
                     return false;
-                } else if (n_val != o_val) {
-                    if (grid_obj.getColumnId(cid) == 'path') {
-                        var grid_type = 'sch';//grid_obj.getUserData('', 'grid_type');
-                        
-                        var subgrid = grid_obj.cells(rid, grid_obj.getColIndexById('sub')).getSubGrid();
-                        var fx_reload_grid = function() { 
-                        	reload_subgrid(subgrid, rid);
-                        }
-                       	load_path_contract(rid, fx_reload_grid);
-                    } else if (grid_obj.getColumnId(cid) == 'contract') {
+                } else if (n_val != o_val) {                    
+                    if (grid_obj.getColumnId(cid) == 'contract') {
                         var subgrid = grid_obj.cells(rid, grid_obj.getColIndexById('sub')).getSubGrid();
                         reload_subgrid(subgrid, rid);
                     }
-
                     return true;
                 }
             } else {
@@ -378,31 +374,7 @@ echo $sch_obj->close_layout();
             fx_change_vol(rId, i, subgrid, col_value);
         }
     }
-    /**
-     * [load_path_contract description]
-     *
-     * @return  [type]  [return description]
-     */
-    function load_path_contract (rids, callback) { 
-    	$.each(rids.split(','), function(rid) {
-            var selected_path_id = sch.hourly_sch_grid.cells(rid,sch.hourly_sch_grid.getColIndexById('path')).getValue().toString();
-            var set_grid_value_contract = function () {
-                var selected_contract = sch.hourly_sch_grid.getColumnCombo(sch.hourly_sch_grid.getColIndexById('contract')).getOptionByIndex(0).value;
-
-                if(get_param.contract_id != '' && 1==2) { //donot set contract id from parent param for now, since path only has one contract for case now
-                    selected_contract = get_param.contract_id;
-                }
-
-                sch.hourly_sch_grid.cells(rid,sch.hourly_sch_grid.getColIndexById('contract')).setValue(selected_contract);
-                if(typeof callback === 'function') {
-                    callback();
-                }
-            }
-            sch.load_dropdown("EXEC spa_flow_optimization_hourly @flag='c1', @from_location='" + get_param.rec_location_id + "', @to_location='" + get_param.del_location_id + "', @path_ids='" + selected_path_id + "', @process_id='" + get_param.process_id + "', @xml_manual_vol='" + (get_param.parent_call_from == 'book_out' ? '-1' : '') + "'", sch.hourly_sch_grid.getColIndexById('contract'), set_grid_value_contract, sch.hourly_sch_grid);
-
-        });
-    }
-
+    
     /*
     Function for menu click on layout b
     */
@@ -413,16 +385,26 @@ echo $sch_obj->close_layout();
         } else if(name == 'save_schd') {
             sch.fx_save_schd();
         } else if(name == 'clear_adj') {
-            var subgrid = sch.hourly_sch_grid.cells(sch.hourly_sch_grid.getRowId(0), sch.hourly_sch_grid.getColIndexById('sub')).getSubGrid();
-            reload_subgrid(subgrid, sch.hourly_sch_grid.getRowId(0), 1);
-            
+            PROGRESS_COUNTER_ON_GBL = PARENT_GRID_ROW_IDS.length;
+            _.each(PARENT_GRID_ROW_IDS, function(rid) {
+                var subgrid = sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('sub')).getSubGrid();
+                reload_subgrid(subgrid, rid, 1);
+            });
         }
     }
 
     sch.fx_set_parent_box_values = function(call_from, data_info) {
+
+        if (call_from == 'clear_adj') {
+            if (IFRAME_FLOW_OPT_TEMPLATE != '') {
+                IFRAME_FLOW_OPT_TEMPLATE.contentWindow.set_box_value(get_param.box_id, 0, 0, '', '', call_from, '', 0, 0);
+            }
+            return;
+        }
+
         var subgrid = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('sub')).getSubGrid();
-        var path_id_selected = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('path')).getValue();
-        var contract_id_selected = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('contract')).getValue();
+        var path_id_selected = '';// sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('path')).getValue();
+        var contract_id_selected = '';//sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('contract')).getValue();
         var total_rec = 0;
         var total_del = 0;
         //var total_path_rmdq = 0;
@@ -467,6 +449,7 @@ echo $sch_obj->close_layout();
             }
 
             storage_violate = sch.fx_storage_validation(storage_asset_id, total_rec, total_del);
+            //console.log('stg violate:'+storage_violate);
 
             if (IFRAME_FLOW_OPT_TEMPLATE != '') {
                 $.each(IFRAME_FLOW_OPT_TEMPLATE.contentWindow.EXCEED_INFO_GBL, function(k, v) {
@@ -478,16 +461,10 @@ echo $sch_obj->close_layout();
         }
         
         if (IFRAME_FLOW_OPT_TEMPLATE != '') {
+            var position_exceed = fx_is_position_pmdq_exceeded('position');
+            var pmdq_exceed = fx_is_position_pmdq_exceeded('pmdq');
 
-            var position_exceed = hourly_info_json_gbl.some(function(el,ind) {
-                if(el.position_exceed_rec == '1' || el.position_exceed_del == '1') return true;
-                else return false;
-            }) ? '1' : '0';
-            var pmdq_exceed = hourly_info_json_gbl.some(function(el,ind) {
-                if(el.pmdq_exceed_rec == '1') return true;
-                else return false;
-            }) ? '1' : '0';
-
+            //console.log(position_exceed+':'+pmdq_exceed);
             var limit_exceeded = '0';
             if (position_exceed == '1' || pmdq_exceed == '1' || storage_violate != '0') {
                 limit_exceeded = '1';
@@ -554,7 +531,6 @@ echo $sch_obj->close_layout();
     };
 
     sch.fx_save_schd = function() {
-        //console.log(hourly_info_json_gbl);return;
         var sub_book = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('book')).getValue();
 
         if(get_param.call_from == 'flow_deal_match' && sub_book == '') {
@@ -567,36 +543,40 @@ echo $sch_obj->close_layout();
         }
 
         var xml_manual_vol = '<Root>';
+        //var path_id_selected = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('path')).getValue();
         
-        var subgrid = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('sub')).getSubGrid();
-        var path_id_selected = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('path')).getValue();
-        subgrid.editStop();
-        subgrid.forEachCell(subgrid.getRowId(rec_row_index), function(cellObj, cid) { //loop for Rec row
-            if(cid > 6) {//only for hour columns
-				var hr = subgrid.getColumnId(cid).replace('hr','');
-				var is_dst = 0;
-				if (hr.indexOf('_DST') > 0) {
-					hr = hr.replace('_DST', '');
-					is_dst = 1;
-				}					
-                xml_manual_vol += '<PSRecordset from_loc_id="' + get_param.rec_location_id +
-                    '" to_loc_id="' + get_param.del_location_id +
-                    '" path_id="' + path_id_selected +
-                    '" contract_id="' + sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('contract')).getValue() +
-                    '" hour="' + hr +
-					'" is_dst="' + is_dst +
-                    '" received="' + cellObj.getValue() +
-                    '" delivered="' + subgrid.cells2(del_row_index, cid).getValue() +
-                    '" path_rmdq="' + getNumberFormat(subgrid.cells2(0, cid).getValue().split('/')[1], '', 1) +
-                    '" storage_asset_id="' + sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('storage_contract')).getValue() +
-                    '"></PSRecordset>';
-            }
-        });
+        _.each(PARENT_GRID_ROW_IDS, function (rid) {
+            var subgrid = sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('sub')).getSubGrid();
+            subgrid.editStop();
+            subgrid.forEachCell(subgrid.getRowId(rec_row_index), function(cellObj, cid) { //loop for Rec row
+                if(cid > 6) {//only for hour columns
+                    var hr = subgrid.getColumnId(cid).replace('hr','');
+                    var is_dst = 0;
+                    if (hr.indexOf('_DST') > 0) {
+                        hr = hr.replace('_DST', '');
+                        is_dst = 1;
+                    }					
+                    xml_manual_vol += '<PSRecordset from_loc_id="' + get_param.rec_location_id +
+                        '" to_loc_id="' + get_param.del_location_id +
+                        '" path_id="' + subgrid.cells2(0, subgrid.getColIndexById('path_id')).getValue() +
+                        '" contract_id="' + subgrid.cells2(0, subgrid.getColIndexById('contract_id')).getValue() +
+                        '" hour="' + hr +
+                        '" is_dst="' + is_dst +
+                        '" received="' + cellObj.getValue() +
+                        '" delivered="' + subgrid.cells2(del_row_index, cid).getValue() +
+                        '" path_rmdq="' + getNumberFormat(subgrid.cells2(0, cid).getValue().split('/')[1], '', 1) +
+                        '" storage_asset_id="' + sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('storage_contract')).getValue() +
+                        '"></PSRecordset>';
+                }
+            });
+        })
+        
         xml_manual_vol += '</Root>';
 		
 		//console.log(xml_manual_vol);return;
         
         var sp_string = "EXEC spa_flow_optimization_hourly @flag='s2', @process_id='" + get_param.process_id + "', @xml_manual_vol='" + xml_manual_vol + "', @call_from='" + get_param.call_from + "'";
+        //console.log(sp_string);return;
         post_data = { sp_string: sp_string };
 
         sch.fx_progress_load(1);
@@ -612,22 +592,9 @@ echo $sch_obj->close_layout();
                     
                     //push volume exceed info, so that confirm message box can use this info on parent while saving schedule
                     if (IFRAME_FLOW_OPT_TEMPLATE != '') {
-                        $.each(IFRAME_FLOW_OPT_TEMPLATE.contentWindow.EXCEED_INFO_GBL, function(k, v) {
-                            if(v.box_id == get_param.box_id) {
-                                this.position_exceed = (
-                                    hourly_info_json_gbl.some(function(el,ind) {
-                                        if(el.position_exceed_rec == '1' || el.position_exceed_del == '1') return true;
-                                        else return false;
-                                    }) ? '1' : '0'
-                                );
-                                this.pmdq_exceed = (
-                                    hourly_info_json_gbl.some(function(el,ind) {
-                                        if(el.pmdq_exceed_rec == '1') return true;
-                                        else return false;
-                                    }) ? '1' : '0'
-                                );
-                            }
-                        });
+                        IFRAME_FLOW_OPT_TEMPLATE.contentWindow.EXCEED_INFO_GBL.filter(function(el){return (el.box_id == get_param.box_id);})[0].position_exceed = fx_is_position_pmdq_exceeded('position');
+
+                        IFRAME_FLOW_OPT_TEMPLATE.contentWindow.EXCEED_INFO_GBL.filter(function(el){return (el.box_id == get_param.box_id);})[0].pmdq_exceed = fx_is_position_pmdq_exceeded('pmdq');
                     }
                     
                     sch.fx_set_parent_box_values('', return_data);
@@ -656,6 +623,40 @@ echo $sch_obj->close_layout();
 
         });
     }
+
+    /**
+     * Check if position/pmdq is exceeded on hourly level
+     * @param   string    exceed_type       - exceed type to check. e.g. position,pmdq
+     * return   string  - returns string "1" or "0" for exceeded or not. "1' => exceeded
+     */
+    function fx_is_position_pmdq_exceeded(exceed_type) {
+        var position_exceed = "0";
+        var pmdq_exceed = "0";
+
+        $.each(HOURLY_INFO_JSON_GBL, function(k, entry) {
+            //skip if already exceed set to 1
+            if (position_exceed != "1") {
+                position_exceed = entry.some(function(el, ind) {
+                    if (el.position_exceed_rec == '1' || el.position_exceed_del == '1') return true;
+                    else return false;
+                }) ? '1' : '0';
+            }
+            
+            if (pmdq_exceed != "1") {
+                pmdq_exceed = entry.some(function(el, ind) {
+                    if (el.pmdq_exceed_rec == '1') return true;
+                    else return false;
+                }) ? '1' : '0';
+            }
+        });
+
+        if (exceed_type == 'position') {
+            return position_exceed;
+        } else if (exceed_type == 'pmdq') {
+            return pmdq_exceed;
+        }
+    }
+
     /**
      * Save schedule deal. This call is used when call from schedule deal, gas scheduling deal match. not from flow optimization, as flow optimization has its deal saving logic on its own page.
      * @param   {object}    param       - collection of param values. e.g. box_id
@@ -712,36 +713,30 @@ echo $sch_obj->close_layout();
     Function to load progress On and Off
     */
     sch.fx_progress_load = function(on) {
-    	if(on == 1) {
+        if(on == 1) {
 			sch.sch_layout.cells('a').progressOn();
     	} else {
-    		sch.sch_layout.cells('a').progressOff();
+            PROGRESS_COUNTER_ON_GBL -= 1;
+            //console.log(PROGRESS_COUNTER_ON_GBL);
+            if (PROGRESS_COUNTER_ON_GBL <= 0) {
+                sch.sch_layout.cells('a').progressOff();
+            }    		
     	}
     };
     /**
      * Function to load all combos on sch grid
      */
-    sch.sch_load_all_grid_cmbo = function(grid_obj) {
-        sch.fx_progress_load(1);
-
-        var row_ids = grid_obj.getAllRowIds();
-        var load_path_callback = function () {
-            var fx_call_back = function() {
-                sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('sub')).open();
-            };
-            load_path_contract(row_ids, fx_call_back);
-            
-        }
-        sch.load_dropdown("EXEC spa_flow_optimization_hourly @flag='p1', @from_location='" + get_param.rec_location_id + "', @to_location='" + get_param.del_location_id + "', @process_id='" + get_param.process_id + "', @xml_manual_vol='" + (get_param.parent_call_from == 'book_out' ? '-1' : '') + "'", sch.hourly_sch_grid.getColIndexById('path'), load_path_callback, grid_obj);
-        sch.load_dropdown("EXEC spa_get_source_book_map @flag='s',@function_id=10131000", sch.hourly_sch_grid.getColIndexById('book'), '', grid_obj);
-        sch.load_dropdown("EXEC spa_virtual_storage @flag='c',@storage_location=" + (get_param.storage_location_id == '' ? 'NULL' : get_param.storage_location_id), sch.hourly_sch_grid.getColIndexById('storage_contract'), '', grid_obj);
+    sch.sch_load_all_grid_cmbo = function(grid_obj) {    
+        load_path_contract();        
+        sch.load_dropdown("EXEC spa_get_source_book_map @flag='s',@function_id=10131000", sch.hourly_sch_grid.getColIndexById('book'), '', grid_obj, 0);
+        sch.load_dropdown("EXEC spa_virtual_storage @flag='c',@storage_location=" + (get_param.storage_location_id == '' ? 'NULL' : get_param.storage_location_id), sch.hourly_sch_grid.getColIndexById('storage_contract'), '', grid_obj, 0);
 
     };
 
     /*
     Loads the dropdown values on grid cells
     */
-    sch.load_dropdown = function(sql_stmt, column_index, callback_function, obj_grid) {
+    sch.load_dropdown = function(sql_stmt, column_index, callback_function, obj_grid, custom_combo_case) {
         var cm_param = {
             "action": "spa_generic_mapping_header",
             "flag": "n",
@@ -752,25 +747,50 @@ echo $sch_obj->close_layout();
         cm_param = $.param(cm_param);
         var url = js_dropdown_connector_url + "&" + cm_param;
         var combo_obj = obj_grid.getColumnCombo(column_index);
-        combo_obj.enableFilteringMode("between", null, false)
-
-        combo_obj.clearAll();
         
+        if (typeof custom_combo_case === 'object' && custom_combo_case !== null) {
+            combo_obj = obj_grid.cells(custom_combo_case.rid, column_index).getCellCombo();
+        }
+        combo_obj.clearAll();
+        //sch.fx_progress_load(1);
         combo_obj.load(url, function() {
-        	
-        	obj_grid.refreshComboColumn(obj_grid.getColIndexById('path'));
-        	obj_grid.refreshComboColumn(obj_grid.getColIndexById('contract'));
         	obj_grid.refreshComboColumn(obj_grid.getColIndexById('storage_contract'));
             if (callback_function != '') {
                 callback_function();
            	}
             fx_adjust_grid_all_column_size(obj_grid);
+            //console.log('reload combo complete:'+column_index);
+            sch.fx_progress_load(0);
         });
     };
+
+    /**
+     * [load_path_contract description]
+     *
+     * @return  [type]  [return description]
+     */
+    function load_path_contract () { 
+    	$.each(PARENT_GRID_ROW_IDS, function(rid) {
+            var selected_path_id = sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('path_id')).getValue().toString();
+            //console.log(selected_path_id);
+            BOX_PATH_IDS_GBL.push(selected_path_id);
+            var set_grid_value_contract = function () {
+                var selected_contract = sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('contract')).getCellCombo().getOptionByIndex(0).value;
+                sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('contract')).setValue(selected_contract);
+                sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('sub')).open();
+            }
+            var param_obj = {
+                "rid": rid
+            };
+            sch.load_dropdown("EXEC spa_flow_optimization_hourly @flag='c1', @from_location='" + get_param.rec_location_id + "', @to_location='" + get_param.del_location_id + "', @path_ids='" + selected_path_id + "', @process_id='" + get_param.process_id + "', @xml_manual_vol='" + (get_param.parent_call_from == 'book_out' ? '-1' : '') + "'", sch.hourly_sch_grid.getColIndexById('contract'), set_grid_value_contract, sch.hourly_sch_grid, param_obj);
+
+        });
+    }
    
     /*
     Function to refresh sch grid
     */
+    
     sch.refresh_sch_grid = function(call_from) {
         check_subgrid = [];
                 
@@ -792,45 +812,36 @@ echo $sch_obj->close_layout();
         var param_url = js_data_collector_url + "&" + param;
 
         sch.fx_progress_load(1);
+        
         sch.hourly_sch_grid.clearAndLoad(param_url, function(data) {
+            var total_rows = sch.hourly_sch_grid.getRowsNum(); 
+            PARENT_GRID_ROW_IDS = sch.hourly_sch_grid.getAllRowIds().split(','); 
             sch.hourly_sch_grid.callEvent('onGridReconstructed',[]);
-        	if(sch.hourly_sch_grid.getRowsNum() > 0) {
-                sch.sch_load_all_grid_cmbo(sch.hourly_sch_grid);
-                sch.hourly_sch_grid.forEachRow(function(rid) {
-	                if(sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('new')).getValue() == 'n') {
-	                    sch.hourly_sch_grid.setRowColor(rid, "#EBD3AA");
-	                    var colNum = sch.hourly_sch_grid.getColumnsNum();
-	                    for (i = 0; i < colNum; i++) {
-	                        if (i != 0) {
-	                            //sch.hourly_sch_grid.cells(rid,i).setDisabled(true);
-	                            //sch.hourly_sch_grid.cells(rid,i).setTextColor('red');
-	                        }
-	                    }
-	                }
-	                //sch.subgrid(rid, '' ,sch.hourly_sch_grid);
-	                
-	            });
+        	if(total_rows > 0) {
+                PROGRESS_COUNTER_ON_GBL = (total_rows * 2) + 2; //2 static grid level combo (stg contract, book), 1 path level contract combo, 1 subgrid, which is grid cell level loading depends on parent grid row count     
+                sch.sch_load_all_grid_cmbo(sch.hourly_sch_grid);                
             }
+            //sch.fx_progress_load(0);
 		});
 
     };
 	
 	sch.fx_get_hourly_info_json = function(path_id, param_callback) {
 		var param = {
-						"flag": "VOL_LIMIT",
-						"action": "spa_flow_optimization_hourly",
-						"from_location": get_param.rec_location_id,
-						"to_location": get_param.del_location_id,
-                        "process_id": get_param.process_id,
-                        "receipt_deals_id": get_param.receipt_deals,
-                        "delivery_deals_id": get_param.delivery_deals,
-                        "flow_date_from": get_param.flow_start,
-                        "path_ids": path_id,
-                        "xml_manual_vol": get_param.box_id
-					};
+            "flag": "VOL_LIMIT",
+            "action": "spa_flow_optimization_hourly",
+            "from_location": get_param.rec_location_id,
+            "to_location": get_param.del_location_id,
+            "process_id": get_param.process_id,
+            "receipt_deals_id": get_param.receipt_deals,
+            "delivery_deals_id": get_param.delivery_deals,
+            "flow_date_from": get_param.flow_start,
+            "path_ids": path_id,
+            "xml_manual_vol": get_param.box_id
+        };
 
 		var fx_callback = function(result) {
-            hourly_info_json_gbl = JSON.parse(result[0][0]); //console.log(hourly_info_json_gbl);
+            HOURLY_INFO_JSON_GBL.push(JSON.parse(result[0][0]));
             if(typeof param_callback === "function") {
                 param_callback();
             }
@@ -843,31 +854,6 @@ echo $sch_obj->close_layout();
     function create_sub_grid(subgrid, rid, grid_obj) {
     		
         if (typeof subgrid !== 'undefined') {
-
-            /*
-            var term_start = grid_obj.cells(rid, grid_obj.getColIndexById('term_from')).getValue();
-            var term_to = grid_obj.cells(rid, grid_obj.getColIndexById('term_to')).getValue();
-            //alert(term_start);
-            var header = 'Path Detail ID,Path ID,Path,Contract ID,Contract,Group Path ID,Volume';
-            var column_ids = 'delivery_path_detail_id,path_id,path,contract_id,contract,group_path_id,volume';
-            var col_types = 'ro,ro,ro,ro,ro,ro,ro';
-            var width = '70,70,166,100,100,100,100';
-            var col_sorting = 'int,int,str,int,str,int,int';
-
-            var days = dates.diff_days(term_start,term_to);
-			var hours = get_param.period_from.split(',');
-
-            for(i = 0; i<hours.length ; i++) {
-                var display_gas_hr = (parseInt(hours[i]) <= 18 ? parseInt(hours[i]) + 6 : parseInt(hours[i]) - 18);
-                header += "," + ('0' + display_gas_hr + ':00').slice(-5);
-                column_ids += ',' + 'hr'+ hours[i];
-                col_types += ',ro';
-                width += ',70';
-                col_sorting += ',int';
-
-            }
-            */
-
             var ds_context_menu = new dhtmlXMenuObject({
                 icons_path: js_image_path + 'dhxmenu_web/',
                 context: true,
@@ -917,6 +903,8 @@ echo $sch_obj->close_layout();
                 }
                 return true;
             });
+            //console.log('create subgrid rid:'+rid);
+            subgrid.setUserData('', 'parentRowId', rid);
         }
         reload_subgrid(subgrid, rid);
     }
@@ -925,31 +913,40 @@ echo $sch_obj->close_layout();
         if(nValue == '') {
             nValue = 0;
         }
-		
+		var path_id = subgrid.cells(0, subgrid.getColIndexById('path_id')).getValue();
 		var hour = subgrid.getColumnId(cInd).replace('hr', '');
-		var hourly_info = hourly_info_json_gbl.filter(function (entry) {
-            if (hour.indexOf('_DST') > 0) {
-                return (entry.hr == hour.replace('_DST', '') && entry.is_dst == 1);
-            } else {
-                return (entry.hr == hour);
-            }
-            
+		var hourly_info = {};
+        _.each(HOURLY_INFO_JSON_GBL, function (entry) {
+            _.each(entry, function(el) {
+                if (el.path_id == path_id 
+                    && (
+                        (el.hr == hour && el.is_dst == 0)
+                        || (hour.indexOf('_DST') > 0 && el.hr == hour.replace('_DST', '') && el.is_dst == 1)
+                    )
+                ) {
+                    hourly_info = el;               
+                }
+            });
         });
-        //console.log(hour);
+        //console.log(hourly_info);
     	var loss = 0;
     	var path_mdq_display = subgrid.cells(0, cInd).getValue().split('/');
         var path_mdq_number = getNumberFormat(path_mdq_display[0], '', 1);
-        if (subgrid.cells(rId, subgrid.getColIndexById('volume')).getValue() == 'Rec') {
+        var volume_type = subgrid.cells(rId, subgrid.getColIndexById('volume')).getValue();
+        if (volume_type == 'Rec') {
 
             loss = subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 1), cInd).getValue();
             var new_del_volume = parseFloat(nValue) * (1 - loss);
             new_del_volume = roundTo(new_del_volume, ROUNDING_VALUE).toFixed(ROUNDING_VALUE);
             subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 2), cInd).setValue(new_del_volume);
 
-            var new_path_rmdq = parseFloat(hourly_info[0]['path_ormdq']) - parseFloat(new_del_volume);
+            var new_path_rmdq = parseFloat(hourly_info['path_ormdq']) - parseFloat(new_del_volume);
             subgrid.cells(subgrid.getRowId(0), cInd).setValue(path_mdq_display[0] + '/' + getNumberFormat(new_path_rmdq, 'v'));
             
             if(APPLY_VALIDATION_MESSAGE) {
+                var parent_rId = subgrid.getUserData('', 'parentRowId');
+                var rest_of_the_volumes_rec = fx_subgrid_operations('get_rest_of_the_volumes', volume_type, cInd, parent_rId, '');
+                var rest_of_the_volumes_del = fx_subgrid_operations('get_rest_of_the_volumes', volume_type, cInd, parent_rId, '');
                 //Check for path MDQ
                 if(parseFloat(path_mdq_number) < parseFloat(nValue)) {
                     success_call('Received Volume exceeded path MDQ.');				
@@ -959,63 +956,95 @@ echo $sch_obj->close_layout();
                 }
                 
                 //Check for Supply Volume Limit
-                if(parseFloat(hourly_info[0]['supply_position']) < parseFloat(nValue)) {
+                //console.log(nValue + '+'+rest_of_the_volumes_rec);
+                var is_supply_pos_exceed = (parseFloat(hourly_info['supply_position']) < (parseFloat(nValue) + parseFloat(rest_of_the_volumes_rec)));
+                var is_demand_pos_exceed = (parseFloat(hourly_info['demand_position']) < (parseFloat(new_del_volume) + parseFloat(rest_of_the_volumes_del)) && get_param.storage_type != 'i');
+
+                if(is_supply_pos_exceed) {
                     success_call('Received Volume exceeded supply.');
-                    subgrid.cells(rId,cInd).setTextColor('red');
+                    fx_subgrid_operations('set_cell_text_color', 'Rec', cInd, '', 'red');
                 } else {
-                    subgrid.cells(rId,cInd).setTextColor('black');
+                    fx_subgrid_operations('set_cell_text_color', 'Rec', cInd, '', 'black');
                 }  
 
                 //Check for Demand Volume Limit
-                if(parseFloat(hourly_info[0]['demand_position']) < parseFloat(new_del_volume) && get_param.storage_type != 'i') {
+                if(is_demand_pos_exceed) {
                     success_call('Delivery Volume exceeded demand.');
-                    subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 2), cInd).setTextColor('red');
+                    fx_subgrid_operations('set_cell_text_color', 'Del', cInd, '', 'red');
                 } else {
-                    subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 2), cInd).setTextColor('black');
+                    fx_subgrid_operations('set_cell_text_color', 'Del', cInd, '', 'black');
                 }
 
                 //update json info for exceed info
-                $.each(hourly_info_json_gbl, function(k, v) {
-                    if(v.hr == hour) {
-                        this.position_exceed_rec = (parseFloat(hourly_info[0]['supply_position']) < parseFloat(nValue) ? '1' : '0');
-                        this.position_exceed_del = ((parseFloat(hourly_info[0]['demand_position']) < parseFloat(new_del_volume) && get_param.storage_type != 'i') ? '1' : '0');
-                        this.pmdq_exceed_rec = (parseFloat(path_mdq_number) < parseFloat(nValue) ? '1' : '0');
-                    }
+                $.each(HOURLY_INFO_JSON_GBL, function (k, entry) {
+                    $.each(entry, function(k1, el) {
+                        if (
+                            //el.path_id == path_id 
+                            //&& 
+                            (
+                                (el.hr == hour && el.is_dst == 0)
+                                || (hour.indexOf('_DST') > 0 && el.hr == hour.replace('_DST', '') && el.is_dst == 1)
+                            )
+                        ) {
+                            this.position_exceed_rec = (is_supply_pos_exceed ? '1' : '0');
+                            this.position_exceed_del = (is_demand_pos_exceed ? '1' : '0');
+                            this.pmdq_exceed_rec = (parseFloat(path_mdq_number) < parseFloat(nValue) ? '1' : '0');              
+                        }
+                    });
                 });
             }
-        } else if (subgrid.cells(rId, subgrid.getColIndexById('volume')).getValue() == 'Fuel') {
+        } else if (volume_type == 'Fuel') {
             loss = nValue;
             var new_del_volume = subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) -1), cInd).getValue() * (1 - loss);
             new_del_volume = roundTo(new_del_volume, ROUNDING_VALUE).toFixed(ROUNDING_VALUE);
 			subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 1), cInd).setValue(new_del_volume);
             
             if(APPLY_VALIDATION_MESSAGE) {
+                var parent_rId = subgrid.getUserData('', 'parentRowId');
+                var rest_of_the_volumes_rec = fx_subgrid_operations('get_rest_of_the_volumes', volume_type, cInd, parent_rId, '');
+                var rest_of_the_volumes_del = fx_subgrid_operations('get_rest_of_the_volumes', volume_type, cInd, parent_rId, '');
+
                 //Check for Demand Volume Limit
-                if(parseFloat(hourly_info[0]['demand_position']) < parseFloat(new_del_volume) && get_param.storage_type != 'i') {
+                var is_demand_pos_exceed = (parseFloat(hourly_info['demand_position']) < (parseFloat(new_del_volume) + parseFloat(rest_of_the_volumes_del)) && get_param.storage_type != 'i');
+
+                if(is_demand_pos_exceed) {
                     success_call('Delivery Volume exceeded demand.');
-                    subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 1), cInd).setTextColor('red');
+                    fx_subgrid_operations('set_cell_text_color', 'Del', cInd, '', 'red');
                 } else {
-                    subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) + 1), cInd).setTextColor('black');
+                    fx_subgrid_operations('set_cell_text_color', 'Del', cInd, '', 'black');
                 }
 
                 //update json info for exceed info
-                $.each(hourly_info_json_gbl, function(k, v) {
-                    if(v.hr == hour) {
-                        this.position_exceed_del = ((parseFloat(hourly_info[0]['demand_position']) < parseFloat(new_del_volume) && get_param.storage_type != 'i') ? '1' : '0');
-                    }
+                $.each(HOURLY_INFO_JSON_GBL, function (k, entry) {
+                    $.each(entry, function(k1, el) {
+                        if (
+                            //el.path_id == path_id 
+                            //&& 
+                            (
+                                (el.hr == hour && el.is_dst == 0) 
+                                || (hour.indexOf('_DST') > 0 && el.hr == hour.replace('_DST', '') && el.is_dst == 1)
+                            )
+                        ) {
+                            this.position_exceed_del = (is_demand_pos_exceed ? '1' : '0');           
+                        }
+                    });
                 });
             }
 
-        } else if (subgrid.cells(rId, subgrid.getColIndexById('volume')).getValue() == 'Del') {
+        } else if (volume_type == 'Del') {
             loss = subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) - 1), cInd).getValue();
             var new_rec_volume = parseFloat(nValue) / (1 - loss);
             new_rec_volume = roundTo(new_rec_volume, ROUNDING_VALUE).toFixed(ROUNDING_VALUE);
            	subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) - 2), cInd).setValue(new_rec_volume);
 
-           	var new_path_rmdq = parseFloat(hourly_info[0]['path_ormdq']) - nValue;
+           	var new_path_rmdq = parseFloat(hourly_info['path_ormdq']) - nValue;
             subgrid.cells(subgrid.getRowId(0), cInd).setValue(path_mdq_display[0] + '/' + getNumberFormat(new_path_rmdq, 'v'));
             
             if(APPLY_VALIDATION_MESSAGE) {
+                var parent_rId = subgrid.getUserData('', 'parentRowId');
+                var rest_of_the_volumes_rec = fx_subgrid_operations('get_rest_of_the_volumes', volume_type, cInd, parent_rId, '');
+                var rest_of_the_volumes_del = fx_subgrid_operations('get_rest_of_the_volumes', volume_type, cInd, parent_rId, '');
+
                 //Check for path MDQ
                 if(parseFloat(path_mdq_number) < new_rec_volume) {
                     success_call('Received Volume exceeded path MDQ.');
@@ -1025,70 +1054,93 @@ echo $sch_obj->close_layout();
                 }
                 
                 //Check for Supply Volume Limit
-                if(parseFloat(hourly_info[0]['supply_position']) < parseFloat(new_rec_volume)) {
+                //console.log(nValue+'+'+rest_of_the_volumes_del);
+                var is_supply_pos_exceed = (parseFloat(hourly_info['supply_position']) < (parseFloat(new_rec_volume) + parseFloat(rest_of_the_volumes_rec)));
+                var is_demand_pos_exceed = (parseFloat(hourly_info['demand_position']) < (parseFloat(nValue) + parseFloat(rest_of_the_volumes_del)) && get_param.storage_type != 'i');
+
+                if(is_supply_pos_exceed) {
                     success_call('Received Volume exceeded supply.');
-                    subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) - 2), cInd).setTextColor('red');
+                    fx_subgrid_operations('set_cell_text_color', 'Rec', cInd, '', 'red');
                 } else {
-                    subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId) - 2), cInd).setTextColor('black');
+                    fx_subgrid_operations('set_cell_text_color', 'Rec', cInd, '', 'black');
                 }  
                 
                 //Check for Demand Volume Limit
-                if(parseFloat(hourly_info[0]['demand_position']) < parseFloat(nValue) && get_param.storage_type != 'i') {
+                if(is_demand_pos_exceed) {
                     success_call('Delivery Volume exceeded demand.');
-                    subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId)), cInd).setTextColor('red');
+                    fx_subgrid_operations('set_cell_text_color', 'Del', cInd, '', 'red');
                 } else {
-                    subgrid.cells(subgrid.getRowId(subgrid.getRowIndex(rId)), cInd).setTextColor('black');
+                    fx_subgrid_operations('set_cell_text_color', 'Del', cInd, '', 'black');
                 }
 
                 //update json info for exceed info
-                $.each(hourly_info_json_gbl, function(k, v) {
-                    if(v.hr == hour) {
-                        this.position_exceed_rec = (parseFloat(hourly_info[0]['supply_position']) < parseFloat(new_rec_volume) ? '1' : '0');
-                        this.position_exceed_del = ((parseFloat(hourly_info[0]['demand_position']) < parseFloat(nValue) && get_param.storage_type != 'i') ? '1' : '0');
-                        this.pmdq_exceed_rec = (parseFloat(path_mdq_number) < new_rec_volume ? '1' : '0');
-                    }
+                $.each(HOURLY_INFO_JSON_GBL, function (k, entry) {
+                    $.each(entry, function(k1, el) {
+                        if (
+                            //el.path_id == path_id 
+                            //&& 
+                            (
+                                (el.hr == hour && el.is_dst == 0) 
+                                || (hour.indexOf('_DST') > 0 && el.hr == hour.replace('_DST', '') && el.is_dst == 1)
+                            )
+                        ) {
+                            this.position_exceed_rec = (is_supply_pos_exceed ? '1' : '0');
+                            this.position_exceed_del = (is_demand_pos_exceed ? '1' : '0');
+                            this.pmdq_exceed_rec = (parseFloat(path_mdq_number) < new_rec_volume ? '1' : '0');          
+                        }
+                    });
                 });
             }
         }
     }
 
+    function fx_subgrid_operations(opertaion_type, volume_type, subgrid_cid, parent_rId, cell_text_color) {
+        //console.log(opertaion_type+':'+cell_text_color);
+        var rest_of_the_volumes = 0;
+        var subgrid_rind = rec_row_index;
+        if (volume_type == 'Del') {
+            subgrid_rind = del_row_index;
+        }
+
+        _.each(PARENT_GRID_ROW_IDS, function(rid) {
+            var subgrid = sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('sub')).getSubGrid();
+            if (subgrid == undefined || subgrid.getRowsNum() == 0) return;
+            if (opertaion_type == 'set_cell_text_color') {
+                subgrid.cells(subgrid.getRowId(subgrid_rind), subgrid_cid).setTextColor(cell_text_color);
+            } else if (opertaion_type == 'get_rest_of_the_volumes' && rid != parent_rId) {
+                console.log(subgrid.getRowId(subgrid_rind));
+                rest_of_the_volumes += parseFloat(subgrid.cells(subgrid.getRowId(subgrid_rind), subgrid_cid).getValue());
+            }                
+        });
+        //console.log('call:'+opertaion_type+'rest_of_the_volumes:'+rest_of_the_volumes);
+        return parseFloat(rest_of_the_volumes);
+    }
+
     function reload_subgrid(subgrid, rid, clear_adj) {
-    	var path_id = sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('path')).getValue();
+    	var path_id = sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('path_id')).getValue();
         var term_start = sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('term_from')).getValue();
         var term_end = sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('term_to')).getValue();
         var contract = sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('contract')).getValue();
         
-		if (sch.hourly_sch_grid.cells(rid, sch.hourly_sch_grid.getColIndexById('new')).getValue() == 'y') {
-            data = {
-                "flag": "s1",
-                "action": "spa_flow_optimization_hourly",
-                "process_id": get_param.process_id,
-                "delivery_path": path_id,
-                "contract_id": contract,
-                "flow_date_from": term_start,
-                "granularity": get_param.granularity,
-                "period_from": get_param.period_from,
-                "call_from": ((clear_adj == 1) ? 'clear_adj' : ''),
-                "receipt_deals_id": get_param.receipt_deals,
-                "delivery_deals_id": get_param.delivery_deals,
-                "from_location": get_param.rec_location_id,
-                "to_location": get_param.del_location_id,
-                "xml_manual_vol": (get_param.parent_call_from == 'book_out' ? '-1' : ''),
-				"round": ROUNDING_VALUE,
-                "dst_case": SUBGRID_HEADER_DEFINITION.dst_case
-            };
-        } else {
-            data = {
-                "flag": "m",
-                "action": "spa_get_loss_factor_volume",
-                "path": path_id,
-                "term_start": term_start,
-                "term_end" : term_end,
-                "receipt_deal_ids": '',
-                "delivery_deal_ids":''
-
-            };
-        }
+		data = {
+            "flag": "s1",
+            "action": "spa_flow_optimization_hourly",
+            "process_id": get_param.process_id,
+            "delivery_path": path_id,
+            "contract_id": contract,
+            "flow_date_from": term_start,
+            "granularity": get_param.granularity,
+            "period_from": get_param.period_from,
+            "call_from": ((clear_adj == 1) ? 'clear_adj' : ''),
+            "receipt_deals_id": get_param.receipt_deals,
+            "delivery_deals_id": get_param.delivery_deals,
+            "from_location": get_param.rec_location_id,
+            "to_location": get_param.del_location_id,
+            "xml_manual_vol": (get_param.parent_call_from == 'book_out' ? '-1' : ''),
+            "round": ROUNDING_VALUE,
+            "dst_case": SUBGRID_HEADER_DEFINITION.dst_case,
+            "path_ids": BOX_PATH_IDS_GBL.join(',')
+        };
 
         header_param = $.param(data);
         var header_url = js_data_collector_url + "&" + header_param;
@@ -1109,8 +1161,8 @@ echo $sch_obj->close_layout();
                     });
                 };
                 
-                sch.fx_get_hourly_info_json(path_id, fx_callback);
-				
+                sch.fx_get_hourly_info_json(path_id, fx_callback);                
+                
                 // disable and set blank for contract column on parent grid in case of group path, since group paths have single paths and contract is associated with each single path
                 if (subgrid.cells2(0, subgrid.getColIndexById('group_path_id')).getValue() == '') {
                     sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('contract')).setDisabled(false);
@@ -1118,10 +1170,12 @@ echo $sch_obj->close_layout();
                     sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('contract')).setDisabled(true);
                     sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('contract')).setValue('');
                 }
+                
                 sch.fx_disable_grid_cells(subgrid);
             	if (clear_adj == 1) {
                     sch.fx_set_parent_box_values('clear_adj');
                 }
+                //console.log('reload subgrid complete');
                 sch.fx_progress_load(0);
             });
         }

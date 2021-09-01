@@ -1912,6 +1912,7 @@ if ($granularity == '') {
                             ,uom: volume_conversion
                             ,receipt_loc_id: from_loc_id
                             ,delivery_loc_id: to_loc_id
+                            ,storage_type: storage_type
                             ,selected_path_id: selected_path_id
                             ,period_from: '7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,1,2,3,4,5,6'
                             ,toggle: toggle
