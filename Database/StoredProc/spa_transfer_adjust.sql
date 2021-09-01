@@ -406,32 +406,6 @@ BEGIN
 	CROSS JOIN source_deal_header sdh_m
 	WHERE sdh_m.source_deal_header_id = @source_deal_header_id
 
-	--IF @header_buy_sell_flag = 's'
-	--BEGIN
-	--	DELETE t from #temp_transport_deal t
-	--	WHERE t.source_deal_header_id not in (
-	--		SELECT DISTINCT sdd.source_deal_header_id 
-	--		FROM #temp_transport_deal ttd
-	--		INNER JOIN source_deal_detail sdd
-	--			ON ttd.source_deal_header_id = sdd.source_deal_header_id
-	--		WHERE sdd.leg = 1 AND buy_sell_flag = 's'
-	--	)
-	--END
-	--ELSE 
-	--BEGIN
-	--	DELETE t from #temp_transport_deal t
-	--	WHERE t.source_deal_header_id not in (
-	--		SELECT DISTINCT sdd.source_deal_header_id 
-	--		FROM #temp_transport_deal ttd
-	--		INNER JOIN source_deal_detail sdd
-	--			ON ttd.source_deal_header_id = sdd.source_deal_header_id
-	--		WHERE sdd.leg = 1 AND buy_sell_flag = 'b'
-	--	)
-
-		
-	--END 
-
-	--select * from #temp_transport_deal
 	
 	IF EXISTS(SELECT 1 FROM #temp_transport_deal WHERE type = 'Transport')	
 	BEGIN
@@ -488,43 +462,6 @@ BEGIN
 					sub.hr <> '25:00' 
 					OR (sub.hr = '25:00' AND is_dst= 1)
 				)
-
-		--INSERT INTO  #temp_volume
-		--SELECT term_start
-		--	, IIF(hr = '25:00', IIF( @commodity_id = -1, '21:00', RIGHT( '0' + CAST(dst_hour as VARCHAR(5)), 2) + ':00' ), hr) ,
-		--	, is_dst 
-		--	, MIN(granularity) granularity			
-		--	, NULLIF(SUM(volume),0) volume
-		--FROM 
-		--(
-		--SELECT d.source_deal_header_id, term_start, granularity
-		--	, hr1, hr2, hr3, hr4, hr5, hr6, hr7
-		--	, hr8, hr9, hr10, hr11, hr12, hr13
-		--	, hr14, hr15, hr16, hr17, hr18, hr19
-		--	, hr20, hr21, hr22, hr23, hr24
-		--FROM report_hourly_position_deal d
-		--INNER JOIN SplitCommaSeperatedValues (@all_physical_deals) t
-		--	ON d.source_deal_header_id = t.item
-		--UNION ALL
-		--SELECT p.source_deal_header_id, term_start, granularity
-		--	, hr1, hr2, hr3, hr4, hr5, hr6, hr7
-		--	, hr8, hr9, hr10, hr11, hr12, hr13
-		--	, hr14, hr15, hr16, hr17, hr18, hr19
-		--	, hr20, hr21, hr22, hr23, hr24
-		--FROM report_hourly_position_profile p
-		--INNER JOIN SplitCommaSeperatedValues (@all_physical_deals) t
-		--	ON p.source_deal_header_id = t.item
-		--) p
-		--UNPIVOT
-		--(
-		--	volume FOR hr IN (
-		--		hr1, hr2, hr3, hr4, hr5, hr6, hr7
-		--		, hr8, hr9, hr10, hr11, hr12, hr13
-		--		, hr14, hr15, hr16, hr17, hr18, hr19
-		--		, hr20, hr21, hr22, hr23, hr24
-		--	)
-		--) unpvt
-		--GROUP BY term_start, hr
 
 		UPDATE sddh
 		SET volume = ABS(tv.volume)
@@ -708,46 +645,6 @@ BEGIN
 				AND tvc.hr = sddh.hr
 			WHERE pmh.is_complex = 'y'
 				AND  sddh.term_date BETWEEN  @capacity_term_start AND @capacity_term_end
-
-
-		--165083	-1	328	2026-01-01 00:00:00.000	2026-12-31 00:00:00.000
-		-- 165083	-1	328	2026-01-01 00:00:00.000	2026-12-31 00:00:00.000	165092
-
-	--	select * from source_deal_detail where source_e
-
-
-	--INSERT INTO source_deal_detail_hour (
-	--			source_deal_detail_id
-	--			, term_date
-	--			, hr
-	--			, is_dst
-	--			, volume
-	--			, granularity
-	--		)	
-	--		SELECT sdd.source_deal_detail_id
-	--			, pmh.term_start
-	--			, RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00' 
-	--		    , tvc.is_dst
-	--			, IIF(ISNULL(tvc.volume, 0) <= 0, 0, pmh.rmdq)
-	--			, 982 			
-	--		FROM [FNAGetPathMDQHourly](328, '2026-01-01', '2026-12-31', '') pmh
-	--		INNER JOIN source_deal_detail sdd
-	--			ON pmh.term_start BETWEEN sdd.term_start  AND sdd.term_end
-	--			AND sdd.source_deal_header_id = 165092
-	--		INNER JOIN #temp_volume_capacity tvc
-	--			ON tvc.term_date = pmh.term_start	
-	--			AND RIGHT('0' + CAST(pmh.hour AS VARCHAR(5)), 2) + ':00'  = tvc.hr
-	--			and tvc.is_dst = pmh.is_dst
-	--		WHERE pmh.is_complex = 'y'
-	--			AND  pmh.term_start BETWEEN  '2026-01-01'  AND '2026-12-31'
-	--		order by pmh.term_start
-
-
-	--		select * from [FNAGetPathMDQHourly](328, '2026-01-01', '2026-12-31', '') 
-
-
-
-	--	return;
 
 
 			INSERT INTO source_deal_detail_hour (
@@ -1613,42 +1510,6 @@ BEGIN
 				)
 		-- ORDER BY term_start, hr
 
-
-		SELECT term_start
-			, RIGHT( '0' + SUBSTRING(hr, 3, LEN(hr)), 2) + ':00'  hr
-			, 0 AS is_dst 
-			, MIN(granularity) granularity			
-			, NULLIF(SUM(volume),0) volume
-		FROM 
-		(
-		SELECT d.source_deal_header_id, term_start, granularity
-			, hr1, hr2, hr3, hr4, hr5, hr6, hr7
-			, hr8, hr9, hr10, hr11, hr12, hr13
-			, hr14, hr15, hr16, hr17, hr18, hr19
-			, hr20, hr21, hr22, hr23, hr24
-		FROM report_hourly_position_deal d
-		INNER JOIN SplitCommaSeperatedValues (@all_physical_deals) t
-			ON d.source_deal_header_id = t.item
-		UNION ALL
-		SELECT p.source_deal_header_id, term_start, granularity
-			, hr1, hr2, hr3, hr4, hr5, hr6, hr7
-			, hr8, hr9, hr10, hr11, hr12, hr13
-			, hr14, hr15, hr16, hr17, hr18, hr19
-			, hr20, hr21, hr22, hr23, hr24
-		FROM report_hourly_position_profile p
-		INNER JOIN SplitCommaSeperatedValues (@all_physical_deals) t
-			ON p.source_deal_header_id = t.item
-		) p
-		UNPIVOT
-		(
-			volume FOR hr IN (
-				hr1, hr2, hr3, hr4, hr5, hr6, hr7
-				, hr8, hr9, hr10, hr11, hr12, hr13
-				, hr14, hr15, hr16, hr17, hr18, hr19
-				, hr20, hr21, hr22, hr23, hr24
-			)
-		) unpvt
-		GROUP BY term_start, hr
 		
 		UPDATE sddh
 		SET volume = ABS(tv.volume)
@@ -1733,28 +1594,47 @@ BEGIN
 						, is_dst
 						, volume
 						, granularity
-					)			
+					)		
 		SELECT  sdd.source_deal_detail_id,
 			sddh_m.term_date,
 			sddh_m.hr,
-			CAST(sddh_m.is_dst AS INT) is_dst,
-			SUM(sddh_m.volume) volume,
+			CAST(sddh_m.is_dst AS INT) is_dst
+			,SUM(sddh_m.volume) volume,
 			MAX(sddh_m.granularity) granularity
 		FROM source_deal_detail_hour sddh_m
 		INNER JOIN source_deal_detail sdd_m
 			ON sdd_m.source_deal_detail_id = sddh_m.source_deal_detail_id
-		INNER JOIN source_deal_detail sdd 
-			ON sdd.term_start BETWEEN sdd_m.term_start  AND sdd_m.term_end
+			AND sddh_m.term_date BETWEEN  @capacity_term_start and @capacity_term_end
+		INNER JOIN source_deal_header sdh_m
+			ON sdh_m.source_deal_header_id = sdd_m.source_deal_header_id	
 		INNER JOIN SplitCommaSeperatedValues(@capacity_lto) t
 			ON sdd_m.source_deal_header_id = t.item
+		INNER JOIN source_deal_detail sdd 			
+			ON sdd.term_start BETWEEN sdd_m.term_start  AND sdd_m.term_end
+			AND sdd.source_deal_header_id = @capacity_deal_id
+		INNER JOIN source_deal_header sdh
+			ON sdh.source_deal_header_id = sdd.source_deal_header_id			
+		INNER JOIN user_defined_deal_fields_template uddft
+			ON uddft.template_id = sdh_m.template_id
+		INNER JOIN user_defined_deal_fields uddf
+			ON uddf.source_deal_header_id = sdh_m.source_deal_header_id 
+			AND uddf.udf_template_id = uddft.udf_template_id
+		INNER JOIN user_defined_fields_template udft
+			ON udft.field_id = uddft.field_id
+			AND udft.Field_label = 'Delivery Path'
+		INNER JOIN delivery_path dp
+			ON CAST(dp.path_id AS VARCHAR(10)) = uddf.udf_value
+			AND dp.contract = sdh.contract_id
+			
 		WHERE --sdd_m.source_deal_header_id = 102283 AND --@source_deal_header_id
 			NULLIF(sddh_m.volume, 0) IS NOT NULL
-			AND sdd.source_deal_header_id =  @capacity_deal_id
-			AND sddh_m.term_date BETWEEN @capacity_term_start and @capacity_term_end
+			AND volume is NOT NULL
+
 		GROUP BY sdd.source_deal_detail_id,
 			sddh_m.term_date,
 			sddh_m.hr,
-			sddh_m.is_dst
+			sddh_m.is_dst;		
+			
 
 	END
 
@@ -1762,6 +1642,8 @@ BEGIN
 	SELECT source_deal_header_id
 	FROM #temp_transport_deal
 	WHERE type IN ('Transport', 'Withdrawal')
+	UNION ALL 
+	SELECT @capacity_deal_id
 	
 	IF EXISTS(SELECT 1 FROM #temp_updated_deals)
 	BEGIN
