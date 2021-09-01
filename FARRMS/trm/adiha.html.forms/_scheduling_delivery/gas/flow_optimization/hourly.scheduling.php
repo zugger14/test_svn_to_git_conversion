@@ -385,11 +385,11 @@ echo $sch_obj->close_layout();
      */
     function load_path_contract (rids, callback) { 
     	$.each(rids.split(','), function(rid) {
-            var selected_path_id = sch.hourly_sch_grid.cells(rid,sch.hourly_sch_grid.getColIndexById('path')).getValue();
+            var selected_path_id = sch.hourly_sch_grid.cells(rid,sch.hourly_sch_grid.getColIndexById('path')).getValue().toString();
             var set_grid_value_contract = function () {
                 var selected_contract = sch.hourly_sch_grid.getColumnCombo(sch.hourly_sch_grid.getColIndexById('contract')).getOptionByIndex(0).value;
 
-                if(get_param.contract_id != '') {
+                if(get_param.contract_id != '' && 1==2) { //donot set contract id from parent param for now, since path only has one contract for case now
                     selected_contract = get_param.contract_id;
                 }
 
@@ -398,7 +398,7 @@ echo $sch_obj->close_layout();
                     callback();
                 }
             }
-            sch.load_dropdown("EXEC spa_flow_optimization_hourly @flag='c1', @from_location='" + get_param.rec_location_id + "', @to_location='" + get_param.del_location_id + "', @process_id='" + get_param.process_id + "', @xml_manual_vol='" + (get_param.parent_call_from == 'book_out' ? '-1' : '') + "'", sch.hourly_sch_grid.getColIndexById('contract'), set_grid_value_contract, sch.hourly_sch_grid);
+            sch.load_dropdown("EXEC spa_flow_optimization_hourly @flag='c1', @from_location='" + get_param.rec_location_id + "', @to_location='" + get_param.del_location_id + "', @path_ids='" + selected_path_id + "', @process_id='" + get_param.process_id + "', @xml_manual_vol='" + (get_param.parent_call_from == 'book_out' ? '-1' : '') + "'", sch.hourly_sch_grid.getColIndexById('contract'), set_grid_value_contract, sch.hourly_sch_grid);
 
         });
     }
@@ -419,13 +419,13 @@ echo $sch_obj->close_layout();
         }
     }
 
-    sch.fx_set_parent_box_values = function(call_from) {
+    sch.fx_set_parent_box_values = function(call_from, data_info) {
         var subgrid = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('sub')).getSubGrid();
         var path_id_selected = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('path')).getValue();
         var contract_id_selected = sch.hourly_sch_grid.cells2(0, sch.hourly_sch_grid.getColIndexById('contract')).getValue();
         var total_rec = 0;
         var total_del = 0;
-        var total_path_rmdq = 0;
+        //var total_path_rmdq = 0;
         var first_hour_rec_vol = 0;
         var first_hour_del_vol = 0;
         var hr_count = 0;
@@ -441,10 +441,14 @@ echo $sch_obj->close_layout();
 
                 total_rec += rec_hrly;
                 total_del += del_hrly;
-                total_path_rmdq += parseFloat(getNumberFormat(subgrid.cells2(0, cid).getValue().split('/')[1], '', 1));
+                //total_path_rmdq += parseFloat(getNumberFormat(subgrid.cells2(0, cid).getValue().split('/')[1], '', 1));
                 hr_count++;
             }
         });
+
+        //set values from backend returned on recommendation
+        total_rec = data_info.box_total_rec;
+        total_del = data_info.box_total_del;
 
         //console.log(total_rec+':'+hr_count);
         //setting avg for first hr volume
@@ -489,7 +493,7 @@ echo $sch_obj->close_layout();
                 limit_exceeded = '1';
             }
 
-            IFRAME_FLOW_OPT_TEMPLATE.contentWindow.set_box_value(get_param.box_id, total_rec, total_del, total_path_rmdq, path_id_selected, contract_id_selected, call_from, first_hour_rec_vol, first_hour_del_vol, limit_exceeded);
+            IFRAME_FLOW_OPT_TEMPLATE.contentWindow.set_box_value(get_param.box_id, total_rec, total_del, path_id_selected, contract_id_selected, call_from, first_hour_rec_vol, first_hour_del_vol, limit_exceeded);
 
         }        
     }
@@ -602,6 +606,7 @@ echo $sch_obj->close_layout();
         }).done(function(data) {
             var json_data = data['json'][0];
             if(json_data.errorcode == 'Success') {
+                var return_data = JSON.parse(json_data.recommendation);
                 if(get_param.call_from == 'flow_optimization') {
                     parent.success_call('Changes saved.');
                     
@@ -625,11 +630,10 @@ echo $sch_obj->close_layout();
                         });
                     }
                     
-                    sch.fx_set_parent_box_values();
+                    sch.fx_set_parent_box_values('', return_data);
                     parent.flow_optimization.fx_close_window('window_hourly_schd');
                     sch.fx_progress_load(0);
                 } else if(get_param.call_from == 'flow_deal_match') {
-                    var return_data = JSON.parse(json_data.recommendation);
                     var param = {
                         box_id: return_data["box_id"]
                     };
@@ -753,12 +757,14 @@ echo $sch_obj->close_layout();
         combo_obj.clearAll();
         
         combo_obj.load(url, function() {
-        	if (callback_function != '') {
-                callback_function();
-           	}
+        	
         	obj_grid.refreshComboColumn(obj_grid.getColIndexById('path'));
         	obj_grid.refreshComboColumn(obj_grid.getColIndexById('contract'));
         	obj_grid.refreshComboColumn(obj_grid.getColIndexById('storage_contract'));
+            if (callback_function != '') {
+                callback_function();
+           	}
+            fx_adjust_grid_all_column_size(obj_grid);
         });
     };
    

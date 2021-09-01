@@ -137,18 +137,25 @@ BEGIN
 		IF @storage_type IS NOT NULL
 		BEGIN
 			SELECT @reverse_path_id = dp_reverse.path_id
+			--select @storage_type,dp_reverse.*
 			FROM delivery_path dp
 			LEFT JOIN delivery_path dp_reverse
 				ON dp_reverse.from_location = dp.to_location
 				AND dp_reverse.to_location = dp.from_location
+			LEFT JOIN contract_group cg
+				ON cg.contract_id = dp.[contract]
+			LEFT JOIN contract_group cg_reverse
+				ON cg_reverse.contract_id = dp_reverse.[contract]
 			WHERE dp.path_id = @path_id
+				AND cg.pipeline = cg_reverse.pipeline
 
 			SET @inj_path_id = IIF(@storage_type = 'i', @path_id, @reverse_path_id)
 			SET @with_path_id = IIF(@storage_type = 'w', @path_id, @reverse_path_id)
 
 		END
 	END
-	
+	--select @reverse_path_id
+	--return
 
 	--store location capacity hourly volume
 	BEGIN
@@ -314,8 +321,9 @@ BEGIN
 		UPDATE @stg_net_flow SET [stg_affected_path_id] = IIF([stg_net_flow] >= 0, @inj_path_id, @with_path_id)
 			, [stg_net_type] = CASE WHEN [stg_net_flow] > 0 THEN 'net_inj' WHEN [stg_net_flow] < 0 THEN 'net_with' ELSE NULL END
 
-		--select * from @stg_net_flow
+		
 	END
+	--select * from @stg_net_flow
 	--return
 	--store path mdq hourly information
 	BEGIN

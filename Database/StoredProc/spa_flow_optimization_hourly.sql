@@ -163,9 +163,9 @@ declare @flag CHAR(50),
 	
 EXEC dbo.spa_drop_all_temp_table
 
-EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'adangol';
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'sligal';
 
-select @flag='p', @receipt_delivery='TO', @flow_date_from='2021-03-01', @minor_location='2854', @process_id='EA35A4CC_BA5E_4E6D_AB49_5FAFF93BB1AE', @flow_date_to='2021-03-01', @uom=1158, @reschedule='0'
+select @flag='s2', @process_id='8808A377_01EE_4DF9_A5FF_82DECB240017', @xml_manual_vol='<Root><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="1" is_dst="0" received="10.0000" delivered="10.0000" path_rmdq="990.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="2" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="3" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="4" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="5" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="6" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="7" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="8" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="9" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="10" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="11" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="12" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="13" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="14" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="15" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="16" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="17" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="18" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="19" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="20" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="21" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="22" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="23" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset><PSRecordset from_loc_id="2959" to_loc_id="2960" path_id="364" contract_id="8534" hour="24" is_dst="0" received="" delivered="" path_rmdq="1000.0000" storage_asset_id="26"></PSRecordset></Root>', @call_from='flow_optimization'
 --*/
 
 SELECT @sub = NULLIF(NULLIF(@sub, ''), 'NULL')
@@ -3975,6 +3975,7 @@ BEGIN
 	FROM ' + @contractwise_detail_mdq_hourly + ' cd
 	WHERE cd.from_loc_id IN (' + @from_location + ')
 		AND cd.to_loc_id IN (' + @to_location + ')
+		' + ISNULL('AND cd.path_id = ' + @path_ids, '') + '
 	GROUP BY cd.contract_id, cd.contract_name
 	'
 	EXEC(@sql)
@@ -4320,35 +4321,28 @@ BEGIN
 		EXEC(@sql)
 
 		DECLARE @return_data_json NVARCHAR(2000) = ''
-
-		--GET BOX ID USING FROM LOCATION AND TO LOCATION AND RETURN DATA AS JSON STRING, USED FOR DEAL SAVING LOGIC FROM FLOW DEAL MATCH SCREEN
-		IF @call_from = 'flow_deal_match'
-		BEGIN
-			
-			CREATE TABLE #return_data (
-				box_id INT NULL
-			)
-
-			SET @sql = '
-			INSERT INTO #return_data (box_id)
-			SELECT TOP 1 cdh.box_id
+		
+		--box id used when saving deal from flow deal match
+		DECLARE @query NVARCHAR(2000) = '
+		SET @result = (
+			SELECT MAX(cdh.box_id) [box_id]
+				, CAST(SUM(cdh.received) AS NUMERIC(20,4)) [box_total_rec]
+				, CAST(SUM(cdh.delivered) AS NUMERIC(20,4)) [box_total_del]
+				, CAST(AVG(cdh.delivered) AS NUMERIC(20,4)) [box_avg_rec]
+				, CAST(AVG(cdh.delivered) AS NUMERIC(20,4)) [box_avg_del]
 			FROM ' + @contractwise_detail_mdq_hourly + ' cdh
 			INNER JOIN #hourly_schd_vol hsv
-				ON cdh.from_loc_id = hsv.from_loc_id
-				AND cdh.to_loc_id = hsv.to_loc_id
-			'
-			EXEC(@sql)
+				ON hsv.from_loc_id = cdh.from_loc_id
+				AND hsv.to_loc_id = cdh.to_loc_id 
+				AND hsv.hour = cdh.hour
+				AND ISNULL(hsv.[is_dst], 0) = ISNULL(cdh.[is_dst], 0)
+			FOR JSON PATH
+			, INCLUDE_NULL_VALUES
+			, WITHOUT_ARRAY_WRAPPER
+		)
+		'		
+		EXEC sp_executesql @query, N'@result VARCHAR(2000) OUTPUT',@result = @return_data_json OUTPUT
 		
-			SET @return_data_json = (
-				SELECT rd.box_id
-				FROM #return_data rd
-				FOR JSON PATH
-				, INCLUDE_NULL_VALUES
-				, WITHOUT_ARRAY_WRAPPER
-			)
-
-		END
-
 		EXEC spa_ErrorHandler 0,
 			'Flow Optimization',
 			'spa_flow_optimization_hourly',

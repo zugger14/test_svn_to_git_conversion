@@ -81,9 +81,6 @@ SET NOCOUNT ON
 
 --	2020-01-01 00:00:00.000	2020-01-01 00:00:00.000	DB9138AE_0ECD_4845_9081_3FED34C293FD	flow_auto	1158	0	982	-1	104935
 
-
---exec spa_debug_helper N'EXEC sys.sp_set_session_context @key = N''DB_USER'', @value = ''dmanandhar'';EXEC spa_schedule_deal_flow_optimization  @flag=@P1,@box_ids=@P2,@flow_date_from=@P3,@flow_date_to=@P4,@sub=@P5,@str=@P6,@book=@P7,@sub_book=@P8,@contract_process_id=@P9,@from_priority=@P10,@to_priority=@P11,@call_from=@P12,@target_uom=@P13,@reschedule=@P14,@granularity=@P15',N'@P1 nvarchar(4000),@P2 nvarchar(4000),@P3 nvarchar(4000),@P4 nvarchar(4000),@P5 char(1),@P6 char(1),@P7 nvarchar(4000),@P8 char(1),@P9 nvarchar(4000),@P10 char(1),@P11 char(1),@P12 nvarchar(4000),@P13 nvarchar(4000),@P14 nvarchar(4000),@P15 nvarchar(4000)',N'i',N'2',N'2033-07-01',N'2033-07-01',NULL,NULL,N'60,164,165,167,166',NULL,N'D5C51485_A16D_4C94_B935_3AF34CB32F87',NULL,NULL,N'flow_opt',N'1158',N'0',N'982'
-
 	--Sets session DB users 
 	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
 
@@ -97,7 +94,8 @@ SET NOCOUNT ON
 	EXEC [spa_drop_all_temp_table] 
 	
 	-- SPA parameter values
-	SELECT @flag = 'i', @box_ids = '2,3', @flow_date_from = '2025-07-04', @flow_date_to = '2025-07-04', @sub = NULL, @str = NULL, @book = NULL, @sub_book = NULL, @contract_process_id = '6D5615A2_B3E7_4067_9079_8C7239743AEE', @from_priority = NULL, @to_priority = NULL, @call_from = 'flow_opt', @target_uom = '1158', @reschedule = '0', @granularity = '982'
+	SELECT @flag = 'i', @box_ids = '1', @flow_date_from = '2021-06-01', @flow_date_to = '2021-06-01', @sub = NULL, @str = NULL, @book = NULL, @sub_book = NULL, @contract_process_id = 'DF9AFE60_1C92_4004_9302_2247955044EA', @from_priority = NULL, @to_priority = NULL, @call_from = 'flow_opt', @target_uom = '1158', @reschedule = '0', @granularity = '982'
+
 
 
 --transport_deal_id	deal_volume		up_down_stream	source_deal_header_id
@@ -766,41 +764,6 @@ END --END OF INSERTING TEMPLATE DEAL
 
 BEGIN --Data Prepararion
 	
-	
-	--Update contract_detail process table with sum of hourly received and delivered volume 
-	IF @is_hourly_calc = 1
-	BEGIN 
-		SET @sql = 'UPDATE c
-						SET received = ISNULL(NULLIF(c.received, 0), h.received), 
-							delivered = ISNULL(NULLIF(c.delivered, 0), h.delivered)
-					FROM ' + @contract_detail + ' c
-					CROSS APPLY(
-						SELECT SUM(ch.received) received 
-							, SUM(ch.delivered)  delivered
-						FROM ' + @contract_detail_hourly + ' ch
-						WHERE 	ch.box_id = c.box_id
-						GROUP BY box_id
-					) h
-					'
-		--print @sql
-		EXEC(@sql)
-
-		SET @sql = 'UPDATE c
-					SET received = ISNULL(NULLIF(c.received, 0), h.received), 
-						delivered = ISNULL(NULLIF(c.delivered, 0), h.delivered)
-				FROM ' + @contract_detail_fresh + ' c
-				CROSS APPLY(
-					SELECT SUM(ch.received) received 
-						, SUM(ch.delivered)  delivered
-					FROM ' + @contract_detail_hourly + ' ch
-					WHERE 	ch.box_id = c.box_id
-					GROUP BY box_id
-				) h
-				'
-		--print @sql
-		EXEC(@sql)
-	END
-
 	/**** INSERT COLLECT DEALS 1 ****/
 	SET @sql = '
 		INSERT INTO #collect_deals (
@@ -4000,7 +3963,7 @@ BEGIN --Data Prepararion
 			, p.flow_date_to
 			, p.include_rec
 			, p.storage_deal_type
-			, p.org_storage_deal_type	
+			, p.org_storage_deal_type
 		FROM dbo.source_deal_header sdh
 		CROSS APPLY
 		(
@@ -4013,6 +3976,16 @@ BEGIN --Data Prepararion
 			ON  p.leg1_loc_id = sdd.leg1_location_id
 			AND p.leg2_loc_id = sdd.leg2_location_id 
 			AND p.first_dom = sdh.entire_term_start
+		INNER JOIN user_defined_deal_fields uddf
+			ON sdh.source_deal_header_id = uddf.source_deal_header_id
+			AND uddf.udf_value = CAST(p.single_path_id as VARCHAR(10))
+		INNER JOIN user_defined_deal_fields_template uddft
+			ON uddft.udf_template_id = uddf.udf_template_id
+		INNER JOIN user_defined_fields_template udft
+			ON udft.field_id = uddft.field_id
+		INNER JOIN static_data_value sdv1
+			ON udft.field_id = sdv1.value_id
+			AND sdv1.code = 'Delivery Path' 
 		LEFT JOIN static_data_value sdv
 			ON sdv.value_id = sdh.internal_portfolio_id 
 			AND sdv.type_id = 39800	
@@ -4020,6 +3993,10 @@ BEGIN --Data Prepararion
 			ON epg.product_name = ISNULL(sdv.code, '-1')
 	
 		WHERE p.storage_deal_type = 'n'		
+			AND NOT (
+					p.leg1_volume = 0
+					AND p.leg2_volume = 0
+				)
 			AND sdh.source_deal_type_id = @transportation_deal_type_id-- @transportation_deal_type_id --exclude transportation deal
 			AND epg.product_name IS NULL
 		UNION ALL
@@ -4052,8 +4029,9 @@ BEGIN --Data Prepararion
     		AND uddf.udf_template_id = uddft.udf_template_id    
     		AND uddft.field_label = 'Delivery Path'   
 		INNER JOIN delivery_path dp1
-			ON dp1.path_id = uddf.udf_value
+			ON CAST(dp1.path_id AS VARCHAR(10)) = uddf.udf_value
 			AND dp1.from_location = dp.from_location
+			AND CAST(p.single_path_id AS VARCHAR(10)) = uddf.udf_value
 		LEFT JOIN static_data_value sdv
 			ON sdv.value_id = sdh.internal_portfolio_id 
 			AND sdv.type_id = 39800	
@@ -4094,6 +4072,7 @@ BEGIN --Data Prepararion
 		INNER JOIN delivery_path dp1
 			ON dp1.path_id = uddf.udf_value
 			AND dp1.to_location = dp.to_location
+			AND CAST(p.single_path_id AS VARCHAR(10)) = uddf.udf_value
 		LEFT JOIN static_data_value sdv
 			ON sdv.value_id = sdh.internal_portfolio_id 
 			AND sdv.type_id = 39800	
@@ -4596,6 +4575,7 @@ BEGIN -- Insert/Update Deal data
 		AND ed.leg2_loc_id= p.leg2_loc_id
 		AND ed.first_dom= p.first_dom
 		AND ed.storage_deal_type = p.storage_deal_type
+		AND ed.single_path_id = p.single_path_id
 	LEFT JOIN optimizer_detail od
 		ON od.source_deal_header_id = ed.source_deal_header_id 
 		AND ed.contract_id = COALESCE(od.contract_id,p.single_contract_id, p.contract_id)
