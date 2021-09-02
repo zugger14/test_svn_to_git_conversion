@@ -249,7 +249,10 @@ BEGIN
 
 			--AND sdd.leg = CASE WHEN t.leg = 1 THEN 2 ELSE 1 END
 
-		INNER JOIN source_minor_location sml ON sml.Location_Name = CASE WHEN t.location_name = ''NCGL'' THEN ''NCGH'' ELSE ''GPLH'' END 
+		INNER JOIN source_minor_location sml ON sml.Location_Name = CASE 
+				WHEN t.location_name = ''NCGL'' THEN ''NCGH''
+				WHEN t.location_name = ''THEL'' THEN ''THEH''
+				ELSE ''GPLH'' END 
 
 			AND sdd.location_id = sml.source_minor_location_id
 
