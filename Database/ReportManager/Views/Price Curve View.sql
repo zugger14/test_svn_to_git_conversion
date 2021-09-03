@@ -34,21 +34,7 @@ BEGIN TRY
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Standard Price Curve View'
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + '--DECLARE @_sql VARCHAR(MAX)
---, @_to_as_of_date VARCHAR(25)
---, @_as_of_date VARCHAR(25) = ''2013-07-01''
---, @_from_maturity_date VARCHAR(25) = ''2013-08-01''
---, @_to_maturity_date VARCHAR(25) = ''2013-12-30''
---, @_period_from varchar(25) = ''2''--9/1
---, @_period_to varchar(25) = ''4'' --11/1
---IF @_period_from IS NOT NULL
---	SET @_period_from = convert(varchar(10), dbo.FNAGetTermStartDate(''m'', @_as_of_date, @_period_from), 120)
---IF @_period_to IS NOT NULL
---	SET @_period_to = convert(varchar(10), dbo.FNAGetTermENDDate(''m'', @_as_of_date, @_period_to), 120)
---SELECT @_from_maturity_date from_maturity_date, @_to_maturity_date to_maturity_date, @_period_from period_from, @_period_to period_to
---/*
-
-DECLARE @_sql VARCHAR(MAX)
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sql VARCHAR(MAX)
 , @_to_as_of_date VARCHAR(25)
 , @_as_of_date VARCHAR(25) = ''@as_of_date''
 , @_from_maturity_date VARCHAR(25)
@@ -93,6 +79,14 @@ BEGIN
 		SET @_to_maturity_date = @_period_to
 END
 
+DECLARE @_dst_group_value_id VARCHAR(50)
+
+SELECT @_dst_group_value_id = tz.dst_group_value_id FROM dbo.adiha_default_codes_values adcv
+	INNER JOIN time_zones tz ON tz.timezone_id = adcv.var_value
+WHERE adcv.instance_no = 1 AND adcv.default_code_id = 36 AND adcv.seq_no = 1
+
+SET @_dst_group_value_id = ISNULL(@_dst_group_value_id, ''102201'')
+
 SET @_sql = ''SELECT spc.source_curve_def_id [curve_id],
 					   spcd.curve_id [curve_code],
 					   spc.as_of_date,
@@ -121,6 +115,8 @@ SET @_sql = ''SELECT spc.source_curve_def_id [curve_id],
 					  , ''''@period_to'''' [period_to]
 					  , spcd.forward_settle
 					  , spcd.commodity_id
+					  , REPLACE(hrPeriod.alias_name, ''''DST'''', '''''''') AS hr
+					  , (ROW_NUMBER() OVER(PARTITION BY CAST(maturity_date AS DATE) ORDER BY DATEPART(HH,maturity_date))) AS interval
 				--[__batch_report__]
 				FROM   source_price_curve spc
 					   INNER JOIN source_price_curve_def spcd
@@ -129,6 +125,10 @@ SET @_sql = ''SELECT spc.source_curve_def_id [curve_id],
 							ON  sdv_curve_source.value_id = spc.curve_source_value_id
 					   LEFT JOIN static_data_value sdv_assessment_curve_type
 							ON  sdv_assessment_curve_type.value_id = spc.Assessment_curve_type_value_id
+						OUTER APPLY(SELECT alias_name
+								FROM dbo.FNAGetPivotGranularityColumn(''''1900-01-01'''', ''''1900-01-01'''', spcd.Granularity, '' + @_dst_group_value_id + '') 
+								WHERE 1= CASE WHEN spcd.Granularity in (982, 987, 989) THEN 1 ELSE 0 END
+								AND clm_name = REPLACE(CONVERT(VARCHAR(5), spc.maturity_date, 8), '''':'''', '''''''')) hrPeriod
 				WHERE  1 = 1
         '' + CASE 				
                   WHEN @_to_as_of_date IS NULL 
@@ -1104,6 +1104,74 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest,
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'maturity_year_month' AS [name], 'Maturity Year Month' AS ALIAS, 0 AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, 1 AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Price Curve View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Price Curve View'
+	            AND dsc.name =  'hr'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Hr'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Price Curve View'
+			AND dsc.name =  'hr'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'hr' AS [name], 'Hr' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Price Curve View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Price Curve View'
+	            AND dsc.name =  'interval'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Interval'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 4, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Price Curve View'
+			AND dsc.name =  'interval'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'interval' AS [name], 'Interval' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 4 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Price Curve View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
