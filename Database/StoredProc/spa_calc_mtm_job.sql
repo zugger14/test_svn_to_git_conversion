@@ -8533,12 +8533,6 @@ INNER JOIN source_deal_header_template sdht ON sdht.template_id = sdh.template_i
 WHERE @calc_type = 's' 
 AND EXISTS(SELECT 1 FROM #udft WHERE internal_field_type IN (18742,18743))
 
---SELECT * FROM #uddft WHERE field_id IN (-10000369, -10000368)internal_field_type IN (18742,18743) RETURN
---SELECT * FROM #udft WHERE internal_field_type IN (18742,18743) 
---SELECT * FROM #tmp_deal_info
---RETURN
---SELECT * FROM #uddft WHERE internal_field_type IN (18742,18743)
---SELECT * FROM source_deal_header_template WHERE ISNULL(split_positive_and_negative_commodity, 'n') = 'y'
 IF EXISTS(SELECT * FROM #tmp_deal_info)
 BEGIN
 	--Inersted UDF information to make the condition true in the logic because now onwards for positive/negative commodity value calculaiton UDF will not be mapped and it's calculated based on the internal type and split_positive_and_negative_commodity column value equal to 'y' of source_deal_header_template table.
