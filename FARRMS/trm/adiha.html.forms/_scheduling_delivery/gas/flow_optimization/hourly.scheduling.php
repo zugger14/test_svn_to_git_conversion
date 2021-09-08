@@ -206,7 +206,7 @@ echo $sch_grid_obj->init_by_attach($sch_grid_name, $form_namespace);
 
 $column_text = "&nbsp;,path_id,Path,Contract,Storage Contract,Book,Term From,Term To,New";
 $column_id = "sub,path_id,path_name,contract,storage_contract,book,term_from,term_to,new";
-$column_width = "30,80,170,*,*,*,*,*,*";
+$column_width = "30,80,204,170,*,*,*,*,*";
 $column_type = "sub_row_grid,ro,ro,combo,combo,combo,ro_dhxCalendarA,ro_dhxCalendarA,ro";
 $column_visbility = "false,true,false,false,$hide_storage_contract_col,false,false,false,true";
 
@@ -286,7 +286,7 @@ echo $sch_obj->close_layout();
 
     get_param.row_id = '';
     get_param.toggle = 0;
-    var check_subgrid = new Array();
+    var SUBGRID_INFO = [];
 
     if(parent.flow_optimization !== undefined) {
         IFRAME_FLOW_OPT_TEMPLATE = parent.flow_optimization.layout.cells('d').getFrame();
@@ -301,6 +301,7 @@ echo $sch_obj->close_layout();
 
     BOX_PATH_IDS_GBL = [];
     PARENT_GRID_ROW_IDS = [];
+    SUBGRID_MAX_WIDTH_INFO = [];
     
     var rec_row_index = 1;
     var fuel_row_index = 2;
@@ -758,7 +759,7 @@ echo $sch_obj->close_layout();
             if (callback_function != '') {
                 callback_function();
            	}
-            fx_adjust_grid_all_column_size(obj_grid);
+            //fx_adjust_grid_all_column_size(obj_grid, 'parent');
             //console.log('reload combo complete:'+column_index);
             sch.fx_progress_load(0);
         });
@@ -792,7 +793,6 @@ echo $sch_obj->close_layout();
     */
     
     sch.refresh_sch_grid = function(call_from) {
-        check_subgrid = [];
                 
         var param = {
             "flag": "h1",
@@ -819,7 +819,8 @@ echo $sch_obj->close_layout();
             sch.hourly_sch_grid.callEvent('onGridReconstructed',[]);
         	if(total_rows > 0) {
                 PROGRESS_COUNTER_ON_GBL = (total_rows * 2) + 2; //2 static grid level combo (stg contract, book), 1 path level contract combo, 1 subgrid, which is grid cell level loading depends on parent grid row count     
-                sch.sch_load_all_grid_cmbo(sch.hourly_sch_grid);                
+                sch.sch_load_all_grid_cmbo(sch.hourly_sch_grid);     
+                SUBGRID_LOAD_COUNTER = total_rows;           
             }
             //sch.fx_progress_load(0);
 		});
@@ -850,7 +851,7 @@ echo $sch_obj->close_layout();
 		adiha_post_data('return_array', param, '', '', fx_callback, '');
 	}
 
-	
+	SUBGRID_LOAD_COUNTER = 0;
     function create_sub_grid(subgrid, rid, grid_obj) {
     		
         if (typeof subgrid !== 'undefined') {
@@ -905,6 +906,7 @@ echo $sch_obj->close_layout();
             });
             //console.log('create subgrid rid:'+rid);
             subgrid.setUserData('', 'parentRowId', rid);
+            SUBGRID_INFO.push(subgrid);
         }
         reload_subgrid(subgrid, rid);
     }
@@ -1144,14 +1146,13 @@ echo $sch_obj->close_layout();
 
         header_param = $.param(data);
         var header_url = js_data_collector_url + "&" + header_param;
-        check_subgrid[rid] = true;
         
         if (typeof subgrid !== 'undefined') {
             sch.fx_progress_load(1);
             subgrid.clearAndLoad(header_url, function(data) {
                 subgrid.callEvent('onGridReconstructed',[]);
 
-                fx_adjust_grid_all_column_size(subgrid);
+                //fx_adjust_grid_all_column_size(subgrid);
                 
                 var fx_callback = function() {
                     subgrid.forEachCell(rec_row_index, function(cellObj, ind) {
@@ -1177,9 +1178,36 @@ echo $sch_obj->close_layout();
                 }
                 //console.log('reload subgrid complete');
                 sch.fx_progress_load(0);
+                SUBGRID_LOAD_COUNTER = SUBGRID_LOAD_COUNTER - 1;
+                //fx_init_dyn_col_width();
             });
         }
         return;
+    }
+    function fx_init_dyn_col_width() {
+        var col_indx = [];
+        if(SUBGRID_LOAD_COUNTER == 0 && SUBGRID_INFO.length > 0) {
+
+            SUBGRID_INFO[0].forEachCell(SUBGRID_INFO[0].getRowId(0), function(cellObj, cid) {
+                if(!SUBGRID_INFO[0].isColumnHidden(cid)) {
+                    col_indx.push([cid,'']);
+                }
+            });
+
+
+            $.each(SUBGRID_INFO, function(k,subgrid) {
+                subgrid.forEachCell(subgrid.getRowId(0), function(cellObj, cid) {
+                    if(!subgrid.isColumnHidden(cid)) {
+                        col_max_width.push([cid,subgrid.getColWidth(cid),subgrid.getUserData('', 'parentRowId')]);
+                    }
+                });
+            });
+
+            col_max_width = col_max_width.filter(function(e) {
+
+            })
+        }
+        console.log(col_max_width);
     }
 
     sch.fx_disable_grid_cells = function(subgrid) {
@@ -1235,10 +1263,33 @@ echo $sch_obj->close_layout();
      *
      * @return  void      return nothing
      */
-    function fx_adjust_grid_all_column_size(grid_obj) {
+    function fx_adjust_grid_all_column_size(grid_obj, grid_type) {
         grid_obj.forEachCell(grid_obj.getRowId(0), function(cell_obj, col_ind) {
-            grid_obj.adjustColumnSize(col_ind);
+            if(!grid_obj.isColumnHidden(col_ind)) {
+                grid_obj.adjustColumnSize(col_ind);
+
+                if(SUBGRID_MAX_WIDTH_INFO.length == 0) {
+                    SUBGRID_MAX_WIDTH_INFO.push([col_ind, grid_obj.getColWidth(col_ind)]);
+                }
+            }            
         });
+        return;
+
+        if(grid_type == 'parent') 
+            return;
+
+        if(SUBGRID_INFO.length > 0) {
+            grid_obj.forEachCell(grid_obj.getRowId(0), function(cell_obj, col_ind) {
+                if(!grid_obj.isColumnHidden(col_ind)) {
+                    $.each(SUBGRID_INFO, function(k,v) {
+                        //console.log(v.getColumnLabel(col_ind) +':'+v.getColWidth(col_ind) +'>'+ grid_obj.getColWidth(col_ind));
+                        if(v.getColWidth(col_ind) > grid_obj.getColWidth(col_ind)) {
+                            grid_obj.setColWidth(col_ind, v.getColWidth(col_ind));
+                        }
+                    });
+                }                
+            });
+        }
     }
 
     //ajax setup for default values

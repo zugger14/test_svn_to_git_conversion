@@ -4095,12 +4095,12 @@ BEGIN
 
 		SELECT @hour_column_types = STUFF((REPLICATE(',ro', @hour_count)), 1, 1, '')
 
-		SELECT @hour_column_widths = STUFF((REPLICATE(',150', @hour_count)), 1, 1, '')
+		SELECT @hour_column_widths = STUFF((REPLICATE(',140', @hour_count)), 1, 1, '')
 
 		SELECT 'delivery_path_detail_id,path_id,path,contract_id,contract,group_path_id,volume,' + @hour_column_ids [column_ids]
 			,'Path Detail ID,Path ID,Path,Contract ID,Contract,Group Path ID,Volume,' + @hour_column_headers [column_headers]
 			,'ro,ro,ro,ro,ro,ro,ro,' + @hour_column_types [column_types]
-			,'70,70,166,100,100,100,100,' + @hour_column_widths [column_widths]
+			,'70,70,200,100,170,100,90,' + @hour_column_widths [column_widths]
 			, @dst_case [dst_case]
 		RETURN;
 
