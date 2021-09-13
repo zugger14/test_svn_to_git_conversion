@@ -20744,12 +20744,8 @@ BEGIN
 						AND sddt_inner.leg = 1 
 		) second_leg
  		LEFT JOIN source_price_curve_def formula_curve ON formula_curve.curve_id = a.formula_curve_id
- 		LEFT JOIN (
- 					SELECT MAX(fe.formula_id) formula_id, fe.formula
- 					FROM formula_editor fe
- 					INNER JOIN ' + @import_temp_table_name + ' a ON  fe.formula_id = a.formula_id
- 					GROUP BY fe.formula
- 		) formula ON formula.formula_id = a.formula_id
+ 		LEFT JOIN formula_editor formula
+				ON  formula.formula_id = a.formula_id	
  		INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = b.source_deal_header_id
  			AND sdd.term_start = a.term_start
  			AND sdd.term_end = a.term_end
@@ -21037,12 +21033,8 @@ BEGIN
 					LEFT JOIN source_deal_detail_template sddt1 ON sdht.template_id = sddt1.template_id AND sddt1.leg = 1
 					OUTER APPLY ( SELECT physical_financial_flag FROM source_deal_detail_template sddt_inner WHERE sddt_inner.template_id = sdht.template_id AND sddt_inner.leg = 1 ) second_leg
  					LEFT JOIN source_price_curve_def formula_curve ON formula_curve.curve_id = a.formula_curve_id
- 					LEFT JOIN (
- 								SELECT MAX(fe.formula_id) formula_id, fe.formula
- 								FROM formula_editor fe
- 								INNER JOIN ' + @import_temp_table_name + ' a ON  fe.formula_id = a.formula_id
- 								GROUP BY fe.formula
- 					) formula ON formula.formula_id = a.formula_id
+ 					LEFT JOIN formula_editor formula
+						ON  formula.formula_id = a.formula_id	
  					LEFT JOIN source_deal_detail sdd 
  						ON sdd.source_deal_header_id = b.source_deal_header_id
  						AND sdd.term_start = a.term_start
