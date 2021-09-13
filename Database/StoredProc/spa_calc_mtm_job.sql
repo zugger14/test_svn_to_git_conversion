@@ -182,8 +182,8 @@ SET @calc_explain_type ='p'
 
 /* 
 
-select *  from source_deal_HEADER   where source_deal_header_id=104416
-select *  from source_deal_pnl_detail   where source_deal_header_id=1600
+select *  from source_deal_HEADER   where source_deal_header_id=125719
+select *  from source_deal_pnl_detail   where source_deal_header_id=125719
 select *  from source_deal_settlement   where source_deal_header_id=104791
 select * from index_fees_breakdown   where source_deal_header_id=1600
 select * from index_fees_breakdown_settlement   where source_deal_header_id=145462
@@ -204,8 +204,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =510982   ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2021-08-02' , --'2017-02-15',
+	@source_deal_header_id =125719   ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2020-09-30' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -222,9 +222,9 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2019-12-01' ,
-	@term_end = '2019-12-28' ,
-	@calc_type = 'm',
+	@term_start = '2020-09-01' ,
+	@term_end = '2020-09-30' ,
+	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
 	@deal_list_table = null,
@@ -9169,6 +9169,7 @@ select term_start, formula_id , contract_expiration_date, formula_value,contract
 from #formula_value 
 
 
+
 /* not found using this temp table..
 CREATE TABLE #formula_value_daily_wght_avg
 (term_start datetime, formula_id INT, contract_expiration_date datetime, formula_value float,contract_id INT, source_deal_detail_id INT,round_value INT)
@@ -9227,7 +9228,7 @@ begin
 	SET @sql='INSERT INTO #formula_value_at_low
 		(term_start, formula_id , contract_expiration_date, formula_value,contract_id, source_deal_detail_id ,hr ,period,is_dst )
 		select crt.prod_date, crt.formula_id, NULL contract_expiration_date, 
-			nullif(crt.formula_value, 0) formula_value, 
+			nullif(crt.formula_eval_value, 0) formula_value, 
 			ISNULL(crt.contract_id,-1) contract_id,td.source_deal_detail_id,-1 hr,0 period,0 is_dst
 		from #temp_deals td
 		inner join ' +  @calc_result_table2 + ' crt on crt.source_deal_detail_id=td.source_deal_detail_id
