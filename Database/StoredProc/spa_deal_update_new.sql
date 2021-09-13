@@ -140,7 +140,7 @@ DECLARE @flag NVARCHAR(1000),
 		@header_udt_grid NVARCHAR(MAX) = NULL
  
 		--Sets session DB users 
-	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
+	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'farrms_admin'
 
 	--Sets contextinfo to debug mode so that spa_print will prints data
 	DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
@@ -3117,7 +3117,7 @@ BEGIN TRY
 			@max_value NVARCHAR(200),
 			@column_name NVARCHAR(200),
 			@err_msg NVARCHAR(MAX)
- 		
+ 	
 	IF OBJECT_ID('tempdb..#temp_pre_sdh') IS NOT NULL DROP TABLE #temp_pre_sdh
 	IF OBJECT_ID('tempdb..#temp_pre_sdd') IS NOT NULL DROP TABLE #temp_pre_sdd
 	IF OBJECT_ID('tempdb..#temp_post_sdh') IS NOT NULL DROP TABLE #temp_post_sdh
@@ -4555,6 +4555,7 @@ BEGIN TRY
 		LEFT JOIN source_deal_header sdh1
 			 ON  sdh1.source_deal_header_id = sdh.close_reference_id
 			 AND sdh.deal_reference_type_id = 12503
+			 AND sdh.product_id <> 4100
 		LEFT JOIN source_deal_detail sdd1
 			 ON  sdd1.source_deal_header_id = sdh1.source_deal_header_id
 			 AND sdd1.term_start = sdd.term_start
