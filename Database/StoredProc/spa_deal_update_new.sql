@@ -4386,12 +4386,13 @@ BEGIN TRY
 			sdd1.price_multiplier = sdd.price_multiplier,
 			sdd1.multiplier = sdd.multiplier,
 			sdd1.formula_curve_id = sdd.formula_curve_id
-		OUTPUT INSERTED.source_deal_header_id INTO #temp_updated_transfer_deals(source_deal_header_id)		
+		OUTPUT INSERTED.source_deal_header_id INTO #temp_updated_transfer_deals(source_deal_header_id)
 		FROM source_deal_detail sdd
 		INNER JOIN #temp_output_updated_detail t1 ON t1.source_deal_detail_id = sdd.source_deal_detail_id
 		INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = sdd.source_deal_header_id
 		LEFT JOIN source_deal_header sdh1 ON sdh1.close_reference_id = sdh.source_deal_header_id
 			 AND sdh1.deal_reference_type_id = 12500
+			 AND sdh1.product_id <> 4100
 		LEFT JOIN source_deal_detail sdd1 ON sdd1.source_deal_header_id = sdh1.source_deal_header_id
 			 AND sdd1.term_start = sdd.term_start
 			 AND sdd1.leg = sdd1.leg
@@ -4483,7 +4484,7 @@ BEGIN TRY
 		INNER JOIN #temp_updated_transfer_deals t1 ON t1.source_deal_header_id = sdd.source_deal_header_id
 		LEFT JOIN source_deal_header sdh1
 			 ON  sdh1.close_reference_id = sdh.source_deal_header_id
-			 AND sdh1.deal_reference_type_id=12503
+			 AND sdh1.deal_reference_type_id= 12503
 		LEFT JOIN source_deal_detail sdd1
 			 ON  sdd1.source_deal_header_id = sdh1.source_deal_header_id
 			 AND sdd1.term_start = sdd.term_start
