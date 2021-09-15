@@ -71,20 +71,20 @@ declare @source_deal_header_ids VARCHAR(MAX),
 	,@trigger_workflow NCHAR(1) = 'y'
 	,@process_id_alert VARCHAR(128) = NULL
 /*
-select * from report_hourly_position_deal where source_deal_header_id=100856
+select * from report_hourly_position_deal where source_deal_header_id=173686
 select * from report_hourly_position_profile where source_deal_header_id=100856
 
 select * from source_deal_breakdown where source_deal_header_id=17912
 
 select * from source_deal_detail_position where source_deal_detail_id=4194
-select total_volume,* from source_deal_detail where source_deal_header_id=17912
+select total_volume,* from source_deal_detail where source_deal_header_id=173686
 select * from source_deal_detail where source_deal_detail_id=4194
 
 select * from report_hourly_position_deal where source_deal_header_id=104071
 select * from report_hourly_position_financial where source_deal_header_id=17912
 
 select * from source_deal_header where source_deal_header_id=104071
-select * from source_deal_header where source_deal_header_id=104071
+select * from source_deal_header where deal_id='DST_WD06-06'
 2021-03-27
 2021-03-28
 
@@ -92,10 +92,11 @@ select * from source_deal_header where source_deal_header_id=104071
 2021-10-31
 
 select * from report_hourly_position_deal where source_deal_header_id=104071
-
+select 80.00000000000000000000	*24.00000000000000000000000000
 
 
 */
+
 
 
 
@@ -104,12 +105,10 @@ DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
 SET CONTEXT_INFO @contextinfo
 
 
-		
-
 -- select * from  process_deal_position_breakdown set process_status=0
 -- delete process_deal_position_breakdown
 
-select @source_deal_header_ids=172504 , 
+select @source_deal_header_ids=173686 , 
 	@process_id = null, --'52C2B537_BDBA_41DB_BE8D_B657F070A041',
 	@insert_type =1,
 	@partition_no =1,
@@ -497,7 +496,7 @@ BEGIN
 		set @sql='
 		UPDATE top(20000) process_deal_position_breakdown with (ROWLOCK) SET process_status=1 
 		output 
-			inserted.source_deal_detail_id,inserted.source_deal_header_id,INSERTED.create_user,q.insert_type,q.deal_type,null commodity_id ,q.fixation
+			inserted.source_deal_detail_id,inserted.source_deal_header_id,INSERTED.create_user,q.insert_type,q.deal_type,inserted.commodity_id ,q.fixation
 			into '+@effected_deals +' (source_deal_detail_id,source_deal_header_id,create_user,insert_type,deal_type,commodity_id,fixation)
 		from process_deal_position_breakdown p inner join
 		(
@@ -729,7 +728,7 @@ BEGIN TRY
 					   sum(isnull(hb.hr7,0)+isnull(hb.hr8,0)+isnull(hb.hr9,0)+isnull(hb.hr10,0)+isnull(hb.hr11,0)+isnull(hb.hr12,0)
 					   +isnull(hb.hr13,0)+isnull(hb.hr14,0)+isnull(hb.hr15,0)+isnull(hb.hr16,0)+isnull(hb.hr17,0)+isnull(hb.hr18,0)
 					   +isnull(hb.hr19,0)+isnull(hb.hr20,0)+isnull(hb.hr21,0)+isnull(hb.hr22,0)+isnull(hb.hr23,0)+isnull(hb.hr24,0)
-					   +isnull(hb1.hr1,0)+isnull(hb1.hr2,0)+isnull(hb1.hr3,0)+isnull(hb1.hr4,0)+isnull(hb1.hr5,0)+isnull(hb1.hr6,0))
+					   +isnull(hb1.hr1,0)+isnull(hb1.hr2,0)+isnull(hb1.hr3,0)+isnull(hb1.hr4,0)+isnull(hb1.hr5,0)+isnull(hb1.hr6,0)+case when hb1.add_dst_hour>0 then 1 else 0 end)
 					 else sum(isnull(hb.volume_mult,0)) end  volume_mult
 				FROM hour_block_term hb
 				inner join hour_block_term hb1  ON hb1.dst_group_value_id=hb.dst_group_value_id
@@ -1009,4 +1008,3 @@ BEGIN CATCH
 		END 
 	END				
 END CATCH
-

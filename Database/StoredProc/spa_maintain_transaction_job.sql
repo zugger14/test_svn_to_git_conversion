@@ -46,7 +46,7 @@ drop table #tmp_header_deal_id
 drop table #tmp_position_breakdown
 declare @process_id varchar(50),@insert_type int,@partition_no int,@user_login_id varchar(30),@deal_delete varchar(1)
 drop table #source_deal_detail_hour
-select  @process_id='1DD40523_3051_49C0_B373_49841B56D666',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
+select  @process_id='1A2C3D84_C2B1_42C9_949F_7C8B91DB1572',@insert_type=1,@partition_no=1,@user_login_id='farrms_admin',@deal_delete='y'
 --report_position_farrms_admin_49AFBFA8_BC35_404B_8590_78F087008D35
 --TRUNCATE TABLE select * from adiha_process.dbo.report_position_farrms_admin_E5D1C26F_C332_4A0A_8082_F3936706EEA8
 --insert into adiha_process.dbo.report_position_farrms_admin_testing select 4100,'d'
@@ -123,6 +123,7 @@ IF object_id('tempdb..#report_hourly_position_financial_main_inserted') IS NOT N
 
 IF object_id('tempdb..#density_multiplier') IS NOT NULL
 	DROP TABLE #density_multiplier
+
 IF object_id('tempdb..#tmp_pos_deal_detail') IS NOT NULL
 	DROP TABLE #tmp_pos_deal_detail
 
@@ -1030,10 +1031,8 @@ BEGIN TRY
 		SET @st_sql = @destination_tbl + ' SELECT max(pdd.source_deal_header_id),
 			hb.term_date term_start,max(pdd.deal_date) deal_date,max(pdd.deal_volume_uom_id),
 			sum(cast(case when pdd.commodity_id=-1 then hb.hr7 else hb.hr1 end as numeric(1,0))*' + @col_exp2_gas + '*' + @col_exp3 +') AS Hr1,  
-			sum(case when isnull(hb.add_dst_hour,0)=2 then 2.00 else 1.00 end
-			*cast(case when pdd.commodity_id=-1 then hb.hr8 else hb.hr2 end as numeric(1,0)) *' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr2,
-			sum(case when isnull(hb.add_dst_hour,0)=3 then 2.00 else 1.00 end
-			*cast(case when pdd.commodity_id=-1 then hb.hr9 else hb.hr3 end as numeric(1,0)) *' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr3,
+			sum(cast(case when pdd.commodity_id=-1 then hb.hr8 else hb.hr2*case when isnull(hb.add_dst_hour,0)=2 then 2.00 else 1.00 end end as numeric(1,0)) *' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr2,
+			sum(cast(case when pdd.commodity_id=-1 then hb.hr9 else hb.hr3*case when isnull(hb.add_dst_hour,0)=3 then 2.00 else 1.00 end end as numeric(1,0)) *' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr3,
 			sum(cast(case when pdd.commodity_id=-1 then hb.hr10 else hb.hr4 end as numeric(1,0))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr4, '
 			
 		SET @st_sql1 = '
@@ -1056,10 +1055,8 @@ BEGIN TRY
 
 		SET @st_sql3 = '
 			sum(cast(case when pdd.commodity_id=-1 then hb1.hr1 else hb.hr19 end as numeric(1,0))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr19, 
-			sum(case when isnull(hb1.add_dst_hour,0)=2 then 2.00 else 1.00 end
-			*cast(case when pdd.commodity_id=-1 then hb1.hr2 else hb.hr20 end as numeric(1,0)) *' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr20,
-			sum(case when isnull(hb1.add_dst_hour,0)=3 then 2.00 else 1.00 end
-			*cast(case when pdd.commodity_id=-1 then hb1.hr3 else hb.hr21 end as numeric(1,0)) *' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr21,
+			sum(cast(case when pdd.commodity_id=-1 then hb1.hr2*case when isnull(hb1.add_dst_hour,0)=2 then 2.00 else 1.00 end else hb.hr20 end as numeric(1,0)) *' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr20,
+			sum(cast(case when pdd.commodity_id=-1 then hb1.hr3*case when isnull(hb1.add_dst_hour,0)=3 then 2.00 else 1.00 end else hb.hr21 end as numeric(1,0)) *' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr21,
 			sum(cast(case when pdd.commodity_id=-1 then hb1.hr4 else hb.hr22 end as numeric(1,0))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr22, 
 			sum(cast(case when pdd.commodity_id=-1 then hb1.hr5 else hb.hr23 end as numeric(1,0))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr23, 
 			sum(cast(case when pdd.commodity_id=-1 then hb1.hr6 else hb.hr24 end as numeric(1,0))*' + @col_exp2_gas + '*' + @col_exp3 + ') AS Hr24, 
@@ -1084,7 +1081,7 @@ BEGIN TRY
 						and hb.term_date between hol_date AND isnull(nullif(hol_date_to,''1900-01-01''),hol_date)
 					) h_grp 
 				outer apply (
-					select hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,volume_mult from hour_block_term hbt  inner join 
+					select hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,volume_mult,add_dst_hour from hour_block_term hbt  inner join 
 						(
 							select distinct exp_date from holiday_group h  where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb.term_date
 						) ex on ex.exp_date=hbt.term_date
@@ -1094,7 +1091,7 @@ BEGIN TRY
 						and pdd.hourly_volume_allocation IN(17603,17604) and pdd.physical_financial_flag=''f'' 
 				) term_hrs_exp
 				outer apply (
-					select hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,volume_mult from hour_block_term hbt  
+					select hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,volume_mult,add_dst_hour from hour_block_term hbt  
 					inner join 
 						(
 							select distinct exp_date from holiday_group h  where  h.hol_group_value_id=pdd.exp_calendar_id and h.exp_date=hb1.term_date
@@ -1115,6 +1112,7 @@ BEGIN TRY
 				   +coalesce(term_hrs_exp.hr22,hb.hr22,0)+coalesce(term_hrs_exp.hr23,hb.hr23,0)+coalesce(term_hrs_exp.hr24,hb.hr24,0)
 				   +coalesce(term_hrs_exp1.hr1,hb1.hr1,0)+coalesce(term_hrs_exp1.hr2,hb1.hr2,0)+coalesce(term_hrs_exp1.hr3,hb1.hr3,0)
 				   +coalesce(term_hrs_exp1.hr4,hb1.hr4,0)+coalesce(term_hrs_exp1.hr5,hb1.hr5,0)+coalesce(term_hrs_exp1.hr6,hb1.hr6,0)
+				   +case when isnull(term_hrs_exp1.add_dst_hour,hb1.add_dst_hour)>0 then 1 else 0 end
 			  else 
 					coalesce(term_hrs_exp.volume_mult,hb.volume_mult,0) end no_hours			
 			) n_hrs
