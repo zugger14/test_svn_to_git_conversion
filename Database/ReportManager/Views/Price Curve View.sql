@@ -35,57 +35,104 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Standard Price Curve View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sql VARCHAR(MAX)
+
 , @_to_as_of_date VARCHAR(25)
+
 , @_as_of_date VARCHAR(25) = ''@as_of_date''
+
 , @_from_maturity_date VARCHAR(25)
+
 , @_to_maturity_date VARCHAR(25)
+
 , @_period_from varchar(25) 
+
 , @_period_to varchar(25) 
+
 , @_curve_id VARCHAR(MAX)
+
 , @_Granularity VARCHAR(MAX)
+
 , @_curve_source_value_id VARCHAR(100)
 
+
 IF ''@to_as_of_date'' <> ''NULL''
+
 	SET @_to_as_of_date = ''@to_as_of_date''
+
 IF ''@to_maturity_date'' <> ''NULL''
+
 	SET @_to_maturity_date = ''@to_maturity_date''
+
 IF ''@maturity_date'' <> ''NULL''
+
 	SET @_from_maturity_date = ''@maturity_date''	
+
 IF ''@period_from'' <> ''NULL''
+
 	SET @_period_from = convert(varchar(10), dbo.FNAGetTermStartDate(''m'', @_as_of_date, ''@period_from''), 120)
+
 IF ''@period_to'' <> ''NULL''
+
 	SET @_period_to = convert(varchar(10), dbo.FNAGetTermENDDate(''m'', @_as_of_date, ''@period_to''), 120)
+
 IF ''@curve_id'' <> ''NULL''
+
 	SET @_curve_id = ''@curve_id''
+
 IF ''@Granularity'' <> ''NULL''
+
 	SET @_Granularity = ''@Granularity''
+
 IF ''@curve_source_value_id'' <> ''NULL''
+
 	SET @_curve_source_value_id = ''@curve_source_value_id''
 
+
 IF (@_from_maturity_date IS NOT NULL AND @_period_from IS NOT NULL) OR (@_to_maturity_date IS NOT NULL  AND @_period_to IS NOT NULL)
+
 BEGIN
+
 	IF DATEDIFF(dd, isnull(@_period_from, @_from_maturity_date), ISNULL(@_from_maturity_date,@_period_from)) >= 0
+
 		SET @_from_maturity_date = isnull(@_from_maturity_date, @_period_from)
+
 	ELSE SET @_from_maturity_date = @_period_from
+
 	IF DATEDIFF(dd, ISNULL(@_period_to, @_to_maturity_date), ISNULL(@_to_maturity_date, @_period_to)) >= 0
+
 		SET @_to_maturity_date = ISNULL(@_period_to, @_to_maturity_date)
+
 	ELSE SET @_to_maturity_date = @_to_maturity_date
+
 END
+
 ELSE
+
 BEGIN
+
 	IF @_from_maturity_date IS NULL AND @_period_from IS NOT NULL
+
 		SET @_from_maturity_date = @_period_from
+
 	IF @_to_maturity_date IS NULL AND @_period_to IS NOT NULL
+
 		SET @_to_maturity_date = @_period_to
+
 END
+
 
 DECLARE @_dst_group_value_id VARCHAR(50)
 
+
 SELECT @_dst_group_value_id = tz.dst_group_value_id FROM dbo.adiha_default_codes_values adcv
+
 	INNER JOIN time_zones tz ON tz.timezone_id = adcv.var_value
+
 WHERE adcv.instance_no = 1 AND adcv.default_code_id = 36 AND adcv.seq_no = 1
 
+
 SET @_dst_group_value_id = ISNULL(@_dst_group_value_id, ''102201'')
+
 
 SET @_sql = ''SELECT spc.source_curve_def_id [curve_id],
 					   spcd.curve_id [curve_code],
@@ -116,7 +163,7 @@ SET @_sql = ''SELECT spc.source_curve_def_id [curve_id],
 					  , spcd.forward_settle
 					  , spcd.commodity_id
 					  , REPLACE(hrPeriod.alias_name, ''''DST'''', '''''''') AS hr
-					  , (ROW_NUMBER() OVER(PARTITION BY CAST(maturity_date AS DATE) ORDER BY DATEPART(HH,maturity_date))) AS interval
+					  , (DENSE_RANK() OVER(PARTITION BY as_of_date,CAST(maturity_date AS DATE) ORDER BY rowid,alias_name)) AS interval
 				--[__batch_report__]
 				FROM   source_price_curve spc
 					   INNER JOIN source_price_curve_def spcd
@@ -125,9 +172,10 @@ SET @_sql = ''SELECT spc.source_curve_def_id [curve_id],
 							ON  sdv_curve_source.value_id = spc.curve_source_value_id
 					   LEFT JOIN static_data_value sdv_assessment_curve_type
 							ON  sdv_assessment_curve_type.value_id = spc.Assessment_curve_type_value_id
-						OUTER APPLY(SELECT alias_name
-								FROM dbo.FNAGetPivotGranularityColumn(''''1900-01-01'''', ''''1900-01-01'''', spcd.Granularity, '' + @_dst_group_value_id + '') 
+						OUTER APPLY(SELECT alias_name, rowid
+								FROM dbo.FNAGetPivotGranularityColumn(CAST(spc.maturity_date AS DATE), CAST(spc.maturity_date AS DATE), spcd.Granularity, '' + @_dst_group_value_id + '') 
 								WHERE 1= CASE WHEN spcd.Granularity in (982, 987, 989) THEN 1 ELSE 0 END
+								AND is_dst = spc.is_dst
 								AND clm_name = REPLACE(CONVERT(VARCHAR(5), spc.maturity_date, 8), '''':'''', '''''''')) hrPeriod
 				WHERE  1 = 1
         '' + CASE 				
@@ -150,7 +198,9 @@ SET @_sql = ''SELECT spc.source_curve_def_id [curve_id],
 			 CASE WHEN @_Granularity IS NOT NULL THEN '' AND spcd.Granularity IN(''+@_Granularity+'')'' ELSE '''' END 
 			  +
 			 CASE WHEN @_curve_source_value_id IS NOT NULL THEN '' AND spc.curve_source_value_id IN(''+@_curve_source_value_id+'')'' ELSE '''' END 
+
 --PRINT(@_sql)
+
 EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
