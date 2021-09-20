@@ -4438,7 +4438,8 @@ BEGIN TRY
 			INNER JOIN source_deal_header sdh ON  sdh.source_deal_header_id = sdd.source_deal_header_id
 			LEFT JOIN source_deal_header sdh1
 				 ON  sdh1.close_reference_id = sdh.source_deal_header_id
-				 AND sdh1.deal_reference_type_id=12503  
+				 AND sdh1.deal_reference_type_id=12503
+				 AND sdh1.product_id <> 4100
 			LEFT JOIN source_deal_detail sdd1
 				 ON  sdd1.source_deal_header_id = sdh1.source_deal_header_id
 				 AND sdd1.term_start = sdd.term_start
@@ -4485,6 +4486,7 @@ BEGIN TRY
 		LEFT JOIN source_deal_header sdh1
 			 ON  sdh1.close_reference_id = sdh.source_deal_header_id
 			 AND sdh1.deal_reference_type_id= 12503
+			 AND sdh1.product_id <> 4100
 		LEFT JOIN source_deal_detail sdd1
 			 ON  sdd1.source_deal_header_id = sdh1.source_deal_header_id
 			 AND sdd1.term_start = sdd.term_start
