@@ -147,3 +147,7 @@ BEGIN
     WHERE  iose.[type_name] = 'Shipper User Allocation Price'
 END
 
+UPDATE user_defined_fields_template
+SET field_size = NULL
+WHERE  Field_label IN('Bundled', 'Shipper User Allocation Price', 'Balancing Group Number', 'Network Point Name (EXIT)', 'Network Point Name (ENTRY)', 'Undiscount/Discount Flag',
+'Network Point ID (ENTRY)', 'Network Point ID (EXIT)') 
