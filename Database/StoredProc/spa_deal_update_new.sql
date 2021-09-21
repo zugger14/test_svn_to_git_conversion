@@ -1975,7 +1975,7 @@ BEGIN
 	FROM #field_template_collection
 	
 	-- Load default value on Shipper Code 1
-	--/*
+	/*
 	IF OBJECT_ID('tempdb..#temp_default_shipper_code1') IS NOT NULL
 		DROP TABLE #temp_default_shipper_code1
 
@@ -2002,7 +2002,7 @@ BEGIN
 		INNER JOIN source_deal_header_template sdht ON sdht.template_id = sddt.template_id
 		WHERE sdht.template_id = @template_id
 	END
-	--*/
+	--
 	-- Load default value on Shipper Code 2
 	IF OBJECT_ID('tempdb..#temp_default_shipper_code2') IS NOT NULL
 		DROP TABLE #temp_default_shipper_code2
@@ -2030,7 +2030,7 @@ BEGIN
 		INNER JOIN source_deal_header_template sdht ON sdht.template_id = sddt.template_id
 		WHERE sdht.template_id = @template_id
 	END
- 	
+ 	*/
 	SELECT  
 	@field_detail = COALESCE(@field_detail + ',', '') + CAST(id AS NVARCHAR(150)) + ' NVARCHAR(MAX) ',
 	@field_temp_detail = CASE WHEN ft.udf_or_system = 'u' THEN @field_temp_detail ELSE COALESCE(@field_temp_detail + ',', '') + CASE WHEN field_type = 'a' THEN 'NULLIF(sdd.' + id + ',''1900-01-01 00:00:00.000'')' ELSE 'sdd.' + id END END,
@@ -3083,7 +3083,7 @@ BEGIN
 			# Added below logic to set value on browser fields.
 			# Values need to be on form : ID^Label
 			# location_id changes to shipper_code_mapping_detail_id^shipper_code i.e. 311^NCLB400125000000
-		*/
+		
 		IF EXISTS (SELECT 1 FROM #temp_default_shipper_code1) AND COL_LENGTH(@deal_update_detail, N'shipper_code1') IS NOT NULL
 		BEGIN
 			EXEC('
@@ -3105,6 +3105,7 @@ BEGIN
 					ON d.shipper_code2 = t.shipper_code_mapping_detail_id
 			')
 		END
+		*/
  		EXEC(@select_statement)
 	END
 END
