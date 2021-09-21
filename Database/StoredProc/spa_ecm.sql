@@ -38,10 +38,11 @@ DECLARE @flag CHAR(1) = NULL,
 		@create_date_to VARCHAR(100) = NULL,
 		@process_id VARCHAR(MAX) = NULL,
 		@include_bfi BIT = NULL,
-		@filter_table_process_id VARCHAR(1000) = NULL
+		@filter_table_process_id VARCHAR(1000) = NULL,
+		@file_transfer_endpoint_name NVARCHAR(2000) = NULL
 
-SELECT @flag='i', @create_date_from='2017-01-01', @create_date_to='2019-04-15',
-	   @include_bfi='1', @filter_table_process_id='1CC1E4BA_36DB_4F09_81E3_424C077697F9'
+
+SELECT @flag = 'r', @file_transfer_endpoint_name = 'ECM Feedback'
 -------------------------------------------------*/
 SET NOCOUNT ON
 DECLARE @create_ts DATETIME = GETDATE()
@@ -1320,21 +1321,21 @@ BEGIN
 			FROM source_ecm se		   
 			INNER JOIN #temp_ecm_payload_xml_data doc ON doc.document_id = se.document_id
 			CROSS APPLY (
-				SELECT MAX([time_stamp]) [time_stamp]
+				SELECT [time_stamp] [time_stamp]
 				FROM #temp_ecm_payload_xml_data
 				WHERE document_id = se.document_id
 					AND document_version = se.document_version
-					AND ISNULL([state], '-1') IN ('Matched', 'PENDING')
+					AND COALESCE([state], [broker_state]) IN ('Matched', 'PENDING', 'PRELIMINARY_MATCHED' )
 			) temp
 			CROSS APPLY (
-				SELECT MIN([state]) [state]
+				SELECT ISNULL([state],[broker_state]) [state]
 				FROM #temp_ecm_payload_xml_data
 				WHERE document_id = se.document_id
 					AND document_version = se.document_version
 					AND [time_stamp] = temp.[time_stamp]
-					AND ISNULL([state], '-1') IN ('Matched', 'PENDING')
-			) r
-
+					AND COALESCE([state], [broker_state]) IN ('Matched', 'PENDING', 'PRELIMINARY_MATCHED' )
+			) r GROUP BY r.state, temp.time_stamp , se.source_deal_header_id
+		
 			IF OBJECT_ID('tempdb..#temp_update_confirm_status') IS NOT NULL
 					DROP TABLE #temp_update_confirm_status
 
@@ -1348,10 +1349,19 @@ BEGIN
 				confirm_id VARCHAR(200) COLLATE DATABASE_DEFAULT 
 			)
 
-			INSERT INTO #temp_update_confirm_status (id, deal_id, as_of_date, confirm_status, comment1, comment2, confirm_id)
-			SELECT '', CAST(source_deal_header_id AS VARCHAR(10)), CONVERT(VARCHAR(10), @create_ts, 120), IIF(response_status = 'Matched',17202,17215), '', '', ''
-			FROM #temp_deal_status
-				
+			IF EXISTS ( SELECT 1 FROM #temp_deal_status WHERE response_status IN ('Matched', 'PRELIMINARY_MATCHED' ))
+			BEGIN
+				INSERT INTO #temp_update_confirm_status (id, deal_id, as_of_date, confirm_status, comment1, comment2, confirm_id)
+				SELECT DISTINCT '', CAST(source_deal_header_id AS VARCHAR(10)), CONVERT(VARCHAR(10), @create_ts, 120), IIF(response_status IN('Matched', 'PRELIMINARY_MATCHED'),17202,17215), '', '', ''
+				FROM #temp_deal_status WHERE  response_status IN ('Matched', 'PRELIMINARY_MATCHED')
+			END
+			ELSE 
+			BEGIN
+				INSERT INTO #temp_update_confirm_status (id, deal_id, as_of_date, confirm_status, comment1, comment2, confirm_id)
+				SELECT '', CAST(source_deal_header_id AS VARCHAR(10)), CONVERT(VARCHAR(10), @create_ts, 120), IIF(response_status IN('Matched', 'PRELIMINARY_MATCHED'),17202,17215), '', '', ''
+			    FROM #temp_deal_status WHERE  response_status IN ('PENDING')
+			END
+			
 			INSERT INTO confirm_status (source_deal_header_id, type, as_of_date)
 			SELECT t.deal_id, t.confirm_status, t.as_of_date
 			FROM #temp_update_confirm_status t
