@@ -20770,7 +20770,11 @@ BEGIN
 					scmd1_def.effective_date,
 					ROW_NUMBER() OVER (PARTITION BY shipper_code1 ORDER BY scmd1_def.effective_date DESC) rn
 						FROM shipper_code_mapping_detail scmd1_def
-						WHERE scmd1_def.shipper_code1 = a.shipper_code1 
+						WHERE (
+											(NULLIF(a.shipper_code1, '''') IS NOT NULL AND scmd1_def.shipper_code1 = a.shipper_code1 )
+											OR
+											(NULLIF(a.shipper_code1, '''') IS NULL)
+										)
 							AND scmd1_def.location_id = sml.source_minor_location_id 
 							AND scmd1_def.effective_date <= CAST(a.term_start AS DATE)
 							AND scmd1_def.shipper_code_id = scm.shipper_code_id
@@ -20811,7 +20815,12 @@ BEGIN
 					scmd2_def.effective_date,
 					ROW_NUMBER() OVER (PARTITION BY scmd2_def.shipper_code ORDER BY scmd2_def.effective_date DESC) rn
 				FROM shipper_code_mapping_detail scmd2_def
-				WHERE scmd2_def.shipper_code = a.shipper_code2 
+				WHERE 
+								(
+									(NULLIF(a.shipper_code2, '''') IS NOT NULL AND scmd2_def.shipper_code = a.shipper_code2 )
+									OR
+									(NULLIF(a.shipper_code2, '''') IS NULL)
+								)
 					AND scmd2_def.location_id = sml.source_minor_location_id 
 					AND scmd2_def.effective_date <= CAST(a.term_start AS DATE)
 					AND scmd2_def.shipper_code_id = scm.shipper_code_id
