@@ -47,7 +47,7 @@ BEGIN
 	SELECT 'Prisma'
 		, 'https://platform.prisma-capacity.eu/api/v2/auction-booking' -- TO Update API URL
 		, 'PrismaApi'
-		, dbo.FNAEncrypt('eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIzMjc3NDAyOTM4MSIsImF1ZCI6InNoaXBwZXItYXBpIiwibnVtYmVyIjoiMSIsImNyZWF0ZWQiOjE2MjQ1Mjc4MDgyMDMsInJvbGVzIjpbIlJPTEVfU0hJUFBFUl9BUElfVVNFUiJdfQ.JaeecDJ87Ke7noo0UdagGnbEGYLQeRNks1l7LuPCul96lpheZNvjdoaN3ZbpHk30-C1H3Ch2BXBG_8qzhususQ') -- TO Update API PW
+		, dbo.FNAEncrypt('eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI5ODMxNSIsImF1ZCI6InNoaXBwZXItYXBpIiwibnVtYmVyIjoiNCIsImNyZWF0ZWQiOjE2MjczOTU1NjE4MTcsInJvbGVzIjpbIlJPTEVfU0hJUFBFUl9BUElfVVNFUiJdfQ.NLeONuLtnrUIQagcQjbylHanLGYVInHufAKFmQ18lz8vIXdyxUtk_v6UatOXfzC7Bo7jF0awk6wOtaxH6G-KJw') -- TO Update API PW
  	    , icf.ixp_clr_functions_id
 	FROM ixp_clr_functions icf
 	WHERE icf.ixp_clr_functions_name = 'Prisma'
@@ -55,12 +55,11 @@ END
 ELSE
 BEGIN
 	UPDATE iws
-	SET iws.ws_name = 'Prisma'
-		, iws.web_service_url =  'https://platform.prisma-capacity.eu/api/v2/auction-booking' --TO DO UPdate API URL
-		, iws.[user_name] =  'RestApi'
-		, iws.[password] = dbo.FNAEncrypt('eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIzMjc3NDAyOTM4MSIsImF1ZCI6InNoaXBwZXItYXBpIiwibnVtYmVyIjoiMSIsImNyZWF0ZWQiOjE2MjQ1Mjc4MDgyMDMsInJvbGVzIjpbIlJPTEVfU0hJUFBFUl9BUElfVVNFUiJdfQ.JaeecDJ87Ke7noo0UdagGnbEGYLQeRNks1l7LuPCul96lpheZNvjdoaN3ZbpHk30-C1H3Ch2BXBG_8qzhususQ') --TO DO Update API PW
+	SET  iws.web_service_url =  'https://platform.prisma-capacity.eu/api/v2/auction-booking' --TO DO UPdate API URL
+		, iws.[user_name] =  'PrismaApi'
+		, iws.[password] = dbo.FNAEncrypt('eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI5ODMxNSIsImF1ZCI6InNoaXBwZXItYXBpIiwibnVtYmVyIjoiNCIsImNyZWF0ZWQiOjE2MjczOTU1NjE4MTcsInJvbGVzIjpbIlJPTEVfU0hJUFBFUl9BUElfVVNFUiJdfQ.NLeONuLtnrUIQagcQjbylHanLGYVInHufAKFmQ18lz8vIXdyxUtk_v6UatOXfzC7Bo7jF0awk6wOtaxH6G-KJw') --TO DO Update API PW
 		FROM import_web_service iws
-	WHERE ws_name = 'PrismaApi'
+	WHERE ws_name = 'Prisma'
 END
 
 
