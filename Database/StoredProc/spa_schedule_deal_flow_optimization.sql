@@ -6715,6 +6715,7 @@ BEGIN
 END
 
 COMMIT
+
 IF EXISTS(SELECT 1 FROM #tmp_header)
 BEGIN
 	IF NULLIF(@call_from, '')  <> 'flow_auto'
@@ -6742,8 +6743,13 @@ EXEC spa_ErrorHandler 0
 END TRY
 BEGIN CATCH
 	--PRINT 'Catch Error:' + ERROR_MESSAGE()
+
+	//DECLARE @transcount INT = @@TRANCOUNT;
+
 	IF @@TRANCOUNT > 0
 		ROLLBACK
+
+
 	--delete junk deals	produced when error occured after inserting on deal header block. (mainly error occurs on inserting deal detail block)
 	
 	DECLARE @junk_deal_ids VARCHAR(2000)
@@ -6760,7 +6766,11 @@ BEGIN CATCH
 	BEGIN
 		EXEC spa_source_deal_header @flag='d', @deal_ids = @junk_deal_ids
 	END
-		
+	
+	---if caller also have a transcation
+//	IF @transcount > 1
+//	RAISEERROR();
+
 	
 	EXEC spa_ErrorHandler -1
 		, 'Flow Optimization'

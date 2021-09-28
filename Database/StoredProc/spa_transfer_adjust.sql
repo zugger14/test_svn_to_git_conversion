@@ -295,6 +295,12 @@ BEGIN
 
 	DECLARE @has_deal_scheduled BIT = 0
 
+	--These changes were for avoiding duplicate transport deal.
+	--SET TRANSACTION ISOLATION LEVEL READ COMMITTED
+	--BEGIN TRY
+	--BEGIN TRAN
+
+
 
 	WHILE (@flow_date_from <= @flow_date_to)
 	BEGIN
@@ -310,6 +316,14 @@ BEGIN
 			SELECT source_deal_header_id FROM optimizer_detail_downstream_hour WHERE flow_date = @flow_date_from  AND source_deal_header_id = @source_deal_header_id
 		)
 		BEGIN
+			
+			--These changes were for avoiding duplicate transport deal.
+			--UPDATE optimizer_detail 
+			--set source_deal_header_id = source_deal_header_id 
+			--WHERE flow_date = @flow_date_from 
+			--	AND source_deal_header_id = @source_deal_header_id
+			
+
 			EXEC spa_print 'Deal has aleady been scheduled';
 			SET @is_deal_created = 1
 			RETURN;
@@ -335,6 +349,10 @@ BEGIN
 			@process_id = @process_id
 
 		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
+
+
+
+		EXEC spa_delete_duplicate_transfer_adjust @source_deal_header_id
 
 		--START OF CHECK IF DEAL SAME DEAL UPDATED BY OTHER PROCESS
 		SET @sql = '
@@ -781,6 +799,7 @@ BEGIN
 			@transport_deal_id = @transport_deal_id,
 			@process_id = @process_id
 
+		EXEC spa_delete_duplicate_transfer_adjust @source_deal_header_id
 
 		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
 
@@ -1366,6 +1385,8 @@ BEGIN
 			@flow_date = @flow_date_from,
 			@transport_deal_id = @transport_deal_id,
 			@process_id = @process_id
+		
+		EXEC spa_delete_duplicate_transfer_adjust @source_deal_header_id
 
 		SET @inserted_updated_deals = dbo.FNAProcessTableName('inserted_updated_deals', @user_name, @process_id)
 
@@ -1973,6 +1994,10 @@ BEGIN
 
 	
 END
+
+
+--		EXEC spa_delete_duplicate_transfer_adjust @source_deal_header_id
+
 
 IF EXISTS (SELECT 1 FROM #temp_transport_deal)
 BEGIN
