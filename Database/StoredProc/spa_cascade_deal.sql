@@ -139,7 +139,8 @@ BEGIN
 	IF OBJECT_ID(N'tempdb..#child_deal_detail') IS NOT NULL
 		DROP TABLE #child_deal_detail
 	
-	CREATE TABLE #child_deal_detail(term_start DATETIME, term_end DATETIME, parent_id INT, id VARCHAR(2) COLLATE DATABASE_DEFAULT)
+
+	CREATE TABLE #child_deal_detail(term_start DATETIME, term_end DATETIME, parent_id INT, id VARCHAR(200) COLLATE DATABASE_DEFAULT)
 
 	DECLARE c CURSOR FOR 
 	SELECT source_deal_header_id, deal_id, curve_id, term_start, term_end, deal_status, term_frequency_type
