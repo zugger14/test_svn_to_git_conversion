@@ -399,7 +399,7 @@ BEGIN
 			DROP TABLE ' + @deal_detail_table_name + '
 
 		SELECT td.source_deal_header_id, sdd.source_deal_detail_id, sdd.term_start, sdd.term_end, sdd.leg, sdd.fixed_float_leg, sdd.buy_sell_flag, sdd.curve_id, sdd.location_id, sdd.physical_financial_flag, 
-				IIF(sdh.internal_desk_id IN (17301,17302), ISNULL(sdd.deal_volume, sdd.total_volume),sdd.deal_volume) deal_volume, sdd.total_volume, sdd.standard_yearly_volume, sdd.deal_volume_frequency, sdd.deal_volume_uom_id, sdd.multiplier, sdd.volume_multiplier2, sdd.fixed_price, 
+				IIF(sdh.internal_desk_id IN (17301,17302), IIF(sdh.term_frequency= ''m'' AND sdh.profile_granularity =982, (sdd.total_volume/30/24) ,  sdd.total_volume), sdd.deal_volume) deal_volume, sdd.total_volume, sdd.standard_yearly_volume, sdd.deal_volume_frequency, sdd.deal_volume_uom_id, sdd.multiplier, sdd.volume_multiplier2, sdd.fixed_price, 
 				sdd.fixed_price_currency_id, sdd.option_strike_price, sdd.fixed_cost, sdd.formula_id, sdd.formula_curve_id, sdd.price_adder, sdd.price_multiplier, sdd.adder_currency_id, 
 				sdd.fixed_cost_currency_id, formula_currency_id, price_adder2, price_adder_currency2, sdd.price_uom_id, sdd.contract_expiration_date, sdd.position_uom
 		INTO ' + @deal_detail_table_name + '
