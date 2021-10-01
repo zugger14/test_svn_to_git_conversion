@@ -167,7 +167,7 @@ BEGIN
 			END + '
 		FROM source_system_data_import_status_detail ssd
 		LEFT JOIN attachment_detail_info adi 
-			ON ISNULL(REPLACE(RIGHT(ssd.import_file_name, CHARINDEX(''\'', REVERSE(ssd.import_file_name), 1)), ''\'', ''''), -1) = ISNULL(REPLACE(RIGHT(adi.attachment_file_path,  CHARINDEX(''/'', REVERSE(adi.attachment_file_path), 1)), ''/'', ''''), -1)
+			ON ISNULL(REPLACE(RIGHT(ssd.import_file_name, CHARINDEX(''\'', REVERSE(ssd.import_file_name), 1)), ''\'', ''''), -1) = ISNULL(REPLACE(RIGHT(adi.attachment_file_path,  CHARINDEX(''/'', REVERSE(adi.attachment_file_path), 1)), ''/'', ''''), -2)
 		WHERE ssd.process_id=''' + @process_id + ''''
     
 	--@type_error can contain descriptive messages having single quotes (') as well, which needs to be escaped
