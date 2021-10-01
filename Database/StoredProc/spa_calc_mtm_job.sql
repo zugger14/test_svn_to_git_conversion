@@ -174,8 +174,6 @@ declare	@sub_id varchar(1000),
 
 SET @calc_explain_type ='p'
 
-
-
 -- select * from  source_deal_settlement_breakdown where source_deal_header_id=79742 and pnl_as_of_date='2018-03-31'
 --		delete select * from source_deal_pnl_detail where pnl_as_of_date='2013-03-25'
 --delete index_fees_breakdown_settlement where as_of_date='2013-03-25'
@@ -184,9 +182,9 @@ SET @calc_explain_type ='p'
 
 select *  from source_deal_HEADER   where source_deal_header_id=125719
 select *  from source_deal_pnl_detail   where source_deal_header_id=125719
-select *  from source_deal_settlement   where source_deal_header_id=104791
+select *  from source_deal_settlement   where source_deal_header_id=554181
 select * from index_fees_breakdown   where source_deal_header_id=1600
-select * from index_fees_breakdown_settlement   where source_deal_header_id=145462
+select * from index_fees_breakdown_settlement   where source_deal_header_id=554181
 delete index_fees_breakdown_settlement   where source_deal_header_id=1600
 
 select *  from source_deal_pnl_breakdown   where source_deal_header_id=7876
@@ -204,8 +202,8 @@ SELECT
 	@strategy_id =null, 
 	@book_id = null,
 	@source_book_mapping_id = null,
-	@source_deal_header_id =125719   ,-- 349 , --'29,30,31,32,33,39',--,8,19',
-	@as_of_date = '2020-09-30' , --'2017-02-15',
+	@source_deal_header_id =554181   ,-- 349 , --'29,30,31,32,33,39',--,8,19',
+	@as_of_date = '2021-04-02' , --'2017-02-15',
 	@curve_source_value_id = 4500, 
 	@pnl_source_value_id = 4500,
 	@hedge_or_item = NULL, 
@@ -222,8 +220,8 @@ SELECT
 	@trader_id = NULL,
 	@status_table_name = NULL,
 	@run_incremental = 'n',
-	@term_start = '2020-09-01' ,
-	@term_end = '2020-09-30' ,
+	@term_start = '2021-04-01' ,
+	@term_end = '2021-04-02' ,
 	@calc_type = 's',
 	@curve_shift_val = NULL,
 	@curve_shift_per = NULL, 
@@ -233,6 +231,7 @@ SELECT
 	@ref_id=null,
 	@process_linear_options_delta = NULL
 	,@look_term= 's' -- 'd'-> delivered term 's'-> settled term
+
 
 
 /*
@@ -349,6 +348,8 @@ select original_formula_currency, formula_Currency, contract_id, formula_id, *
 
 */
 --select * from adiha_process.dbo.testtest
+
+
 
 
 
@@ -2466,7 +2467,6 @@ begin
 	end		
 END
 
-
 --Linear Model Option Leg 1
 
 delete #temp_deals where internal_deal_subtype_value_id=155 and leg>=2 
@@ -2483,7 +2483,6 @@ CREATE INDEX [IX_PT_temp_deals_internal_deal_type_value_id] ON [#temp_deals] ([i
 CREATE INDEX [IX_PT_temp_deals_internal_deal_type_value_id_include] ON [#temp_deals] ([internal_deal_type_value_id]) INCLUDE ([source_deal_header_id], [term_start])
 CREATE INDEX [IX_PT_temp_deals_formula_curve_id_formula_id_pricing] ON [#temp_deals] ([formula_curve_id],[formula_id], [pricing]) INCLUDE ([source_deal_detail_id], [term_start], [deal_volume], [contract_id])
 CREATE INDEX [IX_PT_temp_deals_deal_volume] ON [#temp_deals] ([deal_volume]) INCLUDE ([source_deal_header_id], [term_start])
-
 DELETE td FROM #temp_deals td
 	INNER JOIN source_deal_header sdh ON sdh.close_reference_id=td.source_deal_header_id
 		AND td.internal_deal_type_value_id IN(20,21)
@@ -2614,7 +2613,7 @@ FROM (
 ) udf 
 	inner join user_defined_deal_fields_template uddft on uddft.udf_template_id=udf.udf_template_id
 	inner join #udft udft on udft.field_id=uddft.field_id
-	WHERE uddft.internal_field_type NOT IN (18742,18743)
+	WHERE isnull(uddft.internal_field_type,-1) NOT IN (18742,18743)
 
 
 
@@ -5122,6 +5121,8 @@ FROM source_price_curve spc
 INNER JOIN #whatif_shift_mtm_new wsmn ON spc.source_curve_def_id = wsmn.curve_shift_val
 WHERE as_of_date <= @curve_as_of_date AND curve_source_value_id = @curve_source_value_id
 GROUP BY spc.source_curve_def_id
+
+
 
 IF OBJECT_ID('tempdb..#source_price_curve') IS NOT NULL DROP TABLE #source_price_curve
 SELECT  
