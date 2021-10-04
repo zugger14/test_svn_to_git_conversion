@@ -6744,7 +6744,7 @@ END TRY
 BEGIN CATCH
 	--PRINT 'Catch Error:' + ERROR_MESSAGE()
 
-	//DECLARE @transcount INT = @@TRANCOUNT;
+	--DECLARE @transcount INT = @@TRANCOUNT;
 
 	IF @@TRANCOUNT > 0
 		ROLLBACK
@@ -6768,8 +6768,8 @@ BEGIN CATCH
 	END
 	
 	---if caller also have a transcation
-//	IF @transcount > 1
-//	RAISEERROR();
+--	IF @transcount > 1
+--	RAISEERROR();
 
 	
 	EXEC spa_ErrorHandler -1

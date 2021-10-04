@@ -305,7 +305,9 @@ BEGIN
 	WHILE (@flow_date_from <= @flow_date_to)
 	BEGIN
 
-
+		
+		-- It is assume that there won't be any update in EEX deal. If transportatio deal is already created, then the process is hult. 
+		-- There is not provision of reschedule in case of EEX. So, @reschedule is always 0.
 		IF EXISTS(
 			SELECT source_deal_header_id FROM optimizer_detail WHERE flow_date = @flow_date_from AND source_deal_header_id = @source_deal_header_id
 			UNION ALL
@@ -354,7 +356,7 @@ BEGIN
 
 		EXEC spa_delete_duplicate_transfer_adjust @source_deal_header_id
 
-		--START OF CHECK IF DEAL SAME DEAL UPDATED BY OTHER PROCESS
+		--START OF CHECK IF SAME DEAL UPDATED BY OTHER PROCESS
 		SET @sql = '
 			INSERT INTO #temp_transport_deal(source_deal_header_id)
 			SELECT source_deal_header_id 
@@ -428,58 +430,86 @@ BEGIN
 	IF EXISTS(SELECT 1 FROM #temp_transport_deal WHERE type = 'Transport')	
 	BEGIN
 
-		INSERT INTO #temp_volume		
-		SELECT term_start,
-			IIF(hr = '25:00', IIF( @commodity_id = -1, '21:00', RIGHT( '0' + CAST(dst_hour as VARCHAR(5)), 2) + ':00' ), hr) ,
-			is_dst,
-			granularity,
-			volume
-		FROM (
-			SELECT term_start
-				, RIGHT( '0' + SUBSTRING(hr, 3, LEN(hr)), 2) + ':00'  hr
-				, IIF(MAX(mvd.id) is not null and hr = 'hr25' , 1, 0) AS is_dst  
-				, MIN(granularity) granularity			
-				, NULLIF(SUM(volume),0) volume
-				, MAX(mvd.hour) dst_hour
-			FROM 
-			(
-			SELECT d.source_deal_header_id, term_start, granularity
-				, hr1, hr2, hr3, hr4, hr5, hr6, hr7
-				, hr8, hr9, hr10, hr11, hr12, hr13
-				, hr14, hr15, hr16, hr17, hr18, hr19
-				, hr20, (hr21-hr25) hr21, hr22, hr23, hr24, hr25
-			FROM report_hourly_position_deal d
-			INNER JOIN SplitCommaSeperatedValues (@all_physical_deals) t
-				ON d.source_deal_header_id = t.item
-			UNION ALL
-			SELECT p.source_deal_header_id, term_start, granularity
-				, hr1, hr2, hr3, hr4, hr5, hr6, hr7
-				, hr8, hr9, hr10, hr11, hr12, hr13
-				, hr14, hr15, hr16, hr17, hr18, hr19
-				, hr20, (hr21-hr25) hr21, hr22, hr23, hr24, hr25
-			FROM report_hourly_position_profile p
-			INNER JOIN SplitCommaSeperatedValues (@all_physical_deals) t
-				ON p.source_deal_header_id = t.item
-			) p
-			UNPIVOT
-			(
-				volume FOR hr IN (
-					hr1, hr2, hr3, hr4, hr5, hr6, hr7
-					, hr8, hr9, hr10, hr11, hr12, hr13
-					, hr14, hr15, hr16, hr17, hr18, hr19
-					, hr20, hr21, hr22, hr23, hr24, hr25
-				)
-			) unpvt
-			LEFT JOIN mv90_dst mvd
-				ON DATEADD(DAY, IIF( @commodity_id= -1, -1, 0), mvd.date) = term_start
-				AND mvd.insert_delete = 'i'
-			GROUP BY term_start, hr
-			--ORDER BY term_start, hr
-		) sub
-		WHERE (
-					sub.hr <> '25:00' 
-					OR (sub.hr = '25:00' AND is_dst= 1)
-				)
+
+		DECLARE @counter INT 
+		SET @counter=1
+
+		-- wait 1 minute until the parent deal position is calclulated.
+		WHILE ( @counter <= 60)
+		BEGIN
+
+			IF EXISTS(SELECT 1 
+						FROM process_deal_position_breakdown 
+						WHERE source_deal_header_id IN (@all_physical_deals) 
+							AND process_status IN (0,1)
+						)
+			BEGIN
+				
+				SET @counter = @counter + 1
+				WAITFOR DELAY '00:00:01';  
+				CONTINUE;
+			END 
+			ELSE 
+			BEGIN 
+				
+				INSERT INTO #temp_volume		
+				SELECT term_start,
+					IIF(hr = '25:00', IIF( @commodity_id = -1, '21:00', RIGHT( '0' + CAST(dst_hour as VARCHAR(5)), 2) + ':00' ), hr) ,
+					is_dst,
+					granularity,
+					volume
+				FROM (
+					SELECT term_start
+						, RIGHT( '0' + SUBSTRING(hr, 3, LEN(hr)), 2) + ':00'  hr
+						, IIF(MAX(mvd.id) is not null and hr = 'hr25' , 1, 0) AS is_dst  
+						, MIN(granularity) granularity			
+						, NULLIF(SUM(volume),0) volume
+						, MAX(mvd.hour) dst_hour
+					FROM 
+					(
+					SELECT d.source_deal_header_id, term_start, granularity
+						, hr1, hr2, hr3, hr4, hr5, hr6, hr7
+						, hr8, hr9, hr10, hr11, hr12, hr13
+						, hr14, hr15, hr16, hr17, hr18, hr19
+						, hr20, (hr21-hr25) hr21, hr22, hr23, hr24, hr25
+					FROM report_hourly_position_deal d
+					INNER JOIN SplitCommaSeperatedValues (@all_physical_deals) t
+						ON d.source_deal_header_id = t.item
+					UNION ALL
+					SELECT p.source_deal_header_id, term_start, granularity
+						, hr1, hr2, hr3, hr4, hr5, hr6, hr7
+						, hr8, hr9, hr10, hr11, hr12, hr13
+						, hr14, hr15, hr16, hr17, hr18, hr19
+						, hr20, (hr21-hr25) hr21, hr22, hr23, hr24, hr25
+					FROM report_hourly_position_profile p
+					INNER JOIN SplitCommaSeperatedValues (@all_physical_deals) t
+						ON p.source_deal_header_id = t.item
+					) p
+					UNPIVOT
+					(
+						volume FOR hr IN (
+							hr1, hr2, hr3, hr4, hr5, hr6, hr7
+							, hr8, hr9, hr10, hr11, hr12, hr13
+							, hr14, hr15, hr16, hr17, hr18, hr19
+							, hr20, hr21, hr22, hr23, hr24, hr25
+						)
+					) unpvt
+					LEFT JOIN mv90_dst mvd
+						ON DATEADD(DAY, IIF( @commodity_id= -1, -1, 0), mvd.date) = term_start
+						AND mvd.insert_delete = 'i'
+					GROUP BY term_start, hr
+					--ORDER BY term_start, hr
+				) sub
+				WHERE (
+							sub.hr <> '25:00' 
+							OR (sub.hr = '25:00' AND is_dst= 1)
+						)
+				
+				SET @counter = 100;
+				BREAK;
+			END
+		END
+
 
 		UPDATE sddh
 		SET volume = ABS(tv.volume)
