@@ -56,7 +56,7 @@ namespace FARRMSImportCLR
                     bookedBefore = "";
                 }
 
-                bookedSince = (bookedSince != "") ? System.Convert.ToDateTime(bookedSince).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + ".000Z" : "";
+                bookedSince = (bookedSince != "") ? (bookedSince.Contains("Z") ? bookedSince : System.Convert.ToDateTime(bookedSince).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + ".000Z") : "";
                 bookedBefore = (bookedBefore != "") ? System.Convert.ToDateTime(bookedBefore).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + ".000Z" : "";
                 clrImportInfo.WebServiceInfo.WebServiceURL = (bookedAt != "") ? clrImportInfo.WebServiceInfo.WebServiceURL + "?bookedAt=" + bookedAt : clrImportInfo.WebServiceInfo.WebServiceURL;
                   
