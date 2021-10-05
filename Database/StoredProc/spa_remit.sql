@@ -2445,7 +2445,9 @@ BEGIN
 		deal_group_id INT,
 		ext_deal_id VARCHAR(512) COLLATE DATABASE_DEFAULT,
 		confirm_status VARCHAR(1000) COLLATE DATABASE_DEFAULT,
-		[commodity_name] VARCHAR(1000) COLLATE DATABASE_DEFAULT
+		[commodity_name] VARCHAR(1000) COLLATE DATABASE_DEFAULT,
+		[term_frequency] NCHAR(2) COLLATE DATABASE_DEFAULT,
+		[profile_granularity] INT
     )
 
 	EXEC ('
@@ -3768,7 +3770,10 @@ BEGIN
 									  WHEN 'Ect' THEN 'EUX' 
 									  WHEN 'GPC'THEN 'GBX'
 									  ELSE UPPER(scur_fixed.currency_name) END) END, 
-			[quantity_volume] = CASE WHEN (MAX(td.deal_group_id) = 1 AND MAX(td.commodity_name) = 'Power' AND MAX(td.internal_desk_id) = 17302) THEN  NULL ELSE AVG(tdd.deal_volume) END,
+			[quantity_volume] = CASE WHEN (MAX(td.deal_group_id) = 1 AND MAX(td.commodity_name) = 'Power' AND MAX(td.internal_desk_id) = 17302) THEN  NULL ELSE 
+			IIF(MAX(td.term_frequency) = 'm' AND MAX(td.profile_granularity) = 982, AVG(tdd.deal_volume/30/24) ,
+
+			 AVG(tdd.deal_volume)) END,
 			[Total notional contract quantity]= ABS(ROUND(MAX(tvf.total_notional_contract_quantity),5)) ,
 			[quantity_unit_field_40_and_41] = CASE --WHEN MAX(tsu.uom_name)='mwh' THEN 'MWh'
 												  WHEN MAX(tsu.uom_name)='kwh' THEN 'KWh'

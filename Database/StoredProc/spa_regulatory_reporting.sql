@@ -251,7 +251,9 @@ BEGIN
 		[deal_group_id] INT NOT NULL,
 		[ext_deal_id] VARCHAR(50) NULL,
 		[confirm_status] VARCHAR(500) NULL,
-		[commodity_name] VARCHAR(1000) NULL
+		[commodity_name] VARCHAR(1000) NULL,
+		[term_frequency] NCHAR(2) COLLATE DATABASE_DEFAULT,
+		[profile_granularity] INT
 
 	) 
 	
@@ -278,7 +280,7 @@ BEGIN
 					sdh.deal_date deal_date, sdh.physical_financial_flag physical_financial_flag, sdh.entire_term_start entire_term_start, sdh.entire_term_end entire_term_end, sdh.source_deal_type_id source_deal_type_id,
 					sdh.deal_sub_type_type_id deal_sub_type_type_id, sdh.option_flag option_flag, sdh.option_type option_type, sdh.option_excercise_type option_excercise_type, sdh.header_buy_sell_flag header_buy_sell_flag,
 					sdh.create_ts create_ts, sdh.update_ts update_ts, sdh.internal_desk_id internal_desk_id, sdh.product_id product_id, sdh.commodity_id commodity_id, sdh.block_define_id block_define_id,
-					sdh.deal_status deal_status, sdh.description1 description1, sdh.description2 description2, sdh.trader_id source_trader_id, sdh.contract_id contract_id, 0 deal_group_id, sdh.ext_deal_id ext_deal_id, sdv.code confirm_status, sc1.commodity_id commodity_name
+					sdh.deal_status deal_status, sdh.description1 description1, sdh.description2 description2, sdh.trader_id source_trader_id, sdh.contract_id contract_id, 0 deal_group_id, sdh.ext_deal_id ext_deal_id, sdv.code confirm_status, sc1.commodity_id commodity_name, sdh.term_frequency, sdh.profile_granularity
 			FROM source_deal_header sdh
 			INNER JOIN source_deal_detail sdd ON sdh.source_deal_header_id = sdd.source_deal_header_id
 			INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
@@ -399,7 +401,7 @@ BEGIN
 			DROP TABLE ' + @deal_detail_table_name + '
 
 		SELECT td.source_deal_header_id, sdd.source_deal_detail_id, sdd.term_start, sdd.term_end, sdd.leg, sdd.fixed_float_leg, sdd.buy_sell_flag, sdd.curve_id, sdd.location_id, sdd.physical_financial_flag, 
-				IIF(sdh.internal_desk_id IN (17301,17302), IIF(sdh.term_frequency= ''m'' AND sdh.profile_granularity =982, (sdd.total_volume/30/24) ,  sdd.total_volume), sdd.deal_volume) deal_volume, sdd.total_volume, sdd.standard_yearly_volume, sdd.deal_volume_frequency, sdd.deal_volume_uom_id, sdd.multiplier, sdd.volume_multiplier2, sdd.fixed_price, 
+				IIF(sdh.internal_desk_id IN (17301,17302), sdd.total_volume, sdd.deal_volume) deal_volume, sdd.total_volume, sdd.standard_yearly_volume, sdd.deal_volume_frequency, sdd.deal_volume_uom_id, sdd.multiplier, sdd.volume_multiplier2, sdd.fixed_price, 
 				sdd.fixed_price_currency_id, sdd.option_strike_price, sdd.fixed_cost, sdd.formula_id, sdd.formula_curve_id, sdd.price_adder, sdd.price_multiplier, sdd.adder_currency_id, 
 				sdd.fixed_cost_currency_id, formula_currency_id, price_adder2, price_adder_currency2, sdd.price_uom_id, sdd.contract_expiration_date, sdd.position_uom
 		INTO ' + @deal_detail_table_name + '
