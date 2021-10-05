@@ -3134,12 +3134,12 @@ BEGIN TRY
 		FROM source_deal_header
 		WHERE source_deal_header_id = @source_deal_header_id
 	)
-	SELECT source_deal_header_id, unp.[column], unp.[value]
+	SELECT unp.[column], unp.[value]
 	INTO #temp_pre_sdh
 	FROM temp_tbl tsdh
 	UNPIVOT (
 		[value] FOR [column] IN (
-			physical_financial_flag, term_frequency, header_buy_sell_flag,
+			source_deal_header_id,physical_financial_flag, term_frequency, header_buy_sell_flag,
 			block_define_id, source_deal_type_id, counterparty_id, close_reference_id, sub_book,
 			source_system_book_id1, source_system_book_id2, source_system_book_id3, source_system_book_id4
 		)
@@ -3174,12 +3174,12 @@ BEGIN TRY
 		FROM source_deal_detail
 		WHERE source_deal_header_id = @source_deal_header_id
 	)
-	SELECT source_deal_detail_id, unp.[column], unp.[value]
+	SELECT unp.[column], unp.[value]
 	INTO #temp_pre_sdd
 	FROM temp_tbl tsdh
 	UNPIVOT (
 		[value] FOR [column] IN (
-			term_start, term_end, curve_id,
+			source_deal_header_id, source_deal_detail_id, term_start, term_end, curve_id,
 			location_id, deal_volume, deal_volume_uom_id, deal_volume_frequency, position_uom,
 			multiplier, volume_multiplier2, price_multiplier, fixed_float_leg, buy_sell_flag,
 			standard_yearly_volume, formula_curve_id, formula_id, contractual_volume,
@@ -6019,12 +6019,12 @@ BEGIN TRY
 		FROM source_deal_header
 		WHERE source_deal_header_id = @source_deal_header_id
 	)
-	SELECT source_deal_header_id, unp.[column], unp.[value]
+	SELECT unp.[column], unp.[value]
 	INTO #temp_post_sdh
 	FROM temp_tbl tsdh
 	UNPIVOT (
 		[value] FOR [column] IN (
-			 physical_financial_flag, term_frequency, header_buy_sell_flag,
+			 source_deal_header_id, physical_financial_flag, term_frequency, header_buy_sell_flag,
 			block_define_id, source_deal_type_id, counterparty_id, close_reference_id, sub_book,
 			source_system_book_id1, source_system_book_id2, source_system_book_id3, source_system_book_id4
 		)
@@ -6059,12 +6059,12 @@ BEGIN TRY
 		FROM source_deal_detail
 		WHERE source_deal_header_id = @source_deal_header_id
 	)
-	SELECT  source_deal_detail_id, unp.[column], unp.[value]
+	SELECT unp.[column], unp.[value]
 	INTO #temp_post_sdd
 	FROM temp_tbl tsdh
 	UNPIVOT (
 		[value] FOR [column] IN (
-			 term_start, term_end, curve_id,
+			source_deal_header_id, source_deal_detail_id, term_start, term_end, curve_id,
 			location_id, deal_volume, deal_volume_uom_id, deal_volume_frequency, position_uom,
 			multiplier, volume_multiplier2, price_multiplier, fixed_float_leg, buy_sell_flag,
 			standard_yearly_volume, formula_curve_id, formula_id, contractual_volume,
@@ -6076,49 +6076,49 @@ BEGIN TRY
 	DECLARE @calc_position CHAR(1) = 'n'
 	DECLARE @exclude_steps VARCHAR(30) = ''
 
-	-- Check if values of specific columns were changed in deal header
-	--IF EXISTS (
-	--	SELECT 1
-	--	FROM #temp_post_sdh post
-	--	LEFT JOIN #temp_pre_sdh pre 
-	--		ON post.source_deal_header_id = pre.source_deal_header_id		
-	--		AND post.[column] = pre.[column]
-	--		AND post.[value] = pre.[value]
+	--Check if values of specific columns were changed in deal header
+	IF EXISTS (
+		SELECT 1
+		FROM #temp_post_sdh post
+		LEFT JOIN #temp_pre_sdh pre 
+			ON post.source_deal_header_id = pre.source_deal_header_id		
+			AND post.[column] = pre.[column]
+			AND post.[value] = pre.[value]
 
-	--	WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
-	--)
-	--BEGIN
-	--	SET @calc_position = 'y'
-	--END
+		WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
+	)
+	BEGIN
+		SET @calc_position = 'y'
+	END
 	
-	-- Check if values of specific columns were changed in deal detail
-	--IF EXISTS (
-	--	SELECT 1
-	--	FROM #temp_post_sdd post
-	--	LEFT JOIN #temp_pre_sdd pre 
-	--		ON post.source_deal_detail_id = pre.source_deal_detail_id		
-	--		AND post.[column] = pre.[column]
-	--		AND post.[value] = pre.[value]
-	--	WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
-	--)
-	--BEGIN
-	--	SET @calc_position = 'y'
-	--END
+	--Check if values of specific columns were changed in deal detail
+	IF EXISTS (
+		SELECT 1
+		FROM #temp_post_sdd post
+		LEFT JOIN #temp_pre_sdd pre 
+			ON post.source_deal_detail_id = pre.source_deal_detail_id		
+			AND post.[column] = pre.[column]
+			AND post.[value] = pre.[value]
+		WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
+	)
+	BEGIN
+		SET @calc_position = 'y'
+	END
 
-	SELECT @calc_position = IIF(COUNT(1) > 0 OR @calc_position = 'y', 'y', 'n')
-	FROM #temp_post_sdh post
-	LEFT JOIN #temp_pre_sdh pre 
-		ON post.source_deal_header_id = pre.source_deal_header_id		
-		AND post.[column] = pre.[column]
-		AND post.[value] = pre.[value]
+	--SELECT @calc_position = IIF(COUNT(1) > 0 OR @calc_position = 'y', 'y', 'n')
+	--FROM #temp_post_sdh post
+	--LEFT JOIN #temp_pre_sdh pre 
+	--	ON post.source_deal_header_id = pre.source_deal_header_id		
+	--	AND post.[column] = pre.[column]
+	--	AND post.[value] = pre.[value]
 
-	SELECT @calc_position = IIF(COUNT(1) > 0 OR @calc_position = 'y', 'y', 'n')
-	FROM #temp_post_sdd post
-	LEFT JOIN #temp_pre_sdd pre 
-		ON post.source_deal_detail_id = pre.source_deal_detail_id		
-		AND post.[column] = pre.[column]
-		AND post.[value] = pre.[value]
-	WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
+	--SELECT @calc_position = IIF(COUNT(1) > 0 OR @calc_position = 'y', 'y', 'n')
+	--FROM #temp_post_sdd post
+	--LEFT JOIN #temp_pre_sdd pre 
+	--	ON post.source_deal_detail_id = pre.source_deal_detail_id		
+	--	AND post.[column] = pre.[column]
+	--	AND post.[value] = pre.[value]
+	--WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
 	
 	-- Check if complex pricing process id is not null. If it is not null then something might have been changed.
 	IF NULLIF(@deal_price_data_process_id, '') IS NOT NULL
