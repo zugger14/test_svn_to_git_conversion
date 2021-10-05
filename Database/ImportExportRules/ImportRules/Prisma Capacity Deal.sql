@@ -44,7 +44,105 @@ BEGIN
 					'Prisma Capacity Deal' ,
 					'N' ,
 					NULL ,
-					'DECLARE @default_code_value INT
+					'/*[final_process_table]
+udf_value1 = tso entry
+udf_value3 = bundled
+udf_value5 = undiscounted
+udf_value6 = networkPoint_id_exit
+udf_value7 = networkPoint_name_entry
+udf_value8 = networkPoint_id_entry
+udf_value4 = networkPoint_name_exit
+*/
+
+CREATE TABLE #source_system_data_import_status_detail (
+	temp_id INT
+	, process_id NVARCHAR(250) COLLATE DATABASE_DEFAULT
+	, [source] NVARCHAR(50) COLLATE DATABASE_DEFAULT
+	, [type] NVARCHAR(20) COLLATE DATABASE_DEFAULT
+	, [description] NVARCHAR(500) COLLATE DATABASE_DEFAULT
+	, type_error NVARCHAR(10) COLLATE DATABASE_DEFAULT
+)
+
+DECLARE @set_process_id VARCHAR(100)
+	, @mapping_table_id INT, @count INT
+SELECT @set_process_id = ''@process_id''
+SELECT @mapping_table_id = mapping_table_id 
+FROM generic_mapping_header 
+WHERE mapping_name = ''Prisma Others Mapping''
+
+SELECT @count = COUNT(1) FROM [final_process_table]
+
+INSERT INTO #source_system_data_import_status_detail(
+	temp_id
+	, process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT ixp_source_unique_id, @set_process_id
+	, ''Deal''
+	, ''Missing Value''
+	, ''Generic mapping not found for Network Point Name (EXIT) : '' + temp.udf_value4 + '' and Network Point ID (EXIT) : '' + temp.udf_value6
+	, ''Error''
+FROM [final_process_table] temp
+LEFT JOIN generic_mapping_values gmexit ON gmexit.mapping_table_id = @mapping_table_id 
+AND gmexit.clm2_value = temp.udf_value4 AND gmexit.clm3_value = temp.udf_value6
+WHERE gmexit.generic_mapping_values_id IS NULL 
+AND temp.udf_value4 IS NOT NULL AND temp.udf_value6 IS NOT NULL
+
+INSERT INTO #source_system_data_import_status_detail(
+	temp_id
+	, process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT ixp_source_unique_id, @set_process_id
+	, ''Deal''
+	, ''Missing Value''
+	, ''Generic mapping not found for Network Point Name (ENTRY) : '' + temp.udf_value7 + '' and Network Point ID (ENTRY) : '' + temp.udf_value8
+	, ''Error''
+FROM [final_process_table] temp
+LEFT JOIN generic_mapping_values gmentry ON gmentry.mapping_table_id = @mapping_table_id 
+AND gmentry.clm5_value = temp.udf_value8 AND gmentry.clm4_value = temp.udf_value7
+WHERE gmentry.generic_mapping_values_id IS NULL 
+AND temp.udf_value8 IS NOT NULL AND temp.udf_value7 IS NOT NULL
+
+INSERT INTO source_system_data_import_status_detail(
+	 process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT  
+DISTINCT process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error 
+FROM  #source_system_data_import_status_detail
+
+DELETE t
+FROM [final_process_table] t
+INNER JOIN  #source_system_data_import_status_detail d ON d.temp_id = t.ixp_source_unique_id
+
+IF @count <> 0 AND NOT EXISTS (SELECT 1 FROM [final_process_table])
+BEGIN
+INSERT INTO source_system_data_import_status(process_id, code, [module], [source], [type], [description], recommendation, rules_name) 
+ 		SELECT @set_process_id,
+ 		       ''Error'', 
+ 		       ''Import Data'',
+ 		       ''Deal'',
+ 		       ''Error'',
+ 		       ''0 Data Imported out of '' + CAST(@count AS NVARCHAR(20)) + '' rows'',
+ 		       ''Please check your data.'',
+ 		       ''Prisma Capacity Deal''
+END
+
+DECLARE @default_code_value INT
 SELECT @default_code_value = [dbo].[FNAGetDefaultCodeValue](36, 1)
 
 UPDATE a
@@ -168,10 +266,21 @@ UPDATE [final_process_table]
 SET 
  term_start = CAST(term_start AS DATE)
 , term_end = CAST(term_end AS DATE)
+
 ',
 					'DECLARE @final_process_table NVARCHAR(250), @user_name NVARCHAR(100)
-SELECT @user_name  = dbo.FNADBUser()
+, @new_process_id NVARCHAR(80), @position_deals NVARCHAR(250), @sql NVARCHAR(MAX)
+SELECT @user_name  = dbo.FNADBUser(), @new_process_id = dbo.FNAGetNewID()
 SELECT @final_process_table = dbo.FNAProcessTableName(''deal_final_backup'', @user_name, ''@process_id'')
+SET @position_deals = dbo.FNAProcessTableName(''report_position'', @user_name, @new_process_id)
+
+EXEC (''CREATE TABLE '' + @position_deals + ''( source_deal_header_id INT, action NCHAR(1) COLLATE DATABASE_DEFAULT)'')
+SET @sql = ''INSERT INTO '' + @position_deals + ''(source_deal_header_id,action) 
+ 	SELECT  DISTINCT sdh.source_deal_header_id,
+ 			''''u''''
+ 	FROM '' + @final_process_table + '' t
+	INNER JOIN source_deal_header sdh ON sdh.deal_id = t.deal_id''
+EXEC(@sql)
 
 -- udf_value9 = Shipper user allocation price
 EXEC (''UPDATE '' + @final_process_table + '' SET udf_value9 = ISNULL(udf_value9, 0) '') 
@@ -383,7 +492,9 @@ SET fixed_price = NULL
 FROM '' + @final_process_table + '' temp
 INNER JOIN source_deal_header sdh ON sdh.deal_id = temp.deal_id
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
-'')',
+'')
+
+EXEC spa_calc_deal_position_breakdown NULL,@new_process_id',
 					'i' ,
 					'n' ,
 					@admin_user ,
@@ -413,7 +524,105 @@ INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal
 			SET ixp_rules_name = 'Prisma Capacity Deal'
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
-				, before_insert_trigger = 'DECLARE @default_code_value INT
+				, before_insert_trigger = '/*[final_process_table]
+udf_value1 = tso entry
+udf_value3 = bundled
+udf_value5 = undiscounted
+udf_value6 = networkPoint_id_exit
+udf_value7 = networkPoint_name_entry
+udf_value8 = networkPoint_id_entry
+udf_value4 = networkPoint_name_exit
+*/
+
+CREATE TABLE #source_system_data_import_status_detail (
+	temp_id INT
+	, process_id NVARCHAR(250) COLLATE DATABASE_DEFAULT
+	, [source] NVARCHAR(50) COLLATE DATABASE_DEFAULT
+	, [type] NVARCHAR(20) COLLATE DATABASE_DEFAULT
+	, [description] NVARCHAR(500) COLLATE DATABASE_DEFAULT
+	, type_error NVARCHAR(10) COLLATE DATABASE_DEFAULT
+)
+
+DECLARE @set_process_id VARCHAR(100)
+	, @mapping_table_id INT, @count INT
+SELECT @set_process_id = ''@process_id''
+SELECT @mapping_table_id = mapping_table_id 
+FROM generic_mapping_header 
+WHERE mapping_name = ''Prisma Others Mapping''
+
+SELECT @count = COUNT(1) FROM [final_process_table]
+
+INSERT INTO #source_system_data_import_status_detail(
+	temp_id
+	, process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT ixp_source_unique_id, @set_process_id
+	, ''Deal''
+	, ''Missing Value''
+	, ''Generic mapping not found for Network Point Name (EXIT) : '' + temp.udf_value4 + '' and Network Point ID (EXIT) : '' + temp.udf_value6
+	, ''Error''
+FROM [final_process_table] temp
+LEFT JOIN generic_mapping_values gmexit ON gmexit.mapping_table_id = @mapping_table_id 
+AND gmexit.clm2_value = temp.udf_value4 AND gmexit.clm3_value = temp.udf_value6
+WHERE gmexit.generic_mapping_values_id IS NULL 
+AND temp.udf_value4 IS NOT NULL AND temp.udf_value6 IS NOT NULL
+
+INSERT INTO #source_system_data_import_status_detail(
+	temp_id
+	, process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT ixp_source_unique_id, @set_process_id
+	, ''Deal''
+	, ''Missing Value''
+	, ''Generic mapping not found for Network Point Name (ENTRY) : '' + temp.udf_value7 + '' and Network Point ID (ENTRY) : '' + temp.udf_value8
+	, ''Error''
+FROM [final_process_table] temp
+LEFT JOIN generic_mapping_values gmentry ON gmentry.mapping_table_id = @mapping_table_id 
+AND gmentry.clm5_value = temp.udf_value8 AND gmentry.clm4_value = temp.udf_value7
+WHERE gmentry.generic_mapping_values_id IS NULL 
+AND temp.udf_value8 IS NOT NULL AND temp.udf_value7 IS NOT NULL
+
+INSERT INTO source_system_data_import_status_detail(
+	 process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT  
+DISTINCT process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error 
+FROM  #source_system_data_import_status_detail
+
+DELETE t
+FROM [final_process_table] t
+INNER JOIN  #source_system_data_import_status_detail d ON d.temp_id = t.ixp_source_unique_id
+
+IF @count <> 0 AND NOT EXISTS (SELECT 1 FROM [final_process_table])
+BEGIN
+INSERT INTO source_system_data_import_status(process_id, code, [module], [source], [type], [description], recommendation, rules_name) 
+ 		SELECT @set_process_id,
+ 		       ''Error'', 
+ 		       ''Import Data'',
+ 		       ''Deal'',
+ 		       ''Error'',
+ 		       ''0 Data Imported out of '' + CAST(@count AS NVARCHAR(20)) + '' rows'',
+ 		       ''Please check your data.'',
+ 		       ''Prisma Capacity Deal''
+END
+
+DECLARE @default_code_value INT
 SELECT @default_code_value = [dbo].[FNAGetDefaultCodeValue](36, 1)
 
 UPDATE a
@@ -537,10 +746,21 @@ UPDATE [final_process_table]
 SET 
  term_start = CAST(term_start AS DATE)
 , term_end = CAST(term_end AS DATE)
+
 '
 				, after_insert_trigger = 'DECLARE @final_process_table NVARCHAR(250), @user_name NVARCHAR(100)
-SELECT @user_name  = dbo.FNADBUser()
+, @new_process_id NVARCHAR(80), @position_deals NVARCHAR(250), @sql NVARCHAR(MAX)
+SELECT @user_name  = dbo.FNADBUser(), @new_process_id = dbo.FNAGetNewID()
 SELECT @final_process_table = dbo.FNAProcessTableName(''deal_final_backup'', @user_name, ''@process_id'')
+SET @position_deals = dbo.FNAProcessTableName(''report_position'', @user_name, @new_process_id)
+
+EXEC (''CREATE TABLE '' + @position_deals + ''( source_deal_header_id INT, action NCHAR(1) COLLATE DATABASE_DEFAULT)'')
+SET @sql = ''INSERT INTO '' + @position_deals + ''(source_deal_header_id,action) 
+ 	SELECT  DISTINCT sdh.source_deal_header_id,
+ 			''''u''''
+ 	FROM '' + @final_process_table + '' t
+	INNER JOIN source_deal_header sdh ON sdh.deal_id = t.deal_id''
+EXEC(@sql)
 
 -- udf_value9 = Shipper user allocation price
 EXEC (''UPDATE '' + @final_process_table + '' SET udf_value9 = ISNULL(udf_value9, 0) '') 
@@ -752,7 +972,9 @@ SET fixed_price = NULL
 FROM '' + @final_process_table + '' temp
 INNER JOIN source_deal_header sdh ON sdh.deal_id = temp.deal_id
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
-'')'
+'')
+
+EXEC spa_calc_deal_position_breakdown NULL,@new_process_id'
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
 				, ixp_category = 23502
@@ -910,6 +1132,14 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'trader_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''102''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'internal_deal_type_value_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''103''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'internal_deal_subtype_value_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Buy''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
