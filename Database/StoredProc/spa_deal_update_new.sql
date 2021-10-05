@@ -1763,8 +1763,7 @@ BEGIN
  		is_required		 NVARCHAR(10) COLLATE DATABASE_DEFAULT,
  		show_in_form	 NCHAR(1) COLLATE DATABASE_DEFAULT,
  		group_id		 INT,
- 		round_value		 NVARCHAR(200) COLLATE DATABASE_DEFAULT,
-		window_function_id VARCHAR(100) COLLATE DATABASE_DEFAULT
+ 		round_value		 NVARCHAR(200) COLLATE DATABASE_DEFAULT
 	)
  	
 	DECLARE @round_price INT, @round_volume INT
@@ -1776,7 +1775,7 @@ BEGIN
 	AND ISNULL(commodity, -1) = ISNULL(@commodity_id, -1)
 	AND ((pricing_type IS NULL AND @pricing_type IS NULL) OR pricing_type = @pricing_type)
 
-	INSERT INTO #field_template_collection([id], default_label, seq_no, field_id, field_type, leg, udf_or_system, hide_control, sql_string, [disabled], field_size, data_type, is_required, show_in_form, group_id, round_value, window_function_id)
+	INSERT INTO #field_template_collection([id], default_label, seq_no, field_id, field_type, leg, udf_or_system, hide_control, sql_string, [disabled], field_size, data_type, is_required, show_in_form, group_id, round_value)
 	SELECT *
 	FROM   (
  			SELECT  mfd.farrms_field_id farrms_field_id,
@@ -1826,8 +1825,7 @@ BEGIN
  								 WHEN ISNULL(@round_volume, mftd.round_value) = 9 THEN '0,000.000000000'
  							END
  					     ELSE NULL
- 					END round_value,
-					mfd.window_function_id
+ 					END round_value
  			FROM maintain_field_deal mfd
  			INNER JOIN maintain_field_template_detail mftd ON  mftd.field_id = mfd.field_id
  			INNER JOIN dbo.source_deal_header_template sdht ON sdht.field_template_id = mftd.field_template_id
@@ -1890,8 +1888,7 @@ BEGIN
  								 WHEN mftd.round_value = 9 THEN '0,000.000000000'
  							END
  					     ELSE NULL
- 					END round_value,
-					NULL window_function_id
+ 					END round_value
  			FROM  maintain_field_template_detail mftd
  			INNER JOIN user_defined_fields_template udft
  				ON  mftd.field_id = udft.udf_template_id
@@ -1928,17 +1925,12 @@ BEGIN
  			@detail_form_json1		  NVARCHAR(MAX),
  			@detail_form_json		  NVARCHAR(MAX),
 			@order_by NVARCHAR(1000),
-			@term_end_exists INT = 0,
-			@browser_columns		  VARCHAR(MAX)
+			@term_end_exists INT = 0
  			
  	
  	SELECT @formula_fields_detail = COALESCE(@formula_fields_detail + ',', '') + id
  	FROM #field_template_collection
  	WHERE field_type = 'w' 	
-
-	SELECT @browser_columns = COALESCE(@browser_columns + ',', '') + id + '->' + window_function_id + '->n'
-	FROM #field_template_collection
-	WHERE field_type = 'b' AND window_function_id IS NOT NULL
 
 	SELECT @term_end_exists = 1 
 	FROM #field_template_collection 
@@ -3075,7 +3067,7 @@ BEGIN
 
 	IF @flag = 'd'
 	BEGIN
- 		SELECT @detail_grid_labels [config_json], @detail_combo_list [combo_list], @filter_list [filter_list], @select_statement [data_sp], @validation_rule [validation_rule], @detail_form_final [form_json], @header_menu [header_menu], @detail_tab_json [tab_json], @detail_tab_ids [tab_ids], @process_id [process_id], @formula_fields_detail [detail_formula_field], CASE WHEN @formula_fields_detail IS NOT NULL OR @enable_pricing = 'y' OR @enable_provisional_tab = 'y' THEN @formula_process_id ELSE NULL END [formula_process_id], @browser_columns [browser_columns]
+ 		SELECT @detail_grid_labels [config_json], @detail_combo_list [combo_list], @filter_list [filter_list], @select_statement [data_sp], @validation_rule [validation_rule], @detail_form_final [form_json], @header_menu [header_menu], @detail_tab_json [tab_json], @detail_tab_ids [tab_ids], @process_id [process_id], @formula_fields_detail [detail_formula_field], CASE WHEN @formula_fields_detail IS NOT NULL OR @enable_pricing = 'y' OR @enable_provisional_tab = 'y' THEN @formula_process_id ELSE NULL END [formula_process_id]
 	END
 	ELSE
 	BEGIN
