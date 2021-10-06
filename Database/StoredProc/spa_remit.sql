@@ -3771,7 +3771,7 @@ BEGIN
 									  WHEN 'GPC'THEN 'GBX'
 									  ELSE UPPER(scur_fixed.currency_name) END) END, 
 			[quantity_volume] = CASE WHEN (MAX(td.deal_group_id) = 1 AND MAX(td.commodity_name) = 'Power' AND MAX(td.internal_desk_id) = 17302) THEN  NULL ELSE 
-			IIF(MAX(td.term_frequency) = 'm' AND MAX(td.profile_granularity) = 982, AVG(tdd.deal_volume/30/24) ,
+			IIF(MAX(td.term_frequency) = 'm' AND MAX(td.profile_granularity) = 982 AND MAX(td.internal_desk_id) IN (17301,17302), AVG(tdd.deal_volume/30/24) ,
 
 			 AVG(tdd.deal_volume)) END,
 			[Total notional contract quantity]= ABS(ROUND(MAX(tvf.total_notional_contract_quantity),5)) ,
