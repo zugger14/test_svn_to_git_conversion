@@ -89,17 +89,38 @@ EXEC spa_drop_all_temp_table
 --*/
 
 DECLARE @SQL VARCHAR(MAX)
-DECLARE @detail_url varchar(MAX) , @url varchar(MAX)
-DECLARE @detail_description varchar(MAX)
+DECLARE @detail_url varchar(MAX) , @url varchar(MAX), @success_count NVARCHAR(20), @error_count  NVARCHAR(20)
+DECLARE @detail_description varchar(MAX), @total_count NVARCHAR(20)
 DECLARE @user_login_id NVARCHAR(250)
 SET @user_login_id =  dbo.FNADBUSER()
 
 
 IF @flag = 'm'
 BEGIN
+SELECT @error_count = COUNT(1)
+FROM remote_service_response_log rsrl	
+WHERE rsrl.process_id = @new_process_id AND response_status = 'Error'
 
-SET @url  = './dev/spa_html.php?__user_name__=' + @user_login_id + '&spa=exec spa_remote_service_response_log @process_id =''' + @new_process_id + ''',@flag=''s'''
-SET @detail_url =  '<a target="_blank" href="' + @url + '"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')</ul></a>' 
+SELECT @success_count = COUNT(1)
+FROM remote_service_response_log rsrl	
+WHERE rsrl.process_id = @new_process_id AND response_status = 'Success'
+
+SELECT @total_count = COUNT(1)
+FROM remote_service_response_log rsrl	
+WHERE rsrl.process_id = @new_process_id 
+
+
+SET @url  = './dev/spa_html.php?__user_name__=' + @user_login_id + '&spa=exec spa_remote_service_response_log @process_id =''' + @new_process_id + ''',@flag=''s'', @response_status=''Error'''
+
+IF @error_count <> 0
+BEGIN
+	SET @detail_url =  '<a target="_blank" href="' + @url + '"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')
+	 <font color="red">(Error(s) Found).</font> </br> (Out of ' + @total_count + ' Time Decimal Segments, ' + @success_count + ' successfully posted and ' + @error_count + ' Error(s) found.)	</ul></a>' 
+END
+ELSE
+BEGIN
+	SET @detail_url = 'Post data Details (' + @source + ') </br> (' + @success_count + ' Time Decimal Segment(s) successfully posted.)'
+END
 
 INSERT INTO message_board (
 	 user_login_id
@@ -158,7 +179,7 @@ BEGIN
 		WHERE role_name = 'Nomination Submission Notification-Success'
 	) users
 	WHERE rsrl.process_id = @new_process_id AND response_status = 'Success'
-
+	
 	-- For Error case, send message to users in role 'Nomination Submission Notification-Error'
 	INSERT INTO message_board (
 		 user_login_id
