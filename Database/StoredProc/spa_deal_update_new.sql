@@ -6076,35 +6076,32 @@ BEGIN TRY
 	DECLARE @calc_position CHAR(1) = 'n'
 	DECLARE @exclude_steps VARCHAR(30) = ''
 
-	--Check if values of specific columns were changed in deal header
+	-- Check if values of specific columns were changed in deal header
 	IF EXISTS (
 		SELECT 1
 		FROM #temp_post_sdh post
 		LEFT JOIN #temp_pre_sdh pre 
-			ON post.source_deal_header_id = pre.source_deal_header_id		
-			AND post.[column] = pre.[column]
+			ON post.[column] = pre.[column]
 			AND post.[value] = pre.[value]
-
 		WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
 	)
 	BEGIN
 		SET @calc_position = 'y'
 	END
 	
-	--Check if values of specific columns were changed in deal detail
+	-- Check if values of specific columns were changed in deal detail
 	IF EXISTS (
 		SELECT 1
 		FROM #temp_post_sdd post
 		LEFT JOIN #temp_pre_sdd pre 
-			ON post.source_deal_detail_id = pre.source_deal_detail_id		
-			AND post.[column] = pre.[column]
+			ON post.[column] = pre.[column]
 			AND post.[value] = pre.[value]
 		WHERE ISNULL(post.[value], -1) <> ISNULL(pre.[value], -1)
 	)
 	BEGIN
 		SET @calc_position = 'y'
 	END
-
+	
 	--SELECT @calc_position = IIF(COUNT(1) > 0 OR @calc_position = 'y', 'y', 'n')
 	--FROM #temp_post_sdh post
 	--LEFT JOIN #temp_pre_sdh pre 
