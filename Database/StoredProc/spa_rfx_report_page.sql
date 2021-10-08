@@ -99,6 +99,10 @@ SET @rfx_report_page_line           = dbo.FNAProcessTableName('report_page_line'
 SET @rfx_data_source_column			= dbo.FNAProcessTableName('data_source_column', @user_name, @process_id)
 SET @rfx_report_dataset				= dbo.FNAProcessTableName('report_dataset', @user_name, @process_id)
 
+-- Note: Report Page Width and Height are set to 8.5 and 11 as standard body properties of ssrs is A4 size. Greater than either of attributes will result page breakdown.
+SET @width = '8.5'
+SET @height = '11'
+
 -- Add Report Page
 IF @flag = 'i'
 BEGIN
