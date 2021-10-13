@@ -78,7 +78,7 @@ BEGIN TRY
 		
 
 	INSERT INTO report_page(report_id, [name], report_hash, width, height)
-	SELECT @report_id_dest AS report_id, 'VPP LT Position with Price Report' [name], '392C5FE3_A9C7_44E5_98AF_DFDBFBA28555' report_hash, 11.5 width,5.5 height
+	SELECT @report_id_dest AS report_id, 'VPP LT Position with Price Report' [name], '392C5FE3_A9C7_44E5_98AF_DFDBFBA28555' report_hash, 8.5 width,11 height
 	
 
 		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
@@ -138,7 +138,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 7 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -166,7 +166,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 8 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -194,7 +194,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 6 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 9 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -222,7 +222,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 7 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 10 AS param_order, 0 AS param_depth, 'Commodity' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -250,7 +250,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 8 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 11 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -278,7 +278,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 9 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 12 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -306,7 +306,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 10 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 13 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -334,7 +334,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 11 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 14 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -362,7 +362,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 12 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 15 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -390,7 +390,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 13 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 16 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -418,7 +418,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 14 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 17 AS param_order, 0 AS param_depth, 'Location' AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -446,7 +446,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 15 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 18 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -474,7 +474,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 16 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 19 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -502,7 +502,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 17 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 20 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -530,7 +530,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 18 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 21 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -558,7 +558,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 19 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 22 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -586,7 +586,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 23 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 1 AS hidden,1 AS logical_operator, 23 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -642,7 +642,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 6 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -670,7 +670,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -698,7 +698,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -726,7 +726,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 20 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -754,7 +754,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 21 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -782,7 +782,7 @@ BEGIN TRY
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 22 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'VPP LT Position with Price Report'
@@ -825,7 +825,7 @@ BEGIN TRY
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 1 column_order,NULL aggregation, NULL functions, 'Counterparty Name' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 0 column_order,NULL aggregation, NULL functions, 'Counterparty' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -847,7 +847,7 @@ BEGIN TRY
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 2 column_order,NULL aggregation, NULL functions, 'Location' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 1 column_order,NULL aggregation, NULL functions, 'Location' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -869,7 +869,7 @@ BEGIN TRY
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 3 column_order,NULL aggregation, NULL functions, 'Reporting Group1 Name' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 2 column_order,NULL aggregation, NULL functions, 'Reporting Group1' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -891,7 +891,7 @@ BEGIN TRY
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 4 column_order,NULL aggregation, NULL functions, 'Term' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 4 render_as,-1 column_template,NULL negative_mark,NULL currency,0 date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 3 column_order,NULL aggregation, NULL functions, 'Term' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 4 render_as,-1 column_template,NULL negative_mark,NULL currency,0 date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -913,29 +913,7 @@ BEGIN TRY
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 0 column_order,NULL aggregation, NULL functions, 'Hours' [alias], 1 sortable, -1 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
-			
-		FROM sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON rpt.[name] = 'VPP LT Position with Price Report_tablix'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] = 'VPP LT Position with Price Report'
-		INNER JOIN report r 
-			ON r.report_id = rpage.report_id
-			AND r.[name] = 'VPP LT Position with Price Report'
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id AND rd.[alias] = 'PWFPV1' 	
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = '15 Mins Position with Fixed Price View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Hours' 
-
-		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
-					, functions, [alias], sortable, rounding, thousand_seperation, font
-					, font_size, font_style, text_align, text_color, background, default_sort_order
-					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 7 column_order,NULL aggregation, NULL functions, 'Dst' [alias], 1 sortable, -1 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 6 column_order,NULL aggregation, NULL functions, 'DST' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -957,7 +935,7 @@ BEGIN TRY
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 9 column_order,NULL aggregation, NULL functions, 'Price' [alias], 1 sortable, -1 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 8 column_order,NULL aggregation, NULL functions, 'Price' [alias], 1 sortable, 5 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -979,7 +957,7 @@ BEGIN TRY
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 5 column_order,NULL aggregation, NULL functions, 'Period Alias Name' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 4 column_order,NULL aggregation, NULL functions, 'Hour' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Left' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1001,7 +979,7 @@ BEGIN TRY
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 6 column_order,NULL aggregation, NULL functions, 'Hr Rowid' [alias], 1 sortable, -1 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 5 column_order,NULL aggregation, NULL functions, 'Interval' [alias], 1 sortable, NULL rounding, NULL thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 0 render_as,-1 column_template,NULL negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1023,7 +1001,7 @@ BEGIN TRY
 					, functions, [alias], sortable, rounding, thousand_seperation, font
 					, font_size, font_style, text_align, text_color, background, default_sort_order
 					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
-		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 8 column_order,NULL aggregation, NULL functions, 'Position' [alias], 1 sortable, -1 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 7 column_order,NULL aggregation, NULL functions, 'Position' [alias], 1 sortable, 5 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,13 sql_aggregation,NULL subtotal
 			
 		FROM sys.objects o
 		INNER JOIN report_page_tablix rpt 
@@ -1066,7 +1044,7 @@ BEGIN TRY
 		INNER JOIN report_tablix_column rtc 
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Counterparty Name' --Added to handle custom column. Assumption: alias is unique and NOT NULL
+			AND rtc.alias = 'Counterparty' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
@@ -1094,35 +1072,7 @@ BEGIN TRY
 		INNER JOIN report_tablix_column rtc 
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Dst' --Added to handle custom column. Assumption: alias is unique and NOT NULL
-	
- INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
-	  SELECT TOP 1 
-			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
-			'Tahoma' font,
-			'8' font_size,
-			'1,0,0' font_style,
-			'Right' text_align,
-			'#ffffff' text_color,
-			'#458bc1' background,
-			rtc.report_tablix_column_id			 		       
-		FROM   sys.objects o
-		INNER JOIN report_page_tablix rpt 
-			ON  rpt.[name] = 'VPP LT Position with Price Report_tablix'
-		INNER JOIN report_page rpage 
-			ON  rpage.report_page_id = rpt.page_id 
-		AND rpage.[name] = 'VPP LT Position with Price Report'
-		INNER JOIN report r 
-			ON  r.report_id = rpage.report_id 
-			AND r.[name] = 'VPP LT Position with Price Report'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = '15 Mins Position with Fixed Price View' 	
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'Hours' 
-		INNER JOIN report_tablix_column rtc 
-			on rtc.tablix_id = rpt.report_page_tablix_id
-			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Hours' --Added to handle custom column. Assumption: alias is unique and NOT NULL
+			AND rtc.alias = 'DST' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
@@ -1150,7 +1100,7 @@ BEGIN TRY
 		INNER JOIN report_tablix_column rtc 
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Hr Rowid' --Added to handle custom column. Assumption: alias is unique and NOT NULL
+			AND rtc.alias = 'Interval' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
@@ -1206,7 +1156,7 @@ BEGIN TRY
 		INNER JOIN report_tablix_column rtc 
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Period Alias Name' --Added to handle custom column. Assumption: alias is unique and NOT NULL
+			AND rtc.alias = 'Hour' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
@@ -1290,7 +1240,7 @@ BEGIN TRY
 		INNER JOIN report_tablix_column rtc 
 			on rtc.tablix_id = rpt.report_page_tablix_id
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
-			AND rtc.alias = 'Reporting Group1 Name' --Added to handle custom column. Assumption: alias is unique and NOT NULL
+			AND rtc.alias = 'Reporting Group1' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
