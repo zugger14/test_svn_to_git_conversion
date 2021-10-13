@@ -906,9 +906,9 @@ SET @_sql_select2 = ''
 
 		sdh.close_reference_id,
 
-		-5500 AS  [charge_type_id],
+		CASE WHEN aod.charge_type = ''''Margin-Commodity'''' THEN -10000377 ELSE -5500 END AS [charge_type_id],
 
-		''''Commodity'''' AS [charge_type],
+		aod.charge_type,
 
 		ag_t.agg_term,
 
@@ -1084,9 +1084,25 @@ SET  @_sql_from2 = ''
 
 	(
 
-		select max(as_of_date) as_of_date 
+		select max(as_of_date) as_of_date,
+
+			MAX(ct.charge_type) AS charge_type
 
 		from source_deal_settlement
+
+		INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
+
+		LEFT JOIN holiday_group hg ON hg.hol_group_value_id = spcd.exp_calendar_id
+			AND hg.hol_date >= '' +
+			CASE WHEN @_term_start IS NOT NULL THEN '''' + convert(varchar(10), @_term_start,120) + '''' ELSE '' sdh.entire_term_start'' END + ''
+			AND hg.hol_date_to <= '' +
+			CASE WHEN @_term_end IS NOT NULL THEN '''' + convert(varchar(10), @_term_end,120) + '''' ELSE '' sdh.entire_term_end'' END + ''
+			AND hg.exp_date <= '''''' + @_from_as_of_date + ''''''
+		OUTER APPLY(SELECT CASE WHEN sdt.deal_type_id = ''''Future'''' AND idtst.internal_deal_type_subtype_type = ''''Physical Future'''' and hg.hol_group_ID IS NOT NULL 
+			THEN CASE WHEN spcd.Granularity IN (991,993) THEN ''''Margin-Commodity''''
+				WHEN sdh.physical_financial_flag = ''''p'''' AND spcd.Granularity = 980 THEN ''''Margin-Commodity''''
+				ELSE ''''Commodity'''' END
+			ELSE ''''Commodity'''' END AS charge_type) ct
 
 		where source_deal_header_id=sdd.source_deal_header_id and 
 
@@ -1095,7 +1111,6 @@ SET  @_sql_from2 = ''
 			and as_of_date<=''''''+ @_from_as_of_date +''''''
 
 		GROUP BY CASE WHEN sdt.deal_type_id = ''''Future'''' AND idtst.internal_deal_type_subtype_type = ''''Physical Future'''' AND sdh.physical_financial_flag = ''''p'''' AND spcd.granularity = 980 THEN fin_volume_uom ELSE ''''1'''' END
-
 
 	)	aod
 
