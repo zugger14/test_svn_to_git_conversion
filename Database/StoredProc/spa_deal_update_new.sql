@@ -3677,7 +3677,7 @@ BEGIN TRY
 	-- Save UDT Grid data using spa_process_form_data
 	IF @header_udt_grid IS NOT NULL
 	BEGIN
-		SET @header_udt_grid = '<Root function_id="10131000" object_id="' + @deal_ref_id + '">' + @header_udt_grid + '</Root>'
+		SET @header_udt_grid = '<Root function_id="10131000" object_id="' + dbo.FNAEncodeXML(@deal_ref_id) + '">' + @header_udt_grid + '</Root>'
 		EXEC spa_process_form_data @flag = 's', @xml = @header_udt_grid, @success_message = 0
 	END
 	
