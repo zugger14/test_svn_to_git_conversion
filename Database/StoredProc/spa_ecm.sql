@@ -123,7 +123,9 @@ BEGIN
 		deal_group_id INT,
 		ext_deal_id VARCHAR(512) COLLATE DATABASE_DEFAULT,
 		confirm_status VARCHAR(512) COLLATE DATABASE_DEFAULT,
-		[commodity_name] VARCHAR(1000) COLLATE DATABASE_DEFAULT
+		[commodity_name] VARCHAR(1000) COLLATE DATABASE_DEFAULT,
+		[term_frequency] NCHAR(1) COLLATE DATABASE_DEFAULT,
+		profile_granularity INT
 	)
 
 	SET @_sql = '
