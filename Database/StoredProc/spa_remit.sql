@@ -911,18 +911,6 @@ BEGIN
 							volume FLOAT,
 							price FLOAT 
 						)
-			IF OBJECT_ID('tempdb..#tempblock3') IS NOT NULL
-				DROP TABLE #tempblock3
-			CREATE TABLE #tempblock3 (
-							id INT IDENTITY(1, 1), 
-							hr INT, 
-							source_deal_header_id INT, 
-							term_date DATETIME, 
-							hr_mult INT,
-							granularity INT,
-							volume FLOAT,
-							price FLOAT 
-						)
 
 			IF OBJECT_ID('tempdb..#tempblock2') IS NOT NULL
 				DROP TABLE #tempblock2
@@ -1336,26 +1324,41 @@ BEGIN
 							AND unpvt.ecm_document_type = @ecm_document_type
 							AND unpvt.error_validation_message IS NULL
 
-						INSERT INTO #tempblock3(hr, source_deal_header_id, term_date, hr_mult,granularity,volume,price)
-							SELECT MIN(hr),[source_deal_header_id], MAX(term_date), MIN(hr_mult),MIN(granularity), volume, price FROM #tempblock1
-						GROUP BY  hr,[source_deal_header_id], volume, price
-						ORDER BY hr
+						SELECT hr,[source_deal_header_id],volume,price, hr_mult,granularity 
+							, min(term_date) AS start_date, DATEADD(mi,15,MAX(term_date)) AS		end_date 
+						INTO #temp 
+						FROM (
+								SELECT ISNULL(LAG(price,1) OVER (ORDER BY term_date), price) next_price , *
+								FROM #tempblock1 
+						) a GROUP BY  hr,[source_deal_header_id],volume,price, hr_mult,granularity, next_price
+						ORDER BY start_date
 
-						-- Aggregate functions used for Volume and Price, in order to handle duplicate term  dates where DST influenced
-						SELECT @xml_inner3 = (
-								SELECT CONVERT(VARCHAR(19), term_date, 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
-								CASE WHEN  granularity = 982 THEN CONVERT(VARCHAR(19), DATEADD(hour, 1, term_date), 126) 
-									WHEN granularity = 987  THEN CONVERT(VARCHAR(19), DATEADD(minute, 15, term_date), 126) 
-									ELSE CONVERT(VARCHAR(19), term_date, 126) END
-								 AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
-								CAST(ISNULL(SUM(volume),@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
-								CAST(ISNULL(AVG(price),@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
-						FROM #tempblock3
-						WHERE hr_mult = 1
-						GROUP BY term_date, granularity
-						ORDER BY term_date
-						FOR XML PATH(''), ROOT('TimeIntervalQuantities')
-						)
+					-- Aggregate functions used for Volume and Price, in order to handle duplicate term  dates where DST influenced
+					SELECT @xml_inner3 = (
+											SELECT CONVERT(VARCHAR(19), start_date, 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
+											 CONVERT(VARCHAR(19), end_date, 126) [TimeIntervalQuantity/DeliveryEndDateAndTime] ,
+											 CAST(ISNULL(volume,@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+													CAST(ISNULL(price,@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+											FROM #temp
+											WHERE hr_mult = 1
+											ORDER BY start_date
+											FOR XML PATH(''), ROOT('TimeIntervalQuantities')
+					)
+
+						--SELECT @xml_inner3 = (
+						--		SELECT CONVERT(VARCHAR(19), start_date, 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
+						--		CASE WHEN  granularity = 982 THEN CONVERT(VARCHAR(19), DATEADD(hour, 1, term_date), 126) 
+						--			WHEN granularity = 987  THEN CONVERT(VARCHAR(19), DATEADD(minute, 30,term_date), 126) 
+						--			ELSE CONVERT(VARCHAR(19), end_date, 126) END
+						--		 AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+						--		CAST(ISNULL(SUM(volume),@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+						--		CAST(ISNULL(AVG(price),@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+						--FROM #temp
+						--WHERE hr_mult = 1
+						--GROUP BY term_date, granularity
+						--ORDER BY term_date
+						--FOR XML PATH(''), ROOT('TimeIntervalQuantities')
+						--)
 					END
 					ELSE IF EXISTS(SELECT 1 FROM source_deal_header sdh
 						  INNER JOIN source_deal_detail sdd
