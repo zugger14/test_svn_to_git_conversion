@@ -2327,8 +2327,8 @@ BEGIN TRY
 			+ CASE WHEN isnull(@maintain_delta, 0) = 0 THEN '' ELSE 
 				CASE WHEN EXISTS ( SELECT 1 FROM #report_hourly_position_financial_main_old ) THEN 
 			' 
-			output [source_deal_header_id],[term_start],[deal_date],[deal_volume_uom_id],[hr1],[hr2],[hr3],[hr4],[hr5],[hr6],[hr7],[hr8],[hr9],[hr10],[hr11],[hr12],[hr13],[hr14],[hr15],[hr16],[hr17],[hr18],[hr19],[hr20],[hr21],[hr22],[hr23],[hr24],[hr25],[create_ts],[create_user]
-			,source_deal_detail_id,rowid,granularity,[period],financial_curve_id,expiration_date
+			output inserted.[source_deal_header_id],inserted.[term_start],inserted.[deal_date],inserted.[deal_volume_uom_id],inserted.[hr1],inserted.[hr2],inserted.[hr3],inserted.[hr4],inserted.[hr5],inserted.[hr6],inserted.[hr7],inserted.[hr8],inserted.[hr9],inserted.[hr10],inserted.[hr11],inserted.[hr12],inserted.[hr13],inserted.[hr14],inserted.[hr15],inserted.[hr16],inserted.[hr17],inserted.[hr18],inserted.[hr19],inserted.[hr20],inserted.[hr21],inserted.[hr22],inserted.[hr23],inserted.[hr24],inserted.[hr25],inserted.[create_ts],inserted.[create_user]
+			,inserted.source_deal_detail_id,inserted.rowid,inserted.granularity,inserted.[period],inserted.financial_curve_id,inserted.expiration_date
 		into #report_hourly_position_financial_main_inserted 
 		 (source_deal_header_id,term_start,deal_date,deal_volume_uom_id
 		 ,hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16
