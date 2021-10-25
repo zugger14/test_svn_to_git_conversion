@@ -212,7 +212,7 @@
 
 			var counterparty_contract_types = counterparty_contract_type.contract_counterparty_type_form.getItemValue('counterparty_contract_type');
 			var description = counterparty_contract_type.contract_counterparty_type_form.getItemValue('description');
-			var ammendment_date = counterparty_contract_type.contract_counterparty_type_form.getItemValue('ammendment_date',true);
+			var ammendment_date = counterparty_contract_type.contract_counterparty_type_form.getCalendar('ammendment_date').getFormatedDate("%Y-%m-%d");
 			var number = counterparty_contract_type.contract_counterparty_type_form.getItemValue('number');
 			var contract_status = counterparty_contract_type.contract_counterparty_type_form.getItemValue('contract_status');
 			notes_object_id = counterparty_contract_types;
