@@ -50,7 +50,7 @@ namespace FARRMSImportCLR
                     bookedSince = "";
                 }
 
-                string bookedBefore = clrImportInfo.Params[3].paramValue;
+                string bookedBefore = (clrImportInfo.Params.Count == 4 ? clrImportInfo.Params[3].paramValue : "null")  ;
                 if (bookedBefore == "null")
                 {
                     bookedBefore = "";
