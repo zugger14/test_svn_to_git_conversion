@@ -1343,7 +1343,7 @@ BEGIN
 						
 						DELETE FROM #temp1 WHERE volume IS NULL AND price IS NULL
 
-						IF EXISTS(SELECT 1 FROM #temp WHERE source_deal_header_id IS NOT NULL)
+						IF OBJECT_ID('tempdb..#temp') IS NOT NULL
 							DROP TABLE #temp
 
 						DECLARE @timer1 INT = 1
@@ -1394,10 +1394,11 @@ BEGIN
 					SELECT @xml_inner3 = (
 											SELECT CONVERT(VARCHAR(19), start_date, 126) [TimeIntervalQuantity/DeliveryStartDateAndTime],
 											 CONVERT(VARCHAR(19), end_date, 126) [TimeIntervalQuantity/DeliveryEndDateAndTime] ,
-											 CAST(ISNULL(volume,@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
-													CAST(ISNULL(price,@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+											 CAST(ISNULL(SUM(volume),@col_contract_capacity) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+													CAST(ISNULL(AVG(price),@col_price) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
 											FROM #temp
 											WHERE hr_mult = 1
+											GROUP BY start_date,end_date
 											ORDER BY start_date
 											FOR XML PATH(''), ROOT('TimeIntervalQuantities')
 					)
