@@ -104,7 +104,7 @@
 								// These layouts are not supported/tested, hence hide them.
 								// {value: "5h", img: "' .  $image_path . 'dhxcombo_web/5h.bmp", img_dis: "' .  $image_path . 'dhxcombo_web/1c.bmp", text: "5H"},
 								// {value: "5i", img: "' .  $image_path . 'dhxcombo_web/5i.bmp", img_dis: "' .  $image_path . 'dhxcombo_web/1c.bmp", text: "5I"},
-								// {value: "5u", img: "' .  $image_path . 'dhxcombo_web/5u.bmp", img_dis: "' .  $image_path . 'dhxcombo_web/1c.bmp", text: "5U"},
+								 {value: "5u", img: "' .  $image_path . 'dhxcombo_web/5u.bmp", img_dis: "' .  $image_path . 'dhxcombo_web/1c.bmp", text: "5U"},
 								// {value: "5e", img: "' .  $image_path . 'dhxcombo_web/5e.bmp", img_dis: "' .  $image_path . 'dhxcombo_web/1c.bmp", text: "5E"},
 								// {value: "5w", img: "' .  $image_path . 'dhxcombo_web/5w.bmp", img_dis: "' .  $image_path . 'dhxcombo_web/1c.bmp", text: "5W"},
 								// {value: "5k", img: "' .  $image_path . 'dhxcombo_web/5k.bmp", img_dis: "' .  $image_path . 'dhxcombo_web/1c.bmp", text: "5K"},
