@@ -366,6 +366,9 @@ BEGIN
 			SET @sql += '
 				LEFT JOIN report_paramset rp ON rp.paramset_hash = prv.paramset_hash
 				LEFT JOIN report_page rp2 ON rp.page_id = rp2.report_page_id
+				LEFT JOIN report_paramset_privilege rpp3
+					ON rpp3.paramset_hash = rp.paramset_hash
+					AND (rpp3.[user_id] = ''' + @user_name + ''' OR rpp3.role_id IN (SELECT fur1.role_id FROM dbo.FNAGetUserRole(''' + @user_name + ''') fur1))
 				LEFT JOIN report_privilege rp3 
 					ON rp2.report_hash = rp3.report_hash
 					AND (rp3.[user_id] = ''' + @user_name + ''' OR rp3.role_id IN (SELECT fur.role_id FROM dbo.FNAGetUserRole(''' + @user_name + ''') fur))'
@@ -377,7 +380,7 @@ BEGIN
 		BEGIN
 			SET @sql += ' 
 					OR (rp.paramset_hash IS NULL AND prv.is_public = 1)					--for Std report
-					OR (prv.is_public = 1 AND rp3.report_privilege_id IS NOT NULL)		--for RM reports	
+					OR (prv.is_public = 1 AND (rp3.report_privilege_id IS NOT NULL OR rpp3.report_paramset_privilege_id IS NOT NULL))		--for RM reports	
 			'
 		END
 		SET @sql += ')'
