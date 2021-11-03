@@ -864,7 +864,7 @@ FROM #final_data
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
 					LEFT JOIN ixp_soap_functions isf ON isf.ixp_soap_functions_name = '' 
-					LEFT JOIN ixp_clr_functions icf ON icf.ixp_clr_functions_name = '' 
+					LEFT JOIN ixp_clr_functions icf ON icf.ixp_clr_functions_name = 'Prisma' 
 					WHERE ir.ixp_rules_id = @ixp_rules_id_new
 						IF OBJECT_ID('tempdb..#pre_ixp_import_data_source') IS NOT NULL
 						BEGIN
@@ -878,7 +878,7 @@ FROM #final_data
 						END
 					
 
-INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[dealID]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[dealID]', ic.ixp_columns_id, 'pa.[DealId]+''_PRISMA''', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
@@ -1049,3 +1049,4 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
+		
