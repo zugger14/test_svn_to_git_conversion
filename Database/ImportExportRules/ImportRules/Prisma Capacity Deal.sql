@@ -44,7 +44,106 @@ BEGIN
 					'Prisma Capacity Deal' ,
 					'N' ,
 					NULL ,
-					'DECLARE @default_code_value INT
+					'/*[final_process_table]
+udf_value1 = tso entry
+udf_value3 = bundled
+udf_value5 = undiscounted
+udf_value6 = networkPoint_id_exit
+udf_value7 = networkPoint_name_entry
+udf_value8 = networkPoint_id_entry
+udf_value4 = networkPoint_name_exit
+*/
+
+CREATE TABLE #source_system_data_import_status_detail (
+	temp_id INT
+	, process_id NVARCHAR(250) COLLATE DATABASE_DEFAULT
+	, [source] NVARCHAR(50) COLLATE DATABASE_DEFAULT
+	, [type] NVARCHAR(20) COLLATE DATABASE_DEFAULT
+	, [description] NVARCHAR(500) COLLATE DATABASE_DEFAULT
+	, type_error NVARCHAR(10) COLLATE DATABASE_DEFAULT
+)
+
+DECLARE @set_process_id VARCHAR(100)
+	, @mapping_table_id INT, @count INT
+SELECT @set_process_id = ''@process_id''
+SELECT @mapping_table_id = mapping_table_id 
+FROM generic_mapping_header 
+WHERE mapping_name = ''Prisma Others Mapping''
+
+SELECT @count = COUNT(1) FROM [final_process_table]
+
+INSERT INTO #source_system_data_import_status_detail(
+	temp_id
+	, process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT ixp_source_unique_id, @set_process_id
+	, ''Deal''
+	, ''Missing Value''
+	, ''Generic mapping not found for Network Point Name (EXIT) : '' + temp.udf_value4 + '' and Network Point ID (EXIT) : '' + temp.udf_value6
+	, ''Error''
+FROM [final_process_table] temp
+LEFT JOIN generic_mapping_values gmexit ON gmexit.mapping_table_id = @mapping_table_id 
+AND gmexit.clm2_value = temp.udf_value4 AND gmexit.clm3_value = temp.udf_value6
+WHERE gmexit.generic_mapping_values_id IS NULL 
+AND temp.udf_value4 IS NOT NULL AND temp.udf_value6 IS NOT NULL
+
+INSERT INTO #source_system_data_import_status_detail(
+	temp_id
+	, process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT ixp_source_unique_id, @set_process_id
+	, ''Deal''
+	, ''Missing Value''
+	, ''Generic mapping not found for Network Point Name (ENTRY) : '' + temp.udf_value7 + '' and Network Point ID (ENTRY) : '' + temp.udf_value8
+	, ''Error''
+FROM [final_process_table] temp
+LEFT JOIN generic_mapping_values gmentry ON gmentry.mapping_table_id = @mapping_table_id 
+AND gmentry.clm5_value = temp.udf_value8 AND gmentry.clm4_value = temp.udf_value7
+WHERE gmentry.generic_mapping_values_id IS NULL 
+AND temp.udf_value8 IS NOT NULL AND temp.udf_value7 IS NOT NULL
+
+INSERT INTO source_system_data_import_status_detail(
+	 process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT  
+DISTINCT process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error 
+FROM  #source_system_data_import_status_detail
+
+DELETE t
+FROM [final_process_table] t
+INNER JOIN  #source_system_data_import_status_detail d ON d.temp_id = t.ixp_source_unique_id
+
+IF @count <> 0 AND NOT EXISTS (SELECT 1 FROM [final_process_table])
+BEGIN
+    INSERT INTO source_system_data_import_status(process_id, code, [module], [source], [type], [description], recommendation, rules_name) 
+ 	SELECT @set_process_id,
+ 	       ''Error'', 
+ 	       ''Import Data'',
+ 	       ''Deal'',
+ 	       ''Error'',
+ 	       ''0 Data Imported out of '' + CAST(@count AS NVARCHAR(20)) + '' rows'',
+ 	       ''Please check your data.'',
+ 	       ''Prisma Capacity Deal''
+END
+
+DECLARE @default_code_value INT
+/**36 = Define System Time Zone(adiha_default_codes) */
 SELECT @default_code_value = [dbo].[FNAGetDefaultCodeValue](36, 1)
 
 UPDATE a
@@ -168,21 +267,53 @@ UPDATE [final_process_table]
 SET 
  term_start = CAST(term_start AS DATE)
 , term_end = CAST(term_end AS DATE)
+
 ',
 					'DECLARE @final_process_table NVARCHAR(250), @user_name NVARCHAR(100)
-SELECT @user_name  = dbo.FNADBUser()
+, @new_process_id NVARCHAR(80), @position_deals NVARCHAR(250), @sql NVARCHAR(MAX)
+SELECT @user_name  = dbo.FNADBUser(), @new_process_id = dbo.FNAGetNewID()
 SELECT @final_process_table = dbo.FNAProcessTableName(''deal_final_backup'', @user_name, ''@process_id'')
+SET @position_deals = dbo.FNAProcessTableName(''report_position'', @user_name, @new_process_id)
+
+EXEC (''CREATE TABLE '' + @position_deals + ''( source_deal_header_id INT, action NCHAR(1) COLLATE DATABASE_DEFAULT)'')
+SET @sql = ''INSERT INTO '' + @position_deals + ''(source_deal_header_id,action) 
+ 	SELECT  DISTINCT sdh.source_deal_header_id,
+ 			''''u''''
+ 	FROM '' + @final_process_table + '' t
+	INNER JOIN source_deal_header sdh ON sdh.deal_id = t.deal_id''
+EXEC(@sql)
 
 -- udf_value9 = Shipper user allocation price
 EXEC (''UPDATE '' + @final_process_table + '' SET udf_value9 = ISNULL(udf_value9, 0) '') 
+EXEC( ''ALTER TABLE '' + @final_process_table + '' ADD hours_diff INT'')
+EXEC( ''ALTER TABLE '' + @final_process_table + '' ADD capacity_fee_leg1 NUMERIC(38,6)'')
+EXEC( ''ALTER TABLE '' + @final_process_table + '' ADD capacity_fee_leg2 NUMERIC(38,6)'')
+
+EXEC (''UPDATE a
+SET hours_diff = DATEDIFF(hh, a.term_start, a.term_end)+ 1 + (CASE WHEN insert_delete = ''''i'''' THEN 1 WHEN insert_delete = ''''d'''' THEN -1 ELSE 0 END),
+capacity_fee_leg1 = (udf_value9 + CAST(fixed_price AS float)) * 10
+						/
+						(DATEDIFF(hh, a.term_start, a.term_end)+1 + (CASE WHEN insert_delete = ''''i'''' THEN 1 WHEN insert_delete = ''''d'''' THEN -1 ELSE 0 END)),
+capacity_fee_leg2 = ((udf_value9 * 0.5 ) + CAST(fixed_price AS float)) * 10
+						/
+						(DATEDIFF(hh, a.term_start, a.term_end)+1 + (CASE WHEN insert_delete = ''''i'''' THEN 1 WHEN insert_delete = ''''d'''' THEN -1 ELSE 0 END))
+FROM '' + @final_process_table + '' a
+LEFT JOIN mv90_dst md ON md.year = YEAR(term_start) 
+AND CAST(md.[date] -1 AS date) BETWEEN CAST(term_start AS DATE) AND CAST(term_end AS DATE)
+AND md.dst_group_value_id = 102201 
+'') 
+
 EXEC(''
+DECLARE @uom_id INT, @currency_id INT
+SELECT @uom_id = source_uom_id FROM source_uom WHERE uom_name = ''''Mwh''''
+SELECT @currency_id = source_currency_id FROM source_currency WHERE currency_name = ''''Eur''''
+
 -- FOR 2 leg deals
 INSERT INTO user_defined_deal_fields (source_deal_header_id, udf_template_id,currency_id,
 	uom_id, receive_pay, udf_value, counterparty_id)
 SELECT cp_entry.source_deal_header_id, 
-	cp_entry.udf_template_id,curr.source_currency_id,
-	uom.source_uom_id, ''''p'''' ,
-	((udf_value9 * 0.5 ) + CAST(fixed_price AS float)) * 10 /(DATEDIFF(hh, a.term_start, a.term_end)+1),
+	cp_entry.udf_template_id, @currency_id, @uom_id, ''''p'''' ,
+	a.capacity_fee_leg2,
 	 sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.udf_value1
@@ -191,20 +322,13 @@ CROSS APPLY (SELECT uddft.udf_template_id, sdh.source_deal_header_id FROM user_d
 	INNER JOIN source_deal_header sdh on sdh.template_id = uddft.template_id AND sdh.deal_id = a.deal_id
 	where udft.field_label = ''''capacity fees-entry''''
 ) cp_entry
-OUTER APPLY (
-	SELECT source_uom_id FROM source_uom WHERE uom_name = ''''Mwh''''
-) uom
-OUTER APPLY (
-	SELECT source_currency_id FROM source_currency WHERE currency_name = ''''Eur''''
-) curr
 LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_entry.source_deal_header_id 
 	AND uddf.udf_template_id = cp_entry.udf_template_id
 WHERE uddf.udf_deal_id IS NULL AND a.udf_value3 = ''''true'''' AND a.udf_value6 IS NULL  -- udf_value6 =networkPoint_id_exit
 UNION
 SELECT cp_exit.source_deal_header_id, 
-	cp_exit.udf_template_id,curr.source_currency_id,
-	uom.source_uom_id, ''''p'''' ,
-	((udf_value9 * 0.5 ) + CAST(fixed_price AS float)) * 10/(DATEDIFF(hh, a.term_start, a.term_end)+1),
+	cp_exit.udf_template_id, @currency_id, @uom_id, ''''p'''' ,
+	a.capacity_fee_leg2,
 	sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -213,18 +337,12 @@ CROSS APPLY (SELECT uddft.udf_template_id, sdh.source_deal_header_id FROM user_d
 	INNER JOIN source_deal_header sdh on sdh.template_id = uddft.template_id AND sdh.deal_id = a.deal_id
 	where udft.field_label = ''''capacity fees-exit''''
 ) cp_exit
-OUTER APPLY (
-	SELECT source_uom_id FROM source_uom WHERE uom_name = ''''Mwh''''
-) uom
-OUTER APPLY (
-	SELECT source_currency_id FROM source_currency WHERE currency_name = ''''Eur''''
-) curr
 LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_exit.source_deal_header_id 
 	AND uddf.udf_template_id = cp_exit.udf_template_id
 WHERE uddf.udf_deal_id IS NULL AND a.udf_value3 = ''''true'''' AND a.udf_value6 IS NOT NULL  -- udf_value6 =networkPoint_id_exit
 
 UPDATE uddf
-SET udf_value= ((udf_value9 * 0.5 ) + CAST(fixed_price AS float)) * 10 /(DATEDIFF(hh, a.term_start, a.term_end)+1)
+SET udf_value= a.capacity_fee_leg2
 , counterparty_id = sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.udf_value1
@@ -238,7 +356,7 @@ INNER JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_entr
 WHERE a.udf_value3 = ''''true'''' AND a.udf_value6 IS NULL  -- udf_value6 =networkPoint_id_exit
 
 UPDATE uddf
-SET udf_value= ((udf_value9 * 0.5 ) + CAST(fixed_price AS float)) * 10 /(DATEDIFF(hh, a.term_start, a.term_end)+1)
+SET udf_value= a.capacity_fee_leg2
 , counterparty_id = sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -257,9 +375,8 @@ WHERE a.udf_value3 = ''''true'''' AND a.udf_value6 IS NOT NULL  -- udf_value6 =n
 INSERT INTO user_defined_deal_fields (source_deal_header_id, udf_template_id,currency_id,
 	uom_id, receive_pay, udf_value, counterparty_id)
 SELECT cp_entry.source_deal_header_id, 
-	cp_entry.udf_template_id,curr.source_currency_id,
-	uom.source_uom_id, ''''p'''' ,
-	(udf_value9 + CAST(fixed_price AS float)) * 10/(DATEDIFF(hh, a.term_start, a.term_end)+1),
+	cp_entry.udf_template_id, @currency_id, @uom_id, ''''p'''' ,
+	a.capacity_fee_leg1,
 	sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -268,21 +385,14 @@ CROSS APPLY (SELECT uddft.udf_template_id, sdh.source_deal_header_id FROM user_d
 	INNER JOIN source_deal_header sdh on sdh.template_id = uddft.template_id AND sdh.deal_id = a.deal_id
 	where udft.field_label = ''''capacity fees-entry''''
 ) cp_entry
-OUTER APPLY (
-	SELECT source_uom_id FROM source_uom WHERE uom_name = ''''Mwh''''
-) uom
-OUTER APPLY (
-	SELECT source_currency_id FROM source_currency WHERE currency_name = ''''Eur''''
-) curr
 LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_entry.source_deal_header_id 
 	AND uddf.udf_template_id = cp_entry.udf_template_id
-WHERE 1=1 --and uddf.udf_deal_id IS NULL 
+WHERE 1=1 AND uddf.udf_deal_id IS NULL
 AND a.udf_value3 = ''''false'''' AND a.udf_value6 IS NULL  -- udf_value6 =networkPoint_id_exit
 UNION
 SELECT cp_exit.source_deal_header_id, 
-	cp_exit.udf_template_id,curr.source_currency_id,
-	uom.source_uom_id, ''''p'''' ,
-	(udf_value9 + CAST(fixed_price AS float)) * 10/(DATEDIFF(hh, a.term_start, a.term_end)+1),
+	cp_exit.udf_template_id, @currency_id, @uom_id, ''''p'''' ,
+	a.capacity_fee_leg1,
 	sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -291,18 +401,12 @@ CROSS APPLY (SELECT uddft.udf_template_id, sdh.source_deal_header_id FROM user_d
 	INNER JOIN source_deal_header sdh on sdh.template_id = uddft.template_id AND sdh.deal_id = a.deal_id
 	where udft.field_label = ''''capacity fees-exit''''
 ) cp_exit
-OUTER APPLY (
-	SELECT source_uom_id FROM source_uom WHERE uom_name = ''''Mwh''''
-) uom
-OUTER APPLY (
-	SELECT source_currency_id FROM source_currency WHERE currency_name = ''''Eur''''
-) curr
 LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_exit.source_deal_header_id 
 	AND uddf.udf_template_id = cp_exit.udf_template_id
 WHERE uddf.udf_deal_id IS NULL AND a.udf_value3 = ''''false'''' AND a.udf_value6 IS NOT NULL  -- udf_value6 =networkPoint_id_exit
 
 UPDATE uddf
-SET udf_value= (udf_value9 + CAST(fixed_price AS float)) * 10/(DATEDIFF(hh, a.term_start, a.term_end)+1)
+SET udf_value = a.capacity_fee_leg1
 , counterparty_id = sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -316,7 +420,7 @@ INNER JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_entr
 WHERE a.udf_value3 = ''''false'''' AND a.udf_value6 IS NULL  -- udf_value6 =networkPoint_id_exit
 
 UPDATE uddf
-SET udf_value= (udf_value9  + CAST(fixed_price AS float)) * 10/(DATEDIFF(hh, a.term_start, a.term_end)+1)
+SET udf_value= a.capacity_fee_leg1
 , counterparty_id = sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -333,7 +437,7 @@ WHERE a.udf_value3 = ''''false'''' AND a.udf_value6 IS NOT NULL  -- udf_value6 =
 
 SELECT sdd.source_deal_Detail_id, CAST(a.term_start AS DATE) term_date, 
 IIF(LEN(DATEPART(hour,a.term_start) +1 ) = 1, ''''0'''' + CAST(DATEPART(hour,a.term_start) +1 AS NVARCHAR(4)) , CAST(DATEPART(hour,a.term_start) +1 AS NVARCHAR(4))) + '''':00'''' hrs , 
-temp.deal_volume/1000 deal_volume, 982 granularity, 0 is_dst
+CAST(temp.deal_volume AS NUMERIC(38,5))/1000 deal_volume, 982 granularity, 0 is_dst
 INTO #temp_detail_hour
 FROM '' + @final_process_table + '' temp
 CROSS APPLY (SELECT * FROM dbo.FNATermBreakdown(''''h'''',term_start,term_end)) a
@@ -383,7 +487,9 @@ SET fixed_price = NULL
 FROM '' + @final_process_table + '' temp
 INNER JOIN source_deal_header sdh ON sdh.deal_id = temp.deal_id
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
-'')',
+'')
+
+EXEC spa_calc_deal_position_breakdown NULL,@new_process_id',
 					'i' ,
 					'n' ,
 					@admin_user ,
@@ -413,7 +519,106 @@ INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal
 			SET ixp_rules_name = 'Prisma Capacity Deal'
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
-				, before_insert_trigger = 'DECLARE @default_code_value INT
+				, before_insert_trigger = '/*[final_process_table]
+udf_value1 = tso entry
+udf_value3 = bundled
+udf_value5 = undiscounted
+udf_value6 = networkPoint_id_exit
+udf_value7 = networkPoint_name_entry
+udf_value8 = networkPoint_id_entry
+udf_value4 = networkPoint_name_exit
+*/
+
+CREATE TABLE #source_system_data_import_status_detail (
+	temp_id INT
+	, process_id NVARCHAR(250) COLLATE DATABASE_DEFAULT
+	, [source] NVARCHAR(50) COLLATE DATABASE_DEFAULT
+	, [type] NVARCHAR(20) COLLATE DATABASE_DEFAULT
+	, [description] NVARCHAR(500) COLLATE DATABASE_DEFAULT
+	, type_error NVARCHAR(10) COLLATE DATABASE_DEFAULT
+)
+
+DECLARE @set_process_id VARCHAR(100)
+	, @mapping_table_id INT, @count INT
+SELECT @set_process_id = ''@process_id''
+SELECT @mapping_table_id = mapping_table_id 
+FROM generic_mapping_header 
+WHERE mapping_name = ''Prisma Others Mapping''
+
+SELECT @count = COUNT(1) FROM [final_process_table]
+
+INSERT INTO #source_system_data_import_status_detail(
+	temp_id
+	, process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT ixp_source_unique_id, @set_process_id
+	, ''Deal''
+	, ''Missing Value''
+	, ''Generic mapping not found for Network Point Name (EXIT) : '' + temp.udf_value4 + '' and Network Point ID (EXIT) : '' + temp.udf_value6
+	, ''Error''
+FROM [final_process_table] temp
+LEFT JOIN generic_mapping_values gmexit ON gmexit.mapping_table_id = @mapping_table_id 
+AND gmexit.clm2_value = temp.udf_value4 AND gmexit.clm3_value = temp.udf_value6
+WHERE gmexit.generic_mapping_values_id IS NULL 
+AND temp.udf_value4 IS NOT NULL AND temp.udf_value6 IS NOT NULL
+
+INSERT INTO #source_system_data_import_status_detail(
+	temp_id
+	, process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT ixp_source_unique_id, @set_process_id
+	, ''Deal''
+	, ''Missing Value''
+	, ''Generic mapping not found for Network Point Name (ENTRY) : '' + temp.udf_value7 + '' and Network Point ID (ENTRY) : '' + temp.udf_value8
+	, ''Error''
+FROM [final_process_table] temp
+LEFT JOIN generic_mapping_values gmentry ON gmentry.mapping_table_id = @mapping_table_id 
+AND gmentry.clm5_value = temp.udf_value8 AND gmentry.clm4_value = temp.udf_value7
+WHERE gmentry.generic_mapping_values_id IS NULL 
+AND temp.udf_value8 IS NOT NULL AND temp.udf_value7 IS NOT NULL
+
+INSERT INTO source_system_data_import_status_detail(
+	 process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error
+)
+SELECT  
+DISTINCT process_id
+	, [source]
+	, [type]
+	, [description]
+	, type_error 
+FROM  #source_system_data_import_status_detail
+
+DELETE t
+FROM [final_process_table] t
+INNER JOIN  #source_system_data_import_status_detail d ON d.temp_id = t.ixp_source_unique_id
+
+IF @count <> 0 AND NOT EXISTS (SELECT 1 FROM [final_process_table])
+BEGIN
+    INSERT INTO source_system_data_import_status(process_id, code, [module], [source], [type], [description], recommendation, rules_name) 
+ 	SELECT @set_process_id,
+ 	       ''Error'', 
+ 	       ''Import Data'',
+ 	       ''Deal'',
+ 	       ''Error'',
+ 	       ''0 Data Imported out of '' + CAST(@count AS NVARCHAR(20)) + '' rows'',
+ 	       ''Please check your data.'',
+ 	       ''Prisma Capacity Deal''
+END
+
+DECLARE @default_code_value INT
+/**36 = Define System Time Zone(adiha_default_codes) */
 SELECT @default_code_value = [dbo].[FNAGetDefaultCodeValue](36, 1)
 
 UPDATE a
@@ -537,21 +742,53 @@ UPDATE [final_process_table]
 SET 
  term_start = CAST(term_start AS DATE)
 , term_end = CAST(term_end AS DATE)
+
 '
 				, after_insert_trigger = 'DECLARE @final_process_table NVARCHAR(250), @user_name NVARCHAR(100)
-SELECT @user_name  = dbo.FNADBUser()
+, @new_process_id NVARCHAR(80), @position_deals NVARCHAR(250), @sql NVARCHAR(MAX)
+SELECT @user_name  = dbo.FNADBUser(), @new_process_id = dbo.FNAGetNewID()
 SELECT @final_process_table = dbo.FNAProcessTableName(''deal_final_backup'', @user_name, ''@process_id'')
+SET @position_deals = dbo.FNAProcessTableName(''report_position'', @user_name, @new_process_id)
+
+EXEC (''CREATE TABLE '' + @position_deals + ''( source_deal_header_id INT, action NCHAR(1) COLLATE DATABASE_DEFAULT)'')
+SET @sql = ''INSERT INTO '' + @position_deals + ''(source_deal_header_id,action) 
+ 	SELECT  DISTINCT sdh.source_deal_header_id,
+ 			''''u''''
+ 	FROM '' + @final_process_table + '' t
+	INNER JOIN source_deal_header sdh ON sdh.deal_id = t.deal_id''
+EXEC(@sql)
 
 -- udf_value9 = Shipper user allocation price
 EXEC (''UPDATE '' + @final_process_table + '' SET udf_value9 = ISNULL(udf_value9, 0) '') 
+EXEC( ''ALTER TABLE '' + @final_process_table + '' ADD hours_diff INT'')
+EXEC( ''ALTER TABLE '' + @final_process_table + '' ADD capacity_fee_leg1 NUMERIC(38,6)'')
+EXEC( ''ALTER TABLE '' + @final_process_table + '' ADD capacity_fee_leg2 NUMERIC(38,6)'')
+
+EXEC (''UPDATE a
+SET hours_diff = DATEDIFF(hh, a.term_start, a.term_end)+ 1 + (CASE WHEN insert_delete = ''''i'''' THEN 1 WHEN insert_delete = ''''d'''' THEN -1 ELSE 0 END),
+capacity_fee_leg1 = (udf_value9 + CAST(fixed_price AS float)) * 10
+						/
+						(DATEDIFF(hh, a.term_start, a.term_end)+1 + (CASE WHEN insert_delete = ''''i'''' THEN 1 WHEN insert_delete = ''''d'''' THEN -1 ELSE 0 END)),
+capacity_fee_leg2 = ((udf_value9 * 0.5 ) + CAST(fixed_price AS float)) * 10
+						/
+						(DATEDIFF(hh, a.term_start, a.term_end)+1 + (CASE WHEN insert_delete = ''''i'''' THEN 1 WHEN insert_delete = ''''d'''' THEN -1 ELSE 0 END))
+FROM '' + @final_process_table + '' a
+LEFT JOIN mv90_dst md ON md.year = YEAR(term_start) 
+AND CAST(md.[date] -1 AS date) BETWEEN CAST(term_start AS DATE) AND CAST(term_end AS DATE)
+AND md.dst_group_value_id = 102201 
+'') 
+
 EXEC(''
+DECLARE @uom_id INT, @currency_id INT
+SELECT @uom_id = source_uom_id FROM source_uom WHERE uom_name = ''''Mwh''''
+SELECT @currency_id = source_currency_id FROM source_currency WHERE currency_name = ''''Eur''''
+
 -- FOR 2 leg deals
 INSERT INTO user_defined_deal_fields (source_deal_header_id, udf_template_id,currency_id,
 	uom_id, receive_pay, udf_value, counterparty_id)
 SELECT cp_entry.source_deal_header_id, 
-	cp_entry.udf_template_id,curr.source_currency_id,
-	uom.source_uom_id, ''''p'''' ,
-	((udf_value9 * 0.5 ) + CAST(fixed_price AS float)) * 10 /(DATEDIFF(hh, a.term_start, a.term_end)+1),
+	cp_entry.udf_template_id, @currency_id, @uom_id, ''''p'''' ,
+	a.capacity_fee_leg2,
 	 sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.udf_value1
@@ -560,20 +797,13 @@ CROSS APPLY (SELECT uddft.udf_template_id, sdh.source_deal_header_id FROM user_d
 	INNER JOIN source_deal_header sdh on sdh.template_id = uddft.template_id AND sdh.deal_id = a.deal_id
 	where udft.field_label = ''''capacity fees-entry''''
 ) cp_entry
-OUTER APPLY (
-	SELECT source_uom_id FROM source_uom WHERE uom_name = ''''Mwh''''
-) uom
-OUTER APPLY (
-	SELECT source_currency_id FROM source_currency WHERE currency_name = ''''Eur''''
-) curr
 LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_entry.source_deal_header_id 
 	AND uddf.udf_template_id = cp_entry.udf_template_id
 WHERE uddf.udf_deal_id IS NULL AND a.udf_value3 = ''''true'''' AND a.udf_value6 IS NULL  -- udf_value6 =networkPoint_id_exit
 UNION
 SELECT cp_exit.source_deal_header_id, 
-	cp_exit.udf_template_id,curr.source_currency_id,
-	uom.source_uom_id, ''''p'''' ,
-	((udf_value9 * 0.5 ) + CAST(fixed_price AS float)) * 10/(DATEDIFF(hh, a.term_start, a.term_end)+1),
+	cp_exit.udf_template_id, @currency_id, @uom_id, ''''p'''' ,
+	a.capacity_fee_leg2,
 	sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -582,18 +812,12 @@ CROSS APPLY (SELECT uddft.udf_template_id, sdh.source_deal_header_id FROM user_d
 	INNER JOIN source_deal_header sdh on sdh.template_id = uddft.template_id AND sdh.deal_id = a.deal_id
 	where udft.field_label = ''''capacity fees-exit''''
 ) cp_exit
-OUTER APPLY (
-	SELECT source_uom_id FROM source_uom WHERE uom_name = ''''Mwh''''
-) uom
-OUTER APPLY (
-	SELECT source_currency_id FROM source_currency WHERE currency_name = ''''Eur''''
-) curr
 LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_exit.source_deal_header_id 
 	AND uddf.udf_template_id = cp_exit.udf_template_id
 WHERE uddf.udf_deal_id IS NULL AND a.udf_value3 = ''''true'''' AND a.udf_value6 IS NOT NULL  -- udf_value6 =networkPoint_id_exit
 
 UPDATE uddf
-SET udf_value= ((udf_value9 * 0.5 ) + CAST(fixed_price AS float)) * 10 /(DATEDIFF(hh, a.term_start, a.term_end)+1)
+SET udf_value= a.capacity_fee_leg2
 , counterparty_id = sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.udf_value1
@@ -607,7 +831,7 @@ INNER JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_entr
 WHERE a.udf_value3 = ''''true'''' AND a.udf_value6 IS NULL  -- udf_value6 =networkPoint_id_exit
 
 UPDATE uddf
-SET udf_value= ((udf_value9 * 0.5 ) + CAST(fixed_price AS float)) * 10 /(DATEDIFF(hh, a.term_start, a.term_end)+1)
+SET udf_value= a.capacity_fee_leg2
 , counterparty_id = sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -626,9 +850,8 @@ WHERE a.udf_value3 = ''''true'''' AND a.udf_value6 IS NOT NULL  -- udf_value6 =n
 INSERT INTO user_defined_deal_fields (source_deal_header_id, udf_template_id,currency_id,
 	uom_id, receive_pay, udf_value, counterparty_id)
 SELECT cp_entry.source_deal_header_id, 
-	cp_entry.udf_template_id,curr.source_currency_id,
-	uom.source_uom_id, ''''p'''' ,
-	(udf_value9 + CAST(fixed_price AS float)) * 10/(DATEDIFF(hh, a.term_start, a.term_end)+1),
+	cp_entry.udf_template_id, @currency_id, @uom_id, ''''p'''' ,
+	a.capacity_fee_leg1,
 	sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -637,21 +860,14 @@ CROSS APPLY (SELECT uddft.udf_template_id, sdh.source_deal_header_id FROM user_d
 	INNER JOIN source_deal_header sdh on sdh.template_id = uddft.template_id AND sdh.deal_id = a.deal_id
 	where udft.field_label = ''''capacity fees-entry''''
 ) cp_entry
-OUTER APPLY (
-	SELECT source_uom_id FROM source_uom WHERE uom_name = ''''Mwh''''
-) uom
-OUTER APPLY (
-	SELECT source_currency_id FROM source_currency WHERE currency_name = ''''Eur''''
-) curr
 LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_entry.source_deal_header_id 
 	AND uddf.udf_template_id = cp_entry.udf_template_id
-WHERE 1=1 --and uddf.udf_deal_id IS NULL 
+WHERE 1=1 AND uddf.udf_deal_id IS NULL
 AND a.udf_value3 = ''''false'''' AND a.udf_value6 IS NULL  -- udf_value6 =networkPoint_id_exit
 UNION
 SELECT cp_exit.source_deal_header_id, 
-	cp_exit.udf_template_id,curr.source_currency_id,
-	uom.source_uom_id, ''''p'''' ,
-	(udf_value9 + CAST(fixed_price AS float)) * 10/(DATEDIFF(hh, a.term_start, a.term_end)+1),
+	cp_exit.udf_template_id, @currency_id, @uom_id, ''''p'''' ,
+	a.capacity_fee_leg1,
 	sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -660,18 +876,12 @@ CROSS APPLY (SELECT uddft.udf_template_id, sdh.source_deal_header_id FROM user_d
 	INNER JOIN source_deal_header sdh on sdh.template_id = uddft.template_id AND sdh.deal_id = a.deal_id
 	where udft.field_label = ''''capacity fees-exit''''
 ) cp_exit
-OUTER APPLY (
-	SELECT source_uom_id FROM source_uom WHERE uom_name = ''''Mwh''''
-) uom
-OUTER APPLY (
-	SELECT source_currency_id FROM source_currency WHERE currency_name = ''''Eur''''
-) curr
 LEFT JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_exit.source_deal_header_id 
 	AND uddf.udf_template_id = cp_exit.udf_template_id
 WHERE uddf.udf_deal_id IS NULL AND a.udf_value3 = ''''false'''' AND a.udf_value6 IS NOT NULL  -- udf_value6 =networkPoint_id_exit
 
 UPDATE uddf
-SET udf_value= (udf_value9 + CAST(fixed_price AS float)) * 10/(DATEDIFF(hh, a.term_start, a.term_end)+1)
+SET udf_value = a.capacity_fee_leg1
 , counterparty_id = sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -685,7 +895,7 @@ INNER JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = cp_entr
 WHERE a.udf_value3 = ''''false'''' AND a.udf_value6 IS NULL  -- udf_value6 =networkPoint_id_exit
 
 UPDATE uddf
-SET udf_value= (udf_value9  + CAST(fixed_price AS float)) * 10/(DATEDIFF(hh, a.term_start, a.term_end)+1)
+SET udf_value= a.capacity_fee_leg1
 , counterparty_id = sc.source_counterparty_id
 FROM '' + @final_process_table + ''  a
 INNER JOIN source_counterparty sc ON sc.counterparty_id = a.counterparty_id
@@ -702,7 +912,7 @@ WHERE a.udf_value3 = ''''false'''' AND a.udf_value6 IS NOT NULL  -- udf_value6 =
 
 SELECT sdd.source_deal_Detail_id, CAST(a.term_start AS DATE) term_date, 
 IIF(LEN(DATEPART(hour,a.term_start) +1 ) = 1, ''''0'''' + CAST(DATEPART(hour,a.term_start) +1 AS NVARCHAR(4)) , CAST(DATEPART(hour,a.term_start) +1 AS NVARCHAR(4))) + '''':00'''' hrs , 
-temp.deal_volume/1000 deal_volume, 982 granularity, 0 is_dst
+CAST(temp.deal_volume AS NUMERIC(38,5))/1000 deal_volume, 982 granularity, 0 is_dst
 INTO #temp_detail_hour
 FROM '' + @final_process_table + '' temp
 CROSS APPLY (SELECT * FROM dbo.FNATermBreakdown(''''h'''',term_start,term_end)) a
@@ -752,7 +962,9 @@ SET fixed_price = NULL
 FROM '' + @final_process_table + '' temp
 INNER JOIN source_deal_header sdh ON sdh.deal_id = temp.deal_id
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
-'')'
+'')
+
+EXEC spa_calc_deal_position_breakdown NULL,@new_process_id'
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
 				, ixp_category = 23502
@@ -790,7 +1002,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
  [counter], dealID, auctionId, balancingGroup_balancingGroupNumber, bookingDate, bundled
   ,  marketArea_name, networkPoint_direction, networkPoint_identifier, networkPoint_name, periodType
   , priceInformation_charges_regulatedCapacityTariff_price_unit_currency, priceInformation_charges_regulatedCapacityTariff_price_value
-  , quantity_unit, quantity_value, runtime_end, runtime_start, shipper_user_email, tso_name, undiscounted, bundleInformation_splitFactor_entry
+  , quantity_unit, quantity_value, runtime_end, runtime_start, shipper_user_email, tso_name, undiscounted, priceInformation_auctionSurcharge_price_value
 INTO #test_data
 FROM  
 (
@@ -803,7 +1015,7 @@ PIVOT
   FOR label IN (auctionId, balancingGroup_balancingGroupNumber, bookingDate, bundled
   ,  marketArea_name, networkPoint_direction, networkPoint_identifier, networkPoint_name, periodType
   , priceInformation_charges_regulatedCapacityTariff_price_unit_currency, priceInformation_charges_regulatedCapacityTariff_price_value
-  , quantity_unit, quantity_value, runtime_end, runtime_start, shipper_user_email, tso_name, undiscounted, bundleInformation_splitFactor_entry)  
+  , quantity_unit, quantity_value, runtime_end, runtime_start, shipper_user_email, tso_name, undiscounted, priceInformation_auctionSurcharge_price_value)  
 ) AS PivotTable;  
 
 SELECT 
@@ -819,7 +1031,7 @@ SELECT
 , priceInformation_charges_regulatedCapacityTariff_price_value price_value
 , quantity_unit, quantity_value, runtime_end, runtime_start, shipper_user_email trader_id
 , tso_name, CAST('''' AS NVARCHAR(50)) counterparty_id, undiscounted , CAST('''' AS NVARCHAR(50)) tso_entry
-, bundleInformation_splitFactor_entry shipper_user_alloc_price
+, priceInformation_auctionSurcharge_price_value shipper_user_alloc_price
 INTO #final_data
 FROM #test_data
 
@@ -878,7 +1090,7 @@ FROM #final_data
 						END
 					
 
-INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[dealID]', ic.ixp_columns_id, 'pa.[DealId]+''_PRISMA''', NULL, 0, NULL, NULL 
+INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[dealID]', ic.ixp_columns_id, 'pa.[dealID] + ''_PRISMA''', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
@@ -910,6 +1122,14 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'trader_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, 'IIF(pa.[bundled] = ''true'', ''Linear Asset Model'', NULL)', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'internal_deal_type_value_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, 'IIF(pa.[bundled] = ''true'', ''Linear Model Option'', NULL)', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'internal_deal_subtype_value_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Buy''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
@@ -1049,4 +1269,3 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-		
