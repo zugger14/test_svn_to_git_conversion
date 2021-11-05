@@ -11,13 +11,13 @@ GO
 */
 CREATE PROCEDURE [dbo].[spa_rfx_resolve_text_param]
     @criteria VARCHAR(max) = NULL,
-	@param_value VARCHAR(max) = NULL,
+	@param_value NVARCHAR(max) = NULL,
 	@runtime_user			NVARCHAR(200) = NULL
 AS
 /*
 DECLARE 
 @criteria VARCHAR(5000) = 'sub_id=122,stra_id=123,book_id=124,sub_book_id=4,curve_id=4595,label_counterparty_id=NULL'
-,@param_value VARCHAR(5000) = 'Report for Book : <#sub_book_id#> and Curve : <#curve_id#>'
+,@param_value NVARCHAR(5000) = 'Report for Book : <#sub_book_id#> and Curve : <#curve_id#>'
 --*/
 SET NOCOUNT ON
 
@@ -37,9 +37,11 @@ BEGIN TRY
 	SELECT @param_value = dbo.FNADecodeXML(@param_value)
 	IF CHARINDEX('<#', @param_value, 0) = 0
 	BEGIN
-		SELECT ISNULL(translated_keyword,@param_value) [value]
+		SELECT @param_value = ISNULL(translated_keyword,@param_value) 
 		FROM locale_mapping 
 			WHERE language_id = @language_id AND original_keyword = @param_value
+
+		SELECT @param_value [value]
 	END
 	ELSE
 	BEGIN
