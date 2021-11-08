@@ -3956,7 +3956,21 @@ BEGIN TRY
 				EXEC(@sql)
 			END			
 		END
- 			
+ 		
+		SET @sql = '
+				IF COL_LENGTH(''' + @detail_process_table + ''', ''contract_expiration_date'') IS NULL
+				BEGIN
+					ALTER TABLE ' + @detail_process_table + ' ADD contract_expiration_date DATETIME
+				END
+			'
+		EXEC (@sql)
+		SET @sql = '
+				UPDATE ' + @detail_process_table + ' 
+				SET contract_expiration_date = term_end
+				WHERE contract_expiration_date IS NULL
+			'
+		EXEC (@sql)
+
  		IF OBJECT_ID('tempdb..#detail_xml_columns') IS NOT NULL
  			DROP TABLE #detail_xml_columns
  			

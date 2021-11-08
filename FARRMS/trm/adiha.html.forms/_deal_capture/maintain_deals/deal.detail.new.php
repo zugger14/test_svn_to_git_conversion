@@ -2781,10 +2781,12 @@ $formula_form_data = '[
             if (column_id == 'term_start' || column_id == 'term_end') {
                 var term_start_index = dealDetail.grid.getColIndexById('term_start');
                 var term_end_index = dealDetail.grid.getColIndexById('term_end');
+                var expiration_date_index = dealDetail.grid.getColIndexById('contract_expiration_date');
 
                 if (term_start_index == undefined || term_end_index == undefined) return true;
                 var term_start = dealDetail.grid.cells(rId, term_start_index).getValue();
                 var term_end = dealDetail.grid.cells(rId, term_end_index).getValue();
+                var expiration_date = (expiration_date_index) ? dealDetail.grid.cells(rId, expiration_date_index).getValue() : '';
 
                 if (column_id == 'term_start') {
                     var vintage_index = dealDetail.grid.getColIndexById('vintage');
@@ -2795,6 +2797,11 @@ $formula_form_data = '[
                     var new_term_end = dates.getTermEnd(term_start, term_frequency);
                     dealDetail.grid.cells(rId, term_end_index).setValue(new_term_end);
                     dealDetail.load_shipper_dropdown(rId, 'term_start_end');
+                } else if (column_id == 'term_end') {
+                    var term_end = dealDetail.grid.cells(rId, term_end_index).getValue();
+                    var parent_id = dealDetail.grid.getParentId(rId);
+                    var parent_date = (parent_id) ? dealDetail.grid.cells(parent_id, expiration_date_index).getValue() : '';
+                    if (expiration_date_index && !parent_date) dealDetail.grid.cells(rId, expiration_date_index).setValue(term_end);
                 } else if (dates.compare(term_end, term_start) == -1) {
                     var term_start_label = dealDetail.grid.getColLabel(term_start_index);
                     var term_end_label = dealDetail.grid.getColLabel(term_end_index);
