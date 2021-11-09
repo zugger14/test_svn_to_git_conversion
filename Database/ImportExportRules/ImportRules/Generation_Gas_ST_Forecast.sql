@@ -45,6 +45,7 @@ BEGIN
 					'N' ,
 					NULL ,
 					'
+
 UPDATE a
 SET [Term] = CAST(dbo.FNAClientToSqlDate([Term]) AS DATE)
 FROM [temp_process_table] a
@@ -184,8 +185,8 @@ INTO #temp_position
 	FROM ( SELECT 
 		  source_deal_header_id
 		, source_deal_detail_id
-		, term_start
-		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, dst.hour , cast(substring(upv.hr,3,2) AS INT)) Hr
+		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, DATEADD(DAY, 1, term_start), term_start) [term_start]
+		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, IIF(dst.hour IS NOT NULL, 3, NULL), cast(substring(upv.hr,3,2) AS INT)) Hr
 		, [period]
 		, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
 		, val volume
@@ -214,17 +215,19 @@ INTO #temp_position
 		UNPIVOT
 			(val for Hr IN (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25)	
 	) upv
-	OUTER APPLY(SELECT dst.date,dst.[hour]
+	OUTER APPLY(
+		SELECT DATEADD(DAY, -1,dst.[date]) [date], 21 [hour] 
 		FROM #mv90_dst dst 
-		WHERE dst.date = upv.term_start
+		WHERE DATEADD(DAY, -1, dst.date) = upv.term_start
 		GROUP BY dst.date,dst.[hour]
 		) dst
+
 	UNION all
 	SELECT 
 		  source_deal_header_id
 		, source_deal_detail_id
-		, term_start
-		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, dst.hour , cast(substring(upv.hr,3,2) AS INT)) Hr
+		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, DATEADD(DAY, 1, term_start), term_start) [term_start]
+		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, IIF(dst.hour IS NOT NULL, 3, NULL) , cast(substring(upv.hr,3,2) AS INT)) Hr
 		, [period]
 		, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
 		, val volume
@@ -253,9 +256,10 @@ INTO #temp_position
 		UNPIVOT
 			(val for Hr IN (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25)	
 	) upv
-	OUTER APPLY(SELECT dst.date,dst.[hour]
+	OUTER APPLY(
+		SELECT DATEADD(DAY, -1,dst.[date]) [date], 21 [hour]
 		FROM #mv90_dst dst 
-		WHERE dst.date = upv.term_start
+		WHERE DATEADD(DAY, -1, dst.date) = upv.term_start
 		GROUP BY dst.date,dst.[hour]
 		) dst
 ) rs
@@ -268,6 +272,7 @@ FROM #temp_position tp
 WHERE 1 = 1
 	AND ([hr] BETWEEN 19 AND 24)
 
+
 -- Shift Hour		
 UPDATE tp
 SET [hr] = CASE WHEN [hr] BETWEEN  1 AND 18 THEN [hr] + 6
@@ -275,6 +280,7 @@ SET [hr] = CASE WHEN [hr] BETWEEN  1 AND 18 THEN [hr] + 6
 	ELSE [hr]
 	END
 FROM #temp_position tp
+WHERE tp.is_dst <> 1
 
 UPDATE tp
 SET position = (tp.position - tpd.position)
@@ -424,6 +430,7 @@ AND gm_profile.source_profile1 IS NOT NULL',
 				, individuals_script_per_ojbect = 'N'
 				, limit_rows_to = NULL
 				, before_insert_trigger = '
+
 UPDATE a
 SET [Term] = CAST(dbo.FNAClientToSqlDate([Term]) AS DATE)
 FROM [temp_process_table] a
@@ -563,8 +570,8 @@ INTO #temp_position
 	FROM ( SELECT 
 		  source_deal_header_id
 		, source_deal_detail_id
-		, term_start
-		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, dst.hour , cast(substring(upv.hr,3,2) AS INT)) Hr
+		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, DATEADD(DAY, 1, term_start), term_start) [term_start]
+		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, IIF(dst.hour IS NOT NULL, 3, NULL), cast(substring(upv.hr,3,2) AS INT)) Hr
 		, [period]
 		, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
 		, val volume
@@ -593,17 +600,19 @@ INTO #temp_position
 		UNPIVOT
 			(val for Hr IN (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25)	
 	) upv
-	OUTER APPLY(SELECT dst.date,dst.[hour]
+	OUTER APPLY(
+		SELECT DATEADD(DAY, -1,dst.[date]) [date], 21 [hour] 
 		FROM #mv90_dst dst 
-		WHERE dst.date = upv.term_start
+		WHERE DATEADD(DAY, -1, dst.date) = upv.term_start
 		GROUP BY dst.date,dst.[hour]
 		) dst
+
 	UNION all
 	SELECT 
 		  source_deal_header_id
 		, source_deal_detail_id
-		, term_start
-		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, dst.hour , cast(substring(upv.hr,3,2) AS INT)) Hr
+		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, DATEADD(DAY, 1, term_start), term_start) [term_start]
+		, IIF(cast(substring(upv.hr,3,2) AS INT) = 25, IIF(dst.hour IS NOT NULL, 3, NULL) , cast(substring(upv.hr,3,2) AS INT)) Hr
 		, [period]
 		, IIF(cast(substring(upv.hr,3,2) AS INT) <> 25,0,1)  is_dst
 		, val volume
@@ -632,9 +641,10 @@ INTO #temp_position
 		UNPIVOT
 			(val for Hr IN (hr1,hr2,hr3,hr4,hr5,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25)	
 	) upv
-	OUTER APPLY(SELECT dst.date,dst.[hour]
+	OUTER APPLY(
+		SELECT DATEADD(DAY, -1,dst.[date]) [date], 21 [hour]
 		FROM #mv90_dst dst 
-		WHERE dst.date = upv.term_start
+		WHERE DATEADD(DAY, -1, dst.date) = upv.term_start
 		GROUP BY dst.date,dst.[hour]
 		) dst
 ) rs
@@ -647,6 +657,7 @@ FROM #temp_position tp
 WHERE 1 = 1
 	AND ([hr] BETWEEN 19 AND 24)
 
+
 -- Shift Hour		
 UPDATE tp
 SET [hr] = CASE WHEN [hr] BETWEEN  1 AND 18 THEN [hr] + 6
@@ -654,6 +665,7 @@ SET [hr] = CASE WHEN [hr] BETWEEN  1 AND 18 THEN [hr] + 6
 	ELSE [hr]
 	END
 FROM #temp_position tp
+WHERE tp.is_dst <> 1
 
 UPDATE tp
 SET position = (tp.position - tpd.position)
@@ -800,7 +812,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity_Test\temp_Note\0',
+						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
 						   NULL,
 						   ';',
 						   2,
@@ -819,8 +831,8 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   '', 
 						   '0',
 						   '0',
-						   NULL,
-						   NULL
+						   '11',
+						   'Import2TRM/CONV_GEN_KWEP/DEAL_Generation_ST_Gas_Forecast'
 					FROM ixp_rules ir 
 					LEFT JOIN ixp_ssis_configurations isc ON isc.package_name = '' 
 					LEFT JOIN ixp_soap_functions isf ON isf.ixp_soap_functions_name = '' 
