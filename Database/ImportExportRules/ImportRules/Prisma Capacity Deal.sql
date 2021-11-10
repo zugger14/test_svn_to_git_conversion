@@ -64,7 +64,7 @@ CREATE TABLE #source_system_data_import_status_detail (
 )
 
 DECLARE @set_process_id VARCHAR(100)
-	, @mapping_table_id INT, @count INT
+	, @mapping_table_id INT, @count INT, @sql NVARCHAR(4000)
 SELECT @set_process_id = ''@process_id''
 SELECT @mapping_table_id = mapping_table_id 
 FROM generic_mapping_header 
@@ -81,7 +81,7 @@ INSERT INTO #source_system_data_import_status_detail(
 	, type_error
 )
 SELECT ixp_source_unique_id, @set_process_id
-	, ''Deal''
+	, ''ixp_source_deal_template''
 	, ''Missing Value''
 	, ''Generic mapping not found for Network Point Name (EXIT) : '' + temp.udf_value4 + '' and Network Point ID (EXIT) : '' + temp.udf_value6
 	, ''Error''
@@ -100,7 +100,7 @@ INSERT INTO #source_system_data_import_status_detail(
 	, type_error
 )
 SELECT ixp_source_unique_id, @set_process_id
-	, ''Deal''
+	, ''ixp_source_deal_template''
 	, ''Missing Value''
 	, ''Generic mapping not found for Network Point Name (ENTRY) : '' + temp.udf_value7 + '' and Network Point ID (ENTRY) : '' + temp.udf_value8
 	, ''Error''
@@ -262,6 +262,10 @@ SELECT @user_name  = dbo.FNADBUser()
 SELECT @process_table = dbo.FNAProcessTableName(''deal_final_backup'', @user_name, ''@process_id'')
 
 EXEC (''SELECT * INTO '' + @process_table + '' FROM [final_process_table]'')
+EXEC (''ALTER TABLE '' + @process_table + '' ADD total_count INT'')
+SET @sql = ''UPDATE '' + @process_table + '' SET total_count = '' + CAST(@count AS NVARCHAR(20)) 
+EXEC(@sql )
+
 
 UPDATE [final_process_table]
 SET 
@@ -274,6 +278,38 @@ SET
 SELECT @user_name  = dbo.FNADBUser(), @new_process_id = dbo.FNAGetNewID()
 SELECT @final_process_table = dbo.FNAProcessTableName(''deal_final_backup'', @user_name, ''@process_id'')
 SET @position_deals = dbo.FNAProcessTableName(''report_position'', @user_name, @new_process_id)
+
+CREATE TABLE #row_count(imported_deal INT, total_deal INT)
+
+EXEC(''INSERT INTO #row_count SELECT COUNT(1), MAX(total_count) FROM '' + @final_process_table)
+
+DECLARE @imported_deal INT, @total_deal INT
+
+SELECT @imported_deal = imported_deal, @total_deal = total_deal FROM #row_count
+
+IF EXISTS(SELECT 1 FROM source_system_data_import_status
+	  WHERE process_id = ''@process_id''
+	  AND description like ''%Data imported Successfully out of%''
+	  )
+BEGIN
+	UPDATE source_system_data_import_status
+		SET description = CAST(@imported_deal AS NVARCHAR(10)) + '' Data imported Successfully out of '' + CAST(@total_deal AS NVARCHAR(10)) + '' rows.''
+	WHERE process_id = ''@process_id''
+	AND description like ''%Data imported Successfully out of%''
+END
+ELSE 
+BEGIN
+	INSERT INTO source_system_data_import_status(process_id, code, [module], [source], [type], [description], recommendation, rules_name) 
+	SELECT DISTINCT ''@process_id'',
+		''Error'',
+		''Import Data'',
+		''ixp_source_deal_template'',
+		''Error'',
+		CAST(@imported_deal AS NVARCHAR(10)) + '' Data imported Successfully out of '' + CAST(@total_deal AS NVARCHAR(10)) + '' rows.'',
+		''Please verify data.'',
+		''Prisma Capacity Deal''
+END
+
 
 EXEC (''CREATE TABLE '' + @position_deals + ''( source_deal_header_id INT, action NCHAR(1) COLLATE DATABASE_DEFAULT)'')
 SET @sql = ''INSERT INTO '' + @position_deals + ''(source_deal_header_id,action) 
@@ -539,7 +575,7 @@ CREATE TABLE #source_system_data_import_status_detail (
 )
 
 DECLARE @set_process_id VARCHAR(100)
-	, @mapping_table_id INT, @count INT
+	, @mapping_table_id INT, @count INT, @sql NVARCHAR(4000)
 SELECT @set_process_id = ''@process_id''
 SELECT @mapping_table_id = mapping_table_id 
 FROM generic_mapping_header 
@@ -556,7 +592,7 @@ INSERT INTO #source_system_data_import_status_detail(
 	, type_error
 )
 SELECT ixp_source_unique_id, @set_process_id
-	, ''Deal''
+	, ''ixp_source_deal_template''
 	, ''Missing Value''
 	, ''Generic mapping not found for Network Point Name (EXIT) : '' + temp.udf_value4 + '' and Network Point ID (EXIT) : '' + temp.udf_value6
 	, ''Error''
@@ -575,7 +611,7 @@ INSERT INTO #source_system_data_import_status_detail(
 	, type_error
 )
 SELECT ixp_source_unique_id, @set_process_id
-	, ''Deal''
+	, ''ixp_source_deal_template''
 	, ''Missing Value''
 	, ''Generic mapping not found for Network Point Name (ENTRY) : '' + temp.udf_value7 + '' and Network Point ID (ENTRY) : '' + temp.udf_value8
 	, ''Error''
@@ -737,6 +773,10 @@ SELECT @user_name  = dbo.FNADBUser()
 SELECT @process_table = dbo.FNAProcessTableName(''deal_final_backup'', @user_name, ''@process_id'')
 
 EXEC (''SELECT * INTO '' + @process_table + '' FROM [final_process_table]'')
+EXEC (''ALTER TABLE '' + @process_table + '' ADD total_count INT'')
+SET @sql = ''UPDATE '' + @process_table + '' SET total_count = '' + CAST(@count AS NVARCHAR(20)) 
+EXEC(@sql )
+
 
 UPDATE [final_process_table]
 SET 
@@ -749,6 +789,38 @@ SET
 SELECT @user_name  = dbo.FNADBUser(), @new_process_id = dbo.FNAGetNewID()
 SELECT @final_process_table = dbo.FNAProcessTableName(''deal_final_backup'', @user_name, ''@process_id'')
 SET @position_deals = dbo.FNAProcessTableName(''report_position'', @user_name, @new_process_id)
+
+CREATE TABLE #row_count(imported_deal INT, total_deal INT)
+
+EXEC(''INSERT INTO #row_count SELECT COUNT(1), MAX(total_count) FROM '' + @final_process_table)
+
+DECLARE @imported_deal INT, @total_deal INT
+
+SELECT @imported_deal = imported_deal, @total_deal = total_deal FROM #row_count
+
+IF EXISTS(SELECT 1 FROM source_system_data_import_status
+	  WHERE process_id = ''@process_id''
+	  AND description like ''%Data imported Successfully out of%''
+	  )
+BEGIN
+	UPDATE source_system_data_import_status
+		SET description = CAST(@imported_deal AS NVARCHAR(10)) + '' Data imported Successfully out of '' + CAST(@total_deal AS NVARCHAR(10)) + '' rows.''
+	WHERE process_id = ''@process_id''
+	AND description like ''%Data imported Successfully out of%''
+END
+ELSE 
+BEGIN
+	INSERT INTO source_system_data_import_status(process_id, code, [module], [source], [type], [description], recommendation, rules_name) 
+	SELECT DISTINCT ''@process_id'',
+		''Error'',
+		''Import Data'',
+		''ixp_source_deal_template'',
+		''Error'',
+		CAST(@imported_deal AS NVARCHAR(10)) + '' Data imported Successfully out of '' + CAST(@total_deal AS NVARCHAR(10)) + '' rows.'',
+		''Please verify data.'',
+		''Prisma Capacity Deal''
+END
+
 
 EXEC (''CREATE TABLE '' + @position_deals + ''( source_deal_header_id INT, action NCHAR(1) COLLATE DATABASE_DEFAULT)'')
 SET @sql = ''INSERT INTO '' + @position_deals + ''(source_deal_header_id,action) 
@@ -1090,31 +1162,7 @@ FROM #final_data
 						END
 					
 
-INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[dealID]', ic.ixp_columns_id, 'pa.[dealID] + ''_PRISMA''', NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[bookingDate]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_date' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[auctionId]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'ext_deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Physical''', 'Max', 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'physical_financial_flag' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[counterparty_id]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'counterparty_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Capacity''', 'Max', 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'source_deal_type_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Real''', 'Max', 0, NULL, NULL 
+INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Real''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_category_value_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
@@ -1186,6 +1234,34 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume_uom_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Capacity''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'source_deal_type_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[counterparty_id]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'counterparty_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Physical''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'physical_financial_flag' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[auctionId]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'ext_deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[bookingDate]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_date' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[dealID]', ic.ixp_columns_id, 'pa.[dealID] + ''_PRISMA''', NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Hourly''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'profile_granularity' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[location_id]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
@@ -1194,10 +1270,6 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'pricing_type' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Hourly''', 'Max', 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'profile_granularity' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[tso_entry]', ic.ixp_columns_id, NULL, NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'TSO Entry' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
