@@ -2797,7 +2797,9 @@ $formula_form_data = '[
                     var new_term_end = dates.getTermEnd(term_start, term_frequency);
                     dealDetail.grid.cells(rId, term_end_index).setValue(new_term_end);
                     dealDetail.load_shipper_dropdown(rId, 'term_start_end');
-                } else if (column_id == 'term_end') {
+                 } 
+				if (column_id == 'term_start' || column_id == 'term_end') {
+                    // update expiration date by term_start or term_end
                     var term_end = dealDetail.grid.cells(rId, term_end_index).getValue();
                     var parent_id = dealDetail.grid.getParentId(rId);
                     var parent_date = (parent_id) ? dealDetail.grid.cells(parent_id, expiration_date_index).getValue() : '';
