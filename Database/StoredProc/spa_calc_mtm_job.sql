@@ -8598,10 +8598,10 @@ SET @sql= ' SELECT
 	source_deal_detail_id,
 	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) < 0 THEN 
 		(volume*ISNULL(NULLIF(price, 0), fixed_price)) 
-	ELSE 0 END*CASE WHEN (buy_sell_flag=''s'') THEN -1 ELSE 1 END) negative_vol,
+	ELSE 0 END*-1) negative_vol,
 	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) >= 0 THEN 
 		(volume*ISNULL(NULLIF(price, 0), fixed_price)) 
-	ELSE 0 END*CASE WHEN (buy_sell_flag=''s'') THEN -1 ELSE 1 END) positive_vol,
+	ELSE 0 END*-1) positive_vol,
 	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) < 0 THEN volume ELSE 0 END) negative_volume,
 	SUM(CASE WHEN ISNULL(NULLIF(price, 0), fixed_price) >= 0 THEN volume ELSE 0 END) positive_volume,
 	SUM(volume*ISNULL(NULLIF(price, 0), fixed_price)) vol
