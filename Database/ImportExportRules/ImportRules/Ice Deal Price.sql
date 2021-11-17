@@ -7,7 +7,7 @@ BEGIN
 
 			
 			SELECT @old_ixp_rule_id = ixp_rules_id FROM ixp_rules ir 
-			WHERE ixp_rule_hash = 'F7D2A247_9A75_4186_A926_51299B9C3D55'
+			WHERE ixp_rule_hash = 'DB2978E5_AA60_45B0_B7E4_64051DF5B4D3'
 
 			if @old_ixp_rule_id IS NULL
 			BEGIN
@@ -42,16 +42,16 @@ BEGIN
 				INSERT INTO ixp_rules (ixp_rules_name, individuals_script_per_ojbect, limit_rows_to, before_insert_trigger, after_insert_trigger, import_export_flag, is_system_import, ixp_owner, ixp_category, is_active,ixp_rule_hash)
 				VALUES( 
 					'ice_deal_price' ,
-					'N' ,
+					'n' ,
 					NULL ,
 					NULL,
 					NULL,
 					'i' ,
-					'n' ,
+					'y' ,
 					@admin_user ,
 					23504,
 					1,
-					'F7D2A247_9A75_4186_A926_51299B9C3D55'
+					'DB2978E5_AA60_45B0_B7E4_64051DF5B4D3'
 					 )
 
 				SET @ixp_rules_id_new = SCOPE_IDENTITY()
@@ -73,14 +73,14 @@ BEGIN
 			UPDATE
 			ixp_rules
 			SET ixp_rules_name = 'ice_deal_price'
-				, individuals_script_per_ojbect = 'N'
+				, individuals_script_per_ojbect = 'n'
 				, limit_rows_to = NULL
 				, before_insert_trigger = NULL
 				, after_insert_trigger = NULL
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
 				, ixp_category = 23504
-				, is_system_import = 'n'
+				, is_system_import = 'y'
 				, is_active = 1
 			WHERE ixp_rules_id = @ixp_rules_id_new
 				
@@ -102,9 +102,9 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					, excel_sheet, ssis_package, soap_function_id, clr_function_id, ws_function_name, enable_email_import
 					, send_email_import_reply, file_transfer_endpoint_id, remote_directory)
 					SELECT @ixp_rules_id_new,
-						   NULL,
-						   NULL,
-						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
+						   21400,
+						   '',
+						   '\\PSSJCDEV01\shared_docs_TRMTracker_Trunk\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
@@ -120,9 +120,9 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						   isc.ixp_ssis_configurations_id,
 						   isf.ixp_soap_functions_id,
 						   icf.ixp_clr_functions_id,
-						   '', 
-						   '0',
-						   '0',
+						   NULL, 
+						   NULL,
+						   NULL,
 						   NULL,
 						   NULL
 					FROM ixp_rules ir 
@@ -142,7 +142,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						END
 					
 
-INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, 'TradeId1', ic.ixp_columns_id, 'TradeId1+''_ICE''', NULL, 0, NULL, NULL 
+INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, 'TradeId1', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_udt_ice_deal_price'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'TradeId1' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
@@ -198,7 +198,7 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_udt_ice_deal_price'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'LegQty' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_udt_ice_deal_price' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'LegRefID', ic.ixp_columns_id, 'LegRefID+''_ICE''', NULL, 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_udt_ice_deal_price' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'LegRefID', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_udt_ice_deal_price'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'LegRefID' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
@@ -271,4 +271,3 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-	
