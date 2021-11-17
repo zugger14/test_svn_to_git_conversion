@@ -4,28 +4,52 @@ DECLARE @job_category NVARCHAR(150) = N'Import'
 DECLARE @job_name NVARCHAR(500) = @job_db_name + N' - ' + @job_category + N' - Shaped Volume Power'
 
 -- batch notification
-DECLARE @role_id INT , @csv_file_path VARCHAR(5000)
-IF NOT EXISTS(SELECT * FROM application_security_role WHERE role_name = 'Enercity Operations')
+DECLARE @role_id INT , @csv_file_path VARCHAR(5000), @role_id1 INT
+IF NOT EXISTS(SELECT 1 FROM application_security_role WHERE role_name = 'Enercity Operations') 
 BEGIN
 	INSERT INTO application_security_role(role_name, role_description, role_type_value_id)
 	SELECT 'Enercity Operations', 'Enercity Operations', 2
 END
 
+IF NOT EXISTS(SELECT 1 FROM application_security_role WHERE role_name = 'Enercity middle office') 
+BEGIN
+	INSERT INTO application_security_role(role_name, role_description, role_type_value_id)
+	SELECT 'Enercity middle office', 'Enercity middle office', 2
+END
+
 SELECT @role_id = role_id FROM application_security_role WHERE ROLE_NAME = 'Enercity Operations'
+SELECT @role_id1 = role_id FROM application_security_role WHERE ROLE_NAME = 'Enercity middle office'
+
 SELECT @csv_file_path = document_path+'\temp_note' from connection_string
 
-IF NOT EXISTS(SELECT * FROM batch_process_notifications WHERE process_id = 'zef42e2330j11')
+IF NOT EXISTS(SELECT 1 FROM batch_process_notifications WHERE process_id = 'zef42e2330j11' AND role_id = @role_id)
 BEGIN
 	INSERT INTO batch_process_notifications(role_id,process_id,notification_type,csv_file_path)
 	SELECT @role_id,
 		'zef42e2330j11',
 		752,
-		@csv_file_path			
+		@csv_file_path	
 END
 ELSE
 BEGIN
 	UPDATE batch_process_notifications
 	SET role_id = @role_id
+		, notification_type = 752
+	WHERE process_id = 'zef42e2330j11'
+END
+
+IF NOT EXISTS(SELECT 1 FROM batch_process_notifications WHERE process_id = 'zef42e2330j11' AND role_id = @role_id1)
+BEGIN
+	INSERT INTO batch_process_notifications(role_id,process_id,notification_type,csv_file_path)
+	SELECT @role_id1,
+		'zef42e2330j11',
+		752,
+		@csv_file_path	
+END
+ELSE
+BEGIN
+	UPDATE batch_process_notifications
+	SET role_id = @role_id1
 		, notification_type = 752
 	WHERE process_id = 'zef42e2330j11'
 END
