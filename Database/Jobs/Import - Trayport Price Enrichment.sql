@@ -42,6 +42,17 @@ WHERE ISNULL(udt.LegUnitOfMeasure, ''n'') = ''n''
 
 IF NOT EXISTS (SELECT 1 FROM #temp_deals) RETURN
 
+DECLARE @total_deals NVARCHAR(MAX)
+SELECT @total_deals = COALESCE(@total_deals + '','', '''') + CAST(a.source_deal_header_id AS NVARCHAR(10))
+FROM
+(
+	SELECT DISTINCT source_deal_header_id 
+	FROM #temp_deals sdh
+)as
+
+--Deal audit logic for update deals starts	  
+EXEC spa_insert_update_audit ''u'', @total_deals
+
 DECLARE @msg NVARCHAR(MAX), @deal_ids NVARCHAR(MAX)
 
 SELECT @deal_ids = COALESCE(@deal_ids + '', '', '''') +
