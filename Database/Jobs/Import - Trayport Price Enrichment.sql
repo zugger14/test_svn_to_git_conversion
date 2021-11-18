@@ -48,7 +48,7 @@ FROM
 (
 	SELECT DISTINCT source_deal_header_id 
 	FROM #temp_deals sdh
-)as
+) a
 
 --Deal audit logic for update deals starts	  
 EXEC spa_insert_update_audit ''u'', @total_deals
