@@ -8,30 +8,34 @@ DECLARE @folder_path VARCHAR(300), @common_dlls_path VARCHAR(500)
 SELECT @folder_path = document_path, @common_dlls_path = document_path + '\CLR_deploy\' FROM connection_string
 DECLARE @library_path VARCHAR(MAX) = @folder_path + '\CLR_deploy\FARRMSGenericCLR\' -- Assembly DLL File path
 
-DECLARE @command NVARCHAR(1024) = N'ALTER AUTHORIZATION ON DATABASE::[<<DatabaseName>>] TO [<<LoginName>>]' 
 DECLARE @db_name NVARCHAR(250) = DB_NAME()
-/*
-Logic to change db owner is:
-a. If current db owner is SQL login & has sysadmin privilege, set it as it is.
-b. Otherwise, get [sa] account and set it as db owner. There should be no impact even if this account is disabled. 
-*/
-SELECT @command = REPLACE(
-					REPLACE(@command,  '<<DatabaseName>>', @db_name)
-						, '<<LoginName>>', ISNULL(rs_db_owner.name, sl.name))
-	FROM sys.sql_logins sl
-	LEFT JOIN (
-		--get current db user name only if it has sysadmin role
-		SELECT rs_owner.name
-		FROM sys.databases d
-		CROSS APPLY (SELECT suser_sname(d.owner_sid) name) rs_owner
-		INNER JOIN sys.server_principals sp ON rs_owner.name = sp.name
-		WHERE d.name = DB_NAME()
-			AND IS_SRVROLEMEMBER('sysadmin', rs_owner.name) = 1
-			AND sp.type_desc = 'SQL_LOGIN'
-		) rs_db_owner ON  1 = 1	--Using CROSS JOIN returns empty set if the second set is also empty. So LEFT JOIN with always true condition is used.
-	WHERE sl.sid = 0x01;		--get sa user, which may be renamed to other name. So it is safe to use sid instead of hardcoding sa
-
-EXEC (@command)
+--check database owner is [sa] or not
+IF((SELECT owner_sid FROM sys.databases WHERE name =@db_name)!=0x01 )
+BEGIN
+	DECLARE @command NVARCHAR(1024) = N'ALTER AUTHORIZATION ON DATABASE::[<<DatabaseName>>] TO [<<LoginName>>]' 
+	/*
+	Logic to change db owner is:
+	a. If current db owner is SQL login & has sysadmin privilege, set it as it is.
+	b. Otherwise, get [sa] account and set it as db owner. There should be no impact even if this account is disabled. 
+	*/
+	SELECT @command = REPLACE(
+						REPLACE(@command,  '<<DatabaseName>>', @db_name)
+							, '<<LoginName>>', ISNULL(rs_db_owner.name, sl.name))
+		FROM sys.sql_logins sl
+		LEFT JOIN (
+			--get current db user name only if it has sysadmin role
+			SELECT rs_owner.name
+			FROM sys.databases d
+			CROSS APPLY (SELECT suser_sname(d.owner_sid) name) rs_owner
+			INNER JOIN sys.server_principals sp ON rs_owner.name = sp.name
+			WHERE d.name = DB_NAME()
+				AND IS_SRVROLEMEMBER('sysadmin', rs_owner.name) = 1
+				AND sp.type_desc = 'SQL_LOGIN'
+			) rs_db_owner ON  1 = 1	--Using CROSS JOIN returns empty set if the second set is also empty. So LEFT JOIN with always true condition is used.
+		WHERE sl.sid = 0x01;		--get sa user, which may be renamed to other name. So it is safe to use sid instead of hardcoding sa
+	
+	EXEC (@command)
+END
 
 -- Drop Assembly Modules
 PRINT '1. Drop Assembly Modules'
