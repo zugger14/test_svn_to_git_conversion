@@ -10373,8 +10373,7 @@ set @mtm_value_17='
 	'
 set @mtm_value_18=' 
 	where (ISNULL(a.option_flag, ''n'') = ''n'' or (a.internal_deal_type_value_id IN (103) AND a.internal_deal_subtype_value_id = 102 AND '''+@process_linear_options_delta+''' = ''y'')) AND a.internal_deal_type_value_id <> 6 AND a.internal_deal_type_value_id <> 7 
-		AND (a.hourly_position_breakdown not in(982,987,989,997) OR (a.hourly_position_breakdown in(982,987,989,997) AND hv.curve_id IS NOT NULL)
-		or  a.source_deal_header_id<0 )
+		--AND (a.hourly_position_breakdown not in(982,987,989,997) OR (a.hourly_position_breakdown in(982,987,989,997) AND hv.curve_id IS NOT NULL) or a.source_deal_header_id<0 )
 	'  + ' AND '''+@cpt_type+'''<>''b'''
 	
 	EXEC spa_print  '	INSERT INTO  #temp_leg_mtm'
