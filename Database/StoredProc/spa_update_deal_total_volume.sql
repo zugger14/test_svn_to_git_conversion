@@ -183,7 +183,8 @@ IF object_id('tempdb..#total_process_deals') IS NOT null
 
 CREATE TABLE #total_process_deals(
 	source_deal_header_id int,
-	source_deal_detail_id int
+	source_deal_detail_id int,
+	create_user VARCHAR(150)
 )
 
 
@@ -378,8 +379,8 @@ BEGIN
 
 	-- Taking fixation deal of orginal deal.
 
-		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id) 
-			SELECT distinct fix.source_deal_header_id,sdd.source_deal_detail_id 
+		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id, create_user) 
+			SELECT distinct fix.source_deal_header_id,sdd.source_deal_detail_id, p.create_user 
 			FROM ' + @effected_deals + ' p inner join source_deal_header fix  on p.source_deal_header_id=fix.close_reference_id 
 					and ISNULL(fix.internal_desk_id,17300)=17301 
 					and isnull(fix.product_id,4101)=4100 
@@ -394,8 +395,8 @@ BEGIN
 		exec(@sql)	
 					
 		-- Taking orginal deal of fixation deal.
-		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id) 
-			SELECT distinct sdd.source_deal_header_id,sdd.source_deal_detail_id 
+		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id, create_user) 
+			SELECT distinct sdd.source_deal_header_id,sdd.source_deal_detail_id, p.create_user 
 			FROM ' + @effected_deals + ' p 
 				inner join source_deal_header fix  on p.source_deal_header_id=fix.source_deal_header_id 
 					and isnull(fix.product_id,4101)=4100 
@@ -410,13 +411,13 @@ BEGIN
 
 			-- insert nomination/schedule/actul deals
 				
-		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id) 
-			SELECT distinct sdh.source_deal_header_id,sdd.source_deal_detail_id
+		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id, create_user) 
+			SELECT distinct sdh.source_deal_header_id,sdd.source_deal_detail_id, p.create_user
 			FROM  ' + @effected_deals + ' p inner join source_deal_header sdh  on p.source_deal_header_id=sdh.close_reference_id 
 				and sdh.internal_deal_type_value_id IN(19,20)
 				inner join source_deal_detail sdd on sdd.source_deal_header_id=sdh.source_deal_header_id
 			UNION
-			SELECT distinct sdh1.source_deal_header_id,sdd.source_deal_detail_id
+			SELECT distinct sdh1.source_deal_header_id,sdd.source_deal_detail_id, p.create_user
 			FROM  ' + @effected_deals + ' p inner join source_deal_header sdh  on p.source_deal_header_id=sdh.source_deal_header_id 
 				and sdh.internal_deal_type_value_id IN(20,21)
 			inner join source_deal_header sdh1  on sdh1.source_deal_header_id=sdh.close_reference_id
@@ -527,8 +528,8 @@ BEGIN
 		IF @@ROWCOUNT<1 and @exit=1
 			RETURN
 
-		EXEC('INSERT INTO #total_process_deals (source_deal_header_id, source_deal_detail_id) 
-			  SELECT DISTINCT source_deal_header_id, source_deal_detail_id 
+		EXEC('INSERT INTO #total_process_deals (source_deal_header_id, source_deal_detail_id, create_user) 
+			  SELECT DISTINCT source_deal_header_id, source_deal_detail_id, create_user 
 			  FROM ' + @effected_deals 
 		) 
 			
@@ -842,7 +843,8 @@ begin
        		hyperlink2             VARCHAR(5000),
        		hyperlink3             VARCHAR(5000),
        		hyperlink4             VARCHAR(5000),
-       		hyperlink5             VARCHAR(5000)
+       		hyperlink5             VARCHAR(5000),
+			create_user            VARCHAR(150)
 		   )')
 
 	EXEC ('CREATE TABLE ' + @alert_process_table + ' (
@@ -855,7 +857,8 @@ begin
        		hyperlink2             VARCHAR(5000),
        		hyperlink3             VARCHAR(5000),
        		hyperlink4             VARCHAR(5000),
-       		hyperlink5             VARCHAR(5000)
+       		hyperlink5             VARCHAR(5000),
+			create_user            VARCHAR(150)
 		   )')
 
 	SET @sql = 'INSERT INTO ' + @alert_process_table + '
@@ -864,13 +867,15 @@ begin
 		source_deal_detail_id,
 		deal_date,
 		term_start,
-		counterparty_id
+		counterparty_id,
+		create_user
 	)
 	SELECT DISTINCT sdh.source_deal_header_id,
 		sdd.source_deal_detail_id,
 		sdh.deal_date,
 		sdd.term_start,
-		sdh.counterparty_id
+		sdh.counterparty_id,
+		tpd.create_user
 	FROM   source_deal_header sdh 
 	INNER JOIN #total_process_deals tpd 
 		ON sdh.source_deal_header_id = tpd.source_deal_header_id
@@ -887,12 +892,14 @@ begin
 						source_deal_header_id,
 						deal_date,
 						term_start,
-						counterparty_id
+						counterparty_id,
+						create_user
 					)
 						SELECT distinct sdh.source_deal_header_id,
 						sdh.deal_date,
 						sdh.entire_term_start,
-						sdh.counterparty_id
+						sdh.counterparty_id,
+						tpd.create_user
 						FROM   source_deal_header sdh 
 							inner join #total_process_deals tpd on sdh.source_deal_header_id=tpd.source_deal_header_id
 						'
