@@ -2510,8 +2510,12 @@ DELETE td FROM #temp_deals td
 INSERT INTO #calc_status
 Select @process_id,'Warning','Settlement Calc','Run Settlement','Warning',
 			'Invoice already prepared for deal(s) '+CAST(td.[source_deal_header_id] AS VARCHAR),'Please check your input.'
-FROM
-	#temp_deals td
+
+FROM (
+	select [source_deal_header_id],source_deal_detail_id, ticket_detail_id,match_info_id from #temp_deals 
+	union
+	select [source_deal_header_id],source_deal_detail_id, -1 ticket_detail_id,-1 match_info_id from #temp_deals_broker --where [source_deal_header_id]=570298
+) td 
 	LEFT JOIN ticket_detail ttd ON td.ticket_detail_id = ttd.ticket_detail_id
 	INNER JOIN stmt_checkout sc ON td.source_deal_detail_id = sc.source_deal_detail_id 
 		AND ISNULL(ttd.ticket_header_id,-1) = ISNULL(sc.ticket_id,-1)
@@ -2526,6 +2530,13 @@ FROM
 	INNER JOIN stmt_checkout sc ON td.source_deal_detail_id = sc.source_deal_detail_id 
 		AND ISNULL(ttd.ticket_header_id,-1) = ISNULL(sc.ticket_id,-1)
 		AND ISNULL(td.match_info_id,-1) = ISNULL(sc.match_info_id,-1)
+	INNER JOIN stmt_invoice_detail sid ON sid.stmt_invoice_detail_id = sc.stmt_invoice_detail_id
+	WHERE sc.accrual_or_final = 'f' AND @calc_settlement_adjustment = 0
+
+DELETE td 
+FROM 
+	 #temp_deals_broker td
+	INNER JOIN stmt_checkout sc ON td.source_deal_detail_id = sc.source_deal_detail_id 
 	INNER JOIN stmt_invoice_detail sid ON sid.stmt_invoice_detail_id = sc.stmt_invoice_detail_id
 	WHERE sc.accrual_or_final = 'f' AND @calc_settlement_adjustment = 0
 
@@ -2539,6 +2550,15 @@ FROM
 		AND sc.accrual_or_final = 'f'
 	INNER JOIN stmt_invoice_detail sid ON sid.stmt_invoice_detail_id = sc.stmt_invoice_detail_id
 	WHERE sid.stmt_invoice_detail_id IS NULL AND @calc_settlement_adjustment = 1
+
+
+DELETE td 
+FROM   #temp_deals_broker td
+	INNER JOIN stmt_checkout sc ON td.source_deal_detail_id = sc.source_deal_detail_id 
+		AND sc.accrual_or_final = 'f'
+	INNER JOIN stmt_invoice_detail sid ON sid.stmt_invoice_detail_id = sc.stmt_invoice_detail_id
+	WHERE sid.stmt_invoice_detail_id IS NULL AND @calc_settlement_adjustment = 1
+
 
 --###########################
 
@@ -18715,6 +18735,7 @@ Begin
 		print  @pr_name+' Running..............'
 	end
 
+	update #calc_status set process_id=@process_id
 	IF @calc_type= 'w'
 	insert into MTM_TEST_RUN_LOG(process_id,code,module,source,type,[description],nextsteps)  
 	select @original_process_id,ErrorCode,Module,Source,[type],[description],nextstep  from #calc_status --where process_id=@process_id
