@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
+using FARRMSUtilities;
 
 namespace FARRMSExcelServerCLR
 {
@@ -74,15 +75,22 @@ namespace FARRMSExcelServerCLR
                 string spaRfxQuery = OverRideViewFilter(snapshotInfo);
                 //  Clear content from worksheet
                 snapshotInfo.ReplicaWorkbook.Clear(SheetName);
-                using (var cmd = new SqlCommand(spaRfxQuery, snapshotInfo.SqlConnection))
+                try
                 {
-                    cmd.CommandTimeout = 36000;     //  Timeout to 10 Hours
-                    using (SqlDataReader rd = cmd.ExecuteReader())
+                    using (var cmd = new SqlCommand(spaRfxQuery, snapshotInfo.SqlConnection))
                     {
-                        var dataTable = new DataTable();
-                        dataTable.Load(rd);
-                        sheet.InsertDataTable(dataTable, true, 1, 1);
+                        cmd.CommandTimeout = 36000;     //  Timeout to 10 Hours
+                        using (SqlDataReader rd = cmd.ExecuteReader())
+                        {
+                            var dataTable = new DataTable();
+                            dataTable.Load(rd);
+                            sheet.InsertDataTable(dataTable, true, 1, 1);
+                        }
                     }
+                }
+                catch (Exception e)
+                {
+                    e.LogError("Bind data", null);
                 }
                 //  Save changes after data binding
                 snapshotInfo.ReplicaWorkbook.Save();
