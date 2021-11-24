@@ -14,7 +14,7 @@
 </head>
     <?php
     $function_ids = get_sanitized_value($_GET['function_ids'] ?? '');
-    $primary_column_value = get_sanitized_value($_GET['primary_column_value'] ?? '');
+    $primary_column_value = get_sanitized_value($_GET['primary_column_value'] ?? 'NULL');
     $active_tab = null;
 
     $func_id = isset($_GET['function_id']) ? strtolower($_GET['function_id']) : null;
@@ -127,6 +127,7 @@
         var module_type = "<?php echo $module_type; ?>";
         var func_id = "<?php echo $func_id; ?>";
         var active_tab = "<?php echo $active_tab; ?>";
+		var sort_col_index = {};
 
         $(function() {
             Generic_Mapping.generic_map.addNewSibling('t1', 'process', 'Process', false, 'process.gif', 'process_dis.gif');
@@ -714,7 +715,29 @@
                 }
             }
         }
+		
+		function sort_custom(comp_val_a,comp_val_b,order) {
+            var selected_id = Generic_Mapping.cell_a_tab.getActiveTab();
+            var column_index = sort_col_index[selected_id];
+            var grid_obj = Generic_Mapping["grd_inner_obj_" + selected_id];
+            var col_type = grid_obj.getColType(column_index);
 
+            if (col_type == 'combo') {
+                var cell_combo_object = grid_obj.getColumnCombo(column_index);
+                comp_val_a =  (cell_combo_object.getOption(comp_val_a))? cell_combo_object.getOption(comp_val_a).text : comp_val_a;
+                comp_val_b =  (cell_combo_object.getOption(comp_val_b))? cell_combo_object.getOption(comp_val_b).text : comp_val_b;
+            }
+            
+            comp_val_a = comp_val_a.trim();
+            comp_val_b = comp_val_b.trim();
+
+            if (order == "asc") {
+                return comp_val_a > comp_val_b ? 1 : (comp_val_a < comp_val_b ? -1 : 0)
+            } else {
+                return comp_val_a < comp_val_b ? 1 : (comp_val_a > comp_val_b ? -1 : 0)
+            }
+        }
+		
         function ajx_call_back_grid_header(result) {          
             var json_obj = $.parseJSON(result);            
             var header = json_obj[0].name_list;
@@ -760,7 +783,7 @@
                         col_sort_string += ',int';
                     } else {
                         filter_string += ',#text_filter';
-                        col_sort_string += ',str';
+                        col_sort_string += ',sort_custom';
                     }  
                 }              
             }
@@ -776,19 +799,32 @@
             } else if (selected_item == 'Nomination Mapping') {
                 Generic_Mapping["grd_inner_obj_" + selected_item_id].setInitWidths("0,150,750");
             } else {
-                Generic_Mapping["grd_inner_obj_" + selected_item_id].setInitWidths("180,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150");              
+                Generic_Mapping["grd_inner_obj_" + selected_item_id].setInitWidths("180,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150,150");              
             }
-            Generic_Mapping["grd_inner_obj_" + selected_item_id].setDateFormat(user_date_format, "%Y-%m-%d");
-            Generic_Mapping["grd_inner_obj_" + selected_item_id].attachHeader(filter_string);
-            Generic_Mapping["grd_inner_obj_" + selected_item_id].setColSorting(col_sort_string);
-            Generic_Mapping["grd_inner_obj_" + selected_item_id].setColTypes(field_type);
-            Generic_Mapping["grd_inner_obj_" + selected_item_id].init();            
-            Generic_Mapping["grd_inner_obj_" + selected_item_id].setColumnHidden(0, true);// to hide id column 
-            Generic_Mapping["grd_inner_obj_" + selected_item_id].enableHeaderMenu();
-            Generic_Mapping["grd_inner_obj_" + selected_item_id].enableMultiselect(true);
-            Generic_Mapping["grd_inner_obj_" + selected_item_id].loadHiddenColumnsFromCookie("grd_generic_mapping_" + selected_item_id);
-            Generic_Mapping["grd_inner_obj_" + selected_item_id].enableAutoHiddenColumnsSaving("grd_generic_mapping_" + selected_item_id,cookie_expire_date);
 
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].attachHeader(filter_string);
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].setColTypes(field_type);
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].setColSorting(col_sort_string);
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].setColumnIds(column_ids);
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].setColumnHidden(0, true); // to hide id column 
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].enableValidation(true);
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].setColValidators(validation_rule);
+			Generic_Mapping["grd_inner_obj_" + selected_item_id].setDateFormat(user_date_format, "%Y-%m-%d");
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].enableMultiselect(true);
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].setPagingWTMode(true,true,true,[10,20,30,40,50,60,70,80,90,100]);
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].enablePaging(true, 50, 0, 'pagingArea_a'); 
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].setPagingSkin('toolbar'); 
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].init();
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].enableHeaderMenu();
+			Generic_Mapping["grd_inner_obj_" + selected_item_id].loadHiddenColumnsFromCookie(Generic_Mapping["grd_inner_obj_" + selected_item_id]); 
+			Generic_Mapping["grd_inner_obj_" + selected_item_id].enableOrderSaving(Generic_Mapping["grd_inner_obj_" + selected_item_id],cookie_expire_date); 
+			Generic_Mapping["grd_inner_obj_" + selected_item_id].enableAutoHiddenColumnsSaving(Generic_Mapping["grd_inner_obj_" + selected_item_id],cookie_expire_date);
+            
+            Generic_Mapping["grd_inner_obj_" + selected_item_id].attachEvent("onBeforeSorting", function(ind,type,direction){
+                var selected_id = Generic_Mapping.cell_a_tab.getActiveTab();
+                sort_col_index[selected_id] = ind;
+                return true;
+            });
             combo_load_state = {};
             combo_events_array = [];
 
@@ -870,7 +906,8 @@
             var invoice_param = { "flag": "a",
                                     "mapping_table_id": selected_item_id,
                                     "action": "spa_generic_mapping_header",
-                                    "primary_column_value": primary_column_value
+                                    "primary_column_value": primary_column_value,
+									"grid_type":"g"
                                 };
 
             invoice_param = $.param(invoice_param);
