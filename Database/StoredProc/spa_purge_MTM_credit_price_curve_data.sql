@@ -111,12 +111,16 @@ BEGIN TRY
 									, 'GAS.NCH.PFC.H.Fwd'
 									, 'GAS.NCL.PFC.D.Fwd'
 									, 'GAS.NCL.PFC.H.Fwd'
+									, 'GAS.THH.PFC.D.Fwd'
+									, 'GAS.THH.PFC.H.Fwd'
+									, 'GAS.THL.PFC.D.Fwd'
+									, 'GAS.THL.PFC.H.Fwd'
 									, 'GAS.TTF.PFC.D.Fwd'
 									, 'GAS.TTF.PFC.H.Fwd'
 									, 'GOO.GOO ALPINE.PFC.D.Fwd'
 									, 'GOO.GOO NORDIC.PFC.D.Fwd'
 									, 'POWER.DE.PFC.H.Fwd'
-									, 'FX.DE.PFC.D.USD'
+
 								)
 
 	/*insert in lock_as_of_date table
@@ -141,8 +145,4 @@ BEGIN CATCH
 
 END CATCH
 
-GO	
-
-
-
-
+GO
