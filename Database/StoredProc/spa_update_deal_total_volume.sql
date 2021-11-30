@@ -379,8 +379,8 @@ BEGIN
 
 	-- Taking fixation deal of orginal deal.
 
-		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id, create_user) 
-			SELECT distinct fix.source_deal_header_id,sdd.source_deal_detail_id, p.create_user 
+		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id) 
+			SELECT distinct fix.source_deal_header_id,sdd.source_deal_detail_id 
 			FROM ' + @effected_deals + ' p inner join source_deal_header fix  on p.source_deal_header_id=fix.close_reference_id 
 					and ISNULL(fix.internal_desk_id,17300)=17301 
 					and isnull(fix.product_id,4101)=4100 
@@ -395,8 +395,8 @@ BEGIN
 		exec(@sql)	
 					
 		-- Taking orginal deal of fixation deal.
-		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id, create_user) 
-			SELECT distinct sdd.source_deal_header_id,sdd.source_deal_detail_id, p.create_user 
+		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id) 
+			SELECT distinct sdd.source_deal_header_id,sdd.source_deal_detail_id 
 			FROM ' + @effected_deals + ' p 
 				inner join source_deal_header fix  on p.source_deal_header_id=fix.source_deal_header_id 
 					and isnull(fix.product_id,4101)=4100 
@@ -411,13 +411,13 @@ BEGIN
 
 			-- insert nomination/schedule/actul deals
 				
-		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id, create_user) 
-			SELECT distinct sdh.source_deal_header_id,sdd.source_deal_detail_id, p.create_user
+		set @sql='insert into '+ @effected_deals+ '(source_deal_header_id,source_deal_detail_id) 
+			SELECT distinct sdh.source_deal_header_id,sdd.source_deal_detail_id
 			FROM  ' + @effected_deals + ' p inner join source_deal_header sdh  on p.source_deal_header_id=sdh.close_reference_id 
 				and sdh.internal_deal_type_value_id IN(19,20)
 				inner join source_deal_detail sdd on sdd.source_deal_header_id=sdh.source_deal_header_id
 			UNION
-			SELECT distinct sdh1.source_deal_header_id,sdd.source_deal_detail_id, p.create_user
+			SELECT distinct sdh1.source_deal_header_id,sdd.source_deal_detail_id
 			FROM  ' + @effected_deals + ' p inner join source_deal_header sdh  on p.source_deal_header_id=sdh.source_deal_header_id 
 				and sdh.internal_deal_type_value_id IN(20,21)
 			inner join source_deal_header sdh1  on sdh1.source_deal_header_id=sdh.close_reference_id
