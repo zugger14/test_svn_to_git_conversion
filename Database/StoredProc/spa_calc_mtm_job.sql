@@ -10082,7 +10082,7 @@ BEGIN
 					(round(coalesce(atc.avg_curve_value,f.formula_value, 0), isnull(cfr.formula_rounding, 100))*isnull(a.price_multiplier, 1)*ISNULL(formula_cur_factor, 1)*b.foucf_price_fx_conv_factor_deal)) * isnull(cucfP.curve_uom_conv_factor, 1)
 			) 
 		end as extrinsic_value_deal, NULL accrued_interest,
-		CASE when isnull(hv.curve_id,-1)=-1 OR pd.source_deal_detail_id IS NOT NULL THEN 
+		CASE when ((isnull(hv.curve_id,-1)=-1 OR pd.source_deal_detail_id IS NOT NULL) AND a.hourly_position_breakdown not in(982,987,989,997)) THEN 
 			isnull(a.deal_volume,0) * case when a.buy_sell_flag=''s'' then -1 else 1 end 
 		ELSE hv.volume END  volume, a.leg, 
 		ABS(cast(CASE WHEN (a.fas_deal_type_value_id = 409) THEN 0 
