@@ -47,7 +47,6 @@ namespace FARRMSExcelServerCLR
                 //CellRange sourceRange = _templateWorksheet.AllocatedRange;
                 ////Copy the template worksheet to the document worksheet.
                 //_templateWorksheet.Copy(sourceRange, _documentWorksheet, _templateWorksheet.FirstRow, _templateWorksheet.FirstColumn, true);
-                _snapshotInfo.ReplicaWorkbook.Save();
             }
         }
         /// <summary>
@@ -160,7 +159,6 @@ namespace FARRMSExcelServerCLR
 
             #endregion
             _snapshotInfo.ReplicaWorkbook.CalculateAllValue();
-            _snapshotInfo.ReplicaWorkbook.Save();
         }
 
         private void ClearDataRows(Tablix tablix)

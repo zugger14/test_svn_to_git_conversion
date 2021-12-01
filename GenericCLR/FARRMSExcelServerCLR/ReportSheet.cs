@@ -92,8 +92,6 @@ namespace FARRMSExcelServerCLR
                 {
                     e.LogError("Bind data", null);
                 }
-                //  Save changes after data binding
-                snapshotInfo.ReplicaWorkbook.Save();
             }
         }
 

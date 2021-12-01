@@ -48,7 +48,7 @@ namespace FARRMSExcelServerCLR
 
             //SqlConnection =
             //    new SqlConnection(
-            //        @"Data Source=PSDL20\INSTANCE2016;Initial Catalog=TRMTracker_Release;Persist Security Info=True;User ID=sa;password=pioneer");
+            //        @"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT_Mkt_Merge;Persist Security Info=True;User ID=dev_admin;password=Admin2929");
             //SqlConnection.Open();
 
             SqlConnection = sqlConnection;
@@ -408,6 +408,7 @@ namespace FARRMSExcelServerCLR
 
         public void Dispose()
         {
+            this.ReplicaWorkbook.Dispose();
             GC.Collect();
         }
 

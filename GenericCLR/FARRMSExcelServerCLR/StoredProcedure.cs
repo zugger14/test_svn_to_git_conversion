@@ -26,7 +26,7 @@ namespace FARRMSExcelServerCLR
         {
             try
             {
-                //using (SqlConnection sqlConnection = new SqlConnection(@"Data Source=PSDL20\INSTANCE2016;Initial Catalog=TRMTracker_DEV;Persist Security Info=True;User ID=sa;password=pioneer"))
+                //using (SqlConnection sqlConnection = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT_Mkt_Merge;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                 using (var sqlConnection = new SqlConnection("Context Connection=True"))
                 {
                     sqlConnection.Open();
@@ -35,8 +35,10 @@ namespace FARRMSExcelServerCLR
                             userName, settlementCalc, exportFormat, processId, sqlConnection))
                     {
                         snapshotInfo.Synchronize();
+                        snapshotInfo.ReplicaWorkbook.Save();
 
                     }
+                    sqlConnection.Close();
                     outputResult = "success";
                 }
             }

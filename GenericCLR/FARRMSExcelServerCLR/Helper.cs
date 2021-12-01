@@ -150,7 +150,6 @@ namespace FARRMSExcelServerCLR
             Worksheet sheet = workbook.Worksheets[sheetName];
             sheet.Clear();
             sheet.ClearData();
-            workbook.Save();
         }
 
         /// <summary>
@@ -351,19 +350,6 @@ namespace FARRMSExcelServerCLR
                 }
             }
             workbook.CalculateAllValue();
-            //workbook.Save();
-        }
-
-        public static void UpdateCharts(this Workbook workbook)
-        {
-            foreach (Worksheet worksheet in workbook.Worksheets)
-            {
-                foreach (Chart ct in worksheet.Charts)
-                {
-                    ct.DataRange = worksheet.AllocatedRange;
-                }
-            }
-            workbook.Save();
         }
 
         public static void RefreshCharts(this Workbook workbook)
@@ -405,7 +391,6 @@ namespace FARRMSExcelServerCLR
                     if (sheet.Rows.Count() != 1)
                         rowCount = sheet.Rows.Count();
                     workbook.NameRanges[nameRange.Name].RefersToRange = sheet.Range["A1:" + colName + rowCount];
-                    workbook.Save();
                 }
             }
             catch (Exception)

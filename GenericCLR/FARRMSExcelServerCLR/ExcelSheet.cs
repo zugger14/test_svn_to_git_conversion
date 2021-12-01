@@ -90,7 +90,6 @@ namespace FARRMSExcelServerCLR
                 default:
                     break;
             }
-            this.SnapshotInfo.ReplicaWorkbook.Save();
             //  Save log
             SaveSnapshotHistoryLog();
         }
@@ -205,7 +204,6 @@ namespace FARRMSExcelServerCLR
                 if (ws.Name != SheetName && !ShowDataTabs)
                     ws.Visibility = WorksheetVisibility.StrongHidden;
             }
-            workbook.Save();
         }
 
         /// <summary>
