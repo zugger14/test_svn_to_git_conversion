@@ -667,26 +667,31 @@ END
 ELSE IF @flag = 'z' --Finalize Invoice  
 BEGIN
 	BEGIN TRY
-		SELECT * INTO #invoice_collection FROM dbo.SplitCommaSeperatedValues(@invoice_id) id
+		SELECT DISTINCT IDENTITY(INT, 1, 1) id, i.item INTO #invoice_collection FROM dbo.SplitCommaSeperatedValues(@invoice_id) i WHERE item <> ''
 		DECLARE @id INT, @status INT = 1, @url_name VARCHAR(5000), @total_time_for_pdf_process VARCHAR(200), @pdf_process_start_time  DATETIME 
 		SET @pdf_process_start_time = GETDATE()
 
 		/* To Finalize the Backing Sheet */
 		INSERT INTO #invoice_collection
-		SELECT DISTINCT si_b.stmt_invoice_id FROM stmt_invoice si
+		SELECT si_b.stmt_invoice_id FROM stmt_invoice si
 		INNER JOIN #invoice_collection tid ON tid.item = si.stmt_invoice_id
 		INNER JOIN stmt_invoice_detail stid ON si.stmt_invoice_id = stid.stmt_invoice_id
 		OUTER APPLY( SELECT itm.item [stmt_checkout_id] FROM dbo.SplitCommaSeperatedValues(stid.description1) itm) a 
 		INNER JOIN stmt_invoice_detail stid_b ON stid_b.description1 = a.[stmt_checkout_id]
 		INNER JOIN stmt_invoice si_b ON si_b.stmt_invoice_id = stid_b.stmt_invoice_id AND ISNULL(si_b.is_voided,'n') = ISNULL(si.is_voided,'n')
-		WHERE ISNULL(si_b.is_backing_sheet,'n') = 'y'
+		LEFT JOIN #invoice_collection i ON i.item = si_b.stmt_invoice_id
+		WHERE i.id IS NULL AND ISNULL(si_b.is_backing_sheet,'n') = 'y'
 
 		DELETE FROM #invoice_collection WHERE NULLIF(item,'') IS NULL
+ 
 		DECLARE @netting_id INT 
-		WHILE EXISTS(SELECT * FROM #invoice_collection) 
+		DECLARE invoice_col CURSOR FOR
+		SELECT item FROM #invoice_collection
+		OPEN invoice_col
+		FETCH NEXT FROM invoice_col INTO @id
+		WHILE @@FETCH_STATUS = 0
 		BEGIN
-			SELECT TOP(1) @id = item FROM #invoice_collection
-
+		
 			SET @status = 1
 			SET @netting_id =  NULL
 			
@@ -746,8 +751,11 @@ BEGIN
 				INSERT INTO process_settlement_invoice_log (process_id, counterparty_id, prod_date, code, module, [description], invoice_id)
 				SELECT @process_id, counterparty_id, getdate(), 'Error', 'Settlement invoice', 'Failed to finalize invoice : ' + CAST(stmt_invoice_id AS VARCHAR), stmt_invoice_id FROM stmt_invoice WHERE stmt_invoice_id = @id
 			END
-			DELETE FROM #invoice_collection WHERE (item = @id);
+						 
+			FETCH NEXT FROM invoice_col INTO @id
 		END
+		CLOSE invoice_col
+		DEALLOCATE invoice_col
 
 		SET @url_name = './dev/spa_html.php?__user_name__=''' + @user_login_id + '''&spa=exec spa_get_settlement_invoice_log ''' + @process_id + ''''
 		SET @msg = '<a target="_blank" href="' + @url_name + '">' + 'Process to create invoice PDFs has been completed.</a>'
