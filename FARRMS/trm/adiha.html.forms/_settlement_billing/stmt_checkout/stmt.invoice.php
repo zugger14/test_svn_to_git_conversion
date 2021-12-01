@@ -25,6 +25,7 @@
     $settlement_invoice_counterparty_invoice_function_id = 20012203;
     $settlement_invoice_workflow_status_function_id = 20012204;
     $settlement_invoice_finalize_function_id = 20012205;
+    $settlement_invoice_finalize_all_function_id = 20012211;
     $settlement_invoice_void_function_id = 20012206;
     $settlement_invoice_export_invoice_function_id = 20012207;
  
@@ -34,6 +35,7 @@
         $has_right_settlement_invoice_counterparty_invoice_function_id,
         $has_right_settlement_invoice_workflow_status_function_id,
         $has_right_settlement_invoice_finalize_function_id,
+        $has_right_settlement_invoice_finalize_all_function_id,
         $has_right_settlement_invoice_void_function_id,
         $has_right_settlement_invoice_export_invoice_function_id
         ) = build_security_rights (
@@ -42,6 +44,7 @@
         $settlement_invoice_counterparty_invoice_function_id,
         $settlement_invoice_workflow_status_function_id,
         $settlement_invoice_finalize_function_id,
+        $settlement_invoice_finalize_all_function_id,
         $settlement_invoice_void_function_id,
         $settlement_invoice_export_invoice_function_id
     );
@@ -63,6 +66,7 @@
 	var has_right_settlement_invoice_counterparty_invoice_function_id = <?php echo (($has_right_settlement_invoice_counterparty_invoice_function_id) ? $has_right_settlement_invoice_counterparty_invoice_function_id : '0'); ?>;
 	var has_right_settlement_invoice_workflow_status_function_id = <?php echo (($has_right_settlement_invoice_workflow_status_function_id) ? $has_right_settlement_invoice_workflow_status_function_id : '0'); ?>;
 	var has_right_settlement_invoice_finalize_function_id = <?php echo (($has_right_settlement_invoice_finalize_function_id) ? $has_right_settlement_invoice_finalize_function_id : '0'); ?>;
+	var has_right_settlement_invoice_finalize_all_function_id = <?php echo (($has_right_settlement_invoice_finalize_all_function_id) ? $has_right_settlement_invoice_finalize_all_function_id : '0'); ?>;
 	var has_right_settlement_invoice_void_function_id = <?php echo (($has_right_settlement_invoice_void_function_id) ? $has_right_settlement_invoice_void_function_id : '0'); ?>;
 	var has_right_settlement_invoice_export_invoice_function_id = <?php echo (($has_right_settlement_invoice_export_invoice_function_id) ? $has_right_settlement_invoice_export_invoice_function_id : '0'); ?>;
 	
@@ -439,6 +443,7 @@
                 var invoice_type = SettlementInvoice.grid.cells(row_id, SettlementInvoice.grid.getColIndexById('invoice_type')).getValue();
   
                 if(invoice_type == 'Netting') {
+                    SettlementInvoice.menu.setItemDisabled('finalize_status_all');
                     SettlementInvoice.menu.setItemDisabled('finalize_status');
                     SettlementInvoice.menu.setItemDisabled('unfinalize_status');
                     SettlementInvoice.menu.setItemDisabled('void_status');
@@ -484,6 +489,12 @@
                         SettlementInvoice.menu.setItemDisabled('finalize_status');
                     }
 
+                    if(is_finalized != 'Finalized' && (has_right_settlement_invoice_finalize_all_function_id)) {
+                        SettlementInvoice.menu.setItemEnabled('finalize_status_all');
+                    } else {
+                        SettlementInvoice.menu.setItemDisabled('finalize_status_all');
+                    }
+					
                     SettlementInvoice.menu.setItemEnabled('payment_status');
                     if(payment_status == 'Paid'){
                         SettlementInvoice.menu.setItemEnabled('unpaid');
@@ -562,6 +573,7 @@
     load_workflow_status = function() { 
         SettlementInvoice.menu.addNewSibling('t2', 'process', 'Process', false, 'action.gif', 'action_dis.gif'); 
         SettlementInvoice.menu.addNewChild('process', '0', 'workflow_status', 'Workflow Status', true, 'update_invoice_stat.gif', 'update_invoice_stat_dis.gif');
+        SettlementInvoice.menu.addNewChild('process', '8', 'finalize_status_all', 'Finalize All', false, 'finalize.gif', 'finalize_dis.gif');
         SettlementInvoice.menu.addNewChild('process', '1', 'finalize_status', 'Finalize', true, 'finalize.gif', 'finalize_dis.gif');
         SettlementInvoice.menu.addNewChild('process', '2', 'unfinalize_status', 'UnFinalize', true, 'unfinalize.gif', 'unfinalize_dis.gif');
 
@@ -578,8 +590,13 @@
     }
 
     SettlementInvoice.grid_menu_click = function(id, zoneId, cas) {
-        if (id == 'finalize_status' || id == 'unfinalize_status' || id == 'delete') {
-            var selected_row = SettlementInvoice.grid.getSelectedRowId();
+        if (id == 'finalize_status' || id == 'finalize_status_all' || id == 'unfinalize_status' || id == 'delete') {
+			var selected_row;
+            if(id == 'finalize_status_all')
+				selected_row = SettlementInvoice.grid.getAllRowIds();
+			else
+				selected_row = SettlementInvoice.grid.getSelectedRowId();
+			
             var as_of_date_arr = new Array();
             if (selected_row != null) {
                 var selected_row_array = selected_row.split(',');
@@ -724,6 +741,9 @@
         case "finalize_status":
             finalize_invoice();
             break;
+        case "finalize_status_all":
+            finalize_invoice_all();
+            break;			
         case "unfinalize_status":
             unfinalize_invoice();                
             break;
@@ -817,6 +837,24 @@
         break;    
        }
     };
+
+    function finalize_invoice_all() {
+        var selected_rows = SettlementInvoice.grid.getAllRowIds();
+        var invoice_ids = new Array();
+        var arr_selected_rows = selected_rows.split(',');
+
+        $.each(arr_selected_rows, function(i, row_id) {
+            var invoice_id = SettlementInvoice.grid.cells(row_id, SettlementInvoice.grid.getColIndexById('invoice_id')).getValue();
+            invoice_ids.push(invoice_id);
+        });
+
+        data = {"action": "spa_stmt_invoice",
+                "flag": "f",
+                "invoice_id": invoice_ids.join()
+             };
+
+        adiha_post_data('confirm', data, '', '', 'SettlementInvoice.refresh_grid', 'false', 'Are you sure you want to finalize all invoices ?');
+    }
 
     function finalize_invoice() {
         var selected_rows = SettlementInvoice.grid.getSelectedRowId();
