@@ -473,7 +473,7 @@ WHERE a.udf_value3 = ''''false'''' AND a.udf_value6 IS NOT NULL  -- udf_value6 =
 
 SELECT sdd.source_deal_Detail_id, CAST(a.term_start AS DATE) term_date, 
 IIF(LEN(DATEPART(hour,a.term_start) +1 ) = 1, ''''0'''' + CAST(DATEPART(hour,a.term_start) +1 AS NVARCHAR(4)) , CAST(DATEPART(hour,a.term_start) +1 AS NVARCHAR(4))) + '''':00'''' hrs , 
-CAST(temp.deal_volume AS NUMERIC(38,5))/1000 deal_volume, 982 granularity, 0 is_dst
+CAST(temp.deal_volume AS NUMERIC(38,5)) deal_volume, 982 granularity, 0 is_dst
 INTO #temp_detail_hour
 FROM '' + @final_process_table + '' temp
 CROSS APPLY (SELECT * FROM dbo.FNATermBreakdown(''''h'''',term_start,term_end)) a
@@ -984,7 +984,7 @@ WHERE a.udf_value3 = ''''false'''' AND a.udf_value6 IS NOT NULL  -- udf_value6 =
 
 SELECT sdd.source_deal_Detail_id, CAST(a.term_start AS DATE) term_date, 
 IIF(LEN(DATEPART(hour,a.term_start) +1 ) = 1, ''''0'''' + CAST(DATEPART(hour,a.term_start) +1 AS NVARCHAR(4)) , CAST(DATEPART(hour,a.term_start) +1 AS NVARCHAR(4))) + '''':00'''' hrs , 
-CAST(temp.deal_volume AS NUMERIC(38,5))/1000 deal_volume, 982 granularity, 0 is_dst
+CAST(temp.deal_volume AS NUMERIC(38,5)) deal_volume, 982 granularity, 0 is_dst
 INTO #temp_detail_hour
 FROM '' + @final_process_table + '' temp
 CROSS APPLY (SELECT * FROM dbo.FNATermBreakdown(''''h'''',term_start,term_end)) a
@@ -1064,7 +1064,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-D-SQL01\shared_docs_TRMTracker_Enercity\temp_Note\0',
+						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
@@ -1162,7 +1162,31 @@ FROM #final_data
 						END
 					
 
-INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Real''', 'Max', 0, NULL, NULL 
+INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[dealID]', ic.ixp_columns_id, 'pa.[dealID] + ''_PRISMA''', NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[bookingDate]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_date' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[auctionId]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'ext_deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Physical''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'physical_financial_flag' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[counterparty_id]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'counterparty_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Capacity''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'source_deal_type_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Real''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_category_value_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
@@ -1222,7 +1246,7 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'fixed_price_currency_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[quantity_value]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[quantity_value]', ic.ixp_columns_id, 'pa.[quantity_value]/1000', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
@@ -1234,34 +1258,6 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume_uom_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Capacity''', 'Max', 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'source_deal_type_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[counterparty_id]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'counterparty_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Physical''', 'Max', 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'physical_financial_flag' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[auctionId]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'ext_deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[bookingDate]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_date' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[dealID]', ic.ixp_columns_id, 'pa.[dealID] + ''_PRISMA''', NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Hourly''', 'Max', 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'profile_granularity' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[location_id]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
@@ -1270,6 +1266,10 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'pricing_type' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Hourly''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'profile_granularity' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[tso_entry]', ic.ixp_columns_id, NULL, NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'TSO Entry' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
