@@ -13322,16 +13322,12 @@ SET @qry8a='
 		AND uds.field_id = -10000335  --Sleeve
 	LEFT JOIN user_defined_deal_fields uddfs on uddfs.udf_template_id = uds.udf_template_id 
 		AND uddfs.source_deal_header_id = td.source_deal_header_id
-	LEFT JOIN user_defined_deal_fields_template uds1 on uds1.template_id = sdh.template_id
-		AND uds1.field_id= -10000336	 --Spread	
-	LEFT JOIN user_defined_deal_fields uddfs1 on uddfs1.udf_template_id = uds1.udf_template_id 
-		AND uddfs1.source_deal_header_id = td.source_deal_header_id
 	OUTER APPLY(SELECT sfv.[value]  * 
-				CASE WHEN uddfs.udf_value = ''y'' THEN 0 WHEN uddfs1.udf_value = ''y'' THEN 0.5 ELSE 1 END [value],
+				CASE WHEN uddfs.udf_value = ''y'' THEN 0 ELSE 1 END [value],
 				sfv.[minimum_value]  * 
-				CASE WHEN uddfs.udf_value = ''y'' THEN 0 WHEN uddfs1.udf_value = ''y'' THEN 0.5 ELSE 1 END [minimum_value],
+				CASE WHEN uddfs.udf_value = ''y'' THEN 0 ELSE 1 END [minimum_value],
 				sfv.[maximum_value]  * 
-				CASE WHEN uddfs.udf_value = ''y'' THEN 0 WHEN uddfs1.udf_value = ''y'' THEN 0.5 ELSE 1 END [maximum_value]
+				CASE WHEN uddfs.udf_value = ''y'' THEN 0 ELSE 1 END [maximum_value]
 				WHERE udft.internal_field_type IN (18723,18739,18740,18741)) sfv2
 	WHERE 1 = 1 --	udft.internal_field_type IN(18723,18724,18733,18737)			
 	AND ISNUMERIC(ISNULL(sfv2.value, sfv.value)) = 1
