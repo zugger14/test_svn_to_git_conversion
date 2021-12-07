@@ -478,6 +478,14 @@ BEGIN
 				END   
 			else
 			begin
+				if exists( SELECT a.* FROM dbo.farrms_sysjobactivity a INNER JOIN  msdb.dbo.sysjobs_view b ON a.job_id=b.job_id 
+					--inner JOIN msdb.dbo.sysjobsteps js ON a.job_id = js.job_id AND ISNULL(a.last_executed_step_id,0)+1 = js.step_id
+				WHERE b.name like '%'+db_name()+' - Calc Position Breakdown%' AND a.stop_execution_date IS not NULL  
+					AND a.start_execution_date IS NOT NULL
+					)
+				begin
+					update dbo.process_deal_position_breakdown set process_status=0 where process_status=1
+				end
 				IF NOT EXISTS (SELECT 1 aa FROM dbo.process_deal_position_breakdown where process_status=1)
 				begin
 					IF EXISTS (SELECT 1  aa FROM dbo.process_deal_position_breakdown where process_status=0)
