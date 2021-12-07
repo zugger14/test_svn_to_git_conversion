@@ -459,7 +459,12 @@ BEGIN
 			--INSERT INTO @currently_running_jobs
 			--EXECUTE master.dbo.xp_sqlagent_enum_jobs 1,''
 
-			IF  not EXISTS (SELECT a.job_id FROM dbo.farrms_sysjobactivity a INNER JOIN  msdb.dbo.sysjobs_view b ON a.job_id=b.job_id 
+			SET @spa = 'spa_update_deal_total_volume null,null,0,1,''' + @user_login_id + ''',''n'',1, ' + ISNULL('''' + @call_from_2 + '''', 'NULL') + ',''' + @trigger_workflow + '''' 
+			
+			select @job_name= 'Calc Position Breakdown_'+@process_id
+
+			-- The checking job running status condition is not 100% perfect (https://stackoverflow.com/questions/18445825/how-to-know-status-of-currently-running-jobs)
+			IF not EXISTS (SELECT a.* FROM dbo.farrms_sysjobactivity a INNER JOIN  msdb.dbo.sysjobs_view b ON a.job_id=b.job_id 
 				--inner JOIN msdb.dbo.sysjobsteps js ON a.job_id = js.job_id AND ISNULL(a.last_executed_step_id,0)+1 = js.step_id
 			WHERE b.name like '%'+db_name()+' - Calc Position Breakdown%' AND a.stop_execution_date IS NULL  
 				AND a.start_execution_date IS NOT NULL -- AND a.run_requested_date IS NOT NULL
@@ -467,12 +472,20 @@ BEGIN
 				--IF  not EXISTS (SELECT 1 FROM  @currently_running_jobs rJOB  INNER JOIN [msdb].[dbo].[sysjobs_view] AS [sJOB] ON rJOB.[job_id] = [sJOB].[job_id] 
 				--					WHERE [sJOB].name like db_name()+'- Calc Position Breakdown%' AND running=1 and next_run_date=0)
 				BEGIN   
-					SET @spa = 'spa_update_deal_total_volume null,null,0,1,''' + @user_login_id + ''',''n'',1, ' + ISNULL('''' + @call_from_2 + '''', 'NULL') + ',''' + @trigger_workflow + ''', ''' + @process_id + ''''
-					select @job_name= 'Calc Position Breakdown_'+@process_id
 					EXEC spa_run_sp_as_job @job_name,  @spa, 'FARRMS - Calc Position Breakdown', @user_login_id
 			
 				--EXEC dbo.spa_run_existing_job N'FARRMS - Calc Position Breakdown'
 				END   
+			else
+			begin
+				IF NOT EXISTS (SELECT 1 aa FROM dbo.process_deal_position_breakdown where process_status=1)
+				begin
+					IF EXISTS (SELECT 1  aa FROM dbo.process_deal_position_breakdown where process_status=0)
+					begin
+						EXEC spa_run_sp_as_job @job_name,  @spa, 'FARRMS - Calc Position Breakdown', @user_login_id
+					end
+				end
+			end  
 			RETURN
 		END
 		ELSE  --call from eod  
