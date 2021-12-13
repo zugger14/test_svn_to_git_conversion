@@ -50,6 +50,8 @@ BEGIN
 SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[final_process_table]''), 0,37))
 
 DECLARE @temp_process_table NVARCHAR(1000) = dbo.FNAProcessTableName(''temp_pre_import_data'', dbo.FNADBUser(), @set_process_id)
+DECLARE @temp_process_table1 NVARCHAR(1000) = dbo.FNAProcessTableName(''temp_pre_before_insert_data'', dbo.FNADBUser(), @set_process_id)
+
 EXEC(''IF OBJECT_ID('''''' + @temp_process_table + '''''') IS NOT NULL
 				DROP TABLE '' + @temp_process_table + ''
 	  SELECT * INTO '' + @temp_process_table + ''
@@ -130,17 +132,17 @@ INSERT INTO source_system_data_import_status_detail(
 SELECT DISTINCT @set_process_id
 	, ''ixp_source_deal_template''
 	, ''Missing Value''
-	, ''Generic mapping not found for TermCodes: '' + CASE WHEN MAX(temp.curve_id) IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END + '' AND DealTimeHour: '' + CAST(DATEPART(HH, dbo.FNAGetLOCALTime(temp.[deal_date],15)) AS VARCHAR(10)) + '' for Deal : '' + temp.deal_id
+	, ''Generic mapping not found for TermCodes: '' + CASE WHEN MAX(temp.curve_id) IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END + '' AND DealTimeHour: '' + CAST(DATEPART(HH, dbo.FNAGetLOCALTime(temp.[deal_date],15)) AS VARCHAR(10)) + '' for Deal : '' + temp.deal_id
 	, ''Error''
 FROM [final_process_table] temp
-INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
+INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
 INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 LEFT JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
-	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN 1 ELSE 0 END AS VARCHAR(10)) 
+	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 WHERE ISDATE(temp.[deal_date]) = 1
 AND gmv.generic_mapping_values_id IS NULL
 AND NULLIF(gmv0.clm2_value,'''') IS NULL
@@ -149,14 +151,14 @@ GROUP BY temp.deal_id, temp.term_start, temp.[deal_date]
 
 DELETE temp
 FROM [final_process_table] temp
-INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
+INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
 INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 LEFT JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
-	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN 1 ELSE 0 END AS VARCHAR(10)) 
+	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 WHERE ISDATE(temp.[deal_date]) = 1
 AND NULLIF(gmv0.clm2_value,'''') IS NULL
 AND gmv.generic_mapping_values_id IS NULL
@@ -169,9 +171,9 @@ INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.
 INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 INNER JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
-	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN 1 ELSE 0 END AS VARCHAR(10)) 
+	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
 WHERE ISDATE(temp.[deal_date]) = 1
@@ -188,7 +190,7 @@ INNER JOIN generic_mapping_values gmv
 							  THEN ''WkEnd''
 							  WHEN t.[term_start] like ''%sun%'' THEN ''SUN''
 						  	  WHEN t.[term_start] like ''%sat%'' THEN ''SAT''					 
-					     ELSE CASE WHEN t.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(t.term_start))) = 0, RTRIM(LTRIM(t.term_start)),SUBSTRING(RTRIM(LTRIM(t.term_start)), CHARINDEX('' '',RTRIM(LTRIM(t.term_start))) + 1 , LEN(RTRIM(LTRIM(t.term_start))))) ELSE t.term_start END END
+					     ELSE CASE WHEN t.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(t.term_start))) = 0, RTRIM(LTRIM(t.term_start)),SUBSTRING(RTRIM(LTRIM(t.term_start)), CHARINDEX('' '',RTRIM(LTRIM(t.term_start))) + 1 , LEN(RTRIM(LTRIM(t.term_start))))) ELSE t.term_start END END
 INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
 WHERE t.[term_start] NOT IN (''Saturday'', ''Sunday'')
@@ -216,7 +218,7 @@ WHERE NULLIF(gmv.clm1_value,'''') IS NULL
 UPDATE [final_process_table]
 SET term_start = IIF(CHARINDEX('' '',term_start) = 0,term_start,SUBSTRING(term_start,0, CHARINDEX('' '',term_start)))
 	,term_end = IIF(CHARINDEX('' '',term_end) = 0, term_end,SUBSTRING(term_end,0, CHARINDEX('' '',term_end)))
-WHERE curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'')
+WHERE curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'')
 
 INSERT INTO source_system_data_import_status_detail(
 	process_id
@@ -294,11 +296,15 @@ UPDATE t
 FROM [final_process_table] t
 INNER JOIN [temp_process_table] t1
 	ON t1.[tradeid] = t.deal_id
-LEFT JOIN term_map_detail tmd 
-	ON tmd.term_code =  t1.[FirstSequenceItemName]
 INNER JOIN generic_mapping_values gmv
     ON gmv.clm1_value = t.[curve_id]
-	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(tmd.sequence,gmv.clm4_value) END
+	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(CASE WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 0 THEN ''981''
+	        WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 1 AND 6 THEN ''990''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 7 AND 31 THEN ''980''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 32 AND 93 THEN ''991''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) > 90 AND DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) < 364 THEN ''992''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) >= 364 THEN ''993''
+	   ELSE ''981'' END,gmv.clm4_value) END
 INNER join generic_mapping_header gmh
 	ON gmv.mapping_table_id = gmh.mapping_table_id
 LEFT JOIN source_deal_header_template sdht
@@ -371,11 +377,15 @@ UPDATE t
 FROM [final_process_table] t
 INNER JOIN [temp_process_table] t1
 	ON t1.[tradeid] = t.deal_id
-LEFT JOIN term_map_detail tmd 
-	ON tmd.term_code =  t1.[FirstSequenceItemName]
 INNER JOIN generic_mapping_values gmv
     ON gmv.clm1_value = t.[curve_id]
-	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(tmd.sequence,gmv.clm4_value) END
+	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(CASE WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 0 THEN ''981''
+	        WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 1 AND 6 THEN ''990''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 7 AND 31 THEN ''980''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 32 AND 93 THEN ''991''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) > 90 AND DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) < 364 THEN ''992''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) >= 364 THEN ''993''
+	   ELSE ''981'' END,gmv.clm4_value) END
 INNER join generic_mapping_header gmh
 	ON gmv.mapping_table_id = gmh.mapping_table_id
 LEFT JOIN source_price_curve_def spcd
@@ -456,13 +466,25 @@ LEFT JOIN shipper_code_mapping_detail scmd1
 	AND scmd1.shipper_code_id = scm.shipper_code_id
 
 UPDATE temp
-	SET deal_date = CAST(deal_date AS DATE),
-		term_start = CAST(CASE WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' THEN DATEADD(dd, 7-(DATEPART(dw, deal_date)), deal_date)
-							   WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
+SET deal_date = CAST(deal_date AS DATE),
+		term_start = CAST(CASE  WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' AND DATEPART(dw, temp.deal_date) = 7 AND DATEPART(hour,temp.deal_date) < 3
+										THEN deal_date
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' AND DATEPART(dw, temp.deal_date) = 7 THEN DATEADD(dd, 7,deal_date)
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' THEN DATEADD(dd, 7-(DATEPART(dw, deal_date)), deal_date)
+							    WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday''  AND DATEPART(dw, temp.deal_date) = 1 AND DATEPART(hour,temp.deal_date) < 3
+										THEN deal_date
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' AND DATEPART(dw, temp.deal_date) = 1 THEN DATEADD(dd, 7,deal_date)
+							    WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
 						  ELSE term_start END
 					 AS DATE),
-		term_end = CAST(CASE WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' THEN DATEADD(dd, 7-(DATEPART(dw, deal_date)), deal_date)
-							   WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
+		term_end = CAST(CASE    WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' AND DATEPART(dw, temp.deal_date) = 7 AND DATEPART(hour,temp.deal_date) < 3
+									 THEN deal_date
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' AND DATEPART(dw, temp.deal_date) = 7 THEN DATEADD(dd, 7,deal_date)
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday''  THEN DATEADD(dd, 7-(DATEPART(dw, deal_date)), deal_date)
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' AND DATEPART(dw, temp.deal_date) = 1 AND DATEPART(hour,temp.deal_date) < 3
+									 THEN deal_date
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' AND DATEPART(dw, temp.deal_date) = 1 THEN DATEADD(dd, 7,deal_date)
+							    WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday''  THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
 						  ELSE term_end END
 					 AS DATE)
 FROM [final_process_table] temp
@@ -497,9 +519,9 @@ FROM (
 	) AS a
 PIVOT(MAX(a.ixp_columns_name) FOR a.Field_label IN ([Delivery Path])) AS P
 
-SELECT @mapping_table_id = mapping_table_id 
-FROM generic_mapping_header 
-WHERE mapping_name = ''Trayport Autopath Mapping''
+--SELECT @mapping_table_id = mapping_table_id 
+--FROM generic_mapping_header 
+--WHERE mapping_name = ''Trayport Autopath Mapping''
 
 DECLARE @udf_update_query NVARCHAR(MAX), @sql_query NVARCHAR(MAX)
 SELECT @udf_update_query = [Delivery Path] + ''= dp.path_code''
@@ -507,15 +529,16 @@ FROM #temp_udf_data
 
 SET @sql_query = ''
 	UPDATE temp
-	SET shipper_code1 = gmv.clm6_value
-	,	shipper_code2 = gmv.clm7_value
+    SET shipper_code1 = ISNULL(gmv.clm6_value,temp.shipper_code1)
+    ,    shipper_code2 = ISNULL(gmv.clm7_value,temp.shipper_code2)
 	, internal_portfolio_id = sdv_product.code
 	'' + CASE WHEN @udf_update_query IS NOT NULL THEN '', '' + @udf_update_query ELSE '''' END + ''
 	FROM [final_process_table] temp
 	INNER JOIN [temp_process_table] t1
 		ON t1.[tradeid] = temp.deal_id
+	CROSS APPLY(SELECT mapping_table_id FROM generic_mapping_header WHERE mapping_name = ''''Trayport Autopath Mapping'''') gmh
 	LEFT JOIN generic_mapping_values gmv 
-		ON  mapping_table_id =   '''''' + CAST(@mapping_table_id AS VARCHAR(10)) + ''''''
+		ON gmv.mapping_table_id = gmh.mapping_table_id
 		AND  gmv.clm1_value = t1.[InstName]
 		AND  COALESCE(gmv.clm2_value,t1.[Book],''''-1'''') = ISNULL(t1.[Book], ''''-1'''')
 		AND  COALESCE(gmv.clm3_value,CASE temp.header_buy_sell_flag WHEN ''''Buy'''' THEN ''''b'''' WHEN ''''Sell'''' THEN ''''s'''' ELSE temp.header_buy_sell_flag END,''''-1'''') = ISNULL(CASE temp.header_buy_sell_flag WHEN ''''Buy'''' THEN ''''b'''' WHEN ''''Sell'''' THEN ''''s'''' ELSE temp.header_buy_sell_flag END, ''''-1'''')
@@ -524,7 +547,7 @@ SET @sql_query = ''
 	LEFT JOIN static_data_value sdv_product
 		ON CAST(sdv_product.value_id  AS VARCHAR(10)) = gmv.clm5_value
 		AND sdv_product.[type_id] = 39800
-	WHERE gmv.clm1_value in ( ''''NCG L - WEST EEX'''',''''NCG L - EAST EEX'''')
+	--WHERE gmv.clm1_value in ( ''''NCG L - WEST EEX'''',''''NCG L - EAST EEX'''', ''''NCG Low Cal EEX'''')
 ''
 EXEC(@sql_query)
 
@@ -545,7 +568,52 @@ SELECT DISTINCT @set_process_id
 		+ '' for Deal : '' + temp.deal_id
 	, ''Warning''
 FROM [final_process_table] temp
-WHERE temp.shipper_code1 IS NULL OR temp.shipper_code2 IS NULL',
+WHERE temp.shipper_code1 IS NULL OR temp.shipper_code2 IS NULL
+
+SELECT @mapping_table_id = mapping_table_id 
+FROM generic_mapping_header 
+WHERE mapping_name = ''Trayport Block Definition Product Mapping''
+
+UPDATE temp
+	SET term_start = DATEADD(d, -1, temp.term_start)
+	   , term_end = DATEADD(d, -1, temp.term_end)
+FROM [final_process_table] temp
+INNER JOIN [temp_process_table] t1
+	ON t1.[tradeid] = temp.deal_id
+INNER JOIN static_data_value sdv
+	ON sdv.code = temp.block_define_id
+INNER JOIN generic_mapping_values gmv
+	ON gmv.mapping_table_id = @mapping_table_id
+	AND gmv.clm2_value = t1.[InstName]
+	AND gmv.clm4_value = CAST(sdv.value_id AS VARCHAR(10))
+WHERE t1.[InstName] IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'')
+AND gmv.clm6_value = ''y''
+
+UPDATE temp
+    SET deal_id = deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''')
+FROM [final_process_table] temp
+INNER JOIN [temp_process_table] t1
+    ON t1.[tradeid] = temp.deal_id
+WHERE CAST(temp.deal_date AS DATE) > ''2021-05-27''
+
+EXEC(''IF OBJECT_ID('''''' + @temp_process_table1 + '''''') IS NOT NULL
+				DROP TABLE '' + @temp_process_table1 + ''
+	  SELECT sdh.source_deal_header_id,
+			 sdh.sub_book
+	  INTO '' + @temp_process_table1 + ''
+	  FROM  [final_process_table] a
+	  INNER JOIN source_deal_header sdh
+		ON sdh.deal_id = a.deal_id
+'')
+
+EXEC(''UPDATE '' + @temp_process_table + ''
+		SET [tradeid] = [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''')
+'')
+
+DELETE temp
+FROM source_deal_header sdh 
+INNER JOIN [final_process_table] temp ON temp.[deal_id] = sdh.deal_id
+AND sdh.deal_status =5607',
 					'DECLARE @mapping_table_id INT
 DECLARE @set_process_id VARCHAR(40)
 	, @hyperlink_row_count INT
@@ -558,12 +626,14 @@ DECLARE @set_process_id VARCHAR(40)
 SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37))
 
 DECLARE @temp_process_table NVARCHAR(1000) = dbo.FNAProcessTableName(''temp_pre_import_data'', dbo.FNADBUser(), @set_process_id)
+DECLARE @temp_process_table1 NVARCHAR(1000) = dbo.FNAProcessTableName(''temp_pre_before_insert_data'', dbo.FNADBUser(), @set_process_id)
+
 IF OBJECT_ID(''tempdb..#temp_deal_import_count'') IS NOT NULL
 	DROP TABLE #temp_deal_import_count
 
 CREATE TABLE #temp_deal_import_count(
-	pre_deal_id VARCHAR(100),
-	post_deal_id VARCHAR(100)
+	pre_deal_id VARCHAR(100) COLLATE DATABASE_DEFAULT,
+	post_deal_id VARCHAR(100) COLLATE DATABASE_DEFAULT
 )
 
 EXEC(''INSERT INTO #temp_deal_import_count
@@ -573,6 +643,19 @@ EXEC(''INSERT INTO #temp_deal_import_count
 					FROM [temp_process_table]
 					WHERE deal_id = temp.[tradeid]
 	) tbl
+'')
+
+IF OBJECT_ID(''tempdb..#temp_pre_before_insert_data'') IS NOT NULL
+	DROP TABLE #temp_pre_before_insert_data
+
+CREATE TABLE #temp_pre_before_insert_data(
+	source_deal_header_id INT,
+	sub_book INT
+)
+
+EXEC(''INSERT INTO #temp_pre_before_insert_data
+	SELECT temp.[source_deal_header_id],temp.sub_book
+	FROM '' + @temp_process_table1 + '' temp
 '')
 
 SELECT @total_deal = COUNT(pre_deal_id)
@@ -634,9 +717,14 @@ FROM (
 PIVOT (MAX(a.udf_value) FOR a.Field_label IN ([Trayport Date Time], [Trayport Last Update])) AS p
 
 
-SELECT @book_update_deals = STUFF((SELECT DISTINCT '', '' +  dbo.FNATRMWinHyperlink(''a'', 10131010, deal_id,source_deal_header_id,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT)
-							FROM #temp_deal_udf_values
-							WHERE DATEDIFF(MINUTE, CAST([Trayport Date Time] AS DATETIME), CAST([Trayport Last Update] AS DATETIME)) > 30
+SELECT @book_update_deals = STUFF((SELECT DISTINCT '', '' +  dbo.FNATRMWinHyperlink(''a'', 10131010, tduf.deal_id,tduf.source_deal_header_id,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT)
+							FROM #temp_deal_udf_values tduf
+                            INNER JOIN source_deal_header sdh
+                            	ON sdh.source_deal_header_id = tduf.source_deal_header_id
+                            INNER JOIN #temp_pre_before_insert_data tpbid
+								ON tpbid.source_deal_header_id = sdh.source_deal_header_id
+                            WHERE DATEDIFF(MINUTE, CAST([Trayport Date Time] AS DATETIME), CAST([Trayport Last Update] AS DATETIME)) > 30
+                            	  AND tpbid.sub_book <> sdh.sub_book
 					 FOR XML PATH('''')), 1, 1, '''')
 					 
 SELECT @book_update_deals = dbo.FNADECODEXML(@book_update_deals)
@@ -682,7 +770,17 @@ INNER JOIN source_counterparty sc
     ON sc.source_counterparty_id = sdh.counterparty_id
 LEFT JOIN source_counterparty bkr
     ON bkr.source_counterparty_id = sdh.broker_id
-WHERE sc.counterparty_id in(''ICE'',''EEX'')',
+WHERE sc.counterparty_id in(''ICE'',''EEX'')
+
+--update internal deal subtype value id to physical future (166) for all deal with template ''Physical Cascade''
+UPDATE sdh
+    SET sdh.internal_deal_subtype_value_id=166
+FROM source_deal_header sdh
+INNER JOIN [temp_process_table] t
+    ON t.deal_id = sdh.deal_id
+INNER JOIN source_deal_header_template sdht
+    ON sdht.template_name in (''Physical Cascade'',''Future Physical'',''Cascade'')
+    AND sdht.template_id = sdh.template_id',
 					'i' ,
 					'n' ,
 					@admin_user ,
@@ -718,6 +816,8 @@ WHERE sc.counterparty_id in(''ICE'',''EEX'')',
 SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[final_process_table]''), 0,37))
 
 DECLARE @temp_process_table NVARCHAR(1000) = dbo.FNAProcessTableName(''temp_pre_import_data'', dbo.FNADBUser(), @set_process_id)
+DECLARE @temp_process_table1 NVARCHAR(1000) = dbo.FNAProcessTableName(''temp_pre_before_insert_data'', dbo.FNADBUser(), @set_process_id)
+
 EXEC(''IF OBJECT_ID('''''' + @temp_process_table + '''''') IS NOT NULL
 				DROP TABLE '' + @temp_process_table + ''
 	  SELECT * INTO '' + @temp_process_table + ''
@@ -798,17 +898,17 @@ INSERT INTO source_system_data_import_status_detail(
 SELECT DISTINCT @set_process_id
 	, ''ixp_source_deal_template''
 	, ''Missing Value''
-	, ''Generic mapping not found for TermCodes: '' + CASE WHEN MAX(temp.curve_id) IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END + '' AND DealTimeHour: '' + CAST(DATEPART(HH, dbo.FNAGetLOCALTime(temp.[deal_date],15)) AS VARCHAR(10)) + '' for Deal : '' + temp.deal_id
+	, ''Generic mapping not found for TermCodes: '' + CASE WHEN MAX(temp.curve_id) IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END + '' AND DealTimeHour: '' + CAST(DATEPART(HH, dbo.FNAGetLOCALTime(temp.[deal_date],15)) AS VARCHAR(10)) + '' for Deal : '' + temp.deal_id
 	, ''Error''
 FROM [final_process_table] temp
-INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
+INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
 INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 LEFT JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
-	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN 1 ELSE 0 END AS VARCHAR(10)) 
+	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 WHERE ISDATE(temp.[deal_date]) = 1
 AND gmv.generic_mapping_values_id IS NULL
 AND NULLIF(gmv0.clm2_value,'''') IS NULL
@@ -817,14 +917,14 @@ GROUP BY temp.deal_id, temp.term_start, temp.[deal_date]
 
 DELETE temp
 FROM [final_process_table] temp
-INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
+INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
 INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 LEFT JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
-	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN 1 ELSE 0 END AS VARCHAR(10)) 
+	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 WHERE ISDATE(temp.[deal_date]) = 1
 AND NULLIF(gmv0.clm2_value,'''') IS NULL
 AND gmv.generic_mapping_values_id IS NULL
@@ -837,9 +937,9 @@ INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.
 INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 INNER JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
-	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN 1 ELSE 0 END AS VARCHAR(10)) 
+	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
 WHERE ISDATE(temp.[deal_date]) = 1
@@ -856,7 +956,7 @@ INNER JOIN generic_mapping_values gmv
 							  THEN ''WkEnd''
 							  WHEN t.[term_start] like ''%sun%'' THEN ''SUN''
 						  	  WHEN t.[term_start] like ''%sat%'' THEN ''SAT''					 
-					     ELSE CASE WHEN t.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(t.term_start))) = 0, RTRIM(LTRIM(t.term_start)),SUBSTRING(RTRIM(LTRIM(t.term_start)), CHARINDEX('' '',RTRIM(LTRIM(t.term_start))) + 1 , LEN(RTRIM(LTRIM(t.term_start))))) ELSE t.term_start END END
+					     ELSE CASE WHEN t.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(t.term_start))) = 0, RTRIM(LTRIM(t.term_start)),SUBSTRING(RTRIM(LTRIM(t.term_start)), CHARINDEX('' '',RTRIM(LTRIM(t.term_start))) + 1 , LEN(RTRIM(LTRIM(t.term_start))))) ELSE t.term_start END END
 INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
 WHERE t.[term_start] NOT IN (''Saturday'', ''Sunday'')
@@ -884,7 +984,7 @@ WHERE NULLIF(gmv.clm1_value,'''') IS NULL
 UPDATE [final_process_table]
 SET term_start = IIF(CHARINDEX('' '',term_start) = 0,term_start,SUBSTRING(term_start,0, CHARINDEX('' '',term_start)))
 	,term_end = IIF(CHARINDEX('' '',term_end) = 0, term_end,SUBSTRING(term_end,0, CHARINDEX('' '',term_end)))
-WHERE curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'')
+WHERE curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'')
 
 INSERT INTO source_system_data_import_status_detail(
 	process_id
@@ -962,11 +1062,15 @@ UPDATE t
 FROM [final_process_table] t
 INNER JOIN [temp_process_table] t1
 	ON t1.[tradeid] = t.deal_id
-LEFT JOIN term_map_detail tmd 
-	ON tmd.term_code =  t1.[FirstSequenceItemName]
 INNER JOIN generic_mapping_values gmv
     ON gmv.clm1_value = t.[curve_id]
-	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(tmd.sequence,gmv.clm4_value) END
+	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(CASE WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 0 THEN ''981''
+	        WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 1 AND 6 THEN ''990''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 7 AND 31 THEN ''980''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 32 AND 93 THEN ''991''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) > 90 AND DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) < 364 THEN ''992''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) >= 364 THEN ''993''
+	   ELSE ''981'' END,gmv.clm4_value) END
 INNER join generic_mapping_header gmh
 	ON gmv.mapping_table_id = gmh.mapping_table_id
 LEFT JOIN source_deal_header_template sdht
@@ -1039,11 +1143,15 @@ UPDATE t
 FROM [final_process_table] t
 INNER JOIN [temp_process_table] t1
 	ON t1.[tradeid] = t.deal_id
-LEFT JOIN term_map_detail tmd 
-	ON tmd.term_code =  t1.[FirstSequenceItemName]
 INNER JOIN generic_mapping_values gmv
     ON gmv.clm1_value = t.[curve_id]
-	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(tmd.sequence,gmv.clm4_value) END
+	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(CASE WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 0 THEN ''981''
+	        WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 1 AND 6 THEN ''990''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 7 AND 31 THEN ''980''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 32 AND 93 THEN ''991''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) > 90 AND DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) < 364 THEN ''992''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) >= 364 THEN ''993''
+	   ELSE ''981'' END,gmv.clm4_value) END
 INNER join generic_mapping_header gmh
 	ON gmv.mapping_table_id = gmh.mapping_table_id
 LEFT JOIN source_price_curve_def spcd
@@ -1124,13 +1232,25 @@ LEFT JOIN shipper_code_mapping_detail scmd1
 	AND scmd1.shipper_code_id = scm.shipper_code_id
 
 UPDATE temp
-	SET deal_date = CAST(deal_date AS DATE),
-		term_start = CAST(CASE WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' THEN DATEADD(dd, 7-(DATEPART(dw, deal_date)), deal_date)
-							   WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
+SET deal_date = CAST(deal_date AS DATE),
+		term_start = CAST(CASE  WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' AND DATEPART(dw, temp.deal_date) = 7 AND DATEPART(hour,temp.deal_date) < 3
+										THEN deal_date
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' AND DATEPART(dw, temp.deal_date) = 7 THEN DATEADD(dd, 7,deal_date)
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' THEN DATEADD(dd, 7-(DATEPART(dw, deal_date)), deal_date)
+							    WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday''  AND DATEPART(dw, temp.deal_date) = 1 AND DATEPART(hour,temp.deal_date) < 3
+										THEN deal_date
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' AND DATEPART(dw, temp.deal_date) = 1 THEN DATEADD(dd, 7,deal_date)
+							    WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
 						  ELSE term_start END
 					 AS DATE),
-		term_end = CAST(CASE WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' THEN DATEADD(dd, 7-(DATEPART(dw, deal_date)), deal_date)
-							   WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
+		term_end = CAST(CASE    WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' AND DATEPART(dw, temp.deal_date) = 7 AND DATEPART(hour,temp.deal_date) < 3
+									 THEN deal_date
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday'' AND DATEPART(dw, temp.deal_date) = 7 THEN DATEADD(dd, 7,deal_date)
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Saturday''  THEN DATEADD(dd, 7-(DATEPART(dw, deal_date)), deal_date)
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' AND DATEPART(dw, temp.deal_date) = 1 AND DATEPART(hour,temp.deal_date) < 3
+									 THEN deal_date
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' AND DATEPART(dw, temp.deal_date) = 1 THEN DATEADD(dd, 7,deal_date)
+							    WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday''  THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
 						  ELSE term_end END
 					 AS DATE)
 FROM [final_process_table] temp
@@ -1165,9 +1285,9 @@ FROM (
 	) AS a
 PIVOT(MAX(a.ixp_columns_name) FOR a.Field_label IN ([Delivery Path])) AS P
 
-SELECT @mapping_table_id = mapping_table_id 
-FROM generic_mapping_header 
-WHERE mapping_name = ''Trayport Autopath Mapping''
+--SELECT @mapping_table_id = mapping_table_id 
+--FROM generic_mapping_header 
+--WHERE mapping_name = ''Trayport Autopath Mapping''
 
 DECLARE @udf_update_query NVARCHAR(MAX), @sql_query NVARCHAR(MAX)
 SELECT @udf_update_query = [Delivery Path] + ''= dp.path_code''
@@ -1175,15 +1295,16 @@ FROM #temp_udf_data
 
 SET @sql_query = ''
 	UPDATE temp
-	SET shipper_code1 = gmv.clm6_value
-	,	shipper_code2 = gmv.clm7_value
+    SET shipper_code1 = ISNULL(gmv.clm6_value,temp.shipper_code1)
+    ,    shipper_code2 = ISNULL(gmv.clm7_value,temp.shipper_code2)
 	, internal_portfolio_id = sdv_product.code
 	'' + CASE WHEN @udf_update_query IS NOT NULL THEN '', '' + @udf_update_query ELSE '''' END + ''
 	FROM [final_process_table] temp
 	INNER JOIN [temp_process_table] t1
 		ON t1.[tradeid] = temp.deal_id
+	CROSS APPLY(SELECT mapping_table_id FROM generic_mapping_header WHERE mapping_name = ''''Trayport Autopath Mapping'''') gmh
 	LEFT JOIN generic_mapping_values gmv 
-		ON  mapping_table_id =   '''''' + CAST(@mapping_table_id AS VARCHAR(10)) + ''''''
+		ON gmv.mapping_table_id = gmh.mapping_table_id
 		AND  gmv.clm1_value = t1.[InstName]
 		AND  COALESCE(gmv.clm2_value,t1.[Book],''''-1'''') = ISNULL(t1.[Book], ''''-1'''')
 		AND  COALESCE(gmv.clm3_value,CASE temp.header_buy_sell_flag WHEN ''''Buy'''' THEN ''''b'''' WHEN ''''Sell'''' THEN ''''s'''' ELSE temp.header_buy_sell_flag END,''''-1'''') = ISNULL(CASE temp.header_buy_sell_flag WHEN ''''Buy'''' THEN ''''b'''' WHEN ''''Sell'''' THEN ''''s'''' ELSE temp.header_buy_sell_flag END, ''''-1'''')
@@ -1192,7 +1313,7 @@ SET @sql_query = ''
 	LEFT JOIN static_data_value sdv_product
 		ON CAST(sdv_product.value_id  AS VARCHAR(10)) = gmv.clm5_value
 		AND sdv_product.[type_id] = 39800
-	WHERE gmv.clm1_value in ( ''''NCG L - WEST EEX'''',''''NCG L - EAST EEX'''')
+	--WHERE gmv.clm1_value in ( ''''NCG L - WEST EEX'''',''''NCG L - EAST EEX'''', ''''NCG Low Cal EEX'''')
 ''
 EXEC(@sql_query)
 
@@ -1213,7 +1334,52 @@ SELECT DISTINCT @set_process_id
 		+ '' for Deal : '' + temp.deal_id
 	, ''Warning''
 FROM [final_process_table] temp
-WHERE temp.shipper_code1 IS NULL OR temp.shipper_code2 IS NULL'
+WHERE temp.shipper_code1 IS NULL OR temp.shipper_code2 IS NULL
+
+SELECT @mapping_table_id = mapping_table_id 
+FROM generic_mapping_header 
+WHERE mapping_name = ''Trayport Block Definition Product Mapping''
+
+UPDATE temp
+	SET term_start = DATEADD(d, -1, temp.term_start)
+	   , term_end = DATEADD(d, -1, temp.term_end)
+FROM [final_process_table] temp
+INNER JOIN [temp_process_table] t1
+	ON t1.[tradeid] = temp.deal_id
+INNER JOIN static_data_value sdv
+	ON sdv.code = temp.block_define_id
+INNER JOIN generic_mapping_values gmv
+	ON gmv.mapping_table_id = @mapping_table_id
+	AND gmv.clm2_value = t1.[InstName]
+	AND gmv.clm4_value = CAST(sdv.value_id AS VARCHAR(10))
+WHERE t1.[InstName] IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'')
+AND gmv.clm6_value = ''y''
+
+UPDATE temp
+    SET deal_id = deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''')
+FROM [final_process_table] temp
+INNER JOIN [temp_process_table] t1
+    ON t1.[tradeid] = temp.deal_id
+WHERE CAST(temp.deal_date AS DATE) > ''2021-05-27''
+
+EXEC(''IF OBJECT_ID('''''' + @temp_process_table1 + '''''') IS NOT NULL
+				DROP TABLE '' + @temp_process_table1 + ''
+	  SELECT sdh.source_deal_header_id,
+			 sdh.sub_book
+	  INTO '' + @temp_process_table1 + ''
+	  FROM  [final_process_table] a
+	  INNER JOIN source_deal_header sdh
+		ON sdh.deal_id = a.deal_id
+'')
+
+EXEC(''UPDATE '' + @temp_process_table + ''
+		SET [tradeid] = [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''')
+'')
+
+DELETE temp
+FROM source_deal_header sdh 
+INNER JOIN [final_process_table] temp ON temp.[deal_id] = sdh.deal_id
+AND sdh.deal_status =5607'
 				, after_insert_trigger = 'DECLARE @mapping_table_id INT
 DECLARE @set_process_id VARCHAR(40)
 	, @hyperlink_row_count INT
@@ -1226,12 +1392,14 @@ DECLARE @set_process_id VARCHAR(40)
 SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37))
 
 DECLARE @temp_process_table NVARCHAR(1000) = dbo.FNAProcessTableName(''temp_pre_import_data'', dbo.FNADBUser(), @set_process_id)
+DECLARE @temp_process_table1 NVARCHAR(1000) = dbo.FNAProcessTableName(''temp_pre_before_insert_data'', dbo.FNADBUser(), @set_process_id)
+
 IF OBJECT_ID(''tempdb..#temp_deal_import_count'') IS NOT NULL
 	DROP TABLE #temp_deal_import_count
 
 CREATE TABLE #temp_deal_import_count(
-	pre_deal_id VARCHAR(100),
-	post_deal_id VARCHAR(100)
+	pre_deal_id VARCHAR(100) COLLATE DATABASE_DEFAULT,
+	post_deal_id VARCHAR(100) COLLATE DATABASE_DEFAULT
 )
 
 EXEC(''INSERT INTO #temp_deal_import_count
@@ -1241,6 +1409,19 @@ EXEC(''INSERT INTO #temp_deal_import_count
 					FROM [temp_process_table]
 					WHERE deal_id = temp.[tradeid]
 	) tbl
+'')
+
+IF OBJECT_ID(''tempdb..#temp_pre_before_insert_data'') IS NOT NULL
+	DROP TABLE #temp_pre_before_insert_data
+
+CREATE TABLE #temp_pre_before_insert_data(
+	source_deal_header_id INT,
+	sub_book INT
+)
+
+EXEC(''INSERT INTO #temp_pre_before_insert_data
+	SELECT temp.[source_deal_header_id],temp.sub_book
+	FROM '' + @temp_process_table1 + '' temp
 '')
 
 SELECT @total_deal = COUNT(pre_deal_id)
@@ -1302,9 +1483,14 @@ FROM (
 PIVOT (MAX(a.udf_value) FOR a.Field_label IN ([Trayport Date Time], [Trayport Last Update])) AS p
 
 
-SELECT @book_update_deals = STUFF((SELECT DISTINCT '', '' +  dbo.FNATRMWinHyperlink(''a'', 10131010, deal_id,source_deal_header_id,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT)
-							FROM #temp_deal_udf_values
-							WHERE DATEDIFF(MINUTE, CAST([Trayport Date Time] AS DATETIME), CAST([Trayport Last Update] AS DATETIME)) > 30
+SELECT @book_update_deals = STUFF((SELECT DISTINCT '', '' +  dbo.FNATRMWinHyperlink(''a'', 10131010, tduf.deal_id,tduf.source_deal_header_id,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT,DEFAULT)
+							FROM #temp_deal_udf_values tduf
+                            INNER JOIN source_deal_header sdh
+                            	ON sdh.source_deal_header_id = tduf.source_deal_header_id
+                            INNER JOIN #temp_pre_before_insert_data tpbid
+								ON tpbid.source_deal_header_id = sdh.source_deal_header_id
+                            WHERE DATEDIFF(MINUTE, CAST([Trayport Date Time] AS DATETIME), CAST([Trayport Last Update] AS DATETIME)) > 30
+                            	  AND tpbid.sub_book <> sdh.sub_book
 					 FOR XML PATH('''')), 1, 1, '''')
 					 
 SELECT @book_update_deals = dbo.FNADECODEXML(@book_update_deals)
@@ -1350,7 +1536,17 @@ INNER JOIN source_counterparty sc
     ON sc.source_counterparty_id = sdh.counterparty_id
 LEFT JOIN source_counterparty bkr
     ON bkr.source_counterparty_id = sdh.broker_id
-WHERE sc.counterparty_id in(''ICE'',''EEX'')'
+WHERE sc.counterparty_id in(''ICE'',''EEX'')
+
+--update internal deal subtype value id to physical future (166) for all deal with template ''Physical Cascade''
+UPDATE sdh
+    SET sdh.internal_deal_subtype_value_id=166
+FROM source_deal_header sdh
+INNER JOIN [temp_process_table] t
+    ON t.deal_id = sdh.deal_id
+INNER JOIN source_deal_header_template sdht
+    ON sdht.template_name in (''Physical Cascade'',''Future Physical'',''Cascade'')
+    AND sdht.template_id = sdh.template_id'
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
 				, ixp_category = 23502
@@ -1424,7 +1620,7 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_date' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, NULL, ic.ixp_columns_id, '''p''', 'Max', 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''p''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'physical_financial_flag' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
@@ -1455,7 +1651,7 @@ ELSE ''0'' END', NULL, 0, NULL, NULL
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'description3' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, NULL, ic.ixp_columns_id, '''Real''', 'Max', 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Real''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_category_value_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
@@ -1495,7 +1691,7 @@ END', NULL, 0, NULL, NULL
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'contract_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, NULL, ic.ixp_columns_id, '''deal volume''', 'Max', 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''deal volume''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'internal_desk_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
@@ -1566,7 +1762,7 @@ ELSE ''0'' END', NULL, 0, NULL, NULL
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'Leg' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, NULL, ic.ixp_columns_id, '''t''', 'Max', 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''t''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'fixed_float_leg' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
@@ -1586,7 +1782,7 @@ END', NULL, 0, NULL, NULL
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'fixed_price' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, NULL, ic.ixp_columns_id, '''EUR''', 'Max', 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''EUR''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'fixed_price_currency_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
@@ -1608,11 +1804,11 @@ else tdi.[Unit] END', NULL, 0, NULL, NULL
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'location_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, NULL, ic.ixp_columns_id, '''Fixed Priced''', 'Max', 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Fixed Priced''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'pricing_type' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, NULL, ic.ixp_columns_id, '''Hourly''', 'Max', 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Hourly''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'profile_granularity' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
@@ -1621,18 +1817,18 @@ else tdi.[Unit] END', NULL, 0, NULL, NULL
 	 WHEN tdi.[initiatorCompany] = ''Stadtwerke Hannover AG'' AND tdi.[AggSleeve]=''TRUE'' THEN ''PTTP''
 	 WHEN tdi.[initiatorCompany] = ''Stadtwerke Hannover AG'' AND tdi.[InitSleeve]=''TRUE'' THEN ''PTTA''
     ELSE
-        ''''
+        NULL
 END', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'reporting_group1' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, NULL, ic.ixp_columns_id, '''''', 'Max', 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Delivery Path' + '''')  
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''''', 'Max', 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Delivery Path' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value1' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Delivery Path'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
-				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, NULL, ic.ixp_columns_id, '''''', 'Max', 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Product group' + '''')  
+				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''''', 'Max', 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Product group' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value2' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
@@ -1680,7 +1876,7 @@ END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''
 				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value7' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Initiator/Aggressor'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
-				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, NULL, ic.ixp_columns_id, 'CASE WHEN tdi.[InitiatorCompany] = ''Stadtwerke Hannover AG'' AND tdi.[InitSleeve]=''TRUE''  THEN ''Yes''
+				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, 'CASE WHEN tdi.[InitiatorCompany] = ''Stadtwerke Hannover AG'' AND tdi.[InitSleeve]=''TRUE''  THEN ''Yes''
 	 WHEN tdi.[InitiatorCompany] = ''Stadtwerke Hannover AG'' AND tdi.[InitSleeve]=''FALSE''  THEN ''No''
 	 WHEN tdi.[AggressorCompany] = ''Stadtwerke Hannover AG'' AND tdi.[AggSleeve]=''TRUE''  THEN ''Yes''
 ELSE ''No''
@@ -1690,19 +1886,39 @@ END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''
 				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value8' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Sleeve'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
-				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[VoiceDeal]', ic.ixp_columns_id, 'CASE WHEN tdi.[VoiceDeal] = ''YES''   THEN ''Broker_Voice''
-ELSE ''Broker''
-END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Broker Contract' + '''')  
+				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[VoiceDeal]', ic.ixp_columns_id, 'CASE WHEN tdi.[VoiceDeal]=''TRUE'' THEN ''1'' ELSE ''0'' END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Adder 1' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value9' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
-				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Broker Contract'									   
+				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Adder 1'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
 				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[ForeignRelationshipID]', ic.ixp_columns_id, NULL, NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'ForeignRelationshipID' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value10' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'ForeignRelationshipID'									   
+				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
+				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[ExecutionVenueID]', ic.ixp_columns_id, NULL, NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'EXECUTION VENUE ID' + '''')  
+				FROM ixp_tables it 
+				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value11' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
+				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'EXECUTION VENUE ID'									   
+				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
+				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, 'CASE WHEN tdi.[VoiceDeal] = ''1'' AND tdi.[FromBrokenSpread]=''1'' THEN ''Broker_Voice''
+WHEN tdi.[VoiceDeal] = '''' AND tdi.[FromBrokenSpread]=''1'' THEN ''Broker_Spread''
+WHEN tdi.[VoiceDeal] = ''1'' AND tdi.[FromBrokenSpread]=''0'' THEN ''Broker_Voice''
+ELSE ''Broker''
+END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Broker Contract' + '''')  
+				FROM ixp_tables it 
+				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value12' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
+				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Broker Contract'									   
+				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
+				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[FromBrokenSpread]', ic.ixp_columns_id, 'CASE WHEN tdi.[FromBrokenSpread]=''TRUE'' THEN ''1'' ELSE ''0'' END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Account Name' + '''')  
+				FROM ixp_tables it 
+				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value13' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
+				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Account Name'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
 				WHERE it.ixp_tables_name = 'ixp_source_deal_template'
 
@@ -1721,3 +1937,4 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
+		
