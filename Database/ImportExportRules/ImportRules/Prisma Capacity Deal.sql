@@ -1064,7 +1064,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\CTRMEUWEB-T6002\shared_docs_TRMTracker_Enercity_Pre_UAT\temp_Note\0',
+						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
@@ -1178,7 +1178,7 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'fixed_price_currency_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[quantity_value]', ic.ixp_columns_id, 'pa.[quantity_value]/1000', NULL, 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'pa.[quantity_value]', ic.ixp_columns_id, 'CAST(pa.[quantity_value] AS NUMERIC(38,5))/1000', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
