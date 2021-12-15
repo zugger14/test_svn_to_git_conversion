@@ -1854,16 +1854,33 @@ END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''
 				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value4' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Trayport Last Update'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
-				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[DateTime]', ic.ixp_columns_id, 'CONVERT(VARCHAR(30),dbo.FNAGetLOCALTime(CAST(tdi.[DateTime] AS VARCHAR(23)),15), 127)', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Trayport Date Time' + '''')  
+				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, 'CASE WHEN tdi.[VoiceDeal] = ''1'' AND tdi.[FromBrokenSpread]=''1'' THEN ''Broker_Voice''
+WHEN tdi.[VoiceDeal] = '''' AND tdi.[FromBrokenSpread]=''1'' THEN ''Broker_Spread''
+WHEN tdi.[VoiceDeal] = ''0'' AND tdi.[FromBrokenSpread]=''1'' THEN ''Broker_Spread''
+WHEN tdi.[VoiceDeal] = ''1'' AND tdi.[FromBrokenSpread]=''0'' THEN ''Broker_Voice''
+ELSE ''Broker''
+END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Broker Contract' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value5' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
+				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Broker Contract'									   
+				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
+				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[FromBrokenSpread]', ic.ixp_columns_id, 'CASE WHEN tdi.[FromBrokenSpread]=''TRUE'' THEN ''1'' ELSE ''0'' END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Account Name' + '''')  
+				FROM ixp_tables it 
+				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value6' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
+				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Account Name'									   
+				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
+				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[DateTime]', ic.ixp_columns_id, 'CONVERT(VARCHAR(30),dbo.FNAGetLOCALTime(CAST(tdi.[DateTime] AS VARCHAR(23)),15), 127)', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Trayport Date Time' + '''')  
+				FROM ixp_tables it 
+				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value7' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Trayport Date Time'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
 				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[ExecutionDT]', ic.ixp_columns_id, 'CONVERT(VARCHAR(30),dbo.FNAGetLOCALTime(CAST(tdi.[ExecutionDT] AS VARCHAR(23)),15), 127)', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Execution Timestamp' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value6' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value8' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Execution Timestamp'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
 				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggressorUserID]', ic.ixp_columns_id, 'CASE WHEN tdi.AggressorCompany = ''Stadtwerke Hannover AG''
@@ -1873,7 +1890,7 @@ END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''
 END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Initiator/Aggressor' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value7' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value9' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Initiator/Aggressor'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
 				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, 'CASE WHEN tdi.[InitiatorCompany] = ''Stadtwerke Hannover AG'' AND tdi.[InitSleeve]=''TRUE''  THEN ''Yes''
@@ -1883,42 +1900,26 @@ ELSE ''No''
 END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Sleeve' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value8' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value10' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Sleeve'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
 				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[VoiceDeal]', ic.ixp_columns_id, 'CASE WHEN tdi.[VoiceDeal]=''TRUE'' THEN ''1'' ELSE ''0'' END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Adder 1' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value9' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value11' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Adder 1'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
 				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[ForeignRelationshipID]', ic.ixp_columns_id, NULL, NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'ForeignRelationshipID' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value10' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value12' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'ForeignRelationshipID'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
 				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[ExecutionVenueID]', ic.ixp_columns_id, NULL, NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'EXECUTION VENUE ID' + '''')  
 				FROM ixp_tables it 
 				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value11' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
-				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'EXECUTION VENUE ID'									   
-				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
-				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, 'CASE WHEN tdi.[VoiceDeal] = ''1'' AND tdi.[FromBrokenSpread]=''1'' THEN ''Broker_Voice''
-WHEN tdi.[VoiceDeal] = '''' AND tdi.[FromBrokenSpread]=''1'' THEN ''Broker_Spread''
-WHEN tdi.[VoiceDeal] = ''1'' AND tdi.[FromBrokenSpread]=''0'' THEN ''Broker_Voice''
-ELSE ''Broker''
-END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Broker Contract' + '''')  
-				FROM ixp_tables it 
-				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value12' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
-				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Broker Contract'									   
-				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
-				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[FromBrokenSpread]', ic.ixp_columns_id, 'CASE WHEN tdi.[FromBrokenSpread]=''TRUE'' THEN ''1'' ELSE ''0'' END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Account Name' + '''')  
-				FROM ixp_tables it 
-				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value13' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
-				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Account Name'									   
+				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'EXECUTION VENUE ID'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
 				WHERE it.ixp_tables_name = 'ixp_source_deal_template'
 
