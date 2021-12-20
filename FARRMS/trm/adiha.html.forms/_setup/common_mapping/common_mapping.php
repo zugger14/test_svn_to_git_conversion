@@ -769,6 +769,9 @@
             if (array_field_type[0] == 'ron' || array_field_type[0] == 'ro_no'){
                 var filter_string = '#numeric_filter';
                 var col_sort_string = 'int';
+            } else if (array_field_type[0] == 'dhxCalendarA'){
+                var filter_string = '#text_filter';
+                var col_sort_string = 'date';
             } else {
                 var filter_string = '#text_filter';
                 var col_sort_string = 'str';
@@ -781,7 +784,10 @@
                     if (array_field_type[i] == 'ron' || array_field_type[i] == 'ro_no') {
                         filter_string += ',#numeric_filter';
                         col_sort_string += ',int';
-                    } else {
+                    } else if (array_field_type[i] == 'dhxCalendarA'){
+						filter_string += ',#text_filter';
+						col_sort_string += ',date';
+					} else {
                         filter_string += ',#text_filter';
                         col_sort_string += ',sort_custom';
                     }  
