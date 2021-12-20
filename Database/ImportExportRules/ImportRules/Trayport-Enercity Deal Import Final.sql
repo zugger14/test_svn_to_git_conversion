@@ -1921,6 +1921,12 @@ END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''
 				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value13' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'EXECUTION VENUE ID'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
+				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[Broker Fees by Deal Date]', ic.ixp_columns_id, NULL, NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Broker Fees By Deal Date' + '''')  
+				FROM ixp_tables it 
+				INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value14' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
+				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Broker Fees By Deal Date'									   
+				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
 				WHERE it.ixp_tables_name = 'ixp_source_deal_template'
 
 COMMIT 
