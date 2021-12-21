@@ -125,7 +125,8 @@ CREATE TABLE #temp_term(
 		[deal_id] [VARCHAR](50) COLLATE DATABASE_DEFAULT NULL ,  
 		[date_or_block] [char](1) NULL,
 		no_of_days INT NULL ,
-		old_term_date NVARCHAR(100) COLLATE DATABASE_DEFAULT NULL
+		old_term_date NVARCHAR(100) COLLATE DATABASE_DEFAULT NULL,
+		dynamic_year CHAR(1) COLLATE DATABASE_DEFAULT NULL
 	) ON [PRIMARY]  
 					    
 	SET @sql = '    
@@ -138,7 +139,9 @@ CREATE TABLE #temp_term(
 				,[deal_id]  
 				,[date_or_block]
 				,no_of_days 
-				,old_term_date)
+				,old_term_date
+				,dynamic_year
+				)
 		SELECT CASE WHEN t.date_or_block=''b'' THEN   
 			DATEADD(d, CASE WHEN weekday-dbo.FNARWeekDay(DATEADD(wk,ISNULL(t.relative_days,0),ts.deal_date))<0 THEN  
 			(weekday-dbo.FNARWeekDay(DATEADD(wk,ISNULL(t.relative_days,0),ts.deal_date)))  
@@ -153,6 +156,7 @@ CREATE TABLE #temp_term(
 				ELSE  dbo.FNAGetNextAvailDate(t.term_start,1,t.holiday_calendar_id )  END term_start,
 			CASE WHEN t.date_or_block=''m'' THEN  dbo.FNAGetTermEndDate(''m'',ts.deal_date,0) ELSE t.term_end END term_end,
 			ts.deal_id,t.date_or_block,t.no_of_days,ts.term_start    
+			,ISNULL(t.dynamic_year, ''n'')
 		FROM ' + @process_table + '  ts JOIN term_map_detail t   
 		ON ts.term_start = t.term_code 
 		OUTER  apply (
@@ -240,8 +244,8 @@ CREATE TABLE #temp_term(
 	 				
 	SET @sql = '  
 		UPDATE ' + @process_table + ' 
-			SET term_start = CONVERT(VARCHAR,ht.term_start,120) , 
-				term_end = CONVERT(VARCHAR,ht.term_end,120),
+			SET term_start = CASE WHEN dynamic_year = ''y'' THEN CONVERT(VARCHAR,DATEADD(year, (YEAR(deal_date) - YEAR(ht.term_start)), ht.term_start),120) ELSE CONVERT(VARCHAR,ht.term_start,120) END , 
+				term_end = CASE WHEN dynamic_year = ''y'' THEN CONVERT(VARCHAR,DATEADD(year, (YEAR(deal_date) - YEAR(ht.term_end)), ht.term_end),120) ELSE CONVERT(VARCHAR,ht.term_end,120) END,
 				deal_date = CASE WHEN titd.term_code = ''DA'' AND DATEPART(HOUR, deal_date) < 3 THEN DATEADD(DAY, 1, deal_date)
 								 WHEN titd.term_code <> ''DA'' AND DATEPART(HOUR, deal_date) < 2 THEN DATEADD(DAY, 1, deal_date) 
 								 ELSE deal_date 
@@ -260,6 +264,7 @@ CREATE TABLE #temp_term(
 							  WHEN date_or_block IN (''d'', ''m'') THEN term_end  ELSE NULL  
 					END) term_end
 					,old_term_date 
+					,MAX(dynamic_year) dynamic_year
 			FROM #temp_term 
 			WHERE [active_date]=1 
 			GROUP BY deal_id,old_term_date
@@ -267,4 +272,4 @@ CREATE TABLE #temp_term(
 		--WHERE  t.action IN (''INSERT'', ''UPDATE'')  
 		'   
 	--PRINT(@sql)  
-EXEC (@sql)  
+EXEC (@sql)    
