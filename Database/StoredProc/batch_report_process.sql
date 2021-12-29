@@ -656,7 +656,7 @@ ELSE IF @computed_flag = 'a'
 BEGIN
 	SET @st = '
 		SELECT DISTINCT sjs.job_id, REPLACE(ss.name, ''schedule_'', '''') AS jobname, ss.schedule_id, ss.freq_type, ss.freq_interval, ss.freq_subday_type, ss.freq_subday_interval, ss.freq_relative_interval, ss.freq_recurrence_factor, 
-			   dbo.FNAConvertTimezone(CAST(CONVERT(VARCHAR(10), ss.active_start_date, 101) + '' '' + CAST(LEFT(RIGHT(''0'' + CAST(ss.active_start_time AS VARCHAR(10)), 6), 2) AS VARCHAR(10)) + '':'' + CAST(SUBSTRING(RIGHT(''0'' + CAST(ss.active_start_time AS VARCHAR(10)), 6), 3, 2) AS VARCHAR(10)) + '':'' + CAST(RIGHT(RIGHT(''0'' + CAST(ss.active_start_time AS VARCHAR(10)), 6), 2) AS VARCHAR(10)) AS DATETIME), 0) [start_date],
+			   dbo.FNAConvertTimezone(CAST(CONVERT(VARCHAR(10), ss.active_start_date, 101) + '' '' + CAST(LEFT(RIGHT(''0'' + CAST(ss.active_start_time AS VARCHAR(10)), 6), 2) AS VARCHAR(10)) + '':'' + CASE WHEN ss.active_start_time = 0 THEN ''00'' ELSE CAST(SUBSTRING(RIGHT(''0'' + CAST(ss.active_start_time AS VARCHAR(10)), 6), 3, 2) AS VARCHAR(10)) END + '':'' + CAST(RIGHT(RIGHT(''0'' + CAST(ss.active_start_time AS VARCHAR(10)), 6), 2) AS VARCHAR(10)) AS DATETIME), 0) [start_date],
 			   dbo.FNAConvertTimezone(CAST(CONVERT(VARCHAR(10), ss.active_end_date, 101) + '' '' + CAST(LEFT(RIGHT(''0'' + CAST(ss.active_end_time AS VARCHAR(10)), 6), 2) AS VARCHAR(10)) + '':'' + CAST(SUBSTRING(RIGHT(''0'' + CAST(ss.active_end_time AS VARCHAR(10)), 6), 3, 2) AS VARCHAR(10)) + '':'' +	CAST(RIGHT(RIGHT(''0'' + CAST(ss.active_end_time AS VARCHAR(10)), 6), 2) AS VARCHAR(10)) AS DATETIME), 0) [end_date],
 			   bpn.csv_file_path, bpn.notification_type, bpn.attach_file, bpn.holiday_calendar_id, bpn.export_table_name, bpn.compress_file,
 			   bpn.delimiter,

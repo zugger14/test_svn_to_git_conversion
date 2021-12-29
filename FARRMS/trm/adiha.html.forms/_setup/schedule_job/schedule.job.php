@@ -205,8 +205,9 @@
                         var job_owner_col_index = view_scheduled_job.grd_view_scheduled_job.getColIndexById('owner_sid');
                         var job_owner = view_scheduled_job.grd_view_scheduled_job.cells(row_id, job_owner_col_index).getValue().toLowerCase();
 
-                        if (job_next_run == '' || user_name.toLowerCase() != js_user_name.toLowerCase() || !has_rights_scheduled_job_edit) 
+                        if (job_next_run == '' || (user_name.toLowerCase() != js_user_name.toLowerCase() && is_user_on_admin_group == 0)  || !has_rights_scheduled_job_edit) {
                             return;
+                        }
 
                         var title = 'Edit Job Schedule';
                         var job = (job_next_run != 'NULL') ? 's' : 'r';
