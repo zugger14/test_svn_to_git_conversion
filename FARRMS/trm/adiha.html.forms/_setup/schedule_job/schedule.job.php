@@ -98,11 +98,11 @@
             var is_user_on_admin_group = '<?php echo $is_user_on_admin_group;?>';
             
             $(function(){
-                view_scheduled_job.jobs_toolbar.hideItem('enable');
-                view_scheduled_job.jobs_toolbar.hideItem('disable');
-                view_scheduled_job.jobs_toolbar.hideItem('stop');
-                view_scheduled_job.jobs_toolbar.hideItem('run');
-                view_scheduled_job.jobs_toolbar.hideItem('run_as_copy');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('enable');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('disable');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('stop');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('run');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('run_as_copy');
             })
 
             function grd_scheduled_jobs_click(row_id) {
@@ -120,21 +120,21 @@
                 // For system jobs
                 if (job_owner == 'system job') {
                     if (is_user_on_admin_group == 1) {
-                        if (run_status == 'in progress') view_scheduled_job.jobs_toolbar.showItem('stop');
-                        else view_scheduled_job.jobs_toolbar.hideItem('stop');    
+                        if (run_status == 'in progress') view_scheduled_job.jobs_toolbar.setItemEnabled('stop');
+                        else view_scheduled_job.jobs_toolbar.setItemDisabled('stop');    
                     
                         if (is_enabled == 'no') {
-                            view_scheduled_job.jobs_toolbar.showItem('enable');
-                            view_scheduled_job.jobs_toolbar.hideItem('disable');
+                            view_scheduled_job.jobs_toolbar.setItemEnabled('enable');
+                            view_scheduled_job.jobs_toolbar.setItemDisabled('disable');
                         } else {
-                            view_scheduled_job.jobs_toolbar.showItem('disable');
-                            view_scheduled_job.jobs_toolbar.hideItem('enable');
+                            view_scheduled_job.jobs_toolbar.setItemEnabled('disable');
+                            view_scheduled_job.jobs_toolbar.setItemDisabled('enable');
                         }
 
-                        if (run_status !='in progress') view_scheduled_job.jobs_toolbar.showItem('run');
-                        else view_scheduled_job.jobs_toolbar.hideItem('run');
+                        if (run_status !='in progress') view_scheduled_job.jobs_toolbar.setItemEnabled('run');
+                        else view_scheduled_job.jobs_toolbar.setItemDisabled('run');
 
-                        view_scheduled_job.jobs_toolbar.showItem('run_as_copy');
+                        view_scheduled_job.jobs_toolbar.setItemEnabled('run_as_copy');
                     } else {
                         disable_menu_items();
                     }
@@ -148,38 +148,38 @@
                         if (job_next_run != '') view_scheduled_job.jobs_toolbar.setItemEnabled('update');
                         else view_scheduled_job.jobs_toolbar.setItemDisabled('update');
 
-                        if (run_status == 'in progress') view_scheduled_job.jobs_toolbar.showItem('stop');
-                        else view_scheduled_job.jobs_toolbar.hideItem('stop');    
+                        if (run_status == 'in progress') view_scheduled_job.jobs_toolbar.setItemEnabled('stop');
+                        else view_scheduled_job.jobs_toolbar.setItemDisabled('stop');    
 
                         if (is_enabled == 'no') {
-                            view_scheduled_job.jobs_toolbar.showItem('enable');
-                            view_scheduled_job.jobs_toolbar.hideItem('disable');
+                            view_scheduled_job.jobs_toolbar.setItemEnabled('enable');
+                            view_scheduled_job.jobs_toolbar.setItemDisabled('disable');
                         } else {
-                            view_scheduled_job.jobs_toolbar.showItem('disable');
-                            view_scheduled_job.jobs_toolbar.hideItem('enable');
+                            view_scheduled_job.jobs_toolbar.setItemEnabled('disable');
+                            view_scheduled_job.jobs_toolbar.setItemDisabled('enable');
                         }
 
-                        if (run_status !='in progress') view_scheduled_job.jobs_toolbar.showItem('run');
-                        else view_scheduled_job.jobs_toolbar.hideItem('run');
+                        if (run_status !='in progress') view_scheduled_job.jobs_toolbar.setItemEnabled('run');
+                        else view_scheduled_job.jobs_toolbar.setItemDisabled('run');
                     } else {
                         view_scheduled_job.jobs_toolbar.setItemDisabled('update');
-                        view_scheduled_job.jobs_toolbar.hideItem('stop');
-                        view_scheduled_job.jobs_toolbar.hideItem('enable');
-                        view_scheduled_job.jobs_toolbar.hideItem('disable');
-                        view_scheduled_job.jobs_toolbar.hideItem('run');
+                        view_scheduled_job.jobs_toolbar.setItemDisabled('stop');
+                        view_scheduled_job.jobs_toolbar.setItemDisabled('enable');
+                        view_scheduled_job.jobs_toolbar.setItemDisabled('disable');
+                        view_scheduled_job.jobs_toolbar.setItemDisabled('run');
                     }
 
                     if (has_rights_scheduled_job_del) view_scheduled_job.jobs_toolbar.setItemEnabled('delete');
                     else view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
                     if (has_rights_scheduled_job_run) {
                         if(run_status != 'in progress') {
-                            view_scheduled_job.jobs_toolbar.showItem('run');
+                            view_scheduled_job.jobs_toolbar.setItemEnabled('run');
                         } else {
-                            view_scheduled_job.jobs_toolbar.hideItem('run');
+                            view_scheduled_job.jobs_toolbar.setItemDisabled('run');
                         }
-                        view_scheduled_job.jobs_toolbar.showItem('run_as_copy');
+                        view_scheduled_job.jobs_toolbar.setItemEnabled('run_as_copy');
                     } else {
-                        view_scheduled_job.jobs_toolbar.hideItem('run_as_copy');
+                        view_scheduled_job.jobs_toolbar.setItemDisabled('run_as_copy');
                     }   
                 }
             }
@@ -309,13 +309,13 @@
             }
             
             function disable_menu_items() {
-                view_scheduled_job.jobs_toolbar.hideItem('run_as_copy');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('run_as_copy');
                 view_scheduled_job.jobs_toolbar.setItemDisabled('delete');
                 view_scheduled_job.jobs_toolbar.setItemDisabled('update');
-                view_scheduled_job.jobs_toolbar.hideItem('enable');
-                view_scheduled_job.jobs_toolbar.hideItem('disable');
-                view_scheduled_job.jobs_toolbar.hideItem('stop');
-                view_scheduled_job.jobs_toolbar.hideItem('run');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('enable');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('disable');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('stop');
+                view_scheduled_job.jobs_toolbar.setItemDisabled('run');
             }
 
         </script>
