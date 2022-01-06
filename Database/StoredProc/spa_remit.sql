@@ -3930,7 +3930,7 @@ BEGIN
 				LEFT JOIN time_zones tz ON tz.TIMEZONE_ID = sml.time_zone
 				LEFT JOIN static_data_value sdv_cntry ON sdv_cntry.value_id = sml.country
 				LEFT JOIN source_remit_standard src_remit ON td.source_deal_header_id=src_remit.source_deal_header_id 
-					AND src_remit.acer_submission_status = 39502
+					AND src_remit.acer_submission_status IN (39502,39501)
 				LEFT JOIN static_data_value sdv_deal_status ON sdv_deal_status.value_id = td.deal_status
 				LEFT JOIN #temp_vol_final2 tvf ON td.source_deal_header_id=tvf.source_deal_header_id
 				LEFT JOIN source_uom tsu ON tvf.notional_quantity_unit=tsu.source_uom_id
