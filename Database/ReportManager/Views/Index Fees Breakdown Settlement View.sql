@@ -149,7 +149,7 @@ SET @_sql = ''
 					AND tbl.as_of_date = ifbs.as_of_date
 				'' ELSE '''' END
 				 +'' INNER JOIN source_deal_header sdh 
-					ON sdh.source_deal_header_id = ifbs.source_deal_header_id  
+					ON sdh.source_deal_header_id = ifbs.source_deal_header_id  AND sdh.deal_status <> 5607
 				INNER JOIN source_deal_Detail sdd
 					ON  sdh.source_deal_header_id = sdd.source_deal_header_id AND sdd.leg = 1
 				INNER JOIN dbo.source_counterparty AS sc
