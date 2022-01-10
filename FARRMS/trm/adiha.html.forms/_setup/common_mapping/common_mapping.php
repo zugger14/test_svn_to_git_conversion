@@ -737,7 +737,26 @@
                 return comp_val_a < comp_val_b ? 1 : (comp_val_a > comp_val_b ? -1 : 0)
             }
         }
-		
+
+		function date_custom(date_val_a,date_val_b,order) { 
+            var selected_id = Generic_Mapping.cell_a_tab.getActiveTab();
+            var column_index = sort_col_index[selected_id];
+            var grid_obj = Generic_Mapping["grd_inner_obj_" + selected_id];
+            var col_type = grid_obj.getColType(column_index);
+            
+            if (col_type == 'dhxCalendarA') {
+                date_val_a = Date.parse(date_val_a);
+                date_val_b = Date.parse(date_val_b); 
+            }
+
+            if (order == "asc") {
+                return date_val_a > date_val_b ? 1 : (date_val_a < date_val_b ? -1 : 0)
+            } else {
+                return date_val_a < date_val_b ? 1 : (date_val_a > date_val_b ? -1 : 0)
+            }
+        }
+
+
         function ajx_call_back_grid_header(result) {          
             var json_obj = $.parseJSON(result);            
             var header = json_obj[0].name_list;
@@ -786,7 +805,7 @@
                         col_sort_string += ',int';
                     } else if (array_field_type[i] == 'dhxCalendarA'){
 						filter_string += ',#text_filter';
-						col_sort_string += ',date';
+						col_sort_string += ',date_custom';
 					} else {
                         filter_string += ',#text_filter';
                         col_sort_string += ',sort_custom';
