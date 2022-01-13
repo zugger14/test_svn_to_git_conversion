@@ -268,7 +268,7 @@ LEFT JOIN term_map_detail tmd
 WHERE tmd.term_map_id IS NULL
 AND NULLIF(t.term_end,'''') IS NOT NULL
 
-EXEC spa_trayport_deal_term_mapping @process_table = ''[final_process_table]''
+EXEC spa_trayport_deal_term_mapping ''[final_process_table]'', @set_process_id
 
 
 UPDATE a
@@ -574,12 +574,33 @@ SELECT @mapping_table_id = mapping_table_id
 FROM generic_mapping_header 
 WHERE mapping_name = ''Trayport Block Definition Product Mapping''
 
+DECLARE @temp_term_process_table NVARCHAR(1000) = dbo.FNAProcessTableName(''temp_term_data'', dbo.FNADBUser(), @set_process_id)
+IF OBJECT_ID(''tempdb..#temp_term_data'') IS NOT NULL
+		DROP TABLE #temp_term_data
+CREATE TABLE #temp_term_data(  
+	[deal_id] [VARCHAR](50) COLLATE DATABASE_DEFAULT NULL ,  
+	leg INT,
+	dynamic_year CHAR(1) COLLATE DATABASE_DEFAULT NULL
+)
+
+IF OBJECT_ID(@temp_term_process_table) IS NOT NULL
+BEGIN
+	SET @sql_query = ''INSERT INTO #temp_term_data(deal_id,leg,dynamic_year)
+					   SELECT deal_id,leg,dynamic_year
+					   FROM '' + @temp_term_process_table
+	EXEC(@sql_query)
+END
+
+
 UPDATE temp
-	SET term_start = DATEADD(d, -1, temp.term_start)
-	   , term_end = DATEADD(d, -1, temp.term_end)
+	SET term_start = CASE WHEN ISNULL(ttd.dynamic_year, ''n'') = ''y'' THEN CONVERT(VARCHAR,DATEADD(year, (YEAR(t1.[DateTime]) - YEAR(DATEADD(d, -1, temp.term_start)) - CASE WHEN temp.block_define_id = ''05-06'' AND MONTH(t1.[DateTime]) = 1 AND   DAY(t1.[DateTime]) = 1 THEN 1 ELSE 0 END), DATEADD(d, -1, temp.term_start)),120) ELSE CONVERT(VARCHAR,DATEADD(d, -1, temp.term_start),120) END , 
+				term_end = CASE WHEN ISNULL(ttd.dynamic_year, ''n'') = ''y'' THEN CONVERT(VARCHAR,DATEADD(year, (YEAR(t1.[DateTime]) - YEAR(DATEADD(d, -1, temp.term_end)) - CASE WHEN temp.block_define_id = ''05-06'' AND MONTH(t1.[DateTime]) = 1 AND   DAY(t1.[DateTime]) = 1 THEN 1 ELSE 0 END), DATEADD(d, -1, temp.term_end)),120) ELSE CONVERT(VARCHAR,DATEADD(d, -1, temp.term_end),120) END
 FROM [final_process_table] temp
 INNER JOIN [temp_process_table] t1
 	ON t1.[tradeid] = temp.deal_id
+LEFT JOIN #temp_term_data ttd
+	ON ttd.deal_id = temp.deal_id
+	ANd ttd.leg = temp.leg
 INNER JOIN static_data_value sdv
 	ON sdv.code = temp.block_define_id
 INNER JOIN generic_mapping_values gmv
@@ -1034,7 +1055,7 @@ LEFT JOIN term_map_detail tmd
 WHERE tmd.term_map_id IS NULL
 AND NULLIF(t.term_end,'''') IS NOT NULL
 
-EXEC spa_trayport_deal_term_mapping @process_table = ''[final_process_table]''
+EXEC spa_trayport_deal_term_mapping ''[final_process_table]'', @set_process_id
 
 
 UPDATE a
@@ -1340,12 +1361,33 @@ SELECT @mapping_table_id = mapping_table_id
 FROM generic_mapping_header 
 WHERE mapping_name = ''Trayport Block Definition Product Mapping''
 
+DECLARE @temp_term_process_table NVARCHAR(1000) = dbo.FNAProcessTableName(''temp_term_data'', dbo.FNADBUser(), @set_process_id)
+IF OBJECT_ID(''tempdb..#temp_term_data'') IS NOT NULL
+		DROP TABLE #temp_term_data
+CREATE TABLE #temp_term_data(  
+	[deal_id] [VARCHAR](50) COLLATE DATABASE_DEFAULT NULL ,  
+	leg INT,
+	dynamic_year CHAR(1) COLLATE DATABASE_DEFAULT NULL
+)
+
+IF OBJECT_ID(@temp_term_process_table) IS NOT NULL
+BEGIN
+	SET @sql_query = ''INSERT INTO #temp_term_data(deal_id,leg,dynamic_year)
+					   SELECT deal_id,leg,dynamic_year
+					   FROM '' + @temp_term_process_table
+	EXEC(@sql_query)
+END
+
+
 UPDATE temp
-	SET term_start = DATEADD(d, -1, temp.term_start)
-	   , term_end = DATEADD(d, -1, temp.term_end)
+	SET term_start = CASE WHEN ISNULL(ttd.dynamic_year, ''n'') = ''y'' THEN CONVERT(VARCHAR,DATEADD(year, (YEAR(t1.[DateTime]) - YEAR(DATEADD(d, -1, temp.term_start)) - CASE WHEN temp.block_define_id = ''05-06'' AND MONTH(t1.[DateTime]) = 1 AND   DAY(t1.[DateTime]) = 1 THEN 1 ELSE 0 END), DATEADD(d, -1, temp.term_start)),120) ELSE CONVERT(VARCHAR,DATEADD(d, -1, temp.term_start),120) END , 
+				term_end = CASE WHEN ISNULL(ttd.dynamic_year, ''n'') = ''y'' THEN CONVERT(VARCHAR,DATEADD(year, (YEAR(t1.[DateTime]) - YEAR(DATEADD(d, -1, temp.term_end)) - CASE WHEN temp.block_define_id = ''05-06'' AND MONTH(t1.[DateTime]) = 1 AND   DAY(t1.[DateTime]) = 1 THEN 1 ELSE 0 END), DATEADD(d, -1, temp.term_end)),120) ELSE CONVERT(VARCHAR,DATEADD(d, -1, temp.term_end),120) END
 FROM [final_process_table] temp
 INNER JOIN [temp_process_table] t1
 	ON t1.[tradeid] = temp.deal_id
+LEFT JOIN #temp_term_data ttd
+	ON ttd.deal_id = temp.deal_id
+	ANd ttd.leg = temp.leg
 INNER JOIN static_data_value sdv
 	ON sdv.code = temp.block_define_id
 INNER JOIN generic_mapping_values gmv
