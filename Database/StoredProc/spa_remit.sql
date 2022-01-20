@@ -2542,16 +2542,18 @@ BEGIN
 			SET @sql2 = '
 				INSERT INTO #collect_submitted_deals(source_deal_header_id, allow_insert)
 				SELECT sdh.source_deal_header_id,
-					  CASE WHEN MAX(src_remit.source_deal_header_id) IS NULL THEN 1
-					       WHEN MAX(sdha.update_ts) IS NOT NULL AND MAX(sdha.update_ts) > MAX(src_remit.create_ts) THEN 1
+					 CASE WHEN MAX(src_remit.source_deal_header_id) IS NULL THEN 1
+					       WHEN MAX(sdha.update_ts) IS NOT NULL AND MAX(sdha.update_ts) > MAX(src_remit.create_ts) ' + CASE WHEN @report_type = 39401 THEN ' AND MAX(sdh1.deal_status) = 5606 ' ELSE '' END  + ' THEN 1
 					       WHEN MAX(submission_status.status) = 39502 THEN 0
 					  ELSE 1
 				END allow_insert
 				FROM #temp_deals sdh
+				INNER JOIN source_deal_header sdh1
+					ON sdh1.source_deal_header_id = sdh.source_deal_header_id
 				LEFT JOIN source_deal_header_audit sdha ON sdha.source_deal_header_id = sdh.source_deal_header_id
 				LEFT JOIN ' + @phy_remit_table_name + ' src_remit ON src_remit.source_deal_header_id = sdh.source_deal_header_id
 				OUTER APPLY (SELECT TOP 1 acer_submission_status [status]
-					 FROM source_remit_non_standard
+					 FROM ' + @phy_remit_table_name + '
 					 WHERE source_deal_header_id = sdh.source_deal_header_id
 					 AND acer_submission_status = 39502
 					 ORDER BY create_ts
