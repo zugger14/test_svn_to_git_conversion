@@ -17329,6 +17329,19 @@ BEGIN
 			  AND ((a.hour IS NULL AND spcd.granularity IN (994, 987, 989, 995, 982)) OR (a.minute IS NULL AND spcd.granularity IN (994, 987, 989, 995)))
 	')
 
+	-- Data type mismatch for Curve Value
+	EXEC('INSERT INTO #error_status (temp_id, error_number, template_values, import_file_name)
+			SELECT a.temp_id,
+			10004,
+			dbo.FNABuildNameValueXML(dbo.FNABuildNameValueXML('''', ''<column_name>'', ''Curve Value''), ''<column_value>'', a.curve_value),
+			a.import_file_name
+			FROM   ' + @import_temp_table_name + ' a
+			LEFT JOIN #error_status 
+				ON a.temp_id = #error_status.temp_id 						  
+ 			WHERE #error_status.temp_id IS NULL AND
+				ISNUMERIC(a.curve_value) = 0 '
+		)
+
 	EXEC('
 		DELETE a
  	    FROM #error_status
