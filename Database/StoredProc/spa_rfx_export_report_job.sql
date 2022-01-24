@@ -386,7 +386,7 @@ BEGIN
 	UPDATE message_board SET process_id = @process_id_p  WHERE process_id = '''+@process_id+'''
 
 	DECLARE @job_name_p VARCHAR(1000) = ''' + @export_job_name + ''' + ''_'' + @process_id_p
-	DECLARE @report_sp_p VARCHAR(1000) = ' + CASE WHEN @report_executable_sp IS NOT NULL THEN 'REPLACE(''' + REPLACE(@report_executable_sp, '''','''''') + ''',''#EXPORT_PROCESS_ID#'',@process_id_p)' ELSE 'NULL' END + '
+	DECLARE @report_sp_p VARCHAR(MAX) = ' + CASE WHEN @report_executable_sp IS NOT NULL THEN 'REPLACE(''' + REPLACE(@report_executable_sp, '''','''''') + ''',''#EXPORT_PROCESS_ID#'',@process_id_p)' ELSE 'NULL' END + '
 	
 	EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name = @job_name_p, @process_id = @process_id_p, @email_enable =''y'', @email_description=''' + @email_description + ''', @email_subject=''' + @email_subject + ''',@file_name = @output_file_full_path_p,@report_sp =@report_sp_p'
 END
@@ -399,7 +399,7 @@ BEGIN
 		UPDATE message_board SET process_id = @process_id_p  WHERE process_id = '''+@process_id+'''
 
 		DECLARE @job_name_p VARCHAR(1000) = ''' + @export_job_name + ''' + ''_'' + @process_id_p
-		DECLARE @report_sp_p VARCHAR(1000) = ' + CASE WHEN @report_executable_sp IS NOT NULL THEN 'REPLACE(''' + REPLACE(@report_executable_sp, '''','''''') + ''',''#EXPORT_PROCESS_ID#'',@process_id_p)' ELSE 'NULL' END + '
+		DECLARE @report_sp_p VARCHAR(MAX) = ' + CASE WHEN @report_executable_sp IS NOT NULL THEN 'REPLACE(''' + REPLACE(@report_executable_sp, '''','''''') + ''',''#EXPORT_PROCESS_ID#'',@process_id_p)' ELSE 'NULL' END + '
 		EXEC ' + @db_name + '.dbo.spa_message_board @flag = ''u'', @user_login_id = ''' + @user_name + ''', @source= ''' + @trimmed_report_name  + ''', @description = @desc_success_p, @url_desc='''', @url ='''', @type = ''s'', @job_name = @job_name_p, @process_id = @process_id_p, @email_enable =''y'', @email_description=''' + @email_description + ''',@report_sp =@report_sp_p,@file_name = @output_file_full_path_p, @email_subject=''' + @email_subject + ''', @is_aggregate = '+@is_aggregate_var+''
 END
 
