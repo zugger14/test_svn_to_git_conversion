@@ -16,21 +16,29 @@ if (!empty($path) && file_exists($path)) {
 	$name = get_sanitized_value($_GET['name'] ?? '');
 	//get explicitly provided download filename if available
 	$download_filename = ($name == '' ? basename($path) : $name);
+	
+	set_time_limit(0);
+	$size = intval(sprintf("%u", filesize($path)));
 
 	header('Content-Type: application/octet-stream');
 	header("Content-Transfer-Encoding: Binary");
+	header('Content-Length: '.$size);
 	header("Content-disposition: attachment; filename=\"" . $download_filename . "\"");
-	set_time_limit(0);
-	$context = stream_context_create();
-	$file = fopen($path,"rb", false, $context);
-	while(!feof($file))
-	{
-		//print(@fread($file, 1024*8));
-		echo stream_get_contents($file, filesize($path));
-		ob_flush();
-		flush();
+	
+	$chunk_size = 5 * (1024 * 1024); //5 MB
+	if($size > $chunk_size)
+    { 
+		$file = fopen($path,"rb");
+		while(!feof($file))
+		{
+			print(@fread($file, $chunk_size));
+			ob_flush();
+			flush();
+		}
+		fclose($file);
+	} else {
+		readfile($file);
 	}
-	fclose($file);
 } else {
 	die("You're not authorized to access this file or file doesn't exists.");
 }
