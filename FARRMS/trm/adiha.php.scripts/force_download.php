@@ -20,8 +20,17 @@ if (!empty($path) && file_exists($path)) {
 	header('Content-Type: application/octet-stream');
 	header("Content-Transfer-Encoding: Binary");
 	header("Content-disposition: attachment; filename=\"" . $download_filename . "\"");
-
-	readfile($path);
+	set_time_limit(0);
+	$context = stream_context_create();
+	$file = fopen($path,"rb", false, $context);
+	while(!feof($file))
+	{
+		//print(@fread($file, 1024*8));
+		echo stream_get_contents($file, 1024*8);
+		ob_flush();
+		flush();
+	}
+	fclose($file);
 } else {
 	die("You're not authorized to access this file or file doesn't exists.");
 }
