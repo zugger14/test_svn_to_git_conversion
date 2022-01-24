@@ -26,7 +26,7 @@ if (!empty($path) && file_exists($path)) {
 	while(!feof($file))
 	{
 		//print(@fread($file, 1024*8));
-		echo stream_get_contents($file, 1024*8);
+		echo stream_get_contents($file, filesize($path));
 		ob_flush();
 		flush();
 	}
