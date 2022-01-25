@@ -17,7 +17,8 @@ GO
 */
 
 CREATE PROCEDURE [dbo].[spa_trayport_deal_term_mapping]
-	@process_table VARCHAR(200)
+	@process_table VARCHAR(200),
+	@process_id VARCHAR(100)
 AS
 
 
@@ -126,7 +127,9 @@ CREATE TABLE #temp_term(
 		[date_or_block] [char](1) NULL,
 		no_of_days INT NULL ,
 		old_term_date NVARCHAR(100) COLLATE DATABASE_DEFAULT NULL,
-		dynamic_year CHAR(1) COLLATE DATABASE_DEFAULT NULL
+		dynamic_year CHAR(1) COLLATE DATABASE_DEFAULT NULL,
+		leg INT
+
 	) ON [PRIMARY]  
 					    
 	SET @sql = '    
@@ -141,6 +144,7 @@ CREATE TABLE #temp_term(
 				,no_of_days 
 				,old_term_date
 				,dynamic_year
+				,leg
 				)
 		SELECT CASE WHEN t.date_or_block=''b'' THEN   
 			DATEADD(d, CASE WHEN weekday-dbo.FNARWeekDay(DATEADD(wk,ISNULL(t.relative_days,0),ts.deal_date))<0 THEN  
@@ -157,6 +161,7 @@ CREATE TABLE #temp_term(
 			CASE WHEN t.date_or_block=''m'' THEN  dbo.FNAGetTermEndDate(''m'',ts.deal_date,0) ELSE t.term_end END term_end,
 			ts.deal_id,t.date_or_block,t.no_of_days,ts.term_start    
 			,ISNULL(t.dynamic_year, ''n'')
+			,ts.leg
 		FROM ' + @process_table + '  ts JOIN term_map_detail t   
 		ON ts.term_start = t.term_code 
 		OUTER  apply (
@@ -241,6 +246,19 @@ CREATE TABLE #temp_term(
 	END
 	CLOSE cur1
 	DEALLOCATE cur1
+	 				
+	IF @process_id IS NOT NULL
+	BEGIN
+		DECLARE @temp_term_process_table NVARCHAR(1000) = dbo.FNAProcessTableName('temp_term_data', dbo.FNADBUser(), @process_id)
+		IF OBJECT_ID(@temp_term_process_table) IS NOT NULL EXEC ('DROP TABLE ' + @temp_term_process_table)
+		SET @sql = 'SELECT deal_id,leg,MAX(dynamic_year) dynamic_year
+					INTO ' + @temp_term_process_table + ' 
+					FROM #temp_term 
+					WHERE [active_date]=1 
+					GROUP BY deal_id,leg,old_term_date
+					'
+		EXEC(@sql)
+	END
 	 				
 	SET @sql = '  
 		UPDATE ' + @process_table + ' 
