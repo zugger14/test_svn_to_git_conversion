@@ -28,10 +28,11 @@ if (!empty($path) && file_exists($path)) {
 	$chunk_size = 5 * (1024 * 1024); //5 MB
 	if($size > $chunk_size)
     { 
-		$file = fopen($path,"rb");
+		$file = @fopen($path,"rb");
 		while(!feof($file))
 		{
-			print(@fread($file, $chunk_size));
+			$buffer = @fread($file, $chunk_size);
+			echo $buffer;
 			ob_flush();
 			flush();
 		}
