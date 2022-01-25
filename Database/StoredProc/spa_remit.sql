@@ -3911,8 +3911,8 @@ BEGIN
 			[Action type]= 	CASE WHEN @cancellation='1' THEN 'E'---to cancel previously submitted report wtih action type= Error
 								 WHEN MAX(sdv_deal_status.value_id)=5629 THEN 'C'---Deal with cancelled status
 								 WHEN MAX(src_remit.source_deal_header_id) IS NULL THEN 'N'
-								 WHEN MAX(src_remit.source_deal_header_id) IS NOT NULL THEN 'M' 
-								 ELSE NULL END,
+								 WHEN MAX(tbl_remit.id) IS NOT NULL THEN 'M' 
+								 ELSE 'N' END,
 			report_type = @report_type ,
 			create_date_from = @create_date_from,
 			create_date_to =@create_date_to,
@@ -3933,6 +3933,7 @@ BEGIN
 				LEFT JOIN static_data_value sdv_cntry ON sdv_cntry.value_id = sml.country
 				LEFT JOIN source_remit_standard src_remit ON td.source_deal_header_id=src_remit.source_deal_header_id 
 					AND src_remit.acer_submission_status IN (39502,39501)
+				OUTER APPLY(SELECT MAX(id) id FROM source_remit_standard WHERE source_deal_header_id = td.source_deal_header_id AND src_remit.acer_submission_status IN (39502,39503)) tbl_remit
 				LEFT JOIN static_data_value sdv_deal_status ON sdv_deal_status.value_id = td.deal_status
 				LEFT JOIN #temp_vol_final2 tvf ON td.source_deal_header_id=tvf.source_deal_header_id
 				LEFT JOIN source_uom tsu ON tvf.notional_quantity_unit=tsu.source_uom_id
