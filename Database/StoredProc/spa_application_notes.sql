@@ -480,7 +480,7 @@ BEGIN
 		isnull(sdv_cat.code, ''General'') [category],
 		isnull(sdv_sub_cat.code, ''General'') [sub_category],
 		an2.notes_subject,
-		an2.attachment_file_name + ''^javascript:fx_download_file("'' + an2.notes_attachment + ''")^_self'' [notes_attachment],
+		an2.attachment_file_name + ''^javascript:fx_download_file("'' + replace(((select document_path from connection_string) + SUBSTRING(an2.notes_attachment, CHARINDEX(''/attach_docs/'',an2.notes_attachment), LEN(an2.notes_attachment))),''\'',''/'') + ''")^_self'' [notes_attachment],
 		cast(isnull(an2.parent_object_id, an2.notes_object_id) as varchar(500)) + '' ('' + isnull(sdv_cat.code, '''') + '')^javascript:fx_click_parent_object_id_link('' + cast(sdv_cat.value_id as varchar(10)) + '','' + cast(isnull(an2.parent_object_id, an2.notes_object_id) as varchar(500))+ '')^_self'' parent_object_id,
 		sdv_user_cat.code user_category,
 		(an2.url + ''^'' + an2.url) url,
