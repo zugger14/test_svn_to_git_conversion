@@ -234,42 +234,38 @@ BEGIN
 	
 END
 	ELSE IF @flag = 'i' 
-	BEGIN
-					
-		SELECT @emailid= description
-		FROM adiha_default_codes_values_possible
-		WHERE default_code_id = 44 
-
-		INSERT INTO email_notes
-			(
-				internal_type_value_id,
-				category_value_id,
-				notes_object_id,		
-				notes_object_name,
-				notes_subject,
-				notes_text,
-				attachment_file_name,
-				send_to,
-				send_cc,
-				send_bcc,
-				send_status,
-				active_flag
-			)		
-		SELECT @internal_type_value_id,
-			@category_value_id,
-			@notes_object_id,
-			@notes_object_name,
-			dbo.FNAReplaceEmailTemplateParams(@subject, @template_params),
-			dbo.FNAReplaceEmailTemplateParams(@body, @template_params),
-			@attachment_file_name,
-			@send_to,
-			--@emailid,
-			--, au.user_emal_add, 
-			NULL,
-			NULL,
-			@send_status,
-			@active_flag
-
+	BEGIN					
+		
+		IF NULLIF(@send_to, '') IS NOT NULL
+		BEGIN
+			INSERT INTO email_notes
+				(
+					internal_type_value_id,
+					category_value_id,
+					notes_object_id,		
+					notes_object_name,
+					notes_subject,
+					notes_text,
+					attachment_file_name,
+					send_to,
+					send_cc,
+					send_bcc,
+					send_status,
+					active_flag
+				)		
+			SELECT @internal_type_value_id,
+				@category_value_id,
+				@notes_object_id,
+				@notes_object_name,
+				dbo.FNAReplaceEmailTemplateParams(@subject, @template_params),
+				dbo.FNAReplaceEmailTemplateParams(@body, @template_params),
+				@attachment_file_name,
+				@send_to,
+				NULL,
+				NULL,
+				@send_status,
+				@active_flag
+		END
 		
 	END
 	else if @flag = 'g'

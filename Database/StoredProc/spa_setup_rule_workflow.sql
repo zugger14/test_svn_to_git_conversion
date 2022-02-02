@@ -1148,6 +1148,7 @@ ELSE IF @flag = 'd'
 								SELECT MAX(notes_subject), MAX(notes_text), send_from, send_to, send_status, active_flag, max(email_type), max(workflow_activity_id),max(attachment_file_name), MAX(sys_users)
 								FROM ' + @msg_process_table + '
 								WHERE is_alert IS NULL
+									AND NULLIF(send_to,'') IS NOT NULL
 								GROUP BY send_from, send_to, send_status, active_flag, event_trigger_id
 							END
 						END'
