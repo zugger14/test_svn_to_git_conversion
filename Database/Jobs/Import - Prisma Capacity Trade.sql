@@ -26,7 +26,7 @@ SELECT @utc_date = dbo.FNAGetUTCTTime(GETDATE(), @timezone)
 
 --Rule Name : Prisma Capacity Deal
 SELECT @ixp_rule_id = ixp_rules_id FROM ixp_rules WHERE ixp_rules_name = ''Prisma Capacity Deal''
-SELECT @time_difference = IIF(DATEPART(MINUTE, @utc_date) = 00, -30, -29)
+SELECT @time_difference = -30
 SELECT @date = FORMAT(DATEADD(minute, @time_difference, @utc_date), ''yyyy-MM-ddTHH:mm:ss.fffZ'')				
 
 SELECT @parameters = ''<Root><PSRecordset paramName="PS_auctionId" paramValue="null" paramType="input"/><PSRecordset paramName="PS_bookedAt" paramValue="null" paramType="calendar"/><PSRecordset paramName="PS_bookedSince" paramValue="'' + @date + ''" paramType="calendar"/><PSRecordset paramName="PS_bookedBefore" paramValue="null" paramType="calendar"/></Root>''
