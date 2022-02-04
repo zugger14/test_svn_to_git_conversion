@@ -1063,7 +1063,7 @@ BEGIN
 									AND h1.block_type = 12000
 									AND h1.term_date = h.term_date + 1
 									AND h1.dst_group_value_id = h.dst_group_value_id
-								WHERE h.block_define_id = sdh.block_define_id
+								WHERE h.block_define_id = ISNULL(sdh.block_define_id, -10000298) -- BASE LOAD
 									AND h.block_type = 12000
 									AND h.term_date BETWEEN CAST(se.delivery_start AS DATE) AND CAST(se.delivery_end AS DATE) 
 									AND h.dst_group_value_id = @default_dst_group
@@ -1181,7 +1181,7 @@ BEGIN
 									AND h1.block_type = 12000
 									AND h1.term_date = h.term_date + 1
 									AND h1.dst_group_value_id = h.dst_group_value_id
-								WHERE h.block_define_id = sdh.block_define_id
+								WHERE h.block_define_id = ISNULL(sdh.block_define_id, -10000298) -- BASE LOAD
 									AND h.block_type = 12000
 									AND h.term_date BETWEEN CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_start AS DATE)) IN (1,7) THEN dbo.FNAGetBusinessDay('n',CAST(sdh.entire_term_start AS DATE), NULL) ELSE CAST(sdh.entire_term_start AS DATE) END
 									AND CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_end AS DATE) ) IN (1,7) THEN dbo.FNAGetBusinessDay('p',CAST(sdh.entire_term_end AS DATE), NULL) ELSE CAST(sdh.entire_term_end AS DATE)  END
@@ -1301,7 +1301,7 @@ BEGIN
 							CROSS APPLY	(
 								SELECT h.*
 								FROM hour_block_term h WITH (NOLOCK)
-								WHERE block_define_id = sdh.block_define_id
+								WHERE block_define_id = ISNULL(sdh.block_define_id, -10000298) -- BASE LOAD
 									AND h.block_type = 12000
 									AND term_date BETWEEN CAST(se.delivery_start AS DATE) AND CAST(se.delivery_end AS DATE) 
 									AND dst_group_value_id = @default_dst_group
@@ -1474,7 +1474,7 @@ BEGIN
 							CROSS APPLY	(
 								SELECT h.*
 								FROM hour_block_term h WITH (NOLOCK)
-								WHERE block_define_id = sdh.block_define_id
+								WHERE block_define_id = ISNULL(sdh.block_define_id, -10000298) -- BASE LOAD
 									AND h.block_type = 12000
 									AND term_date BETWEEN CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_start AS DATE)) IN (1,7) THEN dbo.FNAGetBusinessDay('n',CAST(sdh.entire_term_start AS DATE), NULL) ELSE CAST(sdh.entire_term_start AS DATE) END
 									AND CASE WHEN @business_day = 'y' AND DATEPART(dw, CAST(sdh.entire_term_end AS DATE) ) IN (1,7) THEN dbo.FNAGetBusinessDay('p',CAST(sdh.entire_term_end AS DATE), NULL) ELSE CAST(sdh.entire_term_end AS DATE)  END
