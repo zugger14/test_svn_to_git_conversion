@@ -38,7 +38,7 @@ if (!empty($path) && file_exists($path)) {
 		}
 		fclose($file);
 	} else {
-		readfile($file);
+		readfile($path);
 	}
 } else {
 	die("You're not authorized to access this file or file doesn't exists.");
