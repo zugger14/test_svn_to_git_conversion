@@ -39256,6 +39256,19 @@ BEGIN
  					'
  		EXEC(@sql)
  		
+			--insert blank files into error_files when comes with other files
+			INSERT INTO #error_files
+			SELECT DISTINCT ipi.import_file_name
+			FROM  import_process_info  ipi
+			LEFT JOIN #error_files ef
+				ON ef.files_name = ipi.import_file_name
+			LEFT JOIN #success_files sf
+				ON sf.files_name = ipi.import_file_name
+			WHERE process_id = @process_id
+				AND NULLIF(import_file_name,'') IS NOT NULL
+				AND sf.files_name IS NULL
+				AND ef.files_name IS NULL
+ 		
  		IF EXISTS(SELECT 1 FROM #error_files)
  		BEGIN
  			DECLARE @error_file NVARCHAR(3000)
