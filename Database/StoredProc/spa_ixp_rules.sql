@@ -4204,8 +4204,9 @@ BEGIN
 	WHERE ds.ws_function_name = @rule_name
 
 	DECLARE @col_list NVARCHAR(MAX) = NULL
-	SELECT @col_list = ISNULL(@col_list + '],[','[') + [Key] FROM #temp_mapping
+	SELECT @col_list = ISNULL(@col_list + '],[','[') + [Key] FROM #temp_mapping WHERE NULLIF([Key],'') IS NOT NULL
 	SET @col_list = @col_list + ']'
+
 
 	SET @sql = '
 	SELECT ' + @col_list + '
