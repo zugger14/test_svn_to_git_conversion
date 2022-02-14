@@ -1133,7 +1133,7 @@ ELSE IF @flag = 'd'
 										MAX(process_id) [process_id],
 										MAX(workflow_activity_id) [workflow_activity_id]
 								FROM ' + @msg_process_table + ' mpt
-								
+								WHERE user_login_id IS NOT NULL
 								GROUP BY user_login_id, is_alert, event_trigger_id, 
 								SUBSTRING(description,0,CHARINDEX(''EXEC spa_get_alert_report_output'',description)) + SUBSTRING(description,CHARINDEX(''EXEC spa_get_alert_report_output'',description) + 54, LEN(description))
 								) a
