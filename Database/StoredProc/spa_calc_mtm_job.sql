@@ -6826,68 +6826,6 @@ begin
 END
 
 
-SET @sqlstmt=  ' 
-SELECT distinct source_deal_header_id into #tmp_list_deals FROM '+@position_table_name +';
-
-INSERT INTO '+@position_table_name+'(location_id,leg,source_deal_header_id,curve_id,monthly_index,source_deal_detail_id,commodity_id
-		,term_start,curve_granularity,proxy_curve_id,proxy_curve_id3,settlement_curve_id,formula_curve_id,b_s_mult,curve_maturity,proxy_curve_maturity
-		,proxy_curve_maturity3,monthly_index_maturity,set_maturity,monthly_index_granularity,proxy_curve_granularity,proxy_curve_granularity3
-		,settlement_curve_granularity,func_cur_id,contract_id,monthly_term,deal_term_start,deal_term_end,meter_deal_id,meter_mult,volume_rounding
-		,formula_id,pricing,price_adder,price_multiplier,pay_opposite,period,pos_granularity,save_mtm_at_calculation_granularity,hr1,hr2,hr3,hr4,hr5
-	,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,[buy_sell_flag],bid_n_ask_price
-	,calc_mtm_at_tou_level,state_value_id, tier_value_id, match_info_id)
-	select td.location_id, td.leg, td.source_deal_header_id, ISNULL(td.curve_id, -1) curve_id, td.monthly_index, td.source_deal_detail_id,
-		sdh.commodity_id, td.term_start, td.curve_granularity, td.proxy_curve_id, td.proxy_curve_id3, td.settlement_curve_id, 
-		td.formula_curve_id, -1 b_s_mult, --case when(td.buy_sell_flag=''s'') then 1 else -1 end b_s_mult,		
-		CAST(CASE WHEN (td.curve_granularity = 980 OR td.pricing IN (1601,1602)) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(Month(td.term_start) as varchar) + ''-01'' 
-			 WHEN (td.curve_granularity = 991) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 4 when 3 then 7 when 4 then 10 END as varchar) + ''-01'' 
-			 WHEN (td.curve_granularity = 992) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 1 ELSE 7 END as varchar) + ''-01''
-			 WHEN (td.curve_granularity = 993) THEN cast(Year(td.term_start) as varchar) + ''-01-01'' 
-			 ELSE td.term_start 
-		END AS DATETIME) curve_maturity,		 			
-		CAST(CASE WHEN (td.proxy_curve_granularity = 980) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(Month(td.term_start) as varchar) + ''-01'' 
-			 WHEN (td.proxy_curve_granularity = 991) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 4 when 3 then 7 when 4 then 10 END as varchar) + ''-01'' 
-			 WHEN (td.proxy_curve_granularity = 992) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 1 ELSE 7 END as varchar) + ''-01''
-			 WHEN (td.proxy_curve_granularity = 993) THEN cast(Year(td.term_start) as varchar) + ''-01-01'' 
-			 ELSE td.term_start 
-		END AS DATETIME) proxy_curve_maturity,		 
-		CAST(CASE WHEN (td.proxy_curve_granularity3 = 980) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(Month(td.term_start) as varchar) + ''-01'' 
-			 WHEN (td.proxy_curve_granularity3 = 991) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 4 when 3 then 7 when 4 then 10 END as varchar) + ''-01'' 
-			 WHEN (td.proxy_curve_granularity3 = 992) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 1 ELSE 7 END as varchar) + ''-01''
-			 WHEN (td.proxy_curve_granularity3 = 993) THEN cast(Year(td.term_start) as varchar) + ''-01-01'' 
-			 ELSE td.term_start 
-		END AS DATETIME) proxy_curve_maturity3,		 
-		CAST(CASE WHEN (td.monthly_index_granularity = 980) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(Month(td.term_start) as varchar) + ''-01'' 
-			 WHEN (td.monthly_index_granularity = 991) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 4 when 3 then 7 when 4 then 10 END as varchar) + ''-01'' 
-			 WHEN (td.monthly_index_granularity = 992) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 1 ELSE 7 END as varchar) + ''-01''
-			 WHEN (td.monthly_index_granularity = 993) THEN cast(Year(td.term_start) as varchar) + ''-01-01'' 
-			 ELSE td.term_start 
-		END AS DATETIME) monthly_index_maturity,
-		CAST(CASE WHEN (td.settlement_curve_granularity = 980) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(Month(td.term_start) as varchar) + ''-01'' 
-			WHEN (td.settlement_curve_granularity = 991) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 4 when 3 then 7 when 4 then 10 END as varchar) + ''-01'' 
-			WHEN (td.settlement_curve_granularity = 992) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 1 ELSE 7 END as varchar) + ''-01''
-			WHEN (td.settlement_curve_granularity = 993) THEN cast(Year(td.term_start) as varchar) + ''-01-01'' 
-		ELSE td.term_start 
-		END AS DATETIME) set_maturity,		 		
-		td.monthly_index_granularity, 
-		td.proxy_curve_granularity, td.proxy_curve_granularity3, 
-		td.settlement_curve_granularity, isnull(td.func_cur_id, -1) func_cur_id, ISNULL(td.contract_id, -1) contract_id,
-		cast(cast(year(td.term_start) as varchar) + ''-'' + cast(MONTH(td.term_start) as varchar) + ''-01'' as DATETIME) monthly_term, 
-		td.term_start deal_term_start,td.term_end deal_term_end,
-		td.meter_deal_id, td.volume_multiplier * td.volume_multiplier2 meter_mult, td.volume_rounding, td.formula_id, td.pricing, 
-		td.price_adder, td.price_multiplier,td.pay_opposite,  0  period,td.hourly_position_breakdown pos_granularity,
-		td.save_mtm_at_calculation_granularity,CASE WHEN td.buy_sell_flag = ''s'' THEN -1 ELSE 1 END *td.deal_volume
-		,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,td.[buy_sell_flag],td.bid_n_ask_price,td.calc_mtm_at_tou_level,td.state_value_id, td.tier_value_id, td.match_info_id
-	FROM  #temp_deals td INNER JOIN source_deal_header sdh On td.source_deal_header_id = sdh.source_deal_header_id
-		left join #tmp_list_deals ptn on ptn.source_deal_header_id = td.source_deal_header_id
-	WHERE  ptn.source_deal_header_id IS NULL AND '+case when @calc_type = 's' then  ' ISNULL(settlement_date,td.term_start) BETWEEN '''+@term_start+''' and '''+@term_end+''' 
-	--AND ISNULL(td.actualization_flag,'''') = ''d'''
-			else ' td.term_start between td.filter_term_start and td.filter_term_end ' end +' AND ISNULL(td.variable_swap, ''n'') = ''n'''	
-
-EXEC spa_print  @sqlstmt
-
-EXEC(@sqlstmt)
-
 
 
 --It supports only in Enterprise Edition
@@ -6998,6 +6936,71 @@ exec spa_print @sqlstmt
 
 
 EXEC('SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;'+@sqlstmt )		
+
+
+
+
+SET @sqlstmt=  ' 
+SELECT distinct source_deal_header_id into #tmp_list_deals FROM '+@position_table_name +';
+
+INSERT INTO '+@position_table_name+'(location_id,leg,source_deal_header_id,curve_id,monthly_index,source_deal_detail_id,commodity_id
+		,term_start,curve_granularity,proxy_curve_id,proxy_curve_id3,settlement_curve_id,formula_curve_id,b_s_mult,curve_maturity,proxy_curve_maturity
+		,proxy_curve_maturity3,monthly_index_maturity,set_maturity,monthly_index_granularity,proxy_curve_granularity,proxy_curve_granularity3
+		,settlement_curve_granularity,func_cur_id,contract_id,monthly_term,deal_term_start,deal_term_end,meter_deal_id,meter_mult,volume_rounding
+		,formula_id,pricing,price_adder,price_multiplier,pay_opposite,period,pos_granularity,save_mtm_at_calculation_granularity,hr1,hr2,hr3,hr4,hr5
+	,hr6,hr7,hr8,hr9,hr10,hr11,hr12,hr13,hr14,hr15,hr16,hr17,hr18,hr19,hr20,hr21,hr22,hr23,hr24,hr25,[buy_sell_flag],bid_n_ask_price
+	,calc_mtm_at_tou_level,state_value_id, tier_value_id, match_info_id)
+	select td.location_id, td.leg, td.source_deal_header_id, ISNULL(td.curve_id, -1) curve_id, td.monthly_index, td.source_deal_detail_id,
+		sdh.commodity_id, td.term_start, td.curve_granularity, td.proxy_curve_id, td.proxy_curve_id3, td.settlement_curve_id, 
+		td.formula_curve_id, -1 b_s_mult, --case when(td.buy_sell_flag=''s'') then 1 else -1 end b_s_mult,		
+		CAST(CASE WHEN (td.curve_granularity = 980 OR td.pricing IN (1601,1602)) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(Month(td.term_start) as varchar) + ''-01'' 
+			 WHEN (td.curve_granularity = 991) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 4 when 3 then 7 when 4 then 10 END as varchar) + ''-01'' 
+			 WHEN (td.curve_granularity = 992) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 1 ELSE 7 END as varchar) + ''-01''
+			 WHEN (td.curve_granularity = 993) THEN cast(Year(td.term_start) as varchar) + ''-01-01'' 
+			 ELSE td.term_start 
+		END AS DATETIME) curve_maturity,		 			
+		CAST(CASE WHEN (td.proxy_curve_granularity = 980) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(Month(td.term_start) as varchar) + ''-01'' 
+			 WHEN (td.proxy_curve_granularity = 991) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 4 when 3 then 7 when 4 then 10 END as varchar) + ''-01'' 
+			 WHEN (td.proxy_curve_granularity = 992) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 1 ELSE 7 END as varchar) + ''-01''
+			 WHEN (td.proxy_curve_granularity = 993) THEN cast(Year(td.term_start) as varchar) + ''-01-01'' 
+			 ELSE td.term_start 
+		END AS DATETIME) proxy_curve_maturity,		 
+		CAST(CASE WHEN (td.proxy_curve_granularity3 = 980) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(Month(td.term_start) as varchar) + ''-01'' 
+			 WHEN (td.proxy_curve_granularity3 = 991) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 4 when 3 then 7 when 4 then 10 END as varchar) + ''-01'' 
+			 WHEN (td.proxy_curve_granularity3 = 992) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 1 ELSE 7 END as varchar) + ''-01''
+			 WHEN (td.proxy_curve_granularity3 = 993) THEN cast(Year(td.term_start) as varchar) + ''-01-01'' 
+			 ELSE td.term_start 
+		END AS DATETIME) proxy_curve_maturity3,		 
+		CAST(CASE WHEN (td.monthly_index_granularity = 980) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(Month(td.term_start) as varchar) + ''-01'' 
+			 WHEN (td.monthly_index_granularity = 991) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 4 when 3 then 7 when 4 then 10 END as varchar) + ''-01'' 
+			 WHEN (td.monthly_index_granularity = 992) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 1 ELSE 7 END as varchar) + ''-01''
+			 WHEN (td.monthly_index_granularity = 993) THEN cast(Year(td.term_start) as varchar) + ''-01-01'' 
+			 ELSE td.term_start 
+		END AS DATETIME) monthly_index_maturity,
+		CAST(CASE WHEN (td.settlement_curve_granularity = 980) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(Month(td.term_start) as varchar) + ''-01'' 
+			WHEN (td.settlement_curve_granularity = 991) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 4 when 3 then 7 when 4 then 10 END as varchar) + ''-01'' 
+			WHEN (td.settlement_curve_granularity = 992) THEN cast(Year(td.term_start) as varchar) + ''-'' + cast(CASE datepart(q, td.term_start) WHEN 1 THEN 1 WHEN 2 THEN 1 ELSE 7 END as varchar) + ''-01''
+			WHEN (td.settlement_curve_granularity = 993) THEN cast(Year(td.term_start) as varchar) + ''-01-01'' 
+		ELSE td.term_start 
+		END AS DATETIME) set_maturity,		 		
+		td.monthly_index_granularity, 
+		td.proxy_curve_granularity, td.proxy_curve_granularity3, 
+		td.settlement_curve_granularity, isnull(td.func_cur_id, -1) func_cur_id, ISNULL(td.contract_id, -1) contract_id,
+		cast(cast(year(td.term_start) as varchar) + ''-'' + cast(MONTH(td.term_start) as varchar) + ''-01'' as DATETIME) monthly_term, 
+		td.term_start deal_term_start,td.term_end deal_term_end,
+		td.meter_deal_id, td.volume_multiplier * td.volume_multiplier2 meter_mult, td.volume_rounding, td.formula_id, td.pricing, 
+		td.price_adder, td.price_multiplier,td.pay_opposite,  0  period,td.hourly_position_breakdown pos_granularity,
+		td.save_mtm_at_calculation_granularity,CASE WHEN td.buy_sell_flag = ''s'' THEN -1 ELSE 1 END *td.deal_volume
+		,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,td.[buy_sell_flag],td.bid_n_ask_price,td.calc_mtm_at_tou_level,td.state_value_id, td.tier_value_id, td.match_info_id
+	FROM  #temp_deals td INNER JOIN source_deal_header sdh On td.source_deal_header_id = sdh.source_deal_header_id
+		left join #tmp_list_deals ptn on ptn.source_deal_header_id = td.source_deal_header_id
+	WHERE  ptn.source_deal_header_id IS NULL AND '+case when @calc_type = 's' then  ' ISNULL(settlement_date,td.term_start) BETWEEN '''+@term_start+''' and '''+@term_end+''' 
+	--AND ISNULL(td.actualization_flag,'''') = ''d'''
+			else ' td.term_start between td.filter_term_start and td.filter_term_end ' end +' AND ISNULL(td.variable_swap, ''n'') = ''n'''	
+
+EXEC spa_print  @sqlstmt
+EXEC(@sqlstmt)
+
 
 If @print_diagnostic = 1
 BEGIN
