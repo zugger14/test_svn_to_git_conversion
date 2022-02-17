@@ -1,4 +1,4 @@
-BEGIN 
+ BEGIN 
 	BEGIN TRY 
 		BEGIN TRAN 
 		DECLARE @admin_user VARCHAR(100) =  dbo.FNAAppAdminID(), @old_ixp_rule_id INT
@@ -7,7 +7,7 @@ BEGIN
 
 			
 			SELECT @old_ixp_rule_id = ixp_rules_id FROM ixp_rules ir 
-			WHERE ixp_rule_hash = '6500C6FB_F039_48EF_B4B0_9668B1BA4DBF'
+			WHERE ixp_rule_hash = '9DB48870_5BA4_47A3_B100_2512AD19A3CE'
 
 			if @old_ixp_rule_id IS NULL
 			BEGIN
@@ -97,18 +97,7 @@ LEFT JOIN generic_mapping_values gmv ON ISNULL(t.[counterparty_id], ''-1'') = IS
 	AND gmv.mapping_table_id = @cpty_mapping_id
 LEFT JOIN generic_mapping_values gmv1 ON ISNULL(t.[curve_id], ''-1'') = ISNULL(gmv1.clm3_value, ''-2'')
 	AND gmv1.mapping_table_id = @cpty_mapping_id
-LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = COALESCE(gmv.clm2_value,gmv1.clm2_value)
-
-UPDATE t
-SET t.[deal_detail_description] = sc.counterparty_name
-FROM [final_process_table] t
-LEFT JOIN generic_mapping_values gmv ON ISNULL(t.[deal_detail_description], ''-1'') = ISNULL(gmv.clm1_value, ''-2'')
-	AND gmv.mapping_table_id = @cpty_mapping_id
-LEFT JOIN generic_mapping_values gmv1 ON ISNULL(t.[curve_id], ''-1'') = ISNULL(gmv1.clm3_value, ''-2'')
-	AND gmv1.mapping_table_id = @cpty_mapping_id
-LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = COALESCE(gmv.clm2_value,gmv1.clm2_value)
-WHERE  gmv.clm1_value IS NOT NULL
-AND gmv.clm3_value IS NOT NULL
+LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = COALESCE(gmv1.clm2_value,gmv.clm2_value)
 
 SELECT @mapping_table_id = mapping_table_id 
 FROM generic_mapping_header 
@@ -818,7 +807,7 @@ INNER JOIN source_deal_header_template sdht
 					@admin_user ,
 					23502,
 					1,
-					'6500C6FB_F039_48EF_B4B0_9668B1BA4DBF'
+					'9DB48870_5BA4_47A3_B100_2512AD19A3CE'
 					 )
 
 				SET @ixp_rules_id_new = SCOPE_IDENTITY()
@@ -895,18 +884,7 @@ LEFT JOIN generic_mapping_values gmv ON ISNULL(t.[counterparty_id], ''-1'') = IS
 	AND gmv.mapping_table_id = @cpty_mapping_id
 LEFT JOIN generic_mapping_values gmv1 ON ISNULL(t.[curve_id], ''-1'') = ISNULL(gmv1.clm3_value, ''-2'')
 	AND gmv1.mapping_table_id = @cpty_mapping_id
-LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = COALESCE(gmv.clm2_value,gmv1.clm2_value)
-
-UPDATE t
-SET t.[deal_detail_description] = sc.counterparty_name
-FROM [final_process_table] t
-LEFT JOIN generic_mapping_values gmv ON ISNULL(t.[deal_detail_description], ''-1'') = ISNULL(gmv.clm1_value, ''-2'')
-	AND gmv.mapping_table_id = @cpty_mapping_id
-LEFT JOIN generic_mapping_values gmv1 ON ISNULL(t.[curve_id], ''-1'') = ISNULL(gmv1.clm3_value, ''-2'')
-	AND gmv1.mapping_table_id = @cpty_mapping_id
-LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = COALESCE(gmv.clm2_value,gmv1.clm2_value)
-WHERE  gmv.clm1_value IS NOT NULL
-AND gmv.clm3_value IS NOT NULL
+LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = COALESCE(gmv1.clm2_value,gmv.clm2_value)
 
 SELECT @mapping_table_id = mapping_table_id 
 FROM generic_mapping_header 
@@ -1638,7 +1616,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\CTRMEUWEB-D6001\shared_docs_TRMTracker_Enercity\temp_Note\0',
+						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
