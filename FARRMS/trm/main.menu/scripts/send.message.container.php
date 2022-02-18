@@ -292,7 +292,7 @@ echo $layout_obj->close_layout();
     html, body {
         margin: 0px;
         padding: 0px;   
-        xoverflow-y: scroll;    
+        overflow-y: scroll;    
     }
 	.dhxform_btn_txt {font-size:28px; color:#17ae61; font-family:Verdana, Geneva, sans-serif!important;}
 </style>

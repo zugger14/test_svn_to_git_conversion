@@ -179,6 +179,7 @@ BEGIN
 END
 
 DECLARE @out_msg VARCHAR(MAX)
+
 IF @flag = 'i'
 BEGIN
 	--description sometimes become null due to bugs, which may prevent insertion in
@@ -189,16 +190,31 @@ BEGIN
 	       WHERE  bpn.process_id = @batch_notification_process_id
 	)
 	BEGIN
-		
-		INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type)
-		OUTPUT INSERTED.user_login_id 
-		INTO #user_login_id(user_login_id)
-		SELECT DISTINCT ISNULL (bpn.user_login_id, aru.user_login_id), @trimmed_source, ISNULL(@description, 'Description is null'), @url_desc, @url, @type, @job_name, @as_of_date,@process_id,@process_type
-		FROM batch_process_notifications bpn
-		LEFT JOIN application_role_user aru ON bpn.role_id=aru.role_Id
-		WHERE bpn.process_id = @batch_notification_process_id
-			AND bpn.notification_type IN(751,752,755,756)
-			AND (bpn.user_login_id IS NOT NULL OR aru.user_login_id IS NOT NULL)
+		DECLARE @notif_type INT
+		SET @notif_type = (SELECT notification_type FROM batch_process_notifications where process_id = @batch_notification_process_id AND user_login_id IS NOT NULL)
+		IF @notif_type = 757 
+		BEGIN 
+			INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type, is_alert)
+			OUTPUT INSERTED.user_login_id 
+			INTO #user_login_id(user_login_id)
+			SELECT DISTINCT ISNULL (bpn.user_login_id, aru.user_login_id), @trimmed_source, ISNULL(@description, 'Description is null'), @url_desc, @url, @type, @job_name, @as_of_date,@process_id,@process_type, 'y' [is_alert]
+			FROM batch_process_notifications bpn
+			LEFT JOIN application_role_user aru ON bpn.role_id=aru.role_Id
+			WHERE bpn.process_id = @batch_notification_process_id
+				AND bpn.notification_type IN(751,752,755,756,757)
+				AND (bpn.user_login_id IS NOT NULL OR aru.user_login_id IS NOT NULL)
+		END 
+		ELSE BEGIN
+			INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type)
+			OUTPUT INSERTED.user_login_id 
+			INTO #user_login_id(user_login_id)
+			SELECT DISTINCT ISNULL (bpn.user_login_id, aru.user_login_id), @trimmed_source, ISNULL(@description, 'Description is null'), @url_desc, @url, @type, @job_name, @as_of_date,@process_id,@process_type
+			FROM batch_process_notifications bpn
+			LEFT JOIN application_role_user aru ON bpn.role_id=aru.role_Id
+			WHERE bpn.process_id = @batch_notification_process_id
+				AND bpn.notification_type IN(751,752,755,756)
+				AND (bpn.user_login_id IS NOT NULL OR aru.user_login_id IS NOT NULL)
+		END
 	END
 	ELSE IF ISNULL(@trimmed_source,'') <> 'Send Invoice' AND ISNULL(@trimmed_source,'') <> 'Send Confirmation' -- only use for invoice emailing purpose not to show msg in msg board 
 	BEGIN
@@ -336,6 +352,7 @@ BEGIN
              @file_name
 	END
 END
+
 IF @flag = 'd' 
 BEGIN
 
@@ -389,6 +406,7 @@ BEGIN
 
 	RETURN
 END
+
 IF @flag = 'e' 
 BEGIN
 
@@ -428,6 +446,7 @@ BEGIN
 
 	RETURN
 END
+
 IF @flag = 'f' 
 BEGIN
 	UPDATE mb
@@ -461,6 +480,7 @@ BEGIN
 		, @message_count [message_count] -- Remaning message which to display in counter.
 	RETURN
 END
+
 IF @flag = 'g'
 BEGIN
 	UPDATE mb
@@ -492,6 +512,7 @@ BEGIN
 	
 	RETURN
 END
+
 IF @flag = 'z'
 BEGIN
 	DELETE 
@@ -500,6 +521,7 @@ BEGIN
 	       AND user_login_id = @user_login_id
 	       AND ISNULL(is_alert, 'n') = 'y' 
 END
+
 IF @flag = 'x'
 BEGIN
 	SELECT mb.message_id,
@@ -513,6 +535,7 @@ BEGIN
 	ORDER BY mb.create_ts DESC
 	RETURN
 END
+
 IF @flag = 'v'
 BEGIN
 	SELECT *,dbo.FNADateTimeFormat(ts, 0) create_ts FROM (
@@ -568,6 +591,7 @@ BEGIN
 
 	RETURN
 END
+
 -- List of Alert for grid
 IF @flag = 'l'
 BEGIN
@@ -575,7 +599,7 @@ BEGIN
 	IF OBJECT_ID('tempdb..#temp_msg_board') IS NOT NULL
 		DROP TABLE #temp_msg_board
 	SELECT row_number() OVER(ORDER BY ISNULL(mb.update_ts,mb.create_ts) DESC) row_num,
-	mb.message_id message_id,
+			mb.message_id message_id,
 	       --mb.user_login_id,
 	       0 [value],
 		   mb.source,
@@ -595,7 +619,7 @@ BEGIN
 	AND is_alert = 'y' AND type <> 'r'
 	
 	SELECT 
-	message_id, [value],source,
+	message_id, [value], source,
 	CASE WHEN CHARINDEX('Report Attached File', [description]) > 0
 	THEN
 	SUBSTRING([description], 0, CHARINDEX('Report Attached File', [description])) + 
@@ -609,6 +633,7 @@ BEGIN
 	ORDER BY row_num 
 	RETURN
 END
+
 -- List of message for grid
 IF @flag = 'o'
 BEGIN	
@@ -652,6 +677,7 @@ BEGIN
 	[description], create_ts, is_read FROM #temp_msg_main ORDER BY row_num 
 	RETURN
 END
+
 IF @flag = 'm' --selection of distinct source for message board log report
 BEGIN
 	SELECT DISTINCT REPLACE(REPLACE(mba.source, 'Import Data', 'ImportData'), 'Email Invoices', 'Send Invoices'),
@@ -662,11 +688,13 @@ BEGIN
 	
 	RETURN
 END
+
 IF @flag = 'n' --selection of distinct source for message board log report
 BEGIN
 	SELECT * FROM message_board WHERE source = 'Workflow Notification' ORDER BY ISNULL(update_ts,create_ts) DESC
 	RETURN
 END
+
 IF @flag = 'q' --selection of distinct source for message board log report
 BEGIN
 	SELECT DISTINCT REPLACE(REPLACE(mba.source, 'Import Data', 'ImportData'), 'Email Invoices', 'Send Invoices'),
@@ -676,6 +704,7 @@ BEGIN
 	
 	RETURN
 END
+
 IF @flag = 'r' --selection of distinct source while selecting the alert message type
 BEGIN
 	SELECT DISTINCT mba.source,
@@ -685,6 +714,7 @@ BEGIN
 	
 	RETURN
 END
+
 IF @flag = 'w'
 BEGIN
 	SELECT au.user_f_name + ' ' + ISNULL(au.user_m_name + ' ', '') + au.user_l_name [USER_NAME], 
@@ -700,6 +730,7 @@ BEGIN
 	WHERE au.user_login_id = @db_user
 	RETURN
 END
+
 IF @flag = 'c'
 BEGIN 
 	DECLARE @reminder_count INT
