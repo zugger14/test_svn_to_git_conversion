@@ -1,4 +1,4 @@
- BEGIN 
+BEGIN 
 	BEGIN TRY 
 		BEGIN TRAN 
 		DECLARE @admin_user VARCHAR(100) =  dbo.FNAAppAdminID(), @old_ixp_rule_id INT
@@ -7,7 +7,7 @@
 
 			
 			SELECT @old_ixp_rule_id = ixp_rules_id FROM ixp_rules ir 
-			WHERE ixp_rule_hash = '9DB48870_5BA4_47A3_B100_2512AD19A3CE'
+			WHERE ixp_rule_hash = '6500C6FB_F039_48EF_B4B0_9668B1BA4DBF'
 
 			if @old_ixp_rule_id IS NULL
 			BEGIN
@@ -299,7 +299,8 @@ INNER JOIN [temp_process_table] t1
 INNER JOIN generic_mapping_values gmv
     ON gmv.clm1_value = t.[curve_id]
 	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(CASE WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 0 THEN ''981''
-	        WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 1 AND 6 THEN ''990''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 1 AND DATEPART(DW,CAST(t.term_start AS DATE)) = 7 AND DATEPART(DW,CAST(t.term_end AS DATE)) = 1 THEN ''10000503''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 1 AND 6 THEN ''990''
 			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 7 AND 31 THEN ''980''
 			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 32 AND 93 THEN ''991''
 			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) > 90 AND DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) < 364 THEN ''992''
@@ -380,6 +381,7 @@ INNER JOIN [temp_process_table] t1
 INNER JOIN generic_mapping_values gmv
     ON gmv.clm1_value = t.[curve_id]
 	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(CASE WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 0 THEN ''981''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 1 AND DATEPART(DW,CAST(t.term_start AS DATE)) = 7 AND DATEPART(DW,CAST(t.term_end AS DATE)) = 1 THEN ''10000503''
 	        WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 1 AND 6 THEN ''990''
 			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 7 AND 31 THEN ''980''
 			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 32 AND 93 THEN ''991''
@@ -807,7 +809,7 @@ INNER JOIN source_deal_header_template sdht
 					@admin_user ,
 					23502,
 					1,
-					'9DB48870_5BA4_47A3_B100_2512AD19A3CE'
+					'6500C6FB_F039_48EF_B4B0_9668B1BA4DBF'
 					 )
 
 				SET @ixp_rules_id_new = SCOPE_IDENTITY()
@@ -1086,7 +1088,8 @@ INNER JOIN [temp_process_table] t1
 INNER JOIN generic_mapping_values gmv
     ON gmv.clm1_value = t.[curve_id]
 	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(CASE WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 0 THEN ''981''
-	        WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 1 AND 6 THEN ''990''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 1 AND DATEPART(DW,CAST(t.term_start AS DATE)) = 7 AND DATEPART(DW,CAST(t.term_end AS DATE)) = 1 THEN ''10000503''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 1 AND 6 THEN ''990''
 			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 7 AND 31 THEN ''980''
 			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 32 AND 93 THEN ''991''
 			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) > 90 AND DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) < 364 THEN ''992''
@@ -1167,6 +1170,7 @@ INNER JOIN [temp_process_table] t1
 INNER JOIN generic_mapping_values gmv
     ON gmv.clm1_value = t.[curve_id]
 	AND ISNULL(gmv.clm4_value,''-1'') = CASE WHEN gmv.clm4_value IS NULL THEN ''-1'' ELSE ISNULL(CASE WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 0 THEN ''981''
+			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) = 1 AND DATEPART(DW,CAST(t.term_start AS DATE)) = 7 AND DATEPART(DW,CAST(t.term_end AS DATE)) = 1 THEN ''10000503''
 	        WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 1 AND 6 THEN ''990''
 			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 7 AND 31 THEN ''980''
 			WHEN DATEDIFF(d, CAST(t.term_start AS DATE), CAST(t.term_end AS DATE)) BETWEEN 32 AND 93 THEN ''991''
@@ -1616,7 +1620,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
+						   '\\CTRMEUWEB-D6001\shared_docs_TRMTracker_Enercity\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
@@ -1986,4 +1990,3 @@ COMMIT
 				--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 			END CATCH
 END
-		
