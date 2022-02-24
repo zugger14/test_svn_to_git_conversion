@@ -2099,7 +2099,16 @@ BEGIN
  								currency_id = NULLIF(hct.currency_id, ''''),
  								uom_id = NULLIF(hct.uom_id, ''''),
  								counterparty_id = NULLIF(hct.counterparty_id, ''''),
-								seq_no = NULLIF(hct.seq_no, '''')
+								seq_no = NULLIF(hct.seq_no, ''''),
+								contract_id = NULLIF(hct.contract_id, ''''),
+								receive_pay = NULLIF(hct.receive_pay, ''''),
+								settlement_date = NULLIF(hct.settlement_date 	, ''''),
+								settlement_calendar	= NULLIF(hct.settlement_calendar, ''''),
+								settlement_days	= NULLIF(hct.settlement_days	, ''''),
+								payment_date = NULLIF(hct.payment_date		, ''''),
+								payment_calendar = NULLIF(hct.payment_calendar	, ''''),
+								payment_days = NULLIF(hct.payment_days		, ''''),
+								fixed_fx_rate = NULLIF(hct.fixed_fx_rate		, '''')
  							FROM #temp_inserted_source_deal_header tsdh
 							INNER JOIN user_defined_deal_fields uddf ON uddf.source_deal_header_id = tsdh.source_deal_header_id	 							
  							INNER JOIN ' + @header_costs_xml_table + ' hct ON hct.cost_id = uddf.udf_template_id
@@ -2109,8 +2118,15 @@ BEGIN
 
 				SET @sql = '
 					INSERT INTO user_defined_deal_fields (source_deal_header_id, udf_template_id, udf_value, currency_id, uom_id, counterparty_id, seq_no, contract_id, receive_pay, fixed_fx_rate)
-					SELECT sdh.source_deal_header_id, hct.cost_id, NULLIF(hct.udf_value, ''''), NULLIF(hct.currency_id, ''''), NULLIF(hct.uom_id, ''''), NULLIF(hct.counterparty_id, ''''), NULLIF(hct.seq_no, '''') , NULLIF(hct.contract_id, ''''), NULLIF(hct.receive_pay, ''''),
-					NULLIF(hct.fixed_fx_rate, '''')
+					SELECT sdh.source_deal_header_id, hct.cost_id, 
+					   NULLIF(hct.udf_value, ''''), 
+					   NULLIF(hct.currency_id, ''''), 
+					   NULLIF(hct.uom_id, ''''), 
+					   NULLIF(hct.counterparty_id, ''''), 
+					   NULLIF(hct.seq_no, '''') , 
+					   NULLIF(hct.contract_id, ''''), 
+					   NULLIF(hct.receive_pay, ''''),
+					   NULLIF(hct.fixed_fx_rate, '''')
 					FROM ' + @header_costs_xml_table + ' hct
 					OUTER APPLY (SELECT DISTINCT source_deal_header_id FROM #temp_inserted_source_deal_header) sdh 
 					LEFT JOIN user_defined_deal_fields uddf
