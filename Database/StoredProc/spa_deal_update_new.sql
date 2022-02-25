@@ -690,9 +690,9 @@ BEGIN
  			WHERE dsdh.source_deal_header_id = @source_deal_header_id		
  		END	
  	
- 		SET @sql = 'INSERT INTO #temp_deal_udf_values (field_name, field_value, currency_id, uom_id, counterparty_id, field_label, seq_no, contract_id, receive_pay)
+ 		SET @sql = 'INSERT INTO #temp_deal_udf_values (field_name, field_value, currency_id, uom_id, counterparty_id, field_label, seq_no, contract_id, receive_pay, fixed_fx_rate)
  					SELECT CAST(uddf.udf_template_id AS NVARCHAR(20)), CAST(uddf.udf_value AS NVARCHAR(2000)), currency_id, uom_id, counterparty_id
-						, uddft.Field_label, uddf.seq_no , uddf.contract_id, uddf.receive_pay 
+						, uddft.Field_label, uddf.seq_no , uddf.contract_id, uddf.receive_pay, uddf.fixed_fx_rate 
  					FROM user_defined_deal_fields_template uddft    
  					INNER JOIN ' + CASE WHEN @view_deleted ='y' THEN 'delete_' ELSE '' END + 'user_defined_deal_fields uddf
  						ON  uddft.udf_template_id = uddf.udf_template_id
@@ -1630,13 +1630,13 @@ BEGIN
 
  				SET @sql = 'INSERT INTO ' + @header_costs_table + '(udf_id, udf_name, udf_value, currency_id, uom_id, counterparty_id, seq_no, internal_type_id, charge_type, contract_id, receive_pay, udf_field_type
 								--, settlement_date, settlement_calendar, settlement_days, payment_date, payment_calendar, payment_days
-								--, fixed_fx_rate
+								, fixed_fx_rate
 							)
 							SELECT ISNULL(t_udf.field_name, uddft.udf_template_id), ISNULL(t_udf.field_label, uddft.Field_label)+ CASE WHEN [type] = ''w'' THEN ''::::Formula: '' + ISNULL('+CASE WHEN @formula_id IS NOT NULL THEN 'tpt.formula_name' ELSE 'NULL' END+', '''') ELSE '''' END, 
 							CASE WHEN udft.[Field_type] = ''w'' THEN CAST(tpt.formula_id AS NVARCHAR(10)) + ''^'' + ISNULL(NULLIF(fe.formula_name,''''), tpt.formula_name) ELSE t_udf.field_value END udf_value, t_udf.currency_id, t_udf.uom_id, t_udf.counterparty_id, temp.seq_no     
 								, sdv.value_id, sdv.code, t_udf.contract_id, t_udf.receive_pay, udft.Field_type
 								--, uddf.settlement_date, uddf.settlement_calendar, uddf.settlement_days,	uddf.payment_date, uddf.payment_calendar, uddf.payment_days
-								--,  uddf.fixed_fx_rate
+								,  t_udf.fixed_fx_rate
 							FROM #temp_deal_header_fields temp
 							INNER JOIN user_defined_deal_fields_template uddft ON uddft.udf_user_field_id = REPLACE(temp.name, ''UDF___'', '''') AND uddft.template_id = ' + CAST(@template_id AS NVARCHAR(20)) + '
 							' + CASE WHEN @source_deal_header_id  IS NOT NULL THEN ' INNER JOIN ' ELSE ' LEFT JOIN ' END + ' #temp_deal_udf_values t_udf ON uddft.udf_template_id = t_udf.field_name
