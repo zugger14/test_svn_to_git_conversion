@@ -38,22 +38,32 @@ BEGIN
 	WHERE process_id = 'zef42e2330j11'
 END
 
-IF NOT EXISTS(SELECT 1 FROM batch_process_notifications WHERE process_id = 'zef42e2330j11' AND role_id = @role_id1)
-BEGIN
-	INSERT INTO batch_process_notifications(role_id,process_id,notification_type,csv_file_path)
-	SELECT @role_id1,
-		'zef42e2330j11',
-		752,
-		@csv_file_path	
-END
-ELSE
-BEGIN
-	UPDATE batch_process_notifications
-	SET role_id = @role_id1
-		, notification_type = 752
-	WHERE process_id = 'zef42e2330j11'
-END
+-- Removed 'Enercity Middle Office'
+DELETE FROM batch_process_notifications WHERE process_id = 'zef42e2330j11' AND role_id = @role_id1
 
+-- Added users list for notifications
+IF OBJECT_ID('tempdb..#tmp_application_users') IS NOT NULL
+	DROP TABLE #tmp_application_users
+
+SELECT * INTO #tmp_application_users FROM (
+SELECT 'Markus Richter' [user_name]
+UNION ALL SELECT 'Oliver Studier'
+UNION ALL SELECT 'Bernd Wallukat'
+UNION ALL SELECT 'Fred Jansen'
+UNION ALL SELECT 'Heike Reitz'
+UNION ALL SELECT 'Maria Eggert'
+) tau
+
+INSERT INTO batch_process_notifications(user_login_id,process_id,notification_type,csv_file_path)
+SELECT au.user_login_id
+		,'zef42e2330j11'
+		,752
+		,@csv_file_path
+		--select *
+FROM #tmp_application_users tau
+INNER JOIN application_users au ON tau.[user_name] = CONCAT (au.user_f_name,' ',au.user_l_name)
+LEFT JOIN batch_process_notifications bpn ON bpn.user_login_id = au.user_login_id  AND bpn.process_id = 'zef42e2330j11' 
+WHERE bpn.user_login_id IS NULL
 
 DECLARE @command1 NVARCHAR(4000) = '
 		DECLARE @file_transfer_endpoint_id INT
@@ -123,7 +133,7 @@ END
 
 DECLARE @jobId BINARY(16)
 EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=@job_name, 
-	@enabled=0, 
+	@enabled=1, 
 		@notify_level_eventlog=2, 
 		@notify_level_email=0, 
 		@notify_level_netsend=0, 
@@ -153,7 +163,7 @@ EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 
 EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'24X7', 
-		@enabled=0, 
+		@enabled=1, 
 		@freq_type=4, 
 		@freq_interval=1, 
 		@freq_subday_type=4, 
