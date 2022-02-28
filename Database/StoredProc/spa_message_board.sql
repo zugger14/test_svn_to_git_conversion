@@ -789,7 +789,18 @@ END
 
 IF @returnOutput = 'y'
 BEGIN
-	--PRINT 'select'
+	IF NULLIF(@user_login_id, 'NULL') IS NOT NULL AND NULLIF(@message_id, '') IS NOT NULL
+	BEGIN
+		IF NOT EXISTS (SELECT 1 FROM message_board WHERE message_id = @message_id AND user_login_id = @user_login_id
+		)
+		BEGIN
+			SELECT @message_id = message_id 
+			FROM message_board
+			WHERE user_login_id = @user_login_id
+				AND process_id = (SELECT process_id FROM message_board WHERE message_id = @message_id)
+		END
+	END
+
 	SET @sql = 'SELECT message_id,
 					   user_login_id,
 					   source,
