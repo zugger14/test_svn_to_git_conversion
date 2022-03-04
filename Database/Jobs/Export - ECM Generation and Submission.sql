@@ -61,7 +61,7 @@ SELECT @process_id = RIGHT(REPLACE(@process_id1,''_'',''''), 13)
 
 INSERT INTO batch_process_notifications (user_login_id, role_id, process_id, notification_type, attach_file, scheduled, csv_file_path, compress_file, delimiter, 
 report_header, output_file_format, xml_format)
-SELECT NULL, role_id, @process_id, 752, ''y'', ''n'', @csv_file_path, ''n'', '','', 1, ''.csv'', -100000 
+SELECT NULL, role_id, @process_id, 750, ''y'', ''n'', @csv_file_path, ''n'', '','', 1, ''.csv'', -100000 
 FROM application_security_role 
 WHERE role_name = ''Regulatory Submission''
 
