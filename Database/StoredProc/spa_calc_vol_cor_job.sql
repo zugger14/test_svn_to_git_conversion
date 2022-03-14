@@ -2073,13 +2073,15 @@ BEGIN TRY
 			END
 		FROM #tmpcor t 
 		INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = t.curve_id_from
-		INNER JOIN [curve_correlation] cc ON cc.term1 = CASE spcd.granularity 
-															WHEN  991 THEN t.quarterly
-															WHEN  992 THEN t.semi_annually
-															WHEN 993 THEN REPLACE(cc.term1, YEAR(cc.term1), YEAR(t.term1))
-															ELSE t.term1
-														END
-			AND cc.term2 = CASE spcd.granularity 
+		INNER JOIN source_price_curve_def spcd1 ON spcd1.source_curve_def_id = t.curve_id_to
+		INNER JOIN [curve_correlation] cc ON cc.term1 = 
+			CASE spcd.granularity 
+				WHEN  991 THEN t.quarterly
+				WHEN  992 THEN t.semi_annually
+				WHEN 993 THEN REPLACE(cc.term1, YEAR(cc.term1), YEAR(t.term1))
+				ELSE t.term1
+			END
+			AND cc.term2 = CASE spcd1.granularity 
 								WHEN  991 THEN t.quarterly2
 								WHEN  992 THEN t.semi_annually2
 								WHEN 993 THEN REPLACE(cc.term2, YEAR(cc.term2), YEAR(t.term2))
@@ -2089,25 +2091,26 @@ BEGIN TRY
 			AND cc.[curve_id_to] = t.[curve_id_to]
 			AND cc.curve_source_value_id = ISNULL(@volatility_source, @price_curve_source)
 		INNER JOIN(
-					SELECT MAX(CASE WHEN @vol_cor = 'd' THEN @as_of_date ELSE s.[as_of_date]  END ) [as_of_date]
-					FROM [curve_correlation] s
-					INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = s.curve_id_from
-					INNER JOIN #tmpcor t ON  s.term1 = CASE spcd.granularity 
-															WHEN  991 THEN t.quarterly
-															WHEN  992 THEN t.semi_annually
-															WHEN 993 THEN REPLACE(s.term1, YEAR(s.term1), YEAR(t.term1))
-															ELSE t.term1
-														END
-						AND s.term2 = CASE spcd.granularity
-											WHEN  991 THEN t.quarterly2
-											WHEN  992 THEN t.semi_annually2
-											WHEN 993 THEN REPLACE(s.term2, YEAR(s.term2), YEAR(t.term2))
-											ELSE t.term2
-										END
-						AND s.[curve_id_from] = t.[curve_id_from]
-						AND s.[curve_id_to] = t.[curve_id_to]
-						AND s.as_of_date <= @as_of_date
-						AND s.curve_source_value_id = ISNULL(@volatility_source, @price_curve_source)
+			SELECT TOP 1 (CASE WHEN @vol_cor = 'd' THEN @as_of_date ELSE s.[as_of_date]  END ) [as_of_date]
+			FROM #tmpcor t
+			INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = t.curve_id_from
+			INNER JOIN source_price_curve_def spcd1 ON spcd1.source_curve_def_id = t.curve_id_to
+			INNER JOIN [curve_correlation] s ON s.[curve_id_from] = t.[curve_id_from]
+				AND s.[curve_id_to] = t.[curve_id_to]
+				AND s.as_of_date <= @as_of_date
+				AND s.curve_source_value_id = ISNULL(@volatility_source, @price_curve_source) 
+				AND s.term1 = 
+				CASE spcd.granularity 
+					WHEN  991 THEN t.quarterly
+					WHEN  992 THEN t.semi_annually
+					WHEN 993 THEN REPLACE(s.term1, YEAR(s.term1), YEAR(t.term1))
+					ELSE t.term1 END
+				AND s.term2 = CASE spcd1.granularity
+						WHEN  991 THEN t.quarterly2
+						WHEN  992 THEN t.semi_annually2
+						WHEN 993 THEN REPLACE(s.term2, YEAR(s.term2), YEAR(t.term2))
+						ELSE t.term2 END
+				ORDER BY s.[as_of_date] DESC
 					) mx ON cc.as_of_date = mx.as_of_date 
 		LEFT JOIN(
 				SELECT DISTINCT ty.curve_id,
