@@ -62,8 +62,8 @@ BEGIN
 	INSERT INTO #temp1 (table_name)
 	SELECT [name]
 	FROM adiha_process.dbo.sysobjects so WITH(NOLOCK)
-		left join #except_tables et on so.[name] like et.[item]+'%'
-	WHERE xtype = 'u'
+		left join #except_tables et on so.[name] like et.[item]+'%' WHERE xtype = 'u'
+	
 		AND dbo.FNAGetSQLStandardDate(crdate) <= @sel_date
 		and et.item is null
 
@@ -71,14 +71,12 @@ END
 ELSE
 BEGIN
 	INSERT INTO #temp1 (table_name)
-	SELECT [name]
-	FROM adiha_process.dbo.sysobjects so WITH(NOLOCK)
-		left join #except_tables et on so.[name] like et.[item]+'%'
-
-	WHERE xtype = 'u'
-		AND dbo.FNAGetSQLStandardDate(crdate) <= @sel_date
-		AND [name] LIKE '%' + @process_id + '%'
-			and et.item is null
+	SELECT so.[name]
+	FROM dbo.FNASplit(@process_id,',') i 
+	INNER JOIN adiha_process.dbo.sysobjects so WITH(NOLOCK) ON so.[name] LIKE '%' + i.item + '%' and so.xtype = 'u'
+	LEFT JOIN #except_tables et on so.[name] like et.[item]+'%'
+	AND dbo.FNAGetSQLStandardDate(crdate) <= @sel_date
+		AND et.item is null
 END
 
 
