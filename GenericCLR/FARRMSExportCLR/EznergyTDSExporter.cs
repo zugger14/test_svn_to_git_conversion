@@ -213,7 +213,8 @@ namespace FARRMSExportCLR
                         catch (WebException webExs)
                         {
                             BuildMessagesLog("Failed to post data", exportStatus.ProcessID, exportStatus.FileName, "Error", tds.newProcessID, tds.jobName);
-                            webExs.LogError("TimeSeries Decimal Segment", webExs.Message);
+                            exportStatus.Status = "Error";
+                            exportStatus.Exception = webExs;
                         }
                         finally
                         {
@@ -228,15 +229,15 @@ namespace FARRMSExportCLR
 
             catch (WebException webEx)
             {
-                exportStatus.Status = "Error";
                 BuildMessagesLog("Failed to post data", exportStatus.ProcessID, exportStatus.FileName, "Error", tds.newProcessID, tds.jobName);
-                webEx.LogError("TimeSeries Decimal Segment", webEx.Message);
+                exportStatus.Status = "Error";
+                exportStatus.Exception = webEx;
             }
             catch (Exception ex)
             {
-                exportStatus.Status = "Error";
                 BuildMessagesLog("Failed to post data", exportStatus.ProcessID, exportStatus.FileName, "Error", tds.newProcessID, tds.jobName);
-                ex.LogError("TimeSeries Decimal Segment", ex.Message);
+                exportStatus.Status = "Error";
+                exportStatus.Exception = ex;
             }
 
             return exportStatus;
@@ -267,9 +268,9 @@ namespace FARRMSExportCLR
                         cmdm.ExecuteNonQuery();
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    ex.LogError("TimeSeries Decimal Segment", ex.Message);
+                    
                 }
                 finally
                 {
@@ -310,9 +311,9 @@ namespace FARRMSExportCLR
                         cmdn.ExecuteNonQuery();
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    ex.LogError("TimeSeries Decimal Segment", ex.Message);
+                    
                 }
                 finally
                 {
@@ -369,9 +370,9 @@ namespace FARRMSExportCLR
 
 
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ex.LogError("TimeSeries Decimal Segment", ex.Message);
+                
             }
             finally
             {
