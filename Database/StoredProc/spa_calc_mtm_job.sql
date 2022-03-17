@@ -9238,7 +9238,7 @@ begin
 			nullif(crt.formula_value, 0) formula_value, 
 			ISNULL(crt.contract_id,-1) contract_id,td.source_deal_detail_id
 		from #temp_deals td
-			outer apply
+			cross apply
 			(
 				select max(contract_id) contract_id,max(formula_id) formula_id
 					,sum(formula_eval_value*volume)/nullif(sum(volume),0) formula_value
