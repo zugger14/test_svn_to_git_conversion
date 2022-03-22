@@ -2959,7 +2959,7 @@ $formula_form_data = '[
      */
     dealDetail.load_shipper_dropdown = function(rId, call_from) {
         var shipper_code1_index = dealDetail.grid.getColIndexById('shipper_code1');
-        var shipper_code2_index = dealDetail.grid.getColIndexById('shipper_code2');       
+        var shipper_code2_index = dealDetail.grid.getColIndexById('shipper_code2');      
         var deal_id = '<?php echo $deal_id; ?>';
         var copy_deal_id = '<?php echo $copy_deal_id; ?>';       
         var counterparty_id, template_text;
@@ -3006,50 +3006,50 @@ $formula_form_data = '[
         var buy_sell_flag;
         if (typeof buy_sell_index != 'undefined') buy_sell_flag = dealDetail.grid.cells(rId, buy_sell_index).getValue();
 
-        if (shipper_code1_index) {
-            var shipper_code1_combo = dealDetail.grid.cells(rId, shipper_code1_index).getCellCombo();           
-            default_value_shipper1 = dealDetail.grid.cells(rId, shipper_code1_index).getValue();
-            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id,  "template_id": template_id, "counterparty_id": counterparty_id, "location_id": location_id,  "deal_fields": 'shipper_code1', "term_start": term_start, "default_value":default_value_shipper1, "contract_id" : contract_id, "buy_sell_flag" : buy_sell_flag};
+        function load_shipper_code_combo_options_and_set_value(combo_index, deal_field) {
+            if (!combo_index) {
+                return
+            }
+            var shipper_code_combo = dealDetail.grid.cells(rId, combo_index).getCellCombo();
+            var default_value_shipper = dealDetail.grid.cells(rId, combo_index).getValue();
+           
+            var cm_param = {
+                "action": "spa_deal_fields_mapping", 
+                "call_from": "grid", 
+                "flag": "s", 
+                "deal_id": deal_id,  
+                "template_id": template_id, 
+                "counterparty_id": counterparty_id, 
+                "location_id": location_id,  
+                "deal_fields": deal_field, 
+                "term_start": term_start, 
+                "default_value":default_value_shipper, 
+                "contract_id" : contract_id, 
+                "buy_sell_flag" : buy_sell_flag,
+                "load_default": 0
+            };
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
-            dealDetail.grid.cells(rId, shipper_code1_index).setValue('');
-            shipper_code1_combo.clearAll();
+            dealDetail.grid.cells(rId, combo_index).setValue('');
+            shipper_code_combo.clearAll();
 
             if (child_rows == 0) {
-                shipper_code1_combo.enableFilteringMode(true);
-                shipper_code1_combo.load(url,function () {                
-                    shipper_code1_combo.forEachOption(function(option) {
-                        if (option.selected == true) {
-                            dealDetail.grid.cells(rId, shipper_code1_index).setValue(option.value);
+                shipper_code_combo.enableFilteringMode(true);
+                shipper_code_combo.load(url,function () {               
+                    shipper_code_combo.forEachOption(function(option) {
+                        if (default_value_shipper != '' && option.selected == true) {
+                            dealDetail.grid.cells(rId, combo_index).setValue(option.value);
                         }
                     }); 
                     
                 }); 
-            }        
-                                 
-        }
+            }       
 
-        if (shipper_code2_index) {
-            var shipper_code2_combo = dealDetail.grid.cells(rId, shipper_code2_index).getCellCombo();           
-            default_value_shipper2 = dealDetail.grid.cells(rId, shipper_code2_index).getValue();  
-            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id,  "template_id": template_id, "counterparty_id": counterparty_id, "location_id": location_id,  "deal_fields": 'shipper_code2', "term_start": term_start, "default_value":default_value_shipper2, "contract_id" : contract_id, "buy_sell_flag" : buy_sell_flag};
-            cm_param = $.param(cm_param);
-            var url = js_dropdown_connector_url + '&' + cm_param;
-            dealDetail.grid.cells(rId, shipper_code2_index).setValue('');
-            shipper_code2_combo.clearAll(); 
-
-            if (child_rows == 0) {     
-                shipper_code2_combo.enableFilteringMode(true);
-                shipper_code2_combo.load(url,function () {                
-                    shipper_code2_combo.forEachOption(function(options) { 
-                        if (options.selected == true) {
-                            dealDetail.grid.cells(rId, shipper_code2_index).setValue(options.value);
-                        }
-                    }); 
-                    
-                });   
-            }                   
         }
+       
+        load_shipper_code_combo_options_and_set_value(shipper_code1_index, deal_field='shipper_code1');     
+        load_shipper_code_combo_options_and_set_value(shipper_code2_index, deal_field='shipper_code2');         
+
     }
 
     /**
