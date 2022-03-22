@@ -134,12 +134,12 @@ BEGIN
 		EXEC spa_delete_file @full_file_path, @output_msg OUTPUT 	
 	END
 	
-	----DROP process table once file is generated.
-	--IF OBJECT_ID(@data_table_name) IS NOT NULL
-	--BEGIN
-	--	SET @sql = dbo.FNAProcessDeleteTableSql(@data_table_name)
-	--	EXEC (@sql)
-	--END	
+	--DROP process table once file is generated.
+	IF OBJECT_ID(@data_table_name) IS NOT NULL
+	BEGIN
+		SET @sql = dbo.FNAProcessDeleteTableSql(@data_table_name)
+		EXEC (@sql)
+	END	
 
 	--Raise error to mark the job as failure in case of error, so that job next step will write failure message in message board
 	IF (@result <> N'true' AND  @result <> '1') OR (@inner_result <> N'true' AND @is_custom_xml_format = 1 AND @inner_result IS NOT NULL)

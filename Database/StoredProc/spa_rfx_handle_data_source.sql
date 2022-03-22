@@ -149,10 +149,10 @@ BEGIN TRY
 	EXEC spa_print 'Result temp table: ', @sql_batch_table
 	SET @sql_batch_table = dbo.FNAProcessTableName('report_dataset_' + @data_source_alias, dbo.FNADBUser(), @data_source_process_id)
 	
-	----TODO added to delete process table created in view after its scope is completed.
-	--DECLARE @unx_id VARCHAR(8) = RIGHT(CAST(RAND(CHECKSUM(NEWID())) AS DECIMAL(15, 15)), 8)
-	--		, @unx_id1 VARCHAR(50) 
-	--SET @unx_id1 =  '''' +   @unx_id  + '_'' +  dbo.FNAGETNEWID()'
+	--TODO added to delete process table created in view after its scope is completed.
+	DECLARE @unx_id VARCHAR(8) = RIGHT(CAST(RAND(CHECKSUM(NEWID())) AS DECIMAL(15, 15)), 8)
+			, @unx_id1 VARCHAR(50) 
+	SET @unx_id1 =  '''' +   @unx_id  + '_'' +  dbo.FNAGETNEWID()'
 
 	IF @view_result_identifier_index > 0 -- case when view result identifier used on view code, where sp will dump data to batch table directly (for performance optmization)
 	BEGIN
@@ -168,12 +168,11 @@ BEGIN TRY
 		--otherwise it will be done later after replacing view name with view definition
 		SET @data_source_tsql = dbo.FNARFXReplaceReportParams(@data_source_tsql, @criteria, NULL)
 
-		--/*TODO added to delete process table created in view after its scope is completed.*/	
-		----SET Value to ON to fix incorrect setting 'QUOTED_IDENTIFIER'
-		--SET @data_source_tsql = CAST('' AS VARCHAR(MAX)) + 'SET QUOTED_IDENTIFIER ON;' + CHAR(10) + REPLACE(@data_source_tsql, ' dbo.FNAGETNEWID()', @unx_id1 )
-		--SET @data_source_tsql += ' ; EXEC dbo.spa_clear_all_temp_table NULL, ''' + @unx_id + ''''
-		----------------------------------------------
-		SET @data_source_tsql = CAST('' AS VARCHAR(MAX)) + 'SET QUOTED_IDENTIFIER ON;' + CHAR(10) + @data_source_tsql
+		/*TODO added to delete process table created in view after its scope is completed.*/	
+		--SET Value to ON to fix incorrect setting 'QUOTED_IDENTIFIER'
+		SET @data_source_tsql = CAST('' AS VARCHAR(MAX)) + 'SET QUOTED_IDENTIFIER ON;' + CHAR(10) + REPLACE(@data_source_tsql, ' dbo.FNAGETNEWID()', @unx_id1 )
+		SET @data_source_tsql += ' ; EXEC dbo.spa_clear_all_temp_table NULL, ''' + @unx_id + ''''
+		--------------------------------------------
 		
 		EXEC spa_print '****************************************Datasource SQL Started****************************************:' 
 			, @data_source_tsql, '****************************************Datasource SQL Ended******************************************:'
@@ -251,11 +250,10 @@ BEGIN TRY
 					SET @data_source_tsql1 = REPLACE(@data_source_tsql1, 'WHERE', 'WHERE 1 = 2 AND ')	
 				END
 
-				--/*TODO added to delete process table created in view after its scope is completed.*/	
-				----SET Value to ON to fix incorrect setting 'QUOTED_IDENTIFIER'
-				--SET @data_source_tsql1 = CAST('' AS VARCHAR(MAX)) + 'SET QUOTED_IDENTIFIER ON;' + CHAR(10) + REPLACE(@data_source_tsql1, ' dbo.FNAGETNEWID()', @unx_id1 )
-				--SET @data_source_tsql1 += ' ; EXEC dbo.spa_clear_all_temp_table NULL, ''' + @unx_id + ''''
-				SET @data_source_tsql1 = CAST('' AS VARCHAR(MAX)) + 'SET QUOTED_IDENTIFIER ON;' + CHAR(10) + @data_source_tsql1
+				/*TODO added to delete process table created in view after its scope is completed.*/	
+				--SET Value to ON to fix incorrect setting 'QUOTED_IDENTIFIER'
+				SET @data_source_tsql1 = CAST('' AS VARCHAR(MAX)) + 'SET QUOTED_IDENTIFIER ON;' + CHAR(10) + REPLACE(@data_source_tsql1, ' dbo.FNAGETNEWID()', @unx_id1 )
+				SET @data_source_tsql1 += ' ; EXEC dbo.spa_clear_all_temp_table NULL, ''' + @unx_id + ''''
 				
 				EXEC spa_print '****************************************Datasource SQL Started****************************************:' 
 							, @data_source_tsql1, '****************************************Datasource SQL Ended******************************************:'

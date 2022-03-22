@@ -20,10 +20,17 @@ AS
 SET NOCOUNT ON
 
 /*
-
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'farrms_admin';
 declare @nos_of_days INT = NULL,
-	@process_id VARCHAR(150) = NULL,
-	@exclude_tables VARCHAR(max) = 'report_dataset_cdv,deal_settlement,index_fees_settlement' 
+	@process_id VARCHAR(150) = 'DEA12BF0_9389_45CE_856B_B7CD8460F6E1',
+	@exclude_tables VARCHAR(max) = 'retain_
+	, alert_
+	, report_position
+	, search_table
+	, step_error_log
+	, missing_deals_pre
+	, TmpEligibleDeals
+	, source_deal_detail_debug' 
 
 
 if object_id('tempdb..#temp1') is not null drop table #temp1
@@ -53,9 +60,13 @@ CREATE TABLE #temp1(
 --'batch_export_':exclude export tables in deletion action; export table starts with batch_export_
 --'batch_report_power_bi_':exclude power bi tables in deletion action; power bi table starts with batch_report_power_bi_
 
-set @exclude_tables =isnull(nullif(@exclude_tables,'')+',','')+'batch_export_,batch_report_power_bi_'
+SET @exclude_tables = isnull(nullif(@exclude_tables,'')+',','') + 'retain_,batch_export_,batch_report_power_bi_'
 
-select tbl.* into #except_tables from dbo.SplitCommaSeperatedValues(@exclude_tables) tbl
+SET @exclude_tables = REPLACE(REPLACE(REPLACE(REPLACE(@exclude_tables,CHAR(32),''),CHAR(9),''),CHAR(10),''),CHAR(13),'')
+ 
+SELECT LTRIM(RTRIM(tbl.item)) item 
+INTO #except_tables 
+FROM dbo.SplitCommaSeperatedValues(@exclude_tables) tbl
 
 IF @process_id IS NULL
 BEGIN
@@ -91,6 +102,6 @@ BEGIN
     WHERE sno = @cnt
 
     EXEC ('DROP TABLE adiha_process.dbo.[' + @tbl_name+']')
-	print @tbl_name
+	--print @tbl_name
     SET @cnt = @cnt + 1
 END
