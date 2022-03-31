@@ -1348,10 +1348,10 @@ BEGIN
 
 						DECLARE @timer1 INT = 1
 						DECLARE @timer2 INT = 0
-						DECLARE @price INT
-						DECLARE @volume INT
-						DECLARE @next_price INT
-						DECLARE @next_volume INT
+						DECLARE @price NUMERIC(30,20)
+						DECLARE @volume NUMERIC(30,20)
+						DECLARE @next_price NUMERIC(30,20)
+						DECLARE @next_volume NUMERIC(30,20)
 						DECLARE @term_date DATETIME DECLARE bond_cursor CURSOR FOR
 
 							SELECT term_date, price, volume
