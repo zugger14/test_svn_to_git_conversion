@@ -1172,6 +1172,21 @@ BEGIN
 			END
 
 		END
+
+		IF EXISTS(SELECT 1 FROM  #temp_combo WHERE ISNULL(VALUE,'') != '')
+		BEGIN
+			 IF ((ISNULL(@default_value, '') = '') AND (@contract_id IS NOT NULL))
+			 BEGIN
+			  IF EXISTS(SELECT deal_type_id FROM source_deal_type sdt
+					INNER JOIN source_deal_header_template sdht ON sdht.source_deal_type_id = sdt.source_deal_type_id
+					INNER JOIN source_deal_header sdh ON sdh.template_id = sdht.template_id
+					WHERE sdh.source_deal_header_id = @deal_id and deal_type_id = 'Transportation')
+					BEGIN
+						SELECT @default_value = (SELECT TOP 1 VALUE FROM #temp_combo WHERE ISNULL(VALUE,'') != '')
+					END
+			 END
+		END
+
 	END
 	IF @deal_fields <> 'counterparty_trader' AND @deal_fields <> 'counterparty2_trader' AND @deal_fields <> 'contract_id' AND @deal_fields <> 'tier_value_id' AND @deal_fields <> 'reporting_tier_id' AND @deal_fields <> 'shipper_code2' AND @deal_fields <> 'shipper_code1'
 	BEGIN
