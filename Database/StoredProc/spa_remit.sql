@@ -1521,6 +1521,29 @@ BEGIN
 						)
 					END 
 					ELSE
+					IF EXISTS (
+						SELECT  1
+						FROM source_deal_header  sdh
+						INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id 	
+						WHERE sdh.source_deal_header_id = @col_source_deal_header_id
+						AND sdd.deal_volume_frequency = 'm' AND sdh.internal_desk_id = 17300 --Deal Volume
+					)
+					BEGIN						
+						SELECT @xml_inner3 = (
+							SELECT 
+							CONVERT(NVARCHAR(19), CAST(sdd.term_start AS DATETIME), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime], 
+							CONVERT(NVARCHAR(19), CAST(DATEADD(dd, 1, sdd.term_end) AS DATETIME), 126) AS [TimeIntervalQuantity/DeliveryEndDateAndTime],
+							CAST(CONVERT(NVARCHAR(50), sdd.total_volume, 3) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/ContractCapacity],
+							CAST(CONVERT(NVARCHAR(50), sdd.fixed_price, 3) AS NUMERIC(38,2)) AS [TimeIntervalQuantity/Price]
+							FROM source_deal_header sdh 
+							INNER JOIN source_deal_detail sdd 
+								ON sdh.source_deal_header_id = sdd.source_deal_header_id
+								WHERE sdh.source_deal_header_id = @col_source_deal_header_id
+							FOR XML PATH(''), ROOT('TimeIntervalQuantities')
+							
+						)
+					END
+					ELSE
 					BEGIN
  						SELECT @xml_inner3 = (
 							SELECT CONVERT(VARCHAR(19), CAST(@col_delivery_start AS DATETIME), 126) AS [TimeIntervalQuantity/DeliveryStartDateAndTime],
