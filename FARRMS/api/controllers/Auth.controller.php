@@ -189,12 +189,10 @@ class AuthController extends REST {
                 $decoded_array = (array) $decoded;
                 return $decoded_array;
             } else {
-                //$this->sendError(401, 'Bad login');  
-                return '';
+                $this->sendError(401, 'Bad login');  
             }
         } catch(Exception $e) {
-            //$this->sendError(401, 'Bad login');
-            return '';
+            $this->sendError(401, 'Bad login');
         }        
         
     }
