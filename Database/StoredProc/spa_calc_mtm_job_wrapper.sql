@@ -66,10 +66,10 @@ GO
 
 
 CREATE PROCEDURE [dbo].[spa_calc_mtm_job_wrapper]
-	@sub_id VARCHAR(100)=NULL,
-	@strategy_id VARCHAR(100)=NULL,
-	@book_id VARCHAR(100)=NULL,
-	@source_book_mapping_id VARCHAR (100)=NULL,
+	@sub_id VARCHAR(MAX)=NULL,
+	@strategy_id VARCHAR(MAX)=NULL,
+	@book_id VARCHAR(MAX)=NULL,
+	@source_book_mapping_id VARCHAR (MAX)=NULL,
 	@source_deal_header_id VARCHAR (5000) =NULL,
 	@as_of_date VARCHAR(100),
 	@curve_source_value_id INT ,
@@ -949,7 +949,7 @@ BEGIN TRY
 			END Hr
 			,SUM(CASE WHEN u.expiration_date > ''' + CONVERT(VARCHAR(10),@as_of_date,120) + ''' AND u.[term_start] > '''+CONVERT(VARCHAR(10),@as_of_date,120) + ''' 
 					THEN u.Volume ELSE 0 END- CASE WHEN dst.[hour]=CAST(SUBSTRING(u.hr,3,2) AS INT) THEN ISNULL(u.dst_hr,0) ELSE 0 END ) Position
-			, DATEADD(HOUR,	CASE WHEN CAST(SUBSTRING(hr,3,2) AS INT) = 25 THEN dst.[hour] ELSE CAST(SUBSTRING(u.hr,3,2) AS INT) END -1,u.[term_start]) [Maturity_hr]
+			, DATEADD(HOUR,	CASE WHEN CAST(SUBSTRING(hr,3,2) AS INT) = 25 THEN dst.[hour] ELSE CAST(SUBSTRING(u.hr,3,2) AS INT) END -1,CAST(u.[term_start] AS DATETIME)) [Maturity_hr]
 			,CAST(CONVERT(VARCHAR(8),u.[term_start],120)+''01'' AS DATE) [Maturity_mnth]
 			,CAST(CONVERT(VARCHAR(5),u.[term_start],120)+ CAST(CASE DATEPART(q, u.term_start) WHEN 1 THEN 1 WHEN 2 THEN 4 WHEN 3 THEN 7 WHEN 4 THEN 10 END as VARCHAR)+''-01'' AS DATE) [Maturity_qtr] 
 			,CAST(CONVERT(VARCHAR(5),u.[term_start],120)+ CAST(CASE WHEN month(u.term_start) < 7 THEN 1 ELSE 7 END as VARCHAR)+''-01'' AS DATE) [Maturity_semi] 
@@ -1025,7 +1025,7 @@ BEGIN TRY
 			GROUP BY u.source_deal_detail_id,u.[curve_id],u.term_start,u.book_deal_type_map_id,[physical_financial_flag] ,u.deal_volume_uom_id,u.[book_id],u.counterparty_id
 			,CASE WHEN CAST(SUBSTRING(hr,3,2) AS INT) = 25 THEN CASE WHEN u.formula_breakdown = 0 THEN dst.[hour] ELSE dst.fin_hour END
 				  ELSE CAST(SUBSTRING(u.hr,3,2) AS INT) 
-			 END , DATEADD(hour, CASE WHEN CAST(SUBSTRING(hr,3,2) AS INT) = 25 THEN dst.[hour] ELSE CAST(SUBSTRING(u.hr,3,2) AS INT) END -1,u.[term_start])
+			 END , DATEADD(hour, CASE WHEN CAST(SUBSTRING(hr,3,2) AS INT) = 25 THEN dst.[hour] ELSE CAST(SUBSTRING(u.hr,3,2) AS INT) END -1,CAST(u.[term_start] AS DATETIME))
 			,u.commodity_id,CASE WHEN CAST(SUBSTRING(u.hr,3,2) AS INT)=25 THEN 1 ELSE 0 END,u.[source_deal_header_id]'
 			
 			
@@ -1280,9 +1280,9 @@ CREATE TABLE #process_as_of_date_point(as_of_date DATETIME)
 		SET @st2 = ' FROM #process_as_of_date_point a 
 		cross join dbo.source_price_curve_Def spcd (NOLOCK)
 			inner join '+@tbl_name_pos+' p on p.curve_id=spcd.source_curve_def_id
-			and CASE  spcd.Granularity WHEN 982 THEN p.maturity_hr WHEN 981 THEN p.term_start WHEN 980 THEN p.maturity_mnth
-						WHEN 991 THEN p.maturity_qtr WHEN 992 THEN p.maturity_semi WHEN 993 THEN p.maturity_yr
-				END>''' + CONVERT(VARCHAR(10),@as_of_date,120) + '''
+			--and CASE  spcd.Granularity WHEN 982 THEN p.maturity_hr WHEN 981 THEN p.term_start WHEN 980 THEN p.maturity_mnth
+			--			WHEN 991 THEN p.maturity_qtr WHEN 992 THEN p.maturity_semi WHEN 993 THEN p.maturity_yr
+			--	END>''' + CONVERT(VARCHAR(10),@as_of_date,120) + '''
 			LEFT JOIN dbo.source_price_curve_def spcd2 (NOLOCK)  ON spcd.proxy_source_curve_def_id=spcd2.source_curve_def_id
 			LEFT JOIN dbo.source_price_curve_def spcd3 (NOLOCK)  ON spcd.monthly_index=spcd3.source_curve_def_id
 			LEFT JOIN dbo.source_price_curve_def spcd4 (NOLOCK)  ON spcd.proxy_curve_id3=spcd4.source_curve_def_id
