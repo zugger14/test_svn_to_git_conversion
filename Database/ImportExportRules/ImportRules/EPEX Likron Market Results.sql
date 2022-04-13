@@ -1,4 +1,4 @@
-BEGIN
+BEGIN 
 	BEGIN TRY 
 		BEGIN TRAN 
 		DECLARE @admin_user VARCHAR(100) =  dbo.FNAAppAdminID(), @old_ixp_rule_id INT
@@ -49,10 +49,9 @@ BEGIN
 
 
 DELETE FROM [temp_process_table]
-WHERE [text] = ''SYNECO''',
-					'DECLARE @delivery_date DATE =  GETDATE(), @col NVARCHAR(300), @sql NVARCHAR(MAX)
-
-UPDATE udt_likron_market_results SET [hour] = [hour]+1 WHERE daylight_change_suffix = ''a'' AND contract_type = ''h'' AND WHERE CAST(delivery_date AS DATE) = @delivery_date
+WHERE [text] IN (''SYNECO'',''LikronBroker'')',
+					'UPDATE udt_likron_market_results SET [hour] = 3 WHERE daylight_change_suffix = ''a'' AND contract_type = ''h''
+UPDATE udt_likron_market_results SET [hour] = 2 WHERE  contract_type = ''h'' AND delivery_end_local_time = ''2022-03-27T03:00:00+02:00''
 
 IF OBJECT_ID(''tempdb..#tmp_data'') IS NOT NULL
 	DROP TABLE #tmp_data
@@ -66,6 +65,8 @@ CREATE TABLE #tmp_data(
 	amount FLOAT,
 	is_dst INT
 )
+
+DECLARE @delivery_date DATE =  GETDATE(), @col NVARCHAR(300), @sql NVARCHAR(MAX)
 
 IF (OBJECT_ID(''tempdb..#udt_likron_market_results'') IS NOT NULL)
 	DROP TABLE #udt_likron_market_results
@@ -409,10 +410,9 @@ EXEC dbo.spa_update_deal_total_volume NULL, @prss_id
 
 
 DELETE FROM [temp_process_table]
-WHERE [text] = ''SYNECO'''
-				, after_insert_trigger = 'DECLARE @delivery_date DATE =  GETDATE(), @col NVARCHAR(300), @sql NVARCHAR(MAX)
-
-UPDATE udt_likron_market_results SET [hour] = [hour]+1 WHERE daylight_change_suffix = ''a'' AND contract_type = ''h'' AND WHERE CAST(delivery_date AS DATE) = @delivery_date
+WHERE [text] IN (''SYNECO'',''LikronBroker'')'
+				, after_insert_trigger = 'UPDATE udt_likron_market_results SET [hour] = 3 WHERE daylight_change_suffix = ''a'' AND contract_type = ''h''
+UPDATE udt_likron_market_results SET [hour] = 2 WHERE  contract_type = ''h'' AND delivery_end_local_time = ''2022-03-27T03:00:00+02:00''
 
 IF OBJECT_ID(''tempdb..#tmp_data'') IS NOT NULL
 	DROP TABLE #tmp_data
@@ -426,6 +426,8 @@ CREATE TABLE #tmp_data(
 	amount FLOAT,
 	is_dst INT
 )
+
+DECLARE @delivery_date DATE =  GETDATE(), @col NVARCHAR(300), @sql NVARCHAR(MAX)
 
 IF (OBJECT_ID(''tempdb..#udt_likron_market_results'') IS NOT NULL)
 	DROP TABLE #udt_likron_market_results
