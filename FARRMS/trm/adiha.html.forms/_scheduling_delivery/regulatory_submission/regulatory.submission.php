@@ -532,7 +532,11 @@ echo $layout_obj->close_layout();
         } else if (submission_type == 44703 || submission_type == 44704) {
             var exec_call = "EXEC spa_source_emir @process_id='" + process_id + "', @flag='g', @submission_type=" + submission_type + ", @level_mifid='" + level_mifid_view + "', @level = '" + level_emir_view + "'";
 
-            var param = 'gen_as_of_date=0&batch_type=r&default_export_format=.xml';
+            var param = 'gen_as_of_date=0&default_export_format=.xml';
+            
+            if (submission_type == 44703) {
+                param = param + '&batch_type=remit'
+            }
 
             if (submission_type == 44704 && level_mifid_view == 'X') {
                 param = param + '&batch_type=r&xml_default_format=-100002';
