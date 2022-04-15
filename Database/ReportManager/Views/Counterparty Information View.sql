@@ -1,4 +1,4 @@
- BEGIN TRY
+BEGIN TRY
 		BEGIN TRAN
 	
 	declare @new_ds_alias varchar(10) = 'CIV'
@@ -32,24 +32,68 @@
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Standard Counterparty Information View'
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_source_counterparty_id VARCHAR(MAX),
-		@_parent_counterparty_id VARCHAR(MAX),
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_counterparty_type_id CHAR(1),
+		@_source_counterparty_id VARCHAR(MAX),		
+        @_parent_counterparty_id VARCHAR(MAX),
 		@_counterparty_status INT,
 		@_is_active CHAR(1),
 		@_broker_relevant CHAR(1),
 		@_sql VARCHAR(MAX)
+
+IF ''@counterparty_type_id'' <> ''NULL''
+    SET @_counterparty_type_id = ''@counterparty_type_id''
+
 IF ''@source_counterparty_id'' <> ''NULL''
     SET @_source_counterparty_id = ''@source_counterparty_id''
+
 IF ''@parent_counterparty_id'' <> ''NULL''
     SET @_parent_counterparty_id = ''@parent_counterparty_id''
+
 IF ''@counterparty_status'' <> ''NULL''
     SET @_counterparty_status = ''@counterparty_status''
+
 IF ''@is_active'' <> ''NULL''
     SET @_is_active = ''@is_active''
+
 IF ''@broker_relevant'' <> ''NULL''
     SET @_broker_relevant = ''@broker_relevant''
 
+SET @_sql = ''
+SELECT cea.counterparty_id,
+	sc.counterparty_name,
+	sdv.code,
+	cea.external_value
+INTO #epa_account
+FROM   dbo.counterparty_epa_account cea
+	JOIN dbo.source_counterparty sc ON  sc.source_counterparty_id = cea.counterparty_id
+	JOIN dbo.static_data_value sdv ON  sdv.value_id = cea.external_type_id 
+WHERE 1 = 1''
+
++CASE WHEN @_source_counterparty_id IS NOT NULL THEN '' AND cea.counterparty_id IN ('' + @_source_counterparty_id + '')'' ELSE '''' END
+
++CASE WHEN @_counterparty_type_id IS NOT NULL THEN '' AND sc.int_ext_flag = '''''' + @_counterparty_type_id + ''''''''  + char(10) ELSE '''' END
+
+IF OBJECT_ID(''tempdb..#epa_account_data'') IS NOT NULL 
+	DROP TABLE #epa_account_data
+
+SET @_sql = @_sql+'' SELECT * 
+INTO #epa_account_data
+FROM   
+(
+	SELECT epa.counterparty_id,
+			epa.counterparty_name,
+			epa.code,
+			epa.external_value
+	FROM   #epa_account epa
+) t 
+PIVOT(
+    MAX(external_value) 
+    FOR code IN ([SAP Receivable ID (Debtor)],[SAP Payable ID (Creditor)],[VAT No])
+) AS pivot_table
+''
+
 DROP TABLE IF exists #a
+
 SELECT autf.application_field_id
 	, autd.farrms_field_id, autd.default_label
 	, autf.sequence
@@ -62,7 +106,8 @@ INNER JOIN application_ui_template_group autg
 WHERE autg.group_name in (''submission'',''additional'')
 AND autf.field_type <> ''settings''
 AND application_function_id = 10105800
-SET @_sql = ''SELECT sc.source_counterparty_id,
+
+SET @_sql = @_sql+'' SELECT sc.source_counterparty_id,
 	   sc.counterparty_id,
 	   sc.counterparty_name,
 	   sc.counterparty_desc,
@@ -72,6 +117,7 @@ SET @_sql = ''SELECT sc.source_counterparty_id,
 			WHEN sc.int_ext_flag = ''''e'''' THEN ''''External''''  
 			WHEN sc.int_ext_flag = ''''i'''' THEN ''''Internal''''  
 	   END counterparty_type,
+       sc.int_ext_flag counterparty_type_id,
 	   sdv_entity_type.code type_of_entity,
 	   sdv_cpty_status.code counterparty_status_name,
 	   sc.tax_id [tax_id],
@@ -114,8 +160,12 @@ SET @_sql = ''SELECT sc.source_counterparty_id,
 	   v14.static_data_udf_values [Collateralization],
 	   v15.static_data_udf_values [Corporate Sector],
 	   sdvc.code [Country],
-	   v17.static_data_udf_values [Collateral Portfolio Code]
+	   v17.static_data_udf_values [Collateral Portfolio Code],
+       [SAP Receivable ID (Debtor)] [SAP Receivable ID],
+	   [SAP Payable ID (Creditor)] [SAP Payable ID],
+	   [VAT No]
 --[__batch_report__]
+
 FROM source_counterparty sc
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
@@ -124,6 +174,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''Broker Relevant''''
 )v0
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -131,6 +182,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''PRP Code Power''''
 ) v1
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -138,6 +190,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''PRP Code Gas''''
 ) v2
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -145,6 +198,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''EAN Code Power''''
 ) v3
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -152,6 +206,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''EAN Code Gas''''
 ) v4
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -159,6 +214,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''TSO Power''''
 ) v5
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -166,6 +222,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''TSO Gas''''
 ) v6
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -173,6 +230,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''Acer''''
 ) v7
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -180,6 +238,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''BIC''''
 ) v8
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -187,6 +246,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''LEI''''
 ) v9
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -194,6 +254,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''EIC''''
 ) v10
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -201,6 +262,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''Financial/Non-Financial''''
 ) v11
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -208,6 +270,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''EEA''''
 ) v12
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -215,6 +278,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''Commercial/Treasury''''
 ) v13
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -222,6 +286,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''Collateralization''''
 ) v14
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -229,6 +294,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''Corporate Sector''''
 ) v15
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -236,6 +302,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''Country''''
 ) v16
+
 OUTER APPLY (
 	SELECT musddv.primary_field_object_id, musddv.static_data_udf_values FROM #a a
 	LEFT JOIN maintain_udf_static_data_detail_values musddv
@@ -243,6 +310,7 @@ OUTER APPLY (
 	WHERE primary_field_object_id = sc.source_counterparty_id
 		AND default_label = ''''Collateral Portfolio Code''''
 ) v17
+
 LEFT JOIN source_counterparty sc_parent
 	ON sc_parent.source_counterparty_id = sc.parent_counterparty_id
 LEFT JOIN static_data_value sdv_entity_type
@@ -257,21 +325,22 @@ LEFT JOIN static_data_value sdvc
 	ON sdvc.value_id = v16.static_data_udf_values
 LEFT JOIN static_data_value sdvst
 	ON sdvst.value_id = sc.[state]
+LEFT JOIN #epa_account_data epaad ON epaad.counterparty_id = sc.source_counterparty_id
 WHERE 1 = 1''
-+
-CASE WHEN @_source_counterparty_id IS NOT NULL THEN '' AND sc.source_counterparty_id IN ('' + @_source_counterparty_id + '')'' ELSE '''' END
-+
-CASE WHEN @_parent_counterparty_id IS NOT NULL THEN '' AND sc.parent_counterparty_id IN ('' + @_parent_counterparty_id + '')'' ELSE '''' END
-+
-CASE WHEN @_counterparty_status IS NOT NULL THEN '' AND sc.counterparty_status = '' + CAST(@_counterparty_status AS VARCHAR(10))  ELSE '''' END
-+
-CASE WHEN @_broker_relevant IS NOT NULL THEN '' AND v0.static_data_udf_values = '''''' + @_broker_relevant + '''''''' ELSE '''' END
-+
-CASE WHEN @_is_active IS NOT NULL THEN '' AND sc.is_active = '''''' + @_is_active + '''''''' ELSE '''' END
-EXEC(@_sql)
 
++CASE WHEN @_counterparty_type_id IS NOT NULL THEN '' AND sc.int_ext_flag = '''''' + @_counterparty_type_id + ''''''''  + char(10) ELSE '''' END
 
-', report_id = @report_id_data_source_dest,
++CASE WHEN @_source_counterparty_id IS NOT NULL THEN '' AND sc.source_counterparty_id IN ('' + @_source_counterparty_id + '')'' ELSE '''' END
+
++CASE WHEN @_parent_counterparty_id IS NOT NULL THEN '' AND sc.parent_counterparty_id IN ('' + @_parent_counterparty_id + '')'' ELSE '''' END
+
++CASE WHEN @_counterparty_status IS NOT NULL THEN '' AND sc.counterparty_status = '' + CAST(@_counterparty_status AS VARCHAR(10))  ELSE '''' END
+
++CASE WHEN @_broker_relevant IS NOT NULL THEN '' AND v0.static_data_udf_values = '''''' + @_broker_relevant + '''''''' ELSE '''' END
+
++CASE WHEN @_is_active IS NOT NULL THEN '' AND sc.is_active = '''''' + @_is_active + '''''''' ELSE '''' END
+
+EXEC(@_sql)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
 	WHERE [name] = 'Counterparty Information View'
@@ -1756,6 +1825,138 @@ EXEC(@_sql)
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'broker_relevant' AS [name], 'Broker Relevant1' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 5 AS datatype_id, 'SELECT ''y'' id, ''Yes'' code UNION ALL SELECT ''n'', ''No''' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Counterparty Information View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Counterparty Information View'
+	            AND dsc.name =  'VAT No'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Vat No'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Counterparty Information View'
+			AND dsc.name =  'VAT No'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'VAT No' AS [name], 'Vat No' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Counterparty Information View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Counterparty Information View'
+	            AND dsc.name =  'SAP Payable ID'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Sap Payable Id'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Counterparty Information View'
+			AND dsc.name =  'SAP Payable ID'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'SAP Payable ID' AS [name], 'Sap Payable Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Counterparty Information View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Counterparty Information View'
+	            AND dsc.name =  'SAP Receivable ID'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Sap Receivable Id'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Counterparty Information View'
+			AND dsc.name =  'SAP Receivable ID'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'SAP Receivable ID' AS [name], 'Sap Receivable Id' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Counterparty Information View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Counterparty Information View'
+	            AND dsc.name =  'counterparty_type_id'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Counterparty Type'
+			   , reqd_param = NULL, widget_id = 2, datatype_id = 1, param_data_source = 'SELECT ''i'' [value], ''Internal'' [text] UNION ALL SELECT ''e'', ''External'' UNION ALL SELECT ''b'', ''Broker'' UNION ALL SELECT ''c'',''Clearing''', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Counterparty Information View'
+			AND dsc.name =  'counterparty_type_id'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'counterparty_type_id' AS [name], 'Counterparty Type' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 1 AS datatype_id, 'SELECT ''i'' [value], ''Internal'' [text] UNION ALL SELECT ''e'', ''External'' UNION ALL SELECT ''b'', ''Broker'' UNION ALL SELECT ''c'',''Clearing''' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Counterparty Information View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
