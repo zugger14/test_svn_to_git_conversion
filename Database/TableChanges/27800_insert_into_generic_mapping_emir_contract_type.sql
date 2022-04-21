@@ -114,7 +114,7 @@ BEGIN
            'nvarchar(250)',
            'n',
            NULL,
-           'h',
+           'o',
            100,
            iose.value_id
     FROM   #insert_output_sdv_external iose
