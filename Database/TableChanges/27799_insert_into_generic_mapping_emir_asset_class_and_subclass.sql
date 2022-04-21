@@ -378,7 +378,7 @@ BEGIN
 		, @deal_type
 		, 'Multiplier'
 		, @multiplier
-		, NULL
+		, '1'
 END
 ELSE
 BEGIN
@@ -393,7 +393,7 @@ BEGIN
 		, clm4_udf_id = @deal_type
 		, clm5_label	= 'Multiplier'
 		, clm5_udf_id = @multiplier
-		, unique_columns_index = NULL
+		, unique_columns_index = '1'
 	FROM generic_mapping_definition gmd
 	INNER JOIN generic_mapping_header gmh 
 		ON gmh.mapping_table_id = gmd.mapping_table_id

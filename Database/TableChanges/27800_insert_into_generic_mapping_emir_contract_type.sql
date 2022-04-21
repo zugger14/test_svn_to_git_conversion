@@ -175,7 +175,7 @@ BEGIN
 		, @deal_type
 		, 'EMIR Contract Type'
 		, @emir_contract_type
-		, NULL
+		, '1'
 END
 ELSE
 BEGIN
@@ -184,7 +184,7 @@ BEGIN
 		, clm1_udf_id = @deal_type
 		, clm2_label	= 'EMIR Contract Type'
 		, clm2_udf_id = @emir_contract_type
-		, unique_columns_index = NULL
+		, unique_columns_index = '1'
 	FROM generic_mapping_definition gmd
 	INNER JOIN generic_mapping_header gmh 
 		ON gmh.mapping_table_id = gmd.mapping_table_id

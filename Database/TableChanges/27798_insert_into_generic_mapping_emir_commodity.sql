@@ -138,25 +138,25 @@ BEGIN
 	)
 	VALUES (
 		'EMIR Commodity', 
-		3, 
+		2, 
 		0
 	)
 END
 
 -- Mapping Definition
 DECLARE @mapping_table_id INT
-	  , @Commodity INT
+	  , @commodity INT
 	  , @energy_commodity INT
 	  
 SELECT @mapping_table_id = mapping_table_id
 FROM generic_mapping_header
 WHERE mapping_name = 'EMIR Commodity'
 
-SELECT @Commodity = udf_template_id 
+SELECT @commodity = udf_template_id 
 FROM user_defined_fields_template 
 WHERE Field_id = (SELECT field_id FROM user_defined_fields_template WHERE Field_label = 'Commodity')
 
-SELECT @Commodity = udf_template_id 
+SELECT @energy_commodity = udf_template_id 
 FROM user_defined_fields_template 
 WHERE Field_id = (SELECT field_id FROM user_defined_fields_template WHERE Field_label = 'Energy Commodity')
 
@@ -173,19 +173,19 @@ BEGIN
 	)
 	SELECT @mapping_table_id
 		,'Commodity'
-		, @Commodity
+		, @commodity
 		, 'Energy Commodity'
 		, @energy_commodity
-		, NULL
+		, '1'
 END
 ELSE
 BEGIN
 	UPDATE gmd
 	SET	clm1_label	= 'Commodity'
-		, clm1_udf_id = @Commodity
+		, clm1_udf_id = @commodity
 		, clm2_label = 'Energy Commodity'
 		, clm2_udf_id = @energy_commodity
-		, unique_columns_index = NULL
+		, unique_columns_index = '1'
 	FROM generic_mapping_definition gmd
 	INNER JOIN generic_mapping_header gmh 
 		ON gmh.mapping_table_id = gmd.mapping_table_id
