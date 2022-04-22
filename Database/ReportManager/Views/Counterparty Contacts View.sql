@@ -1,22 +1,39 @@
 BEGIN TRY
 		BEGIN TRAN
 	
+
+	declare @new_ds_alias varchar(10) = 'ccvw'
+	/** IF DATA SOURCE ALIAS ALREADY EXISTS ON DESTINATION, RAISE ERROR **/
+	if exists(select top 1 1 from data_source where alias = 'ccvw' and name <> 'Counterparty Contacts View')
+	begin
+		select top 1 @new_ds_alias = 'ccvw' + cast(s.n as varchar(5))
+		from seq s
+		left join data_source ds on ds.alias = 'ccvw' + cast(s.n as varchar(5))
+		where ds.data_source_id is null
+			and s.n < 10
+
+		--RAISERROR ('Datasource alias already exists on system.', 16, 1);
+	end
+
 	DECLARE @report_id_data_source_dest INT 
 	
 	SELECT @report_id_data_source_dest = report_id
 	FROM report r
 	WHERE r.[name] = NULL
+
 	IF NOT EXISTS (SELECT 1 
 	           FROM data_source 
 	           WHERE [name] = 'Counterparty Contacts View'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	AND NOT EXISTS (SELECT 1 FROM map_function_category WHERE [function_name] = 'Counterparty Contacts View' AND '106500' = '106501') 
 	BEGIN
-		INSERT INTO data_source([type_id], [name], [alias], [description], [tsql], report_id)
-		SELECT TOP 1 1 AS [type_id], 'Counterparty Contacts View' AS [name], 'ccvw' AS ALIAS, 'Standard Counterparty Contacts View' AS [description],null AS [tsql], @report_id_data_source_dest AS report_id
+		INSERT INTO data_source([type_id], [name], [alias], [description], [tsql], report_id, system_defined,category)
+		SELECT TOP 1 1 AS [type_id], 'Counterparty Contacts View' AS [name], @new_ds_alias AS ALIAS, 'Standard Counterparty Contacts View' AS [description],null AS [tsql], @report_id_data_source_dest AS report_id,'1' AS [system_defined]
+			,'106500' AS [category]
 	END
 
 	UPDATE data_source
-	SET alias = 'ccvw', description = 'Standard Counterparty Contacts View'
+	SET alias = @new_ds_alias, description = 'Standard Counterparty Contacts View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_source_counterparty_id VARCHAR(2000) 
 
 
@@ -129,14 +146,18 @@ WHERE      1=1''
 
 
 
-EXEC(@_sql)', report_id = @report_id_data_source_dest 
+EXEC(@_sql)', report_id = @report_id_data_source_dest,
+	system_defined = '1'
+	,category = '106500' 
 	WHERE [name] = 'Counterparty Contacts View'
 		AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1)
 		
 	
+
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
 	CREATE TABLE #data_source_column(column_id INT)	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -170,6 +191,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -203,6 +225,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -236,6 +259,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -269,6 +293,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -302,6 +327,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -335,6 +361,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -368,6 +395,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -401,6 +429,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -434,6 +463,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -467,6 +497,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -500,6 +531,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -533,6 +565,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -566,6 +599,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -599,6 +633,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -632,6 +667,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -665,6 +701,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -698,6 +735,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -731,6 +769,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -764,6 +803,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -797,6 +837,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -830,6 +871,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -863,6 +905,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -896,6 +939,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -929,6 +973,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -962,6 +1007,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -995,6 +1041,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	IF EXISTS (SELECT 1 
 	           FROM data_source_column dsc 
 	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
@@ -1028,6 +1075,7 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	END 
 	
 	
+
 	DELETE dsc
 	FROM data_source_column dsc 
 	INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -1035,7 +1083,8 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 		AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1)
 	LEFT JOIN #data_source_column tdsc ON tdsc.column_id = dsc.data_source_column_id
 	WHERE tdsc.column_id IS NULL
-	COMMIT TRAN
+	
+COMMIT TRAN
 
 	END TRY
 	BEGIN CATCH
@@ -1049,3 +1098,4 @@ EXEC(@_sql)', report_id = @report_id_data_source_dest
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
 		DROP TABLE #data_source_column	
+	
