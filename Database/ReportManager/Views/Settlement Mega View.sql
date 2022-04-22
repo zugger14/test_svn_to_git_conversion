@@ -32,7 +32,8 @@ BEGIN TRY
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Standard Settlement Mega View'
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sql_select1 VARCHAR(MAX)
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + '
+DECLARE @_sql_select1 VARCHAR(MAX)
 	, @_sql_select2 VARCHAR(MAX)
 	, @_sql_from1 VARCHAR(MAX)
 	, @_sql_from2 VARCHAR(MAX)
@@ -454,7 +455,7 @@ CROSS APPLY (SELECT
 			LEFT JOIN source_deal_type sdt ON sdt.source_deal_type_id = sdh.source_deal_type_id
 			OUTER APPLY(SELECT CASE WHEN sdt.deal_type_id = ''Future'' AND idtst.internal_deal_type_subtype_type = ''Physical Future'' and hg.hol_group_ID IS NOT NULL 
 			THEN CASE WHEN spcd.Granularity IN (991,993) THEN ''Margin-Commodity''
-				WHEN sdh.physical_financial_flag = ''p'' AND spcd.Granularity = 980 THEN ''Margin-Commodity''
+				WHEN sdh.physical_financial_flag = ''p'' AND spcd.Granularity = 980 AND sds.fin_volume_uom IS NOT NULL THEN ''Margin-Commodity''
 				ELSE ''Commodity'' END
 			ELSE ''Commodity'' END AS charge_type) ct
 			WHERE sds.source_deal_header_id = fv.source_deal_header_id 
@@ -1000,7 +1001,6 @@ source_deal_header_id
 , cash_flow 
 , pricing_type 
 , source_deal_detail_id
-		
 )
 SELECT fv.source_deal_header_id 
 , ISNULL(cg.contract_id, fv.contract_id) contract_id 
