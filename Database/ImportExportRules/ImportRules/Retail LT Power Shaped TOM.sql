@@ -85,7 +85,6 @@ WHERE adcv.default_code_id = 36
 SELECT @min_term = MIN([Term Date])
 	,@max_term = MAX([Term Date])
 FROM [temp_process_table]
-GROUP BY [Term Date]
 
 IF OBJECT_ID(''tempdb..#temp_hour_breakdown'') IS NOT NULL
 	DROP TABLE #temp_hour_breakdown
@@ -336,7 +335,6 @@ WHERE adcv.default_code_id = 36
 SELECT @min_term = MIN([Term Date])
 	,@max_term = MAX([Term Date])
 FROM [temp_process_table]
-GROUP BY [Term Date]
 
 IF OBJECT_ID(''tempdb..#temp_hour_breakdown'') IS NOT NULL
 	DROP TABLE #temp_hour_breakdown
@@ -544,7 +542,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\EU-T-SQL01\shared_docs_TRMTracker_Enercity_Test\temp_Note\0',
+						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
 						   NULL,
 						   ';',
 						   2,
