@@ -5,12 +5,12 @@ CREATE FUNCTION dbo.FNANormalizeTo1Mw(@quantity_unit NVARCHAR(20), @quantity_vol
 RETURNS @normalize TABLE 
 (
     -- Columns returned by the function
-    unit NVARCHAR(20), volume NUMERIC(20,10), price NUMERIC(20,5), inverse NUMERIC(20,8)
+    unit NVARCHAR(20), volume NUMERIC(20,10), price NUMERIC(20,5), inverse NUMERIC(20,18)
 )
 AS 
 -- Returns the unit, volume, price, inverse values for subimission ACER Remit
 BEGIN
-	DECLARE @unit NVARCHAR(20), @volume NUMERIC(20,8), @inverse NUMERIC(20,8)
+	DECLARE @unit NVARCHAR(20), @volume NUMERIC(20,8), @inverse NUMERIC(20,18)
 	--	Unit that are not supported by ACER submission, add unit list below
 	SET @quantity_unit = CASE WHEN REPLACE(@quantity_unit, ' ', '') IN ('MW/MWh') THEN 'MW' ELSE @quantity_unit END
 
