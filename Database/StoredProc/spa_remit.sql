@@ -5012,11 +5012,14 @@ BEGIN
 		BEGIN
 			INSERT INTO #temp_strTrade (source_deal_header_id, strTrade)
 			SELECT vt.source_deal_header_id,
-				   vt.market_id_participant_counterparty + vt.other_id_market_participant_counterparty + vt.contract_type + vt.energy_commodity + vt.settlement_method + CONVERT(VARCHAR(10), sdh.deal_date, 120) + CAST(vt.price AS VARCHAR(50)) + vt.price_currency + ou.quantity_volume + CASE WHEN ou.quantity_volume = '' THEN ''ELSE vt.quantity_unit_field_40_and_41 END + vt.delivery_point_or_zone + CONVERT(VARCHAR(10), vt.Delivery_start_date, 120) + CONVERT(VARCHAR(10), vt.Delivery_end_date, 120)
+				   vt.market_id_participant_counterparty + vt.other_id_market_participant_counterparty + vt.contract_type + vt.energy_commodity + vt.settlement_method + CONVERT(VARCHAR(10), sdh.deal_date, 120) + CAST(rs_conv.price AS VARCHAR(50)) + vt.price_currency + CAST(rs_conv.volume AS VARCHAR(50)) + rs_conv.unit + vt.delivery_point_or_zone + CONVERT(VARCHAR(10), vt.Delivery_start_date, 120) + CONVERT(VARCHAR(10), vt.Delivery_end_date, 120)
 			FROM source_remit_standard vt
 			OUTER APPLY (
 				SELECT ISNULL(CAST(CASE WHEN vt.quantity_volume = 0 THEN NULL ELSE vt.quantity_volume END AS VARCHAR(50)), '') quantity_volume
 			) ou
+			OUTER APPLY (
+				SELECT unit, volume, price, inverse from dbo.FNANormalizeTo1Mw(REPLACE(vt.quantity_unit_field_40_and_41, ' ', ''), ou.quantity_volume, vt.price)
+			) rs_conv
 			INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = vt.source_deal_header_id
 			WHERE vt.process_id = @process_id
 				AND vt.error_validation_message IS NULL
