@@ -115,11 +115,11 @@ SET @url  = './dev/spa_html.php?__user_name__=' + @user_login_id + '&spa=exec sp
 IF @error_count <> 0
 BEGIN
 	SET @detail_url =  '<a target="_blank" href="' + @url + '"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')
-	 <font color="red">(Error(s) Found).</font> </br> (Out of ' + @total_count + ' Time Decimal Segments, ' + @success_count + ' successfully posted and ' + @error_count + ' Error(s) found.)	</ul></a>' 
+	 <font color="red">(Error(s) Found).</font> </br> (Out of ' + @total_count + ' Timeseries Decimal Segments, ' + @success_count + ' successfully posted and ' + @error_count + ' Error(s) found.)	</ul></a>' 
 END
 ELSE
 BEGIN
-	SET @detail_url = 'Post data Details (' + @source + ') </br> (' + @success_count + ' Time Decimal Segment(s) successfully posted.)'
+	SET @detail_url = 'Post data Details (' + @source + ') </br> (' + @success_count + ' Timeseries Decimal Segment(s) successfully posted.)'
 END
 
 INSERT INTO message_board (
