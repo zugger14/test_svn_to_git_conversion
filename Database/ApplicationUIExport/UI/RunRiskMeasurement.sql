@@ -193,7 +193,7 @@ BEGIN
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('10181200','volatility_source','volatility_source','Volatility Source','combo','int','h','n','EXEC spa_StaticDataValues ''h'', 10007',NULL,'n','n',NULL,'y','n','y','n','n','n','n','n',NULL,NULL,NULL,NULL)
+			VALUES('10181200','volatility_source','volatility_source','Volatility Source','combo','int','h','n','EXEC spa_StaticDataValues ''h'', 10007',NULL,'n','n','10639','y','n','y','n','n','n','n','n',NULL,NULL,NULL,NULL)
 						
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
@@ -228,7 +228,7 @@ BEGIN
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('10181200','use_market_value','use_market_value','Use Market Value','checkbox','char','h','y',NULL,'200','n','n',NULL,'n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
+			VALUES('10181200','use_market_value','use_market_value','Use Market Value','checkbox','char','h','y',NULL,'200','n','n','y','n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
 		END 
 	
@@ -401,7 +401,7 @@ BEGIN
 		SELECT 115005,20029,113780,'9729','General','hold_to_maturity',NULL,NULL,NULL,NULL,NULL,NULL,'checkbox',NULL,'14',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 115006,20029,113782,'9729','General','active',NULL,NULL,NULL,NULL,NULL,NULL,'checkbox',NULL,'15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 115007,20029,113783,'9729','General','daily_return_data_series',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'12',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 115008,20029,113784,'9729','General','simulation_days',NULL,NULL,NULL,NULL,NULL,NULL,'numeric',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 115008,20029,113784,'9729','General','simulation_days',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 115009,20029,113781,NULL,'General','use_discounted_value',NULL,NULL,NULL,NULL,NULL,'200','checkbox',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
 		SELECT 115010,20029,113785,NULL,'General','use_market_value',NULL,NULL,NULL,NULL,NULL,'200','checkbox',NULL,'12',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
 				
