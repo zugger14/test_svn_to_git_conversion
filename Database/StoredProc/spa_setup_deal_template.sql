@@ -349,7 +349,8 @@ BEGIN
 	LEFT JOIN maintain_field_template_detail mftd
 		ON mftd.field_id = udf_temp.udf_template_id
 			AND mftd.field_template_id = ' + IIF(@field_template_id IS NULL, 'mftd.field_template_id',  CAST(@field_template_id AS NVARCHAR(20))) + '
-			AND ISNULL(mftd.udf_or_system, ''s'') = ''u'''
+			AND ISNULL(mftd.udf_or_system, ''s'') = ''u''
+            WHERE udf_temp.is_active = ''y'''
 	IF @field_template_id IS NULL
 		SET @sql += ' AND mftd.field_template_detail_id IS NULL'
 	END

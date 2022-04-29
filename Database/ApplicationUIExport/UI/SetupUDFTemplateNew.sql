@@ -288,6 +288,11 @@ UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
 			VALUES('20008300','include_in_credit_exposure','include_in_credit_exposure','Include in Credit Exposure','checkbox','varchar','h','n',NULL,NULL,'n','n','y','n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
 						
+			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
+			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
+			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
+			VALUES('20008300','is_active','is_active','Active','checkbox','varchar','h','n',NULL,NULL,'n','n','y','n','n','n','n','y','n','n','n',NULL,NULL,NULL,NULL)
+						
 		END 
 	
 		IF OBJECT_ID('tempdb..#temp_old_template_group') IS NOT NULL
@@ -369,7 +374,7 @@ UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','
 				
 		INSERT INTO #temp_old_template_fieldsets(old_fieldset_id, old_group_id, group_name, fieldset_name, className, is_disable, is_hidden, inputLeft, inputTop, label, offsetLeft, offsetTop, position, width, sequence, num_column)
 		
-								SELECT 4138,11048,'General','fee_fields',NULL,'n','n','500','500','Fee Fields',NULL,NULL,NULL,'750','1','3'
+								SELECT 4209,11136,'General','fee_fields',NULL,'n','n','500','500','Fee Fields',NULL,NULL,NULL,'750','1','3'
 				
 		UPDATE otfs
 		SET otfs.new_group_id = ntg.new_id
@@ -445,26 +450,27 @@ UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','
 					
 		INSERT INTO #temp_old_template_fields(old_field_id, old_group_id, old_application_ui_field_id, old_fieldset_id, group_name, ui_field_id, field_alias, Default_value, default_format, validation_flag, hidden, field_size, field_type, field_id, sequence, inputHeight, udf_template_id, udf_field_name, position, dependent_field, dependent_query, old_grid_id, validation_message, load_child_without_parent)
 		
-		SELECT 76347,11048,75467,NULL,'General','',NULL,NULL,NULL,NULL,NULL,NULL,'settings',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76348,11048,75468,NULL,'General','udf_template_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76349,11048,75469,NULL,'General','field_name',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76350,11048,75470,NULL,'General','field_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'3',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76351,11048,75471,NULL,'General','data_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'6',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76352,11048,75472,NULL,'General','data_source_type_id',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76353,11048,75473,NULL,'General','window_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'8',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76354,11048,75474,NULL,'General','formula_id',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'9',NULL,NULL,NULL,NULL,NULL,NULL,'formula',NULL,NULL UNION ALL 
-		SELECT 76355,11048,75475,'4138','General','internal_field_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76356,11048,75476,'4138','General','leg',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76357,11048,75477,NULL,'General','sql_string',NULL,NULL,NULL,NULL,NULL,'720','input',NULL,'21',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76358,11048,75478,NULL,'General','udf_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76359,11048,75479,NULL,'General','default_value',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76360,11048,75480,NULL,'General','udf_category',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'18',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76361,11048,75481,NULL,'General','deal_udf_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76362,11048,75482,NULL,'General','field_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76363,11048,75483,NULL,'General','field_label',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76364,11048,75484,NULL,'General','test',NULL,NULL,NULL,NULL,NULL,NULL,'button',NULL,'22',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76365,11048,75485,NULL,'General','default_value_date',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
-		SELECT 76366,11048,75486,'4138','General','include_in_credit_exposure',NULL,'n',NULL,NULL,NULL,NULL,'checkbox',NULL,'23',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
+		SELECT 77786,11136,76910,NULL,'General','',NULL,NULL,NULL,NULL,NULL,NULL,'settings',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77787,11136,76911,NULL,'General','udf_template_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77788,11136,76912,NULL,'General','field_name',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77789,11136,76913,NULL,'General','field_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'3',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77790,11136,76914,NULL,'General','data_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'6',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77791,11136,76915,NULL,'General','data_source_type_id',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'20',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77792,11136,76916,NULL,'General','window_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'8',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77793,11136,76917,NULL,'General','formula_id',NULL,NULL,NULL,NULL,NULL,NULL,'browser',NULL,'9',NULL,NULL,NULL,NULL,NULL,NULL,'formula',NULL,NULL UNION ALL 
+		SELECT 77794,11136,76918,'4209','General','internal_field_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'10',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77795,11136,76919,'4209','General','leg',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'11',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77796,11136,76920,NULL,'General','sql_string',NULL,NULL,NULL,NULL,NULL,'720','input',NULL,'21',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77797,11136,76921,NULL,'General','udf_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'15',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77798,11136,76922,NULL,'General','default_value',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77799,11136,76923,NULL,'General','udf_category',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'18',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77800,11136,76924,NULL,'General','deal_udf_type',NULL,NULL,NULL,NULL,NULL,NULL,'combo',NULL,'19',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77801,11136,76925,NULL,'General','field_id',NULL,NULL,NULL,NULL,'y',NULL,'input',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77802,11136,76926,NULL,'General','field_label',NULL,NULL,NULL,NULL,NULL,NULL,'input',NULL,'2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77803,11136,76927,NULL,'General','test',NULL,NULL,NULL,NULL,NULL,NULL,'button',NULL,'22',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77804,11136,76928,NULL,'General','default_value_date',NULL,NULL,NULL,NULL,NULL,NULL,'calendar',NULL,'17',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77805,11136,76929,'4209','General','include_in_credit_exposure',NULL,'n',NULL,NULL,NULL,NULL,'checkbox',NULL,'23',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL UNION ALL 
+		SELECT 77806,11136,76930,NULL,'General','is_active',NULL,'y',NULL,NULL,NULL,NULL,'checkbox',NULL,'24',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
 				
 		UPDATE otf
 		SET otf.new_group_id = ntg.new_id
@@ -566,7 +572,7 @@ UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','
 		)	
 					
 		INSERT INTO #temp_old_ui_layout(old_layout_grid_id, old_group_id, group_name, layout_cell, old_grid_id, grid_name, sequence, num_column, cell_height,grid_object_name,grid_object_unique_column)
-		SELECT 9467,11048,'General','a','FORM',NULL,1,NULL,NULL,NULL,NULL
+		SELECT 9578,11136,'General','a','FORM',NULL,1,NULL,NULL,NULL,NULL
 				
 		UPDATE oul
 		SET oul.new_group_id = ntg.new_id
@@ -715,4 +721,4 @@ UNION ALL  SELECT ''p'' AS id, ''Pre Pay'' AS value',NULL,'n','n',NULL,'n','n','
 		EXEC [spa_manage_memcache] @flag = 'd', @key_prefix = @memcache_key, @cmbobj_key_source = NULL, @other_key_source=NULL, @source_object = 'spa_application_ui_export'
 	END
 	
-END 
+END

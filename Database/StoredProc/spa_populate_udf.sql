@@ -6,6 +6,20 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
+/**
+	Stored procedure for UDF template related operations.
+
+	Parameters
+	@flag: Operation flag
+			's' - List static data (UDF Group)
+			'a' - List UDF templates
+			'i' - Insert UDF template
+			'u' - Update UDF template
+			'l' - Get data type for UDF template
+	@xml: UDF XML (for insert/update)
+	@udf_template_id: UDF template id
+*/
+
 CREATE PROCEDURE [dbo].[spa_populate_udf]
 	@flag char(1),
 	@xml VARCHAR(MAX) = NULL,
@@ -43,7 +57,8 @@ BEGIN
 								CASE WHEN udft.deal_udf_type = ''c'' THEN ''Cost''
 									 WHEN udft.deal_udf_type = ''u'' THEN ''UDF''
 								END		[deal_udf_type],
-								udft.include_in_credit_exposure	
+								udft.include_in_credit_exposure,
+                                udft.is_active
 						FROM user_defined_fields_template udft 
 						INNER JOIN static_data_value sdv 
 							ON sdv.value_id = udft.field_name
@@ -77,6 +92,8 @@ BEGIN
 			  , @leg INT
 			  , @function_id INT
 			  , @include_in_credit_exposure VARCHAR(100)
+              , @is_active CHAR(1)
+          
 
 		IF OBJECT_ID('tempdb..#temp_setup_udf') IS NOT NULL
 			DROP TABLE #temp_setup_udf
@@ -99,7 +116,8 @@ BEGIN
 				deal_udf_type		VARCHAR(100) COLLATE database_default,				
 				internal_field_type	VARCHAR(100) COLLATE database_default,
 				leg					VARCHAR(100) COLLATE database_default,
-				include_in_credit_exposure VARCHAR(100) COLLATE database_default
+				include_in_credit_exposure VARCHAR(100) COLLATE database_default,
+                is_active           CHAR(1)  COLLATE database_default
 		)
 		
 	
@@ -125,6 +143,7 @@ BEGIN
 				, internal_field_type	
 				, leg
 				, include_in_credit_exposure
+                , is_active
 		)
 		SELECT 
 				  NULLIF(udf_template_id, '')
@@ -145,6 +164,7 @@ BEGIN
 				, NULLIF(internal_field_type, '')
 				, NULLIF(leg, '')
 				, NULLIF(include_in_credit_exposure, '')
+                , NULLIF(is_active, '')
 		FROM   OPENXML (@idoc, '/Root/FormXML', 2)
 		WITH (							
 				udf_template_id		VARCHAR(100) '@udf_template_id',
@@ -164,7 +184,8 @@ BEGIN
 				deal_udf_type		VARCHAR(100) '@deal_udf_type',				
 				internal_field_type VARCHAR(100) '@internal_field_type',								
 				leg					VARCHAR(100) '@leg',
-				include_in_credit_exposure VARCHAR(100) '@include_in_credit_exposure'
+				include_in_credit_exposure VARCHAR(100) '@include_in_credit_exposure',
+                is_active CHAR(1) '@is_active'
 		)
 
 		SELECT @udf_template_id = udf_template_id
@@ -185,6 +206,7 @@ BEGIN
 			 , @internal_field_type = internal_field_type
 			 , @leg = leg
 			 , @include_in_credit_exposure = include_in_credit_exposure
+             , @is_active = is_active
 		FROM #temp_setup_udf
 		
 		DECLARE @udf_data_source_id INT
@@ -214,6 +236,7 @@ BEGIN
 					   ,internal_field_type
 					   ,leg	
 					   ,include_in_credit_exposure
+                       ,is_active
 				)
 				VALUES( 
 						@field_name
@@ -238,6 +261,7 @@ BEGIN
 					   ,@internal_field_type
 					   ,@leg
 					   ,@include_in_credit_exposure
+                       ,@is_active
 				)
 				
 				SET @udf_template_id = SCOPE_IDENTITY()
@@ -292,6 +316,7 @@ BEGIN
 				   ,internal_field_type = @internal_field_type
 				   ,leg = @leg
 				   ,include_in_credit_exposure = @include_in_credit_exposure
+                   ,is_active = @is_active
 				WHERE udf_template_id = @udf_template_id
 
 				-- Added to update label of field in maintain_field_template_detail 

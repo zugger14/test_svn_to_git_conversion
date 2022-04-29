@@ -302,7 +302,10 @@ BEGIN
 				, sdv.code
 				FROM static_data_type sdt
 				LEFT JOIN static_data_value sdv ON sdv.type_id = sdt.type_id'
-				
+
+	IF @flag = 'h' AND @type_id = 5500
+		SET @sql = @sql + ' INNER JOIN user_defined_fields_template udft ON udft.field_name = sdv.value_id AND udft.is_active = ''y'''
+			
 	IF @flag = 'g'
 		--SET @sql += ' AND CAST(ISNULL(sdv.value_id, 1) AS INT) > 0'
 		
@@ -316,7 +319,7 @@ BEGIN
 	IF @category_id IS NOT NULL
 		SET @sql = @sql + ' AND category_id = ' + CAST(@category_id AS NVARCHAR(10)) 
 	IF @code IS NOT NULL
-	SET @sql += ' AND sdv.code IN (SELECT item FROM dbo.SplitCommaSeperatedValues(''' + @code + ''')) '
+		SET @sql += ' AND sdv.code IN (SELECT item FROM dbo.SplitCommaSeperatedValues(''' + @code + ''')) '
 	
 	IF @type_id IS NOT NULL
 		SET @sql = @sql + ' AND sdt.type_id = ' + CAST(@type_id AS NVARCHAR(10)) 

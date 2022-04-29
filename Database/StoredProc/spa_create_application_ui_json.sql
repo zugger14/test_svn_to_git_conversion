@@ -594,6 +594,7 @@ BEGIN
 			SET @sql += ') sub
 						ON udft.udf_template_id = sub.udf_template_id
 					WHERE udft.udf_type = ''o''
+                        AND udft.is_active = ''y''
 			'
 			SET @sql += '
 			UNION ALL
