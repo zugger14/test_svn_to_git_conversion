@@ -8,200 +8,24 @@ BEGIN TRY
 			Set @report_id_dest = NULL
 		END
 	
-IF EXISTS (SELECT 1 FROM dbo.report WHERE name='EOD - Run Monte Carlo Simulation')
+IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='891CE399_906D_44AB_810E_9A5FAE56BA30')
 		BEGIN
-		EXEC spa_rfx_report 'd', NULL,23957, NULL, NULL, NULL, NULL, NULL
+			declare @report_id_to_delete int
+			select @report_id_to_delete = report_id from report where report_hash = '891CE399_906D_44AB_810E_9A5FAE56BA30'
+
+			EXEC spa_rfx_report 'd', @report_id=@report_id_to_delete, @retain_privilege=1, @process_id = NULL
 		END
-
-		DECLARE @report_id_dest_old INT 
-
-		SELECT @report_id_dest_old = report_id
-		FROM report r
-		WHERE r.[name] = 'EOD - Run Monte Carlo Simulation'
-		
-		IF OBJECT_ID(N'tempdb..#pages_dest', 'U') IS NOT NULL DROP TABLE #pages_dest
-		
-		IF OBJECT_ID(N'tempdb..#paramset_dest', 'U') IS NOT NULL DROP TABLE #paramset_dest
-		
-		IF OBJECT_ID(N'tempdb..#del_report_page', 'U') IS NOT NULL DROP TABLE #del_report_page	
-		
-		IF OBJECT_ID(N'tempdb..#del_report_paramset', 'U') IS NOT NULL DROP TABLE #del_report_paramset	
-		
-		CREATE TABLE #pages_dest(page_name VARCHAR(500) COLLATE DATABASE_DEFAULT)
-		
-		INSERT INTO #pages_dest(page_name)
-		SELECT item FROM dbo.splitcommaseperatedvalues('')	
-		UNION 
-		SELECT rp.[name]
-		FROM report_page rp
-		INNER JOIN report r ON r.report_id = rp.report_id
-		WHERE r.report_id = @report_id_dest_old 
-			AND '' = ''
-			
-		CREATE TABLE #paramset_dest(paramset_name VARCHAR(500) COLLATE DATABASE_DEFAULT)
-		
-		INSERT INTO #paramset_dest(paramset_name)
-		SELECT item FROM dbo.splitcommaseperatedvalues('')
-		UNION
-		SELECT rp.[name] 
-		FROM report_paramset rp
-		INNER JOIN report_page rpage ON rp.page_id = rpage.report_page_id
-		INNER JOIN report r ON r.report_id = rpage.report_id
-		WHERE r.report_id = @report_id_dest_old 
-			AND'' = ''
-		
-		SELECT rp.report_page_id,
-			   rp.[name] 
-			   INTO #del_report_page
-		FROM   report_page rp
-		INNER JOIN report r ON r.report_id = rp.report_id
-		INNER JOIN #pages_dest tpd ON tpd.page_name = rp.name
-		WHERE r.report_id = @report_id_dest_old
-
-		SELECT rp.report_paramset_id,
-			   rp.[name] 
-			   INTO #del_report_paramset
-		FROM   report_paramset rp
-		INNER JOIN #paramset_dest dpd ON dpd.paramset_name = rp.name
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rp.page_id	
-		
-		/*********************************************Table and Chart Deletion START *********************************************/
-		/*
-		* The data of the tables(report_page_tablix, report_tablix_column, report_page_chart, report_chart_column) relating to the pages present in the #del_report_page
-		* are deleted unconditionally as well ,as there might be changes made in these table in the new report that is exported.
-		* */
-		DELETE rtc 
-		FROM report_tablix_column rtc
-		INNER JOIN report_page_tablix rpt ON rpt.report_page_tablix_id = rtc.tablix_id
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rpt.page_id 
-		
-		DELETE rth 
-		FROM report_tablix_header rth
-		INNER JOIN report_page_tablix rpt ON rpt.report_page_tablix_id = rth.tablix_id
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rpt.page_id		  
-
-		DELETE rpt 
-		FROM report_page_tablix rpt 
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rpt.page_id
-
-		DELETE rcc
-		FROM report_chart_column rcc
-		INNER JOIN report_page_chart rpc ON rpc.report_page_chart_id = rcc.chart_id
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rpc.page_id
-			
-		DELETE rpc 
-		FROM report_page_chart rpc	
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rpc.page_id  
-		
-		DELETE rgcs
-		FROM report_gauge_column_scale rgcs
-		INNER JOIN report_gauge_column rgc ON rgc.report_gauge_column_id = rgcs.report_gauge_column_id
-		INNER JOIN report_page_gauge rpg ON rpg.report_page_gauge_id = rgc.gauge_id
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rpg.page_id
-		
-		
-		DELETE rgc
-		FROM report_gauge_column rgc
-		INNER JOIN report_page_gauge rpg ON rpg.report_page_gauge_id = rgc.gauge_id
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rpg.page_id
-			
-		DELETE rpg 
-		FROM report_page_gauge rpg	
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rpg.page_id  
-		
-		DELETE rpi 
-		FROM report_page_image rpi	
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rpi.page_id
-		
-		DELETE rpt 
-		FROM report_page_textbox rpt	
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rpt.page_id  
-		
-		DELETE rpl 
-		FROM report_page_line rpl	
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rpl.page_id  
-		/*********************************************Table and Chart Deletion END *********************************************/
-
-		
-	
-		/*********************************************Paramter Deletion START*********************************************/
-		/* The parameters are deleted unconditionally. (i.e data of the report_param. report_dataset_paramset, report_paramset) */
-		
-		DELETE rp 
-		FROM report_param rp
-		INNER JOIN report_dataset_paramset rdp ON rdp.report_dataset_paramset_id = rp.dataset_paramset_id
-		INNER JOIN #del_report_paramset drp ON drp.report_paramset_id = rdp.paramset_id
-			
-		DELETE rdp
-		FROM report_dataset_paramset rdp 
-		INNER JOIN #del_report_paramset drp ON drp.report_paramset_id = rdp.paramset_id
-					 
-		DELETE rp
-		FROM report_paramset rp 
-		INNER JOIN #del_report_paramset drp ON drp.report_paramset_id = rp.report_paramset_id
-		
-		/*********************************************Paramter Deletion END*********************************************/
-		
-		
-		
-		/*********************************************Page Deletion START*********************************************/
-		/*Delete pages from #del_report_page, that have other paramset defined. These pages shouldnt be deleted*/
-		DELETE #del_report_page
-		FROM #del_report_page drp
-		WHERE EXISTS (SELECT 1 FROM report_paramset WHERE page_id = drp.report_page_id)
-		
-		DELETE rp
-		FROM report_page rp 
-		INNER JOIN #del_report_page drp ON drp.report_page_id = rp.report_page_id
-		WHERE report_id = @report_id_dest_old
-		
-		/*********************************************Page Deletion END*********************************************/
-		
-	
-		
-		/*Delete report only if doesnt have any page left Else set the destination report_id to the old report_id */
-		IF EXISTS (SELECT 1 FROM report r
-				   WHERE r.report_id = @report_id_dest_old
-				   AND NOT EXISTS (SELECT 1 FROM report_page WHERE report_id = r.report_id))
-		BEGIN			
-			DELETE rdr 
-			FROM report_dataset_relationship rdr
-			INNER JOIN report_dataset rd ON rd.report_dataset_id = rdr.dataset_id
-			WHERE rd.report_id = @report_id_dest_old
-			
-		
-			DELETE FROM 
-			report_dataset WHERE report_id = @report_id_dest_old	 
-			
-			DELETE FROM 
-			report WHERE report_id = @report_id_dest_old
-			
-			DELETE dsc
-			FROM data_source_column dsc
-			INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id
-			WHERE ds.[type_id] = 2
-				AND ds.report_id = @report_id_dest_old
-				 
-			DELETE ds
-			FROM data_source ds
-			WHERE ds.[type_id] = 2
-				AND ds.report_id = @report_id_dest_old	
-		END
-		ELSE
-		BEGIN
-			SET @report_id_dest = @report_id_dest_old
-		END
-		
-		EXEC spa_print '@report_id_dest', @report_id_dest
 
 		IF @report_id_dest IS NULL
 		BEGIN
 			INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-			SELECT TOP 1 'EOD - Run Monte Carlo Simulation' [name], 'farrms_admin' [owner], 0 is_system, 0 is_excel, 0 is_mobile, '891CE399_906D_44AB_810E_9A5FAE56BA30' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+			SELECT TOP 1 'EOD - Run Monte Carlo Simulation' [name], 'farrms_admin' [owner], 1 is_system, 0 is_excel, 0 is_mobile, '891CE399_906D_44AB_810E_9A5FAE56BA30' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
 			FROM sys.objects o
 			LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
 			SET @report_id_dest = SCOPE_IDENTITY()
 		END
+
+		
 BEGIN TRY
 		BEGIN TRAN
 	
@@ -212,15 +36,18 @@ BEGIN TRY
 	FROM report r
 	WHERE r.[name] = 'EOD - Run Monte Carlo Simulation'
 
-	IF EXISTS (SELECT 1 
+	IF NOT EXISTS (SELECT 1 
 	           FROM data_source 
 	           WHERE [name] = 'Run Monte Carlo Simulation'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-			
 	BEGIN
-		UPDATE data_source
-		SET alias = 'rmcs', description = NULL
-		, [tsql] = CAST('' AS VARCHAR(MAX)) + '
+		INSERT INTO data_source([type_id], [name], [alias], [description], [tsql], report_id)
+		SELECT TOP 1 2 AS [type_id], 'Run Monte Carlo Simulation' AS [name], 'rmcs' AS ALIAS, NULL AS [description],null AS [tsql], @report_id_data_source_dest AS report_id
+	END
+
+	UPDATE data_source
+	SET alias = 'rmcs', description = NULL
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + '
 DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'',
 		@_tenor_from VARCHAR(500) = ''@tenor_from'',
 		@_tenor_to VARCHAR(500) = ''@tenor_to'',
@@ -315,113 +142,9 @@ SELECT
 --[__batch_report__] 
 FROM #tmp_result
 WHERE 1=1 ', report_id = @report_id_data_source_dest 
-		WHERE [name] = 'Run Monte Carlo Simulation'
-			AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1)
-	END	
-	
-
-	IF NOT EXISTS (SELECT 1 
-	           FROM data_source 
-	           WHERE [name] = 'Run Monte Carlo Simulation'
-				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
-	BEGIN
-		INSERT INTO data_source([type_id], [name], [alias], [description], [tsql], report_id)
-		SELECT TOP 1 2 AS [type_id], 'Run Monte Carlo Simulation' AS [name], 'rmcs' AS ALIAS, NULL AS [description],'
-DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'',
-		@_tenor_from VARCHAR(500) = ''@tenor_from'',
-		@_tenor_to VARCHAR(500) = ''@tenor_to'',
-		@_curve_id VARCHAR(MAX) = ''@curve_id'',
-		@_term_start VARCHAR(10) = NULL,
-		@_term_end VARCHAR(10) = NULL,
-		@_process_id VARCHAR(100) = ''@process_id'',
-		@_sql VARCHAR(MAX) = NULL
+	WHERE [name] = 'Run Monte Carlo Simulation'
+		AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1)
 		
-IF ''@process_id'' <> ''NULL''
-    SET @_process_id = ''@process_id''
- ELSE    
-    SET @_process_id = NULL   		
-
---SET @_curve_id=''262''
---SET @_as_of_date = ''2018-01-01''
---SET @_tenor_from = ''1''
---SET @_tenor_to = ''24''
-
-
-SET @_term_start = CONVERT(VARCHAR(10), [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH,CAST(@_tenor_from AS INT), @_as_of_date), ''f''), 120)
-SET @_term_end = CONVERT(VARCHAR(10), [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH,CAST(@_tenor_to AS INT), @_as_of_date), ''f''), 120)
-
-IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result
-
-CREATE TABLE #tmp_result (
-	ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Module VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Area VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Status VARCHAR(200) COLLATE DATABASE_DEFAULT ,
-	Message VARCHAR(1000) COLLATE DATABASE_DEFAULT ,
-	Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
-)
-
-
-	BEGIN TRY
-			SET @_sql = ''
-			EXEC spa_monte_carlo_simulation'''''' + @_as_of_date + '''''', '''''' 
-					+ @_term_start + '''''', '''''' + @_term_end + '''''', 3000, NULL, '''''' + @_curve_id + '''''', NULL, ''''y'''',''''y'''',NULL, '''''' + @_process_id + ''''''''
-		
-			EXEC(@_sql)
-	
-			DECLARE @_start_time DATETIME = GETDATE();
-			DECLARE @_no_of_running_job INT = 0, @_time_out INT = 0;			
-			
-			SELECT @_no_of_running_job = COUNT(1) FROM tbl_sims_status WHERE process_id = @_process_id AND sims_status = ''R''	
-						
-			-- This will loop every 5 mins until there are running job of Monte Carl simulations, or until a timeout of 3 hours.
-			WHILE (@_time_out = 0 and @_no_of_running_job > 0)
-			BEGIN
-				--five minute delay
-				WAITFOR DELAY ''00:05:00'';
-				
-				SELECT @_no_of_running_job = COUNT(1) 
-				FROM tbl_sims_status 
-				WHERE process_id = @_process_id 
-					AND sims_status = ''R''	
-
-			
-				--time out after 3 hours
-				IF GETDATE() >= DATEADD(MINUTE, 180, @_start_time) 
-				BEGIN 
-					SET @_time_out = 1 
-					PRINT ''time out'' 
-				END					
-			END
-			IF @_time_out = 0
-				INSERT INTO #tmp_result(ErrorCode,Module,Area,Status,Message,Recommendation)
-				SELECT ''Success'',''Monte Carlo Simulation'',''Monte Carlo Simulation'',''Success'',''Montecarlo Simulation Completed Successfully'',NULL
-			ELSE
-				INSERT INTO #tmp_result(ErrorCode,Module,Area,Status,Message,Recommendation)
-				SELECT ''Error'',''Monte Carlo Simulation'',''Monte Carlo Simulation'',''Error'',''Montecarlo Simulation Failed with Timeout Error.'',NULL
-		END TRY			
-		BEGIN CATCH										
-			INSERT INTO #tmp_result(ErrorCode,Module,Area,Status,Message,Recommendation)
-				SELECT ''Error'',''Monte Carlo Simulation'',''Monte Carlo Simulation'',''Error'',''Montecarlo Simulation Failed with Technical Error.'',NULL
-		END CATCH
-
-SELECT  
-    @_as_of_date as_of_date,
-    @_curve_id curve_id,
-    @_tenor_from tenor_from,
-   @_tenor_to tenor_to,
-   1 no_of_year, 
-	@_process_id process_id,
-	MAX([ErrorCode]) [ErrorCode],
-	MAX([Module]) [Module],
-	MAX([Area]) [Area],
-	MAX([Status]) [Status],
-	MAX([Message]) [Message],
-	MAX([Recommendation]) [Recommendation]
---[__batch_report__] 
-FROM #tmp_result
-WHERE 1=1 ' AS [tsql], @report_id_data_source_dest AS report_id
-	END 
 	
 
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
@@ -874,7 +597,7 @@ COMMIT TRAN
 
 	IF NOT EXISTS(SELECT 1 FROM report_page rp 
 	              WHERE rp.report_id = CASE WHEN 'e ' = 'p' 
-											Then 23957 
+											Then 103443 
 											ELSE @report_id_dest 
 						               END 
 					AND rp.name =  'EOD - Run Monte Carlo Simulation'  
@@ -882,7 +605,7 @@ COMMIT TRAN
 	BEGIN
 		INSERT INTO report_page(report_id, [name], report_hash, width, height)
 		SELECT CASE WHEN 'e ' = 'p' 
-					Then 23957 
+					Then 103443 
 					ELSE @report_id_dest 
 		       END  AS report_id, 'EOD - Run Monte Carlo Simulation' [name], '891CE399_906D_44AB_810E_9A5FAE56BA30' report_hash, 11.5 width,5.5 height
 	END 
@@ -912,7 +635,7 @@ COMMIT TRAN
 			AND r.[name] = 'EOD - Run Monte Carlo Simulation'
 		INNER JOIN report_dataset rd 
 			ON rd.report_id = CASE WHEN 'e ' = 'p' 
-									Then 23957 
+									Then 103443 
 									ELSE @report_id_dest 
 			                  END
 			AND rd.[alias] = 'rmcs'
@@ -1379,7 +1102,6 @@ BEGIN CATCH
 		
 	--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
 END CATCH
-
 	
 		IF OBJECT_ID(N'tempdb..#pages_dest', 'U') IS NOT NULL DROP TABLE #pages_dest
 		
