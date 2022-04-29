@@ -487,7 +487,7 @@ BEGIN TRY
 			MTMC FLOAT,
 			MTMI FLOAT,
 			source_deal_header_id INT,
-			deal_id VARCHAR(50) COLLATE DATABASE_DEFAULT ,
+			deal_id VARCHAR(400) COLLATE DATABASE_DEFAULT ,
 			counterparty_id INT,
 			und_pnl_set FLOAT,
 			leg INT
