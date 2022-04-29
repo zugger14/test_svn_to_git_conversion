@@ -7,7 +7,7 @@ BEGIN
 
 			
 			SELECT @old_ixp_rule_id = ixp_rules_id FROM ixp_rules ir 
-			WHERE ixp_rule_hash = '6500C6FB_F039_48EF_B4B0_9668B1BA4DBF'
+			WHERE ixp_rule_hash = '9DB48870_5BA4_47A3_B100_2512AD19A3CE'
 
 			if @old_ixp_rule_id IS NULL
 			BEGIN
@@ -136,13 +136,10 @@ SELECT DISTINCT @set_process_id
 	, ''Error''
 FROM [final_process_table] temp
 INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
-INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
-INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 LEFT JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
 	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 WHERE ISDATE(temp.[deal_date]) = 1
 AND gmv.generic_mapping_values_id IS NULL
 AND NULLIF(gmv0.clm2_value,'''') IS NULL
@@ -152,13 +149,10 @@ GROUP BY temp.deal_id, temp.term_start, temp.[deal_date]
 DELETE temp
 FROM [final_process_table] temp
 INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
-INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
-INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 LEFT JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
 	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 WHERE ISDATE(temp.[deal_date]) = 1
 AND NULLIF(gmv0.clm2_value,'''') IS NULL
 AND gmv.generic_mapping_values_id IS NULL
@@ -167,16 +161,26 @@ AND gmv0.[clm1_value] NOT IN (''Saturday'', ''Sunday'')
 UPDATE temp
 	SET temp.[block_define_id] = sdv.code
 FROM [final_process_table] temp
-INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
 INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 INNER JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
 	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
 WHERE ISDATE(temp.[deal_date]) = 1
+
+UPDATE temp
+	SET temp.[block_define_id] = sdv.code
+FROM [final_process_table] temp
+INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
+INNER JOIN generic_mapping_values gmv 
+	ON gmv.mapping_table_id = @mapping_table_id 
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
+	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
+INNER JOIN static_data_value sdv
+	ON sdv.value_id = gmv.clm4_value
+WHERE ISDATE(temp.[deal_date]) = 1 AND ISNULL(gmv.clm5_value, ''n'') =''y''
 
 UPDATE t
     SET t.[block_define_id] = sdv.code
@@ -269,7 +273,6 @@ WHERE tmd.term_map_id IS NULL
 AND NULLIF(t.term_end,'''') IS NOT NULL
 
 EXEC spa_trayport_deal_term_mapping ''[final_process_table]'', @set_process_id
-
 
 UPDATE a
 SET a.term_start = CAST(tmd.term_start AS DATE)
@@ -809,7 +812,7 @@ INNER JOIN source_deal_header_template sdht
 					@admin_user ,
 					23502,
 					1,
-					'6500C6FB_F039_48EF_B4B0_9668B1BA4DBF'
+					'9DB48870_5BA4_47A3_B100_2512AD19A3CE'
 					 )
 
 				SET @ixp_rules_id_new = SCOPE_IDENTITY()
@@ -925,13 +928,10 @@ SELECT DISTINCT @set_process_id
 	, ''Error''
 FROM [final_process_table] temp
 INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
-INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
-INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 LEFT JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
 	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 WHERE ISDATE(temp.[deal_date]) = 1
 AND gmv.generic_mapping_values_id IS NULL
 AND NULLIF(gmv0.clm2_value,'''') IS NULL
@@ -941,13 +941,10 @@ GROUP BY temp.deal_id, temp.term_start, temp.[deal_date]
 DELETE temp
 FROM [final_process_table] temp
 INNER JOIN generic_mapping_values gmv0 ON gmv0.mapping_table_id = @mapping_table_id AND gmv0.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
-INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
-INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 LEFT JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
 	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 WHERE ISDATE(temp.[deal_date]) = 1
 AND NULLIF(gmv0.clm2_value,'''') IS NULL
 AND gmv.generic_mapping_values_id IS NULL
@@ -956,16 +953,26 @@ AND gmv0.[clm1_value] NOT IN (''Saturday'', ''Sunday'')
 UPDATE temp
 	SET temp.[block_define_id] = sdv.code
 FROM [final_process_table] temp
-INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
 INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
 INNER JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
 	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
 	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-	--AND gmv.clm5_value = CAST(CASE WHEN CAST(temp.[deal_date] AS DATETIME) >= d1.date AND CAST(temp.[deal_date] AS DATETIME) < d2.date THEN ''y'' ELSE ''n'' END AS VARCHAR(10)) 
 INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
 WHERE ISDATE(temp.[deal_date]) = 1
+
+UPDATE temp
+	SET temp.[block_define_id] = sdv.code
+FROM [final_process_table] temp
+INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
+INNER JOIN generic_mapping_values gmv 
+	ON gmv.mapping_table_id = @mapping_table_id 
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
+	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
+INNER JOIN static_data_value sdv
+	ON sdv.value_id = gmv.clm4_value
+WHERE ISDATE(temp.[deal_date]) = 1 AND ISNULL(gmv.clm5_value, ''n'') =''y''
 
 UPDATE t
     SET t.[block_define_id] = sdv.code
@@ -1058,7 +1065,6 @@ WHERE tmd.term_map_id IS NULL
 AND NULLIF(t.term_end,'''') IS NOT NULL
 
 EXEC spa_trayport_deal_term_mapping ''[final_process_table]'', @set_process_id
-
 
 UPDATE a
 SET a.term_start = CAST(tmd.term_start AS DATE)
@@ -1620,7 +1626,7 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 					SELECT @ixp_rules_id_new,
 						   NULL,
 						   NULL,
-						   '\\CTRMEUWEB-D6001\shared_docs_TRMTracker_Enercity\temp_Note\0',
+						   '\\EU-U-SQL03\shared_docs_TRMTracker_Enercity_UAT\temp_Note\0',
 						   NULL,
 						   ',',
 						   2,
