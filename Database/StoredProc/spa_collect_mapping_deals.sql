@@ -78,6 +78,7 @@ BEGIN
 	FROM portfolio_mapping_source pms
 	INNER JOIN  portfolio_mapping_deal pmd ON pmd.portfolio_mapping_source_id = pms.portfolio_mapping_source_id
 	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = pmd.deal_id
+		AND sdh.deal_status <> 5607
 	WHERE pms.mapping_source_value_id = @mapping_source_value_id AND pms.mapping_source_usage_id = @mapping_source_usage_id
 	UNION
 	--Criteria Mapping book
@@ -89,6 +90,7 @@ BEGIN
 		AND sdh.source_system_book_id2 = ssbm.source_system_book_id2
 		AND sdh.source_system_book_id3 = ssbm.source_system_book_id3
 		AND sdh.source_system_book_id4 = ssbm.source_system_book_id4
+		AND sdh.deal_status <> 5607
 	INNER JOIN #tmp_criteria_filters tf ON ISNULL(tf.trader_id, sdh.trader_id) = sdh.trader_id
 		AND coalesce(tf.commodity_id, sdh.commodity_id,'') = ISNULL(sdh.commodity_id,'')
 		AND coalesce(tf.deal_type_id, sdh.source_deal_type_id,'') =ISNULL( sdh.source_deal_type_id,'')
@@ -104,6 +106,7 @@ BEGIN
 				FROM portfolio_mapping_source pms 
 				WHERE pms.mapping_source_value_id = @mapping_source_value_id AND pms.mapping_source_usage_id = @mapping_source_usage_id) msui ON msui.portfolio_group_id = pms.mapping_source_usage_id
 	INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = pmd.deal_id
+		AND sdh.deal_status <> 5607
 	WHERE pms.mapping_source_value_id = @portfolio_mapping_source_value_id
 	UNION
 	--Portfolio Mapping Book
@@ -115,6 +118,7 @@ BEGIN
 		AND sdh.source_system_book_id2 = ssbm.source_system_book_id2
 		AND sdh.source_system_book_id3 = ssbm.source_system_book_id3
 		AND sdh.source_system_book_id4 = ssbm.source_system_book_id4
+		AND sdh.deal_status <> 5607
 	INNER JOIN (SELECT 
 					portfolio_group_id 
 				FROM portfolio_mapping_source pms 
