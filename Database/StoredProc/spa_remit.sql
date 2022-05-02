@@ -5018,7 +5018,7 @@ BEGIN
 				SELECT ISNULL(CAST(CASE WHEN vt.quantity_volume = 0 THEN NULL ELSE vt.quantity_volume END AS VARCHAR(50)), '') quantity_volume
 			) ou
 			OUTER APPLY (
-				SELECT unit, volume, price, inverse from dbo.FNANormalizeTo1Mw(REPLACE(vt.quantity_unit_field_40_and_41, ' ', ''), ou.quantity_volume, vt.price)
+				SELECT unit, volume, price, inverse from dbo.FNANormalizeRemitUOM(REPLACE(vt.quantity_unit_field_40_and_41, ' ', ''), ou.quantity_volume, vt.price)
 			) rs_conv
 			INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = vt.source_deal_header_id
 			WHERE vt.process_id = @process_id

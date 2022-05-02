@@ -1,7 +1,22 @@
-IF OBJECT_ID(N'dbo.FNANormalizeTo1Mw', N'TF') IS NOT NULL
-    DROP FUNCTION dbo.FNANormalizeTo1Mw;
+SET ANSI_NULLS ON
 GO
-CREATE FUNCTION dbo.FNANormalizeTo1Mw(@quantity_unit NVARCHAR(20), @quantity_volume NUMERIC(20,8), @price NUMERIC(20,8))
+SET QUOTED_IDENTIFIER ON
+GO
+
+/**
+	Function to evaluate Price, UOM supported by Remit submission.
+
+	Parameters 
+	@quantity_unit		: TRM UOM
+	@quantity_volume	: Deal volume
+	@price				: Deal Price
+	Returns table with converted Unit, Volume, Price and the inverse value
+*/
+
+IF OBJECT_ID(N'dbo.FNANormalizeRemitUOM', N'TF') IS NOT NULL
+    DROP FUNCTION dbo.FNANormalizeRemitUOM;
+GO
+CREATE FUNCTION dbo.FNANormalizeRemitUOM(@quantity_unit NVARCHAR(20), @quantity_volume NUMERIC(20,8), @price NUMERIC(20,8))
 RETURNS @normalize TABLE 
 (
     -- Columns returned by the function
