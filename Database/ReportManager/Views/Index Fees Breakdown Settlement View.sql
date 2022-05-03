@@ -33,193 +33,471 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = 'Index Fees Breakdown Settlement View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sql AS VARCHAR(MAX),
+
 		@_source_deal_header_id  AS VARCHAR(MAX),
+
 		@_month_from VARCHAR(50),
+
         @_month_to  VARCHAR(50),
+
         @_as_of_date_from VARCHAR(50),
+
         @_as_of_date_to VARCHAR(50),
+
         @_source_counterparty_id VARCHAR(MAX),
+
         @_contract_id VARCHAR(MAX),
+
         @_deal_reference_id VARCHAR(MAX),
+
         @_broker_id VARCHAR(MAX),
+
         @_fee_type_id VARCHAR(MAX),
+
         @_internal_type VARCHAR(MAX)
+
+    	,@_deal_status VARCHAR(8) = NULL
+
+	    ,@_deal_status_group VARCHAR(4) = NULL
+
+        ,@_commodity_id VARCHAR(MAX)
+
 set @_source_deal_header_id = nullif(  isnull(@_source_deal_header_id,nullif(''@source_deal_header_id'', replace(''@_source_deal_header_id'',''@_'',''@''))),''null'')
+
 set @_source_counterparty_id = nullif(  isnull(@_source_counterparty_id,nullif(''@source_counterparty_id'', replace(''@_source_counterparty_id'',''@_'',''@''))),''null'')
+
 set @_month_from = nullif(  isnull(@_month_from,nullif(''@month_from'', replace(''@_month_from'',''@_'',''@''))),''null'')
+
 set @_month_to = nullif(  isnull(@_month_to,nullif(''@month_to'', replace(''@_month_to'',''@_'',''@''))),''null'')
+
 set @_as_of_date_from = nullif(  isnull(@_as_of_date_from,nullif(''@as_of_date_from'', replace(''@_as_of_date_from'',''@_'',''@''))),''null'')
+
 set @_as_of_date_to = nullif(  isnull(@_as_of_date_to,nullif(''@as_of_date_to'', replace(''@_as_of_date_to'',''@_'',''@''))),''null'')
+
 set @_contract_id = nullif(  isnull(@_contract_id,nullif(''@contract_id'', replace(''@_contract_id'',''@_'',''@''))),''null'')
+
 set @_deal_reference_id = nullif(  isnull(@_deal_reference_id,nullif(''@deal_reference_id'', replace(''@_deal_reference_id'',''@_'',''@''))),''null'')
+
 set @_broker_id = nullif(  isnull(@_broker_id,nullif(''@broker_id'', replace(''@_broker_id'',''@_'',''@''))),''null'')
+
 set @_fee_type_id = nullif(  isnull(@_fee_type_id,nullif(''@fee_type_id'', replace(''@_fee_type_id'',''@_'',''@''))),''null'')
+
 set @_internal_type = nullif(  isnull(@_internal_type,nullif(''@internal_type'', replace(''@_internal_type'',''@_'',''@''))),''null'')
- IF Object_id(N''tempdb..#books'') IS NOT NULL 
+
+SET @_deal_status = nullif(isnull(@_deal_status, nullif(''@deal_status_id'', replace(''@_deal_status_id'', ''@_'', ''@''))), ''null'')
+
+SET @_deal_status_group = nullif(isnull(@_deal_status_group, nullif(''@deal_status_group'', replace(''@_deal_status_group'', ''@_'', ''@''))), ''null'')
+
+set @_commodity_id = nullif(  isnull(@_commodity_id,nullif(''@commodity_id'', replace(''@_commodity_id'',''@_'',''@''))),''null'')
+
+SET @_deal_status_group = isnull(@_deal_status_group, ''a'') 
+
+IF Object_id(N''tempdb..#books'') IS NOT NULL 
+
   DROP TABLE #books 
+
 SELECT sub.entity_id  sub_id,
+
 		stra.entity_id stra_id,
+
 		book.entity_id  book_id,
+
 		sub.entity_name sub_name,
+
 		stra.entity_name  stra_name,
+
 		book.entity_name  book_name,
+
 		ssbm.source_system_book_id1,
+
 		ssbm.source_system_book_id2,
+
 		ssbm.source_system_book_id3,
+
 		ssbm.source_system_book_id4,
+
 		ssbm.logical_name,
+
 		ssbm.book_deal_type_map_id [sub_book_id],
+
 		ssbm.fas_deal_type_value_id [transaction_type],
+
 		sdv.code [transaction_type_name],
+
 		ssbm.sub_book_group1,
+
 		ssbm.sub_book_group2,
+
 		ssbm.sub_book_group3,
+
 		ssbm.sub_book_group4,
+
 		fs.counterparty_id 
+
 		INTO #books
+
 FROM   portfolio_hierarchy book(NOLOCK)
+
 		INNER JOIN portfolio_hierarchy stra(NOLOCK)
+
 			ON  book.parent_entity_id = stra.entity_id
+
 		INNER JOIN portfolio_hierarchy sub(NOLOCK)
+
 			ON  stra.parent_entity_id = sub.entity_id
+
 		INNER JOIN source_system_book_map ssbm
+
 			ON  ssbm.fas_book_id = book.entity_id
+
 		INNER JOIN fas_subsidiaries fs
+
 			ON  fs.fas_subsidiary_id = sub.entity_id
+
 		LEFT JOIN static_data_value sdv
+
 			ON  sdv.[type_id] = 400
+
 			AND ssbm.fas_deal_type_value_id = sdv.value_id
+
 WHERE  1 = 1			
+
 	AND ( ''@sub_id'' = ''NULL''
+
 			OR sub.entity_id IN ( @sub_id ) )
+
 	AND ( ''@stra_id'' = ''NULL''
+
 			OR stra.entity_id IN ( @stra_id ) )
+
 	AND ( ''@book_id'' = ''NULL''
+
 			OR book.entity_id IN ( @book_id ) )
+
 	AND ( ''@sub_book_id'' = ''NULL''
+
 			OR ssbm.book_deal_type_map_id IN ( @sub_book_id ) ) 
+
 SET @_sql = ''
+
 				SELECT   
+
 						ifbs.[value] [fee_per_deal],
+
 						ifbs.volume [total_volume],
+
 						ifbs.[value] / ifbs.volume [rate],
+
 						MAX(ifbs.field_id) [fee_type_id],
+
 						ifbs.field_name [fee_type],
+
 						ifbs.internal_type,
+
 						MAX(ifbs.source_deal_header_id) [source_deal_header_id],
+
 						MAX(sdh.deal_id) [deal_reference_id],
+
 						MAX(ifbs.as_of_date) [as_of_date],
+
 						MAX(sdh.deal_date) [deal_date],
+
 					    MAX(sdh.entire_term_start) [deal_start_date],
+
 					    MAX(sdh.entire_term_end) [deal_end_date],		
+
 						MAX(sc.source_counterparty_id) [source_counterparty_id],			    
+
 					    MAX(sc.counterparty_name) [counterparty_name],
+
 					    MAX(sc.counterparty_desc) [counterparty_description],
+
 					    MAX(cg.contract_id) contract_id,
+
 					    MAX(cg.contract_name) contract,
+
 					    MAX(sdt.source_deal_type_name) [deal_type],
+
 					    MAX(sdh.broker_id)  [broker_id],
+
 						MAX(sc2.counterparty_name) [broker],
+
 					    books.sub_id  sub_id,
+
 						books.stra_id  stra_id,
+
 						books.book_id  book_id,
+
 						books.sub_name AS subsidiary,
+
 						books.stra_name AS strategy,
+
 						books.book_name AS book,
+
 						books.logical_name [sub_book],	'' + 					
+
 						''CAST('' +ISNULL(@_month_from, ''NULL'')  + '' AS DATETIME) [month_from],'' +      
+
 						''CAST('' + ISNULL(@_month_to, ''NULL'')   + '' AS DATETIME) [month_to],'' +       
+
 						''CAST('' + ISNULL(@_as_of_date_from, ''NULL'') + ''  AS DATETIME) [as_of_date_from],'' +
+
 						''CAST('' + ISNULL(@_as_of_date_to , ''NULL'')  + '' AS DATETIME) [as_of_date_to], 
+
 					    MAX(ifbs.term_start) [term_start],
+
 					    MAX(ifbs.term_end) [term_end],
+
 					    MAX(sdd.fixed_price) deal_price,
+
 						MAX(sdd.deal_volume) deal_volume,
+
 						MAX(sdv.code) charge_type
+
+	                    ,sdv_deal_staus.code [Deal Status]
+
+	                    ,sdv_deal_staus.value_id deal_status_id
+
+	                    , '''''' + isnull(@_deal_status_group,'''') + '''''' [deal_status_group]
+
+                        , udf_initiator_aggressor.initiator_aggressor
+
+						,udf_sleeve.sleeve
+
+						,udf_spread.spread
+
+						,sdh.commodity_id 
+
+						,scom.commodity_name [Commodity]
+
 				--[__batch_report__] 		
+
 				FROM index_fees_breakdown_settlement ifbs ''
+
 				 + CASE WHEN @_as_of_date_to IS NOT NULL AND @_as_of_date_from IS NULL  THEN '' INNER JOIN (
+
 					SELECT MAX(as_of_date) as_of_date, source_deal_header_id , field_name
+
 					FROM index_fees_breakdown_settlement
+
 					WHERE as_of_date <= CAST('''''' + @_as_of_date_to + '''''' AS DATETIME)
+
 					GROUP BY source_deal_header_id,field_name
+
 					) tbl 
+
 					ON tbl.source_deal_header_id = ifbs.source_deal_header_id
+
 					AND tbl.field_name = ifbs.field_name
+
 					AND tbl.as_of_date = ifbs.as_of_date
+
 				'' ELSE '''' END
+
 				 +'' INNER JOIN source_deal_header sdh 
-					ON sdh.source_deal_header_id = ifbs.source_deal_header_id  AND sdh.deal_status <> 5607
+
+					ON sdh.source_deal_header_id = ifbs.source_deal_header_id  
+
 				INNER JOIN source_deal_Detail sdd
+
 					ON  sdh.source_deal_header_id = sdd.source_deal_header_id AND sdd.leg = 1
+
 				INNER JOIN dbo.source_counterparty AS sc
+
 					ON ISNULL(ifbs.counterparty_id, sdh.counterparty_id) = sc.source_counterparty_id	
+
 				INNER JOIN dbo.source_deal_type  AS sdt
+
 					ON  sdh.source_deal_type_id = sdt.source_deal_type_id
+
 				INNER JOIN static_data_value sdv
+
 					ON ifbs.internal_type = sdv.value_id
+
 				INNER JOIN 	static_data_type sdt1
+
 					ON sdv.type_id=sdt1.type_id
+
 				LEFT JOIN source_counterparty   AS sc2
+
 					ON  sdh.broker_id = sc2.source_counterparty_id	
+
 			    LEFT JOIN contract_group   AS cg
+
 					ON  ISNULL(ifbs.contract_id, sdh.contract_id) = cg.contract_id	
+
 				INNER JOIN #books books
+
 					ON  books.source_system_book_id1 = sdh.source_system_book_id1
+
 					AND books.source_system_book_id2 = sdh.source_system_book_id2
+
 					AND books.source_system_book_id3 = sdh.source_system_book_id3
+
 					AND books.source_system_book_id4 = sdh.source_system_book_id4
+
 			   INNER JOIN source_book sb1
+
 					ON  sb1.source_book_id = books.source_system_book_id1
+
 			   INNER JOIN source_book sb2
+
 					ON  sb2.source_book_id = books.source_system_book_id2
+
 			   INNER JOIN source_book sb3
+
 					ON  sb3.source_book_id = books.source_system_book_id3
+
 			   INNER JOIN source_book sb4
+
 					ON  sb4.source_book_id = books.source_system_book_id4	
-				WHERE 1=1 AND ifbs.leg = 1 and sdt1.type_id=18700
+                    
+	            LEFT JOIN static_data_value sdv_deal_staus WITH (NOLOCK) ON sdv_deal_staus.value_id = sdh.deal_status
+                ''+
+                    
+                CASE WHEN @_deal_status_group = ''o'' THEN
+                    '' INNER JOIN deal_status_group dsg ON dsg.status_value_id = sdh.deal_status ''
+                WHEN @_deal_status_group = ''u'' THEN
+                    '' INNER JOIN (SELECT value_id FROM static_data_value WHERE type_id = 5600 EXCEPT SELECT status_value_id FROM deal_status_group) unofficial_status ON unofficial_status.value_id = sdh.deal_status ''
+                ELSE '''' END    
+
+				+'' 
+                
+                OUTER APPLY (
+					SELECT  CASE WHEN uddf.udf_value = ''''1'''' THEN ''''Yes'''' WHEN uddf.udf_value = ''''0'''' THEN ''''No'''' ELSE '''''''' END [initiator_aggressor]
+					FROM user_defined_deal_fields_template uddft
+					inner join source_deal_header_template sdht on sdht.template_id = uddft.template_id
+					inner join user_defined_deal_fields uddf on uddf.udf_template_id = uddft.udf_template_id AND sdh.source_deal_header_id = uddf.source_deal_header_id
+					where uddft.template_id = sdh.template_id
+					AND uddft.field_name = -10000329	--Initiator/Aggressor
+				) udf_initiator_aggressor
+
+				OUTER APPLY (
+					SELECT  CASE WHEN uddf.udf_value = ''''y'''' THEN ''''Yes'''' WHEN uddf.udf_value = ''''n'''' THEN ''''No'''' ELSE '''''''' END [sleeve]
+					FROM user_defined_deal_fields_template uddft
+					inner join source_deal_header_template sdht on sdht.template_id = uddft.template_id
+					inner join user_defined_deal_fields uddf on uddf.udf_template_id = uddft.udf_template_id AND sdh.source_deal_header_id = uddf.source_deal_header_id
+					where uddft.template_id = sdh.template_id
+					AND uddft.field_name = -10000335	--Sleeve
+				) udf_sleeve
+
+				OUTER APPLY (
+					SELECT  CASE WHEN uddf.udf_value = ''''y'''' THEN ''''Yes'''' WHEN uddf.udf_value = ''''n'''' THEN ''''No'''' ELSE '''''''' END [spread]
+					FROM user_defined_deal_fields_template uddft
+					inner join source_deal_header_template sdht on sdht.template_id = uddft.template_id
+					inner join user_defined_deal_fields uddf on uddf.udf_template_id = uddft.udf_template_id AND sdh.source_deal_header_id = uddf.source_deal_header_id
+					where uddft.template_id = sdh.template_id
+					AND uddft.field_name = -10000336	--Spread
+				) udf_spread
+
+                LEFT JOIN source_commodity scom ON scom.source_commodity_id = sdh.commodity_id
+
+                WHERE 1=1 AND ifbs.leg = 1 and sdt1.type_id=18700
+
 			''			
+
 			+
+
 			CASE WHEN @_month_from IS NULL AND @_month_to IS NULL THEN ''''
+
 			 WHEN @_month_to IS NULL THEN '' AND ifbs.term_start >= CAST('''''' + @_month_from + '''''' AS DATETIME)'' 
+
 			 WHEN @_month_from IS NULL THEN '' AND ifbs.term_end <= CAST('''''' + @_month_to + '''''' AS DATETIME)'' 
+
 			 ELSE '' AND ifbs.term_start >= CAST('''''' + @_month_from + '''''' AS DATETIME) AND ifbs.term_end <= CAST('''''' + @_month_to + '''''' AS DATETIME)'' END 
+
 			+
+
 			CASE WHEN @_as_of_date_from IS NULL AND @_as_of_date_to IS NULL THEN ''''
+
 			 WHEN @_as_of_date_from IS NOT NULL AND @_as_of_date_to IS NULL THEN '' AND ifbs.as_of_date = CAST('''''' + @_as_of_date_from + '''''' AS DATETIME)'' 
+
 			 WHEN @_as_of_date_from IS NOT NULL AND @_as_of_date_to IS NOT NULL THEN '' AND ifbs.as_of_date BETWEEN CAST('''''' + @_as_of_date_from + '''''' AS DATETIME) AND CAST('''''' + @_as_of_date_to + '''''' AS DATETIME)''
+
 			 ELSE '''' END
+
 			+ 
+
 			CASE WHEN @_source_deal_header_id IS NULL THEN '''' ELSE '' AND sdh.source_deal_header_id IN ('' + @_source_deal_header_id + '')'' END 
+
 			+ 
+
 			CASE WHEN @_deal_reference_id IS NULL THEN '''' ELSE '' AND sdh.deal_id IN ('''''' + @_deal_reference_id + '''''')'' END 
+
 			+ 
+
 			CASE WHEN @_source_counterparty_id IS NULL THEN '''' ELSE '' AND sdh.counterparty_id IN ('' + @_source_counterparty_id + '')'' END 	
+
 			+ 
+
 			CASE WHEN @_contract_id IS NULL THEN '''' ELSE '' AND sdh.contract_id IN ('' + @_contract_id + '')'' END 	
+
 			+
+
 		    CASE WHEN @_broker_id IS NULL THEN '''' ELSE '' AND sdh.broker_id IN ('' + @_broker_id + '')'' END 
+
 		    +
+
 		    CASE WHEN @_fee_type_id IS NULL THEN '''' ELSE '' AND ifbs.field_id IN ('' + @_fee_type_id + '')'' END
+
 			+
+
 		    CASE WHEN @_internal_type IS NULL THEN '''' ELSE '' AND ifbs.internal_type IN ('' + @_internal_type + '')'' END 				
-			 				
+
+			+ 
+            
+            CASE WHEN @_deal_status IS NOT NULL THEN '' AND sdh.deal_status IN('' + @_deal_status + '')'' ELSE '''' END	
+
+			+ 
+            
+            CASE WHEN @_commodity_id IS NOT NULL THEN '' AND scom.source_commodity_id ='' + @_commodity_id + '''' ELSE '''' END				
+
  			SET @_sql = @_sql +			
+
 					'' 
+
 				GROUP BY  
+
 							ifbs.field_name, 
+
 							ifbs.[value],
+
 							ifbs.[volume],
+
 							books.sub_id,
+
 							books.stra_id,
+
 							books.book_id,
+
 							books.sub_name,
+
 							books.stra_name,
+
 							books.book_name,
+
 							books.logical_name,
+
 							ifbs.internal_type,
+
 							ifbs.source_deal_header_id
+
+                            ,sdv_deal_staus.code
+
+	                        ,sdv_deal_staus.value_id
+
+                            , udf_initiator_aggressor.initiator_aggressor
+
+                            ,udf_sleeve.sleeve
+                            
+                            ,udf_spread.spread
+
+							,sdh.commodity_id
+
+							,scom.commodity_name
+
 						''
+
 EXEC (@_sql)', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
@@ -1408,6 +1686,270 @@ EXEC (@_sql)', report_id = @report_id_data_source_dest,
 		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
 		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
 		SELECT TOP 1 ds.data_source_id AS source_id, 'charge_type' AS [name], 'Charge Type' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+	            AND dsc.name =  'Deal Status'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Deal Status'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND dsc.name =  'Deal Status'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'Deal Status' AS [name], 'Deal Status' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+	            AND dsc.name =  'deal_status_group'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Deal Status Group'
+			   , reqd_param = NULL, widget_id = 2, datatype_id = 5, param_data_source = 'SELECT ''a'', ''All'' UNION' + CHAR(10) + 'SELECT ''o'', ''Official'' UNION' + CHAR(10) + 'SELECT ''u'', ''Unofficial''', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 1
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND dsc.name =  'deal_status_group'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'deal_status_group' AS [name], 'Deal Status Group' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 5 AS datatype_id, 'SELECT ''a'', ''All'' UNION' + CHAR(10) + 'SELECT ''o'', ''Official'' UNION' + CHAR(10) + 'SELECT ''u'', ''Unofficial''' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 1 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+	            AND dsc.name =  'deal_status_id'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Deal Status Id'
+			   , reqd_param = NULL, widget_id = 2, datatype_id = 4, param_data_source = 'exec spa_StaticDataValues ''h'',@type_id=5600', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND dsc.name =  'deal_status_id'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'deal_status_id' AS [name], 'Deal Status Id' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 4 AS datatype_id, 'exec spa_StaticDataValues ''h'',@type_id=5600' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+	            AND dsc.name =  'initiator_aggressor'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Initiator Aggressor'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND dsc.name =  'initiator_aggressor'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'initiator_aggressor' AS [name], 'Initiator Aggressor' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+	            AND dsc.name =  'sleeve'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Sleeve'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND dsc.name =  'sleeve'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'sleeve' AS [name], 'Sleeve' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+	            AND dsc.name =  'spread'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Spread'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND dsc.name =  'spread'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'spread' AS [name], 'Spread' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+	            AND dsc.name =  'Commodity'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Commodity'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = NULL
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND dsc.name =  'Commodity'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'Commodity' AS [name], 'Commodity' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, NULL AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+	            AND dsc.name =  'commodity_id'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'Commodity Id'
+			   , reqd_param = NULL, widget_id = 2, datatype_id = 4, param_data_source = 'EXEC spa_source_commodity_maintain @flag = ''a''', param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 2, key_column = 0, required_filter = 0
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Index Fees Breakdown Settlement View'
+			AND dsc.name =  'commodity_id'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'commodity_id' AS [name], 'Commodity Id' AS ALIAS, NULL AS reqd_param, 2 AS widget_id, 4 AS datatype_id, 'EXEC spa_source_commodity_maintain @flag = ''a''' AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,2 AS column_template, 0 AS key_column, 0 AS required_filter				
 		FROM sys.objects o
 		INNER JOIN data_source ds ON ds.[name] = 'Index Fees Breakdown Settlement View'
 			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
