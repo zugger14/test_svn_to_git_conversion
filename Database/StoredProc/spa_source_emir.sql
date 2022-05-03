@@ -63,7 +63,8 @@ SET NOCOUNT ON
 
 DECLARE @ssbm_table_name VARCHAR(120),
 		@deal_header_table_name VARCHAR(120),
-		@deal_detail_table_name VARCHAR(120)
+		@deal_detail_table_name VARCHAR(120), @tr_rmm INT, @file_transfer_endpoint_id INT, @xml_string NVARCHAR(MAX),
+	    @result NVARCHAR(10), @url NVARCHAR(500), @desc NVARCHAR(1000), @emir_file_name VARCHAR(1000), @user_name VARCHAR(100) = dbo.FNADBUser()
 
 SET @ssbm_table_name = dbo.FNAProcessTableName('ssbm', dbo.FNADBUser(), @filter_table_process_id)
 SET @deal_header_table_name = dbo.FNAProcessTableName('deal_header', dbo.FNADBUser(), @filter_table_process_id)
@@ -146,12 +147,80 @@ BEGIN
 		deal_group_id INT,
 		ext_deal_id VARCHAR(512) COLLATE DATABASE_DEFAULT,
 		confirm_status VARCHAR(512) COLLATE DATABASE_DEFAULT,
-		[commodity_name] VARCHAR(1000) COLLATE DATABASE_DEFAULT
+		[commodity_name] VARCHAR(1000) COLLATE DATABASE_DEFAULT,
+		[term_frequency] NCHAR(1) COLLATE DATABASE_DEFAULT,
+		profile_granularity INT
+
 	)
 
 	SET @_sql = '
-		INSERT INTO #temp_deals
-		SELECT * FROM ' + @deal_header_table_name + '
+		INSERT INTO #temp_deals (
+			source_deal_header_id
+			, deal_id
+			, template_id
+			, counterparty_id
+			, sub_book_id
+			, deal_date
+			, physical_financial_flag
+			, entire_term_start
+			, entire_term_end
+			, source_deal_type_id
+			, deal_sub_type_type_id
+			, option_flag
+			, option_type
+			, option_excercise_type
+			, header_buy_sell_flag
+			, create_ts
+			, update_ts
+			, internal_desk_id
+			, product_id
+			, commodity_id
+			, block_define_id
+			, deal_status
+			, description1
+			, description2
+			, source_trader_id
+			, contract_id
+			, deal_group_id
+			, ext_deal_id
+			, confirm_status
+			, [commodity_name]
+			, [term_frequency]
+			, profile_granularity
+		)
+		SELECT source_deal_header_id
+			, deal_id
+			, template_id
+			, counterparty_id
+			, sub_book_id
+			, deal_date
+			, physical_financial_flag
+			, entire_term_start
+			, entire_term_end
+			, source_deal_type_id
+			, deal_sub_type_type_id
+			, option_flag
+			, option_type
+			, option_excercise_type
+			, header_buy_sell_flag
+			, create_ts
+			, update_ts
+			, internal_desk_id
+			, product_id
+			, commodity_id
+			, block_define_id
+			, deal_status
+			, description1
+			, description2
+			, source_trader_id
+			, contract_id
+			, deal_group_id
+			, ext_deal_id
+			, confirm_status
+			, [commodity_name]
+			, [term_frequency]
+			, profile_granularity
+		FROM ' + @deal_header_table_name + '
 		WHERE 1 = 1 
 	' + IIF(@pnl_deals IS NOT NULL, ' AND source_deal_header_id IN ('+ @pnl_deals +') ', '')
 	+ IIF(NULLIF(@deal_date_from,'') IS NOT NULL, ' AND deal_date >= ''' + @deal_date_from + '''', '')
@@ -434,7 +503,7 @@ BEGIN
 			beneficiary_id = MAX(deal_cpty.LEI),
 			trading_capacity = 'P',
 			counterparty_side = UPPER(MAX(sdh.header_buy_sell_flag)),
-			commercial_or_treasury = '',
+			commercial_or_treasury = 'N',
 			clearing_threshold = 'N',
 			contarct_mtm_value = IIF(MAX(sdt.source_deal_type_name) <> 'Option',
 									CASE when @level = 'T' then NULL
@@ -471,13 +540,8 @@ BEGIN
 			excess_collateral_posted_currency = NULL,
 			excess_collateral_received = NULL,
 			excess_collateral_received_currency = NULL,
-			contract_type = CASE WHEN MAX(sdt.source_deal_type_name) = 'Future' THEN 'FU' 
-									WHEN MAX(sdt.source_deal_type_name) = 'Swap' THEN 'SW' 
-									WHEN MAX(sdt.source_deal_type_name) = 'Option' THEN 'OP' 
-									WHEN MAX(sdt.source_deal_type_name) = 'Forward' THEN 'FW' 
-									ELSE 'OT' 
-							END,
-			asset_class = CASE WHEN MAX(scm.commodity_id) = 'FX' THEN 'CU' ELSE 'CO' END,--MAX(deal_udf.[Asset Class]),
+			contract_type = MAX(gmv_contract_type.clm2_value),
+			asset_class = MAX(gmv_asset.clm2_value),
 			product_classification_type = 'C',--MAX(deal_udf.[Product Classification Type]),
 			product_classification = MAX(gmv1.clm3_value),--MAX(deal_udf.[Product Classification]),
 			product_identification_type = IIF(MAX(deal_udf.[Pure OTC]) = 'Y', '', 'I'),
@@ -507,7 +571,7 @@ BEGIN
 			effective_date = CONVERT(VARCHAR(10), CONVERT(DATETIME, MAX(sdh.deal_date), 103), 126),
 			maturity_date = CONVERT(VARCHAR(10), CONVERT(DATETIME, MAX(sdd.contract_expiration_date), 103), 126),
 			termination_date = NULL,
-			settlement_date = NULL,
+			settlement_date = CONVERT(VARCHAR(10),MAX(sdh.entire_term_end), 126),
 			aggreement_type = MAX(cg.[contract_name]),
 			aggreement_version = NULL,
 			confirm_ts = LEFT(STUFF(STUFF(REPLACE(MAX(deal_udf.[Execution Timestamp]), '-', 'T'), 7, 0, '-'), 5, 0, '-'), 19) + 'Z',--MAX(deal_udf.[Execution Timestamp]),--CONVERT(VARCHAR(10), CONVERT(DATETIME, MAX(sdh.deal_date), 103),126) + 'T' + CAST(CAST(MAX(sdh.deal_date) AS TIME) AS VARCHAR(8)) + 'Z',
@@ -547,7 +611,13 @@ BEGIN
 			commodity_details = CASE WHEN MAX(scm.commodity_id) = 'FX' THEN 'OT' ELSE 'EM' END,
 			delivery_point = NULL,
 			interconnection_point = NULL,
-			load_type = NULL,
+			load_type = CASE WHEN MAX(ISNULL(sdh.internal_desk_id,17300))=17302 THEN 'SH'
+							WHEN MAX(scm.commodity_name) IN ('Gas', 'Natural Gas', 'LNG', 'NG') THEN 'GD' 
+							WHEN MAX(sdv_block.code) LIKE '%Base%' THEN 'BL'
+							WHEN MAX(sdv_block.code) LIKE '%Peak%' THEN 'PL'
+							WHEN MAX(sdv_block.code) LIKE '%Offpeak%' THEN 'OP'
+							ELSE 'OT'
+						END,
 			load_delivery_interval = 'T' + CAST(CAST(GETDATE() AS TIME) AS VARCHAR(8)) + 'Z',
 			delivery_start_date = CONVERT(VARCHAR(10), CONVERT(DATETIME, MAX(sdh.entire_term_start), 103),126) + 'T' + CAST(CAST(MAX(sdh.entire_term_start) AS TIME) AS VARCHAR(8)) + 'Z',
 			delivery_end_date = CONVERT(VARCHAR(10), CONVERT(DATETIME, MAX(sdh.entire_term_end), 103),126) + 'T' + CAST(CAST(MAX(sdh.entire_term_start) AS TIME) AS VARCHAR(8)) + 'Z',
@@ -581,7 +651,9 @@ BEGIN
 			submission_status = 39500,
 			submission_date = GETDATE(),
 			confirmation_date = GETDATE(),
-			process_id = @process_id
+			process_id = @process_id,
+			document_id = IIF(MAX(emr.document_id) IS NULL, ROW_NUMBER() OVER(PARTITION BY sdh.source_deal_header_id ORDER BY sdh.source_deal_header_id), MAX(emr.document_id) + 1 ),
+			commodity_id = MAX(scm.commodity_id)
 		INTO #temp_source_emir
 		--SELECT  * 
 		FROM #temp_deals sdh
@@ -623,6 +695,20 @@ BEGIN
 				ON gmh.mapping_table_id = gmva.mapping_table_id
 			WHERE gmh.mapping_name = 'Venue of Execution'
 		) gmv ON clm7_value = sco.counterparty_id
+		LEFT JOIN (
+			SELECT gmvcc.clm1_value, gmvcc.clm2_value
+			FROM generic_mapping_values gmvcc
+			INNER JOIN generic_mapping_header gmh1
+				ON gmh1.mapping_table_id = gmvcc.mapping_table_id
+			WHERE gmh1.mapping_name = 'Emir Asset Class and Subclass'
+		) gmv_asset ON gmv_asset.clm1_value = CAST(sdh.commodity_id AS VARCHAR(10))
+		LEFT JOIN (
+			SELECT gmvcc.clm1_value, gmvcc.clm2_value
+			FROM generic_mapping_values gmvcc
+			INNER JOIN generic_mapping_header gmh1
+				ON gmh1.mapping_table_id = gmvcc.mapping_table_id
+			WHERE gmh1.mapping_name = 'Emir Contract Type'
+		) gmv_contract_type ON gmv_contract_type.clm1_value = CAST(sdh.source_deal_type_id AS VARCHAR(10))		  
 		LEFT JOIN (
 			SELECT gmvx.mapping_table_id, gmvx.clm1_value, gmvx.clm2_value, gmvx.clm3_value, gmvx.clm4_value,
 				   gmvx.clm5_value, gmvx.clm6_value, gmvx.clm7_value, gmvx.clm8_value, gmvx.clm9_value
@@ -681,6 +767,12 @@ BEGIN
 		) s ON sdd.curve_id = s.[index]
 			AND CONVERT(VARCHAR(10), sdd.contract_expiration_date, 120) = CONVERT(VARCHAR(10), s.expiration_date, 120)
 			AND sdh.option_type = s.call_put
+		OUTER APPLY(
+			SELECT TOP 1 emir.document_id
+			FROM source_emir emir
+			WHERE emir.source_deal_header_id = sdh.source_deal_header_id
+			ORDER BY emir.document_id DESC
+		) emr
 		WHERE 1 = 1
 		-- AND sub_cpty.LEI IS NOT NULL
 			AND ((sco.counterparty_id IN ('ICE', 'CME', 'EEX') AND sdt.source_deal_type_name <> 'Spot') OR (sco.counterparty_id NOT IN ('ICE', 'CME', 'EEX')))
@@ -720,7 +812,7 @@ BEGIN
 				delivery_currency_2, exchange_rate_1, forward_exchange_rate, exchange_rate_basis, commodity_base, commodity_details, delivery_point, interconnection_point, load_type, 
 				load_delivery_interval, delivery_start_date, delivery_end_date, duration, days_of_the_week, delivery_capacity, quantity_unit, price_time_interval_quantity, option_type, option_style, 
 				strike_price, strike_price_notation, underlying_maturity_date, seniority, reference_entity, frequency_of_payment, calculation_basis, series, version, index_factor, tranche, 
-				attachment_point, detachment_point, action_type, level, report_type, create_date_from, create_date_to, submission_status, submission_date, confirmation_date, process_id
+				attachment_point, detachment_point, action_type, level, report_type, create_date_from, create_date_to, submission_status, submission_date, confirmation_date, process_id, document_id, commodity_id
 			)
 			SELECT * FROM #temp_source_emir
 			
@@ -833,12 +925,6 @@ BEGIN
 
 			DECLARE @commercial_or_treasury_non VARCHAR(10) = '''Y'',''N'''
 			
-			INSERT INTO #temp_messages ([source_deal_header_id], [column], [messages])
-			SELECT DISTINCT source_deal_header_id, 'commercial_or_treasury', 'commercial_or_treasury does not match the format'
-			FROM source_emir
-			WHERE commercial_or_treasury NOT IN (CASE WHEN nature_of_reporting_cpty = 'N' AND level = 'T' THEN @commercial_or_treasury_non ELSE '' END)
-				AND process_id = @process_id
-
 			INSERT INTO #temp_messages ([source_deal_header_id], [column], [messages])
 			SELECT DISTINCT source_deal_header_id, 'commercial_or_treasury', 'commercial_or_treasury cannot be blank when nature of counterparty populated with N AND level with T'
 			FROM source_emir
@@ -1097,14 +1183,6 @@ BEGIN
 			WHERE NULLIF(underlying, '') IS NOT NULL 
 				AND underlying NOT IN ('I','A','U','B','X')
 				AND process_id = @process_id
-
-			INSERT INTO #temp_messages ([source_deal_header_id], [column], [messages])
-			SELECT DISTINCT source_deal_header_id, 'underlying_identification', 'underlying_identification cannot be blank'
-			FROM source_emir
-			WHERE NULLIF(underlying, '') IS NOT NULL 
-				AND NULLIF(underlying_identification, '') IS NULL
-				AND process_id = @process_id
-				AND @level <> 'M'
 
 			INSERT INTO #temp_messages ([source_deal_header_id], [column], [messages])
 			SELECT DISTINCT source_deal_header_id, 'underlying_identification', 'underlying_identification does not match the format'
@@ -3293,251 +3371,492 @@ BEGIN
 	@subission_type = 44704 AND @level_mifid = T MiFID Trade level
 	*******************************************/
 	DECLARE @sql_str VARCHAR(MAX)
+	DECLARE @file_path VARCHAR(MAX), @trade_id NVARCHAR(100), @file_name_export NVARCHAR(MAX) = '', @temp_note_file_path NVARCHAR(100), @remote_directory NVARCHAR(2000)
+	SELECT @file_path = CONCAT(cs.document_path, '\temp_note\')
+	FROM connection_string cs
+
+	SELECT @tr_rmm = ISNULL(gmv.clm2_value, -1)
+	FROM generic_mapping_header gmh
+	INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id
+	WHERE mapping_name = 'Regulatory Repository' AND gmv.clm1_value = CAST(@submission_type AS NVARCHAR(10))
+	
+	DECLARE @document_usage NVARCHAR(100)
+	SELECT @document_usage = gmv.clm1_value
+	FROM generic_mapping_header gmh
+	INNER JOIN generic_mapping_values gmv
+		ON gmv.mapping_table_id = gmh.mapping_table_id
+	WHERE gmh.mapping_name = 'Document Usage'
 
 	IF @submission_type = 44703 AND @level IN ('P', 'T')
-	BEGIN
-		SET @sql_str = '
-			SELECT '''' [*Comments],				   
-				   CASE
-						WHEN se.action_type = ''N'' THEN ''New''
-						WHEN se.action_type = ''M'' THEN ''Modify''
-						WHEN se.action_type = ''E'' THEN ''Error''
-						WHEN se.action_type = ''C'' THEN ''Cancel''
-						WHEN se.action_type = ''V'' THEN ''Valuation update''
-						WHEN se.action_type = ''Z'' THEN ''Compression''
-						WHEN se.action_type = ''O'' THEN ''Other''				
-				   END [Action],
-				   ''EULITE1.0'' [Message Version],
-				   ''Trade State'' [Message Type],
-				   ISNULL(se.reporting_entity_id, '''') [Report submitting entity ID],
-				   ISNULL(se.counterparty_id, '''') [Submitted For Party],
-				   ISNULL(se.other_counterparty_id, '''') [Trade Party 1 - ID Type],
-				   ISNULL(se.counterparty_id, '''') [Trade Party 1 - ID],
-				   ISNULL(se.other_counterparty_id, '''') [Trade Party 2 - ID Type],
-				   ISNULL(se.counterparty_name, '''') [Trade Party 2 - ID],
-				   ''ESMA'' [Trade Party 1 - Reporting Destination],
-				   ''ESMA'' [Trade Party 2 - Reporting Destination],
-				   '''' [Trade Party 1 - Execution Agent ID],
-				   '''' [Trade Party 2 - Execution Agent ID],
-				   '''' [Trade Party 1 - Third Party Viewer ID- Party 1],
-				   '''' [Trade Party 2 - Third Party Viewer ID- Party 2],
-				   ''OTC'' [Exchange Traded Indicator],
-				   ISNULL(se.counterparty_country, '''') [Country of the Other Counterparty - Trade Party 1 ],
-				   ISNULL(sdv_country.code, '''') [Country of the Other Counterparty - Trade Party 2],
-				   ISNULL(se.corporate_sector, '''') [Corporate sector of the reporting counterparty - Trade Party 1  ],
-				   ISNULL(se.corporate_sector2, '''') [Corporate sector of the reporting counterparty - Trade Party 2],
-				   ISNULL(se.nature_of_reporting_cpty, '''') [Nature of the Reporting Counterparty - Trade Party 1],
-				   ISNULL(se.nature_of_reporting_cpty2, '''') [Nature of the Reporting Counterparty - Trade Party 2],
-				   '''' [Broker ID - Trade Party 1],
-				   ISNULL(se.broker_id, '''') [Broker ID - Trade Party 2],
-				   '''' [Clearing Member ID - Trade Party 1],
-				   '''' [Clearing Member ID - Trade Party 2],
-				   ISNULL(se.beneficiary_type_id, '''') [Type of ID of the Beneficiary - Trade Party 1],
-				   ISNULL(se.beneficiary_id, '''') [Beneficiary ID - Trade Party 1],
-				   '''' [Type of ID of the Beneficiary - Trade Party 2],
-				   '''' [Beneficiary ID - Trade Party 2],
-				   ISNULL(se.trading_capacity, '''') [Trading Capacity - Trade Party 1],
-				   ISNULL(se.trading_capacity, '''') [Trading Capacity - Trade Party 2],
-				   ISNULL(se.counterparty_side, '''') [Counterparty Side - Trade Party 1],
-				   CASE WHEN ISNULL(se.counterparty_side, '''') = ''S'' THEN ''B'' ELSE ''S'' END [Counterparty Side - Trade Party 2],
-				   '''' [Directly linked to commercial activity or treasury financing Indicator - Trade Party 1],
-				   ISNULL(se.commercial_or_treasury, '''') [Directly linked to commercial activity or treasury financing Indicator - Trade Party 2],
-				   '''' [Clearing Threshold - Trade Party 1 ],
-				   ISNULL(se.clearing_threshold, '''') [Clearing Threshold - Trade Party 2 ],
-				   '''' [Collateral Portfolio Code - Trade Party 1 ],
-				   '''' [Collateral Portfolio Code - Trade Party 2 ],
-				   ISNULL(se.contract_type, '''') [Contract type],
-				   ISNULL(se.asset_class, '''') [Asset Class],
-				   ISNULL(se.product_classification_type, '''') [Product Classification Type],
-				   ISNULL(se.product_classification, '''') [Product Classification],
-				   ISNULL(se.product_identification_type, '''') [Product identification type],
-				   ISNULL(se.product_identification, '''') [Product identification],
-				   ISNULL(se.underlying, '''') [Underlying identification type],
-				   ISNULL(se.underlying_identification, '''') [Underlying identification],
-				   ISNULL(se.notional_currency_1, '''') [Notional Currency 1],
-				   ISNULL(se.notional_currency_2, '''') [Notional Currency 2],
-				   ISNULL(se.derivable_currency, '''') [Deliverable currency],
-				   ISNULL(se.trade_id, '''') [Trade ID],
-				   ISNULL(se.report_tracking_no, '''') [Report Tracking Number],
-				   ISNULL(se.complex_trade_component_id, '''') [Complex Trade Component ID],
-				   ISNULL(se.exec_venue, '''') [Venue of execution ],
-				   ISNULL([compression], '''') [Compression],
-				   dbo.FNARemoveTrailingZeroes(ROUND(price_rate, 4)) [Price / rate ],
-				   ISNULL(price_notation, '''') [Price notation],
-				   ISNULL(price_currency, '''') [Currency of Price],
-				   dbo.FNARemoveTrailingZeroes(ROUND(notional_amount, 4)) [Notional],
-				   price_multiplier [Price Multiplier],
-				   quantity [Quantity],
-				   up_front_payment [Up-front payment],
-				   ISNULL(delivery_type, '''') [Delivery Type],
-				   ISNULL(execution_timestamp, '''') [Execution Timestamp],
-				   ISNULL(CONVERT(VARCHAR(10), effective_date, 120), '''') [Effective Date],
-				   ISNULL(CONVERT(VARCHAR(10), maturity_date, 120), '''') [Maturity date],
-				   ISNULL(termination_date, '''') [Termination Date],
-				   ISNULL(settlement_date, '''') [Settlement Date],
-				   ISNULL(aggreement_type, '''') [Master Agreement Type],
-				   ISNULL(aggreement_version, '''') [Master Agreement Version],
-				   ISNULL(confirm_ts, '''') [Confirmation timestamp],
-				   ISNULL(confirm_means, '''') [Confirmation means],
-				   ISNULL(clearing_obligation, '''') [Clearing obligation],
-				   ISNULL(cleared, '''') [Cleared],
-				   ISNULL(clearing_ts, '''') [Clearing timestamp],
-				   ISNULL(ccp, '''') [CCP],
-				   ISNULL(intra_group, '''') [Intragroup],
-				   fixed_rate_leg_1 [Fixed rate of leg 1],
-				   fixed_rate_leg_2 [Fixed rate of leg 2],
-				   ISNULL(fixed_rate_day_count_leg_1, '''') [Fixed rate day count leg 1],
-				   ISNULL(fixed_rate_day_count_leg_2, '''') [Fixed rate day count leg 2],
-				   ISNULL(fixed_rate_payment_feq_time_leg_1, '''') [Fixed rate payment frequency leg 1 -time period],
-				   ISNULL(fixed_rate_payment_feq_mult_leg_1, '''') [Fixed rate payment frequency leg 1 - multiplier],
-				   ISNULL(fixed_rate_payment_feq_time_leg_2, '''') [Fixed rate payment frequency leg 2 - time period],
-				   ISNULL(fixed_rate_payment_feq_mult_leg_2, '''') [Fixed rate payment frequency leg 2 - multiplier],
-				   ISNULL(float_rate_payment_feq_time_leg_1, '''') [Floating rate payment frequency leg 1 - time period],
-				   ISNULL(float_rate_payment_feq_mult_leg_1, '''') [Floating rate payment frequency leg 1 - multiplier],
-				   ISNULL(float_rate_payment_feq_time_leg_2, '''') [Floating rate payment frequency leg 2 - time period],
-				   ISNULL(float_rate_payment_feq_mult_leg_2, '''') [Floating rate payment frequency leg 2 - multiplier],
-				   ISNULL(float_rate_reset_freq_leg_1_time, '''') [Floating rate reset frequency leg 1 - time period],
-				   ISNULL(float_rate_reset_freq_leg_1_mult, '''') [Floating rate reset frequency leg 1 - multiplier],
-				   ISNULL(float_rate_reset_freq_leg_2_time, '''') [Floating rate reset frequency leg 2- time period],
-				   ISNULL(float_rate_reset_freq_leg_2_mult, '''') [Floating rate reset frequency leg 2 - multiplier],
-				   ISNULL(float_rate_leg_1, '''') [Floating rate of leg 1],
-				   float_rate_ref_period_leg_1_time [Floating rate reference period leg 1 - time period],
-				   float_rate_ref_period_leg_1_mult [Floating rate reference period leg 1 - multiplier],
-				   ISNULL(float_rate_leg_2, '''') [Floating rate of leg 2],
-				   ISNULL(float_rate_ref_period_leg_2_time, '''') [Floating rate reference period leg 2 - time period],
-				   float_rate_ref_period_leg_2_mult [Floating rate reference period leg 2 -multiplier],
-				   ISNULL(delivery_currency_2, '''') [Delivery Currency 2],
-				   exchange_rate_1 [Exchange rate 1],
-				   forward_exchange_rate [Forward exchange rate],
-				   ISNULL(exchange_rate_basis, '''') [Exchange rate basis],
-				   ISNULL(commodity_base, '''') [Commodity base],
-				   ISNULL(commodity_details, '''') [Commodity details],
-				   ISNULL(delivery_point, '''') [Delivery point or zone],
-				   ISNULL(interconnection_point, '''') [Interconnection Point ],
-				   ISNULL(load_type, '''') [Load type],
-				   ISNULL(load_delivery_interval, '''') [Load Delivery Intervals],
-				   ISNULL(delivery_start_date, '''') [Delivery Start Date AND Time],
-				   ISNULL(delivery_end_date, '''') [Delivery End Date AND Time],
-				   ISNULL(duration, '''') [Duration],
-				   ISNULL(days_of_the_week, '''') [Days of the Week],
-				   ISNULL(delivery_capacity, '''') [Delivery Capacity],
-				   ISNULL(quantity_unit, '''') [Quantity Unit ],
-				   price_time_interval_quantity [Price/time interval quantities],
-				   ISNULL(se.option_type, '''') [Option Type],
-				   ISNULL(se.option_style, '''') [Option exercise style ],
-				   strike_price [Strike price (cap/floor rate)],
-				   ISNULL(strike_price_notation, '''') [Strike price notation],
-				   ISNULL(underlying_maturity_date, '''') [Maturity Date of the Underlying],
-				   ISNULL(seniority, '''') [Seniority],
-				   ISNULL(reference_entity, '''') [Reference Entity],
-				   ISNULL(frequency_of_payment, '''') [Frequency of Payment],
-				   ISNULL(calculation_basis, '''') [The calculation basis],
-				   series [Series],
-				   [version] [Version],
-				   ISNULL(dbo.FNARemoveTrailingZeroes(ROUND(index_factor, 4)), '''') [Index factor],
-				   ISNULL(tranche, '''') [Tranche],
-				   ISNULL(attachment_point, '''') [Attachment point],
-				   ISNULL(detachment_point, '''') [Detachment Point],
-				   ISNULL(action_type, '''') [Action Type - Trade Party 1],
-				   ISNULL(action_type, '''') [Action Type - Trade Party 2],
-				   ISNULL([level], '''') [Level],
-				   ISNULL(reporting_timestamp, '''') [As of Date/Time],
-				   '''' [Trade Party 1 - Event ID],
-				   '''' [Trade Party 2 - Event ID],
-				   '''' [Lifecycle Event],
-				   '''' [Data Submitter Message ID],
-				   '''' [Reserved - Participant Use 1],
-				   '''' [Reserved - Participant Use 2],
-				   '''' [Reserved - Participant Use 3],
-				   '''' [Reserved - Participant Use 4],
-				   '''' [Reserved - Participant Use 5],
-				   '''' [Trade Party 1 - Branch Location],
-				   '''' [Trade Party 2 - Branch Location],
-				   '''' [Trade Party 2 - Third Party Viewer ID Type],
-				   '''' [Trade Party 2 - Third Party Viewer ID ],
-				   '''' [Product ID Type],
-				   '''' [Product ID],
-				   '''' [Trade Party 1 - Collateralization],
-				   '''' [Trade Party 2 - Collateralization],
-				   '''' [Trade Party 1 - Collateral Portfolio],
-				   '''' [Trade Party 2 - Collateral Portfolio],
-				   '''' [NA1],
-				   '''' [NA2],
-				   '''' [NA3],
-				   '''' [NA4],
-				   '''' [NA5],
-				   '''' [NA6],
-				   '''' [NA7],
-				   '''' [NA8],
-				   '''' [NA9],
-				   '''' [NA10],
-				   '''' [NA11],
-				   '''' [NA12],
-				   '''' [NA13],
-				   '''' [NA14],
-				   '''' [NA15],
-				   '''' [NA16],
-				   '''' [NA17],
-				   '''' [NA18],
-				   '''' [NA19],
-				   '''' [NA20],
-				   '''' [NA21],
-				   '''' [NA22],
-				   '''' [NA23],
-				   '''' [NA24],
-				   '''' [NA25],
-				   '''' [NA26],
-				   '''' [NA27],
-				   '''' [NA28],
-				   ISNULL(reporting_timestamp, '''') [Reporting Timestamp],
-				   '''' [TBD30],
-				   '''' [TBD31],
-				   '''' [TBD32],
-				   '''' [TBD33],
-				   '''' [TBD34],
-				   '''' [TBD35],
-				   '''' [TBD36],
-				   '''' [TBD37],
-				   '''' [TBD38],
-				   '''' [TBD39],
-				   '''' [TBD40],
-				   '''' [TBD41],
-				   '''' [TBD42],
-				   '''' [TBD43],
-				   '''' [TBD44],
-				   '''' [TBD45],
-				   '''' [TBD46],
-				   '''' [TBD47],
-				   '''' [TBD48],
-				   '''' [TBD49],
-				   '''' [TBD50],
-				   '''' [TBD51],
-				   '''' [TBD52],
-				   '''' [TBD53],
-				   '''' [TBD54],
-				   '''' [TBD55],
-				   '''' [TBD56],
-				   '''' [TBD57],
-				   '''' [TBD58],
-				   '''' [TBD59],
-				   '''' [TBD60],
-				   '''' [TBD61],
-				   '''' [TBD62],
-				   '''' [TBD63],
-				   '''' [Trade Party 1 - Transaction ID],
-				   '''' [Trade Party 2 - Transaction ID]
-			' + @str_batch_table + '
+	BEGIN		
+		IF @tr_rmm = 116901 -- Equias
+		BEGIN
+			DROP TABLE IF EXISTS #xml_data
+			SELECT 
+				'Trader' ReportingRole
+				, 'Report' EMIRReportMode
+				, 'NoReport' REMITReportMode
+				, IIF(@level = 'P', 'true', 'false') Position
+				, IIF(DATEDIFF(DAY, sdh.deal_date, reporting_timestamp ) > 30 AND submission_status = 39501, 'true', 'false') Backload
+				, action_type ActionType
+				, reporting_timestamp ReportingTimestamp
+				, other_counterparty_id CPIDCodeType
+				, ISNULL(beneficiary_id, '') BeneficiaryID	
+				, trading_capacity TradingCapacity
+				, 'false' OtherCPEEA
+				, commercial_or_treasury CommercialOrTreasury	
+				, IIF(clearing_threshold = 'N', 'false', 'true') ClearingThreshold
+				, collateralization Collateralisation	
+				, collateral_portfolio CollateralisationPortfolio
+				, collateral_portfolio_code CollateralisationPortfolioCode
+				, nature_of_reporting_cpty Taxonomy
+				, 'EMIR_Taxonomy' TaxonomyCodeType
+				, product_classification_type  EProductID1
+				, 'EMIR_Taxonomy' Product1CodeType
+				, contract_type EProductID2	
+				, 'CpML' UnderlyingCodeType
+				, trade_id TradeID
+				, exec_venue VenueOfExecution
+				, [compression] [Compression]
+				, execution_timestamp ExecutionTimestamp
+				, aggreement_type MasterAgreementVersion	
+				, clearing_obligation ClearingObligation
+				, intra_group Intragroup
+				, ISNULL(load_type, '') LoadType
+				, confirm_means ConfirmationMeans
+				, ISNULL(confirm_ts, '') ConfirmationTimestamp
+				, ISNULL(settlement_date, '') DateOfSettlement
+				, CAST(document_id AS NVARCHAR(100)) DocumentID 	
+				, ISNULL(@document_usage, 'Test') DocumentUsage 
+				, se.counterparty_id SenderID 
+				, ISNULL(se.counterparty_name, '') ReceiverID	
+				, 'ClearingHouse' ReceiverRole
+				, reporting_timestamp CreationTimestamp	
+				, contract_type TransactionType	
+				, asset_class PrimaryAssetClass	
+				, trade_id DealID	
+				, '11X-UNICLEAR---H' ClearingRegistrationAgentID	--??
+				, '11X-UNICLEAR---H' ClearingHouseID --??
+				, CONVERT(NVARCHAR(10),quantity)  Lots	
+				, CONVERT(NVARCHAR(50),price_rate)  UnitPrice
+				, 'true' [Anonymous]	
+				, se.counterparty_id [Initiator]	
+				, se.commodity_id CRAProductCode
+				, delivery_start_date DeliveryStartDateAndTime
+				, delivery_end_date DeliveryEndDateAndTime
+				, other_counterparty_id BuyerParty	
+				, 'Broker' AgentType 
+				, ISNULL(sc.counterparty_name, '') AgentName
+				, '11X-BETA-BROKERT' BrokerID --Derive from Generic Mapping --??
+				, other_counterparty_id SellerParty
+				, ISNULL(product_identification, '') MTFID 	
+			INTO #xml_data
 			FROM source_emir se
 			INNER JOIN source_deal_header sdh
 				ON sdh.source_deal_header_id = se.source_deal_header_id
-			LEFT JOIN source_counterparty sc
-				ON sc.source_counterparty_id = sdh.counterparty_id
-			LEFT JOIN static_data_value sdv_country 
-				ON sdv_country.value_id = sc.country
+			LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.broker_id 
+			WHERE process_id = @process_id AND error_validation_message IS NULL
+
+			DECLARE c CURSOR FOR 
+			SELECT DealID FROM #xml_data
+			OPEN c 
+			FETCH NEXT FROM c INTO @trade_id
+			WHILE @@FETCH_STATUS = 0
+			BEGIN
+				WAITFOR DELAY '00:00:02'
+				SET @emir_file_name = 'EMIR_EU_Lite_CO_' + CONVERT(VARCHAR(10), GETDATE(), 120) + '.' + REPLACE(CAST(CAST(GETDATE() AS TIME) AS VARCHAR(8)), ':', '_')
+				SET @temp_note_file_path = NULL
+				SELECT @xml_string = CAST('' AS NVARCHAR(MAX)) + 
+					'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+					<CpmlDocument>
+						<Reporting>
+							<Europe>
+								<ProcessInformation>
+									<ReportingRole>' + ReportingRole + '</ReportingRole>
+									<EMIRReportMode>' + EMIRReportMode + '</EMIRReportMode>
+									<REMITReportMode>' + REMITReportMode + '</REMITReportMode>
+									<Position>' + Position + '</Position>
+									<Backload>' + Backload + '</Backload>
+								</ProcessInformation>
+								<Action>
+									<ActionType>' + ActionType + '</ActionType>
+								</Action>
+								<EURegulatoryDetails>
+									<ReportingTimestamp>' + ReportingTimestamp + '</ReportingTimestamp>
+									<CPIDCodeType>' + CPIDCodeType + '</CPIDCodeType>
+									<BeneficiaryID>' + BeneficiaryID + '</BeneficiaryID>
+									<TradingCapacity>' + TradingCapacity + '</TradingCapacity>
+									<OtherCPEEA>' + OtherCPEEA + '</OtherCPEEA>
+									<CommercialOrTreasury>' + CommercialOrTreasury + '</CommercialOrTreasury>
+									<ClearingThreshold>' + ClearingThreshold + '</ClearingThreshold>
+									<Collateralisation>' + Collateralisation + '</Collateralisation>
+									<CollateralisationPortfolio>' + CollateralisationPortfolio + '</CollateralisationPortfolio>
+									<CollateralisationPortfolioCode>' + CollateralisationPortfolioCode + '</CollateralisationPortfolioCode>
+									<ProductIdentifier>
+										<Taxonomy>' + Taxonomy + '</Taxonomy>
+										<TaxonomyCodeType>' + TaxonomyCodeType + '</TaxonomyCodeType>
+										<EProduct>
+											<EProductID1>' + EProductID1 + '</EProductID1>
+											<Product1CodeType>' + Product1CodeType + '</Product1CodeType>
+											<EProductID2>' + EProductID2 + '</EProductID2>
+										</EProduct>
+									</ProductIdentifier>
+									<UnderlyingCodeType>' + UnderlyingCodeType + '</UnderlyingCodeType>
+									<TradeID>' + TradeID + '</TradeID>
+									<VenueOfExecution>' + VenueOfExecution + '</VenueOfExecution>
+									<Compression>' + [Compression] + '</Compression>
+									<ExecutionTimestamp>' + ExecutionTimestamp + '</ExecutionTimestamp>
+									<MasterAgreementVersion>' + MasterAgreementVersion + '</MasterAgreementVersion>
+									<ClearingObligation>' + ClearingObligation + '</ClearingObligation>
+									<Intragroup>' + Intragroup + '</Intragroup>
+									<LoadType>' + LoadType + '</LoadType>
+									<ConfirmationMeans>' + ConfirmationMeans + '</ConfirmationMeans>
+									<ConfirmationTimestamp>' + ConfirmationTimestamp + '</ConfirmationTimestamp>
+									<SettlementDates>
+										<DateOfSettlement>' + DateOfSettlement + '</DateOfSettlement>
+									</SettlementDates>
+								</EURegulatoryDetails>
+							</Europe>
+						</Reporting>
+						<ETDTradeDetails>
+							<DocumentID>' + DocumentID + '</DocumentID>
+							<DocumentUsage>' + DocumentUsage + '</DocumentUsage>
+							<SenderID>' + SenderID + '</SenderID>
+							<ReceiverID>' + ReceiverID + '</ReceiverID>
+							<ReceiverRole>' + ReceiverRole + '</ReceiverRole>
+							<DocumentVersion>' + DocumentID + '</DocumentVersion>
+							<CreationTimestamp>' + CreationTimestamp + '</CreationTimestamp>
+							<TransactionType>' + TransactionType + '</TransactionType>
+							<PrimaryAssetClass>' + PrimaryAssetClass + '</PrimaryAssetClass>
+							<ClearingParameters>
+								<DealID>' + DealID + '</DealID>
+								<ClearingRegistrationAgentID>' + ClearingRegistrationAgentID + '</ClearingRegistrationAgentID>
+								<ClearingHouseID>' + ClearingHouseID + '</ClearingHouseID>
+								<Lots>' + Lots + '</Lots>
+								<UnitPrice>' + UnitPrice + '</UnitPrice>
+								<Anonymous>' + [Anonymous] + '</Anonymous>
+								<Initiator>' + [Initiator] + '</Initiator>
+								<Product>
+									<CRAProductCode>' + CRAProductCode + '</CRAProductCode>
+									<DeliveryPeriod>
+										<DeliveryStartDateAndTime>' + DeliveryStartDateAndTime + '</DeliveryStartDateAndTime>
+										<DeliveryEndDateAndTime>' + DeliveryEndDateAndTime + '</DeliveryEndDateAndTime>
+									</DeliveryPeriod>
+								</Product>
+							</ClearingParameters>
+							<BuyerDetails>
+								<BuyerParty>' + BuyerParty + '</BuyerParty>
+								<DealID>' + DealID + '</DealID>
+								<Agents>
+									<Agent>
+										<AgentType>' + AgentType + '</AgentType>
+										<AgentName>' + AgentName + '</AgentName>
+										<BrokerID>' + BrokerID + '</BrokerID>
+									</Agent>
+								</Agents>
+							</BuyerDetails>
+							<SellerDetails>
+								<SellerParty>' + SellerParty + '</SellerParty>
+								<DealID>' + DealID + '</DealID>
+								<ExecutionTimestamp>' + ExecutionTimestamp + '</ExecutionTimestamp>
+								<Agents>
+									<Agent>
+										<AgentType>' + AgentType + '</AgentType>
+										<AgentName>' + AgentName + '</AgentName>
+										<BrokerID>' + BrokerID + '</BrokerID>
+									</Agent>
+								</Agents>
+							</SellerDetails>
+							<MTFDetails>
+								<MTFID>' + MTFID + '</MTFID>
+								<ExecutionTimestamp>' + ExecutionTimestamp + '</ExecutionTimestamp>
+							</MTFDetails>
+						</ETDTradeDetails>
+					</CpmlDocument>
+					'
+				FROM #xml_data
+				WHERE DealID = @trade_id
+				
+				SELECT @emir_file_name = @emir_file_name + '.xml'
+				
+				SELECT @temp_note_file_path = @file_path + @emir_file_name
+				EXEC [spa_write_to_file] @xml_string, 'n',  @temp_note_file_path, @result OUTPUT	
+				IF @result = '1'
+				BEGIN
+					SELECT @file_name_export += IIF(NULLIF(@file_name_export,'') IS NULL, @temp_note_file_path, ',' + @temp_note_file_path)
+				END
+				
+				FETCH NEXT FROM c INTO @trade_id
+			END
+			CLOSE c
+			DEALLOCATE c		
+			SET @desc = 'Export process completed for EMIR Equias for process_id: ' + @process_id + '. File has been saved at ' + @file_path
+			EXEC spa_message_board 'i', @user_name, NULL, 'Export Xml', @desc, '', '', 's', 'EMIR XML Export'
+			--drop table if exists adiha_process.dbo.test234
+			--SELECT @batch_process_id id into adiha_process.dbo.test234
+			SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id	
+			, @remote_directory = ftp_folder_path
+			FROM batch_process_notifications bpn
+			WHERE bpn.process_id = RIGHT(@batch_process_id, 13)
+
+			SELECT @remote_directory = COALESCE(@remote_directory,remote_directory)
+			FROM file_transfer_endpoint
+			WHERE file_transfer_endpoint_id = @file_transfer_endpoint_id
+			
+			IF @file_transfer_endpoint_id IS NOT NULL
+			BEGIN
+				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, @remote_directory, @file_name_export, @result OUTPUT
+			END	
+			
+			UPDATE source_emir 
+			SET submission_status = 39501 
+			WHERE process_id = @process_id
+			RETURN
+		END
+		ELSE
+		BEGIN
+			SET @sql_str = '
+				SELECT '''' [*Comments],				   
+					   CASE
+							WHEN se.action_type = ''N'' THEN ''New''
+							WHEN se.action_type = ''M'' THEN ''Modify''
+							WHEN se.action_type = ''E'' THEN ''Error''
+							WHEN se.action_type = ''C'' THEN ''Cancel''
+							WHEN se.action_type = ''V'' THEN ''Valuation update''
+							WHEN se.action_type = ''Z'' THEN ''Compression''
+							WHEN se.action_type = ''O'' THEN ''Other''				
+					   END [Action],
+					   ''EULITE1.0'' [Message Version],
+					   ''Trade State'' [Message Type],
+					   ISNULL(se.reporting_entity_id, '''') [Report submitting entity ID],
+					   ISNULL(se.counterparty_id, '''') [Submitted For Party],
+					   ISNULL(se.other_counterparty_id, '''') [Trade Party 1 - ID Type],
+					   ISNULL(se.counterparty_id, '''') [Trade Party 1 - ID],
+					   ISNULL(se.other_counterparty_id, '''') [Trade Party 2 - ID Type],
+					   ISNULL(se.counterparty_name, '''') [Trade Party 2 - ID],
+					   ''ESMA'' [Trade Party 1 - Reporting Destination],
+					   ''ESMA'' [Trade Party 2 - Reporting Destination],
+					   '''' [Trade Party 1 - Execution Agent ID],
+					   '''' [Trade Party 2 - Execution Agent ID],
+					   '''' [Trade Party 1 - Third Party Viewer ID- Party 1],
+					   '''' [Trade Party 2 - Third Party Viewer ID- Party 2],
+					   ''OTC'' [Exchange Traded Indicator],
+					   ISNULL(se.counterparty_country, '''') [Country of the Other Counterparty - Trade Party 1 ],
+					   ISNULL(sdv_country.code, '''') [Country of the Other Counterparty - Trade Party 2],
+					   ISNULL(se.corporate_sector, '''') [Corporate sector of the reporting counterparty - Trade Party 1  ],
+					   ISNULL(se.corporate_sector2, '''') [Corporate sector of the reporting counterparty - Trade Party 2],
+					   ISNULL(se.nature_of_reporting_cpty, '''') [Nature of the Reporting Counterparty - Trade Party 1],
+					   ISNULL(se.nature_of_reporting_cpty2, '''') [Nature of the Reporting Counterparty - Trade Party 2],
+					   '''' [Broker ID - Trade Party 1],
+					   ISNULL(se.broker_id, '''') [Broker ID - Trade Party 2],
+					   '''' [Clearing Member ID - Trade Party 1],
+					   '''' [Clearing Member ID - Trade Party 2],
+					   ISNULL(se.beneficiary_type_id, '''') [Type of ID of the Beneficiary - Trade Party 1],
+					   ISNULL(se.beneficiary_id, '''') [Beneficiary ID - Trade Party 1],
+					   '''' [Type of ID of the Beneficiary - Trade Party 2],
+					   '''' [Beneficiary ID - Trade Party 2],
+					   ISNULL(se.trading_capacity, '''') [Trading Capacity - Trade Party 1],
+					   ISNULL(se.trading_capacity, '''') [Trading Capacity - Trade Party 2],
+					   ISNULL(se.counterparty_side, '''') [Counterparty Side - Trade Party 1],
+					   CASE WHEN ISNULL(se.counterparty_side, '''') = ''S'' THEN ''B'' ELSE ''S'' END [Counterparty Side - Trade Party 2],
+					   '''' [Directly linked to commercial activity or treasury financing Indicator - Trade Party 1],
+					   ISNULL(se.commercial_or_treasury, '''') [Directly linked to commercial activity or treasury financing Indicator - Trade Party 2],
+					   '''' [Clearing Threshold - Trade Party 1 ],
+					   ISNULL(se.clearing_threshold, '''') [Clearing Threshold - Trade Party 2 ],
+					   '''' [Collateral Portfolio Code - Trade Party 1 ],
+					   '''' [Collateral Portfolio Code - Trade Party 2 ],
+					   ISNULL(se.contract_type, '''') [Contract type],
+					   ISNULL(se.asset_class, '''') [Asset Class],
+					   ISNULL(se.product_classification_type, '''') [Product Classification Type],
+					   ISNULL(se.product_classification, '''') [Product Classification],
+					   ISNULL(se.product_identification_type, '''') [Product identification type],
+					   ISNULL(se.product_identification, '''') [Product identification],
+					   ISNULL(se.underlying, '''') [Underlying identification type],
+					   ISNULL(se.underlying_identification, '''') [Underlying identification],
+					   ISNULL(se.notional_currency_1, '''') [Notional Currency 1],
+					   ISNULL(se.notional_currency_2, '''') [Notional Currency 2],
+					   ISNULL(se.derivable_currency, '''') [Deliverable currency],
+					   ISNULL(se.trade_id, '''') [Trade ID],
+					   ISNULL(se.report_tracking_no, '''') [Report Tracking Number],
+					   ISNULL(se.complex_trade_component_id, '''') [Complex Trade Component ID],
+					   ISNULL(se.exec_venue, '''') [Venue of execution ],
+					   ISNULL([compression], '''') [Compression],
+					   dbo.FNARemoveTrailingZeroes(ROUND(price_rate, 4)) [Price / rate ],
+					   ISNULL(price_notation, '''') [Price notation],
+					   ISNULL(price_currency, '''') [Currency of Price],
+					   dbo.FNARemoveTrailingZeroes(ROUND(notional_amount, 4)) [Notional],
+					   price_multiplier [Price Multiplier],
+					   quantity [Quantity],
+					   up_front_payment [Up-front payment],
+					   ISNULL(delivery_type, '''') [Delivery Type],
+					   ISNULL(execution_timestamp, '''') [Execution Timestamp],
+					   ISNULL(CONVERT(VARCHAR(10), effective_date, 120), '''') [Effective Date],
+					   ISNULL(CONVERT(VARCHAR(10), maturity_date, 120), '''') [Maturity date],
+					   ISNULL(termination_date, '''') [Termination Date],
+					   ISNULL(settlement_date, '''') [Settlement Date],
+					   ISNULL(aggreement_type, '''') [Master Agreement Type],
+					   ISNULL(aggreement_version, '''') [Master Agreement Version],
+					   ISNULL(confirm_ts, '''') [Confirmation timestamp],
+					   ISNULL(confirm_means, '''') [Confirmation means],
+					   ISNULL(clearing_obligation, '''') [Clearing obligation],
+					   ISNULL(cleared, '''') [Cleared],
+					   ISNULL(clearing_ts, '''') [Clearing timestamp],
+					   ISNULL(ccp, '''') [CCP],
+					   ISNULL(intra_group, '''') [Intragroup],
+					   fixed_rate_leg_1 [Fixed rate of leg 1],
+					   fixed_rate_leg_2 [Fixed rate of leg 2],
+					   ISNULL(fixed_rate_day_count_leg_1, '''') [Fixed rate day count leg 1],
+					   ISNULL(fixed_rate_day_count_leg_2, '''') [Fixed rate day count leg 2],
+					   ISNULL(fixed_rate_payment_feq_time_leg_1, '''') [Fixed rate payment frequency leg 1 -time period],
+					   ISNULL(fixed_rate_payment_feq_mult_leg_1, '''') [Fixed rate payment frequency leg 1 - multiplier],
+					   ISNULL(fixed_rate_payment_feq_time_leg_2, '''') [Fixed rate payment frequency leg 2 - time period],
+					   ISNULL(fixed_rate_payment_feq_mult_leg_2, '''') [Fixed rate payment frequency leg 2 - multiplier],
+					   ISNULL(float_rate_payment_feq_time_leg_1, '''') [Floating rate payment frequency leg 1 - time period],
+					   ISNULL(float_rate_payment_feq_mult_leg_1, '''') [Floating rate payment frequency leg 1 - multiplier],
+					   ISNULL(float_rate_payment_feq_time_leg_2, '''') [Floating rate payment frequency leg 2 - time period],
+					   ISNULL(float_rate_payment_feq_mult_leg_2, '''') [Floating rate payment frequency leg 2 - multiplier],
+					   ISNULL(float_rate_reset_freq_leg_1_time, '''') [Floating rate reset frequency leg 1 - time period],
+					   ISNULL(float_rate_reset_freq_leg_1_mult, '''') [Floating rate reset frequency leg 1 - multiplier],
+					   ISNULL(float_rate_reset_freq_leg_2_time, '''') [Floating rate reset frequency leg 2- time period],
+					   ISNULL(float_rate_reset_freq_leg_2_mult, '''') [Floating rate reset frequency leg 2 - multiplier],
+					   ISNULL(float_rate_leg_1, '''') [Floating rate of leg 1],
+					   float_rate_ref_period_leg_1_time [Floating rate reference period leg 1 - time period],
+					   float_rate_ref_period_leg_1_mult [Floating rate reference period leg 1 - multiplier],
+					   ISNULL(float_rate_leg_2, '''') [Floating rate of leg 2],
+					   ISNULL(float_rate_ref_period_leg_2_time, '''') [Floating rate reference period leg 2 - time period],
+					   float_rate_ref_period_leg_2_mult [Floating rate reference period leg 2 -multiplier],
+					   ISNULL(delivery_currency_2, '''') [Delivery Currency 2],
+					   exchange_rate_1 [Exchange rate 1],
+					   forward_exchange_rate [Forward exchange rate],
+					   ISNULL(exchange_rate_basis, '''') [Exchange rate basis],
+					   ISNULL(commodity_base, '''') [Commodity base],
+					   ISNULL(commodity_details, '''') [Commodity details],
+					   ISNULL(delivery_point, '''') [Delivery point or zone],
+					   ISNULL(interconnection_point, '''') [Interconnection Point ],
+					   ISNULL(load_type, '''') [Load type],
+					   ISNULL(load_delivery_interval, '''') [Load Delivery Intervals],
+					   ISNULL(delivery_start_date, '''') [Delivery Start Date AND Time],
+					   ISNULL(delivery_end_date, '''') [Delivery End Date AND Time],
+					   ISNULL(duration, '''') [Duration],
+					   ISNULL(days_of_the_week, '''') [Days of the Week],
+					   ISNULL(delivery_capacity, '''') [Delivery Capacity],
+					   ISNULL(quantity_unit, '''') [Quantity Unit ],
+					   price_time_interval_quantity [Price/time interval quantities],
+					   ISNULL(se.option_type, '''') [Option Type],
+					   ISNULL(se.option_style, '''') [Option exercise style ],
+					   strike_price [Strike price (cap/floor rate)],
+					   ISNULL(strike_price_notation, '''') [Strike price notation],
+					   ISNULL(underlying_maturity_date, '''') [Maturity Date of the Underlying],
+					   ISNULL(seniority, '''') [Seniority],
+					   ISNULL(reference_entity, '''') [Reference Entity],
+					   ISNULL(frequency_of_payment, '''') [Frequency of Payment],
+					   ISNULL(calculation_basis, '''') [The calculation basis],
+					   series [Series],
+					   [version] [Version],
+					   ISNULL(dbo.FNARemoveTrailingZeroes(ROUND(index_factor, 4)), '''') [Index factor],
+					   ISNULL(tranche, '''') [Tranche],
+					   ISNULL(attachment_point, '''') [Attachment point],
+					   ISNULL(detachment_point, '''') [Detachment Point],
+					   ISNULL(action_type, '''') [Action Type - Trade Party 1],
+					   ISNULL(action_type, '''') [Action Type - Trade Party 2],
+					   ISNULL([level], '''') [Level],
+					   ISNULL(reporting_timestamp, '''') [As of Date/Time],
+					   '''' [Trade Party 1 - Event ID],
+					   '''' [Trade Party 2 - Event ID],
+					   '''' [Lifecycle Event],
+					   '''' [Data Submitter Message ID],
+					   '''' [Reserved - Participant Use 1],
+					   '''' [Reserved - Participant Use 2],
+					   '''' [Reserved - Participant Use 3],
+					   '''' [Reserved - Participant Use 4],
+					   '''' [Reserved - Participant Use 5],
+					   '''' [Trade Party 1 - Branch Location],
+					   '''' [Trade Party 2 - Branch Location],
+					   '''' [Trade Party 2 - Third Party Viewer ID Type],
+					   '''' [Trade Party 2 - Third Party Viewer ID ],
+					   '''' [Product ID Type],
+					   '''' [Product ID],
+					   '''' [Trade Party 1 - Collateralization],
+					   '''' [Trade Party 2 - Collateralization],
+					   '''' [Trade Party 1 - Collateral Portfolio],
+					   '''' [Trade Party 2 - Collateral Portfolio],
+					   '''' [NA1],
+					   '''' [NA2],
+					   '''' [NA3],
+					   '''' [NA4],
+					   '''' [NA5],
+					   '''' [NA6],
+					   '''' [NA7],
+					   '''' [NA8],
+					   '''' [NA9],
+					   '''' [NA10],
+					   '''' [NA11],
+					   '''' [NA12],
+					   '''' [NA13],
+					   '''' [NA14],
+					   '''' [NA15],
+					   '''' [NA16],
+					   '''' [NA17],
+					   '''' [NA18],
+					   '''' [NA19],
+					   '''' [NA20],
+					   '''' [NA21],
+					   '''' [NA22],
+					   '''' [NA23],
+					   '''' [NA24],
+					   '''' [NA25],
+					   '''' [NA26],
+					   '''' [NA27],
+					   '''' [NA28],
+					   ISNULL(reporting_timestamp, '''') [Reporting Timestamp],
+					   '''' [TBD30],
+					   '''' [TBD31],
+					   '''' [TBD32],
+					   '''' [TBD33],
+					   '''' [TBD34],
+					   '''' [TBD35],
+					   '''' [TBD36],
+					   '''' [TBD37],
+					   '''' [TBD38],
+					   '''' [TBD39],
+					   '''' [TBD40],
+					   '''' [TBD41],
+					   '''' [TBD42],
+					   '''' [TBD43],
+					   '''' [TBD44],
+					   '''' [TBD45],
+					   '''' [TBD46],
+					   '''' [TBD47],
+					   '''' [TBD48],
+					   '''' [TBD49],
+					   '''' [TBD50],
+					   '''' [TBD51],
+					   '''' [TBD52],
+					   '''' [TBD53],
+					   '''' [TBD54],
+					   '''' [TBD55],
+					   '''' [TBD56],
+					   '''' [TBD57],
+					   '''' [TBD58],
+					   '''' [TBD59],
+					   '''' [TBD60],
+					   '''' [TBD61],
+					   '''' [TBD62],
+					   '''' [TBD63],
+					   '''' [Trade Party 1 - Transaction ID],
+					   '''' [Trade Party 2 - Transaction ID]
+				' + @str_batch_table + '
+				FROM source_emir se
+				INNER JOIN source_deal_header sdh
+					ON sdh.source_deal_header_id = se.source_deal_header_id
+				LEFT JOIN source_counterparty sc
+					ON sc.source_counterparty_id = sdh.counterparty_id
+				LEFT JOIN static_data_value sdv_country 
+					ON sdv_country.value_id = sc.country
 				
 			WHERE process_id = ''' + @process_id + '''
 				AND error_validation_message IS NULL'
-		
+		END
 		IF EXISTS(SELECT 1 FROM source_emir WHERE process_id = @process_id)
 		BEGIN
 			SET @error_spa = 'EXEC spa_regulatory_submission_error @submission_type = ''EMIR Trade'', @process_id = ''' + @process_id + ''''
@@ -4166,6 +4485,8 @@ BEGIN
 		se.process_id [Process ID],
 		se.error_validation_message [Error Validation],
 		se.file_export_name [Export File Name],
+		se.commodity_id [Commodity Id],
+		se.document_id [Document Id],
 		se.create_user [Create User],
 		se.create_ts [Create TS],
 		se.update_user [Update User],
@@ -4545,7 +4866,7 @@ END
 
 IF @batch_process_id IS NOT NULL AND @batch_report_param IS NOT NULL
 BEGIN
-	DECLARE @report_name VARCHAR(100), @user_name VARCHAR(100) = dbo.FNADBUser(), @job_name VARCHAR(100) = 'report_batch_' + @batch_process_id
+	DECLARE @report_name VARCHAR(100), @job_name VARCHAR(100) = 'report_batch_' + @batch_process_id
 		
 	SET @report_name = CASE WHEN @submission_type = 44703 THEN 'EMIR Report' 
 							WHEN @submission_type = 44704 AND @level_mifid = 'X' THEN 'MiFID Transaction Report'
@@ -4583,13 +4904,11 @@ BEGIN
 				AND autd.field_id = 'lei' AND sf.process_id = @process_id
 				
 				DECLARE @current_date DATETIME = GETDATE()
-				DECLARE @file_path VARCHAR(MAX)				
+				
 				DECLARE @file varchar(5000) --'TR_asdasd_123456_0001.xml'
 				, @prefix VARCHAR(1000) --= 'TR_asdasd_123456_'
 			
-				SELECT @prefix = CONCAT('TR_', @lei,'_01_', YEAR(@current_date), FORMAT(@current_date,'MM'),FORMAT(@current_date,'dd') ,'_')
-				SELECT @file_path = CONCAT(cs.document_path, '\temp_note\')
-				FROM connection_string cs
+				SELECT @prefix = CONCAT('TR_', @lei,'_01_', YEAR(@current_date), FORMAT(@current_date,'MM'),FORMAT(@current_date,'dd') ,'_')				
 				
 				DECLARE @search_prefix VARCHAR(1000) = @prefix + '*.xml'
 				EXEC spa_latest_file_in_directory_with_prefix @file_path, @search_prefix, @file OUTPUT
@@ -4635,17 +4954,16 @@ BEGIN
 	END
 	ELSE IF @submission_type = 44703
 	BEGIN
-		DECLARE @emir_file_name VARCHAR(1000)
-
-		--SET @emir_file_name = 'ETD_ESMA_Daily_Trade_Activity_Report-' + CONVERT(VARCHAR(10), GETDATE(), 120) + '.' + REPLACE(CAST(CAST(GETDATE() AS TIME) AS VARCHAR(8)), ':', '_') + '-en'
-		SET @emir_file_name = 'EU_Lite ' + CASE WHEN @level IN ('P', 'T') THEN 'CO_' WHEN @level = 'M' THEN 'Valuation' END + CONVERT(VARCHAR(10), GETDATE(), 120) + '.' + REPLACE(CAST(CAST(GETDATE() AS TIME) AS VARCHAR(8)), ':', '_')
-	
+		SET @emir_file_name = 'EMIR_EU_Lite ' + CASE WHEN @level IN ('P', 'T') THEN 'CO_' WHEN @level = 'M' THEN 'Valuation' END + CONVERT(VARCHAR(10), GETDATE(), 120) + '.' + REPLACE(CAST(CAST(GETDATE() AS TIME) AS VARCHAR(8)), ':', '_')
 		SET @file_name = IIF(@submission_type = 44703, @emir_file_name, @file_name)
-
+		
 		IF EXISTS (SELECT 1 FROM source_emir WHERE process_id = @process_id AND error_validation_message IS NULL)
 		BEGIN
-			SELECT @str_batch_table = dbo.FNABatchProcess('c', @batch_process_id, @batch_report_param, DEFAULT, @file_name, @report_name)
-			EXEC (@str_batch_table)
+			IF @tr_rmm NOT IN (116901) 
+			BEGIN
+				SELECT @str_batch_table = dbo.FNABatchProcess('c', @batch_process_id, @batch_report_param, DEFAULT, @file_name, @report_name)
+				EXEC (@str_batch_table)
+			END				
 		END
 		ELSE IF EXISTS (SELECT 1 FROM source_emir_collateral WHERE process_id = @process_id AND error_validation_message IS NULL)
 		BEGIN
