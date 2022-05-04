@@ -1863,10 +1863,7 @@ SELECT
 	, tfd.reporting_group3_name
 	, tfd.reporting_group4_name
 	, tfd.reporting_group5_name
-	, CASE WHEN tfd.actual_forward=''a'' AND tfd.physical_financial_flag=''physical'' THEN tfd.contract_value
-		WHEN tfd.actual_forward=''a'' AND tfd.physical_financial_flag=''fiancial'' THEN tfd.contract_value + tfd.market_value
-		ELSE tfd.Amount END pnl
-	--, IIF(actual_forward= ''f'', IIF(ISNULL(tfd.deal_type_name, ''Non'') = ''Physical'', tfd.contract_value, tfd.und_pnl_set ),contract_value)	pnl
+	, IIF(actual_forward= ''f'', IIF(ISNULL(tfd.deal_type_name, ''Non'') = ''Physical'', tfd.contract_value, tfd.und_pnl_set ),contract_value)	pnl
 	, ISNULL(tpd.payment_date, tfd.term_end) payment_date
 	, CONVERT(VARCHAR(7), ISNULL(tpd.cash_flow_year_month, tfd.term_end), 120) cash_flow_year_month
 	, ISNULL(tpd.pnl_date, tfd.term_end) pnl_date
