@@ -495,8 +495,8 @@ BEGIN
 			corporate_sector = MAX(sub_cpty.[Corporate Sector]),
 			corporate_sector2 = MAX(deal_cpty.[Corporate Sector]),						
 			nature_of_reporting_cpty = MAX(sub_cpty.[Financial/Non-Financial]),
-			nature_of_reporting_cpty2 = MAX(deal_cpty.[Financial/Non-Financial]),
-			broker_id = NULL,
+			nature_of_reporting_cpty2 = MAX(deal_cpty.[Financial/Non-Financial]),			
+			broker_id = MAX(b_lei.broker_lei),
 			reporting_entity_id = MAX(sub_cpty.LEI),
 			clearing_member_id = MAX(sub_cpty.LEI),
 			beneficiary_type_id = 'LEI',
@@ -551,7 +551,7 @@ BEGIN
 			notional_currency_1 = CASE WHEN ISNULL(SUM(ABS(sdpd.und_pnl)), CAST((ISNULL(SUM(sdd.total_volume), 0) * ISNULL(AVG(sdd.fixed_price), 0)) AS NUMERIC(38, 20))) IS NOT NULL THEN 'EUR' ELSE NULL END,
 			notional_currency_2 = CASE WHEN MAX(scm.commodity_id) = 'FX' THEN MAX(su.uom_id) ELSE NULL END,
 			derivable_currency = MAX(sc.currency_name),
-			trade_id = COALESCE(MAX(ext_deal_id),MAX(sdh.deal_id)),
+			trade_id = COALESCE(MAX(sdh.ext_deal_id),MAX(sdh.deal_id)),
 			report_tracking_no = NULL,
 			complex_trade_component_id = NULL,
 			exec_venue = IIF(MAX(deal_udf.[Pure OTC]) = 'Y', 'XXXX', IIF(MAX(sco.counterparty_id) = MAX(gmv.clm7_value), MAX(gmv.clm4_value), 'XOFF')),--MAX(deal_udf.[Venue of Execution]),
@@ -653,11 +653,25 @@ BEGIN
 			confirmation_date = GETDATE(),
 			process_id = @process_id,
 			document_id = IIF(MAX(emr.document_id) IS NULL, ROW_NUMBER() OVER(PARTITION BY sdh.source_deal_header_id ORDER BY sdh.source_deal_header_id), MAX(emr.document_id) + 1 ),
-			commodity_id = MAX(scm.commodity_id)
+			commodity_id = MAX(scm.commodity_id),
+			broker_name = MAX(sc_broker.counterparty_name)
 		INTO #temp_source_emir
 		--SELECT  * 
 		FROM #temp_deals sdh
 		INNER JOIN #temp_deal_details sdd ON sdh.source_deal_header_id = sdd.source_deal_header_id
+		INNER JOIN source_deal_header sdh1 ON sdh1.source_Deal_header_id = sdh.source_deal_header_id 
+		LEFT JOIN source_counterparty sc_broker ON sc_broker.source_counterparty_id = sdh1.broker_id 
+		OUTER APPLY (
+			SELECT musddv.static_data_udf_values broker_lei
+			FROM maintain_udf_static_data_detail_values musddv
+			INNER JOIN application_ui_template_fields autf
+				ON autf.application_field_id = musddv.application_field_id
+			INNER JOIN application_ui_template_definition autd 
+				ON autd.application_ui_field_id = autf.application_ui_field_id AND autd.application_function_id = 10105800
+			INNER JOIN user_defined_fields_template udft
+				ON udft.udf_template_id = autf.udf_template_id
+			WHERE udft.Field_label = 'LEI' AND musddv.primary_field_object_id = sc_broker.source_counterparty_id
+		) b_lei
 		LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id
 		LEFT JOIN source_deal_type sdt ON sdh.source_deal_type_id = sdt.source_deal_type_id
 		LEFT JOIN #source_deal_pnl sdpd ON sdpd.source_deal_header_id = sdh.source_deal_header_id
@@ -772,7 +786,7 @@ BEGIN
 			FROM source_emir emir
 			WHERE emir.source_deal_header_id = sdh.source_deal_header_id
 			ORDER BY emir.document_id DESC
-		) emr
+		) emr		
 		WHERE 1 = 1
 		-- AND sub_cpty.LEI IS NOT NULL
 			AND ((sco.counterparty_id IN ('ICE', 'CME', 'EEX') AND sdt.source_deal_type_name <> 'Spot') OR (sco.counterparty_id NOT IN ('ICE', 'CME', 'EEX')))
@@ -812,7 +826,7 @@ BEGIN
 				delivery_currency_2, exchange_rate_1, forward_exchange_rate, exchange_rate_basis, commodity_base, commodity_details, delivery_point, interconnection_point, load_type, 
 				load_delivery_interval, delivery_start_date, delivery_end_date, duration, days_of_the_week, delivery_capacity, quantity_unit, price_time_interval_quantity, option_type, option_style, 
 				strike_price, strike_price_notation, underlying_maturity_date, seniority, reference_entity, frequency_of_payment, calculation_basis, series, version, index_factor, tranche, 
-				attachment_point, detachment_point, action_type, level, report_type, create_date_from, create_date_to, submission_status, submission_date, confirmation_date, process_id, document_id, commodity_id
+				attachment_point, detachment_point, action_type, level, report_type, create_date_from, create_date_to, submission_status, submission_date, confirmation_date, process_id, document_id, commodity_id, broker_name
 			)
 			SELECT * FROM #temp_source_emir
 			
@@ -3446,15 +3460,14 @@ BEGIN
 				, delivery_end_date DeliveryEndDateAndTime
 				, other_counterparty_id BuyerParty	
 				, 'Broker' AgentType 
-				, ISNULL(sc.counterparty_name, '') AgentName
-				, '11X-BETA-BROKERT' BrokerID --Derive from Generic Mapping --??
+				, broker_name AgentName
+				, se.broker_id BrokerID 
 				, other_counterparty_id SellerParty
 				, ISNULL(product_identification, '') MTFID 	
 			INTO #xml_data
 			FROM source_emir se
 			INNER JOIN source_deal_header sdh
 				ON sdh.source_deal_header_id = se.source_deal_header_id
-			LEFT JOIN source_counterparty sc ON sc.source_counterparty_id = sdh.broker_id 
 			WHERE process_id = @process_id AND error_validation_message IS NULL
 
 			DECLARE c CURSOR FOR 
@@ -4364,6 +4377,7 @@ BEGIN
 		'' AS [Financial or non-financial nature of the counterparty ],
 		ISNULL(nature_of_reporting_cpty, '') AS [Nature of the reporting counterparty],
 		ISNULL(se.broker_id, '') AS [Broker ID],
+		ISNULL(se.broker_name, '') AS [Broker Name],
 		ISNULL(clearing_member_id, '') AS [Clearing member ID],
 		ISNULL(beneficiary_type_id, '') AS [Type of ID of the Beneficiary],
 		ISNULL(beneficiary_id, '') AS [Beneficiary ID],
