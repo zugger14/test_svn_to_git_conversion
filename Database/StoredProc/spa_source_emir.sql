@@ -3460,8 +3460,8 @@ BEGIN
 				, delivery_end_date DeliveryEndDateAndTime
 				, other_counterparty_id BuyerParty	
 				, 'Broker' AgentType 
-				, broker_name AgentName
-				, se.broker_id BrokerID 
+				, ISNULL(broker_name, '') AgentName
+				, ISNULL(se.broker_id, '') BrokerID 
 				, other_counterparty_id SellerParty
 				, ISNULL(product_identification, '') MTFID 	
 			INTO #xml_data
