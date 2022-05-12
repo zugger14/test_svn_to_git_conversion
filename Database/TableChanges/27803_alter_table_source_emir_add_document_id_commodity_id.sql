@@ -10,3 +10,14 @@ BEGIN
 END
 GO
 
+IF COL_LENGTH('source_emir', 'broker_id') IS NULL
+BEGIN
+    ALTER TABLE source_emir ADD broker_id NVARCHAR(250)
+END
+GO
+
+IF COL_LENGTH('source_emir', 'broker_name') IS NULL
+BEGIN
+    ALTER TABLE source_emir ADD broker_name NVARCHAR(2000)
+END
+GO
