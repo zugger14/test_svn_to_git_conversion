@@ -1134,7 +1134,7 @@ CREATE TABLE #process_as_of_date_point(as_of_date DATETIME)
 						when g.granularity_id=991 then a.maturity_qtr 
 						when g.granularity_id=980 then a.maturity_mnth
 					else a.term_start end else a.maturity_mnth end term_start,
-				CASE WHEN spcd.Granularity in( 982,981,980 ) then a.maturity_mnth else null end maturity_mnth,
+				CASE WHEN spcd.Granularity in(993,982,981,980 ) then a.maturity_mnth else null end maturity_mnth,
 				CASE WHEN spcd.Granularity in(982,981,980, 991) then a.maturity_qtr else null end maturity_qtr,
 				CASE WHEN spcd.Granularity in( 982,981,980,991, 992) then a.maturity_semi else null end maturity_semi,
 				CASE WHEN spcd.Granularity in( 982,981,980,991, 992,993) then a.maturity_yr else null end maturity_yr,
@@ -1156,7 +1156,7 @@ CREATE TABLE #process_as_of_date_point(as_of_date DATETIME)
 						when g.granularity_id=991 then a.maturity_qtr 
 						when g.granularity_id=980 then a.maturity_mnth
 					else a.term_start end else a.maturity_mnth end,
-				CASE WHEN spcd.Granularity in( 982,981,980) then maturity_mnth else null end ,
+				CASE WHEN spcd.Granularity in(993,982,981,980) then maturity_mnth else null end ,
 				CASE WHEN spcd.Granularity in(  982,981,980,991) then maturity_qtr else null end ,
 				CASE WHEN spcd.Granularity in(  982,981,980,991, 992) then maturity_semi else null end ,
 				CASE WHEN spcd.Granularity in( 982,981,980,991, 992,993) then maturity_yr else null end ,
