@@ -189,32 +189,17 @@ BEGIN
 	       FROM batch_process_notifications bpn
 	       WHERE  bpn.process_id = @batch_notification_process_id
 	)
-	BEGIN
-		DECLARE @notif_type INT
-		SET @notif_type = (SELECT notification_type FROM batch_process_notifications where process_id = @batch_notification_process_id AND user_login_id IS NOT NULL)
-		IF @notif_type = 757 
-		BEGIN 
-			INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type, is_alert)
-			OUTPUT INSERTED.user_login_id 
-			INTO #user_login_id(user_login_id)
-			SELECT DISTINCT ISNULL (bpn.user_login_id, aru.user_login_id), @trimmed_source, ISNULL(@description, 'Description is null'), @url_desc, @url, @type, @job_name, @as_of_date,@process_id,@process_type, 'y' [is_alert]
-			FROM batch_process_notifications bpn
-			LEFT JOIN application_role_user aru ON bpn.role_id=aru.role_Id
-			WHERE bpn.process_id = @batch_notification_process_id
-				AND bpn.notification_type IN(751,752,755,756,757)
-				AND (bpn.user_login_id IS NOT NULL OR aru.user_login_id IS NOT NULL)
-		END 
-		ELSE BEGIN
-			INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type)
-			OUTPUT INSERTED.user_login_id 
-			INTO #user_login_id(user_login_id)
-			SELECT DISTINCT ISNULL (bpn.user_login_id, aru.user_login_id), @trimmed_source, ISNULL(@description, 'Description is null'), @url_desc, @url, @type, @job_name, @as_of_date,@process_id,@process_type
-			FROM batch_process_notifications bpn
-			LEFT JOIN application_role_user aru ON bpn.role_id=aru.role_Id
-			WHERE bpn.process_id = @batch_notification_process_id
-				AND bpn.notification_type IN(751,752,755,756)
-				AND (bpn.user_login_id IS NOT NULL OR aru.user_login_id IS NOT NULL)
-		END
+	BEGIN		
+		INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type, is_alert)
+		OUTPUT INSERTED.user_login_id 
+		INTO #user_login_id(user_login_id)
+		SELECT DISTINCT ISNULL (bpn.user_login_id, aru.user_login_id), @trimmed_source, ISNULL(@description, 'Description is null'), 
+			@url_desc, @url, @type, @job_name, @as_of_date,@process_id,@process_type, IIF(bpn.notification_type = 757, 'y', 'n')
+		FROM batch_process_notifications bpn
+		LEFT JOIN application_role_user aru ON bpn.role_id=aru.role_Id
+		WHERE bpn.process_id = @batch_notification_process_id
+			AND bpn.notification_type IN (751,752,755,756, 757)
+			AND (bpn.user_login_id IS NOT NULL OR aru.user_login_id IS NOT NULL)		
 	END
 	ELSE IF ISNULL(@trimmed_source,'') <> 'Send Invoice' AND ISNULL(@trimmed_source,'') <> 'Send Confirmation' -- only use for invoice emailing purpose not to show msg in msg board 
 	BEGIN
