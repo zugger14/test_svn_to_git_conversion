@@ -191,7 +191,7 @@ BEGIN
 	)
 	BEGIN
 		DECLARE @notif_type INT
-		SET @notif_type = (SELECT TOP 1 notification_type FROM batch_process_notifications where process_id = @batch_notification_process_id AND user_login_id IS NOT NULL)
+		SET @notif_type = (SELECT notification_type FROM batch_process_notifications where process_id = @batch_notification_process_id AND user_login_id IS NOT NULL)
 		IF @notif_type = 757 
 		BEGIN 
 			INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type, is_alert)
