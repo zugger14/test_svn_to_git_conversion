@@ -1906,10 +1906,10 @@ END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''
 				INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'udf_value4' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'NULL' OR ic.header_detail IS NULL)
 				LEFT JOIN static_data_value sdv ON sdv.type_id = 5500 AND sdv.code =  'Trayport Last Update'									   
 				LEFT JOIN user_defined_fields_template udft ON udft.field_id = sdv.value_id
-				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, 'CASE WHEN tdi.[VoiceDeal] = ''1'' AND tdi.[FromBrokenSpread]=''1'' THEN ''Broker_Spread''
-WHEN tdi.[VoiceDeal] = '''' AND tdi.[FromBrokenSpread]=''1'' THEN ''Broker_Spread''
-WHEN tdi.[VoiceDeal] = ''0'' AND tdi.[FromBrokenSpread]=''1'' THEN ''Broker_Spread''
-WHEN tdi.[VoiceDeal] = ''1'' AND tdi.[FromBrokenSpread]=''0'' THEN ''Broker_Voice''
+				WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, 'CASE WHEN tdi.[VoiceDeal] IN (''1'', ''true'') AND tdi.[FromBrokenSpread] IN (''1'', ''true'') THEN ''Broker_Spread''
+WHEN tdi.[VoiceDeal] = '''' AND tdi.[FromBrokenSpread] IN (''1'', ''true'') THEN ''Broker_Spread''
+WHEN tdi.[VoiceDeal] IN (''0'', ''false'') AND tdi.[FromBrokenSpread] IN (''1'', ''true'') THEN ''Broker_Spread''
+WHEN tdi.[VoiceDeal] IN (''1'', ''true'') AND tdi.[FromBrokenSpread] IN (''0'', ''false'') THEN ''Broker_Voice''
 ELSE ''Broker''
 END', NULL, 0, NULL, ISNULL(CAST(sdv.value_id AS VARCHAR(200)),'Missing udf - ''' + 'Broker Contract' + '''')  
 				FROM ixp_tables it 
