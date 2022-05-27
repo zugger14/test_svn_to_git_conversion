@@ -90,7 +90,8 @@ select @flag='g',@internal_type_value_id='33',@category_value_id='42018',@notes_
 
 set nocount on
 
-declare @shared_document_path nvarchar(1000) = null
+declare @shared_document_path nvarchar(1000) = null,
+		@delete_notes_ids NVARCHAR(MAX)
 select @shared_document_path = cs.document_path
 from connection_string cs
 
@@ -237,6 +238,19 @@ BEGIN try
 	declare @c_file_path nvarchar(max) = null
 	declare @err_message_delete varchar(300) = '.'
 
+	/* Pull ids containing same file name and extension.*/
+	SELECT @delete_notes_ids = STUFF((SELECT DISTINCT ',' +  CAST(an1.notes_id AS VARCHAR(10))
+									FROM application_notes an
+									INNER JOIN dbo.SplitCommaSeperatedValues(@notes_ids) scsv 
+										ON scsv.item = an.notes_id
+									INNER JOIN application_notes an1
+										ON an1.internal_type_value_id = an.internal_type_value_id
+										AND an1.attachment_file_name = an.attachment_file_name
+										AND an1.attachment_folder = an.attachment_folder
+										AND an1.type_column_name = an.type_column_name
+									WHERE NULLIF(an.notes_attachment, '') IS NOT NULL
+							FOR XML PATH('')), 1, 1, '') 
+
 	declare cur_delete_file cursor for
 	select an.notes_id, an.notes_attachment
 	from application_notes an
@@ -266,11 +280,13 @@ BEGIN try
 	close cur_delete_file
 	deallocate cur_delete_file
 
+	SELECT @notes_ids = @notes_ids + IIF(NULLIF(@delete_notes_ids,'') IS NULL, '', ',' + @delete_notes_ids)
+
 	SET @sql = 'DELETE FROM application_notes_status WHERE application_notes_id in (' + @notes_ids + ')
 				DELETE application_notes WHERE notes_id in (' + @notes_ids + ')';
 	EXEC(@sql)
 	
-	commit
+	COMMIT
 
 	if @err_message_delete = 'delete_file_success' set @err_message_delete = 'Document deleted successfully.'
 	else if @err_message_delete = 'delete_file_failed' set @err_message_delete = 'Document deleted successfully. (Physical File delete error)'
