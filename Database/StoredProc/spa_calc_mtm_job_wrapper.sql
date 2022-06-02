@@ -140,6 +140,7 @@ AS
 	@ref_id VARCHAR(200) = NULL,--
 	@calc_explain_type CHAR(1) = NULL, -- 'm'-> modified--
 	@purge CHAR(1) = 'n',
+	@trigger_workflow NCHAR(1) = 'y',
 	@batch_process_id	VARCHAR(120) = NULL,--
 	@batch_report_param	VARCHAR(5000) = NULL,--
 	@transaction_type_id VARCHAR(5000),
@@ -205,7 +206,7 @@ BEGIN TRY
 	DECLARE @mtm_job VARCHAR(100), @Monte_Carlo_Curve_Source INT, @MTMProcessTableName VARCHAR(200),
 			@tbl_name VARCHAR(200), @portfolio_deals VARCHAR(200), @st_sql NVARCHAR(MAX), @hedge_value VARCHAR(100),@mtm_process VARCHAR(100), 
 			@mtm_as_of_date VARCHAR(100), @as_of_date_start DATETIME, @as_of_date_end DATETIME, @curve_date DATETIME,
-			@module VARCHAR(100), @source VARCHAR(100), @errorcode VARCHAR(1), @desc VARCHAR(500), @url VARCHAR(500),
+			@module VARCHAR(100), @source VARCHAR(100), @errorcode VARCHAR(1), @is_warning VARCHAR(1)='n', @desc VARCHAR(500), @url VARCHAR(500),
 			@url_desc VARCHAR(500), @no_of_simulation INT, @call_to NCHAR(1), @DEALDeltaTableName VARCHAR(200) 
 	,@tbl_name_pos varchar(250)
 	
@@ -1371,17 +1372,33 @@ CREATE TABLE #process_as_of_date_point(as_of_date DATETIME)
 		
 		---jump for other remaining as_of_date
 		IF EXISTS(SELECT 1 FROM #as_of_date_point)
-			GOTO loop_process_as_of_date		
+			GOTO loop_process_as_of_date	
+
+
+		DECLARE @totalCount INT = 0, @priceMissing INT = 0
+		SELECT @totalCount = COUNT(*) FROM #source_deal_delta_value
+		SELECT @priceMissing = COUNT(*) FROM #source_deal_delta_value WHERE as_of_date IS NULL
 		
-		IF NOT EXISTS (SELECT TOP 1 1 FROM #source_deal_delta_value)
+		IF (@totalCount = 0)
 		BEGIN
 			INSERT INTO fas_eff_ass_test_run_log (process_id, code, MODULE, source, TYPE, DESCRIPTION, nextsteps) 
 			SELECT  @process_id, 'Error', @module, @source, 'MTM simulation', ' No data found to process for MTM simulation for as of date: ' 
 			+ dbo.FNADateFormat(@as_of_date), 'Please check data.'
 			RAISERROR ('CatchError', 16, 1)
 		END
-		
-		IF EXISTS(SELECT * FROM #source_deal_delta_value WHERE as_of_date IS NULL)
+
+		IF ((@totalCount > @priceMissing) AND @priceMissing > 0)
+		BEGIN 
+			INSERT INTO fas_eff_ass_test_run_log (process_id, code, MODULE, source, TYPE, DESCRIPTION, nextsteps) 
+			SELECT DISTINCT @process_id, 'Warning', @module, @source, 'MTM simulation', ' Price curve simulation not found for as of date: ' + dbo.FNADateFormat(@as_of_date) + ' , curve:  ' + spcd.curve_name + ' and term: ' + dbo.FNADateFormat(sddv.term_start), 'Please check data.'
+			FROM #source_deal_delta_value sddv
+			INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sddv.curve_id
+			WHERE sddv.as_of_date IS NULL
+
+			SET @is_warning = 'y'
+		END
+
+		IF (@totalCount = @priceMissing)
 		BEGIN 
 			INSERT INTO fas_eff_ass_test_run_log (process_id, code, MODULE, source, TYPE, DESCRIPTION, nextsteps) 
 			SELECT  @process_id, 'Error', @module, @source, 'MTM simulation', ' Price curve simulation not found for as of date: ' 
@@ -1498,8 +1515,7 @@ BEGIN
 	SELECT @desc = '<a target="_blank" href="' + @url + '">' + @desc + '.</a>'
 
 	SET @url_desc = '<a href="../../dev/spa_html.php?spa=spa_fas_eff_ass_test_run_log '''+@process_id+'''">Click here...</a>'
-	--SELECT 'Error' ErrorCode, 'Calculate MTM' MODULE, 
-	--		'spa_calc_VaR' Area, 'DB Error' Status, 'MTM Simulation Calculation process is completed with error, Please view this report. ' + @url_desc MESSAGE, '' Recommendation
+
 	SELECT 'Error' ErrorCode, 'Calculate MTM' MODULE, 
 			'spa_calc_mtm_job_wrapper' Area, 'DB Error' Status, 'MTM Simulation Calculation process is completed with error. ' MESSAGE, '' Recommendation
 END
@@ -1508,9 +1524,12 @@ BEGIN
 	SELECT @url = './dev/spa_html.php?__user_name__=' + @user_id + '&spa=exec spa_fas_eff_ass_test_run_log ''' + @process_id + ''',''y'',
 		''MTM simulation'''
 	
-	--SELECT @desc = '<a target="_blank" href="' + @url + '">' + @desc + '.</a>'
-	SET @desc = 'MTM Simulation Calculation process is completed for ' + dbo.FNAUserDateFormat(@as_of_date, @user_id) + '.'	
+	SET @desc = 'MTM Simulation Calculation process is completed for ' + dbo.FNAUserDateFormat(@as_of_date, @user_id) + CASE WHEN @is_warning = 'y' THEN ' with warning(s)' ELSE '' END + '.'	
+
 	EXEC spa_ErrorHandler 0, 'Calculate MTM', 	'spa_calc_mtm_job_wrapper', 'Success', @desc, ''
+
+	IF @is_warning = 'y'
+	SELECT @desc = '<a target="_blank" href="' + @url + '">' + @desc + '.</a>'
 END
 
 
