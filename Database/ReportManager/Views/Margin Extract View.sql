@@ -34,515 +34,224 @@ BEGIN TRY
 	SET alias = @new_ds_alias, description = 'Customized Margin Extract View'
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_sql_select1 VARCHAR(MAX)
 
-
-
 DECLARE @_sql_select2 VARCHAR(MAX)
-
-
 
 DECLARE @_sql_from1 VARCHAR(MAX)
 
-
-
 DECLARE @_sql_from2 VARCHAR(MAX)
-
-
 
 DECLARE @_sql_from3 VARCHAR(MAX)
 
-
-
 DECLARE @_sql_from4 VARCHAR(MAX)
-
-
 
 DECLARE @_sql_whr VARCHAR(MAX)
 
-
-
 DECLARE @_from_as_of_date VARCHAR(50)
-
-
 
 DECLARE @_to_as_of_date VARCHAR(50)
 
-
-
 DECLARE @_term_start DATETIME=NUll
-
-
 
 DECLARE @_term_end DATETIME=NUll
 
-
-
 DECLARE 
-
-
-
 	@_deal_date_from VARCHAR(50), 
-
-
 
 	@_deal_date_to VARCHAR(50), 
 
-
-
 	@_source_counterparty_id VARCHAR(MAX), 
-
-
 
 	@_source_deal_type_id VARCHAR(MAX), 
 
-
-
 	@_deal_sub_type_type_id VARCHAR(MAX), 
-
-
 
 	@_physical_financial_flag VARCHAR(20), 
 
-
-
 	@_contract_id VARCHAR(MAX), 
-
-
 
 	@_trader_id VARCHAR(MAX), 
 
-
-
 	@_block_definition_id VARCHAR(50), 
-
-
 
 	@_location_id VARCHAR(MAX), 
 
-
-
 	@_index_id VARCHAR(MAX),
-
-
 
 	@_source_deal_header_id VARCHAR(50), 
 
-
-
 	@_commodity_id VARCHAR(MAX), 
-
-
 
 	@_period_from VARCHAR(50), 
 
-
-
 	@_period_to VARCHAR(50), 
-
-
 
 	@_detail_buy_sell_flag VARCHAR(20),
 
-
-
 	@_buy_sell_flag VARCHAR(20),
-
-
 
 	@_deal_ref_id VARCHAR(50),
 
-
-
 	@_deal_status_id VARCHAR(50),
-
-
 
 	@_confirm_status_id VARCHAR(50),
 
-
-
 	@_pnl_source_value_id VARCHAR(MAX),
-
-
 
 	@_deal_status_group CHAR(1),
 
-
-
 	@_broker_id VARCHAR(MAX),
-
-
 
 	@_country_id VARCHAR(MAX),
 
-
-
 	@_currency_id VARCHAR(MAX),
-
-
 
 	@_deal_category_id VARCHAR(MAX),
 
-
-
 	@_internal_counterparty_id VARCHAR(MAX),
-
-
 
 	@_product_id VARCHAR(MAX),
 
-
-
 	@_region_id VARCHAR(MAX),
-
-
 
 	@_template_id VARCHAR(MAX),
 
-
-
 	@_pricing_type_id VARCHAR(MAX)
 
+DECLARE @_reporting_group1 VARCHAR(1000)
 
+DECLARE @_reporting_group2 VARCHAR(1000)
 
-	DECLARE @_reporting_group1 VARCHAR(1000)
+DECLARE @_reporting_group3 VARCHAR(1000)
 
+DECLARE @_reporting_group4 VARCHAR(1000)
 
+DECLARE @_reporting_group5 VARCHAR(1000)
 
-	DECLARE @_reporting_group2 VARCHAR(1000)
+IF ''@from_as_of_date'' <> ''NULL''
+    SET @_from_as_of_date = ''@from_as_of_date''
 
+IF ''@to_as_of_date'' <> ''NULL''
+    SET @_to_as_of_date = ''@to_as_of_date''
 
+IF ''@term_start'' <> ''NULL''
+    SET @_term_start = ''@term_start''
 
-	DECLARE @_reporting_group3 VARCHAR(1000)
+IF ''@term_end'' <> ''NULL''
+    SET @_term_end = ''@term_end''
 
+IF ''@deal_date_from'' <> ''NULL''
+    SET @_deal_date_from = ''@deal_date_from''
 
+IF ''@deal_date_to'' <> ''NULL''
+    SET @_deal_date_to = ''@deal_date_to''
 
-	DECLARE @_reporting_group4 VARCHAR(1000)
+IF ''@source_counterparty_id'' <> ''NULL''
+    SET @_source_counterparty_id = ''@source_counterparty_id''
 
+IF ''@source_deal_type_id'' <> ''NULL''
+    SET @_source_deal_type_id = ''@source_deal_type_id''
 
+IF ''@deal_sub_type_type_id'' <> ''NULL''
+    SET @_deal_sub_type_type_id = ''@deal_sub_type_type_id''	
 
-	DECLARE @_reporting_group5 VARCHAR(1000)
+IF ''@physical_financial_flag'' <> ''NULL''
+    SET @_physical_financial_flag = ''@physical_financial_flag''
 
+IF ''@contract_id'' <> ''NULL''
+    SET @_contract_id = ''@contract_id''
 
-	
+IF ''@trader_id'' <> ''NULL''
+    SET @_trader_id = ''@trader_id''
 
+IF ''@block_definition_id'' <> ''NULL''
+    SET @_block_definition_id = ''@block_definition_id''
 
-	IF ''@from_as_of_date'' <> ''NULL''
+IF ''@location_id'' <> ''NULL''
+    SET @_location_id = ''@location_id''
 
+IF ''@index_id'' <> ''NULL''
+    SET @_index_id = ''@index_id''
 
+IF ''@source_deal_header_id'' <> ''NULL''
+    SET @_source_deal_header_id = ''@source_deal_header_id''
 
-		SET @_from_as_of_date = ''@from_as_of_date''
+IF ''@commodity_id'' <> ''NULL''
+    SET @_commodity_id = ''@commodity_id''
 
+IF ''@period_from'' <> ''NULL''
+    SET @_period_from = ''@period_from''
 
+IF ''@period_to'' <> ''NULL''
+    SET @_period_to = ''@period_to''
 
-	IF ''@to_as_of_date'' <> ''NULL''
+IF ''@detail_buy_sell_flag'' <> ''NULL''
+    SET @_detail_buy_sell_flag = ''@detail_buy_sell_flag''
 
+IF ''@buy_sell_flag'' <> ''NULL''
+    SET @_buy_sell_flag = ''@buy_sell_flag''
 
+IF ''@deal_ref_id'' <> ''NULL''
+    SET @_deal_ref_id = ''@deal_ref_id''
 
-		SET @_to_as_of_date = ''@to_as_of_date''
+IF ''@deal_status_id'' <> ''NULL''
+    SET @_deal_status_id = ''@deal_status_id''
 
+IF ''@confirm_status_id'' <> ''NULL''
+    SET @_confirm_status_id = ''@confirm_status_id''
 
+IF ''@pnl_source_value_id'' <> ''NULL''
+    SET @_pnl_source_value_id = ''@pnl_source_value_id''
 
-	IF ''@term_start'' <> ''NULL''
+IF ''@deal_status_group'' <> ''NULL''
+    SET @_deal_status_group = ''@deal_status_group''
 
+IF ''@broker_id'' <> ''NULL''
+    SET @_broker_id = ''@broker_id''
 
+IF ''@country_id'' <> ''NULL''
+    SET @_country_id = ''@country_id''
 
-		SET @_term_start = ''@term_start''
+IF ''@currency_id'' <> ''NULL''
+    SET @_currency_id = ''@currency_id''
 
+IF ''@deal_category_id'' <> ''NULL''
+    SET @_deal_category_id = ''@deal_category_id''
 
+IF ''@internal_counterparty_id'' <> ''NULL''
+    SET @_internal_counterparty_id = ''@internal_counterparty_id''
 
-	IF ''@term_end'' <> ''NULL''
+IF ''@product_id'' <> ''NULL''
+    SET @_product_id = ''@product_id''
 
+IF ''@region_id'' <> ''NULL''
+    SET @_region_id = ''@region_id''
 
+IF ''@template_id'' <> ''NULL''
+    SET @_template_id = ''@template_id''
 
-		SET @_term_end = ''@term_end''
+IF ''@pricing_type_id'' <> ''NULL''
+    SET @_pricing_type_id = ''@pricing_type_id''
 
+IF ''@reporting_group1'' <> ''NULL''
+    SET @_reporting_group1 = ''@reporting_group1''
 
+IF ''@reporting_group2'' <> ''NULL''
+    SET @_reporting_group2 = ''@reporting_group2''
 
-	IF ''@deal_date_from'' <> ''NULL''
+IF ''@reporting_group3'' <> ''NULL''
+    SET @_reporting_group3 = ''@reporting_group3''
 
+IF ''@reporting_group4'' <> ''NULL''
+    SET @_reporting_group4 = ''@reporting_group4''
 
+IF ''@reporting_group5'' <> ''NULL''
+    SET @_reporting_group5 = ''@reporting_group5''
 
-		SET @_deal_date_from = ''@deal_date_from''
 
 
+DECLARE @_EEX_counterparty_id INT
 
-	IF ''@deal_date_to'' <> ''NULL''
-
-
-
-		SET @_deal_date_to = ''@deal_date_to''
-
-
-
-	IF ''@source_counterparty_id'' <> ''NULL''
-
-
-
-		SET @_source_counterparty_id = ''@source_counterparty_id''
-
-
-
-	IF ''@source_deal_type_id'' <> ''NULL''
-
-
-
-		SET @_source_deal_type_id = ''@source_deal_type_id''
-
-
-
-	IF ''@deal_sub_type_type_id'' <> ''NULL''
-
-
-
-		SET @_deal_sub_type_type_id = ''@deal_sub_type_type_id''	
-
-
-
-	IF ''@physical_financial_flag'' <> ''NULL''
-
-
-
-		SET @_physical_financial_flag = ''@physical_financial_flag''
-
-
-
-	IF ''@contract_id'' <> ''NULL''
-
-
-
-		SET @_contract_id = ''@contract_id''
-
-
-
-	IF ''@trader_id'' <> ''NULL''
-
-
-
-		SET @_trader_id = ''@trader_id''
-
-
-
-	IF ''@block_definition_id'' <> ''NULL''
-
-
-
-		SET @_block_definition_id = ''@block_definition_id''
-
-
-
-	IF ''@location_id'' <> ''NULL''
-
-
-
-		SET @_location_id = ''@location_id''
-
-
-
-	IF ''@index_id'' <> ''NULL''
-
-
-
-		SET @_index_id = ''@index_id''
-
-
-
-	IF ''@source_deal_header_id'' <> ''NULL''
-
-
-
-		SET @_source_deal_header_id = ''@source_deal_header_id''
-
-
-
-	IF ''@commodity_id'' <> ''NULL''
-
-
-
-		SET @_commodity_id = ''@commodity_id''
-
-
-
-	IF ''@period_from'' <> ''NULL''
-
-
-
-		SET @_period_from = ''@period_from''
-
-
-
-	IF ''@period_to'' <> ''NULL''
-
-
-
-		SET @_period_to = ''@period_to''
-
-
-
-	IF ''@detail_buy_sell_flag'' <> ''NULL''
-
-
-
-		SET @_detail_buy_sell_flag = ''@detail_buy_sell_flag''
-
-
-
-	IF ''@buy_sell_flag'' <> ''NULL''
-
-
-
-		SET @_buy_sell_flag = ''@buy_sell_flag''
-
-
-
-	IF ''@deal_ref_id'' <> ''NULL''
-
-
-
-		SET @_deal_ref_id = ''@deal_ref_id''
-
-
-
-	IF ''@deal_status_id'' <> ''NULL''
-
-
-
-		SET @_deal_status_id = ''@deal_status_id''
-
-
-
-	IF ''@confirm_status_id'' <> ''NULL''
-
-
-
-		SET @_confirm_status_id = ''@confirm_status_id''
-
-
-
-	IF ''@pnl_source_value_id'' <> ''NULL''
-
-
-
-		SET @_pnl_source_value_id = ''@pnl_source_value_id''
-
-
-
-	IF ''@deal_status_group'' <> ''NULL''
-
-
-
-		SET @_deal_status_group = ''@deal_status_group''
-
-
-
-	IF ''@broker_id'' <> ''NULL''
-
-
-
-		SET @_broker_id = ''@broker_id''
-
-
-
-	IF ''@country_id'' <> ''NULL''
-
-
-
-		SET @_country_id = ''@country_id''
-
-
-
-	IF ''@currency_id'' <> ''NULL''
-
-
-
-		SET @_currency_id = ''@currency_id''
-
-
-
-	IF ''@deal_category_id'' <> ''NULL''
-
-
-
-		SET @_deal_category_id = ''@deal_category_id''
-
-
-
-	IF ''@internal_counterparty_id'' <> ''NULL''
-
-
-
-		SET @_internal_counterparty_id = ''@internal_counterparty_id''
-
-
-
-	IF ''@product_id'' <> ''NULL''
-
-
-
-		SET @_product_id = ''@product_id''
-
-
-
-	IF ''@region_id'' <> ''NULL''
-
-
-
-		SET @_region_id = ''@region_id''
-
-
-
-	IF ''@template_id'' <> ''NULL''
-
-
-
-		SET @_template_id = ''@template_id''
-
-
-
-	IF ''@pricing_type_id'' <> ''NULL''
-
-
-
-		SET @_pricing_type_id = ''@pricing_type_id''
-
-
-
-	IF ''@reporting_group1'' <> ''NULL''
-
-
-
-		SET @_reporting_group1 = ''@reporting_group1''
-
-
-
-	IF ''@reporting_group2'' <> ''NULL''
-
-
-
-		SET @_reporting_group2 = ''@reporting_group2''
-
-
-
-	IF ''@reporting_group3'' <> ''NULL''
-
-
-
-		SET @_reporting_group3 = ''@reporting_group3''
-
-
-
-	IF ''@reporting_group4'' <> ''NULL''
-
-
-
-		SET @_reporting_group4 = ''@reporting_group4''
-
-
-
-	IF ''@reporting_group5'' <> ''NULL''
-
-
-
-		SET @_reporting_group5 = ''@reporting_group5''
+SELECT @_EEX_counterparty_id = source_counterparty_id FROM source_counterparty where counterparty_id = ''EEX''
 
 
 
@@ -550,920 +259,439 @@ DECLARE
 
 
 
-	DECLARE @_EEX_counterparty_id INT
+IF OBJECT_ID(N''tempdb..#books'') IS NOT NULL
+    DROP TABLE #books
 
+    SELECT 
+        sub.entity_id sub_id,
+        stra.entity_id stra_id,
+        book.entity_id book_id,
+        sub.entity_name AS sub_name,
+        stra.entity_name AS stra_name,
+        book.entity_name AS book_name,
+        ssbm.source_system_book_id1, 
+        ssbm.source_system_book_id2, 
+        ssbm.source_system_book_id3, 
+        ssbm.source_system_book_id4,
+        ssbm.logical_name,
+        ssbm.book_deal_type_map_id [sub_book_id],
+        ssbm.fas_deal_type_value_id [transaction_type],
+        sdv.code [transaction_type_name],
+        ssbm.sub_book_group1,
+        ssbm.sub_book_group2,
+        ssbm.sub_book_group3,
+        ssbm.sub_book_group4,
+        fs.counterparty_id 
+    INTO  #books
 
-	SELECT @_EEX_counterparty_id = source_counterparty_id FROM source_counterparty where counterparty_id = ''EEX''
+    FROM   portfolio_hierarchy book(NOLOCK)
 
+    INNER JOIN Portfolio_hierarchy stra(NOLOCK) ON book.parent_entity_id = stra.entity_id
 
-	
+    INNER JOIN portfolio_hierarchy sub (NOLOCK) ON stra.parent_entity_id = sub.entity_id
 
+    INNER JOIN source_system_book_map ssbm ON ssbm.fas_book_id = book.entity_id
 
-	IF OBJECT_ID(N''tempdb..#books'') IS NOT NULL
+    INNER JOIN fas_subsidiaries fs ON fs.fas_subsidiary_id = sub.entity_id
 
+    LEFT JOIN static_data_value sdv ON sdv.[type_id] = 400 AND ssbm.fas_deal_type_value_id = sdv.value_id
 
+    WHERE 1 = 1
 
-		DROP TABLE #books
+        --AND (''@sub_id'' = ''NULL'' OR sub.entity_id IN (@sub_id)) 
 
+        --AND (''@stra_id'' = ''NULL'' OR stra.entity_id IN (@stra_id)) 
 
+        --AND (''@book_id'' = ''NULL'' OR book.entity_id IN (@book_id))
 
-		SELECT sub.entity_id sub_id,
-
-
-
-		  stra.entity_id stra_id,
-
-
-
-		  book.entity_id book_id,
-
-
-
-		  sub.entity_name AS sub_name,
-
-
-
-		  stra.entity_name AS stra_name,
-
-
-
-		  book.entity_name AS book_name,
-
-
-
-		  ssbm.source_system_book_id1, 
-
-
-
-		  ssbm.source_system_book_id2, 
-
-
-
-		  ssbm.source_system_book_id3, 
-
-
-
-		  ssbm.source_system_book_id4,
-
-
-
-		  ssbm.logical_name,
-
-
-
-		  ssbm.book_deal_type_map_id [sub_book_id],
-
-
-
-		  ssbm.fas_deal_type_value_id [transaction_type],
-
-
-
-		  sdv.code [transaction_type_name],
-
-
-
-		  ssbm.sub_book_group1,
-
-
-
-		  ssbm.sub_book_group2,
-
-
-
-		  ssbm.sub_book_group3,
-
-
-
-		  ssbm.sub_book_group4,
-
-
-
-		  fs.counterparty_id 
-
-
-
-	INTO  #books
-
-
-
-	FROM   portfolio_hierarchy book(NOLOCK)
-
-
-
-	INNER JOIN Portfolio_hierarchy stra(NOLOCK) ON book.parent_entity_id = stra.entity_id
-
-
-
-	INNER JOIN portfolio_hierarchy sub (NOLOCK) ON stra.parent_entity_id = sub.entity_id
-
-
-
-	INNER JOIN source_system_book_map ssbm ON ssbm.fas_book_id = book.entity_id
-
-
-
-	INNER JOIN fas_subsidiaries fs ON fs.fas_subsidiary_id = sub.entity_id
-
-
-
-	LEFT JOIN static_data_value sdv ON sdv.[type_id] = 400 AND ssbm.fas_deal_type_value_id = sdv.value_id
-
-
-
-	WHERE 1 = 1
-
-
-
-		--AND (''@sub_id'' = ''NULL'' OR sub.entity_id IN (@sub_id)) 
-
-
-
-		--AND (''@stra_id'' = ''NULL'' OR stra.entity_id IN (@stra_id)) 
-
-
-
-		--AND (''@book_id'' = ''NULL'' OR book.entity_id IN (@book_id))
-
-
-
-		--AND (''@sub_book_id'' = ''NULL'' OR ssbm.book_deal_type_map_id IN (@sub_book_id))
-
-
+        --AND (''@sub_book_id'' = ''NULL'' OR ssbm.book_deal_type_map_id IN (@sub_book_id))
 
 	IF @_from_as_of_date IS NULL AND @_to_as_of_date IS NOT NULL
-
-
-
-		SELECT @_from_as_of_date =  MAX(CONVERT(char(10), sdp.pnl_as_of_date,126)) FROM  dbo.source_deal_pnl sdp WHERE sdp.pnl_as_of_date < @_to_as_of_date
-
-
+        SELECT @_from_as_of_date =  MAX(CONVERT(char(10), sdp.pnl_as_of_date,126)) FROM  dbo.source_deal_pnl sdp WHERE sdp.pnl_as_of_date < @_to_as_of_date
 
 	IF @_from_as_of_date IS NULL AND @_to_as_of_date IS NULL
-
-
-
-		SELECT @_from_as_of_date =  MAX(CONVERT(char(10), sdp.pnl_as_of_date,126)) FROM  dbo.source_deal_pnl sdp
-
+        SELECT @_from_as_of_date =  MAX(CONVERT(char(10), sdp.pnl_as_of_date,126)) FROM  dbo.source_deal_pnl sdp
 
 
 	DECLARE @_temp_date AS VARCHAR(25) = @_from_as_of_date
 
-
-
 	IF @_to_as_of_date IS NOT NULL
-
-
-
-		SET @_temp_date = @_to_as_of_date
-
-
+        SET @_temp_date = @_to_as_of_date
 
 	IF @_period_from IS NOT NULL
-
-
-
-		SET @_term_start = dbo.FNAGetTermStartDate(''m'',@_temp_date,ISNULL(@_period_from,0))
-
-
+        SET @_term_start = dbo.FNAGetTermStartDate(''m'',@_temp_date,ISNULL(@_period_from,0))
 
 	IF @_period_to IS NOT NULL 
-
-
-
-		SET @_term_end = dbo.FNAGetTermENDDate(''m'',@_temp_date,@_period_to)
-
+        SET @_term_end = dbo.FNAGetTermENDDate(''m'',@_temp_date,@_period_to)
 
 
 	IF OBJECT_ID(N''tempdb..#final_values'') IS NOT NULL
 
-
-
 		DROP TABLE #final_values
 
 
-
 	CREATE TABLE #final_values(
+        sub_id int,
+
+        stra_id int,
+        
+        book_id int,
+        
+        subsidiary Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        strategy Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        book Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        sub_book Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        source_deal_header_id int,
+        
+        deal_ref_id nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        trader_id int,
+        
+        trader_name Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        source_counterparty_id int,
+        
+        counterparty_name Nvarchar(500) COLLATE DATABASE_DEFAULT,
+        
+        contract_id int,
+        
+        contract_name Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        broker_id int,
+        
+        broker_name Nvarchar(500) COLLATE DATABASE_DEFAULT,
+        
+        term_start_day int,
+        
+        term_start_month varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        term_start_month_name varchar(500) COLLATE DATABASE_DEFAULT,
+        
+        term_start_year int,
+        
+        term_start_year_month varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        term_quarter varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        currency_id INT,
+        
+        curreny_name Nvarchar(100) COLLATE DATABASE_DEFAULT NULL,
+        
+        agg_term varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        deal_date_from datetime,
+        
+        deal_date_to datetime,
+        
+        parent_counterparty_name Nvarchar(500) COLLATE DATABASE_DEFAULT,
+        
+        source_deal_type_id int,
+        
+        deal_type_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        deal_sub_type_type_id int,
+        
+        deal_sub_type_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        product_id int,
+        
+        commodity_id int,
+        
+        product_desc varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        detail_buy_sell_flag varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        buy_sell_flag varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        term_start datetime,
+        
+        term_end datetime,
+        
+        country_id int,
+        
+        country varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        grid varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        region_id int,
+        
+        region varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        source_major_location_ID int,
+        
+        location_group varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        location_id int,
+        
+        location_name nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        location_description varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        from_as_of_date datetime,
+        
+        MTM float,
+        
+        und_intrinsic_pnl float,
+        
+        und_extrinsic_pnl float,
+        
+        dis_pnl float,
+        
+        dis_intrinsic_pnl float,
+        
+        dis_extrinisic_pnl float,
+        
+        market_value float,
+        
+        contract_value float,
+        
+        dis_market_value float,
+        
+        dis_contract_value float,
+        
+        discount_factor float,
+        
+        discount_amount float,
+        
+        commodity varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        deal_volume float,
+        
+        volume_uom varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        template_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        curve_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        formula varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        total_volume float,
+        
+        position_uom varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        market_price float,
+        
+        formula_price float,
+        
+        net_price float,
+        
+        physical_financial_flag varchar(10) COLLATE DATABASE_DEFAULT NULL,
+        
+        leg int,
+        
+        counterparty_id varchar(500) COLLATE DATABASE_DEFAULT,
+        
+        index_id int,
+        
+        to_as_of_date datetime,
+        
+        sub_book_id int,
+        
+        transaction_type int,
+        
+        transaction_type_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        period_from varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        period_to varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        fair_value float,
+        
+        dis_fair_value float,
+        
+        pnl_conversion_factor float,
+        
+        pnl_adjustment_value float,
+        
+        internal_deal_type_id int,
+        
+        internal_deal_type varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        internal_deal_sub_type_id int,
+        
+        internal_deal_sub_type varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        fixed_cost float,
+        
+        fixed_price float,
+        
+        formula_value float,
+        
+        price_adder float,
+        
+        price_multiplier float,
+        
+        strike_price float,
+        
+        und_pnl_set float,
+        
+        formula_curve_id int,
+        
+        formula_curve_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        internal_desk_id int,
+        
+        internal_desk varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        internal_portfolio_id int,
+        
+        internal_portfolio varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        type_of_entity_id int,
+        
+        type_of_entity varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        int_ext_flag_id char,
+        
+        int_ext_flag varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        deal_status_id int,
+        
+        deal_status varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        confirm_status_id int,
+        
+        confirm_status varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        pnl_source_value_id int,
+        
+        pnl_source_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        description1 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        description2 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        description3 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        description4 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        counterparty_id2 int,
+        
+        counterparty_name2 varchar(500) COLLATE DATABASE_DEFAULT,
+        
+        ext_deal_id varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        reference varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        create_by varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        create_ts datetime,
+        
+        update_by varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        update_ts datetime,
+        
+        confirm_date datetime,
+        
+        sub_book_group1_id int,
+        
+        sub_book_group2_id int,
+        
+        sub_book_group3_id int,
+        
+        sub_book_group4_id int,
+        
+        sub_book_group1 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        sub_book_group2 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        sub_book_group3 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        sub_book_group4 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        book_identifier1_id int,
+        
+        book_identifier2_id int,
+        
+        book_identifier3_id int,
+        
+        book_identifier4_id int,
+        
+        book_identifier1 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        book_identifier2 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        book_identifier3 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        book_identifier4 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        deal_price float,
+        
+        close_reference_id int,
+        
+        deal_category_id int,
+        
+        deal_category varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        internal_counterparty_id int,
+        
+        internal_counterparty varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        template_id int,
+        
+        volume_profile varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        price_adder2 float,
+        
+        volume_multiplier float,
+        
+        volume_multiplier2 float,
+        
+        volume_frequency varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        entire_term_start datetime,
+        
+        entire_term_end datetime,
+        
+        contract_expiration_date datetime,
+        
+        structured_deal_id varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        payment_date datetime,
+        
+        block_definition_id INT,
+        
+        block_definition_name varchar(100) COLLATE DATABASE_DEFAULT NULL,
+        
+        fv_level varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        pricing_type_id INT NULL,
+        
+        pricing_type varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        reporting_group1 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        reporting_group2 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        reporting_group3 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        reporting_group4 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        reporting_group5 varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        [reporting_group1_name] varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        [reporting_group2_name] varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        [reporting_group3_name] varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        [reporting_group4_name] varchar(500) COLLATE DATABASE_DEFAULT NULL,
+        
+        [reporting_group5_name] varchar(500) COLLATE DATABASE_DEFAULT NULL
+    )
 
-
-
-		sub_id int ,
-
-
-
-		stra_id int ,
-
-
-
-		book_id int ,
-
-
-
-		subsidiary Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		strategy Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		book Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		sub_book Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		source_deal_header_id int ,
-
-
-
-		deal_ref_id nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		trader_id int ,
-
-
-
-		trader_name Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		source_counterparty_id int ,
-
-
-
-		counterparty_name Nvarchar(500) COLLATE DATABASE_DEFAULT ,
-
-
-
-		contract_id int ,
-
-
-
-		contract_name Nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		broker_id int ,
-
-
-
-		broker_name Nvarchar(500) COLLATE DATABASE_DEFAULT ,
-
-
-
-		term_start_day int ,
-
-
-
-		term_start_month varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		term_start_month_name varchar(500) COLLATE DATABASE_DEFAULT ,
-
-
-
-		term_start_year int ,
-
-
-
-		term_start_year_month varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		term_quarter varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		currency_id INT,
-
-
-
-		curreny_name Nvarchar(100) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		agg_term varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		deal_date_from datetime ,
-
-
-
-		deal_date_to datetime ,
-
-
-
-		parent_counterparty_name Nvarchar(500) COLLATE DATABASE_DEFAULT ,
-
-
-
-		source_deal_type_id int ,
-
-
-
-		deal_type_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		deal_sub_type_type_id int ,
-
-
-
-		deal_sub_type_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		product_id int ,
-
-
-
-		commodity_id int ,
-
-
-
-		product_desc varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		detail_buy_sell_flag varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		buy_sell_flag varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		term_start datetime ,
-
-
-
-		term_end datetime ,
-
-
-
-		country_id int ,
-
-
-
-		country varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		grid varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		region_id int ,
-
-
-
-		region varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		source_major_location_ID int ,
-
-
-
-		location_group varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		location_id int ,
-
-
-
-		location_name nvarchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		location_description varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		from_as_of_date datetime ,
-
-
-
-		MTM float ,
-
-
-
-		und_intrinsic_pnl float ,
-
-
-
-		und_extrinsic_pnl float ,
-
-
-
-		dis_pnl float ,
-
-
-
-		dis_intrinsic_pnl float ,
-
-
-
-		dis_extrinisic_pnl float ,
-
-
-
-		market_value float ,
-
-
-
-		contract_value float ,
-
-
-
-		dis_market_value float ,
-
-
-
-		dis_contract_value float ,
-
-
-
-		discount_factor float ,
-
-
-
-		discount_amount float ,
-
-
-
-		commodity varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		deal_volume float ,
-
-
-
-		volume_uom varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		template_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		curve_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		formula varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		total_volume float ,
-
-
-
-		position_uom varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		market_price float ,
-
-
-
-		formula_price float ,
-
-
-
-		net_price float ,
-
-
-
-		physical_financial_flag varchar(10) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		leg int ,
-
-
-
-		counterparty_id varchar(500) COLLATE DATABASE_DEFAULT ,
-
-
-
-		index_id int ,
-
-
-
-		to_as_of_date datetime ,
-
-
-
-		sub_book_id int ,
-
-
-
-		transaction_type int ,
-
-
-
-		transaction_type_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		period_from varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		period_to varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		fair_value float ,
-
-
-
-		dis_fair_value float ,
-
-
-
-		pnl_conversion_factor float ,
-
-
-
-		pnl_adjustment_value float ,
-
-
-
-		internal_deal_type_id int ,
-
-
-
-		internal_deal_type varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		internal_deal_sub_type_id int ,
-
-
-
-		internal_deal_sub_type varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		fixed_cost float ,
-
-
-
-		fixed_price float ,
-
-
-
-		formula_value float ,
-
-
-
-		price_adder float ,
-
-
-
-		price_multiplier float ,
-
-
-
-		strike_price float ,
-
-
-
-		und_pnl_set float ,
-
-
-
-		formula_curve_id int ,
-
-
-
-		formula_curve_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		internal_desk_id int ,
-
-
-
-		internal_desk varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		internal_portfolio_id int ,
-
-
-
-		internal_portfolio varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		type_of_entity_id int ,
-
-
-
-		type_of_entity varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		int_ext_flag_id char ,
-
-
-
-		int_ext_flag varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		deal_status_id int ,
-
-
-
-		deal_status varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		confirm_status_id int ,
-
-
-
-		confirm_status varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		pnl_source_value_id int ,
-
-
-
-		pnl_source_name varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		description1 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		description2 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		description3 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		description4 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		counterparty_id2 int ,
-
-
-
-		counterparty_name2 varchar(500) COLLATE DATABASE_DEFAULT ,
-
-
-
-		ext_deal_id varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		reference varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		create_by varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		create_ts datetime ,
-
-
-
-		update_by varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		update_ts datetime ,
-
-
-
-		confirm_date datetime ,
-
-
-
-		sub_book_group1_id int ,
-
-
-
-		sub_book_group2_id int ,
-
-
-
-		sub_book_group3_id int ,
-
-
-
-		sub_book_group4_id int ,
-
-
-
-		sub_book_group1 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		sub_book_group2 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		sub_book_group3 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		sub_book_group4 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		book_identifier1_id int ,
-
-
-
-		book_identifier2_id int ,
-
-
-
-		book_identifier3_id int ,
-
-
-
-		book_identifier4_id int ,
-
-
-
-		book_identifier1 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		book_identifier2 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		book_identifier3 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		book_identifier4 varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		deal_price float ,
-
-
-
-		--Volume float,
-
-
-
-		close_reference_id int ,
-
-
-
-		deal_category_id int ,
-
-
-
-		deal_category  varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		internal_counterparty_id int,
-
-
-
-		internal_counterparty varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		template_id int,
-
-
-
-		volume_profile varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		price_adder2 float,
-
-
-
-		volume_multiplier float,
-
-
-
-		volume_multiplier2 float,
-
-
-
-		volume_frequency varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		entire_term_start datetime,
-
-
-
-		entire_term_end datetime,
-
-
-
-		contract_expiration_date datetime,
-
-
-
-		structured_deal_id  varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		payment_date datetime,
-
-
-
-		block_definition_id INT,
-
-
-
-		block_definition_name varchar(100) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		fv_level varchar(500) COLLATE DATABASE_DEFAULT NULL,
-
-
-
-		pricing_type_id INT  NULL,
-
-
-
-		pricing_type varchar(500) COLLATE DATABASE_DEFAULT  NULL,
-
-
-
-		reporting_group1 varchar(500) COLLATE DATABASE_DEFAULT  NULL, 
-
-
-
-		reporting_group2 varchar(500) COLLATE DATABASE_DEFAULT  NULL, 
-
-
-
-		reporting_group3 varchar(500) COLLATE DATABASE_DEFAULT  NULL, 
-
-
-
-		reporting_group4 varchar(500) COLLATE DATABASE_DEFAULT  NULL, 
-
-
-
-		reporting_group5 varchar(500) COLLATE DATABASE_DEFAULT  NULL,
-
-
-
-		[reporting_group1_name]  varchar(500) COLLATE DATABASE_DEFAULT  NULL,
-
-
-
-		[reporting_group2_name]  varchar(500) COLLATE DATABASE_DEFAULT  NULL,
-
-
-
-		[reporting_group3_name]  varchar(500) COLLATE DATABASE_DEFAULT  NULL,
-
-
-
-		[reporting_group4_name]  varchar(500) COLLATE DATABASE_DEFAULT  NULL,
-
-
-
-		[reporting_group5_name]  varchar(500) COLLATE DATABASE_DEFAULT  NULL
-
-
-
-	)
 
 
 
 	SET @_sql_select1 =''
 
-
-
 		INSERT INTO #final_values
+
+
 
 
 
@@ -1471,7 +699,11 @@ DECLARE
 
 
 
+
+
 			books.sub_id sub_id,
+
+
 
 
 
@@ -1479,7 +711,11 @@ DECLARE
 
 
 
+
+
 			books.book_id book_id,
+
+
 
 
 
@@ -1487,7 +723,11 @@ DECLARE
 
 
 
+
+
 			books.stra_name AS strategy,
+
+
 
 
 
@@ -1495,7 +735,11 @@ DECLARE
 
 
 
+
+
 			books.logical_name [sub_book],
+
+
 
 
 
@@ -1503,7 +747,11 @@ DECLARE
 
 
 
+
+
 			sdh.deal_id deal_ref_id,
+
+
 
 
 
@@ -1511,7 +759,11 @@ DECLARE
 
 
 
+
+
 			st.trader_name,
+
+
 
 
 
@@ -1519,7 +771,11 @@ DECLARE
 
 
 
+
+
 			sc.counterparty_name,
+
+
 
 
 
@@ -1527,7 +783,11 @@ DECLARE
 
 
 
+
+
 			cg.contract_name AS contract_name,
+
+
 
 
 
@@ -1535,7 +795,11 @@ DECLARE
 
 
 
+
+
 			sbro.counterparty_name broker_name,
+
+
 
 
 
@@ -1543,7 +807,11 @@ DECLARE
 
 
 
+
+
 			RIGHT(''''0''''+ CAST(MONTH(sdd.term_start) AS VARCHAR(2)), 2)   [term_start_month],
+
+
 
 
 
@@ -1551,7 +819,11 @@ DECLARE
 
 
 
+
+
 			YEAR(sdd.term_start) [term_start_year],
+
+
 
 
 
@@ -1559,7 +831,11 @@ DECLARE
 
 
 
+
+
 			''''Q'''' + CAST(DATEPART(q,sdd.term_start) AS VARCHAR) [term_quarter],
+
+
 
 
 
@@ -1567,7 +843,11 @@ DECLARE
 
 
 
+
+
 			scur.currency_name,
+
+
 
 
 
@@ -1575,7 +855,11 @@ DECLARE
 
 
 
+
+
 			sdh.deal_date deal_date_from,
+
+
 
 
 
@@ -1583,7 +867,11 @@ DECLARE
 
 
 
+
+
 			psc.counterparty_name parent_counterparty_name,
+
+
 
 
 
@@ -1591,7 +879,11 @@ DECLARE
 
 
 
+
+
 			sdt.source_deal_type_name AS deal_type_name,
+
+
 
 
 
@@ -1599,7 +891,11 @@ DECLARE
 
 
 
+
+
 			sdts.source_deal_type_name AS deal_sub_type_name,
+
+
 
 
 
@@ -1607,7 +903,11 @@ DECLARE
 
 
 
+
+
 			sc2.source_commodity_id commodity_id,
+
+
 
 
 
@@ -1615,7 +915,11 @@ DECLARE
 
 
 
+
+
 			(CASE WHEN sdd.buy_sell_flag = ''''b'''' THEN ''''Buy'''' ELSE ''''Sell'''' END) AS detail_buy_sell_flag,
+
+
 
 
 
@@ -1623,7 +927,11 @@ DECLARE
 
 
 
+
+
 			sdd.term_start,
+
+
 
 
 
@@ -1631,7 +939,11 @@ DECLARE
 
 
 
+
+
 			sdv_cnty.value_id country_id,
+
+
 
 
 
@@ -1639,7 +951,11 @@ DECLARE
 
 
 
+
+
 			sdv_grid.code AS grid,
+
+
 
 
 
@@ -1647,7 +963,11 @@ DECLARE
 
 
 
+
+
 			sdv_region.code AS region,
+
+
 
 
 
@@ -1655,7 +975,11 @@ DECLARE
 
 
 
+
+
 			smjl.location_name AS location_group,
+
+
 
 
 
@@ -1663,7 +987,11 @@ DECLARE
 
 
 
+
+
 			sml.location_name,
+
+
 
 
 
@@ -1671,7 +999,11 @@ DECLARE
 
 
 
+
+
 			sdpd.pnl_as_of_date from_as_of_date,
+
+
 
 
 
@@ -1679,7 +1011,11 @@ DECLARE
 
 
 
+
+
 			CAST(ISNULL(sdpd.und_intrinsic_pnl,0) AS FLOAT) und_intrinsic_pnl,
+
+
 
 
 
@@ -1687,7 +1023,11 @@ DECLARE
 
 
 
+
+
 			CAST(ISNULL(sdpd.dis_pnl,0) AS FLOAT) dis_pnl,
+
+
 
 
 
@@ -1695,7 +1035,11 @@ DECLARE
 
 
 
+
+
 			CAST(ISNULL(sdpd.dis_extrinisic_pnl,0) AS FLOAT) dis_extrinisic_pnl,
+
+
 
 
 
@@ -1703,7 +1047,11 @@ DECLARE
 
 
 
+
+
 			CAST(COALESCE(sdpd.contract_value,0) AS FLOAT) contract_value,
+
+
 
 
 
@@ -1711,7 +1059,11 @@ DECLARE
 
 
 
+
+
 			CAST(ISNULL(sdpd.dis_contract_value,0) AS FLOAT) dis_contract_value,
+
+
 
 
 
@@ -1719,7 +1071,11 @@ DECLARE
 
 
 
+
+
 			ISNULL(sdpd.und_pnl, 0) - ISNULL(sdpd.dis_pnl, 0) [discount_amount],
+
+
 
 
 
@@ -1727,7 +1083,11 @@ DECLARE
 
 
 
+
+
 			(CASE WHEN sdd.buy_sell_flag = ''''s'''' THEN sdd.deal_volume * (-1) ELSE sdd.deal_volume END) [deal_volume],
+
+
 
 
 
@@ -1735,7 +1095,11 @@ DECLARE
 
 
 
+
+
 			sdht.template_name AS [template_name],
+
+
 
 
 
@@ -1743,7 +1107,11 @@ DECLARE
 
 
 
+
+
 			fe.formula [formula],               
+
+
 
 
 
@@ -1751,7 +1119,11 @@ DECLARE
 
 
 
+
+
 			puom.uom_name AS [position_uom],
+
+
 
 
 
@@ -1759,7 +1131,11 @@ DECLARE
 
 
 
+
+
 			sdpd.formula_value [formula_price],
+
+
 
 
 
@@ -1767,7 +1143,11 @@ DECLARE
 
 
 
+
+
 			(CASE WHEN sdd.physical_financial_flag = ''''p'''' THEN ''''Physical'''' ELSE ''''Financial'''' END) [physical_financial_flag],
+
+
 
 
 
@@ -1775,7 +1155,11 @@ DECLARE
 
 
 
+
+
 			sc.counterparty_id [counterparty_id],
+
+
 
 
 
@@ -1783,7 +1167,11 @@ DECLARE
 
 
 
+
+
 			sdpd.pnl_as_of_date to_as_of_date,
+
+
 
 
 
@@ -1791,7 +1179,11 @@ DECLARE
 
 
 
+
+
 			books.[transaction_type],
+
+
 
 
 
@@ -1799,7 +1191,11 @@ DECLARE
 
 
 
+
+
 			''''@_period_from'''' [period_from],
+
+
 
 
 
@@ -1807,7 +1203,11 @@ DECLARE
 
 
 
+
+
 			sdpd.und_pnl - (ISNULL(sdpd.und_pnl, 0)* ISNULL(dp.probability, 0) * (1 - ISNULL(drr.rate, 0))) [fair_value],
+
+
 
 
 
@@ -1815,7 +1215,11 @@ DECLARE
 
 
 
+
+
 			sdpd.pnl_conversion_factor,
+
+
 
 
 
@@ -1823,7 +1227,11 @@ DECLARE
 
 
 
+
+
 			sdpd.internal_deal_type_value_id internal_deal_type_id,
+
+
 
 
 
@@ -1831,7 +1239,11 @@ DECLARE
 
 
 
+
+
 			sdpd.internal_deal_subtype_value_id internal_deal_sub_type_id,
+
+
 
 
 
@@ -1839,7 +1251,11 @@ DECLARE
 
 
 
+
+
 			sdpd.fixed_cost,
+
+
 
 
 
@@ -1847,7 +1263,11 @@ DECLARE
 
 
 
+
+
 			sdpd.formula_value,
+
+
 
 
 
@@ -1855,7 +1275,11 @@ DECLARE
 
 
 
+
+
 			sdpd.price_multiplier,
+
+
 
 
 
@@ -1863,7 +1287,11 @@ DECLARE
 
 
 
+
+
 			sdpd.und_pnl_set,
+
+
 
 
 
@@ -1871,7 +1299,11 @@ DECLARE
 
 
 
+
+
 			formula_curve.curve_name formula_curve_name,
+
+
 
 
 
@@ -1879,7 +1311,11 @@ DECLARE
 
 
 
+
+
 			idesk.code internal_desk, 
+
+
 
 
 
@@ -1887,7 +1323,11 @@ DECLARE
 
 
 
+
+
 			iport.code internal_portfolio, 
+
+
 
 
 
@@ -1895,7 +1335,11 @@ DECLARE
 
 
 
+
+
 			ient.code type_of_entity,
+
+
 
 
 
@@ -1903,7 +1347,11 @@ DECLARE
 
 
 
+
+
 			(CASE sc.int_ext_flag WHEN ''''b'''' THEN ''''Broker'''' WHEN ''''c'''' THEN ''''Clearing'''' WHEN ''''e'''' THEN ''''External'''' WHEN ''''i'''' THEN ''''Internal'''' ELSE '''''''' END) AS int_ext_flag,
+
+
 
 
 
@@ -1911,7 +1359,11 @@ DECLARE
 
 
 
+
+
 			ds.code deal_status,
+
+
 
 
 
@@ -1919,7 +1371,11 @@ DECLARE
 
 
 
+
+
 			cst.code confirm_status,
+
+
 
 
 
@@ -1927,7 +1383,11 @@ DECLARE
 
 
 
+
+
 			pnl_sour.code pnl_source_name,
+
+
 
 
 
@@ -1935,7 +1395,11 @@ DECLARE
 
 
 
+
+
 			sdh.description2,
+
+
 
 
 
@@ -1943,7 +1407,11 @@ DECLARE
 
 
 
+
+
 			sdh.description4,
+
+
 
 
 
@@ -1951,7 +1419,11 @@ DECLARE
 
 
 
+
+
 			sid2.counterparty_name counterparty_name2,
+
+
 
 
 
@@ -1959,7 +1431,11 @@ DECLARE
 
 
 
+
+
 			sdh.reference,
+
+
 
 
 
@@ -1967,7 +1443,11 @@ DECLARE
 
 
 
+
+
 			sdh.create_ts,
+
+
 
 
 
@@ -1975,7 +1455,11 @@ DECLARE
 
 
 
+
+
 			sdh.update_ts,
+
+
 
 
 
@@ -1983,7 +1467,11 @@ DECLARE
 
 
 
+
+
 			books.sub_book_group1 sub_book_group1_id,
+
+
 
 
 
@@ -1991,7 +1479,11 @@ DECLARE
 
 
 
+
+
 			books.sub_book_group3 sub_book_group3_id,
+
+
 
 
 
@@ -1999,7 +1491,11 @@ DECLARE
 
 
 
+
+
 			sdv_sbg1.code sub_book_group1,
+
+
 
 
 
@@ -2007,7 +1503,11 @@ DECLARE
 
 
 
+
+
 			sdv_sbg3.code sub_book_group3,
+
+
 
 
 
@@ -2015,7 +1515,11 @@ DECLARE
 
 
 
+
+
 			sb1.source_book_id book_identifier1_id,
+
+
 
 
 
@@ -2023,7 +1527,11 @@ DECLARE
 
 
 
+
+
 			sb3.source_book_id  book_identifier3_id,
+
+
 
 
 
@@ -2031,7 +1539,11 @@ DECLARE
 
 
 
+
+
 			sb1.source_book_name  book_identifier1,
+
+
 
 
 
@@ -2039,7 +1551,11 @@ DECLARE
 
 
 
+
+
 			sb3.source_book_name  book_identifier3,
+
+
 
 
 
@@ -2047,7 +1563,11 @@ DECLARE
 
 
 
+
+
 			(CASE WHEN sdpd.deal_volume = 0 THEN sdpd.contract_value ELSE  abs(sdpd.contract_value / ISNULL(sdpd.deal_volume, 1)) END) deal_price, 
+
+
 
 
 
@@ -2055,7 +1575,11 @@ DECLARE
 
 
 
+
+
 			''
+
+
 
 
 
@@ -2063,7 +1587,11 @@ DECLARE
 
 
 
+
+
 			sdh.close_reference_id,
+
+
 
 
 
@@ -2071,7 +1599,11 @@ DECLARE
 
 
 
+
+
 			sdv_dc.code deal_category,
+
+
 
 
 
@@ -2079,7 +1611,11 @@ DECLARE
 
 
 
+
+
 			cpt_i.counterparty_name internal_counterparty,
+
+
 
 
 
@@ -2087,7 +1623,11 @@ DECLARE
 
 
 
+
+
 			sdv_p.code volume_profile,
+
+
 
 
 
@@ -2095,7 +1635,11 @@ DECLARE
 
 
 
+
+
 			sdpd.volume_multiplier,
+
+
 
 
 
@@ -2103,7 +1647,11 @@ DECLARE
 
 
 
+
+
 			CASE 
+
+
 
 
 
@@ -2111,7 +1659,11 @@ DECLARE
 
 
 
+
+
 				WHEN sdd.deal_volume_frequency = ''''d'''' THEN ''''Daily''''
+
+
 
 
 
@@ -2119,7 +1671,11 @@ DECLARE
 
 
 
+
+
 				WHEN sdd.deal_volume_frequency = ''''t'''' THEN ''''Term''''
+
+
 
 
 
@@ -2127,7 +1683,11 @@ DECLARE
 
 
 
+
+
 				WHEN sdd.deal_volume_frequency = ''''x'''' THEN ''''15 Minutes''''
+
+
 
 
 
@@ -2135,7 +1695,11 @@ DECLARE
 
 
 
+
+
 			 END [volume_frequency],
+
+
 
 
 
@@ -2143,7 +1707,11 @@ DECLARE
 
 
 
+
+
 			sdh.entire_term_end,
+
+
 
 
 
@@ -2151,7 +1719,11 @@ DECLARE
 
 
 
+
+
 			sdh.structured_deal_id,
+
+
 
 
 
@@ -2159,7 +1731,11 @@ DECLARE
 
 
 
+
+
 					dbo.FNAInvoiceDueDate(sdd.term_start, 
+
+
 
 
 
@@ -2167,7 +1743,11 @@ DECLARE
 
 
 
+
+
 										cg.holiday_calendar_id,
+
+
 
 
 
@@ -2175,7 +1755,11 @@ DECLARE
 
 
 
+
+
 				) [payment_date],
+
+
 
 
 
@@ -2183,7 +1767,11 @@ DECLARE
 
 
 
+
+
 			sdvb.code AS block_define_name,
+
+
 
 
 
@@ -2191,7 +1779,11 @@ DECLARE
 
 
 
+
+
 			sdh.pricing_type [pricing_type_id],
+
+
 
 
 
@@ -2199,7 +1791,11 @@ DECLARE
 
 
 
+
+
 			sdh.reporting_group1, 
+
+
 
 
 
@@ -2207,7 +1803,11 @@ DECLARE
 
 
 
+
+
 			sdh.reporting_group3, 
+
+
 
 
 
@@ -2215,7 +1815,11 @@ DECLARE
 
 
 
+
+
 			sdh.reporting_group5,
+
+
 
 
 
@@ -2223,7 +1827,11 @@ DECLARE
 
 
 
+
+
 			reporting_group2.code [reporting_group2_name],
+
+
 
 
 
@@ -2231,7 +1839,11 @@ DECLARE
 
 
 
+
+
 			reporting_group4.code [reporting_group4_name],
+
+
 
 
 
@@ -2239,155 +1851,101 @@ DECLARE
 
 
 
+
+
 			''	
 
 
 
+
+
 	SET @_sql_from1 = '' 
-
-
-
 		FROM source_deal_header sdh ''
 
+		+ CASE 
+            
+            WHEN @_deal_status_group = ''o'' THEN
+            
+                '' INNER JOIN deal_status_group dsg ON dsg.status_value_id = sdh.deal_status ''
+            
+            WHEN @_deal_status_group = ''u'' THEN
 
+		        ''INNER JOIN (
+                    SELECT value_id 
+                    FROM static_data_value 
+                    WHERE type_id = 5600 
+                    EXCEPT
+                    SELECT status_value_id 
+                    FROM deal_status_group
+                ) unofficial_status 
+                ON unofficial_status.value_id = sdh.deal_status''
 
-		+ CASE WHEN @_deal_status_group = ''o'' THEN
-
-
-
-		'' INNER JOIN deal_status_group dsg ON dsg.status_value_id = sdh.deal_status ''
-
-
-
-		WHEN @_deal_status_group = ''u'' THEN
-
-
-
-		'' INNER JOIN (SELECT value_id FROM static_data_value WHERE type_id = 5600 EXCEPT SELECT status_value_id FROM deal_status_group) unofficial_status ON unofficial_status.value_id = sdh.deal_status ''
-
-
-
-		ELSE
-
-
-
-		''''
-
-
+		    ELSE ''''
 
 		END + ''
 
-
-
 		INNER JOIN source_deal_detail sdd ON sdh.source_deal_header_id = sdd.source_deal_header_id
 
+        -- LEFT JOIN holiday_group hg ON hg.hol_group_value_id = spcd.exp_calendar_id
 
+		--     AND hg.hol_date >= sdh.entire_term_start
+
+		--     AND hg.hol_date_to <= sdh.entire_term_end
 
 		LEFT JOIN source_deal_pnl_detail sdpd ON sdpd.source_deal_header_id = sdh.source_deal_header_id
 
-
-
 				AND '' 
 
+				+ CASE 
+                    WHEN @_to_as_of_date IS NULL THEN 
+                        ''sdpd.pnl_as_of_date = CAST('''''' + @_from_as_of_date + '''''' AS DATETIME)'' 
 
+                    ELSE 
+                        ''sdpd.pnl_as_of_date  BETWEEN CAST('''''' + @_from_as_of_date + '''''' AS DATETIME) AND CAST('''''' + @_to_as_of_date + '''''' AS DATETIME) ''
 
-				+ 
-
-
-
-				CASE 
-
-
-
-					WHEN @_to_as_of_date IS NULL THEN ''sdpd.pnl_as_of_date = CAST('''''' + @_from_as_of_date + '''''' AS DATETIME)'' 
-
-
-
-					ELSE ''sdpd.pnl_as_of_date  BETWEEN CAST('''''' + @_from_as_of_date + '''''' AS DATETIME) AND CAST('''''' + @_to_as_of_date + '''''' AS DATETIME) ''
-
-
-
-				END
-
-
-
-				+					
-
-
-
-				CASE 
-
-
+				END 
+                
+                + CASE 
 
 					WHEN @_term_start IS NULL AND @_term_end IS NULL THEN ''''
 
+					WHEN @_term_end IS NULL THEN 
+                        '' AND sdpd.term_start >= CAST('''''' + CAST(@_term_start AS VARCHAR(100)) + '''''' AS DATETIME)''
 
+					WHEN @_term_start IS NULL THEN 
+                        '' AND sdpd.term_start <= CAST('''''' +  CAST(@_term_end AS VARCHAR(100)) + '''''' AS DATETIME)'' 
 
-					WHEN @_term_end IS NULL THEN '' AND sdpd.term_start >= CAST('''''' + CAST(@_term_start AS VARCHAR(100)) + '''''' AS DATETIME)''
-
-
-
-					WHEN @_term_start IS NULL THEN '' AND sdpd.term_start <= CAST('''''' +  CAST(@_term_end AS VARCHAR(100)) + '''''' AS DATETIME)'' 
-
-
-
-					ELSE '' AND sdpd.term_start BETWEEN CAST('''''' + CAST(@_term_start AS VARCHAR(100)) + '''''' as DATETIME) AND CAST('''''' +  CAST(@_term_end AS VARCHAR(100)) + ''''''as DATETIME)''
-
-
-
-				END
-
-
-
-				+ ''
-
-
-
+					ELSE 
+                        '' AND sdpd.term_start BETWEEN CAST('''''' + CAST(@_term_start AS VARCHAR(100)) + '''''' as DATETIME) AND CAST('''''' +  CAST(@_term_end AS VARCHAR(100)) + ''''''as DATETIME)''
+				
+                END	+ 
+                
+                ''
 				AND sdd.term_start =sdpd.term_start
-
-
 
 				AND sdd.term_end =sdpd.term_end 						
 
-
-
 				AND sdpd.Leg = sdd.leg
-
-
 
 		  INNER JOIN #books books ON books.source_system_book_id1 = sdh.source_system_book_id1
 
-
-
 				AND books.source_system_book_id2 = sdh.source_system_book_id2
-
-
 
 				AND books.source_system_book_id3 = sdh.source_system_book_id3
 
-
-
 				AND books.source_system_book_id4 = sdh.source_system_book_id4
-
-
 
 		  INNER JOIN source_book sb1 ON sb1.source_book_id = books.source_system_book_id1
 
-
-
 		  INNER JOIN source_book sb2 ON sb2.source_book_id = books.source_system_book_id2
-
-
 
 		  INNER JOIN source_book sb3 ON sb3.source_book_id = books.source_system_book_id3
 
-
-
 		  INNER JOIN source_book sb4 ON sb4.source_book_id = books.source_system_book_id4
 
-
-
 		  LEFT JOIN source_currency scur ON scur.source_currency_id = sdpd.pnl_currency_id
+
+
 
 
 
@@ -2395,7 +1953,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN static_data_value cst ON cst.value_id = sdh.confirm_status_type  
+
+
 
 
 
@@ -2403,7 +1965,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN source_counterparty AS sc ON  sc.source_counterparty_id = sdh.counterparty_id
+
+
 
 
 
@@ -2411,7 +1977,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN source_counterparty AS sid2 ON sid2.source_counterparty_id = sdh.counterparty_id2
+
+
 
 
 
@@ -2419,7 +1989,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN source_deal_type AS sdts ON  sdts.source_deal_type_id = sdh.deal_sub_type_type_id
+
+
 
 
 
@@ -2427,7 +2001,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN source_price_curve_def AS spcd ON  spcd.source_curve_def_id = sdd.curve_id
+
+
 
 
 
@@ -2435,7 +2013,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN internal_deal_type_subtype_types idtst ON	idtst.internal_deal_type_subtype_id = sdpd.internal_deal_type_value_id
+
+
 
 
 
@@ -2443,7 +2025,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN source_uom AS su ON  su.source_uom_id = sdd.deal_volume_uom_id
+
+
 
 
 
@@ -2451,7 +2037,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN source_major_location smjl ON  smjl.source_major_location_ID = sml.source_major_location_ID
+
+
 
 
 
@@ -2459,7 +2049,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN static_data_value sdv_cnty ON  sdv_cnty.value_id = sml.country
+
+
 
 
 
@@ -2467,7 +2061,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN static_data_value sdv_region ON  sdv_region.value_id = sml.region
+
+
 
 
 
@@ -2475,7 +2073,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN static_data_value iport ON iport.value_id = sdh.internal_portfolio_id
+
+
 
 
 
@@ -2483,7 +2085,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN static_data_value ient ON ient.value_id = sc.type_of_entity
+
+
 
 
 
@@ -2491,7 +2097,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN source_deal_header_template sdht ON  sdh.template_id = sdht.template_id
+
+
 
 
 
@@ -2499,7 +2109,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN source_uom puom ON  puom.source_uom_id = ISNULL(spcd.display_uom_id, spcd.uom_id)
+
+
 
 
 
@@ -2507,7 +2121,11 @@ DECLARE
 
 
 
+
+
 		  LEFT JOIN fas_subsidiaries fs ON fs.fas_subsidiary_id = books.sub_id
+
+
 
 
 
@@ -2515,7 +2133,11 @@ DECLARE
 
 
 
+
+
 			AND cca.internal_counterparty_id = ISNULL(sdh.internal_counterparty, fs.counterparty_id)
+
+
 
 
 
@@ -2523,7 +2145,11 @@ DECLARE
 
 
 
+
+
 				 SELECT probability FROM default_probability WHERE id IN (SELECT MAX(id) FROM default_probability WHERE effective_date <= '''''' + CAST(@_from_as_of_date AS VARCHAR(100)) + '''''' AND debt_rating = cci.Risk_rating)
+
+
 
 
 
@@ -2531,7 +2157,11 @@ DECLARE
 
 
 
+
+
 			OUTER APPLY (
+
+
 
 
 
@@ -2539,7 +2169,11 @@ DECLARE
 
 
 
+
+
 				 )) drr  
+
+
 
 
 
@@ -2547,7 +2181,11 @@ DECLARE
 
 
 
+
+
 			OUTER APPLY (
+
+
 
 
 
@@ -2555,11 +2193,17 @@ DECLARE
 
 
 
+
+
 			) cs
 
 
 
+
+
 			''
+
+
 
 
 
@@ -2567,7 +2211,11 @@ DECLARE
 
 
 
+
+
 		LEFT JOIN static_data_value sdv_sbg1 ON sdv_sbg1.value_id = books.sub_book_group1
+
+
 
 
 
@@ -2575,7 +2223,11 @@ DECLARE
 
 
 
+
+
 		LEFT JOIN static_data_value sdv_sbg3 ON sdv_sbg3.value_id = books.sub_book_group3
+
+
 
 
 
@@ -2583,7 +2235,11 @@ DECLARE
 
 
 
+
+
 		LEFT JOIN static_data_value sdvb ON sdvb.value_id = sdh.block_define_id
+
+
 
 
 
@@ -2591,7 +2247,11 @@ DECLARE
 
 
 
+
+
 					CASE 
+
+
 
 
 
@@ -2599,7 +2259,11 @@ DECLARE
 
 
 
+
+
 							CAST(YEAR(sdd.term_start) AS VARCHAR) + '''' - Current''''
+
+
 
 
 
@@ -2607,7 +2271,11 @@ DECLARE
 
 
 
+
+
 							convert(varchar(4),sdd.term_start,120) +''''-''''+ ''''M'''' + CAST(DATEDIFF(m,''''''+@_from_as_of_date+'''''',sdd.term_start) AS VARCHAR) +'''' ''''+ ''''('''' + UPPER(LEFT(DATENAME(MONTH,dateadd(MONTH, MONTH(sdd.term_start),-1)),3)) + '''')''''
+
+
 
 
 
@@ -2615,7 +2283,11 @@ DECLARE
 
 
 
+
+
 							convert(varchar(4),sdd.term_start,120) + ''''-''''+ ''''Q'''' + CAST(DATEPART(q,sdd.term_start) AS VARCHAR)
+
+
 
 
 
@@ -2623,7 +2295,11 @@ DECLARE
 
 
 
+
+
 							CAST(YEAR(sdd.term_start) AS VARCHAR) 
+
+
 
 
 
@@ -2631,7 +2307,11 @@ DECLARE
 
 
 
+
+
 		) ag_t ''
+
+
 
 
 
@@ -2639,7 +2319,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			OUTER APPLY(SELECT MAX(effective_date) effective_date
+
+
 
 
 
@@ -2647,7 +2331,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 				   WHERE source_deal_header_id = sdpd.source_deal_header_id AND sdpd.term_start = term_start AND effective_date <= sdpd.Pnl_as_of_date
+
+
 
 
 
@@ -2655,7 +2343,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			OUTER APPLY (SELECT fv_level_value_id ,MAX(effective_date) effective_date
+
+
 
 
 
@@ -2663,7 +2355,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 				 WHERE source_deal_header_id = sdpd.source_deal_header_id
+
+
 
 
 
@@ -2671,7 +2367,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 				  AND effective_date = fv_d_mx.effective_date
+
+
 
 
 
@@ -2679,7 +2379,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			 ) frgd
+
+
 
 
 
@@ -2687,7 +2391,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			OUTER APPLY( SELECT MAX(effective_date)  effective_date FROM price_curve_fv_mapping
+
+
 
 
 
@@ -2695,7 +2403,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 					AND sdpd.term_start BETWEEN DATEADD(MM, from_no_of_months, effective_date)
+
+
 
 
 
@@ -2703,7 +2415,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 					AND effective_date <= sdpd.Pnl_as_of_date
+
+
 
 
 
@@ -2711,7 +2427,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			OUTER APPLY (
+
+
 
 
 
@@ -2719,7 +2439,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 				  ,MAX(effective_date) effective_date
+
+
 
 
 
@@ -2727,7 +2451,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 				 WHERE source_curve_def_id = sdpd.curve_id
+
+
 
 
 
@@ -2735,7 +2463,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 				   AND DATEADD(MM, to_no_of_months, effective_date)
+
+
 
 
 
@@ -2743,7 +2475,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 				 GROUP BY fv_reporting_group_id
+
+
 
 
 
@@ -2751,7 +2487,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			 LEFT JOIN static_data_value curve_level ON curve_level.value_id = pcfm1.fv_reporting_group_id 
+
+
 
 
 
@@ -2759,7 +2499,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			LEFT JOIN static_data_value sdv_p ON sdv_p.value_id = sdh.internal_desk_id
+
+
 
 
 
@@ -2767,7 +2511,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			LEFT JOIN static_data_value sdv_pr ON sdv_pr.value_id = sdh.pricing_type
+
+
 
 
 
@@ -2775,7 +2523,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			LEFT JOIN static_data_value reporting_group2 ON reporting_group2.value_id = sdh.[reporting_group2] AND reporting_group2.type_id = 113100
+
+
 
 
 
@@ -2783,7 +2535,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			LEFT JOIN static_data_value reporting_group4 ON reporting_group4.value_id = sdh.[reporting_group4] AND reporting_group4.type_id = 113300
+
+
 
 
 
@@ -2791,7 +2547,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			''
+
+
 
 
 
@@ -2799,7 +2559,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE 
+
+
 
 
 
@@ -2807,7 +2571,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			WHEN @_deal_date_to IS NULL THEN '' AND sdh.deal_date = CAST('''''' + @_deal_date_from + '''''' AS DATETIME)''
+
+
 
 
 
@@ -2815,7 +2583,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 			ELSE '' AND sdh.deal_date BETWEEN CAST('''''' + @_deal_date_from + '''''' AS DATETIME) AND CAST('''''' + @_deal_date_to + '''''' AS DATETIME)''
+
+
 
 
 
@@ -2823,7 +2595,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_source_counterparty_id IS NULL THEN '''' ELSE '' AND sdh.counterparty_id IN ('' + @_source_counterparty_id + '')'' END + 
+
+
 
 
 
@@ -2831,7 +2607,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_deal_sub_type_type_id IS NULL THEN '''' ELSE '' AND sdh.deal_sub_type_type_id IN ('' + @_deal_sub_type_type_id + '')'' END + 
+
+
 
 
 
@@ -2839,7 +2619,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_contract_id IS NULL THEN '''' ELSE '' AND sdh.contract_id IN ('' + @_contract_id + '')'' END + 
+
+
 
 
 
@@ -2847,7 +2631,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_block_definition_id IS NULL THEN '''' ELSE '' AND sdh.block_define_id IN ('' + @_block_definition_id + '')'' END + 
+
+
 
 
 
@@ -2855,7 +2643,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_index_id IS NULL THEN '''' ELSE '' AND sdd.curve_id IN ('' + @_index_id + '')'' END + 
+
+
 
 
 
@@ -2863,7 +2655,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_commodity_id IS NULL THEN '''' ELSE '' AND sdh.commodity_id IN ('' + @_commodity_id + '')'' END + 
+
+
 
 
 
@@ -2871,7 +2667,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_buy_sell_flag IS NULL THEN '''' ELSE '' AND sdh.header_buy_sell_flag = '''''' + @_buy_sell_flag + '''''''' END +
+
+
 
 
 
@@ -2879,7 +2679,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_deal_status_id IS NULL THEN '''' ELSE '' AND sdh.deal_status IN ('' + @_deal_status_id + '')'' END +
+
+
 
 
 
@@ -2887,7 +2691,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_pnl_source_value_id IS NULL THEN '''' ELSE '' AND (sdpd.pnl_source_value_id IN ('' + @_pnl_source_value_id + '')'' + '' OR sdpd.pnl_source_value_id IS NULL) '' END +
+
+
 
 
 
@@ -2895,7 +2703,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_broker_id IS NULL THEN '''' ELSE '' AND sdh.broker_id IN ('' + @_broker_id + '')'' END +
+
+
 
 
 
@@ -2903,7 +2715,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_currency_id IS NULL THEN '''' ELSE '' AND sdpd.pnl_currency_id IN ('' + @_currency_id + '')'' END +
+
+
 
 
 
@@ -2911,7 +2727,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_internal_counterparty_id IS NULL THEN '''' ELSE '' AND books.counterparty_id IN ('' + @_internal_counterparty_id + '')'' END +
+
+
 
 
 
@@ -2919,7 +2739,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_region_id IS NULL THEN '''' ELSE '' AND sml.region IN ('' + @_region_id + '')'' END +
+
+
 
 
 
@@ -2927,7 +2751,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		CASE WHEN @_term_end IS NULL THEN '''' ELSE '' AND sdd.term_end<=''''''+ convert(varchar(10), @_term_end,120)+'''''''' END +
+
+
 
 
 
@@ -2935,7 +2763,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		'' AND sdpd.pnl_source_value_id IS NOT NULL ''
+
+
 
 
 
@@ -2943,7 +2775,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		+ CASE WHEN @_reporting_group2 IS NULL THEN '''' ELSE '' AND sdh.reporting_group2 = '''''' + @_reporting_group2 + '''''''' END
+
+
 
 
 
@@ -2951,7 +2787,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 		+ CASE WHEN @_reporting_group4 IS NULL THEN '''' ELSE '' AND sdh.reporting_group4 = '''''' + @_reporting_group4 + '''''''' END
+
+
 
 
 
@@ -2959,7 +2799,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 	--PRINT(@_sql_select1)
+
+
 
 
 
@@ -2967,7 +2811,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 	--PRINT(@_sql_from1)
+
+
 
 
 
@@ -2975,7 +2823,11 @@ SET @_sql_from4 = ''
 
 
 
+
+
 	--PRINT(@_sql_from4)
+
+
 
 
 
@@ -2983,26 +2835,37 @@ SET @_sql_from4 = ''
 
 
 
+
+
 	EXEC(@_sql_select1+@_sql_select2+@_sql_from1+@_sql_from3+@_sql_from4+@_sql_whr)
+
+
 
 
 
 	DROP TABLE IF EXISTS #final_result_set
 
 
+
 	DROP TABLE IF EXISTS #collect_data
+
 
 
 SELECT *,ISNULL(@_deal_status_group, '''') [deal_status_group]
 
 
+
 into #collect_data
+
 
 
 FROM #final_values
 
 
+
 WHERE 1=1
+
+
 
 
 
@@ -3010,7 +2873,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(stra_id)[stra_id]
+
+
 
 
 
@@ -3018,7 +2885,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(subsidiary)[subsidiary]
+
+
 
 
 
@@ -3026,7 +2897,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(book)[book]
+
+
 
 
 
@@ -3034,7 +2909,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,(source_deal_header_id)[source_deal_header_id]
+
+
 
 
 
@@ -3042,7 +2921,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(trader_id)[trader_id]
+
+
 
 
 
@@ -3050,7 +2933,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(source_counterparty_id)[source_counterparty_id]
+
+
 
 
 
@@ -3058,7 +2945,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(contract_id)[contract_id]
+
+
 
 
 
@@ -3066,7 +2957,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(broker_id)[broker_id]
+
+
 
 
 
@@ -3074,7 +2969,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MIN(term_start_day)[term_start_day]
+
+
 
 
 
@@ -3082,7 +2981,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MIN(term_start_month_name)[term_start_month_name]
+
+
 
 
 
@@ -3090,7 +2993,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MIN(term_start_year_month)[term_start_year_month]
+
+
 
 
 
@@ -3098,7 +3005,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(currency_id)[currency_id]
+
+
 
 
 
@@ -3106,7 +3017,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MIN(agg_term)[agg_term]
+
+
 
 
 
@@ -3114,7 +3029,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(deal_date_to)[deal_date_to]
+
+
 
 
 
@@ -3122,7 +3041,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(source_deal_type_id)[source_deal_type_id]
+
+
 
 
 
@@ -3130,7 +3053,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(deal_sub_type_type_id)[deal_sub_type_type_id]
+
+
 
 
 
@@ -3138,7 +3065,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(product_id)[product_id]
+
+
 
 
 
@@ -3146,7 +3077,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(product_desc)[product_desc]
+
+
 
 
 
@@ -3154,7 +3089,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(buy_sell_flag)[buy_sell_flag]
+
+
 
 
 
@@ -3162,7 +3101,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(term_end)[term_end]
+
+
 
 
 
@@ -3170,7 +3113,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(country)[country]
+
+
 
 
 
@@ -3178,7 +3125,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(region_id)[region_id]
+
+
 
 
 
@@ -3186,7 +3137,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(source_major_location_ID)[source_major_location_ID]
+
+
 
 
 
@@ -3194,7 +3149,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(location_id)[location_id]
+
+
 
 
 
@@ -3202,7 +3161,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(location_description)[location_description]
+
+
 
 
 
@@ -3210,7 +3173,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,SUM(MTM)[MTM]
+
+
 
 
 
@@ -3218,7 +3185,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,SUM(und_extrinsic_pnl)[und_extrinsic_pnl]
+
+
 
 
 
@@ -3226,7 +3197,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,SUM(dis_intrinsic_pnl)[dis_intrinsic_pnl]
+
+
 
 
 
@@ -3234,7 +3209,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,SUM(market_value)[market_value]
+
+
 
 
 
@@ -3242,7 +3221,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,SUM(dis_market_value)[dis_market_value]
+
+
 
 
 
@@ -3250,7 +3233,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,SUM(discount_factor)[discount_factor]
+
+
 
 
 
@@ -3258,7 +3245,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(commodity)[commodity]
+
+
 
 
 
@@ -3266,7 +3257,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(volume_uom)[volume_uom]
+
+
 
 
 
@@ -3274,7 +3269,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(curve_name)[curve_name]
+
+
 
 
 
@@ -3282,7 +3281,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,SUM(total_volume)[total_volume]
+
+
 
 
 
@@ -3290,7 +3293,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,AVG(market_price)[market_price]
+
+
 
 
 
@@ -3298,7 +3305,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,AVG(net_price)[net_price]
+
+
 
 
 
@@ -3306,7 +3317,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(leg)[leg]
+
+
 
 
 
@@ -3314,7 +3329,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(index_id)[index_id]
+
+
 
 
 
@@ -3322,7 +3341,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(sub_book_id)[sub_book_id]
+
+
 
 
 
@@ -3330,7 +3353,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(period_to)[period_to]
+
+
 
 
 
@@ -3338,7 +3365,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(fixed_cost)[fixed_cost]
+
+
 
 
 
@@ -3346,7 +3377,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(formula_value)[formula_value]
+
+
 
 
 
@@ -3354,7 +3389,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(price_multiplier)[price_multiplier]
+
+
 
 
 
@@ -3362,7 +3401,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(und_pnl_set)[und_pnl_set]
+
+
 
 
 
@@ -3370,7 +3413,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(formula_curve_name)[formula_curve_name]
+
+
 
 
 
@@ -3378,7 +3425,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(internal_desk)[internal_desk]
+
+
 
 
 
@@ -3386,7 +3437,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(internal_portfolio)[internal_portfolio]
+
+
 
 
 
@@ -3394,7 +3449,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(type_of_entity)[type_of_entity]
+
+
 
 
 
@@ -3402,7 +3461,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(int_ext_flag)[int_ext_flag]
+
+
 
 
 
@@ -3410,7 +3473,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(deal_status)[deal_status]
+
+
 
 
 
@@ -3418,7 +3485,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(confirm_status)[confirm_status]
+
+
 
 
 
@@ -3426,7 +3497,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(pnl_source_name)[pnl_source_name]
+
+
 
 
 
@@ -3434,7 +3509,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(description2)[description2]
+
+
 
 
 
@@ -3442,7 +3521,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(description4)[description4]
+
+
 
 
 
@@ -3450,7 +3533,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(counterparty_name2)[counterparty_name2]
+
+
 
 
 
@@ -3458,7 +3545,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(reference)[reference]
+
+
 
 
 
@@ -3466,7 +3557,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(create_ts)[create_ts]
+
+
 
 
 
@@ -3474,7 +3569,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(update_ts)[update_ts]
+
+
 
 
 
@@ -3482,7 +3581,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(sub_book_group1_id)[sub_book_group1_id]
+
+
 
 
 
@@ -3490,7 +3593,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(sub_book_group3_id)[sub_book_group3_id]
+
+
 
 
 
@@ -3498,7 +3605,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(sub_book_group1)[sub_book_group1]
+
+
 
 
 
@@ -3506,7 +3617,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(sub_book_group3)[sub_book_group3]
+
+
 
 
 
@@ -3514,7 +3629,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(book_identifier1_id)[book_identifier1_id]
+
+
 
 
 
@@ -3522,7 +3641,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(book_identifier3_id)[book_identifier3_id]
+
+
 
 
 
@@ -3530,7 +3653,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(book_identifier1)[book_identifier1]
+
+
 
 
 
@@ -3538,7 +3665,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(book_identifier3)[book_identifier3]
+
+
 
 
 
@@ -3546,7 +3677,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(deal_price)[deal_price]
+
+
 
 
 
@@ -3554,7 +3689,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(deal_category_id)[deal_category_id]
+
+
 
 
 
@@ -3562,7 +3701,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(internal_counterparty_id)[internal_counterparty_id]
+
+
 
 
 
@@ -3570,7 +3713,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(template_id)[template_id]
+
+
 
 
 
@@ -3578,7 +3725,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(price_adder2)[price_adder2]
+
+
 
 
 
@@ -3586,7 +3737,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(volume_multiplier2)[volume_multiplier2]
+
+
 
 
 
@@ -3594,7 +3749,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MIN(entire_term_start)[entire_term_start]
+
+
 
 
 
@@ -3602,7 +3761,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(contract_expiration_date)[contract_expiration_date]
+
+
 
 
 
@@ -3610,7 +3773,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(payment_date)[payment_date]
+
+
 
 
 
@@ -3618,7 +3785,11 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(block_definition_name)[block_definition_name]
+
+
 
 
 
@@ -3626,553 +3797,729 @@ SELECT MAX(sub_id)[sub_id]
 
 
 
+
+
 ,MAX(pricing_type_id)[pricing_type_id]
+
+
 
 
 
 ,MAX(pricing_type)[pricing_type]
 
 
+
 ,MAX(deal_status_group) [deal_status_group]
+
 
 
 , MAX(reporting_group1) reporting_group1 , 
 
 
+
 MAX(reporting_group2) reporting_group2,
+
 
 
 MAX(reporting_group3) reporting_group3, 
 
 
+
 MAX(reporting_group4) reporting_group4, 
+
 
 
 MAX(reporting_group5) reporting_group5
 
 
+
 INTO  #final_result_set
 
 
+
 from #collect_data
+
 
 
 WHERE source_counterparty_id = @_EEX_counterparty_id
 
 
+
 group by source_deal_header_id,counterparty_id
+
 
 
 UNION
 
 
+
 SELECT sub_id
+
 
 
 , stra_id
 
 
+
 , book_id
+
 
 
 , subsidiary
 
 
+
 , strategy
+
 
 
 , book
 
 
+
 , sub_book
+
 
 
 , source_deal_header_id
 
 
+
 , deal_ref_id
+
 
 
 , trader_id
 
 
+
 , trader_name
+
 
 
 , source_counterparty_id
 
 
+
 , counterparty_name
+
 
 
 , contract_id
 
 
+
 , contract_name
+
 
 
 , broker_id
 
 
+
 , broker_name
+
 
 
 , term_start_day
 
 
+
 , term_start_month
+
 
 
 , term_start_month_name
 
 
+
 , term_start_year
+
 
 
 , term_start_year_month
 
 
+
 , term_quarter
+
 
 
 , currency_id
 
 
+
 , curreny_name
+
 
 
 , agg_term
 
 
+
 , deal_date_from
+
 
 
 , deal_date_to
 
 
+
 , parent_counterparty_name
+
 
 
 , source_deal_type_id
 
 
+
 , deal_type_name
+
 
 
 , deal_sub_type_type_id
 
 
+
 , deal_sub_type_name
+
 
 
 , product_id
 
 
+
 , commodity_id
+
 
 
 , product_desc
 
 
+
 , detail_buy_sell_flag
+
 
 
 , buy_sell_flag
 
 
+
 , term_start
+
 
 
 , term_end
 
 
+
 , country_id
+
 
 
 , country
 
 
+
 , grid
+
 
 
 , region_id
 
 
+
 , region
+
 
 
 , source_major_location_ID
 
 
+
 , location_group
+
 
 
 , location_id
 
 
+
 , location_name
+
 
 
 , location_description
 
 
+
 , from_as_of_date
+
 
 
 , MTM
 
 
+
 , und_intrinsic_pnl
+
 
 
 , und_extrinsic_pnl
 
 
+
 , dis_pnl
+
 
 
 , dis_intrinsic_pnl
 
 
+
 , dis_extrinisic_pnl
+
 
 
 , market_value
 
 
+
 , contract_value
+
 
 
 , dis_market_value
 
 
+
 , dis_contract_value
+
 
 
 , discount_factor
 
 
+
 , discount_amount
+
 
 
 , commodity
 
 
+
 , deal_volume
+
 
 
 , volume_uom
 
 
+
 , template_name
+
 
 
 , curve_name
 
 
+
 , formula
+
 
 
 , total_volume
 
 
+
 , position_uom
+
 
 
 , market_price
 
 
+
 , formula_price
+
 
 
 , net_price
 
 
+
 , physical_financial_flag
+
 
 
 , leg
 
 
+
 , counterparty_id
+
 
 
 , index_id
 
 
+
 , to_as_of_date
+
 
 
 , sub_book_id
 
 
+
 , period_from
+
 
 
 , period_to
 
 
+
 , fair_value
+
 
 
 , fixed_cost
 
 
+
 , fixed_price
+
 
 
 , formula_value
 
 
+
 , price_adder
+
 
 
 , price_multiplier
 
 
+
 , strike_price
+
 
 
 , und_pnl_set
 
 
+
 , formula_curve_id
+
 
 
 , formula_curve_name
 
 
+
 , internal_desk_id
+
 
 
 , internal_desk
 
 
+
 , internal_portfolio_id
+
 
 
 , internal_portfolio
 
 
+
 , type_of_entity_id
+
 
 
 , type_of_entity
 
 
+
 , int_ext_flag_id
+
 
 
 , int_ext_flag
 
 
+
 , deal_status_id
+
 
 
 , deal_status
 
 
+
 , confirm_status_id
+
 
 
 , confirm_status
 
 
+
 , pnl_source_value_id
+
 
 
 , pnl_source_name
 
 
+
 , description1
+
 
 
 , description2
 
 
+
 , description3
+
 
 
 , description4
 
 
+
 , counterparty_id2
+
 
 
 , counterparty_name2
 
 
+
 , ext_deal_id
+
 
 
 , reference
 
 
+
 , create_by
+
 
 
 , create_ts
 
 
+
 , update_by
+
 
 
 , update_ts
 
 
+
 , confirm_date
+
 
 
 , sub_book_group1_id
 
 
+
 , sub_book_group2_id
+
 
 
 , sub_book_group3_id
 
 
+
 , sub_book_group4_id
+
 
 
 , sub_book_group1
 
 
+
 , sub_book_group2
+
 
 
 , sub_book_group3
 
 
+
 , sub_book_group4
+
 
 
 , book_identifier1_id
 
 
+
 , book_identifier2_id
+
 
 
 , book_identifier3_id
 
 
+
 , book_identifier4_id
+
 
 
 , book_identifier1
 
 
+
 , book_identifier2
+
 
 
 , book_identifier3
 
 
+
 , book_identifier4
+
 
 
 , deal_price
 
 
+
 , close_reference_id
+
 
 
 , deal_category_id
 
 
+
 , deal_category
+
 
 
 , internal_counterparty_id
 
 
+
 , internal_counterparty
+
 
 
 , template_id
 
 
+
 , volume_profile
+
 
 
 , price_adder2
 
 
+
 , volume_multiplier
+
 
 
 , volume_multiplier2
 
 
+
 , volume_frequency
+
 
 
 , entire_term_start
 
 
+
 , entire_term_end
+
 
 
 , contract_expiration_date
 
 
+
 , structured_deal_id
+
 
 
 , payment_date
 
 
+
 , block_definition_id
+
 
 
 , block_definition_name
 
 
+
 , fv_level
+
 
 
 , pricing_type_id
 
 
+
 , pricing_type
+
 
 
 , deal_status_group
 
 
+
 , reporting_group1 , 
+
 
 
 reporting_group2,
 
 
+
 reporting_group3, 
+
 
 
  reporting_group4, 
 
 
+
 reporting_group5
 
 
+
 from #collect_data
+
 
 
 WHERE source_counterparty_id <> @_EEX_counterparty_id
 
 
 
-SELECT *  ,''Forward'' actual_forward,''Commodity'' charge_type
 
+
+SELECT *  ,''Forward'' actual_forward,''Commodity'' charge_type
 
 --[__batch_report__]	
 
-
-FROM #final_result_set
-
-
-
-', report_id = @report_id_data_source_dest,
+FROM #final_result_set', report_id = @report_id_data_source_dest,
 	system_defined = '1'
 	,category = '106500' 
 	WHERE [name] = 'Margin Extract View'
@@ -9647,4 +9994,4 @@ FROM #final_result_set
 	END CATCH
 	
 	IF OBJECT_ID('tempdb..#data_source_column', 'U') IS NOT NULL
-		DROP TABLE #data_source_column	
+		DROP TABLE #data_source_column
