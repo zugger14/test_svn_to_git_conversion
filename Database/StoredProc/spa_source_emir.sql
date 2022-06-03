@@ -3385,7 +3385,7 @@ BEGIN
 	@subission_type = 44704 AND @level_mifid = T MiFID Trade level
 	*******************************************/
 	DECLARE @sql_str VARCHAR(MAX)
-	DECLARE @file_path VARCHAR(MAX), @trade_id NVARCHAR(100), @file_name_export NVARCHAR(MAX) = '', @temp_note_file_path NVARCHAR(100), @remote_directory NVARCHAR(2000)
+	DECLARE @file_path VARCHAR(MAX), @trade_id INT, @file_name_export NVARCHAR(MAX) = '', @temp_note_file_path NVARCHAR(100), @remote_directory NVARCHAR(2000)
 	SELECT @file_path = CONCAT(cs.document_path, '\temp_note\')
 	FROM connection_string cs
 
@@ -3405,30 +3405,21 @@ BEGIN
 	BEGIN		
 		IF @tr_rmm = 116901 -- Equias
 		BEGIN
+			DECLARE @settlement_date NVARCHAR(MAX), @delivery_period NVARCHAR(MAX)
 			DROP TABLE IF EXISTS #xml_data
 			SELECT 
-				'Trader' ReportingRole
+				se.source_deal_header_id
+				,'Trader' ReportingRole
 				, 'Report' EMIRReportMode
 				, 'NoReport' REMITReportMode
 				, IIF(@level = 'P', 'true', 'false') Position
 				, IIF(DATEDIFF(DAY, sdh.deal_date, reporting_timestamp ) > 30 AND submission_status = 39501, 'true', 'false') Backload
 				, action_type ActionType
 				, reporting_timestamp ReportingTimestamp
-				, other_counterparty_id CPIDCodeType
-				, ISNULL(beneficiary_id, '') BeneficiaryID	
 				, trading_capacity TradingCapacity
-				, 'false' OtherCPEEA
 				, commercial_or_treasury CommercialOrTreasury	
 				, IIF(clearing_threshold = 'N', 'false', 'true') ClearingThreshold
-				, collateralization Collateralisation	
-				, collateral_portfolio CollateralisationPortfolio
-				, collateral_portfolio_code CollateralisationPortfolioCode
 				, nature_of_reporting_cpty Taxonomy
-				, 'EMIR_Taxonomy' TaxonomyCodeType
-				, product_classification_type  EProductID1
-				, 'EMIR_Taxonomy' Product1CodeType
-				, contract_type EProductID2	
-				, 'CpML' UnderlyingCodeType
 				, trade_id TradeID
 				, exec_venue VenueOfExecution
 				, [compression] [Compression]
@@ -3436,48 +3427,57 @@ BEGIN
 				, aggreement_type MasterAgreementVersion	
 				, clearing_obligation ClearingObligation
 				, intra_group Intragroup
-				, ISNULL(load_type, '') LoadType
 				, confirm_means ConfirmationMeans
-				, ISNULL(confirm_ts, '') ConfirmationTimestamp
-				, ISNULL(settlement_date, '') DateOfSettlement
 				, CAST(document_id AS NVARCHAR(100)) DocumentID 	
 				, ISNULL(@document_usage, 'Test') DocumentUsage 
 				, se.counterparty_id SenderID 
 				, ISNULL(se.counterparty_name, '') ReceiverID	
 				, 'ClearingHouse' ReceiverRole
-				, reporting_timestamp CreationTimestamp	
 				, contract_type TransactionType	
-				, asset_class PrimaryAssetClass	
 				, trade_id DealID	
-				, '11X-UNICLEAR---H' ClearingRegistrationAgentID	--??
-				, '11X-UNICLEAR---H' ClearingHouseID --??
-				, CONVERT(NVARCHAR(10),quantity)  Lots	
-				, CONVERT(NVARCHAR(50),price_rate)  UnitPrice
-				, 'true' [Anonymous]	
-				, se.counterparty_id [Initiator]	
-				, se.commodity_id CRAProductCode
-				, delivery_start_date DeliveryStartDateAndTime
-				, delivery_end_date DeliveryEndDateAndTime
 				, other_counterparty_id BuyerParty	
-				, 'Broker' AgentType 
-				, ISNULL(broker_name, '') AgentName
-				, ISNULL(se.broker_id, '') BrokerID 
 				, other_counterparty_id SellerParty
-				, ISNULL(product_identification, '') MTFID 	
+				, LTRIM(STR(notional_amount, 25, 0)) NotionalAmount
+				, aggreement_type AgreementType
+				, price_currency Currency
+				, LTRIM(STR(quantity, 25, 0)) TotalVolume
+				, quantity_unit TotalVolumeUnit
+				, CONVERT(VARCHAR(10), execution_timestamp, 120) TradeDate
+				, ISNULL(CONVERT(VARCHAR(10), effective_date, 120), '') EffectiveDate
+				, ISNULL(CONVERT(VARCHAR(10), termination_date, 120), '') TerminationDate
 			INTO #xml_data
 			FROM source_emir se
 			INNER JOIN source_deal_header sdh
 				ON sdh.source_deal_header_id = se.source_deal_header_id
 			WHERE process_id = @process_id AND error_validation_message IS NULL
 
-			DECLARE c CURSOR FOR 
-			SELECT DealID FROM #xml_data
-			OPEN c 
-			FETCH NEXT FROM c INTO @trade_id
+			DECLARE emir_cursor CURSOR FOR 
+			SELECT source_deal_header_id FROM #xml_data
+			OPEN emir_cursor 
+			FETCH NEXT FROM emir_cursor INTO @trade_id
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
 				WAITFOR DELAY '00:00:02'
 				SET @emir_file_name = 'EMIR_EU_Lite_CO_' + CONVERT(VARCHAR(10), GETDATE(), 120) + '.' + REPLACE(CAST(CAST(GETDATE() AS TIME) AS VARCHAR(8)), ':', '_')
+				
+				SELECT @settlement_date = (
+					SELECT CONVERT(VARCHAR(10), term_Start, 120) DateOfSettlement 
+					FROM source_deal_detail 
+					WHERE source_deal_header_id = @trade_id
+					FOR XML PATH(''), ROOT('SettlementDates')
+				)
+
+				SELECT @delivery_period = (
+					SELECT CONVERT(VARCHAR(10), term_Start, 120) [DeliveryPeriod/DeliveryPeriodStartDate]
+					, CONVERT(VARCHAR(10), term_end, 120) [DeliveryPeriod/DeliveryPeriodEndDate]
+					, LTRIM(STR(total_volume, 25, 0)) [DeliveryPeriod/DeliveryPeriodNotionalQuantity]
+					, CONVERT(VARCHAR(10), term_end, 120) [DeliveryPeriod/PaymentDate]
+					, LTRIM(STR(fixed_price, 25, 0)) [DeliveryPeriod/FixedPrice]
+					FROM source_deal_detail 
+					WHERE source_deal_header_id = @trade_id
+					FOR XML PATH(''), ROOT('DeliveryPeriods')
+				)
+			
 				SET @temp_note_file_path = NULL
 				SELECT @xml_string = CAST('' AS NVARCHAR(MAX)) + 
 					'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -3495,26 +3495,12 @@ BEGIN
 									<ActionType>' + ActionType + '</ActionType>
 								</Action>
 								<EURegulatoryDetails>
+									<UTI>' + TradeID + '</UTI>
 									<ReportingTimestamp>' + ReportingTimestamp + '</ReportingTimestamp>
-									<CPIDCodeType>' + CPIDCodeType + '</CPIDCodeType>
-									<BeneficiaryID>' + BeneficiaryID + '</BeneficiaryID>
+									<CPFinancialNature> ' + Taxonomy + '</CPFinancialNature>
 									<TradingCapacity>' + TradingCapacity + '</TradingCapacity>
-									<OtherCPEEA>' + OtherCPEEA + '</OtherCPEEA>
 									<CommercialOrTreasury>' + CommercialOrTreasury + '</CommercialOrTreasury>
 									<ClearingThreshold>' + ClearingThreshold + '</ClearingThreshold>
-									<Collateralisation>' + Collateralisation + '</Collateralisation>
-									<CollateralisationPortfolio>' + CollateralisationPortfolio + '</CollateralisationPortfolio>
-									<CollateralisationPortfolioCode>' + CollateralisationPortfolioCode + '</CollateralisationPortfolioCode>
-									<ProductIdentifier>
-										<Taxonomy>' + Taxonomy + '</Taxonomy>
-										<TaxonomyCodeType>' + TaxonomyCodeType + '</TaxonomyCodeType>
-										<EProduct>
-											<EProductID1>' + EProductID1 + '</EProductID1>
-											<Product1CodeType>' + Product1CodeType + '</Product1CodeType>
-											<EProductID2>' + EProductID2 + '</EProductID2>
-										</EProduct>
-									</ProductIdentifier>
-									<UnderlyingCodeType>' + UnderlyingCodeType + '</UnderlyingCodeType>
 									<TradeID>' + TradeID + '</TradeID>
 									<VenueOfExecution>' + VenueOfExecution + '</VenueOfExecution>
 									<Compression>' + [Compression] + '</Compression>
@@ -3522,73 +3508,40 @@ BEGIN
 									<MasterAgreementVersion>' + MasterAgreementVersion + '</MasterAgreementVersion>
 									<ClearingObligation>' + ClearingObligation + '</ClearingObligation>
 									<Intragroup>' + Intragroup + '</Intragroup>
-									<LoadType>' + LoadType + '</LoadType>
 									<ConfirmationMeans>' + ConfirmationMeans + '</ConfirmationMeans>
-									<ConfirmationTimestamp>' + ConfirmationTimestamp + '</ConfirmationTimestamp>
-									<SettlementDates>
-										<DateOfSettlement>' + DateOfSettlement + '</DateOfSettlement>
-									</SettlementDates>
+									<NotionalAmount>' + NotionalAmount + '</NotionalAmount>
+									'+ @settlement_date +'								
 								</EURegulatoryDetails>
 							</Europe>
 						</Reporting>
-						<ETDTradeDetails>
+						<TradeConfirmation SchemaVersion="4" SchemaRelease="4">
 							<DocumentID>' + DocumentID + '</DocumentID>
 							<DocumentUsage>' + DocumentUsage + '</DocumentUsage>
 							<SenderID>' + SenderID + '</SenderID>
 							<ReceiverID>' + ReceiverID + '</ReceiverID>
 							<ReceiverRole>' + ReceiverRole + '</ReceiverRole>
 							<DocumentVersion>' + DocumentID + '</DocumentVersion>
-							<CreationTimestamp>' + CreationTimestamp + '</CreationTimestamp>
 							<TransactionType>' + TransactionType + '</TransactionType>
-							<PrimaryAssetClass>' + PrimaryAssetClass + '</PrimaryAssetClass>
-							<ClearingParameters>
-								<DealID>' + DealID + '</DealID>
-								<ClearingRegistrationAgentID>' + ClearingRegistrationAgentID + '</ClearingRegistrationAgentID>
-								<ClearingHouseID>' + ClearingHouseID + '</ClearingHouseID>
-								<Lots>' + Lots + '</Lots>
-								<UnitPrice>' + UnitPrice + '</UnitPrice>
-								<Anonymous>' + [Anonymous] + '</Anonymous>
-								<Initiator>' + [Initiator] + '</Initiator>
-								<Product>
-									<CRAProductCode>' + CRAProductCode + '</CRAProductCode>
-									<DeliveryPeriod>
-										<DeliveryStartDateAndTime>' + DeliveryStartDateAndTime + '</DeliveryStartDateAndTime>
-										<DeliveryEndDateAndTime>' + DeliveryEndDateAndTime + '</DeliveryEndDateAndTime>
-									</DeliveryPeriod>
-								</Product>
-							</ClearingParameters>
-							<BuyerDetails>
-								<BuyerParty>' + BuyerParty + '</BuyerParty>
-								<DealID>' + DealID + '</DealID>
-								<Agents>
-									<Agent>
-										<AgentType>' + AgentType + '</AgentType>
-										<AgentName>' + AgentName + '</AgentName>
-										<BrokerID>' + BrokerID + '</BrokerID>
-									</Agent>
-								</Agents>
-							</BuyerDetails>
-							<SellerDetails>
-								<SellerParty>' + SellerParty + '</SellerParty>
-								<DealID>' + DealID + '</DealID>
-								<ExecutionTimestamp>' + ExecutionTimestamp + '</ExecutionTimestamp>
-								<Agents>
-									<Agent>
-										<AgentType>' + AgentType + '</AgentType>
-										<AgentName>' + AgentName + '</AgentName>
-										<BrokerID>' + BrokerID + '</BrokerID>
-									</Agent>
-								</Agents>
-							</SellerDetails>
-							<MTFDetails>
-								<MTFID>' + MTFID + '</MTFID>
-								<ExecutionTimestamp>' + ExecutionTimestamp + '</ExecutionTimestamp>
-							</MTFDetails>
-						</ETDTradeDetails>
+							<BuyerParty>' + BuyerParty + '</BuyerParty>
+							<SellerParty>' + SellerParty + '</SellerParty>
+							<Agreement>' + AgreementType + '</Agreement>
+							<Currency>' + Currency + '</Currency>
+							<TotalVolume>' + TotalVolume + '</TotalVolume>
+							<TotalVolumeUnit>' + TotalVolumeUnit + '</TotalVolumeUnit>
+							<TradeDate>' + TradeDate + '</TradeDate>
+							<FixedPriceInformation>
+								<FixedPricePayer>' + SenderID + '</FixedPricePayer>
+							</FixedPriceInformation>
+							<Rounding>2</Rounding>
+							<CommonPricing>false</CommonPricing>
+							<EffectiveDate>' + EffectiveDate + '</EffectiveDate>
+							<TerminationDate>' + TerminationDate + '</TerminationDate>
+							' + @delivery_period + '
+						</TradeConfirmation>						
 					</CpmlDocument>
 					'
 				FROM #xml_data
-				WHERE DealID = @trade_id
+				WHERE source_deal_header_id = @trade_id 
 				
 				SELECT @emir_file_name = @emir_file_name + '.xml'
 				
@@ -3599,10 +3552,10 @@ BEGIN
 					SELECT @file_name_export += IIF(NULLIF(@file_name_export,'') IS NULL, @temp_note_file_path, ',' + @temp_note_file_path)
 				END
 				
-				FETCH NEXT FROM c INTO @trade_id
+				FETCH NEXT FROM emir_cursor INTO @trade_id
 			END
-			CLOSE c
-			DEALLOCATE c		
+			CLOSE emir_cursor
+			DEALLOCATE emir_cursor		
 			SET @desc = 'Export process completed for EMIR Equias for process_id: ' + @process_id + '. File has been saved at ' + @file_path
 			EXEC spa_message_board 'i', @user_name, NULL, 'Export Xml', @desc, '', '', 's', 'EMIR XML Export'
 			--drop table if exists adiha_process.dbo.test234
