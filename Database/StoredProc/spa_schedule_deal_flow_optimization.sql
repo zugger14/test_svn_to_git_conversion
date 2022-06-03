@@ -82,7 +82,7 @@ SET NOCOUNT ON
 --	2020-01-01 00:00:00.000	2020-01-01 00:00:00.000	DB9138AE_0ECD_4845_9081_3FED34C293FD	flow_auto	1158	0	982	-1	104935
 
 	--Sets session DB users 
-	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'dmanandhar'
+	EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'adangol'
 
 	--Sets contextinfo to debug mode so that spa_print will prints data
 	DECLARE @contextinfo VARBINARY(128) = CONVERT(VARBINARY(128), 'DEBUG_MODE_ON')
@@ -94,7 +94,19 @@ SET NOCOUNT ON
 	EXEC [spa_drop_all_temp_table] 
 	
 	-- SPA parameter values
-	SELECT @flag = 'i', @box_ids = '1', @flow_date_from = '2021-06-01', @flow_date_to = '2021-06-01', @sub = NULL, @str = NULL, @book = NULL, @sub_book = NULL, @contract_process_id = 'DF9AFE60_1C92_4004_9302_2247955044EA', @from_priority = NULL, @to_priority = NULL, @call_from = 'flow_opt', @target_uom = '1158', @reschedule = '0', @granularity = '982'
+	SELECT @flag = 'i'
+		, @box_ids = '2,3'
+		, @flow_date_from = '2022-07-01'
+		, @flow_date_to = '2022-07-01'
+		, @contract_process_id = 'F29C88B2_293F_4E36_9AF7_16670F92AC97'
+		, @call_from = 'flow_opt'
+		, @target_uom = '1158'
+		, @reschedule = '0'
+		, @granularity = '982'
+
+
+		--select * from adiha_process.dbo.contractwise_detail_mdq_hourly_adangol_F29C88B2_293F_4E36_9AF7_16670F92AC97 where box_id in (2,3) order by 1,hour asc
+		--select * from adiha_process.dbo.opt_deal_detail_pos_adangol_F29C88B2_293F_4E36_9AF7_16670F92AC97
 
 
 
@@ -4093,7 +4105,7 @@ SET TRANSACTION ISOLATION LEVEL READ COMMITTED
 IF EXISTS(SELECT 1 FROM  #collect_deals) --Checked Template deals 
 BEGIN
 BEGIN TRY
-	BEGIN TRAN
+	
 	IF ISNULL(@reschedule, 0)  = 1 
 	BEGIN
 			
@@ -4292,7 +4304,12 @@ BEGIN
 END
 
 
+--select * from #tmp_vol_split_deal_final_grp
+--select * from #existing_deals
+--select * from #existing_deal_volume
+--return
 
+BEGIN TRAN
 BEGIN -- Insert/Update Deal data 
 
 	INSERT INTO [dbo].[source_deal_header]
@@ -4542,7 +4559,7 @@ BEGIN -- Insert/Update Deal data
 		, h.[confirm_rule]
 		, h.[description4]
 		, h.[timezone_id]
-		, IIF(@is_hourly_calc = 1, @granularity, NULL) --    SELECT *
+		, IIF(@is_hourly_calc = 1, @granularity, NULL) --    SELECT p.*,'===',ed.*
 	FROM #tmp_vol_split_deal_final_grp p
 	INNER JOIN #source_deal_header h 
 		ON h.source_deal_header_id = p.templete_deal_id	 
@@ -4554,6 +4571,7 @@ BEGIN -- Insert/Update Deal data
 		ON ed.leg1_loc_id= p.leg1_loc_id
 		AND ed.leg2_loc_id= p.leg2_loc_id
 		AND ed.first_dom = p.first_dom
+		AND ed.storage_deal_type = p.storage_deal_type --since inj/with might have same location which will exclude creation of one of inj/with deal
 	LEFT JOIN optimizer_detail od
 		ON od.source_deal_header_id = ed.source_deal_header_id
 		AND ed.contract_id = COALESCE(od.contract_id, p.single_contract_id, p.contract_id) 
