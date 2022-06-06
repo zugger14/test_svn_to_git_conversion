@@ -239,9 +239,10 @@ BEGIN TRY
 	BEGIN
 		INSERT INTO fas_eff_ass_test_run_log (process_id, code, MODULE, source, TYPE, DESCRIPTION, nextsteps) 
 		SELECT DISTINCT  @process_id, 'Error', @module, @source, 'Matrix_Multiplication', 'Correlation Decomposition value not found for 
-			As of Date: ' + CONVERT(VARCHAR(10), @as_of_date, 120) + '; Risk Bucket ID: ' + CAST(risk_bucket_id AS VARCHAR) + '.', 'Please check data.'
-		FROM #tmp_risk_ids
-		WHERE NOT EXISTS(SELECT DISTINCT curve_id FROM #tmp_rnd_value WHERE curve_id = risk_bucket_id)
+			As of Date: ' + CONVERT(VARCHAR(10), @as_of_date, 120) + '; Risk Bucket ID: ' + spcd.curve_name + '.', 'Please check data.'
+		FROM #tmp_risk_ids tri
+		INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = tri.risk_bucket_id
+		WHERE NOT EXISTS(SELECT DISTINCT curve_id FROM #tmp_rnd_value WHERE curve_id = tri.risk_bucket_id)
 
 		RAISERROR ('CatchError', 16, 1)
 	END
