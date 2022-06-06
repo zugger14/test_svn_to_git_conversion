@@ -1391,8 +1391,13 @@ CREATE TABLE #process_as_of_date_point(as_of_date DATETIME)
 		BEGIN 
 			INSERT INTO fas_eff_ass_test_run_log (process_id, code, MODULE, source, TYPE, DESCRIPTION, nextsteps) 
 			SELECT DISTINCT @process_id, 'Warning', @module, @source, 'MTM simulation', ' Price curve simulation not found for as of date: ' + dbo.FNADateFormat(@as_of_date) + ' , curve:  ' + spcd.curve_name + ' and term: ' + dbo.FNADateFormat(sddv.term_start), 'Please check data.'
-			FROM #source_deal_delta_value sddv
-			INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sddv.curve_id
+			FROM #deal_detail dd 
+			INNER JOIN #source_deal_delta_value sddv ON sddv.source_deal_detail_id = dd.source_deal_detail_id
+			OUTER APPLY(SELECT DISTINCT sddv1.curve_id	
+						FROM #source_deal_delta_value sddv1
+						WHERE sddv1.source_deal_detail_id = sddv.source_deal_detail_id
+						AND sddv1.as_of_date IS NOT NULL) sddv1
+			INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = ISNULL(sddv1.curve_id, dd.curve_id)
 			WHERE sddv.as_of_date IS NULL
 
 			SET @is_warning = 'y'
@@ -1416,7 +1421,7 @@ CREATE TABLE #process_as_of_date_point(as_of_date DATETIME)
 			AND spc1.source_curve_def_id = sddv.formula_curve_id
 			AND spc1.maturity_date = sddv.term_start
 			AND spc1.curve_source_value_id = spc.curve_source_value_id	
-		WHERE spc.curve_source_value_id = 4500
+		WHERE spc.curve_source_value_id = 4500 AND sddv.as_of_date IS NOT NULL
 
 		IF @calc_type = 'y'
 			INSERT INTO [dbo].[source_deal_delta_value_whatif](criteria_id,
@@ -1447,7 +1452,7 @@ CREATE TABLE #process_as_of_date_point(as_of_date DATETIME)
 				[formula_curve_value],
 				[leg]
 			)
-			SELECT @criteria_id,* FROM #source_deal_delta_value
+			SELECT @criteria_id,* FROM #source_deal_delta_value WHERE as_of_date IS NOT NULL
 		ELSE
 			INSERT INTO [dbo].[source_deal_delta_value](run_date ,
 				as_of_date, 
@@ -1476,7 +1481,7 @@ CREATE TABLE #process_as_of_date_point(as_of_date DATETIME)
 				[formula_curve_value],
 				[leg]
 			)
-			SELECT * FROM #source_deal_delta_value	
+			SELECT * FROM #source_deal_delta_value WHERE as_of_date IS NOT NULL	
 		END --new approach block end	
 			
 	SET @desc = 'MTM Simulation Calculation process is completed for ' + dbo.FNAUserDateFormat(@as_of_date, @user_id) + '.'	
