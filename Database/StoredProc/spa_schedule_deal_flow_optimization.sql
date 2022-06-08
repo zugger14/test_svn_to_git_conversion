@@ -95,10 +95,10 @@ SET NOCOUNT ON
 	
 	-- SPA parameter values
 	SELECT @flag = 'i'
-		, @box_ids = '2,3'
+		, @box_ids = '1'
 		, @flow_date_from = '2022-07-01'
 		, @flow_date_to = '2022-07-01'
-		, @contract_process_id = 'F29C88B2_293F_4E36_9AF7_16670F92AC97'
+		, @contract_process_id = 'C0333B2C_939F_4CB0_B0B0_A59EF75759A7'
 		, @call_from = 'flow_opt'
 		, @target_uom = '1158'
 		, @reschedule = '0'
@@ -4572,6 +4572,7 @@ BEGIN -- Insert/Update Deal data
 		AND ed.leg2_loc_id= p.leg2_loc_id
 		AND ed.first_dom = p.first_dom
 		AND ed.storage_deal_type = p.storage_deal_type --since inj/with might have same location which will exclude creation of one of inj/with deal
+		AND ed.single_path_id = p.single_path_id --since multiple path on same box may occur
 	LEFT JOIN optimizer_detail od
 		ON od.source_deal_header_id = ed.source_deal_header_id
 		AND ed.contract_id = COALESCE(od.contract_id, p.single_contract_id, p.contract_id) 
