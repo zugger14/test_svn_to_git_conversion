@@ -3087,8 +3087,6 @@ dhtmlXGridObject.prototype._filterTreeA = function(g, q) {
     if (q == "") {
         return
     }
-    // added to fix issue caused by '&'
-    q = escapeXML(q);
     
     var n = true;
     if (typeof(q) == "function") {
