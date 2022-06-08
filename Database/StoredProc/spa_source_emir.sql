@@ -3471,7 +3471,7 @@ BEGIN
 					SELECT CONVERT(VARCHAR(10), term_Start, 120) [DeliveryPeriod/DeliveryPeriodStartDate]
 					, CONVERT(VARCHAR(10), term_end, 120) [DeliveryPeriod/DeliveryPeriodEndDate]
 					, LTRIM(STR(total_volume, 25, 0)) [DeliveryPeriod/DeliveryPeriodNotionalQuantity]
-					, CONVERT(VARCHAR(10), term_end, 120) [DeliveryPeriod/PaymentDate]
+					, CONVERT(VARCHAR(10), contract_expiration_date, 120) [DeliveryPeriod/PaymentDate]
 					, LTRIM(STR(fixed_price, 25, 0)) [DeliveryPeriod/FixedPrice]
 					FROM source_deal_detail 
 					WHERE source_deal_header_id = @trade_id
