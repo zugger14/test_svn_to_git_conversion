@@ -1390,15 +1390,26 @@ CREATE TABLE #process_as_of_date_point(as_of_date DATETIME)
 		IF ((@totalCount > @priceMissing) AND @priceMissing > 0)
 		BEGIN 
 			INSERT INTO fas_eff_ass_test_run_log (process_id, code, MODULE, source, TYPE, DESCRIPTION, nextsteps) 
-			SELECT DISTINCT @process_id, 'Warning', @module, @source, 'MTM simulation', ' Price curve simulation not found for as of date: ' + dbo.FNADateFormat(@as_of_date) + ' , curve:  ' + spcd.curve_name + ' and term: ' + dbo.FNADateFormat(sddv.term_start), 'Please check data.'
+			SELECT DISTINCT @process_id, 'Warning', @module, @source, 'MTM simulation', ' Price curve simulation not found for as of date: ' + dbo.FNADateFormat(@as_of_date) + ' , curve:  ' + ISNULL(sddv1.curve_name, spcd_name.curve_name) + ' and term: ' + dbo.FNADateFormat(sddv.term_start), 'Please check data.'
 			FROM #deal_detail dd 
 			INNER JOIN #source_deal_delta_value sddv ON sddv.source_deal_detail_id = dd.source_deal_detail_id
-			OUTER APPLY(SELECT DISTINCT sddv1.curve_id	
+			OUTER APPLY(SELECT DISTINCT spcd.curve_name	
 						FROM #source_deal_delta_value sddv1
+						INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sddv1.curve_id
 						WHERE sddv1.source_deal_detail_id = sddv.source_deal_detail_id
 						AND sddv1.as_of_date IS NOT NULL) sddv1
-			INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = ISNULL(sddv1.curve_id, dd.curve_id)
-			WHERE sddv.as_of_date IS NULL
+			LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = dd.curve_id
+			LEFT JOIN source_price_curve_def spcd1 ON spcd1.source_curve_def_id = dd.curve_id
+			AND spcd1.monte_carlo_model_parameter_id IS NOT NULL
+			LEFT JOIN dbo.source_price_curve_def spcd2 (NOLOCK)  ON spcd.proxy_source_curve_def_id=spcd2.source_curve_def_id
+			AND spcd2.monte_carlo_model_parameter_id IS NOT NULL
+			LEFT JOIN dbo.source_price_curve_def spcd3 (NOLOCK)  ON spcd.monthly_index=spcd3.source_curve_def_id
+			AND spcd3.monte_carlo_model_parameter_id IS NOT NULL
+			LEFT JOIN dbo.source_price_curve_def spcd4 (NOLOCK)  ON spcd.proxy_curve_id3=spcd4.source_curve_def_id
+			AND spcd4.monte_carlo_model_parameter_id IS NOT NULL
+			LEFT JOIN source_price_curve_def spcd_name ON 
+				spcd_name.source_curve_def_id = COALESCE(spcd1.source_curve_def_id, spcd2.source_curve_def_id, spcd3.source_curve_def_id, spcd4.source_curve_def_id)
+			WHERE sddv.as_of_date IS NULL AND ISNULL(sddv1.curve_name, spcd_name.curve_name) IS NOT NULL
 
 			SET @is_warning = 'y'
 		END
