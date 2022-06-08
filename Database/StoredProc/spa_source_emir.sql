@@ -1121,13 +1121,7 @@ BEGIN
 			FROM source_emir
 			WHERE NULLIF(product_classification_type, '') IS NULL
 				AND process_id = @process_id
-
-			INSERT INTO #temp_messages ([source_deal_header_id], [column], [messages])
-			SELECT DISTINCT source_deal_header_id, 'product_classification', 'product_classification cannot be blank'
-			FROM source_emir
-			WHERE NULLIF(product_classification, '') IS NULL
-				AND process_id = @process_id
-
+			
 			INSERT INTO #temp_messages ([source_deal_header_id], [column], [messages])
 			SELECT DISTINCT source_deal_header_id, 'product_classification', 'product_classification does not match the format'
 			FROM source_emir
@@ -1146,13 +1140,6 @@ BEGIN
 			FROM source_emir
 			WHERE NULLIF(product_identification_type, '') IS NOT NULL 
 				AND product_identification_type NOT IN ('I', 'A')
-				AND process_id = @process_id
-
-			INSERT INTO #temp_messages ([source_deal_header_id], [column], [messages])
-			SELECT DISTINCT source_deal_header_id, 'product_identification', 'product_identification cannot be blank'
-			FROM source_emir
-			WHERE NULLIF(product_identification_type, '') IS NOT NULL 
-				AND product_identification IS NULL
 				AND process_id = @process_id
 
 			INSERT INTO #temp_messages ([source_deal_header_id], [column], [messages])
@@ -3385,7 +3372,7 @@ BEGIN
 	@subission_type = 44704 AND @level_mifid = T MiFID Trade level
 	*******************************************/
 	DECLARE @sql_str VARCHAR(MAX)
-	DECLARE @file_path VARCHAR(MAX), @trade_id INT, @file_name_export NVARCHAR(MAX) = '', @temp_note_file_path NVARCHAR(100), @remote_directory NVARCHAR(2000)
+	DECLARE @file_path VARCHAR(MAX), @trade_id INT, @file_name_export NVARCHAR(MAX) = '', @temp_note_file_path NVARCHAR(300), @remote_directory NVARCHAR(2000)
 	SELECT @file_path = CONCAT(cs.document_path, '\temp_note\')
 	FROM connection_string cs
 
@@ -3849,67 +3836,155 @@ BEGIN
 	END
 	ELSE IF @submission_type = 44703 AND @level = 'M'
 	BEGIN
-		SET @sql_str = '
-			SELECT '''' [*Comment],
-			   CASE WHEN action_type = ''N'' THEN ''New''
-					WHEN action_type = ''C'' THEN ''Cancel''
-					WHEN action_type = ''M'' THEN ''Modify'' 
-					WHEN action_type = ''E'' THEN ''Error'' 
-					WHEN action_type = ''T'' THEN ''Early Termination'' 
-					WHEN action_type = ''R'' THEN ''Correction'' 
-					WHEN action_type = ''Z'' THEN ''Compression'' 
-					WHEN action_type = ''V'' THEN ''Valuation update''
-					WHEN action_type = ''P'' THEN ''Position component'' 
-			   END [Action],
-			   ''EULITE1.0'' [Message Version],
-			   ''Valuation'' [Message Type],
-			   ISNULL(reporting_entity_id, '''') [Report submitting entity ID],
-			   ISNULL(counterparty_id, '''') [Submitted For Party],
-			   ISNULL(other_counterparty_id, '''') [Trade Party 1 - ID Type],
-			   ISNULL(counterparty_id, '''') [Trade Party 1 - ID],
-			   ISNULL(other_counterparty_id, '''') [Trade Party 2 - ID Type],
-			   ISNULL(counterparty_name, '''') [Trade Party 2 - ID],			   
-			   ''ESMA'' [Trade Party 1 - Reporting Destination],
-			   '''' [Trade Party 2 - Reporting Destination],
-			   '''' [Trade Party 1 - Execution Agent ID],
-			   '''' [Trade Party 2 - Execution Agent ID],
-			   '''' [Trade Party 1 - Third Party Viewer ID Type],
-			   '''' [Trade Party 1 - Third Party Viewer ID],
-			   ''OTC'' [Exchange Traded Indicator],
-			   CAST(reporting_timestamp AS VARCHAR(10)) [Data Submitter Message ID],
-			   '''' [Trade Party 1 - Event ID],
-			   '''' [Trade Party 2 - Event ID],
-			   contarct_mtm_value [Value of contract - Trade Party 1],
-			   contarct_mtm_currency [Valuation Currency - Trade Party 1],
-			   CONVERT(VARCHAR(10), valuation_ts, 120) + ''T'' + CAST(CAST(valuation_ts AS TIME) AS VARCHAR(8)) + ''Z'' [Valuation Datetime - Trade Party 1],
-			   ''M'' [Valuation Type - Trade Party 1],
-			   '''' [Value of contract - Trade Party 2],
-			   '''' [Valuation Currency - Trade Party 2],
-			   '''' [Valuation Datetime - Trade Party 2],
-			   '''' [Valuation Type - Trade Party 2],
-			   ISNULL(trade_id, '''') [Trade ID],
-			   ISNULL(cleared, '''') [Cleared],
-			   ''V'' [Trade Party 1 - Action Type],
-			   '''' [Trade Party 2 - Action Type],
-			   '''' [Reserved - Participant Use 1],
-			   '''' [Reserved - Participant Use 2],
-			   '''' [Reserved - Participant Use 3],
-			   '''' [Reserved - Participant Use 4],
-			   '''' [Reserved - Participant Use 5],
-			   ISNULL(asset_class, '''') [Asset Class],
-			   ''T'' [Level],
-			   '''' [Trade Party 1 - Transaction ID],
-			   '''' [Trade Party 2 - Transaction ID],
-			   '''' [Trade Party 2 - Third Party Viewer ID Type],
-			   '''' [Trade Party 2 - Third Party Viewer ID],
-			   '''' [NA1],
-			   '''' [NA2],
-			   ISNULL(reporting_timestamp, '''') [Reporting Timestamp]
-		' + @str_batch_table + '
-		FROM source_emir
-		WHERE [level] = ''M''
-			AND error_validation_message IS NULL'
-		
+		IF @tr_rmm = 116901 -- Equias
+		BEGIN
+			DECLARE @valuation NVARCHAR(MAX)
+			DROP TABLE IF EXISTS #xml_data_m
+			SELECT 
+				se.source_deal_header_id
+				, CAST(document_id AS NVARCHAR(100)) DocumentID 	
+				, ISNULL(@document_usage, 'Test') DocumentUsage 
+				, se.counterparty_id SenderID 
+				, reporting_timestamp ReportingTimestamp
+				, trade_id UTI
+				, counterparty_name CounterpartyID
+				, valuation_ts ValuationTimestamp
+				, Format(contarct_mtm_value,'#.#######') MtMValue
+				, contarct_mtm_currency MtMCurrency
+				, valuation_type ValuationType
+			INTO #xml_data_m
+			FROM source_emir se
+			INNER JOIN source_deal_header sdh
+				ON sdh.source_deal_header_id = se.source_deal_header_id
+			WHERE [level] = 'M' AND error_validation_message IS NULL AND process_id = @process_id 
+			
+			DECLARE emir_cursor CURSOR FOR 
+			SELECT source_deal_header_id FROM #xml_data_m
+			OPEN emir_cursor 
+			FETCH NEXT FROM emir_cursor INTO @trade_id
+			WHILE @@FETCH_STATUS = 0
+			BEGIN
+				SET @emir_file_name = 'EMIR_Valuation_' + CAST(@trade_id AS NVARCHAR(25)) + '_' + CONVERT(NVARCHAR(10), GETDATE(), 120) + '.' + REPLACE(CAST(CAST(GETDATE() AS TIME) AS NVARCHAR(8)), ':', '_')
+				
+				SET @temp_note_file_path = NULL
+				
+				SELECT @xml_string = CAST('' AS NVARCHAR(MAX)) + 
+				'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+				<RegulatoryValuation>
+					<DocumentID>' + DocumentID + '</DocumentID>
+					<DocumentUsage>' + DocumentUsage + '</DocumentUsage>
+					<SenderID>' + SenderID + '</SenderID>
+					<ReportingTimestamp>' + ReportingTimestamp + '</ReportingTimestamp>
+					<CounterpartyID>' + CounterpartyID + '</CounterpartyID>
+					<Valuation>
+						<UTI>' + UTI + '</UTI>
+						<ValuationTimestamp>' + ValuationTimestamp + '</ValuationTimestamp>
+						<MtMValue>' + MtMValue + '</MtMValue>
+						<MtMCurrency>' + MtMCurrency + '</MtMCurrency>
+						<ValuationType>' + ValuationType + '</ValuationType>
+					</Valuation>
+				</RegulatoryValuation>'					
+				FROM #xml_data_m
+				WHERE source_deal_header_id = @trade_id 
+				
+				SELECT @emir_file_name = @emir_file_name + '.xml'
+				
+				SELECT @temp_note_file_path = @file_path + @emir_file_name
+				EXEC [spa_write_to_file] @xml_string, 'n',  @temp_note_file_path, @result OUTPUT	
+				IF @result = '1'
+				BEGIN
+					SELECT @file_name_export += IIF(NULLIF(@file_name_export,'') IS NULL, @temp_note_file_path, ',' + @temp_note_file_path)
+				END
+				
+				FETCH NEXT FROM emir_cursor INTO @trade_id
+			END
+			CLOSE emir_cursor
+			DEALLOCATE emir_cursor		
+			SET @desc = 'Export process completed for EMIR Equias for process_id: ' + @process_id + '. File has been saved at ' + @file_path
+			EXEC spa_message_board 'i', @user_name, NULL, 'Export Xml', @desc, '', '', 's', 'EMIR XML Export'
+			
+			SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id	
+			, @remote_directory = ftp_folder_path
+			FROM batch_process_notifications bpn
+			WHERE bpn.process_id = RIGHT(@batch_process_id, 13)
+
+			SELECT @remote_directory = COALESCE(@remote_directory,remote_directory)
+			FROM file_transfer_endpoint
+			WHERE file_transfer_endpoint_id = @file_transfer_endpoint_id
+			
+			IF @file_transfer_endpoint_id IS NOT NULL
+			BEGIN
+				EXEC spa_upload_file_to_ftp_using_clr @file_transfer_endpoint_id, @remote_directory, @file_name_export, @result OUTPUT
+			END	
+			
+			UPDATE source_emir 
+			SET submission_status = 39501 
+			WHERE process_id = @process_id
+			RETURN
+		END
+		ELSE
+		BEGIN
+			SET @sql_str = '
+				SELECT '''' [*Comment],
+				   CASE WHEN action_type = ''N'' THEN ''New''
+						WHEN action_type = ''C'' THEN ''Cancel''
+						WHEN action_type = ''M'' THEN ''Modify'' 
+						WHEN action_type = ''E'' THEN ''Error'' 
+						WHEN action_type = ''T'' THEN ''Early Termination'' 
+						WHEN action_type = ''R'' THEN ''Correction'' 
+						WHEN action_type = ''Z'' THEN ''Compression'' 
+						WHEN action_type = ''V'' THEN ''Valuation update''
+						WHEN action_type = ''P'' THEN ''Position component'' 
+				   END [Action],
+				   ''EULITE1.0'' [Message Version],
+				   ''Valuation'' [Message Type],
+				   ISNULL(reporting_entity_id, '''') [Report submitting entity ID],
+				   ISNULL(counterparty_id, '''') [Submitted For Party],
+				   ISNULL(other_counterparty_id, '''') [Trade Party 1 - ID Type],
+				   ISNULL(counterparty_id, '''') [Trade Party 1 - ID],
+				   ISNULL(other_counterparty_id, '''') [Trade Party 2 - ID Type],
+				   ISNULL(counterparty_name, '''') [Trade Party 2 - ID],			   
+				   ''ESMA'' [Trade Party 1 - Reporting Destination],
+				   '''' [Trade Party 2 - Reporting Destination],
+				   '''' [Trade Party 1 - Execution Agent ID],
+				   '''' [Trade Party 2 - Execution Agent ID],
+				   '''' [Trade Party 1 - Third Party Viewer ID Type],
+				   '''' [Trade Party 1 - Third Party Viewer ID],
+				   ''OTC'' [Exchange Traded Indicator],
+				   CAST(reporting_timestamp AS VARCHAR(10)) [Data Submitter Message ID],
+				   '''' [Trade Party 1 - Event ID],
+				   '''' [Trade Party 2 - Event ID],
+				   contarct_mtm_value [Value of contract - Trade Party 1],
+				   contarct_mtm_currency [Valuation Currency - Trade Party 1],
+				   CONVERT(VARCHAR(10), valuation_ts, 120) + ''T'' + CAST(CAST(valuation_ts AS TIME) AS VARCHAR(8)) + ''Z'' [Valuation Datetime - Trade Party 1],
+				   ''M'' [Valuation Type - Trade Party 1],
+				   '''' [Value of contract - Trade Party 2],
+				   '''' [Valuation Currency - Trade Party 2],
+				   '''' [Valuation Datetime - Trade Party 2],
+				   '''' [Valuation Type - Trade Party 2],
+				   ISNULL(trade_id, '''') [Trade ID],
+				   ISNULL(cleared, '''') [Cleared],
+				   ''V'' [Trade Party 1 - Action Type],
+				   '''' [Trade Party 2 - Action Type],
+				   '''' [Reserved - Participant Use 1],
+				   '''' [Reserved - Participant Use 2],
+				   '''' [Reserved - Participant Use 3],
+				   '''' [Reserved - Participant Use 4],
+				   '''' [Reserved - Participant Use 5],
+				   ISNULL(asset_class, '''') [Asset Class],
+				   ''T'' [Level],
+				   '''' [Trade Party 1 - Transaction ID],
+				   '''' [Trade Party 2 - Transaction ID],
+				   '''' [Trade Party 2 - Third Party Viewer ID Type],
+				   '''' [Trade Party 2 - Third Party Viewer ID],
+				   '''' [NA1],
+				   '''' [NA2],
+				   ISNULL(reporting_timestamp, '''') [Reporting Timestamp]
+			' + @str_batch_table + '
+			FROM source_emir
+			WHERE [level] = ''M''
+				AND error_validation_message IS NULL'
+		END
 		IF EXISTS(SELECT 1 FROM source_emir WHERE process_id = @process_id)
 		BEGIN
 			SET @error_spa = 'EXEC spa_regulatory_submission_error @submission_type = ''EMIR MTM'', @process_id = ''' + @process_id + ''''
