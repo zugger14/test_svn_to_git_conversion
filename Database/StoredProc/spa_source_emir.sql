@@ -3864,7 +3864,7 @@ BEGIN
 			FETCH NEXT FROM emir_cursor INTO @trade_id
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
-				SET @emir_file_name = 'EMIR_Valuation_' + CAST(@trade_id AS NVARCHAR(25)) + '_' + CONVERT(NVARCHAR(10), GETDATE(), 120) + '.' + REPLACE(CAST(CAST(GETDATE() AS TIME) AS NVARCHAR(8)), ':', '_')
+				SET @emir_file_name = 'eRR_AuditTrail_' + REPLACE(CONVERT(NVARCHAR(10), GETDATE(), 120), '-','') + REPLACE(CAST(CAST(GETDATE() AS TIME) AS NVARCHAR(8)), ':', '')
 				
 				SET @temp_note_file_path = NULL
 				
