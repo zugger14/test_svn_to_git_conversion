@@ -559,7 +559,7 @@ BEGIN
 			price_rate = AVG(sdd.fixed_price),
 			price_notation = CASE WHEN AVG(sdd.fixed_price) = 999999999999999.99999 THEN 'X' ELSE 'U' END,
 			price_currency = CASE WHEN (CASE WHEN AVG(sdd.fixed_price) = 999999999999999.99999 THEN 'X' ELSE 'U' END) = 'U' THEN MAX(sc.currency_name) ELSE '' END,
-			notional_amount = IIF(@level = 'M', SUM(ABS(sdpd.und_pnl)), SUM(ISNULL(sdd.total_volume,0))),
+			notional_amount = IIF(@level = 'M', SUM(ABS(sdpd.und_pnl)), SUM(ISNULL(sdd.total_volume * sdd.fixed_price, 0))),
 			price_multiplier = SUM(ISNULL(sdd.total_volume,0)) ,
 			quantity = MAX(ISNULL(sdd.deal_volume, 0)),
 			up_front_payment = MAX(deal_udf.[Initial Margin]),
@@ -572,7 +572,7 @@ BEGIN
 			maturity_date = CONVERT(VARCHAR(10), CONVERT(DATETIME, MAX(sdd.contract_expiration_date), 103), 126),
 			termination_date = NULL,
 			settlement_date = CONVERT(VARCHAR(10),MAX(sdh.entire_term_end), 126),
-			aggreement_type = MAX(cg.[contract_name]),
+			aggreement_type = MAX(cg.[contract_id]),
 			aggreement_version = NULL,
 			confirm_ts = LEFT(STUFF(STUFF(REPLACE(MAX(deal_udf.[Execution Timestamp]), '-', 'T'), 7, 0, '-'), 5, 0, '-'), 19) + 'Z',--MAX(deal_udf.[Execution Timestamp]),--CONVERT(VARCHAR(10), CONVERT(DATETIME, MAX(sdh.deal_date), 103),126) + 'T' + CAST(CAST(MAX(sdh.deal_date) AS TIME) AS VARCHAR(8)) + 'Z',
 			confirm_means = MAX(sdh.confirm_status),
@@ -1094,13 +1094,6 @@ BEGIN
 			SELECT DISTINCT source_deal_header_id, 'contract_type', 'contract_type cannot be blank'
 			FROM source_emir
 			WHERE NULLIF(contract_type, '') IS NULL
-				AND process_id = @process_id
-
-			INSERT INTO #temp_messages ([source_deal_header_id], [column], [messages])
-			SELECT DISTINCT source_deal_header_id, 'contract_type', 'contract_type does not match the format'
-			FROM source_emir
-			WHERE contract_type NOT IN ('CD', 'FR', 'FU', 'FW', 'OP', 'SB', 'SW', 'ST', 'OT') 
-				AND NULLIF(contract_type, '') IS NOT NULL
 				AND process_id = @process_id
 
 			INSERT INTO #temp_messages ([source_deal_header_id], [column], [messages])
@@ -3371,7 +3364,7 @@ BEGIN
 	@subission_type = 44704 AND @level_mifid = X MiFID Transaction level
 	@subission_type = 44704 AND @level_mifid = T MiFID Trade level
 	*******************************************/
-	DECLARE @sql_str VARCHAR(MAX)
+	DECLARE @sql_str VARCHAR(MAX), @termination_date NVARCHAR(25)
 	DECLARE @file_path VARCHAR(MAX), @trade_id INT, @file_name_export NVARCHAR(MAX) = '', @temp_note_file_path NVARCHAR(300), @remote_directory NVARCHAR(2000)
 	SELECT @file_path = CONCAT(cs.document_path, '\temp_note\')
 	FROM connection_string cs
@@ -3402,19 +3395,19 @@ BEGIN
 				, IIF(@level = 'P', 'true', 'false') Position
 				, IIF(DATEDIFF(DAY, sdh.deal_date, reporting_timestamp ) > 30 AND submission_status = 39501, 'true', 'false') Backload
 				, action_type ActionType
-				, reporting_timestamp ReportingTimestamp
+				, REPLACE(reporting_timestamp, 'Z', '') ReportingTimestamp
 				, trading_capacity TradingCapacity
-				, commercial_or_treasury CommercialOrTreasury	
+				, IIF(commercial_or_treasury = 'N', 'false', 'true') CommercialOrTreasury	
 				, IIF(clearing_threshold = 'N', 'false', 'true') ClearingThreshold
 				, nature_of_reporting_cpty Taxonomy
 				, trade_id TradeID
-				, exec_venue VenueOfExecution
-				, [compression] [Compression]
+				, 'XXXX' VenueOfExecution -- exec_venue
+				, IIF([compression] = 'N', 'false', 'true') [Compression]
 				, execution_timestamp ExecutionTimestamp
 				, aggreement_type MasterAgreementVersion	
-				, clearing_obligation ClearingObligation
-				, intra_group Intragroup
-				, confirm_means ConfirmationMeans
+				, IIF(clearing_obligation = 'N', 'false', 'true') ClearingObligation
+				, IIF(intra_group = 'N', 'false', 'true') Intragroup
+				, IIF(confirm_means = 'Confirmed', 'Y', 'N') ConfirmationMeans
 				, CAST(document_id AS NVARCHAR(100)) DocumentID 	
 				, ISNULL(@document_usage, 'Test') DocumentUsage 
 				, se.counterparty_id SenderID 
@@ -3422,16 +3415,15 @@ BEGIN
 				, 'ClearingHouse' ReceiverRole
 				, contract_type TransactionType	
 				, trade_id DealID	
-				, other_counterparty_id BuyerParty	
-				, other_counterparty_id SellerParty
-				, LTRIM(STR(notional_amount, 25, 0)) NotionalAmount
+				, IIF(se.counterparty_side = 'b', se.counterparty_id, se.counterparty_name) BuyerParty	
+				, IIF(se.counterparty_side = 's', se.counterparty_name, se.counterparty_id) SellerParty
+				, LTRIM(STR(notional_amount, 25, 2)) NotionalAmount
 				, aggreement_type AgreementType
 				, price_currency Currency
 				, LTRIM(STR(quantity, 25, 0)) TotalVolume
 				, quantity_unit TotalVolumeUnit
 				, CONVERT(VARCHAR(10), execution_timestamp, 120) TradeDate
 				, ISNULL(CONVERT(VARCHAR(10), effective_date, 120), '') EffectiveDate
-				, ISNULL(CONVERT(VARCHAR(10), termination_date, 120), '') TerminationDate
 			INTO #xml_data
 			FROM source_emir se
 			INNER JOIN source_deal_header sdh
@@ -3445,7 +3437,7 @@ BEGIN
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
 				WAITFOR DELAY '00:00:02'
-				SET @emir_file_name = 'EMIR_EU_Lite_CO_' + CONVERT(VARCHAR(10), GETDATE(), 120) + '.' + REPLACE(CAST(CAST(GETDATE() AS TIME) AS VARCHAR(8)), ':', '_')
+				SET @emir_file_name = 'eRR_AuditTrail_' + REPLACE(CONVERT(NVARCHAR(10), GETDATE(), 120), '-','') + REPLACE(CAST(CAST(GETDATE() AS TIME) AS NVARCHAR(8)), ':', '')
 				
 				SELECT @settlement_date = (
 					SELECT CONVERT(VARCHAR(10), term_Start, 120) DateOfSettlement 
@@ -3453,6 +3445,10 @@ BEGIN
 					WHERE source_deal_header_id = @trade_id
 					FOR XML PATH(''), ROOT('SettlementDates')
 				)
+
+				SELECT @termination_date =  CONVERT(VARCHAR(10), MAX(contract_expiration_date), 120)  
+				FROM source_deal_detail 
+				WHERE source_deal_header_id = @trade_id
 
 				SELECT @delivery_period = (
 					SELECT CONVERT(VARCHAR(10), term_Start, 120) [DeliveryPeriod/DeliveryPeriodStartDate]
@@ -3484,7 +3480,7 @@ BEGIN
 								<EURegulatoryDetails>
 									<UTI>' + TradeID + '</UTI>
 									<ReportingTimestamp>' + ReportingTimestamp + '</ReportingTimestamp>
-									<CPFinancialNature> ' + Taxonomy + '</CPFinancialNature>
+									<CPFinancialNature>' + Taxonomy + '</CPFinancialNature>
 									<TradingCapacity>' + TradingCapacity + '</TradingCapacity>
 									<CommercialOrTreasury>' + CommercialOrTreasury + '</CommercialOrTreasury>
 									<ClearingThreshold>' + ClearingThreshold + '</ClearingThreshold>
@@ -3518,11 +3514,12 @@ BEGIN
 							<TradeDate>' + TradeDate + '</TradeDate>
 							<FixedPriceInformation>
 								<FixedPricePayer>' + SenderID + '</FixedPricePayer>
+								<TotalContractValue>' + NotionalAmount + '</TotalContractValue>
 							</FixedPriceInformation>
 							<Rounding>2</Rounding>
 							<CommonPricing>false</CommonPricing>
 							<EffectiveDate>' + EffectiveDate + '</EffectiveDate>
-							<TerminationDate>' + TerminationDate + '</TerminationDate>
+							<TerminationDate>' + @termination_date + '</TerminationDate>
 							' + @delivery_period + '
 						</TradeConfirmation>						
 					</CpmlDocument>
@@ -3864,6 +3861,7 @@ BEGIN
 			FETCH NEXT FROM emir_cursor INTO @trade_id
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
+				WAITFOR DELAY '00:00:02'
 				SET @emir_file_name = 'eRR_AuditTrail_' + REPLACE(CONVERT(NVARCHAR(10), GETDATE(), 120), '-','') + REPLACE(CAST(CAST(GETDATE() AS TIME) AS NVARCHAR(8)), ':', '')
 				
 				SET @temp_note_file_path = NULL
