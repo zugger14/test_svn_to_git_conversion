@@ -651,7 +651,6 @@ abstract class DBDataWrapper extends DataWrapper{
 		
 		$where=$this->build_where($source->get_filters(),$source->get_relation());
 		$sort=$this->build_order($source->get_sort_by());
-			
 		return $this->query($this->select_query($select,$source->get_source(),$where,$sort,$source->get_start(),$source->get_count()));
 	}	
 	public function get_size($source){
@@ -700,8 +699,17 @@ abstract class DBDataWrapper extends DataWrapper{
 				array_push($sql,"(".$rules[$i].")");
 			else
 				if ($rules[$i]["value"]!=""){
-					if (!$rules[$i]["operation"])
-						array_push($sql,$this->escape_name($rules[$i]["name"])." LIKE '%".$this->escape($rules[$i]["value"])."%'");
+					if (!$rules[$i]["operation"]) {
+						$date_filters = array('deal_date', 'term_start', 'term_end');
+						if (in_array($rules[$i]["name"], $date_filters)) {
+
+							$stdDate = getStdDateFormat($this->escape($rules[$i]["value"]));
+							array_push($sql, "CONVERT(VARCHAR(20)," .$this->escape_name($rules[$i]["name"]).", 120) LIKE '%".$stdDate."%'");
+
+						} else {
+							array_push($sql,$this->escape_name($rules[$i]["name"])." LIKE '%".$this->escape($rules[$i]["value"])."%'");
+						}
+					}
 					else
 						array_push($sql,$this->escape_name($rules[$i]["name"])." ".$rules[$i]["operation"]." '".$this->escape($rules[$i]["value"])."'");
 				}
