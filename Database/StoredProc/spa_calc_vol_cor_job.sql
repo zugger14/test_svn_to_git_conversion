@@ -1543,7 +1543,7 @@ BEGIN TRY
 				SET @st_stmt = '
 				INSERT INTO ' + @CorProcessTableName + ' (X_curve_id, Y_curve_id, X_term_start, Y_term_start, Cor_value)
 				SELECT cor.X_curve_id, cor.Y_curve_id, cor.X_term_start, cor.Y_term_start, 
-					SUM((X.MATRIX_Value - X.MATRIX_Mean) * (Y.MATRIX_Value - Y.MATRIX_Mean)) / NULLIF(SQRT(ROUND(SUM(SQUARE(X.MATRIX_Value - X.MATRIX_Mean)) * SUM(POWER(Y.MATRIX_Value-Y.MATRIX_Mean,2)), 12)), 0) Cor_value
+					SUM((X.MATRIX_Value - X.MATRIX_Mean) * (Y.MATRIX_Value - Y.MATRIX_Mean)) / NULLIF(SQRT(SUM(SQUARE(X.MATRIX_Value - X.MATRIX_Mean)) * SUM(POWER(Y.MATRIX_Value-Y.MATRIX_Mean,2))), 0) Cor_value
 				FROM #term_correlation cor 
 				INNER JOIN #return_matrix X ON cor.X_curve_id = X.curve_id 
 					AND X.term_start = cor.X_term_start
