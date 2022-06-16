@@ -651,6 +651,7 @@ abstract class DBDataWrapper extends DataWrapper{
 		
 		$where=$this->build_where($source->get_filters(),$source->get_relation());
 		$sort=$this->build_order($source->get_sort_by());
+			
 		return $this->query($this->select_query($select,$source->get_source(),$where,$sort,$source->get_start(),$source->get_count()));
 	}	
 	public function get_size($source){
@@ -703,8 +704,11 @@ abstract class DBDataWrapper extends DataWrapper{
 						$date_filters = array('deal_date', 'term_start', 'term_end');
 						if (in_array($rules[$i]["name"], $date_filters)) {
 
-							$stdDate = getStdDateFormat($this->escape($rules[$i]["value"]));
-							array_push($sql, "CONVERT(VARCHAR(20)," .$this->escape_name($rules[$i]["name"]).", 120) LIKE '%".$stdDate."%'");
+							$std_date_format = getStdDateFormat($this->escape($rules[$i]["value"]));
+							if (strpos(strval($std_date_format), "-0-") !== false) {
+								$std_date_format = str_replace("-0-", "", strval($std_date_format));
+							}
+							array_push($sql, "CONVERT(VARCHAR(20)," .$this->escape_name($rules[$i]["name"]).", 120) LIKE '%".$std_date_format."%'");
 
 						} else {
 							array_push($sql,$this->escape_name($rules[$i]["name"])." LIKE '%".$this->escape($rules[$i]["value"])."%'");
