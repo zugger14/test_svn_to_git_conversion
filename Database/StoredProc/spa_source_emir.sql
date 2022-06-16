@@ -3385,7 +3385,7 @@ BEGIN
 	BEGIN		
 		IF @tr_rmm = 116901 -- Equias
 		BEGIN
-			DECLARE @settlement_date NVARCHAR(MAX), @delivery_period NVARCHAR(MAX)
+			DECLARE @settlement_date NVARCHAR(MAX), @delivery_period NVARCHAR(MAX), @calculation_period NVARCHAR(MAX)
 			DROP TABLE IF EXISTS #xml_data
 			SELECT 
 				se.source_deal_header_id
@@ -3420,15 +3420,36 @@ BEGIN
 				, LTRIM(STR(notional_amount, 25, 2)) NotionalAmount
 				, aggreement_type AgreementType
 				, price_currency Currency
-				, LTRIM(STR(quantity, 25, 0)) TotalVolume
-				, quantity_unit TotalVolumeUnit
-				, CONVERT(VARCHAR(10), execution_timestamp, 120) TradeDate
-				, ISNULL(CONVERT(VARCHAR(10), effective_date, 120), '') EffectiveDate
+				, LTRIM(STR(se.quantity, 25, 0)) TotalVolume
+				, se.quantity_unit TotalVolumeUnit
+				, CONVERT(VARCHAR(10), se.execution_timestamp, 120) TradeDate
+				, ISNULL(CONVERT(VARCHAR(10), se.effective_date, 120), '') EffectiveDate
+				, fixed_price
+				, spcd.curve_id deal_curve_id
+				, spcd_sett.curve_id settlement_curve_id
+				, spcd_formula_curve.curve_id formula_curve_id
+				, sc.commodity_name settlement_commodity
+				, sc_formula_curve.commodity_name formula_curve_commodity
+				, set_curr.currency_name sett_currency_name
+				, set_formula_curve.currency_name formula_cur_currency_name
+				, sett_um.uom_name set_uom_name
+				, form_crv_um.uom_name for_crv_uom_name
 			INTO #xml_data
 			FROM source_emir se
-			INNER JOIN source_deal_header sdh
-				ON sdh.source_deal_header_id = se.source_deal_header_id
-			WHERE process_id = @process_id AND error_validation_message IS NULL
+			INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = se.source_deal_header_id
+			INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+			LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id 		
+			LEFT JOIN source_price_curve_def spcd_sett ON spcd_sett.source_curve_def_id = spcd.settlement_curve_id 	
+			LEFT JOIN source_price_curve_def spcd_formula_curve ON spcd_formula_curve.source_curve_def_id = sdd.formula_curve_id
+			LEFT JOIN source_commodity sc ON sc.source_commodity_id = spcd_sett.commodity_id
+			LEFT JOIN source_commodity sc_formula_curve ON sc_formula_curve.source_commodity_id = spcd_formula_curve.commodity_id
+			LEFT JOIN source_currency set_curr ON set_curr.source_currency_id = spcd_sett.source_currency_id
+			LEFT JOIN source_currency set_formula_curve ON set_formula_curve.source_currency_id = spcd_formula_curve.source_currency_id
+			LEFT JOIN source_uom sett_um ON sett_um.source_uom_id = spcd_sett.uom_id
+			LEFT JOIN source_uom form_crv_um ON form_crv_um.source_uom_id = spcd_formula_curve.uom_id
+			WHERE se.process_id = @process_id AND se.error_validation_message IS NULL
+			
+			CREATE TABLE #settlement_date (settlement_date DATE, contract_expiration_date DATE)
 
 			DECLARE emir_cursor CURSOR FOR 
 			SELECT source_deal_header_id FROM #xml_data
@@ -3437,15 +3458,27 @@ BEGIN
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
 				WAITFOR DELAY '00:00:02'
+				DELETE FROM #settlement_date
 				SET @emir_file_name = 'eRR_AuditTrail_' + REPLACE(CONVERT(NVARCHAR(10), GETDATE(), 120), '-','') + REPLACE(CAST(CAST(GETDATE() AS TIME) AS NVARCHAR(8)), ':', '')
 				
+				INSERT INTO #settlement_date(settlement_date, contract_expiration_date)
+				SELECT dbo.[FNAInvoiceDueDate](term_start, settlement_date, NULL, settlement_days), contract_expiration_date
+				FROM (
+					SELECT sdd.term_start,IIF(cca.settlement_date IS NOT NULL AND cca.settlement_days IS NOT NULL, cca.settlement_date, NULL) settlement_date,
+					IIF(cca.settlement_date IS NOT NULL AND cca.settlement_days IS NOT NULL, cca.settlement_days, cg.settlement_days) settlement_days, sdd.contract_expiration_date
+					FROM source_deal_header sdh 
+					INNER JOIN source_deal_detail sdd ON sdh.source_deal_header_id = sdd.source_deal_header_id 
+					INNER JOIN counterparty_contract_address cca ON cca.counterparty_id = sdh.counterparty_id AND sdh.contract_id = cca.contract_id
+					INNER JOIN contract_group cg ON cg.contract_id = sdh.contract_id
+					WHERE sdh.source_deal_header_id = @trade_id
+				) a
+
 				SELECT @settlement_date = (
-					SELECT CONVERT(VARCHAR(10), term_Start, 120) DateOfSettlement 
-					FROM source_deal_detail 
-					WHERE source_deal_header_id = @trade_id
+					SELECT CONVERT(VARCHAR(10), ISNULL(settlement_date, contract_expiration_date), 120) DateOfSettlement 
+					FROM #settlement_date					
 					FOR XML PATH(''), ROOT('SettlementDates')
 				)
-
+				
 				SELECT @termination_date =  CONVERT(VARCHAR(10), MAX(contract_expiration_date), 120)  
 				FROM source_deal_detail 
 				WHERE source_deal_header_id = @trade_id
@@ -3460,7 +3493,15 @@ BEGIN
 					WHERE source_deal_header_id = @trade_id
 					FOR XML PATH(''), ROOT('DeliveryPeriods')
 				)
-			
+
+				SELECT @calculation_period = (
+					SELECT CONVERT(VARCHAR(10), term_Start, 120) [CalculationPeriod/StartDate] 
+					, CONVERT(VARCHAR(10), term_end, 120) [CalculationPeriod/EndDate] 
+					FROM source_deal_detail 
+					WHERE source_deal_header_id = @trade_id
+					FOR XML PATH(''), ROOT('CalculationPeriods')
+				)
+				
 				SET @temp_note_file_path = NULL
 				SELECT @xml_string = CAST('' AS NVARCHAR(MAX)) + 
 					'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -3513,9 +3554,29 @@ BEGIN
 							<TotalVolumeUnit>' + TotalVolumeUnit + '</TotalVolumeUnit>
 							<TradeDate>' + TradeDate + '</TradeDate>
 							<FixedPriceInformation>
-								<FixedPricePayer>' + SenderID + '</FixedPricePayer>
-								<TotalContractValue>' + NotionalAmount + '</TotalContractValue>
-							</FixedPriceInformation>
+								<FixedPricePayer>' + SenderID + '</FixedPricePayer>'
+							+ IIF (fixed_price IS NOT NULL AND settlement_curve_id IS NULL AND formula_curve_id IS NULL, '<FPCurrencyUnit>' + Currency + '</FPCurrencyUnit>
+								<FPCapacityUnit>' + TotalVolumeUnit + '</FPCapacityUnit>
+								<FPCapacityConversionRate>1</FPCapacityConversionRate>	
+							',  '') + '</FixedPriceInformation>'
+							+ IIF (settlement_curve_id IS NOT NULL OR formula_curve_id IS NOT NULL,
+							'<FloatPriceInformation>
+								<FloatPricePayer>' + ReceiverID + '</FloatPricePayer>
+								<CommodityReferences>
+									<CommodityReference>
+										<CommodityReferencePrice>' + COALESCE(settlement_curve_id, formula_curve_id, '') + '</CommodityReferencePrice>
+										<IndexCommodity>' + COALESCE(settlement_commodity, formula_curve_commodity, '') + '</IndexCommodity> 
+										<IndexCurrencyUnit>' + COALESCE(sett_currency_name, formula_cur_currency_name, '') + '</IndexCurrencyUnit>
+										<IndexCapacityUnit>' + COALESCE(set_uom_name, for_crv_uom_name, '') + '</IndexCapacityUnit>
+										<SpecifiedPrice>Average</SpecifiedPrice>
+										<Factor>1.0</Factor>
+										<DeliveryDate>Calculation_Period</DeliveryDate>
+										<PricingDate>Friday</PricingDate>
+										' + @calculation_period + '
+									</CommodityReference>
+								</CommodityReferences>
+							</FloatPriceInformation>', '') + '
+							<TotalContractValue>' + NotionalAmount + '</TotalContractValue>
 							<Rounding>2</Rounding>
 							<CommonPricing>false</CommonPricing>
 							<EffectiveDate>' + EffectiveDate + '</EffectiveDate>
