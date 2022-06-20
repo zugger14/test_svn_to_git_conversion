@@ -1362,6 +1362,41 @@ BEGIN TRY
 					exec spa_print @st_sql
 					EXEC(@st_sql)
 
+
+				IF OBJECT_ID('tempdb..#simulated_term_not_found') IS NOT NULL
+				 DROP TABLE #simulated_term_not_found
+
+				 CREATE TABLE #simulated_term_not_found (source_deal_header_id INT, term_start DATE, deal_id VARCHAR(400))
+				
+				SET @st_sql = 'INSERT INTO #simulated_term_not_found
+					SELECT DISTINCT sdd.source_deal_header_id, sdd.term_start, sdh.deal_id 
+					FROM ' + @tmp_deals_process_table + ' td
+				INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = td.source_deal_header_id
+				INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
+					LEFT JOIN #source_deal_delta_value sddv ON sddv.source_deal_header_id = sdd.source_deal_header_id
+					AND sddv.term_start = sdd.term_start
+					AND sddv.term_end = sdd.term_end
+					AND sddv.leg = sddv.leg
+				WHERE sddv.source_deal_header_id IS NULL '
+				+
+				CASE WHEN @term_start IS NOT NULL THEN ' AND sdd.term_start >= '''	+ CAST(@term_start AS VARCHAR) + '''' ELSE '' END +
+						CASE WHEN @term_end IS NOT NULL THEN ' AND sdd.term_end <= ''' + CAST(@term_end AS VARCHAR) + '''' ELSE '' END
+
+			exec spa_print @st_sql
+			EXEC(@st_sql)
+
+			IF EXISTS(SELECT TOP 1 1 FROM #simulated_term_not_found)
+			BEGIN
+				INSERT INTO fas_eff_ass_test_run_log (process_id, code, MODULE, source, TYPE, description, nextsteps) 
+				SELECT @process_id,'Error',@module, @source, 'MTM Simulation', ' MTM simulation value not found for Deal: '
+				+ deal_id + ' and Term: '+ convert(varchar(10),term_start,120) + '.','Please check data.'
+				FROM #simulated_term_not_found
+						
+			SET @warningcode = 'e'
+				--RAISERROR ('CatchError', 16, 1)
+			END
+
+
 					IF @measure = 17357 --For GMaR
 					BEGIN						
 						UPDATE sddv SET market_value_delta = CASE WHEN physical_financial_flag = 'p' THEN 0 ELSE market_value_delta END
