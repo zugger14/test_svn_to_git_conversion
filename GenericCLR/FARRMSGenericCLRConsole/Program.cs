@@ -10,28 +10,7 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
-            //Movie m = JsonHelper.Get<Movie>(jsonContent);
-            //var x = JsonHelper.GetMany<Movie>(jsonContent);
-            Movie m = new Movie() { Genres = new List<string>(), Name = "War", Reviews = new List<Review>() };
-            m.Genres.Add("Comedy");
-            m.Genres.Add("Action");
-
-            m.Reviews.Add(new Review() { Ratings = 1 });
-            m.Reviews.Add(new Review() { Ratings = 2 });
-
-            JsonHelper.CollectionToJson(m, Newtonsoft.Json.Formatting.Indented);
-
-            JsonHelper.TableToJSON("select top 10 * from contract_group");
-
-            using (StreamReader sr = new StreamReader(@"D:\data.json.txt"))
-            {
-                JsonHelper.InsertJsonToTable(sr.ReadToEnd(), "goods");
-            }
-
-            using (StreamReader sr = new StreamReader(@"D:\data.json.txt"))
-            {
-                JsonHelper.InsertJsonToTable(sr.ReadToEnd());
-            }
+            
             string msg = "";
             string s;
             //FAARMSFileTransferCLR.StoredProcedure.ListFtpContents(26, null, out s);
@@ -179,16 +158,5 @@ namespace ConsoleApp1
 
         }
     }
-    public class Movie
-    {
-        public string Name { get; set; }
-        public string ReleaseDate { get; set; }
-        public List<string> Genres { get; set; }
-        public List<Review> Reviews { get; set; }
-    }
-
-    public class Review
-    {
-        public int Ratings { get; set; }
-    }
+    
 }
