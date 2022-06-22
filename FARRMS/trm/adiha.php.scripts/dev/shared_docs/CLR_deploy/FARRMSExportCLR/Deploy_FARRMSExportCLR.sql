@@ -1,5 +1,5 @@
-DECLARE @folder_path VARCHAR(300)
-SELECT @folder_path = document_path FROM connection_string
+DECLARE @folder_path VARCHAR(300), @common_dlls_path VARCHAR(500)
+SELECT @folder_path = document_path, @common_dlls_path = document_path + '\CLR_deploy\' FROM connection_string
 DECLARE @library_path VARCHAR(MAX) = @folder_path + '\CLR_deploy\FARRMSExportCLR\' -- Assembly DLL File path
 
 DECLARE @db_name NVARCHAR(250) = DB_NAME()
@@ -37,6 +37,44 @@ IF OBJECT_ID('spa_post_data_to_web_service') IS NOT NULL
 
 IF EXISTS(SELECT 1 FROM sys.assemblies a WHERE [name] LIKE 'FARRMSExportCLR')
 	DROP ASSEMBLY FARRMSExportCLR
+
+	-- Resolve .net framework dir to pick the dependent assemblies
+DECLARE @frameworkDir VARCHAR(1000)
+SELECT @frameworkDir = LEFT(LTRIM(RTRIM(value)), LEN(value) - 1) FROM sys.dm_clr_properties where [name] = 'directory'
+
+IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'System.Runtime.Serialization')
+BEGIN
+	CREATE ASSEMBLY [System.Runtime.Serialization]
+	FROM @frameworkDir + 'System.Runtime.Serialization.dll'
+	WITH PERMISSION_SET = UNSAFE	
+END
+ELSE
+BEGIN
+	BEGIN TRY  
+		ALTER ASSEMBLY [System.Runtime.Serialization] FROM @frameworkDir + 'System.Runtime.Serialization.dll' WITH PERMISSION_SET = UNSAFE  
+	END TRY  
+	BEGIN CATCH  
+		--	Suppressing Error, according to MVID, identical to an assembly that is already registered under the name "System.Runtime.Serialization".
+		PRINT 'System.Runtime.Serialization is already registered according to MVID.'
+	END CATCH
+END
+
+IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'Newtonsoft.Json')
+BEGIN
+	CREATE ASSEMBLY [Newtonsoft.Json]
+	FROM @common_dlls_path + 'Newtonsoft.Json.dll'
+	WITH PERMISSION_SET = UNSAFE	
+END
+ELSE
+BEGIN
+	BEGIN TRY  
+		ALTER ASSEMBLY [Newtonsoft.Json] FROM @common_dlls_path + 'Newtonsoft.Json.dll' WITH PERMISSION_SET = UNSAFE  
+	END TRY  
+	BEGIN CATCH  
+		--	Suppressing Error, according to MVID, identical to an assembly that is already registered under the name "WindowsBase".
+		PRINT 'Newtonsoft.Json is already registered according to MVID.'
+	END CATCH
+END
 
 IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'FARRMSUtilities')
 BEGIN

@@ -1,6 +1,8 @@
 ﻿using FARRMSGenericCLR;
 using FARRMSUtilities;
 using FAARMSFileTransferCLR;
+using System.Collections.Generic;
+using System.IO;
 
 namespace ConsoleApp1
 {
@@ -8,9 +10,30 @@ namespace ConsoleApp1
     {
         static void Main(string[] args)
         {
+            //Movie m = JsonHelper.Get<Movie>(jsonContent);
+            //var x = JsonHelper.GetMany<Movie>(jsonContent);
+            Movie m = new Movie() { Genres = new List<string>(), Name = "War", Reviews = new List<Review>() };
+            m.Genres.Add("Comedy");
+            m.Genres.Add("Action");
+
+            m.Reviews.Add(new Review() { Ratings = 1 });
+            m.Reviews.Add(new Review() { Ratings = 2 });
+
+            JsonHelper.CollectionToJson(m, Newtonsoft.Json.Formatting.Indented);
+
+            JsonHelper.TableToJSON("select top 10 * from contract_group");
+
+            using (StreamReader sr = new StreamReader(@"D:\data.json.txt"))
+            {
+                JsonHelper.InsertJsonToTable(sr.ReadToEnd(), "goods");
+            }
+
+            using (StreamReader sr = new StreamReader(@"D:\data.json.txt"))
+            {
+                JsonHelper.InsertJsonToTable(sr.ReadToEnd());
+            }
             string msg = "";
             string s;
-            FAARMSFileTransferCLR.StoredProcedure.TestEndpointConnection(27, out s);
             //FAARMSFileTransferCLR.StoredProcedure.ListFtpContents(26, null, out s);
             //FARRMSExcelServerCLR.StoredProcedure.SynchronizeExcelWithSpire("2294", "y", "y", "farrms_admin", "n", "PDF", "EFD4A339_8F7F_485C_935C_C646FF17DAE8", out s);
             //FARRMSExcelServerCLR.StoredProcedure.SynchronizeExcelWithSpire("2294", "y", "y", "farrms_admin", "n", "pdf", "EFD4A339_8F7F_485C_935C_C646FF17DAE8", out s);
@@ -155,5 +178,17 @@ namespace ConsoleApp1
             //Utility.MoveFileToFolder(@"D:\Temp\test\surya.txt", @"D:\temp\Error\", out s);
 
         }
+    }
+    public class Movie
+    {
+        public string Name { get; set; }
+        public string ReleaseDate { get; set; }
+        public List<string> Genres { get; set; }
+        public List<Review> Reviews { get; set; }
+    }
+
+    public class Review
+    {
+        public int Ratings { get; set; }
     }
 }

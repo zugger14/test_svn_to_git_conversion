@@ -44,6 +44,44 @@ IF EXISTS(SELECT 1 FROM sys.assemblies a WHERE [name] LIKE 'Spire.Common')
 IF EXISTS(SELECT 1 FROM sys.assemblies a WHERE [name] LIKE 'System.Web')
 	DROP ASSEMBLY [System.Web]
 
+-- Resolve .net framework dir to pick the dependent assemblies
+DECLARE @frameworkDir VARCHAR(1000)
+SELECT @frameworkDir = LEFT(LTRIM(RTRIM(value)), LEN(value) - 1) FROM sys.dm_clr_properties where [name] = 'directory'
+
+IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'System.Runtime.Serialization')
+BEGIN
+	CREATE ASSEMBLY [System.Runtime.Serialization]
+	FROM @frameworkDir + 'System.Runtime.Serialization.dll'
+	WITH PERMISSION_SET = UNSAFE	
+END
+ELSE
+BEGIN
+	BEGIN TRY  
+		ALTER ASSEMBLY [System.Runtime.Serialization] FROM @frameworkDir + 'System.Runtime.Serialization.dll' WITH PERMISSION_SET = UNSAFE  
+	END TRY  
+	BEGIN CATCH  
+		--	Suppressing Error, according to MVID, identical to an assembly that is already registered under the name "System.Runtime.Serialization".
+		PRINT 'System.Runtime.Serialization is already registered according to MVID.'
+	END CATCH
+END
+
+IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'Newtonsoft.Json')
+BEGIN
+	CREATE ASSEMBLY [Newtonsoft.Json]
+	FROM @common_dlls_path + 'Newtonsoft.Json.dll'
+	WITH PERMISSION_SET = UNSAFE	
+END
+ELSE
+BEGIN
+	BEGIN TRY  
+		ALTER ASSEMBLY [Newtonsoft.Json] FROM @common_dlls_path + 'Newtonsoft.Json.dll' WITH PERMISSION_SET = UNSAFE  
+	END TRY  
+	BEGIN CATCH  
+		--	Suppressing Error, according to MVID, identical to an assembly that is already registered under the name "WindowsBase".
+		PRINT 'Newtonsoft.Json is already registered according to MVID.'
+	END CATCH
+END
+
 IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'Accessibility')
 BEGIN
 	CREATE ASSEMBLY [Accessibility]
@@ -96,9 +134,6 @@ BEGIN
 END
 
 ---- Spire
-DECLARE @frameworkDir VARCHAR(1000)
-SELECT @frameworkDir = LEFT(LTRIM(RTRIM(value)), LEN(value) - 1) FROM sys.dm_clr_properties where [name] = 'directory'
-
 IF NOT EXISTS(SELECT 1 FROM   sys.assemblies a WHERE  [name] LIKE 'System.Web')
 BEGIN
 	CREATE ASSEMBLY [System.Web]
