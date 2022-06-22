@@ -596,7 +596,8 @@ BEGIN TRY
 			WHERE MTM IS NULL
 			ORDER BY deal_id
 			
-			RAISERROR ('CatchError', 16, 1)
+			SET @warningcode = 'e'
+			--RAISERROR ('CatchError', 16, 1)
 		END
 		
 		IF EXISTS(SELECT TOP 1 deal_id FROM #tmp_term WHERE counterparty_id IS NULL) 
@@ -1246,8 +1247,12 @@ BEGIN TRY
 					+ CONVERT(VARCHAR(10), ABS(source_deal_header_id)) + ' (' + dbo.FNATRMWinHyperlink('a', CASE WHEN source_deal_header_id < 0 THEN 10183400 ELSE 10131000 END, deal_id, ABS(source_deal_header_id),null,null,null,null,null,null,null,null,null,null,null,0) + ') for as of date: ' +
 					convert(varchar(10),@as_of_date,120), 'Please Run MTM simulation' 
 					FROM #deal_not_found 
-					
+				
+				IF ((SELECT COUNT(*) FROM #tmp_term)
+				 = (SELECT COUNT(*) FROM #deal_not_found))
 					RAISERROR ('CatchError', 16, 1)
+				ELSE
+					SET @warningcode = 'e'
 				END
 				--Total number of un-available as_of_date in simulated data
 				SET @total_count = ABS(@simulation_days - @total_available_date)
@@ -1808,7 +1813,7 @@ BEGIN TRY
 	 			dbo.FNALastDayInDate(tt.term_start), 
 	 			1,
 	 			''' + CONVERT(VARCHAR(10),@as_of_date,120) + ''' pnl_as_of_date, 
-	 			tt.mtm, 
+	 			ISNULL(tt.mtm, ''''),
 	 			0,0,0,0,0,
 	 			' + CAST(CASE WHEN @var_approach IN (1521, 1522) THEN @Monte_Carlo_Curve_Source ELSE @price_curve_source END AS VARCHAR) +' pnl_source_value_id,
 	 			1,
