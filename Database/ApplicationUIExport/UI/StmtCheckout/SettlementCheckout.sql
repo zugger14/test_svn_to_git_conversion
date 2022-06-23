@@ -263,7 +263,7 @@ BEGIN
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type
 			INTO #temp_new_template_definition (new_definition_id, field_id, field_type)
-			VALUES('20011200','deal_charge_type_id','deal_charge_type_id','Charges','combo','char','h','y','EXEC spa_staticdatavalues @flag=''h'', @type_id=5500',NULL,'n','n','','n','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL,NULL)
+			VALUES('20011200','deal_charge_type_id','deal_charge_type_id','Charges','combo','char','h','y','EXEC spa_user_defined_fields_template @flag=''c''',NULL,'n','n','','n','n',NULL,NULL,'y','n','n','n',NULL,NULL,NULL,NULL)
 						
 			INSERT INTO application_ui_template_definition (application_function_id, field_id, farrms_field_id, default_label, field_type, data_type, header_detail, system_required, sql_string, field_size, is_disable, is_hidden, default_value, insert_required, data_flag, update_required, has_round_option, blank_option, is_primary, is_udf, is_identity, text_row_num, hyperlink_function, char_length, open_ui_function_id) 
 			OUTPUT INSERTED.application_ui_field_id, INSERTED.field_id, INSERTED.field_type

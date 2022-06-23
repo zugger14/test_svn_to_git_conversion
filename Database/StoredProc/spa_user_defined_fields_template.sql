@@ -23,6 +23,7 @@ GO
 			-d - Deletes UDF
 			-a - Returns UDF data of a particular UDF
 			-g - Returns lists udfgroup and counts of udf fields inside that group, added for udf tabbing					   
+			-c - Returns list charge type combo field data
 		@udf_template_id : Udf Template Id
 		@field_name : Field Name
 		@field_label : Field Label
@@ -478,6 +479,13 @@ BEGIN try
 			GROUP BY sdv.code
 			ORDER BY [UDF Grouping] --order of [UDF Grouping] need to be same on 's','l' and 'g' option.
 		  END
+	
+	ELSE IF  @flag = 'c'
+		BEGIN
+			SELECT DISTINCT field_name [Value ID], Field_label [code]
+		  	FROM [dbo].[user_defined_fields_template] udft
+			WHERE (udft.is_active = 'y' AND udft.deal_udf_type IN ('c','p')) OR udft.field_name = -5500
+		END
 
 	DECLARE @msg NVARCHAR(2000)
 	SELECT @msg = ''
