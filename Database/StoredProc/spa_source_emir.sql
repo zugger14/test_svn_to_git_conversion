@@ -652,7 +652,7 @@ BEGIN
 			submission_date = GETDATE(),
 			confirmation_date = GETDATE(),
 			process_id = @process_id,
-			document_id = IIF(MAX(emr.document_id) IS NULL, ROW_NUMBER() OVER(PARTITION BY sdh.source_deal_header_id ORDER BY sdh.source_deal_header_id), MAX(emr.document_id) + 1 ),
+			document_id =  sdh.source_deal_header_id,
 			commodity_id = MAX(scm.commodity_id),
 			broker_name = MAX(sc_broker.counterparty_name)
 		INTO #temp_source_emir
@@ -781,12 +781,6 @@ BEGIN
 		) s ON sdd.curve_id = s.[index]
 			AND CONVERT(VARCHAR(10), sdd.contract_expiration_date, 120) = CONVERT(VARCHAR(10), s.expiration_date, 120)
 			AND sdh.option_type = s.call_put
-		OUTER APPLY(
-			SELECT TOP 1 emir.document_id
-			FROM source_emir emir
-			WHERE emir.source_deal_header_id = sdh.source_deal_header_id
-			ORDER BY emir.document_id DESC
-		) emr		
 		WHERE 1 = 1
 		-- AND sub_cpty.LEI IS NOT NULL
 			AND ((sco.counterparty_id IN ('ICE', 'CME', 'EEX') AND sdt.source_deal_type_name <> 'Spot') OR (sco.counterparty_id NOT IN ('ICE', 'CME', 'EEX')))
