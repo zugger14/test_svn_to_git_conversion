@@ -89,7 +89,7 @@ CREATE TABLE #tmp_result (
 	Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
 )
 INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
-EXEC spa_calc_mtm_job_wrapper  @_sub_id,@_stra_id,@_book_id,@_sub_book_id, NULL, @_as_of_date,4500, NULL, ''b'', @_process_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ''n'', @_term_start , @_term_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ''y'',NULL 
+EXEC spa_calc_mtm_job_wrapper  @_sub_id,@_stra_id,@_book_id,@_sub_book_id, NULL, @_as_of_date,4505, NULL, ''b'', @_process_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ''n'', @_term_start , @_term_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ''y'',NULL 
 
 SELECT  
     @_as_of_date as_of_date, 
