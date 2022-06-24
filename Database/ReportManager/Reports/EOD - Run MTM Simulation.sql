@@ -2,33 +2,87 @@ BEGIN TRY
 		BEGIN TRAN
 
 		DECLARE @report_id_dest INT 
-		
-		IF 'e ' = 'p'
-		BEGIN
-			Set @report_id_dest = NULL
-		END
 	
-IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='92E55378_CC05_49BD_BA8D_52BDDB82561A')
+
+		--RETAIN APPLICATION FILTER DETAILS START (PART1)
+		DROP TABLE IF EXISTS #paramset_map
+		CREATE TABLE #paramset_map (
+			deleted_paramset_id INT NULL, 
+			paramset_hash VARCHAR(36) COLLATE DATABASE_DEFAULT NULL, 
+			inserted_paramset_id INT NULL
+
+		)
+
+		--store mapping information for filter detail column ids and data source column id for sql datasource
+		DROP TABLE IF EXISTS #sql_source_filter_detail_column_mapping
+		CREATE TABLE #sql_source_filter_detail_column_mapping (
+			paramset_hash VARCHAR(36),
+			column_id INT,
+			column_name VARCHAR(1000),
+			application_ui_filter_details_id INT NULL
+		)
+
+		IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='92E55378_CC05_49BD_BA8D_52BDDB82561A')
 		BEGIN
-			declare @report_id_to_delete int
-			select @report_id_to_delete = report_id from report where report_hash = '92E55378_CC05_49BD_BA8D_52BDDB82561A'
+			DECLARE @report_id_to_delete INT
+			SELECT @report_id_to_delete = report_id FROM report WHERE report_hash = '92E55378_CC05_49BD_BA8D_52BDDB82561A'
 
-			EXEC spa_rfx_report 'd', @report_id=@report_id_to_delete, @retain_privilege=1, @process_id = NULL
+			INSERT INTO #paramset_map(deleted_paramset_id, paramset_hash)
+			SELECT rp.report_paramset_id, rp.paramset_hash
+			FROM report_paramset rp
+			INNER JOIN report_page pg ON pg.report_page_id = rp.page_id
+			WHERE pg.report_id = @report_id_to_delete
+
+			INSERT INTO #sql_source_filter_detail_column_mapping(paramset_hash, column_id, column_name, application_ui_filter_details_id)
+			SELECT DISTINCT rpm.paramset_hash, aufd.report_column_id, dsc.name, aufd.application_ui_filter_details_id
+			FROM application_ui_filter_details aufd
+			INNER JOIN application_ui_filter auf
+				ON auf.application_ui_filter_id = aufd.application_ui_filter_id
+			INNER JOIN report_paramset rpm
+				ON rpm.report_paramset_id = auf.report_id
+			INNER JOIN report_page pg ON pg.report_page_id = rpm.page_id
+			INNER JOIN data_source_column dsc
+				ON dsc.data_source_column_id = aufd.report_column_id
+			INNER JOIN data_source ds
+				ON ds.data_source_id = source_id
+			WHERE pg.report_id = @report_id_to_delete
+				AND ds.type_id = 2
+
+			EXEC spa_rfx_report @flag='d', @report_id=@report_id_to_delete, @retain_privilege=1, @process_id=NULL
+
+		
 		END
+		--RETAIN APPLICATION FILTER DETAILS END (PART1)
+		
 
-		IF @report_id_dest IS NULL
-		BEGIN
-			INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
-			SELECT TOP 1 'EOD - Run MTM Simulation' [name], 'farrms_admin' [owner], 1 is_system, 0 is_excel, 0 is_mobile, '92E55378_CC05_49BD_BA8D_52BDDB82561A' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
-			FROM sys.objects o
-			LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
-			SET @report_id_dest = SCOPE_IDENTITY()
-		END
+		declare @report_copy_name varchar(200)
+		
+		set @report_copy_name = isnull(@report_copy_name, 'Copy of ' + 'EOD - Run MTM Simulation')
+		
 
+		INSERT INTO report ([name], [owner], is_system, is_excel, is_mobile, report_hash, [description], category_id)
+		SELECT TOP 1 'EOD - Run MTM Simulation' [name], 'dev_admin' [owner], 1 is_system, 0 is_excel, 0 is_mobile, '92E55378_CC05_49BD_BA8D_52BDDB82561A' report_hash, '' [description], CAST(sdv_cat.value_id AS VARCHAR(10)) category_id
+		FROM sys.objects o
+		LEFT JOIN static_data_value sdv_cat ON sdv_cat.code = 'Processes' AND sdv_cat.type_id = 10008 
+		SET @report_id_dest = SCOPE_IDENTITY()
+		
 		
 BEGIN TRY
 		BEGIN TRAN
 	
+
+	declare @new_ds_alias varchar(10) = 'rms1'
+	/** IF DATA SOURCE ALIAS ALREADY EXISTS ON DESTINATION, RAISE ERROR **/
+	if exists(select top 1 1 from data_source where alias = 'rms1' and name <> 'Run MTM Simulation')
+	begin
+		select top 1 @new_ds_alias = 'rms1' + cast(s.n as varchar(5))
+		from seq s
+		left join data_source ds on ds.alias = 'rms1' + cast(s.n as varchar(5))
+		where ds.data_source_id is null
+			and s.n < 10
+
+		--RAISERROR ('Datasource alias already exists on system.', 16, 1);
+	end
 
 	DECLARE @report_id_data_source_dest INT 
 	
@@ -40,13 +94,15 @@ BEGIN TRY
 	           FROM data_source 
 	           WHERE [name] = 'Run MTM Simulation'
 				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	AND NOT EXISTS (SELECT 1 FROM map_function_category WHERE [function_name] = 'Run MTM Simulation' AND '106500' = '106501') 
 	BEGIN
-		INSERT INTO data_source([type_id], [name], [alias], [description], [tsql], report_id)
-		SELECT TOP 1 2 AS [type_id], 'Run MTM Simulation' AS [name], 'rms1' AS ALIAS, NULL AS [description],null AS [tsql], @report_id_data_source_dest AS report_id
+		INSERT INTO data_source([type_id], [name], [alias], [description], [tsql], report_id, system_defined,category)
+		SELECT TOP 1 2 AS [type_id], 'Run MTM Simulation' AS [name], @new_ds_alias AS ALIAS, NULL AS [description],null AS [tsql], @report_id_data_source_dest AS report_id,NULL AS [system_defined]
+			,'106500' AS [category]
 	END
 
 	UPDATE data_source
-	SET alias = 'rms1', description = NULL
+	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'',
 		@_tenor_from VARCHAR(100) = ''@tenor_from'',
 		@_tenor_to VARCHAR(100) = ''@tenor_to'',
@@ -111,7 +167,9 @@ SELECT
 --[__batch_report__] 
 FROM #tmp_result
 WHERE 1=1
-', report_id = @report_id_data_source_dest 
+', report_id = @report_id_data_source_dest,
+	system_defined = NULL
+	,category = '106500' 
 	WHERE [name] = 'Run MTM Simulation'
 		AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1)
 		
@@ -689,37 +747,22 @@ COMMIT TRAN
 		DROP TABLE #data_source_column	
 	
 
-		IF NOT EXISTS(SELECT 1 FROM report_dataset rd WHERE rd.report_id = @report_id_dest AND rd.[alias] =  'rms1')
-		BEGIN
-			INSERT INTO report_dataset (source_id, report_id, [alias], root_dataset_id, is_free_from, relationship_sql)
-			SELECT TOP 1 ds.data_source_id AS source_id, @report_id_dest AS report_id, 'rms1' [alias], rd_root.report_dataset_id AS root_dataset_id,0 AS is_free_from, 'NULL' AS relationship_sql
-			FROM sys.objects o
-			INNER JOIN data_source ds ON ds.[name] = 'Run MTM Simulation'
-				AND ISNULL(ds.report_id, @report_id_dest) = @report_id_dest
-			LEFT JOIN report_dataset rd_root ON rd_root.[alias] = NULL
-				AND rd_root.report_id = @report_id_dest
-		END			
+		INSERT INTO report_dataset (source_id, report_id, [alias], root_dataset_id, is_free_from, relationship_sql)
+		SELECT TOP 1 ds.data_source_id AS source_id, @report_id_dest AS report_id, 'rms1' [alias], rd_root.report_dataset_id AS root_dataset_id,0 AS is_free_from, 'NULL' AS relationship_sql
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Run MTM Simulation'
+			AND ISNULL(ds.report_id, @report_id_dest) = @report_id_dest
+		LEFT JOIN report_dataset rd_root ON rd_root.[alias] = NULL
+			AND rd_root.report_id = @report_id_dest		
 		
 
-	IF NOT EXISTS(SELECT 1 FROM report_page rp 
-	              WHERE rp.report_id = CASE WHEN 'e ' = 'p' 
-											Then 103441 
-											ELSE @report_id_dest 
-						               END 
-					AND rp.name =  'EOD - Run MTM Simulation'  
-	)
-	BEGIN
-		INSERT INTO report_page(report_id, [name], report_hash, width, height)
-		SELECT CASE WHEN 'e ' = 'p' 
-					Then 103441 
-					ELSE @report_id_dest 
-		       END  AS report_id, 'EOD - Run MTM Simulation' [name], '92E55378_CC05_49BD_BA8D_52BDDB82561A' report_hash, 11.5 width,5.5 height
-	END 
+	INSERT INTO report_page(report_id, [name], report_hash, width, height)
+	SELECT @report_id_dest AS report_id, 'EOD - Run MTM Simulation' [name], '92E55378_CC05_49BD_BA8D_52BDDB82561A' report_hash, 11.5 width,5.5 height
 	
 
-		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file)
+		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
 		SELECT TOP 1 rpage.report_page_id, 'EOD - Run MTM Simulation', '820F9FE4_E20C_4691_AC58_5E7F1E452110', 2,'','','.csv',',', 
-		-100001,'y','n'	
+		-100001,'y','n',NULL	
 		FROM sys.objects o
 		INNER JOIN report_page rpage 
 			on rpage.[name] = 'EOD - Run MTM Simulation'
@@ -740,10 +783,7 @@ COMMIT TRAN
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Run MTM Simulation'
 		INNER JOIN report_dataset rd 
-			ON rd.report_id = CASE WHEN 'e ' = 'p' 
-									Then 103441 
-									ELSE @report_id_dest 
-			                  END
+			ON rd.report_id = @report_id_dest
 			AND rd.[alias] = 'rms1'
 	
 
@@ -801,6 +841,62 @@ COMMIT TRAN
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id
 			AND dsc.[name] = 'process_id'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '1' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'EOD - Run MTM Simulation'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'EOD - Run MTM Simulation'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'EOD - Run MTM Simulation'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'rms1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'rms1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Run MTM Simulation' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'tenor_from'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '24' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 6 AS param_order, 0 AS param_depth, NULL AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'EOD - Run MTM Simulation'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'EOD - Run MTM Simulation'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'EOD - Run MTM Simulation'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'rms1'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'rms1'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Run MTM Simulation' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'tenor_to'	
 	
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
@@ -915,62 +1011,6 @@ COMMIT TRAN
 			AND dsc.[name] = 'sub_id'	
 	
 
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '1' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Run MTM Simulation'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Run MTM Simulation'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run MTM Simulation'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'rms1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'rms1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Run MTM Simulation' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'tenor_from'	
-	
-
-		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
-					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '24' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 6 AS param_order, 0 AS param_depth, NULL AS label
-		FROM sys.objects o
-		INNER JOIN report_paramset rp 
-			ON rp.[name] = 'EOD - Run MTM Simulation'
-		INNER JOIN report_page rpage 
-			ON rpage.report_page_id = rp.page_id
-			AND rpage.[name] = 'EOD - Run MTM Simulation'
-		INNER JOIN report r ON r.report_id = rpage.report_id
-			AND r.[name] = 'EOD - Run MTM Simulation'
-		INNER JOIN report_dataset rd_root 
-			ON rd_root.report_id = @report_id_dest 
-			AND rd_root.[alias] = 'rms1'
-		INNER JOIN report_dataset_paramset rdp 
-			ON rdp.paramset_id = rp.report_paramset_id
-			AND rdp.root_dataset_id = rd_root.report_dataset_id
-		INNER JOIN report_dataset rd 
-			ON rd.report_id = r.report_id
-			AND rd.[alias] = 'rms1'
-		INNER JOIN data_source ds 
-			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
-			AND ds.[name] = 'Run MTM Simulation' 
-		INNER JOIN data_source_column dsc 
-			ON dsc.source_id = ds.data_source_id
-			AND dsc.[name] = 'tenor_to'	
-	
-
 		INSERT INTO report_page_tablix(page_id,root_dataset_id, [name], width, height, [top], [left], group_mode, border_style, page_break, type_id, cross_summary, no_header, export_table_name, is_global)
 		SELECT TOP 1 rpage.report_page_id AS page_id, rd.report_dataset_id AS root_dataset_id, 'EOD _ Run MTM Simulation_tablix' [name], '4' width, '2.6666666666666665' height, '0' [top], '0' [left],2 AS group_mode,1 AS border_style,0 AS page_break,1 AS type_id,1 AS cross_summary,2 AS no_header,'' export_table_name, 0 AS is_global
 		FROM sys.objects o
@@ -995,7 +1035,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Run MTM Simulation_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Run MTM Simulation'
+			AND rpage.[name] = 'EOD - Run MTM Simulation'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Run MTM Simulation'
@@ -1017,7 +1057,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Run MTM Simulation_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Run MTM Simulation'
+			AND rpage.[name] = 'EOD - Run MTM Simulation'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Run MTM Simulation'
@@ -1039,7 +1079,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Run MTM Simulation_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Run MTM Simulation'
+			AND rpage.[name] = 'EOD - Run MTM Simulation'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Run MTM Simulation'
@@ -1061,7 +1101,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Run MTM Simulation_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Run MTM Simulation'
+			AND rpage.[name] = 'EOD - Run MTM Simulation'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Run MTM Simulation'
@@ -1083,7 +1123,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Run MTM Simulation_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Run MTM Simulation'
+			AND rpage.[name] = 'EOD - Run MTM Simulation'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Run MTM Simulation'
@@ -1105,7 +1145,7 @@ COMMIT TRAN
 			ON rpt.[name] = 'EOD _ Run MTM Simulation_tablix'
 		INNER JOIN report_page rpage 
 			ON rpage.report_page_id = rpt.page_id 
-			AND rpage.[name] ='EOD - Run MTM Simulation'
+			AND rpage.[name] = 'EOD - Run MTM Simulation'
 		INNER JOIN report r 
 			ON r.report_id = rpage.report_id
 			AND r.[name] = 'EOD - Run MTM Simulation'
@@ -1283,6 +1323,91 @@ COMMIT TRAN
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Status' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
+
+		--RETAIN APPLICATION FILTER DETAILS START (PART2)
+		UPDATE pm
+		SET inserted_paramset_id = rp.report_paramset_id
+		FROM #paramset_map pm
+		INNER JOIN report_paramset rp
+			ON rp.paramset_hash = pm.paramset_hash
+		
+		UPDATE f set f.report_id = pm.inserted_paramset_id
+		FROM application_ui_filter f
+		INNER JOIN #paramset_map pm 
+			ON pm.deleted_paramset_id = ISNULL(f.report_id, -1)
+		WHERE f.application_function_id IS NULL
+	
+		--delete filter details only for view datasource columns
+		DELETE fd
+		FROM application_ui_filter_details fd
+		INNER JOIN application_ui_filter f 
+			ON f.application_ui_filter_id = fd.application_ui_filter_id
+		INNER JOIN #paramset_map pm 
+			ON pm.inserted_paramset_id = ISNULL(f.report_id, -1)
+		LEFT JOIN #sql_source_filter_detail_column_mapping map
+			ON map.column_id = ABS(fd.report_column_id)
+		WHERE ABS(fd.report_column_id) NOT IN (
+			SELECT DISTINCT rp.column_id
+			FROM report_param rp
+			INNER JOIN report_dataset_paramset rdp 
+				ON rdp.report_dataset_paramset_id = rp.dataset_paramset_id
+			INNER JOIN report_paramset rpm 
+				ON rpm.report_paramset_id = rdp.paramset_id
+			WHERE rpm.report_paramset_id = f.report_id
+		)
+		AND map.column_id IS NULL
+
+		
+		--store data to update and delete application filter details row for sql datasource only
+		DROP TABLE IF EXISTS #filter_details_to_update_sql_datasource
+
+		SELECT fd.application_ui_filter_details_id, fd.report_column_id, dsc.data_source_column_id, fd.field_value
+		INTO #filter_details_to_update_sql_datasource
+		FROM application_ui_filter_details fd
+		INNER JOIN application_ui_filter f 
+			ON f.application_ui_filter_id = fd.application_ui_filter_id
+		INNER JOIN report_paramset rp 
+			ON rp.report_paramset_id = f.report_id
+		INNER JOIN #sql_source_filter_detail_column_mapping map 
+			ON map.paramset_hash = rp.paramset_hash
+			AND map.column_id = ABS(fd.report_column_id) --used ABS for browser columns label row.
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+		INNER JOIN report_param rpr
+			ON rpr.dataset_paramset_id = rdp.report_dataset_paramset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_dataset_id = rdp.root_dataset_id
+		INNER JOIN data_source ds 
+			ON ds.data_source_id = rd.source_id
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+		WHERE dsc.name = map.column_name
+			AND rpr.column_id = dsc.data_source_column_id
+
+		DROP TABLE IF EXISTS #filter_details_to_delete_sql_datasource
+
+		SELECT fdmap.application_ui_filter_details_id
+		INTO #filter_details_to_delete_sql_datasource
+		FROM #sql_source_filter_detail_column_mapping fdmap
+		EXCEPT
+		SELECT fdup.application_ui_filter_details_id
+		FROM #filter_details_to_update_sql_datasource fdup
+		
+		--update filters for sql datasource columns
+		UPDATE fd
+			SET fd.report_column_id = IIF(fd.report_column_id < 0, -1, 1) * fdup.data_source_column_id		
+		FROM application_ui_filter_details fd
+		INNER JOIN #filter_details_to_update_sql_datasource fdup
+			ON fdup.application_ui_filter_details_id = fd.application_ui_filter_details_id
+
+		--delete unmatched columns from filter detail for sql data source
+		DELETE fd
+		FROM application_ui_filter_details fd
+		INNER JOIN #filter_details_to_delete_sql_datasource fddel
+			ON fddel.application_ui_filter_details_id = fd.application_ui_filter_details_id
+
+		--RETAIN APPLICATION FILTER DETAILS END (PART2)
+	
 COMMIT 
 
 END TRY
@@ -1290,14 +1415,6 @@ BEGIN CATCH
 	IF @@TRANCOUNT > 0
 		ROLLBACK TRAN;
 		
-	--EXEC spa_print 'Error (' + CAST(ERROR_NUMBER() AS VARCHAR(10)) + ') at Line#' + CAST(ERROR_LINE() AS VARCHAR(10)) + ':' + ERROR_MESSAGE() + ''
+	DECLARE @error_message VARCHAR(MAX) = ERROR_MESSAGE()
+	RAISERROR(@error_message,16,1)
 END CATCH
-	
-		IF OBJECT_ID(N'tempdb..#pages_dest', 'U') IS NOT NULL DROP TABLE #pages_dest
-		
-		IF OBJECT_ID(N'tempdb..#paramset_dest', 'U') IS NOT NULL DROP TABLE #paramset_dest
-		
-		IF OBJECT_ID(N'tempdb..#del_report_page', 'U') IS NOT NULL DROP TABLE #del_report_page	
-		
-		IF OBJECT_ID(N'tempdb..#del_report_paramset', 'U') IS NOT NULL DROP TABLE #del_report_paramset	
-	
