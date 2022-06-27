@@ -326,6 +326,17 @@ BEGIN
 		
 	EXEC(@sql)
 
+	IF @flag ='l' AND NULLIF(@minor_location,'') IS NULL 
+	BEGIN 
+	SET @minor_location= STUFF( 
+	                          (
+	             SELECT DISTINCT ',' + CAST(sml.source_minor_location_id AS VARCHAR)
+	            FROM source_minor_location sml
+	            INNER JOIN dbo.SplitCommaSeperatedValues(@major_location) scsv 
+				ON scsv.item = sml.source_major_location_ID
+	            FOR XML PATH('')),1,1,'')
+	END
+
 	IF @flag = 'c' OR @call_from = 'single_match'
 	BEGIN
 		SET @minor_location = LTRIM(RTRIM(ISNULL(@from_location, '-1') + ISNULL(',' + @to_location, '')))
