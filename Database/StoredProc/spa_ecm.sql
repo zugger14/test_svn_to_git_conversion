@@ -1480,11 +1480,13 @@ BEGIN
 										  OR CHARINDEX('ACK-CNF_',dir_file) > 0 
 										  OR CHARINDEX('ACK-BCN_',dir_file) > 0
 										  OR CHARINDEX('ACK-remit_',dir_file) > 0
+										  OR CHARINDEX('ACK-eRR_', dir_file) > 0
 									)
 							FOR XML PATH('')), 1, 1, '')
 	--SELECT @download_files
 	IF @download_files IS NOT NULL
 	BEGIN
+		DECLARE @dir_file_striped NVARCHAR(1000)
 		EXEC spa_download_file_from_ftp_using_clr @file_transfer_endpoint_id, @remote_location, @download_files, @server_location, '.xml', @output_result OUTPUT
 
 		IF OBJECT_ID('tempdb..#temp_ack_xml_data') IS NOT NULL
@@ -1507,7 +1509,8 @@ BEGIN
 		OPEN db_cursor   
 		FETCH NEXT FROM db_cursor INTO @dir_file
 		WHILE @@FETCH_STATUS = 0   
-		BEGIN   
+		BEGIN  
+			SELECT @dir_file_striped = IIF(CHARINDEX('error',@dir_file) > 0,LEFT(REPLACE(REPLACE(@dir_file,'ACK-',''),'.xml',''), CHARINDEX('error', REPLACE(REPLACE(@dir_file,'ACK-',''),'.xml','')) - 1),REPLACE(REPLACE(@dir_file,'ACK-',''),'.xml',''))
 			SELECT @xml_file_content = dbo.FNAReadFileContents(@server_location + '\' + @dir_file)
 			IF @xml_file_content IS NOT NULL
 			BEGIN
@@ -1519,16 +1522,16 @@ BEGIN
 					  ,x.xml_col.value('(Results/Code)[1]','VARCHAR(1000)') as [code]
 					  ,x.xml_col.value('(Results/Description)[1]','VARCHAR(2000)') as [description]
 					  ,x.xml_col.value('(OverallResultCode)[1]','VARCHAR(100)') as [overall_result_code]
-					  , IIF(CHARINDEX('error',@dir_file) > 0,LEFT(REPLACE(REPLACE(@dir_file,'ACK-',''),'.xml',''), CHARINDEX('error', REPLACE(REPLACE(@dir_file,'ACK-',''),'.xml','')) - 1),REPLACE(REPLACE(@dir_file,'ACK-',''),'.xml',''))
+					  , @dir_file_striped
 				FROM ( SELECT  CAST(@xml_file_content AS XML) RawXml) b
 				CROSS APPLY b.RawXml.nodes('/XpAcknowledgment') x(xml_col)
 
-				IF EXISTS(SELECT 1 FROM #temp_ack_xml_data WHERE overall_result_code IN ('Success') AND download_file_name = @dir_file)
+				IF EXISTS(SELECT 1 FROM #temp_ack_xml_data WHERE overall_result_code IN ('Success') AND download_file_name = @dir_file_striped)
 				BEGIN
 					SELECT @success_files += IIF(NULLIF(@success_files,'') IS NULL, @dir_file, ',' + @dir_file)
 		
 				END
-				ELSE IF EXISTS(SELECT 1 FROM #temp_ack_xml_data WHERE overall_result_code IN ('Error') AND download_file_name = @dir_file)
+				ELSE IF EXISTS(SELECT 1 FROM #temp_ack_xml_data WHERE overall_result_code IN ('Error') AND download_file_name = @dir_file_striped)
 				BEGIN
 					SELECT @error_files += IIF(NULLIF(@error_files,'') IS NULL, @dir_file, ',' + @dir_file)
 				END
@@ -1560,8 +1563,7 @@ BEGIN
 			  , [description]
 			  , overall_result_code
 		FROM #temp_ack_xml_data
-		WHERE (CHARINDEX('BFI_',download_file_name) > 0 OR CHARINDEX('CNF_',download_file_name) > 0)
-
+		WHERE (CHARINDEX('BFI_',download_file_name) > 0 OR CHARINDEX('CNF_',download_file_name) > 0) OR CHARINDEX('eRR_',download_file_name) > 0
 
 		INSERT INTO source_remit_audit(message_id,message_received_timestamp,uti_id, processed_timestamp, error_code, error_description, [status], [type], [source_file_name])
 		SELECT message_id,  GETDATE(), reference_id, remote_reception_time, [code], [description], overall_result_code
@@ -1576,7 +1578,7 @@ BEGIN
 
 		SELECT @process_id = dbo.FNAGETNEWID()
 		SELECT @user_name  = dbo.FNAdbuser()
-		SELECT @file_name = 'ECM_Remit_ACK_Feedback_' + CONVERT(VARCHAR(30), GETDATE(),112) + REPLACE(CONVERT(VARCHAR(30), GETDATE(),108),':','') + '.csv'
+		SELECT @file_name = 'ECM_Remit_EMIR_ACK_Feedback_' + CONVERT(VARCHAR(30), GETDATE(),112) + REPLACE(CONVERT(VARCHAR(30), GETDATE(),108),':','') + '.csv'
 
 		SELECT @process_table = dbo.FNAProcessTableName('ecm_remit_ack_feedback_', dbo.FNADBUser(), @process_id) 
 		SELECT @server_location = document_path
@@ -1592,7 +1594,7 @@ BEGIN
 		BEGIN
 			EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@output_result OUTPUT
 			INSERT INTO source_system_data_import_status (process_id, code, module, source, type, description)
-			SELECT @process_id, temp.overall_result_code, 'ECM Remit ACK Feedback', 'ECM Remit ACK Feedback', 'Error', temp.description
+			SELECT @process_id, temp.overall_result_code, 'ECM Remit EMIR ACK Feedback', 'ECM Remit EMIR ACK Feedback', 'Error', temp.description
 			FROM #temp_ack_xml_data temp
 			WHERE temp.overall_result_code = 'Error'
 			SELECT @url = '../../adiha.php.scripts/dev/spa_html.php?__user_name__=' + @user_name + '&spa=exec spa_get_import_process_status ''' + @process_id + ''','''+@user_name+''''
@@ -1606,7 +1608,7 @@ BEGIN
 		END
 
 		INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type)
-		SELECT DISTINCT au.user_login_id, 'ECM Remit ACK Feedback' , ISNULL(@desc_success, 'Description is null'), NULL, NULL, 's',NULL, NULL,@process_id,NULL
+		SELECT DISTINCT au.user_login_id, 'ECM Remit EMIR ACK Feedback' , ISNULL(@desc_success, 'Description is null'), NULL, NULL, 's',NULL, NULL,@process_id,NULL
 		FROM dbo.application_role_user aru
 		INNER JOIN dbo.application_security_role asr ON aru.role_id = asr.role_id 
 		INNER JOIN dbo.application_users au ON aru.user_login_id = au.user_login_id
@@ -1623,10 +1625,10 @@ BEGIN
 				active_flag,
 				attachment_file_name
 			)		
-		SELECT DB_NAME() + ': ECM Remit ACK Feedback',
+		SELECT DB_NAME() + ': ECM Remit EMIR ACK Feedback',
 			'Dear <b>' + MAX(au.user_l_name) + '</b><br><br>
 
-			 ECM Remit ACK Feedback has been captured. Please check the Summary Report attached in email.',
+			 ECM Remit EMIR ACK Feedback has been captured. Please check the Summary Report attached in email.',
 			'noreply@pioneersolutionsglobal.com',
 			au.user_emal_add,
 			'n',
