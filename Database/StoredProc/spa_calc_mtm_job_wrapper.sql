@@ -15,6 +15,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 
+
  /**
 	Simulate calculation of Marked to Market and settlement of deals in portfolio.
 
@@ -197,6 +198,10 @@ DROP TABLE #bok
 
 DECLARE @default_time_zone INT, @dst_group_value_id INT
 SELECT @default_time_zone = var_value FROM dbo.adiha_default_codes_values (nolock) WHERE instance_no = 1 AND default_code_id = 36 AND seq_no = 1
+
+--Message handling part, while executing from EOD
+DECLARE @simulation_EOD VARCHAR(20)
+SET @simulation_EOD = dbo.FNAProcessTableName('mtm_simulation_EOD', dbo.FNADBUser(), @process_id)
 
 SELECT @dst_group_value_id = tz.dst_group_value_id FROM dbo.adiha_default_codes_values (nolock) adcv INNER JOIN time_zones tz
 		ON tz.TIMEZONE_ID = adcv.var_value WHERE instance_no = 1 AND default_code_id = 36 AND seq_no = 1
@@ -1532,6 +1537,7 @@ BEGIN
 
 	SET @url_desc = '<a href="../../dev/spa_html.php?spa=spa_fas_eff_ass_test_run_log '''+@process_id+'''">Click here...</a>'
 
+	IF OBJECT_ID(@simulation_EOD) IS NULL
 	SELECT 'Error' ErrorCode, 'Calculate MTM' MODULE, 
 			'spa_calc_mtm_job_wrapper' Area, 'DB Error' Status, 'MTM Simulation Calculation process is completed with error. ' MESSAGE, '' Recommendation
 END
@@ -1542,6 +1548,7 @@ BEGIN
 	
 	SET @desc = 'MTM Simulation Calculation process is completed for ' + dbo.FNAUserDateFormat(@as_of_date, @user_id) + CASE WHEN @is_warning = 'y' THEN ' with warning(s)' ELSE '' END + '.'	
 
+	IF OBJECT_ID(@simulation_EOD) IS NULL
 	EXEC spa_ErrorHandler 0, 'Calculate MTM', 	'spa_calc_mtm_job_wrapper', 'Success', @desc, ''
 
 	IF @is_warning = 'y'
@@ -1562,3 +1569,5 @@ EXEC  spa_message_board
 		'MTM Simulation Calculation',
 		NULL,
 		@process_id
+
+
