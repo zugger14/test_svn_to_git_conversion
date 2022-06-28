@@ -61,6 +61,10 @@ IF @user_id IS NULL
 
 SET @curve_info = dbo.FNAProcessTableName('Curve_Info', @user_id, @process_id)
 
+--Message handling part, while executing from EOD
+DECLARE @simulation_EOD VARCHAR(20)
+SET @simulation_EOD = dbo.FNAProcessTableName('simulation_EOD', dbo.FNADBUser(), @process_id)
+
 IF OBJECT_ID('tempdb..#tmp_final_value') IS NOT NULL
 	DROP TABLE #tmp_final_value
 IF OBJECT_ID('tempdb..#tmp_rnd_value') IS NOT NULL
@@ -361,6 +365,8 @@ BEGIN
 	SELECT @desc = '<a target="_blank" href="' + @url + '">' + @desc + '.</a>'
 
 	SET @url_desc = '<a href="../../dev/spa_html.php?spa=spa_fas_eff_ass_test_run_log '''+@process_id+'''">Click here...</a>'
+
+	IF OBJECT_ID(@simulation_EOD) IS NULL
 	SELECT 'Error' ErrorCode, 'Cholesky Decomposition' MODULE, 
 			'spa_calc_matrix_multiplication' Area, 'DB Error' Status, 'Matrix Multiplication process is completed with error, Please view this report. ' + @url_desc MESSAGE, '' Recommendation
 END
@@ -370,6 +376,7 @@ BEGIN
 		''Matrix Multiplication'''
 	
 	--SELECT @desc = '<a target="_blank" href="' + @url + '">' + @desc + '.</a>'
+	IF OBJECT_ID(@simulation_EOD) IS NULL
 	EXEC spa_ErrorHandler 0, 'Matrix Multiplication Process', 	'Matrix Multiplication', 'Success', @desc, ''
 END
 

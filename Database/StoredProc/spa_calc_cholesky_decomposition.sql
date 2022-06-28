@@ -70,6 +70,10 @@ IF @user_id IS NULL
 
 SET @curve_info = dbo.FNAProcessTableName('Curve_Info', @user_id, @process_id)
 
+--Message handling part, while executing from EOD
+DECLARE @simulation_EOD VARCHAR(20)
+SET @simulation_EOD = dbo.FNAProcessTableName('simulation_EOD', dbo.FNADBUser(), @process_id)
+
 CREATE TABLE #tmp_risk_ids(risk_bucket_id INT, volatility_source INT)
 
 SET @sql = 'INSERT INTO #tmp_risk_ids
@@ -339,6 +343,8 @@ BEGIN
 	SELECT @desc = '<a target="_blank" href="' + @url + '">' + @desc + '.</a>'
 
 	SET @url_desc = '<a href="../../dev/spa_html.php?spa=spa_fas_eff_ass_test_run_log '''+@process_id+'''">Click here...</a>'
+
+	IF OBJECT_ID(@simulation_EOD) IS NULL
 	SELECT 'Error' ErrorCode, 'Cholesky Decomposition' MODULE, 
 			'spa_calc_cholesky_decomposition' Area, 'DB Error' Status, 'Cholesky Decomposition process is completed with error, Please view this report. ' + @url_desc MESSAGE, '' Recommendation
 END
@@ -348,6 +354,7 @@ BEGIN
 		''Cholesky Decomposition'''
 	
 	--SELECT @desc = '<a target="_blank" href="' + @url + '">' + @desc + '.</a>'
+	IF OBJECT_ID(@simulation_EOD) IS NULL
 	EXEC spa_ErrorHandler 0, 'Cholesky Decomposition Process', 	'Cholesky Decomposition', 'Success', @desc, ''
 END
 
