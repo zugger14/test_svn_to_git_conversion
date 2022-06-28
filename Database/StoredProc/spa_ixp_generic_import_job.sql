@@ -21681,7 +21681,7 @@ BEGIN
 				LEFT JOIN source_traders stt ON sdh.trader_id = stt.source_trader_id'
  	--PRINT(@sql)
  	EXEC(@sql)
- 	
+
 	--Added logic to update Prorated Volume for gas daily deals
 	DECLARE @sdh_ids NVARCHAR(MAX), @check_gas_daily BIT = 0
 
@@ -39639,6 +39639,7 @@ END
 IF @table_name = 'ixp_source_deal_template'
 BEGIN
 	EXEC spa_register_event 20601, 20515, @alert_process_table, 1, @process_id3
+	EXEC spa_register_event 20601, 20502, @alert_process_table, 1, @process_id3 --Added event to update 'Execution Timestamp'
 END
 
 IF EXISTS (SELECT 1 FROM module_events WHERE modules_id = 20634 AND event_id = 20515 AND is_active = 'y')
