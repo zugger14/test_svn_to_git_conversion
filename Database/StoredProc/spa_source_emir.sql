@@ -3897,13 +3897,14 @@ BEGIN
 				, CAST(document_id AS NVARCHAR(100)) DocumentID 	
 				, ISNULL(@document_usage, 'Test') DocumentUsage 
 				, se.counterparty_id SenderID 
-				, reporting_timestamp ReportingTimestamp
+				, REPLACE(reporting_timestamp, 'Z', '') ReportingTimestamp
 				, trade_id UTI
 				, counterparty_name CounterpartyID
-				, valuation_ts ValuationTimestamp
+				, CONVERT(VARCHAR(10), CONVERT(DATETIME, valuation_ts, 103), 126) + 'T00:00:00' ValuationTimestamp
 				, Format(contarct_mtm_value,'#.#######') MtMValue
 				, contarct_mtm_currency MtMCurrency
 				, valuation_type ValuationType
+				, se.counterparty_name OtherCounterpartyId
 			INTO #xml_data_m
 			FROM source_emir se
 			INNER JOIN source_deal_header sdh
@@ -3930,6 +3931,8 @@ BEGIN
 					<ReportingTimestamp>' + ReportingTimestamp + '</ReportingTimestamp>
 					<CounterpartyID>' + CounterpartyID + '</CounterpartyID>
 					<Valuation>
+						<OtherCounterpartyID>' + OtherCounterpartyId + '</OtherCounterpartyID>
+						<Level>T</Level>
 						<UTI>' + UTI + '</UTI>
 						<ValuationTimestamp>' + ValuationTimestamp + '</ValuationTimestamp>
 						<MtMValue>' + MtMValue + '</MtMValue>
