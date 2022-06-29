@@ -103,9 +103,7 @@ BEGIN TRY
 
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
-	, [tsql] = CAST('' AS VARCHAR(MAX)) + '
-
-DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'',
+	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'',
 
 		@_tenor_from VARCHAR(500) = ''@tenor_from'',
 
@@ -121,6 +119,8 @@ DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'',
 
 		@_sql VARCHAR(MAX) = NULL,
 
+		@_no_of_simulation VARCHAR(50) = NULL,
+
 		@_simulation_EOD VARCHAR(200) = NULL
 
 		
@@ -131,7 +131,13 @@ IF ''@process_id'' <> ''NULL''
 
  ELSE    
 
-    SET @_process_id = dbo.FNAGetNewID()   		
+    SET @_process_id = dbo.FNAGetNewID()
+
+	
+
+IF ''@no_of_simulation'' <> ''NULL''
+
+    SET @_no_of_simulation = ''@no_of_simulation''
 
 
 
@@ -143,17 +149,9 @@ IF ''@process_id'' <> ''NULL''
 
 --SET @_tenor_to = ''24''
 
-
-
 -- Process table to handle messaging / error messages within nested spas. Errors were triggered without a process table, caused by rollbacks in transaction.
 
 SET @_simulation_EOD = dbo.FNAProcessTableName(''simulation_EOD'', dbo.FNADBUser(), @_process_id)
-
-
-
-
-
-
 
 SET @_term_start = CONVERT(VARCHAR(10), [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH,CAST(@_tenor_from AS INT), @_as_of_date), ''f''), 120)
 
@@ -185,13 +183,11 @@ CREATE TABLE #tmp_result (
 
 EXEC (''SELECT * INTO '' + @_simulation_EOD + '' FROM #tmp_result'')
 
-
-
 	BEGIN TRY
 
 			SET @_sql = ''EXEC spa_monte_carlo_simulation'''''' + @_as_of_date + '''''', '''''' 
 
-					+ @_term_start + '''''', '''''' + @_term_end + '''''', 3000, NULL, '''''' + @_curve_id + '''''', NULL, ''''y'''',''''y'''',NULL,NULL, '''''' + @_process_id + ''''''''
+					+ @_term_start + '''''', '''''' + @_term_end + '''''','' + @_no_of_simulation + '', NULL, '''''' + @_curve_id + '''''', NULL, ''''y'''',''''y'''',NULL,NULL, '''''' + @_process_id + ''''''''
 
 		
 
@@ -228,8 +224,6 @@ EXEC (''SELECT * INTO '' + @_simulation_EOD + '' FROM #tmp_result'')
 				WHERE process_id = @_process_id 
 
 					AND sims_status = ''R''	
-
-
 
 			
 
@@ -281,8 +275,6 @@ EXEC (''SELECT * INTO '' + @_simulation_EOD + '' FROM #tmp_result'')
 
 		END CATCH
 
-
-
 SELECT  
 
     @_as_of_date as_of_date,
@@ -307,7 +299,9 @@ SELECT
 
 	[Message] [Message],
 
-	[Recommendation] [Recommendation]
+	[Recommendation] [Recommendation],
+	
+	@_no_of_simulation no_of_simulation
 
 --[__batch_report__] 
 
@@ -731,6 +725,40 @@ FROM #tmp_result', report_id = @report_id_data_source_dest,
 	
 	
 
+	IF EXISTS (SELECT 1 
+	           FROM data_source_column dsc 
+	           INNER JOIN data_source ds on ds.data_source_id = dsc.source_id 
+	           WHERE ds.[name] = 'Run Monte Carlo Simulation'
+	            AND dsc.name =  'no_of_simulation'
+				AND ISNULL(report_id, -1) =  ISNULL(@report_id_data_source_dest, -1))
+	BEGIN
+		UPDATE dsc  
+		SET alias = 'No Of Simulation'
+			   , reqd_param = NULL, widget_id = 1, datatype_id = 5, param_data_source = NULL, param_default_value = NULL, append_filter = NULL, tooltip = NULL, column_template = 0, key_column = 0, required_filter = 0
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		FROM data_source_column dsc
+		INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
+		WHERE ds.[name] = 'Run Monte Carlo Simulation'
+			AND dsc.name =  'no_of_simulation'
+			AND ISNULL(report_id, -1) = ISNULL(@report_id_data_source_dest, -1)
+	END	
+	ELSE
+	BEGIN
+		INSERT INTO data_source_column(source_id, [name], ALIAS, reqd_param, widget_id
+		, datatype_id, param_data_source, param_default_value, append_filter, tooltip, column_template, key_column, required_filter)
+		OUTPUT INSERTED.data_source_column_id INTO #data_source_column(column_id)
+		SELECT TOP 1 ds.data_source_id AS source_id, 'no_of_simulation' AS [name], 'No Of Simulation' AS ALIAS, NULL AS reqd_param, 1 AS widget_id, 5 AS datatype_id, NULL AS param_data_source, NULL AS param_default_value, NULL AS append_filter, NULL  AS tooltip,0 AS column_template, 0 AS key_column, 0 AS required_filter				
+		FROM sys.objects o
+		INNER JOIN data_source ds ON ds.[name] = 'Run Monte Carlo Simulation'
+			AND ISNULL(ds.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		LEFT JOIN report r ON r.report_id = ds.report_id
+			AND ds.[type_id] = 2
+			AND ISNULL(r.report_id , -1) = ISNULL(@report_id_data_source_dest, -1)
+		WHERE ds.type_id = (CASE WHEN r.report_id IS NULL THEN ds.type_id ELSE 2 END)
+	END 
+	
+	
+
 	DELETE dsc
 	FROM data_source_column dsc 
 	INNER JOIN data_source ds ON ds.data_source_id = dsc.source_id 
@@ -797,7 +825,7 @@ COMMIT TRAN
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'EOD - Run Monte Carlo Simulation'
@@ -825,7 +853,7 @@ COMMIT TRAN
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '' AS initial_value, '' AS initial_value2, 1 AS optional, 0 AS hidden,1 AS logical_operator, 5 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'EOD - Run Monte Carlo Simulation'
@@ -853,7 +881,7 @@ COMMIT TRAN
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '1' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '1' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'EOD - Run Monte Carlo Simulation'
@@ -881,7 +909,7 @@ COMMIT TRAN
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '24' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 3 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '24' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 4 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'EOD - Run Monte Carlo Simulation'
@@ -909,7 +937,35 @@ COMMIT TRAN
 
 		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
 					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
-		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 0 AS param_order, 0 AS param_depth, NULL AS label
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 1 AS operator, '1000' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,1 AS logical_operator, 2 AS param_order, 0 AS param_depth, 'No of simulation' AS label
+		FROM sys.objects o
+		INNER JOIN report_paramset rp 
+			ON rp.[name] = 'EOD - Run Monte Carlo Simulation'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rp.page_id
+			AND rpage.[name] = 'EOD - Run Monte Carlo Simulation'
+		INNER JOIN report r ON r.report_id = rpage.report_id
+			AND r.[name] = 'EOD - Run Monte Carlo Simulation'
+		INNER JOIN report_dataset rd_root 
+			ON rd_root.report_id = @report_id_dest 
+			AND rd_root.[alias] = 'rmcs'
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+			AND rdp.root_dataset_id = rd_root.report_dataset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id
+			AND rd.[alias] = 'rmcs'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	
+			AND ds.[name] = 'Run Monte Carlo Simulation' 
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+			AND dsc.[name] = 'no_of_simulation'	
+	
+
+		INSERT INTO report_param(dataset_paramset_id, dataset_id, column_id, operator,
+					initial_value, initial_value2, optional, hidden, logical_operator, param_order, param_depth, label)
+		SELECT TOP 1 rdp.report_dataset_paramset_id AS dataset_paramset_id, rd.report_dataset_id AS dataset_id , dsc.data_source_column_id AS column_id, 9 AS operator, '' AS initial_value, '' AS initial_value2, 0 AS optional, 0 AS hidden,0 AS logical_operator, 1 AS param_order, 0 AS param_depth, NULL AS label
 		FROM sys.objects o
 		INNER JOIN report_paramset rp 
 			ON rp.[name] = 'EOD - Run Monte Carlo Simulation'
