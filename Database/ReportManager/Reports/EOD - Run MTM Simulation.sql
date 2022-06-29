@@ -104,80 +104,156 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'',
+
 		@_tenor_from VARCHAR(100) = ''@tenor_from'',
+
 		@_tenor_to VARCHAR(100) = ''@tenor_to'',
+
                 @_term_start VARCHAR(10) = NULL,
+
 		@_term_end VARCHAR(10) = NULL, 
+
 		@_process_id VARCHAR(100) = ''@process_id'' ,
+
 		@_sub_id VARCHAR(MAX) = NULL,
+
 		@_stra_id VARCHAR(MAX) = NULL,
+
 		@_book_id VARCHAR(MAX) = NULL,
+
 		@_sub_book_id VARCHAR(MAX) = NULL,
-		@_simulation_EOD VARCHAR(MAX) = NULL
+
+		@_simulation_EOD VARCHAR(200) = NULL
+
 IF ''@process_id'' <> ''NULL''
+
     SET @_process_id = ''@process_id''
+
  ELSE    
+
     SET @_process_id = NULL 
+
  
+
  IF ''@sub_id'' <> ''NULL''
+
     SET @_sub_id = ''@sub_id''   
+
  
+
  IF ''@stra_id'' <> ''NULL''
+
     SET @_stra_id = ''@stra_id''   
+
  IF ''@book_id'' <> ''NULL''
+
     SET @_book_id = ''@book_id''   
+
  IF ''@sub_book_id'' <> ''NULL''
+
     SET @_sub_book_id = ''@sub_book_id''
 
+
+
 -- Process table to handle messaging / error messages within nested spas. Errors were triggered without a process table, caused by rollbacks in transaction.
+
 SET @_simulation_EOD = dbo.FNAProcessTableName(''mtm_simulation_EOD'', dbo.FNADBUser(), @_process_id)
+
 	    		
+
 SET @_term_start = CONVERT(VARCHAR(10), [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, CAST(@_tenor_from AS INT), @_as_of_date), ''f''), 120) 
+
 SET @_term_end = CONVERT(VARCHAR(10), [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH, CAST(@_tenor_to AS INT), @_as_of_date), ''l''), 120) 
+
  
+
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result
+EXEC(''IF OBJECT_ID('''''' + @_simulation_EOD + '''''') IS NOT NULL DROP TABLE '' +@_simulation_EOD + '''')
+
 CREATE TABLE #tmp_result (
+
 	ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 	Module VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 	Area VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 	Status VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 	Message VARCHAR(1000) COLLATE DATABASE_DEFAULT ,
+
 	Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
+
 )
+
+
 
 EXEC (''SELECT * INTO '' + @_simulation_EOD + '' FROM #tmp_result'')
 
+
+
 IF ''@sub_id'' = ''1900'' AND  ''@stra_id'' = ''1900'' AND ''@book_id'' = ''1900'' AND ''@sub_book_id'' = ''1900'' 
+
 BEGIN
+
       INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation) 
+
       SELECT NULL, NUll, NULL, NULL, NUll, NULL      
+
     
+
 END
+
 ELSE
+
 BEGIN
+
   
+
   EXEC spa_calc_mtm_job_wrapper  @_sub_id,@_stra_id,@_book_id,@_sub_book_id, NULL, @_as_of_date,4505, NULL, ''b'', @_process_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ''n'', @_term_start , @_term_end, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, ''y'',NULL
+
   
+
   INSERT INTO #tmp_result (ErrorCode, Module, Area, Status, Message, Recommendation)
+
   SELECT  code, MODULE, source, TYPE, DESCRIPTION, nextsteps FROM fas_eff_ass_test_run_log WHERE process_id = @_process_id 
+
 END
+
 SELECT  @_as_of_date as_of_date, @_term_start term_start,
+
     @_term_end term_end, 
+
    @_tenor_from tenor_from,
+
    @_tenor_to tenor_to,
+
     @_process_id process_id,
+
 	@_sub_id sub_id,
+
     @_stra_id stra_id,
+
     @_book_id book_id,
+
     @_sub_book_id sub_book_id,
+
 	[ErrorCode],
+
 	[Module],
+
 	[Area],
+
 	[Status],
+
 	[Message],
+
 	[Recommendation]
+
 --[__batch_report__] 
+
 FROM #tmp_result
+
 WHERE 1=1', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
