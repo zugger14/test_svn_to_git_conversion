@@ -105,6 +105,10 @@ DECLARE @relative_volatility CHAR(1) = 'n'
 DECLARE @curve_detail VARCHAR(128)
 SET @curve_detail = dbo.FNAProcessTableName('Curve_Detail', @user_name, @process_id)
 
+--Message handling part, while executing from EOD
+DECLARE @simulation_EOD VARCHAR(20)
+SET @simulation_EOD = dbo.FNAProcessTableName('simulation_EOD', dbo.FNADBUser(), @process_id)
+
 --CREATE TABLE #tmp_err1 ( curve_id INT,term_start DateTime,curve_source_value_id INT        )
 CREATE TABLE #tmp_risk1 (curve_id INT,Granularity VARCHAR(1) COLLATE DATABASE_DEFAULT , [volatility] VARCHAR(50) COLLATE DATABASE_DEFAULT ,	[drift] VARCHAR(50) COLLATE DATABASE_DEFAULT  ,[data_series] INT ,[curve_source] INT,seed VARCHAR(50) COLLATE DATABASE_DEFAULT , volatility_source INT)	
 CREATE TABLE #tmp_data_drift ( curve_id INT,term_start DateTime,value FLOAT   )
@@ -1174,6 +1178,8 @@ BEGIN
 	SELECT @desc = '<a target="_blank" href="' + @url + '">' + @desc + '.</a>'
 
 	SET @url_desc='<a href="../../dev/spa_html.php?spa=spa_fas_eff_ass_test_run_log '''+@process_id+'''">Click here...</a>'
+
+	IF OBJECT_ID(@simulation_EOD) IS NULL
 		SELECT 'Error' ErrorCode, 'Price Simulation' module, 
 			'spa_monte_carlo_simulation_core' area, 'DB Error' status, 
 		'Price Simulation process completed with error, Please view this report. '+@url_desc message, '' recommendation
@@ -1181,7 +1187,7 @@ END
 ELSE
 BEGIN
 --	select @desc = '<a target="_blank" href="' + @url + '">' + @desc + '.</a>'
-	
+	IF OBJECT_ID(@simulation_EOD) IS NULL
 	EXEC spa_ErrorHandler 0, 'VaR_Simulation Calculation', 
 				'Price_Simulation', 'Success', 
 				@desc, ''
