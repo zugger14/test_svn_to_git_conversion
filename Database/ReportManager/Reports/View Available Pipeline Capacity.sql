@@ -5,23 +5,48 @@ BEGIN TRY
 	
 
 		--RETAIN APPLICATION FILTER DETAILS START (PART1)
-		if object_id('tempdb..#paramset_map') is not null drop table #paramset_map
-		create table #paramset_map (
-			deleted_paramset_id int null, 
-			paramset_hash varchar(36) COLLATE DATABASE_DEFAULT NULL, 
-			inserted_paramset_id int null
+		DROP TABLE IF EXISTS #paramset_map
+		CREATE TABLE #paramset_map (
+			deleted_paramset_id INT NULL, 
+			paramset_hash VARCHAR(36) COLLATE DATABASE_DEFAULT NULL, 
+			inserted_paramset_id INT NULL
 
 		)
+
+		--store mapping information for filter detail column ids and data source column id for sql datasource
+		DROP TABLE IF EXISTS #sql_source_filter_detail_column_mapping
+		CREATE TABLE #sql_source_filter_detail_column_mapping (
+			paramset_hash VARCHAR(36),
+			column_id INT,
+			column_name VARCHAR(1000),
+			application_ui_filter_details_id INT NULL
+		)
+
 		IF EXISTS (SELECT 1 FROM dbo.report WHERE report_hash='010557F5_337C_44A8_A778_18D3517063AC')
 		BEGIN
-			declare @report_id_to_delete int
-			select @report_id_to_delete = report_id from report where report_hash = '010557F5_337C_44A8_A778_18D3517063AC'
+			DECLARE @report_id_to_delete INT
+			SELECT @report_id_to_delete = report_id FROM report WHERE report_hash = '010557F5_337C_44A8_A778_18D3517063AC'
 
-			insert into #paramset_map(deleted_paramset_id, paramset_hash)
-			select rp.report_paramset_id, rp.paramset_hash
-			from report_paramset rp
-			inner join report_page pg on pg.report_page_id = rp.page_id
-			where pg.report_id = @report_id_to_delete
+			INSERT INTO #paramset_map(deleted_paramset_id, paramset_hash)
+			SELECT rp.report_paramset_id, rp.paramset_hash
+			FROM report_paramset rp
+			INNER JOIN report_page pg ON pg.report_page_id = rp.page_id
+			WHERE pg.report_id = @report_id_to_delete
+
+			INSERT INTO #sql_source_filter_detail_column_mapping(paramset_hash, column_id, column_name, application_ui_filter_details_id)
+			SELECT DISTINCT rpm.paramset_hash, aufd.report_column_id, dsc.name, aufd.application_ui_filter_details_id
+			FROM application_ui_filter_details aufd
+			INNER JOIN application_ui_filter auf
+				ON auf.application_ui_filter_id = aufd.application_ui_filter_id
+			INNER JOIN report_paramset rpm
+				ON rpm.report_paramset_id = auf.report_id
+			INNER JOIN report_page pg ON pg.report_page_id = rpm.page_id
+			INNER JOIN data_source_column dsc
+				ON dsc.data_source_column_id = aufd.report_column_id
+			INNER JOIN data_source ds
+				ON ds.data_source_id = source_id
+			WHERE pg.report_id = @report_id_to_delete
+				AND ds.type_id = 2
 
 			EXEC spa_rfx_report @flag='d', @report_id=@report_id_to_delete, @retain_privilege=1, @process_id=NULL
 
@@ -53,7 +78,7 @@ BEGIN TRY
 		
 
 	INSERT INTO report_page(report_id, [name], report_hash, width, height)
-	SELECT @report_id_dest AS report_id, 'View Available Pipeline Capacity' [name], '010557F5_337C_44A8_A778_18D3517063AC' report_hash, 11.5 width,5.5 height
+	SELECT @report_id_dest AS report_id, 'View Available Pipeline Capacity' [name], '010557F5_337C_44A8_A778_18D3517063AC' report_hash, 8.5 width,11 height
 	
 
 		INSERT INTO report_paramset(page_id, [name], paramset_hash, report_status_id, export_report_name, export_location, output_file_format, delimiter, xml_format, report_header, compress_file, category_id)
@@ -289,6 +314,28 @@ BEGIN TRY
 			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Available Pipeline Capacity' 	
 		INNER JOIN data_source_column dsc 
 			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'gas_hr_term' 
+
+		INSERT INTO report_tablix_column(tablix_id, dataset_id, column_id, placement, column_order, aggregation
+					, functions, [alias], sortable, rounding, thousand_seperation, font
+					, font_size, font_style, text_align, text_color, background, default_sort_order
+					, default_sort_direction, custom_field, render_as, column_template, negative_mark, currency, date_format, cross_summary_aggregation, mark_for_total, sql_aggregation, subtotal)
+		SELECT TOP 1 rpt.report_page_tablix_id tablix_id, rd.report_dataset_id dataset_id, dsc.data_source_column_id column_id,1 placement, 5 column_order,NULL aggregation, NULL functions, 'Used Mdq' [alias], 1 sortable, -1 rounding, 0 thousand_seperation, 'Tahoma' font, '8' font_size, '0,0,0' font_style, 'Right' text_align, '#000000' text_color, '#ffffff' background, NULL default_sort_order, NULL sort_direction, 0 custom_field, 2 render_as,-1 column_template,0 negative_mark,NULL currency,NULL date_format,-1 cross_summary_aggregation,NULL mark_for_total,NULL sql_aggregation,NULL subtotal
+			
+		FROM sys.objects o
+		INNER JOIN report_page_tablix rpt 
+			ON rpt.[name] = 'View Available Pipeline Capacity_tablix'
+		INNER JOIN report_page rpage 
+			ON rpage.report_page_id = rpt.page_id 
+			AND rpage.[name] = 'View Available Pipeline Capacity'
+		INNER JOIN report r 
+			ON r.report_id = rpage.report_id
+			AND r.[name] = 'View Available Pipeline Capacity'
+		INNER JOIN report_dataset rd 
+			ON rd.report_id = r.report_id AND rd.[alias] = 'apc' 	
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Available Pipeline Capacity' 	
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'used_mdq' 
  INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
 	  SELECT TOP 1 
 			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
@@ -429,30 +476,117 @@ BEGIN TRY
 			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
 			AND rtc.alias = 'Term' --Added to handle custom column. Assumption: alias is unique and NOT NULL
 	
+ INSERT INTO report_tablix_header(tablix_id, column_id, font, font_size, font_style, text_align, text_color, background, report_tablix_column_id)
+	  SELECT TOP 1 
+			rpt.report_page_tablix_id tablix_id, dsc.data_source_column_id column_id,
+			'Tahoma' font,
+			'8' font_size,
+			'1,0,0' font_style,
+			'Right' text_align,
+			'#ffffff' text_color,
+			'#458bc1' background,
+			rtc.report_tablix_column_id			 		       
+		FROM   sys.objects o
+		INNER JOIN report_page_tablix rpt 
+			ON  rpt.[name] = 'View Available Pipeline Capacity_tablix'
+		INNER JOIN report_page rpage 
+			ON  rpage.report_page_id = rpt.page_id 
+		AND rpage.[name] = 'View Available Pipeline Capacity'
+		INNER JOIN report r 
+			ON  r.report_id = rpage.report_id 
+			AND r.[name] = 'View Available Pipeline Capacity'
+		INNER JOIN data_source ds 
+			ON ISNULL(NULLIF(ds.report_id, 0), r.report_id) = r.report_id	AND ds.[name] = 'Available Pipeline Capacity' 	
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id AND dsc.[name] = 'used_mdq' 
+		INNER JOIN report_tablix_column rtc 
+			on rtc.tablix_id = rpt.report_page_tablix_id
+			--AND rtc.column_id = dsc.data_source_column_id  --This did not handle custom column, got duplicate custom columns during export
+			AND rtc.alias = 'Used Mdq' --Added to handle custom column. Assumption: alias is unique and NOT NULL
+	
 
 		--RETAIN APPLICATION FILTER DETAILS START (PART2)
-		update pm
-		set inserted_paramset_id = rp.report_paramset_id
-		from #paramset_map pm
-		inner join report_paramset rp on rp.paramset_hash = pm.paramset_hash
+		UPDATE pm
+		SET inserted_paramset_id = rp.report_paramset_id
+		FROM #paramset_map pm
+		INNER JOIN report_paramset rp
+			ON rp.paramset_hash = pm.paramset_hash
 		
-		update f set f.report_id = pm.inserted_paramset_id
-		from application_ui_filter f
-		inner join #paramset_map pm on pm.deleted_paramset_id = isnull(f.report_id, -1)
-		where f.application_function_id is null
+		UPDATE f set f.report_id = pm.inserted_paramset_id
+		FROM application_ui_filter f
+		INNER JOIN #paramset_map pm 
+			ON pm.deleted_paramset_id = ISNULL(f.report_id, -1)
+		WHERE f.application_function_id IS NULL
 	
-		delete fd
-		--select *
-		from application_ui_filter_details fd
-		inner join application_ui_filter f on f.application_ui_filter_id = fd.application_ui_filter_id
-		inner join #paramset_map pm on pm.inserted_paramset_id = isnull(f.report_id, -1)
-		where abs(fd.report_column_id) not in (
-			select distinct rp.column_id
-			from report_param rp
-			inner join report_dataset_paramset rdp on rdp.report_dataset_paramset_id = rp.dataset_paramset_id
-			inner join report_paramset rpm on rpm.report_paramset_id = rdp.paramset_id
-			where rpm.report_paramset_id = f.report_id
+		--delete filter details only for view datasource columns
+		DELETE fd
+		FROM application_ui_filter_details fd
+		INNER JOIN application_ui_filter f 
+			ON f.application_ui_filter_id = fd.application_ui_filter_id
+		INNER JOIN #paramset_map pm 
+			ON pm.inserted_paramset_id = ISNULL(f.report_id, -1)
+		LEFT JOIN #sql_source_filter_detail_column_mapping map
+			ON map.column_id = ABS(fd.report_column_id)
+		WHERE ABS(fd.report_column_id) NOT IN (
+			SELECT DISTINCT rp.column_id
+			FROM report_param rp
+			INNER JOIN report_dataset_paramset rdp 
+				ON rdp.report_dataset_paramset_id = rp.dataset_paramset_id
+			INNER JOIN report_paramset rpm 
+				ON rpm.report_paramset_id = rdp.paramset_id
+			WHERE rpm.report_paramset_id = f.report_id
 		)
+		AND map.column_id IS NULL
+
+		
+		--store data to update and delete application filter details row for sql datasource only
+		DROP TABLE IF EXISTS #filter_details_to_update_sql_datasource
+
+		SELECT fd.application_ui_filter_details_id, fd.report_column_id, dsc.data_source_column_id, fd.field_value
+		INTO #filter_details_to_update_sql_datasource
+		FROM application_ui_filter_details fd
+		INNER JOIN application_ui_filter f 
+			ON f.application_ui_filter_id = fd.application_ui_filter_id
+		INNER JOIN report_paramset rp 
+			ON rp.report_paramset_id = f.report_id
+		INNER JOIN #sql_source_filter_detail_column_mapping map 
+			ON map.paramset_hash = rp.paramset_hash
+			AND map.column_id = ABS(fd.report_column_id) --used ABS for browser columns label row.
+		INNER JOIN report_dataset_paramset rdp 
+			ON rdp.paramset_id = rp.report_paramset_id
+		INNER JOIN report_param rpr
+			ON rpr.dataset_paramset_id = rdp.report_dataset_paramset_id
+		INNER JOIN report_dataset rd 
+			ON rd.report_dataset_id = rdp.root_dataset_id
+		INNER JOIN data_source ds 
+			ON ds.data_source_id = rd.source_id
+		INNER JOIN data_source_column dsc 
+			ON dsc.source_id = ds.data_source_id
+		WHERE dsc.name = map.column_name
+			AND rpr.column_id = dsc.data_source_column_id
+
+		DROP TABLE IF EXISTS #filter_details_to_delete_sql_datasource
+
+		SELECT fdmap.application_ui_filter_details_id
+		INTO #filter_details_to_delete_sql_datasource
+		FROM #sql_source_filter_detail_column_mapping fdmap
+		EXCEPT
+		SELECT fdup.application_ui_filter_details_id
+		FROM #filter_details_to_update_sql_datasource fdup
+		
+		--update filters for sql datasource columns
+		UPDATE fd
+			SET fd.report_column_id = IIF(fd.report_column_id < 0, -1, 1) * fdup.data_source_column_id		
+		FROM application_ui_filter_details fd
+		INNER JOIN #filter_details_to_update_sql_datasource fdup
+			ON fdup.application_ui_filter_details_id = fd.application_ui_filter_details_id
+
+		--delete unmatched columns from filter detail for sql data source
+		DELETE fd
+		FROM application_ui_filter_details fd
+		INNER JOIN #filter_details_to_delete_sql_datasource fddel
+			ON fddel.application_ui_filter_details_id = fd.application_ui_filter_details_id
+
 		--RETAIN APPLICATION FILTER DETAILS END (PART2)
 	
 COMMIT 
