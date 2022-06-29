@@ -26,6 +26,7 @@ CREATE PROC [dbo].[spa_source_emir]
 	@deal_date_to VARCHAR(10) = NULL,
 	@valuation_date VARCHAR(10) = '',
 	@filter_table_process_id VARCHAR(100) = NULL,
+	@file_transfer_endpoint_name NVARCHAR(2000) = NULL,
 	@batch_process_id VARCHAR(100) = '',	
 	@batch_report_param VARCHAR(500) = NULL
 AS
@@ -4960,6 +4961,210 @@ BEGIN
 	FROM source_deal_header sdh 
 		INNER JOIN source_counterparty sc 
 		ON sc.source_counterparty_id = sdh.counterparty_id
+END
+ELSE IF @flag='r'
+BEGIN
+	DECLARE @server_location NVARCHAR(1000), 
+		@xml_file_content NVARCHAR(MAX),
+	    @remote_location NVARCHAR(2000),
+		@success_files NVARCHAR(MAX) = '',
+		@error_files NVARCHAR(MAX) = '',
+		@dir_file NVARCHAR(1000), 
+		@target_remote_directory NVARCHAR(MAX),
+		@output_result NVARCHAR(MAX),
+		@full_file_path NVARCHAR(200),
+	    @feedback_file_name NVARCHAR(200) = '',
+		@process_table NVARCHAR(200),
+		@desc_success NVARCHAR(MAX),
+		@download_files NVARCHAR(MAX)
+
+	SELECT @server_location = document_path + '\temp_note\ECM'
+	FROM connection_string 
+
+	SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id
+		  ,@remote_location = remote_directory
+	FROM file_transfer_endpoint
+	WHERE [name] = @file_transfer_endpoint_name
+
+	IF OBJECT_ID('tempdb..#temp_ftp_files') IS NOT NULL
+		DROP TABLE #temp_ftp_files
+	CREATE TABLE #temp_ftp_files(ftp_url NVARCHAR(1000), dir_file NVARCHAR(2000))
+	INSERT INTO #temp_ftp_files
+	EXEC spa_list_ftp_contents_using_clr @file_transfer_endpoint_id, @remote_location , @output_result OUTPUT
+
+	DELETE FROM #temp_ftp_files 
+	WHERE dir_file not like '%.xml%'
+	
+	SELECT @download_files = STUFF((SELECT DISTINCT ',' +  dir_file 
+									FROM #temp_ftp_files
+									WHERE (CHARINDEX('payload-id',dir_file) > 0 
+									)
+							FOR XML PATH('')), 1, 1, '')
+	
+	IF OBJECT_ID('tempdb..#temp_emir_data') IS NOT NULL
+		DROP TABLE #temp_emir_data
+	CREATE TABLE #temp_emir_data(
+		trade_id INT,
+		doc_version INT,
+		[timestamp]  NVARCHAR(100) COLLATE DATABASE_DEFAULT,
+		[status]  NVARCHAR(200) COLLATE DATABASE_DEFAULT,
+		error_code  NVARCHAR(500) COLLATE DATABASE_DEFAULT,
+		error_description  NVARCHAR(2000) COLLATE DATABASE_DEFAULT,
+		download_file_name  NVARCHAR(100) COLLATE DATABASE_DEFAULT	
+	)
+
+	IF @download_files IS NOT NULL
+	BEGIN
+		EXEC spa_download_file_from_ftp_using_clr @file_transfer_endpoint_id, @remote_location, @download_files, @server_location, '.xml', @output_result OUTPUT
+
+		SELECT @success_files = '', @error_files = ''
+		DECLARE db_cursor CURSOR FOR  
+			SELECT dir_file 
+			FROM #temp_ftp_files
+		OPEN db_cursor   
+		FETCH NEXT FROM db_cursor INTO @dir_file
+		WHILE @@FETCH_STATUS = 0   
+		BEGIN   
+			SELECT @xml_file_content = dbo.FNAReadFileContents(@server_location + '\' + @dir_file)
+			IF @xml_file_content IS NOT NULL
+			BEGIN
+				SET @xml_file_content = REPLACE(@xml_file_content, 'encoding="UTF-8"', 'encoding="UTF-16"')
+				INSERT INTO #temp_emir_data
+				SELECT 
+				x.xml_col.value('DocumentID[1]','VARCHAR(100)') AS trade_id
+				,x.xml_col.value('DocumentVersion[1]','VARCHAR(100)') AS [document_version]
+				,x.xml_col.value('Timestamp[1]','VARCHAR(100)') AS [timestamp]
+				,x.xml_col.value('CMSResult[1]/Result[1]','VARCHAR(100)') AS [result]
+				,child.xml_col.value('ReasonCode[1]','VARCHAR(100)') AS [ReasonCode]
+				,child.xml_col.value('ReasonText[1]','VARCHAR(100)') AS [ReasonText]
+				, @dir_file
+				FROM ( SELECT  CAST(@xml_file_content AS XML) RawXml) b
+				CROSS APPLY b.RawXml.nodes('/Envelope/Payload/Message/ERRBoxResult') x(xml_col)
+				CROSS APPLY x.xml_col.nodes('CMSResult/Reason') child(xml_col);
+
+				IF EXISTS(SELECT 1 FROM #temp_emir_data WHERE [status] IN ('Success') AND download_file_name = @dir_file)
+				BEGIN
+					SELECT @success_files += IIF(NULLIF(@success_files,'') IS NULL, @dir_file, ',' + @dir_file)
+		
+				END
+				ELSE IF EXISTS(SELECT 1 FROM #temp_emir_data WHERE [status] IN ('ERROR') AND download_file_name = @dir_file)
+				BEGIN
+					SELECT @error_files += IIF(NULLIF(@error_files,'') IS NULL, @dir_file, ',' + @dir_file)
+				END
+			END
+			FETCH NEXT FROM db_cursor INTO @dir_file
+		END   
+
+		CLOSE db_cursor   
+		DEALLOCATE db_cursor
+		IF EXISTS(SELECT 1 FROM #temp_emir_data WHERE [status] IN ('ERROR','SUCCESS'))
+		BEGIN
+			IF NULLIF(@success_files,'') IS NOT NULL
+			BEGIN
+				SET @target_remote_directory = @remote_location + '/Processed/' + CONVERT(VARCHAR(7), GETDATE(), 120) + '/'
+				EXEC spa_move_ftp_file_to_folder_using_clr @file_transfer_endpoint_id, @remote_location , @target_remote_directory, @success_files, @output_result OUTPUT
+			END
+
+			IF NULLIF(@error_files, '') IS NOT NULL
+			BEGIN
+				SET @target_remote_directory = @remote_location + '/Error/' + CONVERT(VARCHAR(7), GETDATE(), 120) + '/'
+				EXEC spa_move_ftp_file_to_folder_using_clr @file_transfer_endpoint_id, @remote_location , @target_remote_directory, @error_files, @output_result OUTPUT
+			END
+		END
+
+	END
+
+	INSERT INTO source_emir_audit (		
+		status
+		, error_code
+		, error_description
+		, action
+		, message_received_timestamp
+		, processed_timestamp
+		, transaction_type
+		, uti_id
+		, trade_id
+		, source_file_name
+	)		
+	SELECT status, error_code, error_description, se.action_type, GETDATE(),[timestamp],se.[level],
+		tmp.trade_id, tmp.trade_id , tmp.download_file_name
+	FROM #temp_emir_data tmp
+	INNER JOIN source_emir se ON se.source_deal_header_id = tmp.trade_id
+
+	SELECT @process_id = dbo.FNAGETNEWID()
+	SELECT @user_name  = dbo.FNAdbuser()
+	SELECT @feedback_file_name = 'Emir_Feedback_' + CONVERT(VARCHAR(30), GETDATE(),112) + REPLACE(CONVERT(VARCHAR(30), GETDATE(),108),':','') + '.csv'
+
+	SELECT @process_table = dbo.FNAProcessTableName('emir_feedback', dbo.FNADBUser(), @process_id) 
+	
+	SELECT @server_location = document_path
+	FROM connection_string 
+	SELECT @full_file_path = @server_location + '\temp_Note\' + @feedback_file_name
+
+	EXEC('SELECT *
+			INTO ' + @process_table + ' FROM #temp_emir_data
+			WHERE [status] IN (''ERROR'',''SUCCESS'')
+	')
+
+	IF EXISTS(SELECT 1 FROM #temp_emir_data temp
+			WHERE ISNULL([status],'-1') IN ('ERROR')
+	)
+	BEGIN
+		EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@output_result OUTPUT
+		INSERT INTO source_system_data_import_status (process_id, code, module, source, type, description)
+		SELECT @process_id, temp.[status], 'EMIR Feedback', 'EMIR Feedback', temp.[status], temp.error_code + ' ' + temp.error_description  
+		FROM #temp_emir_data temp
+		WHERE [status] IN ('SUCCESS','ERROR')
+		SELECT @url = '../../adiha.php.scripts/dev/spa_html.php?__user_name__=' + @user_name + '&spa=exec spa_get_import_process_status ''' + @process_id + ''','''+@user_name+''''
+		SELECT @desc_success = 'EMIR Feedback captured with error. <a target="_blank" href="' + @url + '">Click here.</a>'
+	END
+	ELSE
+	BEGIN
+		EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@output_result OUTPUT
+		SET @desc_success = 'EMIR Feedback captured successfully.<br>'
+							+  '<b>Response :</b> ' + 'Success'
+	END
+
+	INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type)
+	SELECT DISTINCT au.user_login_id, 'EMIR Feedback' , ISNULL(@desc_success, 'Description is null'), NULL, NULL, 's',NULL, NULL,@process_id,NULL
+	FROM dbo.application_role_user aru
+	INNER JOIN dbo.application_security_role asr ON aru.role_id = asr.role_id 
+	INNER JOIN dbo.application_users au ON aru.user_login_id = au.user_login_id
+	WHERE (au.user_active = 'y') AND (asr.role_type_value_id = 22) AND au.user_emal_add IS NOT NULL
+	GROUP BY au.user_login_id, au.user_emal_add	
+
+	INSERT INTO email_notes
+		(
+			notes_subject,
+			notes_text,
+			send_from,
+			send_to,
+			send_status,
+			active_flag,
+			attachment_file_name
+		)		
+	SELECT DB_NAME() + ': EMIR Feedback',
+		'Dear <b>' + MAX(au.user_l_name) + '</b><br><br>EMIR Feedback has been captured. Please check the Summary Report attached in email.',
+		'noreply@pioneersolutionsglobal.com',
+		au.user_emal_add,
+		'n',
+		'y',
+		@full_file_path
+	FROM dbo.application_role_user aru
+	INNER JOIN dbo.application_security_role asr ON aru.role_id = asr.role_id 
+	INNER JOIN dbo.application_users au ON aru.user_login_id = au.user_login_id
+	WHERE (au.user_active = 'y') AND (asr.role_type_value_id = 22) AND au.user_emal_add IS NOT NULL
+	GROUP BY au.user_login_id, au.user_emal_add 
+		
+	UPDATE se
+	SET submission_status =
+		CASE 
+			WHEN temp.[status] = 'ERROR' THEN 39503
+			WHEN temp.[status] = 'SUCCESS' THEN 39502
+		END				
+	FROM #temp_emir_data temp
+	INNER JOIN source_emir se
+	ON se.source_deal_header_id = temp.trade_id
 END
 
 IF @batch_process_id IS NOT NULL AND @batch_report_param IS NOT NULL

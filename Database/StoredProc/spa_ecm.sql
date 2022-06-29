@@ -1594,21 +1594,21 @@ BEGIN
 		BEGIN
 			EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@output_result OUTPUT
 			INSERT INTO source_system_data_import_status (process_id, code, module, source, type, description)
-			SELECT @process_id, temp.overall_result_code, 'ECM Remit EMIR ACK Feedback', 'ECM Remit EMIR ACK Feedback', 'Error', temp.description
+			SELECT @process_id, temp.overall_result_code, 'ECM REMIT EMIR ACK Feedback', 'ECM Remit EMIR ACK Feedback', 'Error', temp.description
 			FROM #temp_ack_xml_data temp
 			WHERE temp.overall_result_code = 'Error'
 			SELECT @url = '../../adiha.php.scripts/dev/spa_html.php?__user_name__=' + @user_name + '&spa=exec spa_get_import_process_status ''' + @process_id + ''','''+@user_name+''''
-			SELECT @desc_success = 'ECM Remit ACK Feedback captured with error. <a target="_blank" href="' + @url + '">Click here.</a>'
+			SELECT @desc_success = 'ECM Remit EMIR ACK Feedback captured with error. <a target="_blank" href="' + @url + '">Click here.</a>'
 		END
 		ELSE
 		BEGIN
 			EXEC spa_export_to_csv @process_table, @full_file_path, 'y', ',', 'n','y','n','n',@output_result OUTPUT
-			SET @desc_success = 'ECM Remit ACK Feedback  captured successfully.<br>'
+			SET @desc_success = 'ECM REMIT EMIR ACK Feedback  captured successfully.<br>'
 								+  '<b>Response :</b> ' + 'Success'
 		END
 
 		INSERT INTO message_board(user_login_id, source, [description], url_desc, url, [type], job_name, as_of_date, process_id, process_type)
-		SELECT DISTINCT au.user_login_id, 'ECM Remit EMIR ACK Feedback' , ISNULL(@desc_success, 'Description is null'), NULL, NULL, 's',NULL, NULL,@process_id,NULL
+		SELECT DISTINCT au.user_login_id, 'ECM REMIT EMIR ACK Feedback' , ISNULL(@desc_success, 'Description is null'), NULL, NULL, 's',NULL, NULL,@process_id,NULL
 		FROM dbo.application_role_user aru
 		INNER JOIN dbo.application_security_role asr ON aru.role_id = asr.role_id 
 		INNER JOIN dbo.application_users au ON aru.user_login_id = au.user_login_id
@@ -1625,10 +1625,10 @@ BEGIN
 				active_flag,
 				attachment_file_name
 			)		
-		SELECT DB_NAME() + ': ECM Remit EMIR ACK Feedback',
+		SELECT DB_NAME() + ': ECM REMIT EMIR ACK Feedback',
 			'Dear <b>' + MAX(au.user_l_name) + '</b><br><br>
 
-			 ECM Remit EMIR ACK Feedback has been captured. Please check the Summary Report attached in email.',
+			 ECM REMIT EMIR ACK Feedback has been captured. Please check the Summary Report attached in email.',
 			'noreply@pioneersolutionsglobal.com',
 			au.user_emal_add,
 			'n',
