@@ -106,7 +106,7 @@ DECLARE @curve_detail VARCHAR(128)
 SET @curve_detail = dbo.FNAProcessTableName('Curve_Detail', @user_name, @process_id)
 
 --Message handling part, while executing from EOD
-DECLARE @simulation_EOD VARCHAR(20)
+DECLARE @simulation_EOD VARCHAR(200)
 SET @simulation_EOD = dbo.FNAProcessTableName('simulation_EOD', dbo.FNADBUser(), @process_id)
 
 --CREATE TABLE #tmp_err1 ( curve_id INT,term_start DateTime,curve_source_value_id INT        )

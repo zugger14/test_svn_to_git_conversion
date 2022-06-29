@@ -104,109 +104,213 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + '
+
 DECLARE @_as_of_date VARCHAR(10) = ''@as_of_date'',
+
 		@_tenor_from VARCHAR(500) = ''@tenor_from'',
+
 		@_tenor_to VARCHAR(500) = ''@tenor_to'',
+
 		@_curve_id VARCHAR(MAX) = ''@curve_id'',
+
 		@_term_start VARCHAR(10) = NULL,
+
 		@_term_end VARCHAR(10) = NULL,
+
 		@_process_id VARCHAR(100) = ''@process_id'',
+
 		@_sql VARCHAR(MAX) = NULL,
-		@_simulation_EOD VARCHAR(MAX) = NULL
+
+		@_simulation_EOD VARCHAR(200) = NULL
+
 		
+
 IF ''@process_id'' <> ''NULL''
+
     SET @_process_id = ''@process_id''
+
  ELSE    
-    SET @_process_id = NULL   		
+
+    SET @_process_id = dbo.FNAGetNewID()   		
+
+
 
 --SET @_curve_id=''262''
+
 --SET @_as_of_date = ''2018-01-01''
+
 --SET @_tenor_from = ''1''
+
 --SET @_tenor_to = ''24''
 
+
+
 -- Process table to handle messaging / error messages within nested spas. Errors were triggered without a process table, caused by rollbacks in transaction.
+
 SET @_simulation_EOD = dbo.FNAProcessTableName(''simulation_EOD'', dbo.FNADBUser(), @_process_id)
 
 
 
+
+
+
+
 SET @_term_start = CONVERT(VARCHAR(10), [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH,CAST(@_tenor_from AS INT), @_as_of_date), ''f''), 120)
+
 SET @_term_end = CONVERT(VARCHAR(10), [dbo].[FNAGetFirstLastDayOfMonth](DATEADD(MONTH,CAST(@_tenor_to AS INT), @_as_of_date), ''f''), 120)
 
+
+
 IF OBJECT_ID(''tempdb..#tmp_result'') IS NOT NULL DROP TABLE #tmp_result
+
 EXEC(''IF OBJECT_ID('''''' + @_simulation_EOD + '''''') IS NOT NULL DROP TABLE '' +@_simulation_EOD + '''')
 
+
+
 CREATE TABLE #tmp_result (
+
 	ErrorCode VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 	Module VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 	Area VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 	Status VARCHAR(200) COLLATE DATABASE_DEFAULT ,
+
 	Message VARCHAR(1000) COLLATE DATABASE_DEFAULT ,
+
 	Recommendation VARCHAR(200) COLLATE DATABASE_DEFAULT 
+
 )
+
 EXEC (''SELECT * INTO '' + @_simulation_EOD + '' FROM #tmp_result'')
 
+
+
 	BEGIN TRY
+
 			SET @_sql = ''EXEC spa_monte_carlo_simulation'''''' + @_as_of_date + '''''', '''''' 
+
 					+ @_term_start + '''''', '''''' + @_term_end + '''''', 3000, NULL, '''''' + @_curve_id + '''''', NULL, ''''y'''',''''y'''',NULL,NULL, '''''' + @_process_id + ''''''''
+
 		
+
 			EXEC(@_sql)
+
 	
+
 			DECLARE @_start_time DATETIME = GETDATE();
+
 			DECLARE @_no_of_running_job INT = 0, @_time_out INT = 0;			
+
 			
+
 			SELECT @_no_of_running_job = COUNT(1) FROM tbl_sims_status WHERE process_id = @_process_id AND sims_status = ''R''	
+
 						
+
 			-- This will loop every 5 mins until there are running job of Monte Carl simulations, or until a timeout of 3 hours.
+
 			WHILE (@_time_out = 0 and @_no_of_running_job > 0)
+
 			BEGIN
+
 				--five minute delay
+
 				WAITFOR DELAY ''00:05:00'';
+
 				
+
 				SELECT @_no_of_running_job = COUNT(1) 
+
 				FROM tbl_sims_status 
+
 				WHERE process_id = @_process_id 
+
 					AND sims_status = ''R''	
 
+
+
 			
+
 				--time out after 3 hours
+
 				IF GETDATE() >= DATEADD(MINUTE, 180, @_start_time) 
+
 				BEGIN 
+
 					SET @_time_out = 1 
+
 					PRINT ''time out'' 
+
 				END					
+
 			END
+
 			IF @_time_out = 0
+
 				INSERT INTO #tmp_result(ErrorCode,Module,Area,Status,Message,Recommendation)
+
 				SELECT  code, MODULE, source, TYPE, DESCRIPTION, nextsteps FROM fas_eff_ass_test_run_log WHERE process_id = @_process_id
+
 				--SELECT ''Success'',''Monte Carlo Simulation'',''Monte Carlo Simulation'',''Success'',''Montecarlo Simulation Completed Successfully'',NULL
+
 			ELSE
+
 				INSERT INTO #tmp_result(ErrorCode,Module,Area,Status,Message,Recommendation)
+
 				SELECT  code, MODULE, source, TYPE, DESCRIPTION, nextsteps FROM fas_eff_ass_test_run_log WHERE process_id = @_process_id
+
 				--SELECT ''Error'',''Monte Carlo Simulation'',''Monte Carlo Simulation'',''Error'',''Montecarlo Simulation Failed with Timeout Error.'',NULL
+
 		END TRY			
+
 		BEGIN CATCH										
+
 			--INSERT INTO #tmp_result(ErrorCode,Module,Area,Status,Message,Recommendation)
+
 			IF @@TRANCOUNT > 0
+
 			    ROLLBACk
+
 			INSERT INTO #tmp_result(ErrorCode,Module,Area,Status,Message,Recommendation)
+
 			SELECT  code, MODULE, source, TYPE, DESCRIPTION, nextsteps FROM fas_eff_ass_test_run_log WHERE process_id = @_process_id
+
 				--SELECT ''Error'',''Monte Carlo Simulation'',''Monte Carlo Simulation'',''Error'',''Montecarlo Simulation Failed with Technical Error.'',NULL
+
 		END CATCH
 
+
+
 SELECT  
+
     @_as_of_date as_of_date,
+
     @_curve_id curve_id,
+
     @_tenor_from tenor_from,
+
    @_tenor_to tenor_to,
+
    1 no_of_year, 
+
 	@_process_id process_id,
+
 	[ErrorCode] [ErrorCode],
+
 	[Module] [Module],
+
 	[Area] [Area],
+
 	[Status] [Status],
+
 	[Message] [Message],
+
 	[Recommendation] [Recommendation]
+
 --[__batch_report__] 
+
 FROM #tmp_result', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 

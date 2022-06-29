@@ -71,7 +71,7 @@ IF @user_id IS NULL
 SET @curve_info = dbo.FNAProcessTableName('Curve_Info', @user_id, @process_id)
 
 --Message handling part, while executing from EOD
-DECLARE @simulation_EOD VARCHAR(20)
+DECLARE @simulation_EOD VARCHAR(200)
 SET @simulation_EOD = dbo.FNAProcessTableName('simulation_EOD', dbo.FNADBUser(), @process_id)
 
 CREATE TABLE #tmp_risk_ids(risk_bucket_id INT, volatility_source INT)

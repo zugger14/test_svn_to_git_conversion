@@ -200,7 +200,7 @@ DECLARE @default_time_zone INT, @dst_group_value_id INT
 SELECT @default_time_zone = var_value FROM dbo.adiha_default_codes_values (nolock) WHERE instance_no = 1 AND default_code_id = 36 AND seq_no = 1
 
 --Message handling part, while executing from EOD
-DECLARE @simulation_EOD VARCHAR(20)
+DECLARE @simulation_EOD VARCHAR(200)
 SET @simulation_EOD = dbo.FNAProcessTableName('mtm_simulation_EOD', dbo.FNADBUser(), @process_id)
 
 SELECT @dst_group_value_id = tz.dst_group_value_id FROM dbo.adiha_default_codes_values (nolock) adcv INNER JOIN time_zones tz
