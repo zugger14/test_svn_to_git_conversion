@@ -64,6 +64,9 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Core" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\FARRMS\trm\adiha.php.scripts\dev\shared_docs\CLR_deploy\Newtonsoft.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="StoredProcedure.cs" />
@@ -84,6 +87,7 @@
     <Compile Include="PowerTrackMntlyVolsImporter.cs" />
     <Compile Include="TreasuryImporter.cs" />
     <Compile Include="PrismaImporter.cs" />
+    <Compile Include="ENMACCImporter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FAARMSFileTransferService\FAARMSFileTransferService.csproj">

@@ -44,6 +44,8 @@ namespace FARRMSImportCLR
                     return new LikronImporter();
                 case "PrismaImporter":
                     return new PrismaImporter();
+                case "ENMACCImporter":
+                    return new ENMACCImporter();
                 default:
                     throw new InvalidOperationException(String.Format("Class {0} not found", clrImportInfo.MethodName));
             }

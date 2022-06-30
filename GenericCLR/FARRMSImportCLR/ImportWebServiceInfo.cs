@@ -20,6 +20,7 @@ namespace FARRMSImportCLR
         public string ClientId { get; set; }
         public string ClientSecret { get; set; }
         public string CertificatePath { get; set; }
+        public string ApiKey { get; set; }
         public DateTime PasswordUpdatedDate { get; set; }
     }
 }

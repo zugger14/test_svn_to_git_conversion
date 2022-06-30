@@ -412,6 +412,35 @@ namespace FARRMSUtilities
             }
         }
 
+        /// <summary>
+        /// Create process table
+        /// </summary>
+        /// <returns></returns>
+        public static DataTable CreateProcessTable(string processTableName, string[] columns, SqlConnection sqlConnection)
+        {
+            DataTable dt = new DataTable(processTableName.Split('.').Last());
+            foreach (var item in columns)
+            {
+                dt.Columns.Add(new DataColumn(item));
+            }
+
+            string createTableSql = "IF OBJECT_ID('" + processTableName + "') IS NOT NULL DROP TABLE " +
+                                    processTableName;
+
+            Utility.ExecuteQuery(createTableSql, sqlConnection);
+
+            createTableSql = "CREATE TABLE " + processTableName + "(";
+
+            for (int i = 0; i < dt.Columns.Count; i++)
+            {
+                createTableSql += "[" + dt.Columns[i].ColumnName + "] NVARCHAR(1024),";
+            }
+            createTableSql = createTableSql.TrimEnd(',') + ")";
+            Utility.ExecuteQuery(createTableSql, sqlConnection);
+
+            return dt;
+        }
+
         /*
          * Transform XML according to the xslt supplied        
          * effFilePath = File Path of Source XML file
