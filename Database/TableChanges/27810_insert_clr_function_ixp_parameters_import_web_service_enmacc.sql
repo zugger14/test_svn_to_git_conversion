@@ -72,58 +72,61 @@ WHERE method_name  = 'ENMACCImporter'
 
 IF NOT EXISTS(SELECT 1 FROM ixp_parameters where parameter_name = 'PS_Commodity' and clr_function_id = @ixp_clr_functions_id)
 BEGIN
-	INSERT INTO ixp_parameters(parameter_name, parameter_label, operator_id, field_type,  clr_function_id, validation_message, insert_required, default_value, sql_string)
+	INSERT INTO ixp_parameters(parameter_name, parameter_label, operator_id, field_type,  clr_function_id, validation_message, insert_required, default_value, sql_string, default_format)
 	SELECT 'PS_Commodity' --parameter_name
 	, 'Commodity' -- parameter_label
 	, 1	 -- operator_id
 	, 'combo' -- field_type
 	, @ixp_clr_functions_id -- clr_function_id
 	, NULL --validation_message
-	, 'N' -- insert_required
+	, 'n' -- insert_required
 	, NULL -- default_value
-	,'EXEC spa_StaticDataValues ''h'', 117700'
+	,'SELECT ''gas'' as value, ''gas'' as name UNION SELECT ''power'' as value, ''power'' as name UNION SELECT ''guarantee-of-origin'' as value, ''guarantee-of-origin'' as name UNION SELECT ''el-certificate'' as value, ''el-certificate'' as name'
+	, NULL --default format
 END
 
 IF NOT EXISTS(SELECT 1 FROM ixp_parameters where parameter_name = 'PS_Venue' and clr_function_id = @ixp_clr_functions_id)
 BEGIN
-	INSERT INTO ixp_parameters(parameter_name, parameter_label, operator_id, field_type,  clr_function_id, validation_message, insert_required, default_value, sql_string)
+	INSERT INTO ixp_parameters(parameter_name, parameter_label, operator_id, field_type,  clr_function_id, validation_message, insert_required, default_value, sql_string, default_format)
 	SELECT 'PS_Venue' --parameter_name
 	, 'Venue' -- parameter_label
 	, 1	 -- operator_id
 	, 'combo' -- field_type
 	, @ixp_clr_functions_id -- clr_function_id
 	, NULL --validation_message
-	, 'N' -- insert_required
+	, 'n' -- insert_required
 	, NULL -- default_value
-	, 'EXEC spa_StaticDataValues ''h'', 117600'
+	, 'SELECT ''entender'' as value, ''entender'' as name UNION SELECT ''enmarket'' as value, ''enmarket'' as name UNION SELECT ''engreen'' as value, ''engreen'' as name'
+	, NULL  --default format
 END
 
 IF NOT EXISTS(SELECT 1 FROM ixp_parameters where parameter_name = 'PS_TradedStart' and clr_function_id = @ixp_clr_functions_id)
 BEGIN
-	INSERT INTO ixp_parameters(parameter_name, parameter_label, operator_id, field_type,  clr_function_id, validation_message, insert_required, default_value)
+	INSERT INTO ixp_parameters(parameter_name, parameter_label, operator_id, field_type,  clr_function_id, validation_message, insert_required, default_value, default_format)
 	SELECT 'PS_TradedStart' --parameter_name
-	, 'Traded Start' -- parameter_label
+	, 'Traded Start Date' -- parameter_label
 	, 1	 -- operator_id
 	, 'calendar' -- field_type
 	, @ixp_clr_functions_id -- clr_function_id
-	, NULL --validation_message
-	, 'N' -- insert_required
+	, 'Required Field' --validation_message
+	, 'y' -- insert_required
 	, NULL -- default_value
+	,'t' -- default format
 
 END
 
 IF NOT EXISTS(SELECT 1 FROM ixp_parameters where parameter_name = 'PS_TradedEnd' and clr_function_id = @ixp_clr_functions_id)
 BEGIN
-	INSERT INTO ixp_parameters(parameter_name, parameter_label, operator_id, field_type,  clr_function_id, validation_message, insert_required, default_value)
+	INSERT INTO ixp_parameters(parameter_name, parameter_label, operator_id, field_type,  clr_function_id, validation_message, insert_required, default_value, default_format)
 	SELECT 'PS_TradedEnd' --parameter_name
-	, 'Traded End' -- parameter_label
+	, 'Traded End Date' -- parameter_label
 	, 1	 -- operator_id
 	, 'calendar' -- field_type
 	, @ixp_clr_functions_id -- clr_function_id
-	, NULL --validation_message
-	, 'N' -- insert_required
+	, 'Required Field' --validation_message
+	, 'y' -- insert_required
 	, NULL -- default_value
-
+	,'t' -- default format
 END
 
 IF NOT EXISTS(SELECT 1 FROM ixp_parameters where parameter_name = 'PS_Skip' and clr_function_id = @ixp_clr_functions_id)
@@ -135,7 +138,7 @@ BEGIN
 	, 'input' -- field_type
 	, @ixp_clr_functions_id -- clr_function_id
 	, NULL --validation_message
-	, 'N' -- insert_required
+	, 'n' -- insert_required
 	, NULL -- default_value
 
 END
@@ -150,8 +153,8 @@ BEGIN
 	, 'input' -- field_type
 	, @ixp_clr_functions_id -- clr_function_id
 	, NULL --validation_message
-	, 'N' -- insert_required
-	, NULL -- default_value
+	, 'n' -- insert_required
+	, 50 -- default_value
 	
 END
 
