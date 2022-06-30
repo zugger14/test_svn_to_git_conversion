@@ -37,6 +37,7 @@ BEGIN
 		, [client_secret]
 		, [certificate_path]
 		, [password_updated_date]
+		, [api_key]
 	FROM ixp_import_data_source iids
 	INNER JOIN import_web_service iws
 		ON iids.clr_function_id = iws.clr_function_id
