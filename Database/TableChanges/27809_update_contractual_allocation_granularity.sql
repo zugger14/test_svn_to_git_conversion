@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS #temp_counterparty_list
+DROP TABLE IF EXISTS  #temp_counterparty_list_final
+DROP TABLE IF EXISTS #temp_counterparty_list_final2
 
 Declare @field_id int 
 DECLARE @filed_id2 int
@@ -12,6 +15,7 @@ FROM application_ui_template_definition auitd
 INNER JOIN application_ui_template_fields auitf 
 	ON auitf.application_ui_field_id = auitd.application_ui_field_id
 	WHERE application_function_id = 10105800 AND auitd.farrms_field_id = 'contractual_volume_based'
+
 
 CREATE TABLE #temp_counterparty_list (counterparty_id VARCHAR(1000))
 INSERT INTO #temp_counterparty_list
@@ -11383,14 +11387,14 @@ INNER JOIN source_counterparty sc
 	ON sc.counterparty_id = tcl.counterparty_id
 LEFT JOIN maintain_udf_static_data_detail_values musddv 
 	ON  musddv.application_field_id = @filed_id2 and musddv.primary_field_object_id = sc.source_counterparty_id
-WHERE musddv.maintain_udf_detail_values_id IS NULL
+WHERE musddv.maintain_udf_detail_values_id IS  NULL
 
 UPDATE musddv
 SET musddv.static_data_udf_values='m'
 FROM #temp_counterparty_list tcl
 INNER JOIN source_counterparty sc ON sc.counterparty_id = tcl.counterparty_id
 INNER JOIN maintain_udf_static_data_detail_values musddv on  musddv.application_field_id = @field_id and musddv.primary_field_object_id = sc.source_counterparty_id
-WHERE musddv.maintain_udf_detail_values_id IS NULL
+WHERE musddv.maintain_udf_detail_values_id IS NOT NULL
 
 UPDATE musddv
 SET musddv.static_data_udf_values='y'
@@ -11399,7 +11403,7 @@ INNER JOIN source_counterparty sc
 	ON sc.counterparty_id = tcl.counterparty_id
 INNER JOIN maintain_udf_static_data_detail_values musddv 
 	ON  musddv.application_field_id = @filed_id2 and musddv.primary_field_object_id = sc.source_counterparty_id
-WHERE musddv.maintain_udf_detail_values_id IS NULL
+WHERE musddv.maintain_udf_detail_values_id IS NOT NULL
 
 INSERT INTO maintain_udf_static_data_detail_values(application_field_id,primary_field_object_id,static_data_udf_values)
 
@@ -11416,9 +11420,5 @@ INNER JOIN #temp_counterparty_list_final2 tclf
 	ON tclf.source_counterparty_id = sc.source_counterparty_id
 
 
---DROP TABLE #temp_counterparty_list
---DROP TABLE #temp_counterparty_list_final
---DROP TABLE #temp_counterparty_list_final2
---EXEC SPA_DROP_ALL_TEMP_TABLE
 
 
