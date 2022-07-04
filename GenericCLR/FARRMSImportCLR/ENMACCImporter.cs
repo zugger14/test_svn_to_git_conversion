@@ -254,12 +254,12 @@ namespace FARRMSImportCLR
                 {
                     var response = WebResponse.ResponseMessage;
                     JObject tradeids = JsonHelper.GetJObject(response);
-
+                    
                     using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                     //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                     {
                         cn.Open();
-                        var finalTable = new string[] { "id", "short_id", "action", "email", "settlement", "term_start", "term_end", "commodity", "load", "market_area", "reference_market", "total_q_value", "q_unit", "pricing_type", "price_value", "p_currency", "counterparty_name", "interval", "value" };
+                        var finalTable = new string[] { "id", "short_id", "action", "email", "settlement", "term_start", "term_end", "commodity", "load", "market_area", "reference_market", "value", "unit", "pricing_type", "price_value", "price_currency", "counterparty_name", "traded_at", "interval_start", "interval_value" };
 
                         //  Create process table                         
                         var finalDataTable = Utility.CreateProcessTable(processTableName, finalTable, cn);
@@ -297,15 +297,16 @@ namespace FARRMSImportCLR
                                     dtrow["load"] = trade_detail["instrument"]["load"];
                                     dtrow["market_area"] = trade_detail["instrument"]["market-area"];
                                     dtrow["reference_market"] = trade_detail["instrument"]["reference-market"];
-                                    dtrow["total_q_value"] = trade_detail["quantity"]["amount"]["value"];
-                                    dtrow["q_unit"] = trade_detail["quantity"]["amount"]["unit"];
+                                    dtrow["value"] = trade_detail["quantity"]["amount"]["value"];
+                                    dtrow["unit"] = trade_detail["quantity"]["amount"]["unit"];
                                     dtrow["pricing_type"] = trade_detail["pricing"]["pricing-type"];
                                     dtrow["price_value"] = trade_detail["pricing"]["price"]["value"];
-                                    dtrow["p_currency"] = trade_detail["pricing"]["price"]["currency"];
+                                    dtrow["price_currency"] = trade_detail["pricing"]["price"]["currency"];
                                     dtrow["counterparty_name"] = trade_detail["counterparty"]["company"]["name"];
-                                    
-                                    dtrow["interval"] = load_data["interval-start"];
-                                    dtrow["value"] = load_data["quantity"]["value"];
+                                    dtrow["traded_at"] = trade_detail["traded-at"];
+
+                                    dtrow["interval_start"] = load_data["interval-start"];
+                                    dtrow["interval_value"] = load_data["quantity"]["value"];
                                     finalDataTable.Rows.Add(dtrow);
                                 }
                             }
@@ -324,12 +325,13 @@ namespace FARRMSImportCLR
                                 dtrow["load"] = trade_detail["instrument"]["load"];
                                 dtrow["market_area"] = trade_detail["instrument"]["market-area"];
                                 dtrow["reference_market"] = trade_detail["instrument"]["reference-market"];
-                                dtrow["total_q_value"] = trade_detail["quantity"]["amount"]["value"];
-                                dtrow["q_unit"] = trade_detail["quantity"]["amount"]["unit"];
+                                dtrow["value"] = trade_detail["quantity"]["amount"]["value"];
+                                dtrow["unit"] = trade_detail["quantity"]["amount"]["unit"];
                                 dtrow["pricing_type"] = trade_detail["pricing"]["pricing-type"];
                                 dtrow["price_value"] = trade_detail["pricing"]["price"]["value"];
-                                dtrow["p_currency"] = trade_detail["pricing"]["price"]["currency"];
+                                dtrow["price_currency"] = trade_detail["pricing"]["price"]["currency"];
                                 dtrow["counterparty_name"] = trade_detail["counterparty"]["company"]["name"];
+                                dtrow["traded_at"] = trade_detail["traded-at"];
 
                                 finalDataTable.Rows.Add(dtrow);
                             }
