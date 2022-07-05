@@ -46,6 +46,9 @@ namespace FARRMSExcelServerCLR
         public void RunProcess()
         {
             LoadDocumentTemplates();
+            //var doc1 = this.documentTemplates.First();
+            //GenerateDocument(doc1);
+            //return;
             try
             {
                 int completedDocuments = documentTemplates.Count(x => x.ExecutionStatus == ExecutionStatus.Completed);
@@ -93,7 +96,7 @@ namespace FARRMSExcelServerCLR
             try
             {
                 using (var sqlConnection = new SqlConnection("Context Connection=True"))
-                //using (var sqlConnection = new SqlConnection(@"Data Source=CTRMSGDB-D5003.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Release;User ID=dev_admin;password=Admin2929"))
+                //using (var sqlConnection = new SqlConnection(@"Data Source=CTRMEUDB-D6005.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Enercity;User ID=dev_admin;password=Admin2929"))
                 {
                     sqlConnection.Open();
                     using (var snapshotInfo = new SnapshotInfo(sqlConnection, documentTemplate))
@@ -115,7 +118,7 @@ namespace FARRMSExcelServerCLR
             try
             {
                 using (var sqlConnection = new SqlConnection("Context Connection=True"))
-                //using (var sqlConnection = new SqlConnection(@"Data Source=CTRMSGDB-D5003.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Release;User ID=dev_admin;password=Admin2929"))
+                //using (var sqlConnection = new SqlConnection(@"Data Source=CTRMEUDB-D6005.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Enercity;User ID=dev_admin;password=Admin2929"))
                 {
                     sqlConnection.Open();
                     using(var cmd = new SqlCommand(documentTemplate.CriteriaOrSQl, sqlConnection))
@@ -138,10 +141,10 @@ namespace FARRMSExcelServerCLR
         {
             this.documentTemplates = new List<DocumentTemplate>();
             using (var sqlConnection = new SqlConnection("Context Connection=True"))
-            //using (var sqlConnection = new SqlConnection(@"Data Source=CTRMSGDB-D5003.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Release;User ID=dev_admin;password=Admin2929"))
+            //using (var sqlConnection = new SqlConnection(@"Data Source=CTRMEUDB-D6005.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Enercity;User ID=dev_admin;password=Admin2929"))
             {
                 sqlConnection.Open();
-                using (SqlCommand cmd = new SqlCommand($"SELECT TOP 10 * FROM adiha_process.dbo.contract_report_template_exceldoc_{_batchProcessId}", sqlConnection))
+                using (SqlCommand cmd = new SqlCommand($"SELECT * FROM adiha_process.dbo.contract_report_template_exceldoc_{_batchProcessId}", sqlConnection))
                 {
                     using (SqlDataReader rd = cmd.ExecuteReader())
                     {
