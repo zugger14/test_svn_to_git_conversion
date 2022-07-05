@@ -46,11 +46,6 @@ namespace FARRMSExcelServerCLR
         public void RunProcess()
         {
             LoadDocumentTemplates();
-            //var defaultDoc = excelDocuments.First();
-            //GenerateDocument(defaultDoc);
-
-            //return;
-            StoredProcedure.PrintMessage($"BackgroundTaskCheck Started");
             try
             {
                 int completedDocuments = documentTemplates.Count(x => x.ExecutionStatus == ExecutionStatus.Completed);
@@ -80,7 +75,6 @@ namespace FARRMSExcelServerCLR
             }
             catch (Exception ex)
             {
-                StoredProcedure.PrintMessage($"MonitorDocumentGenerationProcess {ex.Message}");
                 throw ex;
             }
         }
@@ -111,7 +105,6 @@ namespace FARRMSExcelServerCLR
             }
             catch (Exception ex)
             {
-                StoredProcedure.PrintMessage($"NewTask {ex.Message}");
                 throw ex;
             }
         }
@@ -134,7 +127,6 @@ namespace FARRMSExcelServerCLR
             }
             catch (Exception ex)
             {
-                StoredProcedure.PrintMessage($"NewTask {ex.Message}");
                 throw ex;
             }
         }
@@ -155,7 +147,7 @@ namespace FARRMSExcelServerCLR
                     {
                         while (rd.Read())
                         {
-                            documentTemplates.Add(new DocumentTemplate() { ExcelSheetId = rd["excel_sheet_id"].ToInt(), ProcessId = rd["process_id"].ToString(), CriteriaOrSQl = rd["criteria"].ToString(), ExportFormat = rd["export_format"].ToString(), TemplateType = rd["template_type"].ToString() });
+                            documentTemplates.Add(new DocumentTemplate() { ExcelSheetId = rd["excel_sheet_id"].ToInt(), ProcessId = rd["process_id"].ToString(), CriteriaOrSQl = rd["criteria"].ToString(), ExportFormat = rd["export_format"].ToString(), TemplateType = rd["template_type"].ToString(), UserName = rd["user_name"].ToString() });
 
                         }
                     }
