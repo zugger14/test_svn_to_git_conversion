@@ -98,6 +98,7 @@
     <Compile Include="SnapshotInfo.cs" />
     <Compile Include="Tablix.cs" />
     <Compile Include="StoredProcedure.cs" />
+    <Compile Include="BulkDocumentGeneration.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FARRMSUtilities\FARRMSUtilities.csproj">

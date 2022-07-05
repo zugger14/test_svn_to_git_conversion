@@ -24,6 +24,7 @@ namespace FARRMSExcelServerCLR
             _snapshotInfo.ReplicaWorkbook.CalculateAllValue();
             //_snapshotInfo.ReplicaWorkbook.Save();
             _snapshotInfo.ExcelSheet.Export(_snapshotInfo.ExportFomat);
+            _snapshotInfo.DocumentSet.ExecutionStatus = ExecutionStatus.Completed;
         }
     }
 }

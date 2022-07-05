@@ -34,6 +34,9 @@ END
 IF OBJECT_ID('spa_synchronize_excel_with_spire') IS NOT NULL
     DROP PROC [spa_synchronize_excel_with_spire]
 
+IF OBJECT_ID('spa_bulk_document_generation') IS NOT NULL
+    DROP PROC [spa_bulk_document_generation]
+
 PRINT 'DROP EXISTING .NET ASSEMBLIES'
 IF EXISTS(SELECT 1 FROM sys.assemblies a WHERE [name] LIKE 'FARRMSExcelServerCLR')
 	DROP ASSEMBLY [FARRMSExcelServerCLR]
@@ -214,14 +217,30 @@ GO
 CREATE PROC [dbo].[spa_synchronize_excel_with_spire]
 (
 	@excelSheetId		NVARCHAR(255),
-	@synchronize		NVARCHAR(1),
-	@imageSnapshot		NVARCHAR(1),
 	@userName			NVARCHAR(255),
-	@settlementCalc		NVARCHAR(1),
 	@exportFormat		NVARCHAR(10),
 	@processId			NVARCHAR(255),
 	@outputResult		NVARCHAR(MAX) output
 )
 AS
 	EXTERNAL NAME FARRMSExcelServerCLR.[FARRMSExcelServerCLR.StoredProcedure].SynchronizeExcelWithSpire
+GO
+
+/**
+	Bulk Excel Document Generation
+	Parameters
+	@batchSize			:	No of parallel threads to be executed
+	@batchProcessId		:	Batch process identifier
+*/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROC [dbo].[spa_bulk_document_generation]
+(
+@batchSize INT
+, @batchProcessId NVARCHAR(255)
+)
+AS
+	EXTERNAL NAME FARRMSExcelServerCLR.[FARRMSExcelServerCLR.StoredProcedure].BulkDocumentGeneration
 GO

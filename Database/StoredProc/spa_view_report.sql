@@ -717,7 +717,7 @@ END
 --Generate excel addin snapshot and return file name.
 ELSE IF @flag = 'o'
 BEGIN
-		EXEC spa_synchronize_excel_reports @excel_sheet_id=@report_id, @synchronize_report='y', @image_snapshot='y',@view_report_filter_xml=@view_report_filter_xml, @process_id=@process_id, @export_format = @export_format, @suppress_result = 'y'
+		EXEC spa_synchronize_excel_reports @excel_sheet_id=@report_id, @view_report_filter_xml=@view_report_filter_xml, @process_id=@process_id, @export_format = @export_format, @suppress_result = 'y'
 		
 		IF (@export_format = 'excel')
 		BEGIN
@@ -766,7 +766,7 @@ BEGIN
 			DECLARE @excel_filename VARCHAR(100)
 			SELECT @process_id = REPLACE(NEWID(),'-','_')
 
-			EXEC spa_synchronize_excel_reports @excel_sheet_id=@report_id, @synchronize_report='y', @image_snapshot='y',@view_report_filter_xml=@view_report_filter_xml, @process_id=@process_id, @export_format = @export_format, @suppress_result = 'y'
+			EXEC spa_synchronize_excel_reports @excel_sheet_id=@report_id, @view_report_filter_xml=@view_report_filter_xml, @process_id=@process_id, @export_format = @export_format, @suppress_result = 'y'
 
 			SELECT @excel_filename = snapshot_filename FROM excel_sheet_snapshot WHERE process_id = @process_id
 			SELECT @report_name = COALESCE(NULLIF(es.alias,''), es.sheet_name)
@@ -780,7 +780,7 @@ BEGIN
 		END
 		ELSE
 		BEGIN
-			EXEC spa_synchronize_excel_reports @excel_sheet_id=@report_id, @synchronize_report='y', @image_snapshot='y',@view_report_filter_xml=@view_report_filter_xml, @process_id=@process_id, @export_format = 'PNG', @suppress_result = 'y'
+			EXEC spa_synchronize_excel_reports @excel_sheet_id=@report_id, @view_report_filter_xml=@view_report_filter_xml, @process_id=@process_id, @export_format = 'PNG', @suppress_result = 'y'
 
 			SELECT @report_name = COALESCE(NULLIF(es.alias,''), es.sheet_name)
 			FROM excel_sheet es

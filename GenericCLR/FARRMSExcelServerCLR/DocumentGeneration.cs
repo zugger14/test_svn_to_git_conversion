@@ -30,6 +30,7 @@ namespace FARRMSExcelServerCLR
             PrepareInvoice();
             _snapshotInfo.ExcelSheet.ShowHideDataTabs(_snapshotInfo.ReplicaWorkbook);            
             _snapshotInfo.ExcelSheet.Export(_snapshotInfo.ExportFomat);
+            _snapshotInfo.DocumentSet.ExecutionStatus = ExecutionStatus.Completed;
         }
 
 

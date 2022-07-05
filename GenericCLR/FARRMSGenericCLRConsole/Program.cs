@@ -3,6 +3,7 @@ using FARRMSUtilities;
 using FAARMSFileTransferCLR;
 using System.Collections.Generic;
 using System.IO;
+using System;
 
 namespace ConsoleApp1
 {
@@ -13,6 +14,10 @@ namespace ConsoleApp1
             
             string msg = "";
             string s;
+            FARRMSExcelServerCLR.StoredProcedure.BulkExcelDocumentGeneration(5, "process_id");
+            Console.ReadLine();
+            return;
+
             //FAARMSFileTransferCLR.StoredProcedure.ListFtpContents(26, null, out s);
             //FARRMSExcelServerCLR.StoredProcedure.SynchronizeExcelWithSpire("2294", "y", "y", "farrms_admin", "n", "PDF", "EFD4A339_8F7F_485C_935C_C646FF17DAE8", out s);
             //FARRMSExcelServerCLR.StoredProcedure.SynchronizeExcelWithSpire("2294", "y", "y", "farrms_admin", "n", "pdf", "EFD4A339_8F7F_485C_935C_C646FF17DAE8", out s);

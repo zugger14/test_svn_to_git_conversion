@@ -6,8 +6,6 @@ Description : Synchronize excel add in reports / Generate snapshot of sheet to i
 
 Parameters :
  @excel_sheet_id 	   : Identifier Excel snapshot id 
- @synchronize_report   :Synchronize excel sheets created using report manager y/n
- @image_snapshot       :generate snapshot file y/n
  @export_format			: Possible values => PNG, PDF
  Example : spa_synchronize_excel_reports 1,'n','y'
  Example 2 From Batch 
@@ -35,12 +33,10 @@ Parameters :
 	                                                </Parameter>
                                                 </Parameters>'
                                                 
- spa_synchronize_excel_reports 1,'n','y', @data, @view_report_filter_xml, null 
+ spa_synchronize_excel_reports 1, @data, @view_report_filter_xml, null 
 */
 CREATE PROC [dbo].[spa_synchronize_excel_reports]
 @excel_sheet_id NVARCHAR(255),
-@synchronize_report CHAR(1),
-@image_snapshot CHAR(1),
 @batch_xml_report_param XML = NULL,
 @view_report_filter_xml XML = NULL,
 @process_id VARCHAR(1000) = NULL,
@@ -48,7 +44,7 @@ CREATE PROC [dbo].[spa_synchronize_excel_reports]
 @suppress_result NCHAR(1) = 'n'
 AS
 SET @process_id = CASE WHEN @process_id IS NULL THEN REPLACE(NEWID(),'-','_') ELSE @process_id END
--- Pass view report filter arguement as table , SSIS Pkg will resolve this values. Instead of passing of command line argument with invalid character eg. & will throw an error 
+-- Pass view report filter arguement as table
 DECLARE @parameter_table_name VARCHAR(255) = 'adiha_process.dbo.excel_add_in_view_report_filter_' + @process_id
 
 DECLARE @xml_filter NVARCHAR(MAX) = CAST(@view_report_filter_xml AS NVARCHAR(MAX))
@@ -59,7 +55,7 @@ EXEC spa_import_from_xml @xml_content = @xml_filter, @xml_filename = NULL, @tabl
 DECLARE @db_user NVARCHAR(1024), @result_output NVARCHAR(MAX)
 SELECT @db_user = dbo.FNADBUser()
 	
-EXEC [spa_synchronize_excel_with_spire] @excelSheetId = @excel_sheet_id , @synchronize = @synchronize_report, @imageSnapshot = @image_snapshot, @userName =@db_user, @settlementCalc ='n' , @exportFormat =@export_format , @processId = @process_id
+EXEC [spa_synchronize_excel_with_spire] @excelSheetId = @excel_sheet_id , @userName =@db_user, @exportFormat =@export_format , @processId = @process_id
 , @outputResult = @result_output output
 	
 IF ISNULL(@suppress_result, 'n') = 'n'

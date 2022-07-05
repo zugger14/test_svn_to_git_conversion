@@ -19,6 +19,7 @@ namespace FARRMSExcelServerCLR
     public class SnapshotInfo : IDisposable
     {
         //  Collection report filter to be overrien when report query is run
+        public DocumentTemplate  DocumentSet{ get; set; }
         public SnapshotInfo()
         {
         }
@@ -27,30 +28,26 @@ namespace FARRMSExcelServerCLR
         /// Intitalize snapshot process
         /// </summary>
         /// <param name="excelSheetId">Excel sheet id to publish</param>
-        /// <param name="synchronizeReport">Run the synchronization process possible values y,n</param>
-        /// <param name="imageSnapshot">Generate image snapshot possible values y,n</param>
         /// <param name="userName">Package execution username, This username will be used generat snapshot file name</param>
-        /// <param name="settlementCalculation">Settlement calculation based trm contract template setup, possible values y,n</param>
         /// <param name="exportFormat">Export format of worksheet after synchronization process is completed, possible values PDF,HTML</param>
         /// <param name="processId">Unique GUID used through out the sync process</param>
         /// <param name="sqlConnection">Valid opened SqlConnection</param>
-        public SnapshotInfo(int excelSheetId, string synchronizeReport, string imageSnapshot, string userName,
-            string settlementCalculation, string exportFormat, string processId, SqlConnection sqlConnection)
+        
+        public SnapshotInfo(SqlConnection sqlConnection, DocumentTemplate excelDocument)
         {
-            SettlementCalculation = settlementCalculation.ToLower() == "y";
-            SynchronizeReport = synchronizeReport.ToLower() == "y";
-            ImageSnapshot = imageSnapshot.ToLower() == "y";
-            UserName = userName;
-            ExportFomat = exportFormat;
-            if (string.IsNullOrEmpty(processId)) processId = Helper.ProcessId();
-            ProcessId = processId;
-            ExcelSheetId = excelSheetId;
+            this.DocumentSet = excelDocument;
+            this.DocumentSet.ExecutionStatus = ExecutionStatus.Started;
+            UserName = excelDocument.UserName;
+            ExportFomat = excelDocument.ExportFormat;
+            if (string.IsNullOrEmpty(excelDocument.ProcessId)) excelDocument.ProcessId = Helper.ProcessId();
+            ProcessId = excelDocument.ProcessId;
+            ExcelSheetId = excelDocument.ExcelSheetId;
 
-            //SqlConnection =
-            //    new SqlConnection(
-            //        @"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT_Mkt_Merge;Persist Security Info=True;User ID=dev_admin;password=Admin2929");
-            //SqlConnection.Open();
+            DefaultConfigurations(sqlConnection);
+        }
 
+        private void DefaultConfigurations(SqlConnection sqlConnection)
+        {
             SqlConnection = sqlConnection;
 
             //  Excel report repository / temp note folder
@@ -64,6 +61,9 @@ namespace FARRMSExcelServerCLR
                     ReportRepository = rd[0].ToString(); //  excel_reports
                     DocumentPath = rd[1].ToString(); //  temp_note
                     LicenseKey = rd[2].ToString();  //  License Key
+
+                    //	ReportRepository = @"D:\FARRMS\TRMTracker_Release\FARRMS\trm\adiha.php.scripts\dev\shared_docs\Excel_Reports"; //  excel_reports
+                    //	DocumentPath = @"D:\FARRMS\TRMTracker_Release\FARRMS\trm\adiha.php.scripts\dev\shared_docs\temp_Note"; //  temp_note
                 }
             }
             LoadLicenseKey();
@@ -135,6 +135,7 @@ namespace FARRMSExcelServerCLR
         private void CreateReplicaOfSourceFile()
         {
             SourceFileName = ExcelSheet.FileName;
+            //SourceFileName = @"D:\FARRMS\TRMTracker_Release\FARRMS\trm\adiha.php.scripts\dev\shared_docs\Excel_Reports\German_Invoice_Template.xlsx";
 
             if (File.Exists(ReplicaFileName))
                 File.Delete(ReplicaFileName);
@@ -350,6 +351,43 @@ namespace FARRMSExcelServerCLR
         private void ParseViewReportFilterXMl()
         {
             ViewReportFilters = new List<ReportFilter>();
+            //  Create view report filters according to XML if available, For bulk excel document generation
+            try
+            {
+                var xmlParameter = this.DocumentSet.CriteriaOrSQl;
+
+                if (!string.IsNullOrEmpty(xmlParameter))
+                {
+                    XmlDocument doc = new XmlDocument();
+                    doc.Load(new StringReader(xmlParameter));
+
+                    foreach (XmlNode param in doc.ChildNodes[0].ChildNodes)
+                    {
+                        var rf = new ReportFilter();
+                        foreach (XmlNode item in param.ChildNodes)
+                        {
+                            if (item.Name.ToLower() == "name") rf.Name = item.InnerText;
+                            if (item.Name.ToLower() == "value") rf.Value = item.InnerText;
+                            if (item.Name.ToLower() == "displaylabel") rf.DisplayLabel = item.InnerText;
+                            if (item.Name.ToLower() == "displayvalue") rf.DisplayValue = item.InnerText;
+                            if (item.Name.ToLower() == "overwritetype") rf.OverrideType = item.InnerText.ToInt();
+                            if (item.Name.ToLower() == "adjustmentdays") rf.AdjustmentDays = item.InnerText.ToInt();
+                            if (item.Name.ToLower() == "adjustmenttype") rf.AdjustmentType = item.InnerText;
+                            if (item.Name.ToLower() == "businessday") rf.BusinessDay = item.InnerText;
+                        }
+                        if (rf.Value.Trim() == "")
+                            rf.Value = "NULL";
+                        ViewReportFilters.Add(rf);
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+
+            //  Load view report filters from process table for old logic which dumps xml filters to process table
             try
             {
                 using (

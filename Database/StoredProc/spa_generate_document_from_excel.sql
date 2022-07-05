@@ -165,8 +165,6 @@ BEGIN
 	BEGIN
 		EXEC spa_synchronize_excel_reports
 			 @excel_sheet_id = @document_sheet_id,
-			 @synchronize_report = 'y',
-			 @image_snapshot = 'y',
 			 @batch_xml_report_param = NULL,
 			 @view_report_filter_xml = @report_filter,
 			 @process_id = @process_id,

@@ -56,7 +56,7 @@ DECLARE @report_snapshot_cmd	 VARCHAR(8000)
 CREATE TABLE #temp_return_msg (return_msg VARCHAR(20) COLLATE DATABASE_DEFAULT );
 
 INSERT INTO #temp_return_msg
-EXEC spa_synchronize_excel_reports '','y','y', @excel_report_param
+EXEC spa_synchronize_excel_reports '', @excel_report_param
 
 DECLARE @desc VARCHAR(MAX)
 DECLARE @job_name VARCHAR(200)

@@ -20,6 +20,7 @@ namespace FARRMSExcelServerCLR
 
             RunProcess();
             _snapshotInfo.ExcelSheet.ShowHideDataTabs(_snapshotInfo.ReplicaWorkbook);
+            _snapshotInfo.DocumentSet.ExecutionStatus = ExecutionStatus.Completed;
         }
 
         /// <summary>
