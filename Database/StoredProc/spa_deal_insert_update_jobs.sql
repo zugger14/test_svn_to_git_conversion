@@ -275,7 +275,6 @@ END
 ELSE IF @insert_update_flag = 'u'
 BEGIN
 	SET @alert_register_event_step = 'EXEC spa_register_event 20601, 20504, ''' + @alert_process_table + ''', 1, ''' + @jobs_process_id + ''''
-	SET @alert_register_event_step += '; EXEC spa_register_event 20601, 20502, ''' + @alert_process_table + ''', 1, ''' + @jobs_process_id + ''''
 END		
 
 SET @alert_register_event_iu_step = 'EXEC spa_register_event 20601, 20537, ''' + @alert_process_table + ''', 1, ''' + @jobs_process_id + ''''
