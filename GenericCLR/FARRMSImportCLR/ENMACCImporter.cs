@@ -259,7 +259,7 @@ namespace FARRMSImportCLR
                     //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                     {
                         cn.Open();
-                        var finalTable = new string[] { "id", "short_id", "action", "email", "settlement", "term_start", "term_end", "commodity", "load", "market_area", "reference_market", "value", "unit", "pricing_type", "price_value", "price_currency", "counterparty_name", "traded_at", "interval_start", "interval_value" };
+                        var finalTable = new string[] { "id", "short_id", "action", "trader", "settlement", "term_start", "term_end", "commodity", "load", "market_area", "reference_market", "value", "unit", "pricing_type", "price_value", "price_currency", "counterparty_name", "traded_at", "interval_start", "interval_value" };
 
                         //  Create process table                         
                         var finalDataTable = Utility.CreateProcessTable(processTableName, finalTable, cn);
@@ -289,7 +289,7 @@ namespace FARRMSImportCLR
                                     dtrow["id"] = trade_detail["id"];
                                     dtrow["short_id"] = trade_detail["short-id"];
                                     dtrow["action"] = trade_detail["action"];
-                                    dtrow["email"] = trade_detail["execution"]["authority"]["user"]["email"];
+                                    dtrow["trader"] = trade_detail["execution"]["authority"]["user"]["email"];
                                     dtrow["settlement"] = trade_detail["instrument"]["settlement"];
                                     dtrow["term_start"] = trade_detail["instrument"]["maturity"]["start"];
                                     dtrow["term_end"] = trade_detail["instrument"]["maturity"]["end"];
@@ -317,7 +317,7 @@ namespace FARRMSImportCLR
                                 dtrow["id"] = trade_detail["id"];
                                 dtrow["short_id"] = trade_detail["short-id"];
                                 dtrow["action"] = trade_detail["action"];
-                                dtrow["email"] = trade_detail["execution"]["authority"]["user"]["email"];
+                                dtrow["trader"] = trade_detail["execution"]["authority"]["user"]["email"];
                                 dtrow["settlement"] = trade_detail["instrument"]["settlement"];
                                 dtrow["term_start"] = trade_detail["instrument"]["maturity"]["start"];
                                 dtrow["term_end"] = trade_detail["instrument"]["maturity"]["end"];
