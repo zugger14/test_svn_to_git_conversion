@@ -7,14 +7,14 @@ DECLARE @command NVARCHAR(4000)
 SET @db_name = DB_NAME()
 SET @owner_name = SYSTEM_USER
 SET @job_category = N'Import'
-SET @job_name = @db_name + N' - ' + @job_category + N' - ECM Remit EMIR ACK Feedback Capture'
+SET @job_name = @db_name + N' - ' + @job_category + N' - EMIR Feedback Capture'
 SET @command = N' 
 DECLARE @contextinfo VARBINARY(128)	
 DECLARE @app_admin_user NVARCHAR(1000) = dbo.FNAAppAdminID() 
 SELECT @contextinfo = CONVERT(VARBINARY(128), @app_admin_user)
 SET CONTEXT_INFO @contextinfo
 GO
-EXEC spa_ecm  @flag = ''a'', @file_transfer_endpoint_name = ''ECM REMIT and Emir ACK'''
+EXEC spa_source_emir @flag = ''r'', @file_transfer_endpoint_name = ''EMIR Feedback'''
 
 BEGIN TRANSACTION
 DECLARE @ReturnCode INT

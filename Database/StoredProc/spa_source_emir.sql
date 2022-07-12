@@ -653,9 +653,12 @@ BEGIN
 			submission_date = GETDATE(),
 			confirmation_date = GETDATE(),
 			process_id = @process_id,
-			document_id =  sdh.source_deal_header_id,
+			document_id = 'CPML_' + CONVERT(NVARCHAR(10), MAX(sdh.deal_date), 112) + '_' + REPLICATE('0', 10 - LEN(RTRIM(sdh.source_deal_header_id))) + RTRIM(sdh.source_deal_header_id) + '@' + MAX(sub_cpty.[LEI]) ,
 			commodity_id = MAX(scm.commodity_id),
-			broker_name = MAX(sc_broker.counterparty_name)
+			broker_name = MAX(sc_broker.counterparty_name),
+			CASE WHEN MAX(se.document_version) IS NULL THEN ROW_NUMBER() OVER(PARTITION BY sdh.source_deal_header_id ORDER BY sdh.source_deal_header_id)
+				ELSE MAX(se.document_version) + 1
+		   END  document_version
 		INTO #temp_source_emir
 		--SELECT  * 
 		FROM #temp_deals sdh
@@ -753,6 +756,12 @@ BEGIN
 				AND CASE WHEN sdh.counterparty_id IN (SELECT source_counterparty_id FROM source_counterparty WHERE counterparty_id IN ('ICE', 'CME', 'EEX')) THEN sdh.counterparty_id ELSE (SELECT source_counterparty_id FROM source_counterparty WHERE counterparty_id IN ('ICE')) END = gmvx.clm7_value	
 			
 		) gmv_ff
+		OUTER APPLY(
+			SELECT TOP 1 se.document_version
+			FROM source_emir se
+			WHERE se.source_deal_header_id = sdh.source_deal_header_id				
+			ORDER BY se.document_version DESC
+		) se
 		OUTER APPLY (
 			SELECT MAX(dmd.fas_link_detail_id) [fas_link_detail_id],
 				   CAST(ROUND((sdd.total_volume - SUM(dmd.matched_volume)), 2) AS NUMERIC(20,2)) [rem_vol],
@@ -821,7 +830,7 @@ BEGIN
 				delivery_currency_2, exchange_rate_1, forward_exchange_rate, exchange_rate_basis, commodity_base, commodity_details, delivery_point, interconnection_point, load_type, 
 				load_delivery_interval, delivery_start_date, delivery_end_date, duration, days_of_the_week, delivery_capacity, quantity_unit, price_time_interval_quantity, option_type, option_style, 
 				strike_price, strike_price_notation, underlying_maturity_date, seniority, reference_entity, frequency_of_payment, calculation_basis, series, version, index_factor, tranche, 
-				attachment_point, detachment_point, action_type, level, report_type, create_date_from, create_date_to, submission_status, submission_date, confirmation_date, process_id, document_id, commodity_id, broker_name
+				attachment_point, detachment_point, action_type, level, report_type, create_date_from, create_date_to, submission_status, submission_date, confirmation_date, process_id, document_id, commodity_id, broker_name, document_version
 			)
 			SELECT * FROM #temp_source_emir
 			
@@ -3410,13 +3419,13 @@ BEGIN
 				, 'ClearingHouse' ReceiverRole
 				, contract_type TransactionType	
 				, trade_id DealID	
-				, IIF(se.counterparty_side = 'b', se.counterparty_id, se.counterparty_name) BuyerParty	
+				, IIF(se.counterparty_side = 'b', se.counterparty_name, se.counterparty_id) BuyerParty	
 				, IIF(se.counterparty_side = 's', se.counterparty_name, se.counterparty_id) SellerParty
 				, LTRIM(STR(notional_amount, 25, 2)) NotionalAmount
 				, aggreement_type AgreementType
 				, price_currency Currency
 				, LTRIM(STR(se.quantity, 25, 0)) TotalVolume
-				, se.quantity_unit TotalVolumeUnit
+				, ISNULL(com_uom.uom, se.quantity_unit) TotalVolumeUnit
 				, CONVERT(VARCHAR(10), se.execution_timestamp, 120) TradeDate
 				, ISNULL(CONVERT(VARCHAR(10), se.effective_date, 120), '') EffectiveDate
 				, fixed_price
@@ -3427,8 +3436,9 @@ BEGIN
 				, sc_formula_curve.commodity_name formula_curve_commodity
 				, set_curr.currency_name sett_currency_name
 				, set_formula_curve.currency_name formula_cur_currency_name
-				, sett_um.uom_name set_uom_name
-				, form_crv_um.uom_name for_crv_uom_name
+				, ISNULL(com_uom.uom, sett_um.uom_name) set_uom_name
+				, ISNULL(com_uom.uom, form_crv_um.uom_name) for_crv_uom_name
+				, se.document_version DocumentVersion
 			INTO #xml_data
 			FROM source_emir se
 			INNER JOIN source_deal_header sdh ON sdh.source_deal_header_id = se.source_deal_header_id
@@ -3436,12 +3446,17 @@ BEGIN
 			LEFT JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = sdd.curve_id 		
 			LEFT JOIN source_price_curve_def spcd_sett ON spcd_sett.source_curve_def_id = spcd.settlement_curve_id 	
 			LEFT JOIN source_price_curve_def spcd_formula_curve ON spcd_formula_curve.source_curve_def_id = sdd.formula_curve_id
-			LEFT JOIN source_commodity sc ON sc.source_commodity_id = spcd_sett.commodity_id
+			LEFT JOIN source_commodity sc ON sc.source_commodity_id = spcd_sett.commodity_id			
 			LEFT JOIN source_commodity sc_formula_curve ON sc_formula_curve.source_commodity_id = spcd_formula_curve.commodity_id
 			LEFT JOIN source_currency set_curr ON set_curr.source_currency_id = spcd_sett.source_currency_id
 			LEFT JOIN source_currency set_formula_curve ON set_formula_curve.source_currency_id = spcd_formula_curve.source_currency_id
 			LEFT JOIN source_uom sett_um ON sett_um.source_uom_id = spcd_sett.uom_id
 			LEFT JOIN source_uom form_crv_um ON form_crv_um.source_uom_id = spcd_formula_curve.uom_id
+			OUTER APPLY (
+				SELECT gmv.clm3_value uom FROM generic_mapping_header gmh 
+				INNER JOIN generic_mapping_values gmv ON gmv.mapping_table_id = gmh.mapping_table_id
+				WHERE gmh.mapping_name = 'EMIR Commodity' AND gmv.clm1_value = sdh.commodity_id
+			) com_uom			
 			WHERE se.process_id = @process_id AND se.error_validation_message IS NULL
 			
 			CREATE TABLE #settlement_date (settlement_date DATE, contract_expiration_date DATE)
@@ -3539,7 +3554,7 @@ BEGIN
 							<SenderID>' + SenderID + '</SenderID>
 							<ReceiverID>' + ReceiverID + '</ReceiverID>
 							<ReceiverRole>' + ReceiverRole + '</ReceiverRole>
-							<DocumentVersion>' + DocumentID + '</DocumentVersion>
+							<DocumentVersion>' + DocumentVersion + '</DocumentVersion>
 							<TransactionType>' + TransactionType + '</TransactionType>
 							<BuyerParty>' + BuyerParty + '</BuyerParty>
 							<SellerParty>' + SellerParty + '</SellerParty>
@@ -3570,9 +3585,9 @@ BEGIN
 										' + @calculation_period + '
 									</CommodityReference>
 								</CommodityReferences>
-							</FloatPriceInformation>', '') + '
-							<TotalContractValue>' + NotionalAmount + '</TotalContractValue>
-							<Rounding>2</Rounding>
+							</FloatPriceInformation>', '') + 
+							IIF (formula_curve_id IS NOT NULL,'<TotalContractValue>' + NotionalAmount + '</TotalContractValue>', '') +
+							'<Rounding>2</Rounding>
 							<CommonPricing>false</CommonPricing>
 							<EffectiveDate>' + EffectiveDate + '</EffectiveDate>
 							<TerminationDate>' + @termination_date + '</TerminationDate>
@@ -4978,7 +4993,7 @@ BEGIN
 		@desc_success NVARCHAR(MAX),
 		@download_files NVARCHAR(MAX)
 
-	SELECT @server_location = document_path + '\temp_note\ECM'
+	SELECT @server_location = document_path + '\temp_note\EMIR'
 	FROM connection_string 
 
 	SELECT @file_transfer_endpoint_id = file_transfer_endpoint_id
@@ -5004,7 +5019,7 @@ BEGIN
 	IF OBJECT_ID('tempdb..#temp_emir_data') IS NOT NULL
 		DROP TABLE #temp_emir_data
 	CREATE TABLE #temp_emir_data(
-		trade_id INT,
+		doc_id NVARCHAR(200),
 		doc_version INT,
 		[timestamp]  NVARCHAR(100) COLLATE DATABASE_DEFAULT,
 		[status]  NVARCHAR(200) COLLATE DATABASE_DEFAULT,
@@ -5012,7 +5027,7 @@ BEGIN
 		error_description  NVARCHAR(2000) COLLATE DATABASE_DEFAULT,
 		download_file_name  NVARCHAR(100) COLLATE DATABASE_DEFAULT	
 	)
-
+	
 	IF @download_files IS NOT NULL
 	BEGIN
 		EXEC spa_download_file_from_ftp_using_clr @file_transfer_endpoint_id, @remote_location, @download_files, @server_location, '.xml', @output_result OUTPUT
@@ -5026,23 +5041,24 @@ BEGIN
 		WHILE @@FETCH_STATUS = 0   
 		BEGIN   
 			SELECT @xml_file_content = dbo.FNAReadFileContents(@server_location + '\' + @dir_file)
+
 			IF @xml_file_content IS NOT NULL
 			BEGIN
 				SET @xml_file_content = REPLACE(@xml_file_content, 'encoding="UTF-8"', 'encoding="UTF-16"')
 				INSERT INTO #temp_emir_data
 				SELECT 
-				x.xml_col.value('DocumentID[1]','VARCHAR(100)') AS trade_id
+				x.xml_col.value('DocumentID[1]','VARCHAR(100)') AS document_id
 				,x.xml_col.value('DocumentVersion[1]','VARCHAR(100)') AS [document_version]
 				,x.xml_col.value('Timestamp[1]','VARCHAR(100)') AS [timestamp]
-				,x.xml_col.value('CMSResult[1]/Result[1]','VARCHAR(100)') AS [result]
+				,x.xml_col.value('CMSResult[1]/Result[1]','VARCHAR(100)') AS [status]
 				,child.xml_col.value('ReasonCode[1]','VARCHAR(100)') AS [ReasonCode]
 				,child.xml_col.value('ReasonText[1]','VARCHAR(100)') AS [ReasonText]
 				, @dir_file
 				FROM ( SELECT  CAST(@xml_file_content AS XML) RawXml) b
 				CROSS APPLY b.RawXml.nodes('/Envelope/Payload/Message/ERRBoxResult') x(xml_col)
-				CROSS APPLY x.xml_col.nodes('CMSResult/Reason') child(xml_col);
-
-				IF EXISTS(SELECT 1 FROM #temp_emir_data WHERE [status] IN ('Success') AND download_file_name = @dir_file)
+				OUTER APPLY x.xml_col.nodes('CMSResult/Reason') child(xml_col);
+				
+				IF EXISTS(SELECT 1 FROM #temp_emir_data WHERE [status] IN ('OK') AND download_file_name = @dir_file)
 				BEGIN
 					SELECT @success_files += IIF(NULLIF(@success_files,'') IS NULL, @dir_file, ',' + @dir_file)
 		
@@ -5057,7 +5073,7 @@ BEGIN
 
 		CLOSE db_cursor   
 		DEALLOCATE db_cursor
-		IF EXISTS(SELECT 1 FROM #temp_emir_data WHERE [status] IN ('ERROR','SUCCESS'))
+		IF EXISTS(SELECT 1 FROM #temp_emir_data WHERE [status] IN ('ERROR','OK'))
 		BEGIN
 			IF NULLIF(@success_files,'') IS NOT NULL
 			BEGIN
@@ -5086,10 +5102,10 @@ BEGIN
 		, trade_id
 		, source_file_name
 	)		
-	SELECT status, error_code, error_description, se.action_type, GETDATE(),[timestamp],se.[level],
-		tmp.trade_id, tmp.trade_id , tmp.download_file_name
+	SELECT DISTINCT [status], error_code, error_description, se.action_type, GETDATE(),[timestamp],se.[level],
+		se.source_deal_header_id, se.trade_id , tmp.download_file_name
 	FROM #temp_emir_data tmp
-	INNER JOIN source_emir se ON se.source_deal_header_id = tmp.trade_id
+	INNER JOIN source_emir se ON se.document_id = tmp.doc_id
 
 	SELECT @process_id = dbo.FNAGETNEWID()
 	SELECT @user_name  = dbo.FNAdbuser()
@@ -5103,7 +5119,7 @@ BEGIN
 
 	EXEC('SELECT *
 			INTO ' + @process_table + ' FROM #temp_emir_data
-			WHERE [status] IN (''ERROR'',''SUCCESS'')
+			WHERE [status] IN (''ERROR'',''OK'')
 	')
 
 	IF EXISTS(SELECT 1 FROM #temp_emir_data temp
@@ -5114,7 +5130,7 @@ BEGIN
 		INSERT INTO source_system_data_import_status (process_id, code, module, source, type, description)
 		SELECT @process_id, temp.[status], 'EMIR Feedback', 'EMIR Feedback', temp.[status], temp.error_code + ' ' + temp.error_description  
 		FROM #temp_emir_data temp
-		WHERE [status] IN ('SUCCESS','ERROR')
+		WHERE [status] IN ('SUCCESS','OK')
 		SELECT @url = '../../adiha.php.scripts/dev/spa_html.php?__user_name__=' + @user_name + '&spa=exec spa_get_import_process_status ''' + @process_id + ''','''+@user_name+''''
 		SELECT @desc_success = 'EMIR Feedback captured with error. <a target="_blank" href="' + @url + '">Click here.</a>'
 	END
@@ -5160,11 +5176,11 @@ BEGIN
 	SET submission_status =
 		CASE 
 			WHEN temp.[status] = 'ERROR' THEN 39503
-			WHEN temp.[status] = 'SUCCESS' THEN 39502
+			WHEN temp.[status] = 'OK' THEN 39502
 		END				
 	FROM #temp_emir_data temp
 	INNER JOIN source_emir se
-	ON se.source_deal_header_id = temp.trade_id
+	ON se.document_id = temp.doc_id
 END
 
 IF @batch_process_id IS NOT NULL AND @batch_report_param IS NOT NULL

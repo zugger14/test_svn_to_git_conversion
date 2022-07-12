@@ -53,6 +53,27 @@ BEGIN
 	FROM static_data_value WHERE [type_id] = 5500 AND [code] = 'Energy Commodity'
 END
 
+IF NOT EXISTS (SELECT 1 FROM static_data_value WHERE [type_id] = 5500 AND code = 'Energy UOM')
+BEGIN
+    INSERT INTO static_data_value (
+		[type_id],  
+		[code], 
+		[description]
+	) 
+	OUTPUT INSERTED.value_id, INSERTED.[type_id], INSERTED.code
+		INTO #insert_output_sdv_external
+	VALUES (
+		5500, 
+		'Energy UOM',
+		'Energy UOM'
+	)
+END
+ELSE
+BEGIN
+    INSERT INTO  #insert_output_sdv_external
+	SELECT value_id, [type_id], code
+	FROM static_data_value WHERE [type_id] = 5500 AND [code] = 'Energy UOM'
+END
 -- 2 UDF Template
 IF NOT EXISTS (
        SELECT 1
@@ -128,6 +149,43 @@ BEGIN
     WHERE  Field_label = 'Energy Commodity'
 END
 
+IF NOT EXISTS (
+       SELECT 1
+       FROM   user_defined_fields_template
+       WHERE  Field_label = 'Energy UOM'
+   )
+BEGIN
+	INSERT INTO user_defined_fields_template (
+		field_name, 
+		field_label,
+		Field_type, 
+		data_type, 
+		is_required, 
+		sql_string,
+		udf_type, 
+		field_size,
+		field_id
+	)
+	SELECT iose.value_id,
+           'Energy UOM',
+           't',
+           'nvarchar(250)',
+           'n',
+           NULL,
+           'o',
+           100,
+           iose.value_id
+    FROM   #insert_output_sdv_external iose
+    WHERE  iose.[code] = 'Energy UOM'
+END
+ELSE
+BEGIN
+    UPDATE user_defined_fields_template
+    SET    Field_type = 't',
+		   sql_string = NULL
+    WHERE  Field_label = 'Energy UOM'
+END
+
 --Generic Mapping Table 
 IF NOT EXISTS( SELECT * FROM generic_mapping_header WHERE mapping_name = 'EMIR Commodity')
 BEGIN 
@@ -138,15 +196,20 @@ BEGIN
 	)
 	VALUES (
 		'EMIR Commodity', 
-		2, 
+		3, 
 		0
 	)
+END
+ELSE 
+BEGIN
+	UPDATE generic_mapping_header SET total_columns_used = 3 WHERE mapping_name = 'EMIR Commodity'
 END
 
 -- Mapping Definition
 DECLARE @mapping_table_id INT
 	  , @commodity INT
 	  , @energy_commodity INT
+	  , @energy_uom INT
 	  
 SELECT @mapping_table_id = mapping_table_id
 FROM generic_mapping_header
@@ -160,6 +223,10 @@ SELECT @energy_commodity = udf_template_id
 FROM user_defined_fields_template 
 WHERE Field_id = (SELECT field_id FROM user_defined_fields_template WHERE Field_label = 'Energy Commodity')
 
+SELECT @energy_uom = udf_template_id 
+FROM user_defined_fields_template 
+WHERE Field_id = (SELECT field_id FROM user_defined_fields_template WHERE Field_label = 'Energy UOM')
+
 
 IF NOT EXISTS (SELECT 1 FROM generic_mapping_definition WHERE mapping_table_id = @mapping_table_id)
 BEGIN
@@ -168,7 +235,9 @@ BEGIN
 		, clm1_label
 		, clm1_udf_id
 		, clm2_label
-		, clm2_udf_id 
+		, clm2_udf_id
+		, clm3_label
+		, clm3_udf_id
 		, unique_columns_index
 	)
 	SELECT @mapping_table_id
@@ -176,6 +245,8 @@ BEGIN
 		, @commodity
 		, 'Energy Commodity'
 		, @energy_commodity
+		, 'Energy UOM'
+		, @energy_uom
 		, '1'
 END
 ELSE
@@ -185,6 +256,8 @@ BEGIN
 		, clm1_udf_id = @commodity
 		, clm2_label = 'Energy Commodity'
 		, clm2_udf_id = @energy_commodity
+		, clm3_label = 'Energy UOM'
+		, clm3_udf_id = @energy_uom
 		, unique_columns_index = '1'
 	FROM generic_mapping_definition gmd
 	INNER JOIN generic_mapping_header gmh 
