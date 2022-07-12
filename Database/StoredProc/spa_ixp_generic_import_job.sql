@@ -21773,7 +21773,8 @@ BEGIN
 
 	EXEC spa_auto_transfer @source_deal_header_id = @inserted_source_deal_header_id
 	--deal transfer ends
-
+	
+	EXEC spa_register_event 20601, 20502, @alert_process_table, 1, @process_id3 --Added event to update 'Execution Timestamp'
 END 
 
 IF @table_name IN ('ixp_15mins_allocation_data_template', 'ixp_mv90_data_template')
@@ -39639,7 +39640,6 @@ END
 IF @table_name = 'ixp_source_deal_template'
 BEGIN
 	EXEC spa_register_event 20601, 20515, @alert_process_table, 1, @process_id3
-	EXEC spa_register_event 20601, 20502, @alert_process_table, 1, @process_id3 --Added event to update 'Execution Timestamp'
 END
 
 IF EXISTS (SELECT 1 FROM module_events WHERE modules_id = 20634 AND event_id = 20515 AND is_active = 'y')
