@@ -49,8 +49,12 @@ SELECT  @default_code_value = [dbo].[FNAGetDefaultCodeValue](36, 1)
 --change date to local time
 UPDATE t
 SET t.[term_start] = [dbo].[FNAGetLOCALTime](t.[term_start] , @default_code_value) ,
-t.[term_end] = [dbo].[FNAGetLOCALTime](t.[term_end] , @default_code_value) ,
-t.[deal_date] = [dbo].[FNAGetLOCALTime](t.[deal_date] , @default_code_value)
+t.[term_end] = CASE WHEN (DATEPART(HOUR, [dbo].[FNAGetLOCALTime](t.[term_end], @default_code_value)) in ( 0, 6))
+                    THEN DATEADD(DAY, -1, [dbo].[FNAGetLOCALTime](t.[term_end], @default_code_value))
+                ELSE [dbo].[FNAGetLOCALTime](t.[term_end], @default_code_value)
+                END ,
+t.[deal_date] =  [dbo].[FNAGetLOCALTime](t.[deal_date] , @default_code_value) 
+
 FROM  [final_process_table] t
 
 UPDATE t
@@ -214,8 +218,12 @@ SELECT  @default_code_value = [dbo].[FNAGetDefaultCodeValue](36, 1)
 --change date to local time
 UPDATE t
 SET t.[term_start] = [dbo].[FNAGetLOCALTime](t.[term_start] , @default_code_value) ,
-t.[term_end] = [dbo].[FNAGetLOCALTime](t.[term_end] , @default_code_value) ,
-t.[deal_date] = [dbo].[FNAGetLOCALTime](t.[deal_date] , @default_code_value)
+t.[term_end] = CASE WHEN (DATEPART(HOUR, [dbo].[FNAGetLOCALTime](t.[term_end], @default_code_value)) in ( 0, 6))
+                    THEN DATEADD(DAY, -1, [dbo].[FNAGetLOCALTime](t.[term_end], @default_code_value))
+                ELSE [dbo].[FNAGetLOCALTime](t.[term_end], @default_code_value)
+                END ,
+t.[deal_date] =  [dbo].[FNAGetLOCALTime](t.[deal_date] , @default_code_value) 
+
 FROM  [final_process_table] t
 
 UPDATE t
@@ -506,6 +514,10 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'fixed_price_currency_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[value]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''h''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
@@ -514,7 +526,7 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume_uom_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[market_area]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[location]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'location_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
