@@ -1,8 +1,5 @@
 using System;
-using System.Data;
 using System.Data.SqlClient;
-using System.Data.SqlTypes;
-using Microsoft.SqlServer.Server;
 using FARRMSUtilities;
 
 namespace FARRMSExcelServerCLR
@@ -47,12 +44,13 @@ namespace FARRMSExcelServerCLR
             }
         }
 
-        public static void BulkDocumentGeneration(int batchSize, string batchProcessId)
+        [Microsoft.SqlServer.Server.SqlProcedure]
+        public static void BulkDocumentGeneration(string batchProcessId)
         {
             try
             {
-                var process = new BulkDocumentGeneration(batchSize, batchProcessId);
-                process.RunProcess();
+                var process = new BulkDocumentGeneration(batchProcessId);
+                process.RunProcesss();
             }
             catch (Exception ex)
             {

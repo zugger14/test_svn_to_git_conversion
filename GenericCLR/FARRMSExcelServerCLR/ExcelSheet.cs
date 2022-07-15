@@ -72,6 +72,7 @@ namespace FARRMSExcelServerCLR
             //                  DateTime.Now.ToString("yyyyMMdd_HHmmssff") + "." + exportFormat.ToLower();
             _exportFileName = fi.DirectoryName + "\\" + SheetName + "_" + SnapshotInfo.UserName + "_" +
                               SnapshotInfo.ProcessId + "." + exportFormat.ToLower();
+            this.SnapshotInfo.DocumentTemplate.ExportFileName = _exportFileName;
             //  Find and replace signature if excel sheet is defined as document generation.
             if (this.DocumentType == DocumentType.DocumentGeneration)
                 FindAndReplaceSignatureImage();

@@ -14,7 +14,7 @@ namespace ConsoleApp1
             
             string msg = "";
             string s;
-            FARRMSExcelServerCLR.StoredProcedure.BulkExcelDocumentGeneration(5, "process_id");
+            FARRMSExcelServerCLR.StoredProcedure.BulkDocumentGeneration("batchProcessId");
             Console.ReadLine();
             return;
 

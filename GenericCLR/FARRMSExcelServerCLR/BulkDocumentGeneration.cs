@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
 using System.Data.SqlClient;
+using System.IO;
+using FARRMSUtilities;
+using System.Text;
 
 namespace FARRMSExcelServerCLR
 {
@@ -16,87 +15,126 @@ namespace FARRMSExcelServerCLR
         public List<DocumentTemplate> documentTemplates { get; set; }
 
         /// <summary>
-        /// Total number of concurrent thread executions
-        /// </summary>
-        private int _batchSize { get; set; }
-        /// <summary>
         /// Bulk Batch process ID
         /// </summary>
-        private string _batchProcessId;
+        private readonly string _batchProcessId;
+        /// <summary>
+        /// Sql Connection string
+        /// </summary>
+        private readonly string _connectionString;
+        /// <summary>
+        /// document templates collection dataset process table name
+        /// </summary>
+        private readonly string _datasetProcessTableName;
 
         /// <summary>
         /// Bulk document generation default intilaization
         /// </summary>
         public BulkDocumentGeneration()
         {
-            _batchSize = 10;
         }
         /// <summary>
         /// Intitalize Bulk document generation
         /// </summary>
-        /// <param name="batchSize">No of parallel threads to be executed</param>
         /// <param name="batchProcessId"></param>
-        public BulkDocumentGeneration(int batchSize, string batchProcessId)
+        public BulkDocumentGeneration(string batchProcessId)
         {
-            _batchSize = batchSize;
-            if (_batchSize == 0) _batchSize = 10;
             _batchProcessId = batchProcessId;
+            _connectionString = "";
+            _connectionString = "Context Connection=True";
+            //_connectionString = @"Data Source=PSDL20;Initial Catalog=TRMTracker_Enercity;Persist Security Info=True;User ID=sa;password=pioneer";
+            _datasetProcessTableName = $"adiha_process.dbo.contract_report_template_exceldoc_{_batchProcessId}";
         }
 
-        public void RunProcess()
+        /// <summary>
+        /// Generate documents according to document templates
+        /// </summary>
+        public void RunProcesss()
         {
             LoadDocumentTemplates();
-            //var doc1 = this.documentTemplates.First();
-            //GenerateDocument(doc1);
-            //return;
-            try
+            foreach (var item in documentTemplates)
             {
-                int completedDocuments = documentTemplates.Count(x => x.ExecutionStatus == ExecutionStatus.Completed);
-                Console.WriteLine($"completedDocuments:{completedDocuments}");
-
-                while (completedDocuments < documentTemplates.Count)
-                {
-                    int runningThread = this.documentTemplates.Count(x => x.ExecutionStatus == ExecutionStatus.Started);
-                    Console.WriteLine($"runningThread:{runningThread}");
-
-                    int take = _batchSize - runningThread;
-                    var pendingDocuments = this.documentTemplates.Where(x => x.ExecutionStatus == ExecutionStatus.NotStarted).Take(take).ToList();
-                    Console.WriteLine($"take:{take}");
-                    Console.WriteLine($"pendingDocuments:{pendingDocuments.Count}");
-
-                    completedDocuments = documentTemplates.Count(x => x.ExecutionStatus == ExecutionStatus.Completed);
-                    Console.WriteLine($"completedDocuments:{completedDocuments} Of total documents {documentTemplates.Count}");
-                    foreach (var doc in pendingDocuments)
-                    {
-                        Task.Factory.StartNew(() => GenerateDocument(doc));
-                    }
-                    //  Dont add extra sleep when process is completed
-                    if (completedDocuments < documentTemplates.Count)
-                        Thread.Sleep(5000);
-                }
-                Console.WriteLine("EVERY THING FINISHED");
+                GenerateDocument(item);
             }
-            catch (Exception ex)
+
+            MoveDocuments();
+            UpdateDocumentExportStatus();
+        }
+
+        /// <summary>
+        /// Move all the exported documents to its output file path
+        /// </summary>
+        private void MoveDocuments()
+        {
+            foreach (var item in documentTemplates)
             {
-                throw ex;
+                if (item.Status && File.Exists(item.ExportFileName))
+                {
+                    try
+                    {
+                        if (File.Exists(item.OutputFilePath)) File.Delete(item.OutputFilePath);
+                        File.Move(item.ExportFileName, item.OutputFilePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        ex.LogError("MoveDocuments", "");
+                    }
+                }
+            }
+        }
+        /// <summary>
+        /// Mark document status as true
+        /// </summary>
+        private void UpdateDocumentExportStatus()
+        {
+            StringBuilder bld = new StringBuilder();
+
+            foreach (var item in documentTemplates)
+            {
+                if (item.Status)
+                {
+                    bld.Append($"{item.Id},");
+                }
+            }
+
+            string docIds = "";
+            if (!string.IsNullOrEmpty(bld.ToString()))
+            {
+                docIds = bld.ToString().TrimEnd(',');
+                using (var cn = new SqlConnection(_connectionString))
+                {
+                    cn.Open();
+                    Helper.ExecuteQuery(cn, $"UPDATE {_datasetProcessTableName} SET [status]=1 WHERE Id IN({docIds})");
+                }
             }
         }
 
         private void GenerateDocument(DocumentTemplate excelDocument)
         {
-            if (excelDocument.TemplateType.ToLower() == "excel")
-                CreateDocumentFromExcelTemplate(excelDocument);
-            else if (excelDocument.TemplateType.ToLower() == "excel")
-                CreateDocumentFromRDLTemplate(excelDocument);
-        }
-
-        private void CreateDocumentFromExcelTemplate(DocumentTemplate documentTemplate)
-        {
-            Console.WriteLine("New Task");
             try
             {
-                using (var sqlConnection = new SqlConnection("Context Connection=True"))
-                //using (var sqlConnection = new SqlConnection(@"Data Source=CTRMEUDB-D6005.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Enercity;User ID=dev_admin;password=Admin2929"))
+                if (excelDocument.TemplateType.ToLower() == "excel")
+                    CreateDocumentFromExcelTemplate(excelDocument);
+                else if (excelDocument.TemplateType.ToLower() == "rdl")
+                    CreateDocumentFromRDLTemplate(excelDocument);
+                excelDocument.Status = true;
+            }
+            catch (Exception ex)
+            {
+                excelDocument.Status = true;
+                ex.LogError("GenerateDocument", "");
+            }
+        }
+
+        /// <summary>
+        /// Generate excel document
+        /// </summary>
+        /// <param name="documentTemplate">DocumentTemplate</param>
+        private void CreateDocumentFromExcelTemplate(DocumentTemplate documentTemplate)
+        {
+            try
+            {
+                using (var sqlConnection = new SqlConnection(_connectionString))
                 {
                     sqlConnection.Open();
                     using (var snapshotInfo = new SnapshotInfo(sqlConnection, documentTemplate))
@@ -108,20 +146,22 @@ namespace FARRMSExcelServerCLR
             }
             catch (Exception ex)
             {
-                throw ex;
+                ex.LogError("CreateDocumentFromExcelTemplate", "");
             }
         }
 
+        /// <summary>
+        /// Execute Export RDL Wrapper sql command
+        /// </summary>
+        /// <param name="documentTemplate">DocumentTemplate</param>
         private void CreateDocumentFromRDLTemplate(DocumentTemplate documentTemplate)
         {
-            Console.WriteLine("New Task");
             try
             {
-                using (var sqlConnection = new SqlConnection("Context Connection=True"))
-                //using (var sqlConnection = new SqlConnection(@"Data Source=CTRMEUDB-D6005.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Enercity;User ID=dev_admin;password=Admin2929"))
+                using (var sqlConnection = new SqlConnection(_connectionString))
                 {
                     sqlConnection.Open();
-                    using(var cmd = new SqlCommand(documentTemplate.CriteriaOrSQl, sqlConnection))
+                    using (var cmd = new SqlCommand(documentTemplate.CriteriaOrSQl, sqlConnection))
                     {
                         cmd.ExecuteNonQuery();
                     }
@@ -130,27 +170,45 @@ namespace FARRMSExcelServerCLR
             }
             catch (Exception ex)
             {
-                throw ex;
+                ex.LogError("CreateDocumentFromRDLTemplate", "");
             }
         }
 
         /// <summary>
         /// Load collection of excel document to be generated from adiha_process.dbo.contract_report_template_exceldoc_process_id table
         /// </summary>
-        private void LoadDocumentTemplates()
+        public void LoadDocumentTemplates()
         {
             this.documentTemplates = new List<DocumentTemplate>();
-            using (var sqlConnection = new SqlConnection("Context Connection=True"))
-            //using (var sqlConnection = new SqlConnection(@"Data Source=CTRMEUDB-D6005.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Enercity;User ID=dev_admin;password=Admin2929"))
+            using (var sqlConnection = new SqlConnection(_connectionString))
             {
                 sqlConnection.Open();
-                using (SqlCommand cmd = new SqlCommand($"SELECT * FROM adiha_process.dbo.contract_report_template_exceldoc_{_batchProcessId}", sqlConnection))
+                using (SqlCommand cmd = new SqlCommand($"SELECT * FROM {_datasetProcessTableName}", sqlConnection))
                 {
                     using (SqlDataReader rd = cmd.ExecuteReader())
                     {
                         while (rd.Read())
                         {
-                            documentTemplates.Add(new DocumentTemplate() { ExcelSheetId = rd["excel_sheet_id"].ToInt(), ProcessId = rd["process_id"].ToString(), CriteriaOrSQl = rd["criteria"].ToString(), ExportFormat = rd["export_format"].ToString(), TemplateType = rd["template_type"].ToString(), UserName = rd["user_name"].ToString() });
+                            documentTemplates.Add(new DocumentTemplate()
+                            {
+                                ExcelSheetId = rd["excel_sheet_id"].ToInt()
+                            ,
+                                ProcessId = rd["process_id"].ToString()
+                            ,
+                                CriteriaOrSQl = rd["criteria"].ToString()
+                            ,
+                                ExportFormat = rd["export_format"].ToString()
+                            ,
+                                TemplateType = rd["template_type"].ToString()
+                            ,
+                                UserName = rd["user_name"].ToString()
+                            ,
+                                Id = rd["id"].ToInt()
+                            ,
+                                OutputFilePath = rd["output_file_path"].ToString()
+                            ,
+                                Status = rd["status"].ToBool()
+                            });
 
                         }
                     }
@@ -158,21 +216,5 @@ namespace FARRMSExcelServerCLR
             }
         }
 
-    }
-
-    public class DocumentTemplate
-    {
-        public int ExcelSheetId { get; set; }
-        public string ProcessId { get; set; }
-        public string CriteriaOrSQl { get; set; }
-        public string ExportFormat { get; set; }
-        public string TemplateType { get; set; }
-        public ExecutionStatus ExecutionStatus { get; set; }
-        public string UserName { get; internal set; }
-    }
-
-    public enum ExecutionStatus
-    {
-        NotStarted = 0, Started = 1, Completed = 2
     }
 }

@@ -99,6 +99,7 @@
     <Compile Include="Tablix.cs" />
     <Compile Include="StoredProcedure.cs" />
     <Compile Include="BulkDocumentGeneration.cs" />
+    <Compile Include="DocumentTemplate.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FARRMSUtilities\FARRMSUtilities.csproj">

@@ -228,8 +228,7 @@ GO
 
 /**
 	Bulk Excel Document Generation
-	Parameters
-	@batchSize			:	No of parallel threads to be executed
+	Parameters:
 	@batchProcessId		:	Batch process identifier
 */
 SET ANSI_NULLS ON
@@ -238,8 +237,7 @@ SET QUOTED_IDENTIFIER ON
 GO
 CREATE PROC [dbo].[spa_bulk_document_generation]
 (
-@batchSize INT
-, @batchProcessId NVARCHAR(255)
+	@batchProcessId NVARCHAR(255)
 )
 AS
 	EXTERNAL NAME FARRMSExcelServerCLR.[FARRMSExcelServerCLR.StoredProcedure].BulkDocumentGeneration

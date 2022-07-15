@@ -1,4 +1,5 @@
-﻿using Spire.Xls;
+﻿using FARRMSUtilities;
+using Spire.Xls;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -19,7 +20,7 @@ namespace FARRMSExcelServerCLR
     public class SnapshotInfo : IDisposable
     {
         //  Collection report filter to be overrien when report query is run
-        public DocumentTemplate  DocumentSet{ get; set; }
+        public DocumentTemplate  DocumentTemplate{ get; set; }
         public SnapshotInfo()
         {
         }
@@ -35,8 +36,7 @@ namespace FARRMSExcelServerCLR
         
         public SnapshotInfo(SqlConnection sqlConnection, DocumentTemplate excelDocument)
         {
-            this.DocumentSet = excelDocument;
-            this.DocumentSet.ExecutionStatus = ExecutionStatus.Started;
+            this.DocumentTemplate = excelDocument;
             UserName = excelDocument.UserName;
             ExportFomat = excelDocument.ExportFormat;
             if (string.IsNullOrEmpty(excelDocument.ProcessId)) excelDocument.ProcessId = Helper.ProcessId();
@@ -354,7 +354,7 @@ namespace FARRMSExcelServerCLR
             //  Create view report filters according to XML if available, For bulk excel document generation
             try
             {
-                var xmlParameter = this.DocumentSet.CriteriaOrSQl;
+                var xmlParameter = this.DocumentTemplate.CriteriaOrSQl;
 
                 if (!string.IsNullOrEmpty(xmlParameter))
                 {
@@ -382,9 +382,10 @@ namespace FARRMSExcelServerCLR
 
                 }
             }
-            catch (Exception ex)
+            //  
+            catch (Exception)
             {
-
+                //  Ignore any exception if XML is not parsed
             }
 
             //  Load view report filters from process table for old logic which dumps xml filters to process table
@@ -441,6 +442,7 @@ namespace FARRMSExcelServerCLR
             }
             catch (Exception)
             {
+                //  Ignoring posible exception if filter process table is not available
             }
         }
 
