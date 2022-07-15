@@ -259,7 +259,7 @@ namespace FARRMSImportCLR
                     //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                     {
                         cn.Open();
-                        var finalTable = new string[] { "id", "short_id", "action", "trader", "settlement", "term_start", "term_end", "commodity", "load", "market_area", "reference_market", "value", "unit", "pricing_type", "price_value", "price_currency", "counterparty_name", "traded_at", "interval_start", "interval_value" };
+                        var finalTable = new string[] { "id", "short_id", "name", "action","role", "trader", "settlement", "term_start", "term_end", "commodity", "load", "location", "reference_market", "value", "unit", "pricing_type", "price_value", "price_currency", "counterparty_name", "traded_at", "interval_start", "interval_value" };
 
                         //  Create process table                         
                         var finalDataTable = Utility.CreateProcessTable(processTableName, finalTable, cn);
@@ -285,17 +285,20 @@ namespace FARRMSImportCLR
                                 foreach( var load_data in load_shape_detail["data"])
                                 {
                                     DataRow dtrow = finalDataTable.NewRow();
-
+                                    var commodity = (string) trade_detail["instrument"]["commodity"];
+                                    
                                     dtrow["id"] = trade_detail["id"];
                                     dtrow["short_id"] = trade_detail["short-id"];
                                     dtrow["action"] = trade_detail["action"];
+                                    dtrow["name"] = trade_detail["name"];
+                                    dtrow["role"] = trade_detail["execution"]["role"];
                                     dtrow["trader"] = trade_detail["execution"]["authority"]["user"]["email"];
                                     dtrow["settlement"] = trade_detail["instrument"]["settlement"];
                                     dtrow["term_start"] = trade_detail["instrument"]["maturity"]["start"];
                                     dtrow["term_end"] = trade_detail["instrument"]["maturity"]["end"];
-                                    dtrow["commodity"] = trade_detail["instrument"]["commodity"];
+                                    dtrow["commodity"] = commodity;
                                     dtrow["load"] = trade_detail["instrument"]["load"];
-                                    dtrow["market_area"] = trade_detail["instrument"]["market-area"];
+                                    dtrow["location"] = (commodity.ToLower() == "power") ? trade_detail["instrument"]["balancing-zone"] : trade_detail["instrument"]["market-area"];
                                     dtrow["reference_market"] = trade_detail["instrument"]["reference-market"];
                                     dtrow["value"] = trade_detail["quantity"]["amount"]["value"];
                                     dtrow["unit"] = trade_detail["quantity"]["amount"]["unit"];
@@ -314,16 +317,20 @@ namespace FARRMSImportCLR
                             {
                                 DataRow dtrow = finalDataTable.NewRow();
 
+                                var commodity = (string) trade_detail["instrument"]["commodity"];
+
                                 dtrow["id"] = trade_detail["id"];
                                 dtrow["short_id"] = trade_detail["short-id"];
                                 dtrow["action"] = trade_detail["action"];
+                                dtrow["name"] = trade_detail["name"];
+                                dtrow["role"] = trade_detail["execution"]["role"];
                                 dtrow["trader"] = trade_detail["execution"]["authority"]["user"]["email"];
                                 dtrow["settlement"] = trade_detail["instrument"]["settlement"];
                                 dtrow["term_start"] = trade_detail["instrument"]["maturity"]["start"];
                                 dtrow["term_end"] = trade_detail["instrument"]["maturity"]["end"];
-                                dtrow["commodity"] = trade_detail["instrument"]["commodity"];
+                                dtrow["commodity"] = commodity;
                                 dtrow["load"] = trade_detail["instrument"]["load"];
-                                dtrow["market_area"] = trade_detail["instrument"]["market-area"];
+                                dtrow["location"] = (commodity.ToLower() == "power") ? trade_detail["instrument"]["balancing-zone"] :  trade_detail["instrument"]["market-area"];
                                 dtrow["reference_market"] = trade_detail["instrument"]["reference-market"];
                                 dtrow["value"] = trade_detail["quantity"]["amount"]["value"];
                                 dtrow["unit"] = trade_detail["quantity"]["amount"]["unit"];
