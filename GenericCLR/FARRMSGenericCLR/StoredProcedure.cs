@@ -147,7 +147,7 @@ namespace FARRMSGenericCLR
             DecompositionStatus calcStatus = new DecompositionStatus() { Type = decompositionType };
             double dValueEndRange = dvalue_end_range.ToDouble();
             using (SqlConnection sc = new SqlConnection("Context Connection=true"))
-            //using (SqlConnection sc = new SqlConnection("Data Source=SG-D-SQL02.farrms.us,2033;Initial Catalog=TRMTracker_PNM_Live;Persist Security Info=True;User ID=farrms_admin;password=Admin2929"))
+            // using (SqlConnection sc = new SqlConnection("Data Source=CTRMEUDB-D6005.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Enercity;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
             {
                 sc.Open();
                 try
@@ -199,9 +199,13 @@ namespace FARRMSGenericCLR
                             .ThenBy(x => x.Term2)
                             .ToArray();
                     reader.Close();
-                    //  Validation for number either curves in process table has data from curve correlation 
-                    if (CurveDataNotExists(curvesInProcess, curveDatas, processId, as_of_date.ToString(), sc, userName))
+                    //  Validation for number either curves in process table has data from curve correlation
+                    int noOfCurvesWhoseDataNotExists = CurveDataNotExists(curvesInProcess, curveDatas, processId, as_of_date.ToString(), sc, userName);
+                    
+                    // if number of curves whose data does not exists exceeds/equals the input curve list calc not reqd
+                    if (noOfCurvesWhoseDataNotExists == curvesInProcess.Length)
                         return;
+
                     //  List of From curves 
                     List<Curve> curves = new List<Curve>();
                     foreach (CurveData curveData in curveDatas)
@@ -685,18 +689,22 @@ namespace FARRMSGenericCLR
         /// <param name="sc">Valid SqlConnection</param>
         /// <param name="userName">Runtime user</param>
         /// <returns></returns>
-        private static bool CurveDataNotExists(Curve[] curvesInProcess, CurveData[] curveDatas, string processId,
+        private static int CurveDataNotExists(Curve[] curvesInProcess, CurveData[] curveDatas, string processId,
             string asOfDate, SqlConnection sc, string userName)
         {
             string query = "";
             bool dontExists = false;
+            int countNotExists = 0;
             foreach (Curve curve in curvesInProcess)
             {
                 CurveData curveData = curveDatas.FirstOrDefault(x => x.CurveIdFrom == curve.CurveId);
+                curve.hasCorrelation = true;
                 //  data not found in correlatin according processed curve
                 if (curveData == null)
                 {
+                    curve.hasCorrelation = false;
                     dontExists = true;
+                    countNotExists++;
                     //  Message Log
                     MessageLogs(processId,
                         "Correlation value not found for : " + asOfDate.ToString() + ", curve Id :" +
@@ -709,7 +717,7 @@ namespace FARRMSGenericCLR
                 MessageLogs(processId, "Eigen Decomposition Values. (ERRORS found).", "", false, sc, userName, "Error",
                     null, true, "Eigen_Correlation");
             }
-            return dontExists;
+            return countNotExists;
         }
         /// <summary>
         /// Validates coumt is same for two different curve
@@ -820,6 +828,7 @@ namespace FARRMSGenericCLR
         {
             public DateTime Term1 { get; set; }
             public int CurveId { get; set; }
+            public bool hasCorrelation { get; set; }
         }
 
         /// <summary>
