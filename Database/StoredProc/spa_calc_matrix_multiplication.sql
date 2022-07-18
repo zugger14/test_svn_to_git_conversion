@@ -87,9 +87,11 @@ BEGIN TRY
 		EXEC spa_calculate_eigen_values @as_of_date_one, @term_start_one, @term_end_one, @purge_one, @dvalue_end_range, @user_id_one, @process_id_one, @criteria_id, @decomposition_type
 	END
 		
-	IF EXISTS(SELECT TOP 1 1  FROM fas_eff_ass_test_run_log WHERE process_id = @process_id AND code ='Error' AND source <> 'Monte Carlo Simulation' AND module = 'Eigen Values')
-		RETURN
-		
+	-- IF EXISTS(SELECT TOP 1 1  FROM fas_eff_ass_test_run_log WHERE process_id = @process_id AND code ='Error' AND source <> 'Monte Carlo Simulation' AND module = 'Eigen Values')
+	-- 	RETURN
+
+	IF OBJECT_ID('tempdb..#tmp_eigen_cho_val') IS NOT NULL
+		DROP TABLE #tmp_eigen_cho_val	
 	CREATE TABLE #tmp_eigen_cho_val	(
 		as_of_date DATETIME,
 		x_curve_id INT,
@@ -155,7 +157,7 @@ BEGIN TRY
 		SELECT  @process_id, 'Error', @module, @source, 'Matrix_Multiplication', 'Correlation decomposition value not found for 
 		As of Date: ' + CONVERT(VARCHAR(10), @as_of_date, 120), 'Please check data.'
 
-		RAISERROR ('CatchError', 16, 1)
+		--RAISERROR ('CatchError', 16, 1)
 	END
 
 	CREATE TABLE #as_of_date_point(row_id INT IDENTITY(1, 1), as_of_date DATETIME);
@@ -248,7 +250,7 @@ BEGIN TRY
 		INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = tri.risk_bucket_id
 		WHERE NOT EXISTS(SELECT DISTINCT curve_id FROM #tmp_rnd_value WHERE curve_id = tri.risk_bucket_id)
 
-		RAISERROR ('CatchError', 16, 1)
+		--RAISERROR ('CatchError', 16, 1)
 	END
 
 	UPDATE trv SET norm_rnd_value = dbo.FNANormSInv(rnd_value) FROM #tmp_rnd_value trv

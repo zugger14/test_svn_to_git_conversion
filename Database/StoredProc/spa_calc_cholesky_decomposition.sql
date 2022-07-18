@@ -158,7 +158,7 @@ BEGIN TRY
 		INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = tri.risk_bucket_id
 		WHERE NOT EXISTS(SELECT DISTINCT x_curve_id FROM #tmp_curve_correlation WHERE x_curve_id = tri.risk_bucket_id)
 
-		RAISERROR ('CatchError', 16, 1)
+		--RAISERROR ('CatchError', 16, 1)
 	END
 
 
@@ -222,26 +222,28 @@ BEGIN TRY
 			INSERT INTO fas_eff_ass_test_run_log (process_id, code, MODULE, source, TYPE, DESCRIPTION, nextsteps) 
 			SELECT  @process_id, 'Error', @module, @source, 'Cholesky_Positive_Value', 'Matrix is not positive definite', 'Please check data.'
 
-			RAISERROR ('CatchError', 16, 1)
+			--RAISERROR ('CatchError', 16, 1)
 		END
 
-		UPDATE #tmp_decom_result SET d_value = v.val FROM #tmp_decom_result s 
-		CROSS APPLY (SELECT SQRT(1 - SUM(POWER(d_value, 2))) val FROM #tmp_decom_result WHERE Y_id = @x_id AND X_id < @x_id) v
-		WHERE s.Y_id = @x_id AND s.X_id = @x_id
+		IF NOT EXISTS(SELECT 1 FROM #d_one WHERE value < 0)
+		BEGIN
+			UPDATE #tmp_decom_result SET d_value = v.val FROM #tmp_decom_result s 
+			CROSS APPLY (SELECT SQRT(1 - SUM(POWER(d_value, 2))) val FROM #tmp_decom_result WHERE Y_id = @x_id AND X_id < @x_id) v
+			WHERE s.Y_id = @x_id AND s.X_id = @x_id
 
-		IF OBJECT_ID('tempdb..#first_value') IS NOT NULL
-		DROP TABLE #first_value
+			IF OBJECT_ID('tempdb..#first_value') IS NOT NULL
+			DROP TABLE #first_value
 
-		SELECT * INTO #first_value FROM #tmp_decom_result WHERE X_id < @x_id AND Y_id = @x_id
+			SELECT * INTO #first_value FROM #tmp_decom_result WHERE X_id < @x_id AND Y_id = @x_id
 
-		UPDATE #tmp_decom_result SET d_value = (d.cor_value-sum_prod.val) / z.val
-		FROM #tmp_decom_result s 
-		INNER JOIN #tmp_data d ON s.X_id = d.X_id AND s.Y_id = d.Y_id
-		CROSS APPLY(SELECT SUM(a.d_value * b.d_value) val FROM #tmp_decom_result a 
-		INNER JOIN #first_value b ON a.X_id = b.X_id AND a.Y_id = s.Y_id) sum_prod
-		CROSS APPLY(SELECT a.d_value val FROM #tmp_decom_result a WHERE a.X_id = @x_id AND a.Y_id = @x_id) z
-		WHERE  s.X_id = @x_id AND s.y_id > @x_id AND s.d_value IS NULL
-
+			UPDATE #tmp_decom_result SET d_value = (d.cor_value-sum_prod.val) / z.val
+			FROM #tmp_decom_result s 
+			INNER JOIN #tmp_data d ON s.X_id = d.X_id AND s.Y_id = d.Y_id
+			CROSS APPLY(SELECT SUM(a.d_value * b.d_value) val FROM #tmp_decom_result a 
+			INNER JOIN #first_value b ON a.X_id = b.X_id AND a.Y_id = s.Y_id) sum_prod
+			CROSS APPLY(SELECT a.d_value val FROM #tmp_decom_result a WHERE a.X_id = @x_id AND a.Y_id = @x_id) z
+			WHERE  s.X_id = @x_id AND s.y_id > @x_id AND s.d_value IS NULL
+		END
 		SET @x_id = @x_id + 1
 	
 	END
