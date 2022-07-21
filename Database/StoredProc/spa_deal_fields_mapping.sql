@@ -1100,7 +1100,7 @@ BEGIN
 		INTO @dup_shipper_code, @effective_date
 		WHILE @@FETCH_STATUS = 0
 		BEGIN	
-			DELETE FROM #temp_collect_shipper_code WHERE shipper_code = @dup_shipper_code AND effective_date != @effective_date
+			DELETE FROM #temp_collect_shipper_code WHERE shipper_code = @dup_shipper_code AND effective_date != @effective_date AND is_default != 'y'
 			IF EXISTS (SELECT 1 FROM #temp_collect_shipper_code WHERE shipper_code = @dup_shipper_code AND is_default = 'y')
 			BEGIN
 				DELETE FROM #temp_collect_shipper_code WHERE shipper_code = @dup_shipper_code		
@@ -1157,8 +1157,7 @@ BEGIN
 				FROM #temp_collect_shipper_code tcsc
 				INNER JOIN #temp_combo tc ON tc.value = tcsc.shipper_code_id
 				OUTER APPLY ( SELECT TOP 1 effective_date 
-					FROM #temp_collect_shipper_code WHERE YEAR(effective_date) = YEAR(@latest_start_eff_dt) 
-					AND MONTH(@latest_start_eff_dt) = MONTH(effective_date)
+					FROM #temp_collect_shipper_code WHERE tcsc.is_default = 'y'
 					ORDER BY shipper_code ASC
 				) a
 				WHERE tcsc.effective_date = CASE WHEN (MONTH(tcsc.effective_date) = MONTH(@term_start) AND YEAR(tcsc.effective_date) = YEAR(@term_start) )
@@ -1217,7 +1216,7 @@ BEGIN
 	BEGIN
 		UPDATE #temp_combo
 		SET selected = 'true'
-		WHERE value = @default_value
+		WHERE value = ISNULL(@default_value, @shipper_default_value)
 	END
 
 	IF @flag = 'v'
