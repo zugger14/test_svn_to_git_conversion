@@ -156,7 +156,7 @@ namespace FARRMSGenericCLR
                     string processTable = "adiha_process.dbo.Curve_Info_" + userName + "_" + processId.ToString();
 
                     //  List Of Curves exists in process table
-                    Curve[] curvesInProcess = GetCurvesFromProcessTable("SELECT DISTINCT risk_bucket_id [CurveId] ",
+                    Curve[] curvesInProcess = GetCurvesFromProcessTable("SELECT DISTINCT pt.risk_bucket_id [CurveId], spcd.curve_name [CurveName]",
                         processTable, sc);
 
                     //  Get most recent date from curve correaltion according asofdate supplied
@@ -579,7 +579,8 @@ namespace FARRMSGenericCLR
         /// <returns></returns>
         private static Curve[] GetCurvesFromProcessTable(string query, string processTable, SqlConnection sqlConnection)
         {
-            SqlCommand cmd = new SqlCommand(query + " FROM " + processTable, sqlConnection);
+            string innerJoinCurveDef = " pt INNER JOIN source_price_curve_def spcd ON spcd.source_curve_def_id = pt.risk_bucket_id";
+            SqlCommand cmd = new SqlCommand(query + " FROM " + processTable + innerJoinCurveDef, sqlConnection);
             using (SqlDataReader reader = cmd.ExecuteReader())
             {
                 Curve[] curves =
@@ -707,14 +708,14 @@ namespace FARRMSGenericCLR
                     countNotExists++;
                     //  Message Log
                     MessageLogs(processId,
-                        "Correlation value not found for : " + asOfDate.ToString() + ", curve Id :" +
-                        curve.CurveId.ToString(), "", true, sc, userName, "Error", null, true, "Eigen_Correlation");
+                        "Correlation value not found for : " + asOfDate.ToString() + ", curve name :" +
+                        curve.CurveName.ToString(), "", true, sc, userName, "Error", null, true, "Eigen_Correlation");
                 }
             }
             if (dontExists)
             {
                 //  Message board
-                MessageLogs(processId, "Eigen Decomposition Values. (ERRORS found).", "", false, sc, userName, "Error",
+                MessageLogs(processId, "Eigen Decomposition Values. (ERRORS found).", "Eigen Decomposition Values. (ERRORS found).", false, sc, userName, "Error",
                     null, true, "Eigen_Correlation");
             }
             return countNotExists;
@@ -768,7 +769,7 @@ namespace FARRMSGenericCLR
                     query =
                         "INSERT INTO fas_eff_ass_test_run_log (process_id, code, MODULE, source, TYPE, DESCRIPTION, nextsteps)";
                     query += "SELECT  '" + processId + "', '" + error + "', '" + module + "' , '" + messageType + "', '" +
-                             messageType + "', '" + messageLogDescription + " " + curve.CurveId.ToString() +
+                             messageType + "', '" + messageLogDescription + " " + curve.CurveName.ToString() +
                              "', 'Please check data.'";
                     //  Message Log
                     connection.ExecuteQuery(query);
@@ -828,6 +829,7 @@ namespace FARRMSGenericCLR
         {
             public DateTime Term1 { get; set; }
             public int CurveId { get; set; }
+            public string CurveName { get; set; }
             public bool hasCorrelation { get; set; }
         }
 
