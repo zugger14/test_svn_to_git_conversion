@@ -715,7 +715,7 @@ namespace FARRMSGenericCLR
             if (dontExists)
             {
                 //  Message board
-                MessageLogs(processId, "Eigen Decomposition Values. (ERRORS found).", "Eigen Decomposition Values. (ERRORS found).", false, sc, userName, "Error",
+                MessageLogs(processId, "Eigen Decomposition Values. (ERRORS found).", "Eigen Decomposition Values. (ERRORS found).", true, sc, userName, "Error",
                     null, true, "Eigen_Correlation");
             }
             return countNotExists;
