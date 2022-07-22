@@ -3391,7 +3391,8 @@ BEGIN
 		BEGIN
 			DECLARE @settlement_date NVARCHAR(MAX), @delivery_period NVARCHAR(MAX), @calculation_period NVARCHAR(MAX)
 			DROP TABLE IF EXISTS #xml_data
-			SELECT 
+			DROP TABLE IF EXISTS #xml_data2
+			SELECT DISTINCT
 				se.source_deal_header_id
 				,'Trader' ReportingRole
 				, 'Report' EMIRReportMode
@@ -3424,11 +3425,11 @@ BEGIN
 				, LTRIM(STR(notional_amount, 25, 2)) NotionalAmount
 				, aggreement_type AgreementType
 				, price_currency Currency
-				, LTRIM(STR(se.quantity, 25, 0)) TotalVolume
+				, se.quantity TotalVolume
 				, ISNULL(com_uom.uom, se.quantity_unit) TotalVolumeUnit
 				, CONVERT(VARCHAR(10), se.execution_timestamp, 120) TradeDate
 				, ISNULL(CONVERT(VARCHAR(10), se.effective_date, 120), '') EffectiveDate
-				, fixed_price
+				, sdd.fixed_price
 				, spcd.curve_id deal_curve_id
 				, spcd_sett.curve_id settlement_curve_id
 				, spcd_formula_curve.curve_id formula_curve_id
@@ -3460,9 +3461,27 @@ BEGIN
 			WHERE se.process_id = @process_id AND se.error_validation_message IS NULL
 			
 			CREATE TABLE #settlement_date (settlement_date DATE, contract_expiration_date DATE)
-
+			
+			SELECT 
+				source_deal_header_id, ReportingRole, EMIRReportMode, REMITReportMode, Position, Backload, ActionType, ReportingTimestamp
+				, TradingCapacity, CommercialOrTreasury, ClearingThreshold, Taxonomy, TradeID, VenueOfExecution, [Compression]
+				, ExecutionTimestamp, MasterAgreementVersion, ClearingObligation, Intragroup, ConfirmationMeans, DocumentID, DocumentUsage
+				, SenderID, ReceiverID, ReceiverRole, TransactionType, DealID, BuyerParty, SellerParty, NotionalAmount, AgreementType
+				, Currency, LTRIM(STR(SUM(TotalVolume), 25, 0)) TotalVolume, TotalVolumeUnit, TradeDate, EffectiveDate, MAX(fixed_price) fixed_price, deal_curve_id
+				, settlement_curve_id, formula_curve_id, settlement_commodity, formula_curve_commodity, sett_currency_name, formula_cur_currency_name
+				, set_uom_name, for_crv_uom_name, DocumentVersion
+			INTO #xml_data2
+			FROM #xml_data
+			GROUP BY 
+				source_deal_header_id, ReportingRole, EMIRReportMode, REMITReportMode, Position, Backload, ActionType, ReportingTimestamp
+				, TradingCapacity, CommercialOrTreasury, ClearingThreshold, Taxonomy, TradeID, VenueOfExecution, [Compression], ExecutionTimestamp
+				, MasterAgreementVersion, ClearingObligation, Intragroup, ConfirmationMeans, DocumentID, DocumentUsage, SenderID, ReceiverID
+				, ReceiverRole, TransactionType, DealID, BuyerParty, SellerParty, NotionalAmount, AgreementType, Currency, TotalVolumeUnit
+				, TradeDate, EffectiveDate, deal_curve_id, settlement_curve_id, formula_curve_id, settlement_commodity, formula_curve_commodity
+				, sett_currency_name, formula_cur_currency_name, set_uom_name, for_crv_uom_name, DocumentVersion
+			
 			DECLARE emir_cursor CURSOR FOR 
-			SELECT source_deal_header_id FROM #xml_data
+			SELECT source_deal_header_id FROM #xml_data2
 			OPEN emir_cursor 
 			FETCH NEXT FROM emir_cursor INTO @trade_id
 			WHILE @@FETCH_STATUS = 0
@@ -3595,7 +3614,7 @@ BEGIN
 						</TradeConfirmation>						
 					</CpmlDocument>
 					'
-				FROM #xml_data
+				FROM #xml_data2
 				WHERE source_deal_header_id = @trade_id 
 				
 				SELECT @emir_file_name = @emir_file_name + '.xml'
@@ -3916,7 +3935,7 @@ BEGIN
 				, REPLACE(reporting_timestamp, 'Z', '') ReportingTimestamp
 				, trade_id UTI
 				, counterparty_name CounterpartyID
-				, CONVERT(VARCHAR(10), CONVERT(DATETIME, valuation_ts, 103), 126) + 'T00:00:00' ValuationTimestamp
+				, CONVERT(VARCHAR(10), CONVERT(DATETIME, valuation_ts, 120), 126) + 'T00:00:00' ValuationTimestamp
 				, Format(contarct_mtm_value,'#.#######') MtMValue
 				, contarct_mtm_currency MtMCurrency
 				, valuation_type ValuationType
