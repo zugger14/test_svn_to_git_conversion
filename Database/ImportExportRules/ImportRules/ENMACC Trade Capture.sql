@@ -48,18 +48,23 @@ BEGIN
 SELECT  @default_code_value = [dbo].[FNAGetDefaultCodeValue](36, 1)
 
 -- insert shape data into process table 
-IF OBJECT_ID (N''adiha_process.dbo.temp_enmac_deal_detail_hour'') IS NOT NULL  
-	DROP TABLE 	adiha_process.dbo.temp_enmac_deal_detail_hour
+DECLARE @set_process_id VARCHAR(40) 
+SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[final_process_table]''), 0,37))
 
+DECLARE @sql NVARCHAR(1000) =''
+IF OBJECT_ID(''''adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + '''''') IS NOT NULL
+	DROP TABLE adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + ''
 SELECT 
 	temp.short_id,
-	dbo.[FNAGetLOCALTime](interval_start, @default_code_value) term_date,
+	dbo.[FNAGetLOCALTime](interval_start, '' + CAST(@default_code_value AS VARCHAR(10))+ '') term_date,
 	interval_value volume,
 	price_value price
-INTO adiha_process.dbo.temp_enmac_deal_detail_hour
+INTO adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + ''
 FROM [temp_process_table] temp
-WHERE temp.[commodity] = ''power'' 
-	AND temp.[load] = ''shape''
+WHERE temp.[commodity] = ''''power'''' 
+	AND temp.[load] = ''''shape''''''
+
+EXEC (@sql)
 	
 --change date to local time
 UPDATE t
@@ -198,7 +203,12 @@ LEFT JOIN static_data_value sdv
 LEFT JOIN  static_data_value sdv1
 	ON sdv1.value_id = gmv.clm4_value AND sdv1.type_id = 17300
 ',
-					'IF OBJECT_ID (N''tempdb..#b'') IS NOT NULL  
+					'DECLARE @set_process_id VARCHAR(40) 
+SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37))
+
+
+
+IF OBJECT_ID (N''tempdb..#b'') IS NOT NULL  
 	DROP TABLE 	#b
 
 CREATE TABLE #b ( minn INT )
@@ -235,16 +245,18 @@ CREATE TABLE #temp_deal_day_hour (
 )
 
 -- insert into temp table to check if it is hourly or 15 min deal
-INSERT INTO #temp_deal_day_hour(t_short_id, t_term_date, t_hr, t_min, t_day_hour, t_volume, t_price)
-SELECT td.short_id
-, term_date
-, DATEPART(HOUR, term_date) +1 t_hr
-, DATEPART(MINUTE, term_date) t_min
-, CAST(DATEPART(DAY, term_date) AS VARCHAR(10)) +'':''+ CAST(DATEPART(HOUR, term_date) +1 AS VARCHAR(10)) t_day_hour
-, MAX(volume) t_volume
-, MAX(price) t_price 
-FROM  adiha_process.dbo.temp_enmac_deal_detail_hour td 
-GROUP BY  short_id, term_date
+EXEC(''
+    INSERT INTO #temp_deal_day_hour(t_short_id, t_term_date, t_hr, t_min, t_day_hour, t_volume, t_price)
+    SELECT td.short_id
+    , term_date
+    , DATEPART(HOUR, term_date) +1 t_hr
+    , DATEPART(MINUTE, term_date) t_min
+    , CAST(DATEPART(DAY, term_date) AS VARCHAR(10)) +'':''+ CAST(DATEPART(HOUR, term_date) +1 AS VARCHAR(10)) t_day_hour
+    , MAX(volume) t_volume
+    , MAX(price) t_price 
+    FROM  adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id+''  td 
+    GROUP BY  short_id, term_date 
+'')
 
 INSERT INTO #temp_final_deal_detail_hour (
 	short_id ,
@@ -318,18 +330,23 @@ GROUP BY sdd.source_deal_detail_id, td.term_date, td.[hour]
 SELECT  @default_code_value = [dbo].[FNAGetDefaultCodeValue](36, 1)
 
 -- insert shape data into process table 
-IF OBJECT_ID (N''adiha_process.dbo.temp_enmac_deal_detail_hour'') IS NOT NULL  
-	DROP TABLE 	adiha_process.dbo.temp_enmac_deal_detail_hour
+DECLARE @set_process_id VARCHAR(40) 
+SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[final_process_table]''), 0,37))
 
+DECLARE @sql NVARCHAR(1000) =''
+IF OBJECT_ID(''''adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + '''''') IS NOT NULL
+	DROP TABLE adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + ''
 SELECT 
 	temp.short_id,
-	dbo.[FNAGetLOCALTime](interval_start, @default_code_value) term_date,
+	dbo.[FNAGetLOCALTime](interval_start, '' + CAST(@default_code_value AS VARCHAR(10))+ '') term_date,
 	interval_value volume,
 	price_value price
-INTO adiha_process.dbo.temp_enmac_deal_detail_hour
+INTO adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + ''
 FROM [temp_process_table] temp
-WHERE temp.[commodity] = ''power'' 
-	AND temp.[load] = ''shape''
+WHERE temp.[commodity] = ''''power'''' 
+	AND temp.[load] = ''''shape''''''
+
+EXEC (@sql)
 	
 --change date to local time
 UPDATE t
@@ -468,7 +485,12 @@ LEFT JOIN static_data_value sdv
 LEFT JOIN  static_data_value sdv1
 	ON sdv1.value_id = gmv.clm4_value AND sdv1.type_id = 17300
 '
-				, after_insert_trigger = 'IF OBJECT_ID (N''tempdb..#b'') IS NOT NULL  
+				, after_insert_trigger = 'DECLARE @set_process_id VARCHAR(40) 
+SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37))
+
+
+
+IF OBJECT_ID (N''tempdb..#b'') IS NOT NULL  
 	DROP TABLE 	#b
 
 CREATE TABLE #b ( minn INT )
@@ -505,16 +527,18 @@ CREATE TABLE #temp_deal_day_hour (
 )
 
 -- insert into temp table to check if it is hourly or 15 min deal
-INSERT INTO #temp_deal_day_hour(t_short_id, t_term_date, t_hr, t_min, t_day_hour, t_volume, t_price)
-SELECT td.short_id
-, term_date
-, DATEPART(HOUR, term_date) +1 t_hr
-, DATEPART(MINUTE, term_date) t_min
-, CAST(DATEPART(DAY, term_date) AS VARCHAR(10)) +'':''+ CAST(DATEPART(HOUR, term_date) +1 AS VARCHAR(10)) t_day_hour
-, MAX(volume) t_volume
-, MAX(price) t_price 
-FROM  adiha_process.dbo.temp_enmac_deal_detail_hour td 
-GROUP BY  short_id, term_date
+EXEC(''
+    INSERT INTO #temp_deal_day_hour(t_short_id, t_term_date, t_hr, t_min, t_day_hour, t_volume, t_price)
+    SELECT td.short_id
+    , term_date
+    , DATEPART(HOUR, term_date) +1 t_hr
+    , DATEPART(MINUTE, term_date) t_min
+    , CAST(DATEPART(DAY, term_date) AS VARCHAR(10)) +'':''+ CAST(DATEPART(HOUR, term_date) +1 AS VARCHAR(10)) t_day_hour
+    , MAX(volume) t_volume
+    , MAX(price) t_price 
+    FROM  adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id+''  td 
+    GROUP BY  short_id, term_date 
+'')
 
 INSERT INTO #temp_final_deal_detail_hour (
 	short_id ,
