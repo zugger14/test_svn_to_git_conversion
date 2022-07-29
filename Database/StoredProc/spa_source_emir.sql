@@ -569,7 +569,7 @@ BEGIN
 									ELSE 'O'
 							END,
 			execution_timestamp = CONVERT(VARCHAR(10), CONVERT(DATETIME, MAX(sdh.deal_date), 103),126) + 'T' + CAST(CAST(MAX(sdh.deal_date) AS TIME) AS VARCHAR(8)) + 'Z',--MAX(deal_udf.[Execution Timestamp]),
-			effective_date = CONVERT(VARCHAR(10), CONVERT(DATETIME, MAX(sdh.deal_date), 103), 126),
+			effective_date = CONVERT(VARCHAR(10), CONVERT(DATETIME, MAX(sdh.entire_term_start), 103), 126),
 			maturity_date = CONVERT(VARCHAR(10), CONVERT(DATETIME, MAX(sdd.contract_expiration_date), 103), 126),
 			termination_date = NULL,
 			settlement_date = CONVERT(VARCHAR(10),MAX(sdh.entire_term_end), 126),
@@ -3541,7 +3541,6 @@ BEGIN
 									<ReportingRole>' + ReportingRole + '</ReportingRole>
 									<EMIRReportMode>' + EMIRReportMode + '</EMIRReportMode>
 									<REMITReportMode>' + REMITReportMode + '</REMITReportMode>
-									<Position>' + Position + '</Position>
 									<Backload>' + Backload + '</Backload>
 								</ProcessInformation>
 								<Action>
