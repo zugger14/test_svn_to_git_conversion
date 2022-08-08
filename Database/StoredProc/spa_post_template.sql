@@ -45,16 +45,16 @@ CREATE PROCEDURE [dbo].spa_post_template
     @doc_file_name				NVARCHAR(MAX) = NULL, 
     @source_system				INT = NULL,
     @notes_id					VARCHAR(50) = NULL,
-    @notes_share_email_enable	BIT = NULL,
+    @notes_share_email_enable	BIT = 0,
 	@url						NVARCHAR(100) = NULL,
-	@category_value_id			INT = NULL,
-	@process_id					VARCHAR(200) = NULL,
+	@category_value_id			INT = 42047,
+	@process_id					VARCHAR(200) = 'E368CF89_2D41_47BF_AB04_FCA35C28512B',
 	@category_based_id			INT = NULL,
 	@document_type				INT = NULL,
 	@user_category				INT = NULL,
 	@workflow_process_id		VARCHAR(200) = NULL,
 	@workflow_message_id		INT = NULL,
-	@parent_object_id			INT = NULL,
+	@parent_object_id			VARCHAR(MAX) = NULL,
 	@workflow_deal_id			INT = NULL
 AS
 
@@ -100,10 +100,25 @@ BEGIN
 				, ''
 			RETURN
 		END
-		
-		INSERT INTO application_notes (internal_type_value_id, notes_object_id, notes_subject, notes_text, content_type, attachment_file_name, source_system_id, notes_share_email_enable, url, category_value_id, user_category, workflow_process_id, workflow_message_id, parent_object_id, attachment_folder, document_type) 
-		select @internal_type_value_id, @notes_object_id, @notes_subject, @notes_text, @doc_type, @doc_file_unique_name, @source_system, @notes_share_email_enable, @url, @category_value_id, @user_category, @workflow_process_id, @workflow_message_id, @parent_object_id, @sub_folder, @document_type
 
+		IF @process_id IS NOT NULL
+		BEGIN
+			DECLARE @contract_report_template_tbl VARCHAR(200) = 'adiha_process.dbo.contract_report_template_exceldoc_' + @process_id
+			SET @sql = '		
+			INSERT INTO application_notes (internal_type_value_id, notes_object_id, notes_subject, notes_text, content_type, attachment_file_name, source_system_id, notes_share_email_enable, url, 
+			category_value_id, user_category, workflow_process_id, workflow_message_id, parent_object_id, attachment_folder, document_type) 
+			SELECT DISTINCT ' + CAST(ISNULL(@internal_type_value_id, '') AS VARCHAR) + ', ' + CAST(ISNULL(@notes_object_id, '') AS VARCHAR) + ', notes_subject, NULL, NULL, output_file_name, NULL, ' + CAST(ISNULL(@notes_share_email_enable, '') AS VARCHAR) + ', NULL, ''' + CAST(ISNULL(@category_value_id, '') AS VARCHAR) 
+			 + ''', NULL, ''' + CAST(ISNULL(@workflow_process_id, '') AS VARCHAR) + ''', ''' + CAST(ISNULL(@workflow_message_id, '') AS VARCHAR) + ''', main_invoice_id, ''' + ISNULL(@sub_folder, '') + ''', NULL
+			FROM ' + @contract_report_template_tbl + ' c
+			'
+			--print(@sql)
+			EXEC(@sql)
+		END
+		ELSE
+		BEGIN
+			INSERT INTO application_notes (internal_type_value_id, notes_object_id, notes_subject, notes_text, content_type, attachment_file_name, source_system_id, notes_share_email_enable, url, category_value_id, user_category, workflow_process_id, workflow_message_id, parent_object_id, attachment_folder, document_type) 
+			select @internal_type_value_id, @notes_object_id, @notes_subject, @notes_text, @doc_type, @doc_file_unique_name, @source_system, @notes_share_email_enable, @url, @category_value_id, @user_category, @workflow_process_id, @workflow_message_id, @parent_object_id, @sub_folder, @document_type
+		END
 		
 	COMMIT 
 		EXEC spa_ErrorHandler 0

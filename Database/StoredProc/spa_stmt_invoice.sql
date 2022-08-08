@@ -666,6 +666,15 @@ END
 
 ELSE IF @flag = 'z' --Finalize Invoice  
 BEGIN
+	IF OBJECT_ID('tempdb..#invoice_collection') IS NOT NULL
+		DROP TABLE #invoice_collection
+
+	IF OBJECT_ID('tempdb..#invoice_nettings') IS NOT NULL
+		DROP TABLE #invoice_nettings
+
+	IF OBJECT_ID('tempdb..#invoice_state') IS NOT NULL
+		DROP TABLE #invoice_state
+
 	BEGIN TRY
 		SELECT DISTINCT IDENTITY(INT, 1, 1) id, i.item INTO #invoice_collection FROM dbo.SplitCommaSeperatedValues(@invoice_id) i WHERE item <> ''
 		DECLARE @id INT, @status INT = 1, @url_name VARCHAR(5000), @total_time_for_pdf_process VARCHAR(200), @pdf_process_start_time  DATETIME 
@@ -684,27 +693,23 @@ BEGIN
 
 		DELETE FROM #invoice_collection WHERE NULLIF(item,'') IS NULL
  
-		DECLARE @netting_id INT 
-		DECLARE invoice_col CURSOR FOR
-		SELECT item FROM #invoice_collection
-		OPEN invoice_col
-		FETCH NEXT FROM invoice_col INTO @id
-		WHILE @@FETCH_STATUS = 0
-		BEGIN
+		DECLARE @netting_id VARCHAR(MAX), @invoice_ids VARCHAR(MAX)
 		
 			SET @status = 1
 			SET @netting_id =  NULL
 			
-			SELECT @netting_id = 
+			SELECT si.stmt_invoice_id invoice_id, 
 				CASE 
 					WHEN si.stmt_invoice_id > si1.stmt_invoice_id 
 						THEN si.stmt_invoice_id 
 					ELSE si1.stmt_invoice_id
-				END * -1
-			FROM stmt_invoice si
-			INNER JOIN contract_group cg
+				END * -1 netting_id
+			INTO #invoice_nettings
+ 		FROM #invoice_collection i 
+			LEFT JOIN stmt_invoice si ON si.stmt_invoice_id = i.item
+			LEFT JOIN contract_group cg
 				ON cg.contract_id = si.contract_id
-			INNER JOIN counterparty_contract_address cca 
+			LEFT JOIN counterparty_contract_address cca 
 				ON cca.counterparty_id = si.counterparty_id 
 				AND cca.contract_id = cg.contract_id
 			OUTER APPLY (
@@ -715,47 +720,72 @@ BEGIN
 				AND si1.prod_date_to = si.prod_date_to
 				AND si1.invoice_type <> si.invoice_type
 			) si1
-			WHERE COALESCE(cca.netting_statement,cg.netting_statement,'n') = 'y'
-			AND ISNULL(si.is_voided,'n') <> 'v'
-			AND si.stmt_invoice_id = @id
+			WHERE 
+			ISNULL(si.is_voided,'n') <> 'v'
+			 AND COALESCE(cca.netting_statement,cg.netting_statement,'n') = 'y'
 			AND si1.stmt_invoice_id IS NOT NULL
 
-			IF @netting_id IS NOT NULL
-			BEGIN
-				EXEC spa_generate_document @document_category = 10000283, @document_sub_category = 42047, @filter_object_id = @id, @temp_generate = 0, @get_generated = 1, @show_output = 0
+			CREATE TABLE #invoice_state(id INT IDENTITY(1,1), invoice_id INT, [status] BIT)
 
-				IF NOT EXISTS (SELECT 1 FROM application_notes an WHERE ISNULL(parent_object_id, notes_object_id) = @id AND internal_type_value_id = 10000283 AND category_value_id = 42047)
+				SELECT @netting_id = COALESCE(@netting_id + ',' ,'') + cast(invoice_id AS VARCHAR)
+				FROM #invoice_nettings  WHERE netting_id IS NOT NULL
+ 
+				IF EXISTS(SELECT 1 FROM #invoice_nettings  WHERE netting_id IS NOT NULL)
 				BEGIN
-					SET @status = 0;
+					EXEC spa_generate_document @document_category = 10000283, @document_sub_category = 42047, @filter_object_id = @netting_id, @temp_generate = 0, @get_generated = 1, @show_output = 0
+
+				INSERT INTO #invoice_state(invoice_id, [status])
+					SELECT DISTINCT i.invoice_id, CASE WHEN an.notes_id IS NULL THEN 0 ELSE 1 END 					
+					--UPDATE i SET [status] = 0 --CASE WHEN an.notes_id IS NULL THEN 0 ELSE 1 END
+					FROM #invoice_nettings i
+					LEFT JOIN application_notes an ON ISNULL(an.parent_object_id, an.notes_object_id) = i.invoice_id AND an.internal_type_value_id = 10000283 AND an.category_value_id = 42047
+					WHERE i.netting_id IS NOT NULL --AND an.notes_id IS NULL
 				END
-			END
 
-			IF @status <> 0
-			BEGIN
-				EXEC spa_generate_document @document_category = 10000283, @document_sub_category = 42031, @filter_object_id = @id, @temp_generate = 0, @get_generated = 1, @show_output = 0
+				INSERT INTO #invoice_state(invoice_id, [status])
+				SELECT DISTINCT i.item, 1 FROM #invoice_collection i
+				LEFT JOIN #invoice_state ist ON ist.invoice_id = i.item
+				WHERE ist.id IS NULL AND i.item > 0
 
-				IF EXISTS (SELECT 1 FROM application_notes an WHERE ISNULL(parent_object_id, notes_object_id) = @id AND internal_type_value_id = 10000283)
-				BEGIN
-					UPDATE stmt_invoice
-						SET is_finalized = 'f',
-							finalized_date = GETDATE()
-					WHERE stmt_invoice_id = @id
+				--INSERT INTO #invoice_state(invoice_id, [status])
+				--SELECT i.invoice_id, 1 FROM #invoice_nettings i
+				--LEFT JOIN application_notes an ON ISNULL(an.parent_object_id, an.notes_object_id) = i.invoice_id AND an.internal_type_value_id = 10000283 AND an.category_value_id = 42047
+				--WHERE (i.netting_id IS NULL OR (i.netting_id IS NOT NULL AND an.notes_id IS NOT NULL))
+		
+ 			SELECT @invoice_ids = COALESCE(@invoice_ids + ',' ,'') + CAST(invoice_id AS VARCHAR)
+				FROM #invoice_state  WHERE  [status] = 1
+			--IF @status <> 0
+			--BEGIN
+				--	select @id id, 'status <> 0'
+				IF NULLIF(@invoice_ids, '') IS NOT NULL
+					EXEC spa_generate_document @document_category = 10000283, @document_sub_category = 42031, @filter_object_id = @invoice_ids, @temp_generate = 0, @get_generated = 1, @show_output = 0
+
+					--IF EXISTS (SELECT 1 FROM application_notes an WHERE ISNULL(parent_object_id, notes_object_id) = @id AND internal_type_value_id = 10000283)
+					--BEGIN
+
+						UPDATE si SET si.is_finalized = 'f', si.finalized_date = GETDATE() FROM #invoice_state i 
+						INNER JOIN application_notes an ON ISNULL(an.parent_object_id, an.notes_object_id) = i.invoice_id AND an.internal_type_value_id = 10000283
+						INNER JOIN stmt_invoice si ON si.stmt_invoice_id = i.invoice_id
+						WHERE i.[status] = 1
 
 					INSERT INTO process_settlement_invoice_log (process_id, counterparty_id, prod_date, code, module, [description], invoice_id)
-					SELECT @process_id, counterparty_id, getdate(), 'Success', 'Settlement invoice', 'Successfully finalize invoice : ' + CAST(stmt_invoice_id AS VARCHAR), stmt_invoice_id FROM stmt_invoice WHERE stmt_invoice_id = @id
-				END
-			END
-			ELSE 
-			BEGIN
-				SET @status = 0;
+						SELECT @process_id, counterparty_id, getdate(), 'Success', 'Settlement invoice', 'Successfully finalize invoice : ' + CAST(si.stmt_invoice_id AS VARCHAR), si.stmt_invoice_id 
+						FROM #invoice_state i 
+						INNER JOIN application_notes an ON i.invoice_id = ISNULL(an.parent_object_id, an.notes_object_id) AND an.internal_type_value_id = 10000283
+						INNER JOIN stmt_invoice si ON si.stmt_invoice_id = i.invoice_id
+						WHERE i.[status] = 1
+					--END
+			--END
+			--ELSE 
+			--BEGIN
+					--SET @status = 0;
 				INSERT INTO process_settlement_invoice_log (process_id, counterparty_id, prod_date, code, module, [description], invoice_id)
-				SELECT @process_id, counterparty_id, getdate(), 'Error', 'Settlement invoice', 'Failed to finalize invoice : ' + CAST(stmt_invoice_id AS VARCHAR), stmt_invoice_id FROM stmt_invoice WHERE stmt_invoice_id = @id
-			END
+					SELECT @process_id, si.counterparty_id, getdate(), 'Error', 'Settlement invoice', 'Failed to finalize invoice : ' + CAST(si.stmt_invoice_id AS VARCHAR), si.stmt_invoice_id 
+					FROM #invoice_state i 
+					INNER JOIN stmt_invoice si ON si.stmt_invoice_id = i.invoice_id
+					WHERE  i.[status] = 0
+			--END
 						 
-			FETCH NEXT FROM invoice_col INTO @id
-		END
-		CLOSE invoice_col
-		DEALLOCATE invoice_col
 
 		SET @url_name = './dev/spa_html.php?__user_name__=''' + @user_login_id + '''&spa=exec spa_get_settlement_invoice_log ''' + @process_id + ''''
 		SET @msg = '<a target="_blank" href="' + @url_name + '">' + 'Process to create invoice PDFs has been completed.</a>'
@@ -767,7 +797,7 @@ BEGIN
 		SET @msg += '(Elapsed Time: ' + @total_time_for_pdf_process + ')'
 		EXEC spa_message_board 'u',@user_login_id,NULL,'Settlement Invoice',@msg,'','','',NULL ,NULL,@process_id
 
-		IF @status = '1'
+		IF EXISTS(SELECT 1 FROM #invoice_state i WHERE i.[status] = 1)   -- @status = '1'
 		BEGIN			
 			EXEC spa_ErrorHandler 0,
 				'stmt_invoice',

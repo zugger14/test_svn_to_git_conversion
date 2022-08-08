@@ -18,7 +18,7 @@ CREATE FUNCTION [dbo].[FNAGetDocumentTemplate]
 (
 	@document_type      INT,
 	@document_sub_type	INT,
-	@object_id			INT,
+	@object_id			VARCHAR(MAX),
 	@template_id		INT
 )
 
