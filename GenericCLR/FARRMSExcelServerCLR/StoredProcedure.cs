@@ -22,7 +22,7 @@ namespace FARRMSExcelServerCLR
             try
             {
                 //using (SqlConnection sqlConnection = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT_Mkt_Merge;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
-                //using (var sqlConnection = new SqlConnection(@"Data Source=CTRMSGDB-D5003.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Release;User ID=dev_admin;password=Admin2929"))
+                //using (var sqlConnection = new SqlConnection(@"Data Source=CTRMEUDB-D6005.ctrmdevwin.hasops.com,2033;Initial Catalog=TRMTracker_Enercity;User ID=dev_admin;password=Admin2929"))
                 using (var sqlConnection = new SqlConnection("Context Connection=True"))
                 {
                     var excelDocument = new DocumentTemplate() { ExcelSheetId = excelSheetId.ToInt(), ExportFormat = exportFormat, ProcessId = processId, UserName = userName};

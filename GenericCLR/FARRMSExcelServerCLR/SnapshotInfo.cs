@@ -62,8 +62,8 @@ namespace FARRMSExcelServerCLR
                     DocumentPath = rd[1].ToString(); //  temp_note
                     LicenseKey = rd[2].ToString();  //  License Key
 
-                    //	ReportRepository = @"D:\FARRMS\TRMTracker_Release\FARRMS\trm\adiha.php.scripts\dev\shared_docs\Excel_Reports"; //  excel_reports
-                    //	DocumentPath = @"D:\FARRMS\TRMTracker_Release\FARRMS\trm\adiha.php.scripts\dev\shared_docs\temp_Note"; //  temp_note
+                    //ReportRepository = @"C:\FARRMS_Applications\TRMTracker_Enercity\FARRMS\trm\adiha.php.scripts\dev\shared_docs\Excel_Reports"; //  excel_reports
+                    //DocumentPath = @"C:\FARRMS_Applications\TRMTracker_Enercity\FARRMS\trm\adiha.php.scripts\dev\shared_docs\temp_Note"; //  temp_note
                 }
             }
             LoadLicenseKey();

@@ -90,7 +90,7 @@ namespace FARRMSExcelServerCLR
                 }
                 catch (Exception e)
                 {
-                    e.LogError("Bind data", null);
+                    e.LogError("Bind data", "Report Binding Error");
                 }
             }
         }
