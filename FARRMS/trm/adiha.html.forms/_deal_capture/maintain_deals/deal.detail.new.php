@@ -3038,7 +3038,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var counterparty_id, template_text;
         var contract_id = '';
         var location_id = '';
-        var template_id = '';
+        //var template_id = '';
+
+        if (deal_id == 'NULL' && copy_deal_id != 'NULL') {
+            deal_id = copy_deal_id;
+        }
 
         var child_rows = dealDetail.grid.hasChildren(rId);
 
@@ -3060,7 +3064,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 var template_obj = form_obj.getCombo('template_id');
                 if (template_obj) {
                     template_text = template_obj.getComboText();
-                    template_id = template_obj.getSelectedValue();
+                    //template_id = template_obj.getSelectedValue();
                 }
             }
 
