@@ -118,6 +118,8 @@ namespace FARRMSExcelServerCLR
             }
             string reportSpaRfxQuery = "";
             string[] allParameters = SpaRfxQuery.Split(',');
+            if (allParameters.Length > 3)
+                allParameters[2] = allParameters[2].Replace("N'", "");
 
             //  Browse parameters to match rfx parameters
             foreach (string s in allParameters)
@@ -153,7 +155,7 @@ namespace FARRMSExcelServerCLR
                     }
                 }
             }
-            reportSpaRfxQuery = "spa_rfx_run_sql " + this.ParamsetId + "," + this.TablixId + ",'" + reportSpaRfxQuery.TrimEnd(',') + "',NULL,'t'";
+            reportSpaRfxQuery = "EXEC spa_rfx_run_sql " + this.ParamsetId + "," + this.TablixId + ",N'" + reportSpaRfxQuery.TrimEnd(',') + "',NULL,'t'";
 
             return reportSpaRfxQuery;
         }
