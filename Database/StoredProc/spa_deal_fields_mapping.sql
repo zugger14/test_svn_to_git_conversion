@@ -1210,7 +1210,7 @@ BEGIN
 	BEGIN
 		UPDATE #temp_combo
 		SET selected = 'true'
-		WHERE value = ISNULL(@default_value, @shipper_default_value)
+		WHERE value = @default_value
 	END
 	ELSE IF @load_default = 0
 	BEGIN
