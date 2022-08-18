@@ -52,8 +52,7 @@ CREATE PROCEDURE [dbo].[spa_deal_fields_mapping]
 	@sub_book_id INT = NULL,
 	@term_start DATETIME = NULL,
 	@contract_id INT = NULL,
-	@buy_sell_flag NCHAR(1) = NULL,
-	@load_default BIT = 1
+	@buy_sell_flag NCHAR(1) = NULL
 AS
 /*------------------Debug Section------------------
 DECLARE @flag NCHAR(1),
@@ -1206,18 +1205,10 @@ BEGIN
 		END
 	END
 	
-	IF @load_default = 1
-	BEGIN
-		UPDATE #temp_combo
-		SET selected = 'true'
-		WHERE value = @default_value
-	END
-	ELSE IF @load_default = 0
-	BEGIN
-		UPDATE #temp_combo
-		SET selected = 'true'
-		WHERE value = ISNULL(@default_value, @shipper_default_value)
-	END
+
+	UPDATE #temp_combo
+	SET selected = 'true'
+	WHERE value = @default_value
 
 	IF @flag = 'v'
 	BEGIN

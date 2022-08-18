@@ -1,21 +1,18 @@
 <?php
-
 /**
- * Deal detail new screen
- * @copyright Pioneer Solutions
- */
+* Deal detail new screen
+* @copyright Pioneer Solutions
+*/
 ?>
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <style type="text/css">
-        html,
-        body {
+        html, body {
             width: 100%;
             height: 100%;
             margin: 0px;
@@ -25,261 +22,261 @@
         }
     </style>
 </head>
-
 <body>
-    <?php
-    include '../../../adiha.php.scripts/components/include.file.v3.php';
-    $php_script_loc = $app_php_script_loc;
-    // TODO: should reference global variable when available
-    $soft_commodity = false;
+<?php
+include '../../../adiha.php.scripts/components/include.file.v3.php';
+$php_script_loc = $app_php_script_loc;
+// TODO: should reference global variable when available
+$soft_commodity = false;
 
-    $deal_id = (isset($_REQUEST["deal_id"]) && $_REQUEST["deal_id"] != '') ? get_sanitized_value($_REQUEST["deal_id"]) : 'NULL';
-    $view_deleted = (isset($_REQUEST["view_deleted"]) && $_REQUEST["view_deleted"] != '' && $_REQUEST["view_deleted"] != 'undefined') ? get_sanitized_value($_REQUEST["view_deleted"]) : 'n';
-    $template_id = (isset($_REQUEST["template_id"]) && $_REQUEST["template_id"] != '') ? get_sanitized_value($_REQUEST["template_id"]) : 'NULL';
-    $sub_book = (isset($_REQUEST["sub_book"]) && $_REQUEST["sub_book"] != '') ? get_sanitized_value($_REQUEST["sub_book"]) : 'NULL';
-    $subsidiary = (isset($_REQUEST["subsidiary"]) && $_REQUEST["subsidiary"] != '') ? get_sanitized_value($_REQUEST["subsidiary"]) : '';
-    $book = (isset($_REQUEST["book"]) && $_REQUEST["book"] != '') ? get_sanitized_value($_REQUEST["book"]) : '';
-    $buy_sell = (isset($_REQUEST["buy_sell"]) && $_REQUEST["buy_sell"] != '') ? get_sanitized_value($_REQUEST["buy_sell"]) : '';
-    $copy_deal_id = (isset($_REQUEST["copy_deal_id"]) && $_REQUEST["copy_deal_id"] != '') ? get_sanitized_value($_REQUEST["copy_deal_id"]) : 'NULL';
-    $copy_insert_mode = (isset($_REQUEST["copy_insert_mode"]) && $_REQUEST["copy_insert_mode"] != '') ? get_sanitized_value($_REQUEST["copy_insert_mode"]) : 'NULL';
-    $deal_type_id = (isset($_REQUEST["deal_type_id"]) && $_REQUEST["deal_type_id"] != '') ? get_sanitized_value($_REQUEST["deal_type_id"]) : 'NULL';
-    $pricing_type_id = (isset($_REQUEST["pricing_type_id"]) && $_REQUEST["pricing_type_id"] != '') ? get_sanitized_value($_REQUEST["pricing_type_id"]) : 'NULL';
-    $term_frequency = (isset($_REQUEST["term_frequency"]) && $_REQUEST["term_frequency"] != '') ? "'" . get_sanitized_value($_REQUEST["term_frequency"]) . "'" : 'NULL';
-    $commodity_id = (isset($_REQUEST["commodity_id"]) && $_REQUEST["commodity_id"] != '') ? get_sanitized_value($_REQUEST["commodity_id"]) : 'NULL';
-    $deal_type = (isset($_REQUEST['deal_type'])) ? get_sanitized_value($_REQUEST['deal_type']) : 'NULL';
-    $enable_product_button = (isset($_REQUEST['is_environmental'])) ? get_sanitized_value($_REQUEST['is_environmental']) : 'NULL';
-    $enable_certificate_button = (isset($_REQUEST['is_environmental'])) ? get_sanitized_value($_REQUEST['is_environmental']) : 'NULL';
+$deal_id = (isset($_REQUEST["deal_id"]) && $_REQUEST["deal_id"] != '') ? get_sanitized_value($_REQUEST["deal_id"]) : 'NULL';
+$view_deleted = (isset($_REQUEST["view_deleted"]) && $_REQUEST["view_deleted"] != '' && $_REQUEST["view_deleted"] != 'undefined' ) ? get_sanitized_value($_REQUEST["view_deleted"]) : 'n';
+$template_id = (isset($_REQUEST["template_id"]) && $_REQUEST["template_id"] != '') ? get_sanitized_value($_REQUEST["template_id"]) : 'NULL';
+$sub_book = (isset($_REQUEST["sub_book"]) && $_REQUEST["sub_book"] != '') ? get_sanitized_value($_REQUEST["sub_book"]) : 'NULL';
+$subsidiary = (isset($_REQUEST["subsidiary"]) && $_REQUEST["subsidiary"] != '') ? get_sanitized_value($_REQUEST["subsidiary"]) : '';
+$book = (isset($_REQUEST["book"]) && $_REQUEST["book"] != '') ? get_sanitized_value($_REQUEST["book"]) : '';
+$buy_sell = (isset($_REQUEST["buy_sell"]) && $_REQUEST["buy_sell"] != '') ? get_sanitized_value($_REQUEST["buy_sell"]) : '';
+$copy_deal_id = (isset($_REQUEST["copy_deal_id"]) && $_REQUEST["copy_deal_id"] != '') ? get_sanitized_value($_REQUEST["copy_deal_id"]) : 'NULL';
+$copy_insert_mode = (isset($_REQUEST["copy_insert_mode"]) && $_REQUEST["copy_insert_mode"] != '') ? get_sanitized_value($_REQUEST["copy_insert_mode"]) : 'NULL';
+$deal_type_id = (isset($_REQUEST["deal_type_id"]) && $_REQUEST["deal_type_id"] != '') ? get_sanitized_value($_REQUEST["deal_type_id"]) : 'NULL';
+$pricing_type_id = (isset($_REQUEST["pricing_type_id"]) && $_REQUEST["pricing_type_id"] != '') ? get_sanitized_value($_REQUEST["pricing_type_id"]) : 'NULL';
+$term_frequency = (isset($_REQUEST["term_frequency"]) && $_REQUEST["term_frequency"] != '') ? "'" . get_sanitized_value($_REQUEST["term_frequency"]) . "'" : 'NULL';
+$commodity_id = (isset($_REQUEST["commodity_id"]) && $_REQUEST["commodity_id"] != '') ? get_sanitized_value($_REQUEST["commodity_id"]) : 'NULL';
+$deal_type = (isset($_REQUEST['deal_type'])) ? get_sanitized_value($_REQUEST['deal_type']) : 'NULL';
+$enable_product_button = (isset($_REQUEST['is_environmental'])) ? get_sanitized_value($_REQUEST['is_environmental']) : 'NULL';
+$enable_certificate_button = (isset($_REQUEST['is_environmental'])) ? get_sanitized_value($_REQUEST['is_environmental']) : 'NULL';
 
-    $lock_data = array();
-    $insert_mode = false;
+$lock_data = array();
+$insert_mode = false;
 
-    // Get Dashboard reports
-    $sp_db = "EXEC spa_pivot_report_dashboard @flag='x', @category=-104700";
-    $db_array = readXMLURL2($sp_db);
-    $db_items = '';
+// Get Dashboard reports
+$sp_db = "EXEC spa_pivot_report_dashboard @flag='x', @category=-104700";
+$db_array = readXMLURL2($sp_db);
+$db_items = '';
 
-    if (is_array($db_array) && sizeof($db_array) > 0) {
-        $db_items = ',items:[';
-        $icnt = 0;
+if (is_array($db_array) && sizeof($db_array) > 0) {
+    $db_items = ',items:[';
+    $icnt = 0;
         foreach ($db_array as $data) {
             if ($icnt > 0) $db_items .= ',';
             $db_items .= ' {id:"dashboard_ ' . $data['dashboard_id'] . '", text:"' . $data['dashboard_name'] . '", img:"report.gif", imgdis:"report_dis.gif", text:"' . $data['dashboard_name'] . '", enabled:true}';
             $icnt++;
         }
 
-        $db_items .= ']';
-    }
+    $db_items .= ']';
+}
 
-    if ($deal_id != 'NULL') {
-        require('../../../adiha.html.forms/_setup/manage_documents/manage.documents.button.php');
-        $sp_deal_lock = "EXEC spa_deal_update_new @flag='l', @source_deal_header_id=" . $deal_id . ", @view_deleted='" . $view_deleted . "'";
-        $lock_data = readXMLURL2($sp_deal_lock);
+if ($deal_id != 'NULL') {
+    require('../../../adiha.html.forms/_setup/manage_documents/manage.documents.button.php');
+    $sp_deal_lock = "EXEC spa_deal_update_new @flag='l', @source_deal_header_id=" . $deal_id . ", @view_deleted='" . $view_deleted . "'";
+    $lock_data = readXMLURL2($sp_deal_lock);
         $insert_mode = false;
-    } else {
-        $insert_mode = true;
+} else {
+    $insert_mode = true;
 
-        //TAKE SUB BOOK AND DEAL TYPE FROM FIELD TEMPLATE
-        $sp_url = "EXEC spa_deal_update_new @flag = 'get_sub_id_from_field_template', @template_id = " . $template_id;
-        $result_value = readXMLURL2($sp_url);
+    //TAKE SUB BOOK AND DEAL TYPE FROM FIELD TEMPLATE
+    $sp_url = "EXEC spa_deal_update_new @flag = 'get_sub_id_from_field_template', @template_id = " . $template_id;
+    $result_value = readXMLURL2($sp_url);
 
-        if ($sub_book == 'NULL' && ($result_value[0]['default_value'] ?? null) != null) {
-            $sub_book = $result_value[0]['default_value'];
-        }
-
-        if ($deal_type_id == 'NULL' && ($result_value[1]['default_value'] ?? null) != null) {
-            $deal_type_id = $result_value[1]['default_value'];
-        }
-
-        $sp_url_product = "EXEC spa_deal_update_new @flag = 'get_environmental_from_field_template', @template_id = " . $template_id;
-        $sp_url_product = readXMLURL2($sp_url_product);
-
-        if ($sp_url_product[0]['default_value'] ?? '' != null) {
-            $enable_product_button = 'true';
-        }
-
-        $sp_url_certificate = "EXEC spa_deal_update_new @flag = 'get_certificate_from_field_template', @template_id = " . $template_id;
-        $sp_url_certificate = readXMLURL2($sp_url_certificate);
-
-        if ($sp_url_certificate[0]['default_value'] ?? '' != null) {
-            $enable_certificate_button = 'true';
-        }
-
-
-
-        $sp_term_frequency = "EXEC spa_deal_update_new @flag='x', @source_deal_header_id=" . $deal_id . ", @template_id=" . $template_id . ", @copy_deal_id=" . $copy_deal_id . ",@deal_type_id=" . $deal_type_id . ", @pricing_type=" . $pricing_type_id . ", @term_frequency=" . $term_frequency . ", @commodity_id=" . $commodity_id;
-        $term_frequency_arr = readXMLURL2($sp_term_frequency);
-        $term_frequency = $term_frequency_arr[0]['term_frequency'];
-        $header_cost_enable = $term_frequency_arr[0]['header_cost_enable'];
-        $detail_cost_enable = $term_frequency_arr[0]['detail_cost_enable'];
-        $pricing_process_id =  ($copy_deal_id != 'NULL') ? $term_frequency_arr[0]['pricing_process_id'] : 'NULL';
-        $deal_date = $term_frequency_arr[0]['deal_date'];
-        $is_shaped =  $term_frequency_arr[0]['is_shaped'];
-        $udf_process_id =  $term_frequency_arr[0]['udf_process_id'];
-        $enable_pricing =  $term_frequency_arr[0]['enable_pricing'];
-        $deal_type_id = ($term_frequency_arr[0]['deal_type_id'] == '') ? 'NULL' : $term_frequency_arr[0]['deal_type_id'];
-        $pricing_type_id = ($term_frequency_arr[0]['pricing_type_id'] == '') ? 'NULL' : $term_frequency_arr[0]['pricing_type_id'];
-        $commodity_id = ($term_frequency_arr[0]['commodity_id'] == '') ? 'NULL' : $term_frequency_arr[0]['commodity_id'];
-        $enable_udf_tab = ($term_frequency_arr[0]['enable_udf_tab'] == '') ? 'n' : $term_frequency_arr[0]['enable_udf_tab'];
-        $enable_prepay_tab = $term_frequency_arr[0]['enable_prepay_tab'];
+    if ($sub_book == 'NULL' && ($result_value[0]['default_value'] ?? null) != null) {
+        $sub_book = $result_value[0]['default_value'];
     }
 
-    $copy_price_process_id = '';
-    $copy_provisional_price_process_id = '';
-
-    if ($copy_deal_id <> 'NULL') {
-        $spa_deal_pricing = "EXEC [dbo].[spa_deal_pricing_detail] @flag = 'j', @source_deal_detail_id = " . $copy_deal_id;
-        $spa_deal_pricing_arr = readXMLURL2($spa_deal_pricing);
-
-        $copy_price_process_id = $spa_deal_pricing_arr[0]['recommendation'];
-
-        $spa_deal_provisional_pricing = "EXEC [dbo].[spa_deal_pricing_detail_provisional] @flag = 'j', @source_deal_detail_id = " . $copy_deal_id;
-        $spa_deal_provisional_pricing_arr = readXMLURL2($spa_deal_provisional_pricing);
-
-        $copy_provisional_price_process_id = $spa_deal_provisional_pricing_arr[0]['recommendation'];
+    if ($deal_type_id == 'NULL' && ($result_value[1]['default_value'] ?? null) != null) {
+        $deal_type_id = $result_value[1]['default_value'];
     }
 
-    //To avoid syntax error for queries below for cases when term_frequency is NULL
-    if ($term_frequency == NULL) {
-        $term_frequency = 'NULL';
+    $sp_url_product = "EXEC spa_deal_update_new @flag = 'get_environmental_from_field_template', @template_id = " . $template_id;
+    $sp_url_product = readXMLURL2($sp_url_product);
+
+    if($sp_url_product[0]['default_value'] ?? '' != null){
+        $enable_product_button = 'true';
     }
 
-    $rights_deal_edit = 10131010;
-    $rights_document = 10102900;
-    $rights_schedule_deal = 10131028;
-    $rights_schedule_volume_update = 10131032;
-    $rights_actual_volume_update = 10131033;
-    $rights_transfer = 10131024;
+    $sp_url_certificate = "EXEC spa_deal_update_new @flag = 'get_certificate_from_field_template', @template_id = " . $template_id;
+    $sp_url_certificate = readXMLURL2($sp_url_certificate);
 
-    list(
-        $has_rights_deal_edit,
-        $has_document_rights,
-        $has_schedule_deal,
-        $has_schedule_vol_update,
-        $has_actual_vol_update,
-        $has_rights_transfer
+    if($sp_url_certificate[0]['default_value'] ?? '' != null){
+        $enable_certificate_button = 'true';
+    }
+
+
+
+    $sp_term_frequency = "EXEC spa_deal_update_new @flag='x', @source_deal_header_id=" . $deal_id . ", @template_id=" . $template_id . ", @copy_deal_id=" . $copy_deal_id . ",@deal_type_id=" . $deal_type_id . ", @pricing_type=" . $pricing_type_id . ", @term_frequency=" . $term_frequency . ", @commodity_id=" . $commodity_id;
+    $term_frequency_arr = readXMLURL2($sp_term_frequency);
+    $term_frequency = $term_frequency_arr[0]['term_frequency'];
+    $header_cost_enable = $term_frequency_arr[0]['header_cost_enable'];
+    $detail_cost_enable = $term_frequency_arr[0]['detail_cost_enable'];
+    $pricing_process_id =  ($copy_deal_id != 'NULL') ? $term_frequency_arr[0]['pricing_process_id'] : 'NULL';
+    $deal_date = $term_frequency_arr[0]['deal_date'];
+    $is_shaped =  $term_frequency_arr[0]['is_shaped'];
+    $udf_process_id =  $term_frequency_arr[0]['udf_process_id'];
+    $enable_pricing =  $term_frequency_arr[0]['enable_pricing'];
+    $deal_type_id = ($term_frequency_arr[0]['deal_type_id'] == '') ? 'NULL' : $term_frequency_arr[0]['deal_type_id'];
+    $pricing_type_id = ($term_frequency_arr[0]['pricing_type_id'] == '') ? 'NULL' : $term_frequency_arr[0]['pricing_type_id'];
+    $commodity_id = ($term_frequency_arr[0]['commodity_id'] == '') ? 'NULL' : $term_frequency_arr[0]['commodity_id'];
+    $enable_udf_tab = ($term_frequency_arr[0]['enable_udf_tab'] == '') ? 'n' : $term_frequency_arr[0]['enable_udf_tab'];
+    $enable_prepay_tab = $term_frequency_arr[0]['enable_prepay_tab'];
+
+}
+
+$copy_price_process_id = '';
+$copy_provisional_price_process_id = '';
+
+if ($copy_deal_id <> 'NULL') {
+    $spa_deal_pricing = "EXEC [dbo].[spa_deal_pricing_detail] @flag = 'j', @source_deal_detail_id = " . $copy_deal_id;
+    $spa_deal_pricing_arr = readXMLURL2($spa_deal_pricing);
+
+    $copy_price_process_id = $spa_deal_pricing_arr[0]['recommendation'];
+
+    $spa_deal_provisional_pricing = "EXEC [dbo].[spa_deal_pricing_detail_provisional] @flag = 'j', @source_deal_detail_id = " . $copy_deal_id;
+    $spa_deal_provisional_pricing_arr = readXMLURL2($spa_deal_provisional_pricing);
+
+    $copy_provisional_price_process_id = $spa_deal_provisional_pricing_arr[0]['recommendation'];
+}
+
+//To avoid syntax error for queries below for cases when term_frequency is NULL
+if ($term_frequency == NULL) {
+    $term_frequency = 'NULL';
+}
+
+$rights_deal_edit = 10131010;
+$rights_document = 10102900;
+$rights_schedule_deal = 10131028;
+$rights_schedule_volume_update = 10131032;
+$rights_actual_volume_update = 10131033;
+$rights_transfer = 10131024;
+
+list (
+    $has_rights_deal_edit,
+    $has_document_rights,
+    $has_schedule_deal,
+    $has_schedule_vol_update,
+    $has_actual_vol_update,
+	$has_rights_transfer
     ) = build_security_rights(
-        $rights_deal_edit,
-        $rights_document,
-        $rights_schedule_deal,
-        $rights_schedule_volume_update,
-        $rights_actual_volume_update,
-        $rights_transfer
-    );
+    $rights_deal_edit,
+    $rights_document,
+    $rights_schedule_deal,
+    $rights_schedule_volume_update,
+    $rights_actual_volume_update,
+	$rights_transfer
+);
 
-    $sql_request = "EXEC spa_source_deal_header @flag='z', @deal_ids=" . $deal_id . ", @function_id = 10131010, @sub_book=" . $sub_book;
-    $return_value = readXMLURL($sql_request);
+$sql_request = "EXEC spa_source_deal_header @flag='z', @deal_ids=". $deal_id . ", @function_id = 10131010, @sub_book=" . $sub_book;
+$return_value = readXMLURL($sql_request);
 
-    if ($return_value[0][0] == 1) {
-        $enable_save_button = 'true';
-    } else if ($insert_mode) {
-        $enable_save_button = 'true';
-    } else {
-        $enable_save_button = 'false';
-    }
+if ($return_value[0][0] == 1) {
+    $enable_save_button = 'true';
+} else if ($insert_mode) {
+    $enable_save_button = 'true';
+} else {
+    $enable_save_button = 'false';
+}
 
-    $deal_trade_locked = $lock_data[0]['deal_trade_locked'] ?? '';
+$deal_trade_locked = $lock_data[0]['deal_trade_locked'] ?? '';
 
-    if ($view_deleted == 'y' || ($lock_data[0]['deal_locked'] ?? '') == 'y' || $deal_trade_locked == 'y') {
-        $enable_save_button = 'false';
-    }
+if ($view_deleted == 'y' || ($lock_data[0]['deal_locked'] ?? '') == 'y' || $deal_trade_locked == 'y' ) {
+    $enable_save_button = 'false';
+}
 
-    $is_locked = '';
-    $volume_type = '';
-    $profile_gran_with_meter = '';
-    $profile_granularity = '';
+$is_locked = '';
+$volume_type = '';
+$profile_gran_with_meter = '';
+$profile_granularity = '';
     $deal_reference_id = '';
     $enable_header_udt = 'n';
     $enable_detail_udt = 'n';
 
-    if (is_array($lock_data) && sizeof($lock_data) > 0) {
-        $is_locked = $lock_data[0]['deal_locked'];
-        $disable_term = ($lock_data[0]['disable_term'] == 'n') ? true : false;
-        $deal_date = $lock_data[0]['deal_date'];
-        $enable_efp = $lock_data[0]['enable_efp'];
-        $enable_trigger = $lock_data[0]['enable_trigger'];
-        $deal_type_text = $lock_data[0]['deal_type'];
-        $enable_pricing =  $lock_data[0]['enable_pricing'];
-        $enable_provisional_tab = $lock_data[0]['enable_provisional_tab'];
-        $enable_escalation_tab = $lock_data[0]['enable_escalation_tab'];
-        $pricing_process_id =  $lock_data[0]['pricing_process_id'];
-        $is_shaped =  $lock_data[0]['is_shaped'];
-        $term_frequency = ($lock_data[0]['term_frequency'] == '') ? 'NULL' : $lock_data[0]['term_frequency'];
-        $header_cost_enable = $lock_data[0]['header_cost_enable'];
-        $detail_cost_enable = $lock_data[0]['detail_cost_enable'];
-        $certificate = $lock_data[0]['certificate'];
-        $document_enable = $lock_data[0]['document_enable'];
-        $enable_remarks = $lock_data[0]['enable_remarks'];
-        $deal_type_id = ($lock_data[0]['deal_type_id'] == '') ? 'NULL' : $lock_data[0]['deal_type_id'];
-        $pricing_type_id = ($lock_data[0]['pricing_type_id'] == '') ? 'NULL' : $lock_data[0]['pricing_type_id'];
-        $enable_exercise = $lock_data[0]['enable_exercise'];
-        $actualization_flag = ($lock_data[0]['actualization_flag'] == '') ? 'NULL' : $lock_data[0]['actualization_flag'];
-        $udf_process_id =  $lock_data[0]['udf_process_id'];
-        $commodity_id =  ($lock_data[0]['commodity_id'] == '') ? 'NULL' : $lock_data[0]['commodity_id'];
-        $enable_udf_tab =  $lock_data[0]['enable_udf_tab'];
-        $is_environmental = $lock_data[0]['is_environmental'];
-        $profile_granularity =  $lock_data[0]['profile_granularity'];
-        $volume_type =  $lock_data[0]['volume_type'];
-        $profile_gran_with_meter = $lock_data[0]['profile_gran_with_meter'];
-        $enable_prepay_tab = $lock_data[0]['enable_prepay_tab'];
-        $deal_reference_id = $lock_data[0]['deal_reference_id'];
-        $enable_header_udt = $lock_data[0]['enable_header_udt'];
-        $enable_detail_udt = $lock_data[0]['enable_detail_udt'];
-    } else {
-        $disable_term = 'false';
-        $enable_efp = 'n';
-        $enable_trigger = 'n';
-        $deal_type_text = '';
-        $enable_provisional_tab = 'n';
-        $enable_escalation_tab = 'n';
-        $certificate = 'n';
-        $document_enable = 'n';
-        $enable_remarks = 'n';
-        $enable_exercise = 'n';
-        $actualization_flag = 'NULL';
-        $is_environmental = 'n';
-    }
+if (is_array($lock_data) && sizeof($lock_data) > 0) {
+    $is_locked = $lock_data[0]['deal_locked'];
+    $disable_term = ($lock_data[0]['disable_term'] == 'n') ? true : false;
+    $deal_date = $lock_data[0]['deal_date'];
+    $enable_efp = $lock_data[0]['enable_efp'];
+    $enable_trigger = $lock_data[0]['enable_trigger'];
+    $deal_type_text = $lock_data[0]['deal_type'];
+    $enable_pricing =  $lock_data[0]['enable_pricing'];
+    $enable_provisional_tab = $lock_data[0]['enable_provisional_tab'];
+    $enable_escalation_tab = $lock_data[0]['enable_escalation_tab'];
+    $pricing_process_id =  $lock_data[0]['pricing_process_id'];
+    $is_shaped =  $lock_data[0]['is_shaped'];
+    $term_frequency = ($lock_data[0]['term_frequency'] == '') ? 'NULL' : $lock_data[0]['term_frequency'];
+    $header_cost_enable = $lock_data[0]['header_cost_enable'];
+    $detail_cost_enable = $lock_data[0]['detail_cost_enable'];
+    $certificate = $lock_data[0]['certificate'];
+    $document_enable = $lock_data[0]['document_enable'];
+    $enable_remarks = $lock_data[0]['enable_remarks'];
+    $deal_type_id = ($lock_data[0]['deal_type_id'] == '') ? 'NULL' : $lock_data[0]['deal_type_id'];
+    $pricing_type_id = ($lock_data[0]['pricing_type_id'] == '') ? 'NULL' : $lock_data[0]['pricing_type_id'];
+    $enable_exercise = $lock_data[0]['enable_exercise'];
+    $actualization_flag = ($lock_data[0]['actualization_flag'] == '') ? 'NULL' : $lock_data[0]['actualization_flag'];
+    $udf_process_id =  $lock_data[0]['udf_process_id'];
+    $commodity_id =  ($lock_data[0]['commodity_id'] == '') ? 'NULL' : $lock_data[0]['commodity_id'];
+    $enable_udf_tab =  $lock_data[0]['enable_udf_tab'];
+    $is_environmental = $lock_data[0]['is_environmental'];
+    $profile_granularity =  $lock_data[0]['profile_granularity'];
+    $volume_type =  $lock_data[0]['volume_type'];
+    $profile_gran_with_meter = $lock_data[0]['profile_gran_with_meter'];
+    $enable_prepay_tab = $lock_data[0]['enable_prepay_tab'];
+    $deal_reference_id = $lock_data[0]['deal_reference_id'];
+    $enable_header_udt = $lock_data[0]['enable_header_udt'];
+    $enable_detail_udt = $lock_data[0]['enable_detail_udt'];
+} else {
+    $disable_term = 'false';
+    $enable_efp = 'n';
+    $enable_trigger = 'n';
+    $deal_type_text = '';
+    $enable_provisional_tab = 'n';
+    $enable_escalation_tab = 'n';
+    $certificate = 'n';
+    $document_enable = 'n';
+    $enable_remarks = 'n';
+    $enable_exercise = 'n';
+    $actualization_flag = 'NULL';
+    $is_environmental = 'n';
+}
 
-    $sp_deal_header = "EXEC spa_deal_update_new @flag='h', @source_deal_header_id=" . $deal_id . ", @view_deleted='" . $view_deleted . "', @template_id=" . $template_id . ", @copy_deal_id=" . $copy_deal_id . ",@deal_type_id=" . $deal_type_id . ", @pricing_type=" . $pricing_type_id . ", @term_frequency=" . $term_frequency . ", @sub_book=" . $sub_book . ", @udf_process_id='" . $udf_process_id . "', @commodity_id=" . $commodity_id;
-    $header_data = readXMLURL2($sp_deal_header);
+$sp_deal_header = "EXEC spa_deal_update_new @flag='h', @source_deal_header_id=" . $deal_id . ", @view_deleted='" . $view_deleted . "', @template_id=" . $template_id . ", @copy_deal_id=" . $copy_deal_id . ",@deal_type_id=" . $deal_type_id . ", @pricing_type=" . $pricing_type_id . ", @term_frequency=" . $term_frequency . ", @sub_book=" . $sub_book . ", @udf_process_id='" . $udf_process_id . "', @commodity_id=" . $commodity_id;
+$header_data = readXMLURL2($sp_deal_header);
 
-    $sp_deal_detail = "EXEC spa_deal_update_new @flag='d', @source_deal_header_id=" . $deal_id . ", @view_deleted='" . $view_deleted . "', @template_id=" . $template_id . ", @copy_deal_id=" . $copy_deal_id . ",@deal_type_id=" . $deal_type_id . ", @pricing_type=" . $pricing_type_id . ", @term_frequency=" . $term_frequency . ", @udf_process_id='" . $udf_process_id . "', @commodity_id=" . $commodity_id;
-    $detail_data = readXMLURL2($sp_deal_detail);
+$sp_deal_detail = "EXEC spa_deal_update_new @flag='d', @source_deal_header_id=" . $deal_id . ", @view_deleted='" . $view_deleted . "', @template_id=" . $template_id . ", @copy_deal_id=" . $copy_deal_id . ",@deal_type_id=" . $deal_type_id . ", @pricing_type=" . $pricing_type_id . ", @term_frequency=" . $term_frequency . ", @udf_process_id='" . $udf_process_id . "', @commodity_id=" . $commodity_id;
+$detail_data = readXMLURL2($sp_deal_detail);
 
-    $future_deal = 'n';
-    if (strtolower($deal_type_text) == 'future') {
-        $future_deal = 'y';
-    }
+$future_deal = 'n';
+if (strtolower($deal_type_text) == 'future') {
+    $future_deal = 'y';
+}
 
-    if ($is_locked == 'y') $has_rights_deal_edit = 'false';
-    if ($view_deleted == 'y') {
-        $has_rights_deal_edit = 'false';
-    }
+if($is_locked == 'y') $has_rights_deal_edit = 'false';
+if ($view_deleted == 'y') {
+    $has_rights_deal_edit = 'false';
+}
 
-    $term_edit_privilege = $has_rights_deal_edit;
-    if ($has_rights_deal_edit && !$disable_term) $term_edit_privilege = 'false';
+$term_edit_privilege = $has_rights_deal_edit;
+if ($has_rights_deal_edit && !$disable_term) $term_edit_privilege = 'false';
 
-    if ((!$has_schedule_vol_update || !$has_actual_vol_update) && ($actualization_flag != 'm' || $actualization_flag != 's')) {
-        $enable_update_actual = false;
-    } else {
-        $enable_update_actual = true;
-    }
+if ((!$has_schedule_vol_update || !$has_actual_vol_update) && ($actualization_flag != 'm' || $actualization_flag != 's')) {
+    $enable_update_actual = false;
+} else {
+    $enable_update_actual = true;
+}
 
-    $tab_data = array();
-    $form_data = array();
-    $grid_sql = array();
-    $header_cost_process_id = '';
-    $header_formula_fields = '';
+$tab_data = array();
+$form_data = array();
+$grid_sql = array();
+$header_cost_process_id = '';
+$header_formula_fields = '';
 
-    $cnt = 0;
-    if (is_array($header_data) && sizeof($header_data) > 0) {
-        foreach ($header_data as $data) {
-            array_push($tab_data, $data['tab_json']);
+$cnt = 0;
+if (is_array($header_data) && sizeof($header_data) > 0) {
+    foreach ($header_data as $data) {
+        array_push($tab_data, $data['tab_json']);
 
-            if ($cnt == 0) $header_formula_fields = $data['header_formula_fields'];
+        if ($cnt == 0) $header_formula_fields = $data['header_formula_fields'];
 
             if ($data['grid_json'] != '') {
                 if (!array_key_exists($data['tab_id'], $form_data))
-                    $form_data[$data['tab_id']] = array();
+                $form_data[$data['tab_id']] = array();
 
                 $form_data[$data['tab_id']]['grid'] = $data['grid_json'];
             } else if ($data['tab_sql'] == '') {
@@ -287,71 +284,71 @@
                     $form_data[$data['tab_id']] = array();
 
                 $form_data[$data['tab_id']]['form'] = $data['form_json'];
-            } else {
-                $grid_sql[$data['tab_id']] = $data['tab_sql'];
-                $header_cost_process_id = $data['process_id'];
-            }
-            $cnt++;
+        } else {
+            $grid_sql[$data['tab_id']] = $data['tab_sql'];
+            $header_cost_process_id = $data['process_id'];
         }
+        $cnt++;
     }
-    $header_tab_data = '[' . implode(",", $tab_data) . ']';
+}
+$header_tab_data = '[' . implode(",", $tab_data) . ']';
 
-    $form_namespace = 'dealDetail';
-    $layout_json = '[{id: "a", text: "Deal", header:true},{id: "b", text:"<div><a class=\"undock_pricing_detail undock_custom\" title=\"Undock\" onClick=\"dealDetail.undock_details(\'b\')\"></a>Additional Details</div>", header:true}, {id: "c", text:"<div><a class=\"undock_detail undock_custom\" title=\"Undock\" onClick=\"dealDetail.undock_details(\'c\')\"></a>Details</div>", header:true}]';
-    $page_toolbar_json = '[{id:"save", type: "button", img:"save.gif", imgdis:"save_dis.gif", enabled:' . $enable_save_button . ', text:"Save", title: "Save"},{id:"certificate",type:"button",img:"certificate.gif",imgdis:"certificate_dis.gif",text:"Certificate",title:"Certificate"},
+$form_namespace = 'dealDetail';
+$layout_json = '[{id: "a", text: "Deal", header:true},{id: "b", text:"<div><a class=\"undock_pricing_detail undock_custom\" title=\"Undock\" onClick=\"dealDetail.undock_details(\'b\')\"></a>Additional Details</div>", header:true}, {id: "c", text:"<div><a class=\"undock_detail undock_custom\" title=\"Undock\" onClick=\"dealDetail.undock_details(\'c\')\"></a>Details</div>", header:true}]';
+$page_toolbar_json = '[{id:"save", type: "button", img:"save.gif", imgdis:"save_dis.gif", enabled:'. $enable_save_button . ', text:"Save", title: "Save"},{id:"certificate",type:"button",img:"certificate.gif",imgdis:"certificate_dis.gif",text:"Certificate",title:"Certificate"},
 {id:"product",type:"button",img:"product.gif",imgdis:"product_dis.gif",text:"Product",title:"Product"}, {id:"transfer",type:"button", text:"Transfer", img:"transfer.gif", imgdis:"transfer_dis.gif", title: "Transfer", enabled:false},
                             {id:"udt",type:"button",img:"data.png",imgdis:"data_dis.png",text:"Additional",title:"Additional"}
                         ]';
 
-    $layout_obj = new AdihaLayout();
-    $page_toolbar = new AdihaToolbar();
-    $tab_obj = new AdihaTab();
+$layout_obj = new AdihaLayout();
+$page_toolbar = new AdihaToolbar();
+$tab_obj = new AdihaTab();
 
-    if ($view_deleted == 'y') {
-        $udf_menu_json = '[{id:"add", text:"Add/Delete UDFs", title: "Add/Delete UDFs", img:"edit.gif", imgdis:"edit_dis.gif", enabled:false}]';
-    } else {
-        $udf_menu_json = '[{id:"add", text:"Add/Delete UDFs", title: "Add/Delete UDFs", img:"edit.gif", imgdis:"edit_dis.gif"}]';
-    }
+if ($view_deleted == 'y') {
+    $udf_menu_json = '[{id:"add", text:"Add/Delete UDFs", title: "Add/Delete UDFs", img:"edit.gif", imgdis:"edit_dis.gif", enabled:false}]';
+} else {
+    $udf_menu_json = '[{id:"add", text:"Add/Delete UDFs", title: "Add/Delete UDFs", img:"edit.gif", imgdis:"edit_dis.gif"}]';
+}
 
-    echo $layout_obj->init_layout('deal_detail', '', '3J', $layout_json, $form_namespace);
+echo $layout_obj->init_layout('deal_detail', '', '3J', $layout_json, $form_namespace);
 
-    echo $layout_obj->attach_toolbar_cell('toolbar', 'a');
-    echo $page_toolbar->init_by_attach('toolbar', $form_namespace);
-    echo $page_toolbar->load_toolbar($page_toolbar_json);
-    echo $page_toolbar->attach_event('', 'onClick', $form_namespace . '.page_toolbar_click');
+echo $layout_obj->attach_toolbar_cell('toolbar', 'a');
+echo $page_toolbar->init_by_attach('toolbar', $form_namespace);
+echo $page_toolbar->load_toolbar($page_toolbar_json);
+echo $page_toolbar->attach_event('', 'onClick', $form_namespace . '.page_toolbar_click');
 
-    if ($enable_header_udt == 'n') {
-        echo $page_toolbar->hide_item('udt');
-    }
+if ($enable_header_udt == 'n') {
+    echo $page_toolbar->hide_item('udt');
+}
 
-    echo $layout_obj->attach_event('', 'onDock', $form_namespace . '.on_dock_detail_event');
-    echo $layout_obj->attach_event('', 'onUnDock', $form_namespace . '.on_undock_detail_event');
-    echo $layout_obj->attach_tab_cell('deal_tab', 'a', $header_tab_data);
-    echo $tab_obj->init_by_attach('deal_tab', $form_namespace);
+echo $layout_obj->attach_event('', 'onDock', $form_namespace . '.on_dock_detail_event');
+echo $layout_obj->attach_event('', 'onUnDock', $form_namespace . '.on_undock_detail_event');
+echo $layout_obj->attach_tab_cell('deal_tab', 'a', $header_tab_data);
+echo $tab_obj->init_by_attach('deal_tab', $form_namespace);
 
-    if (is_array($form_data) && sizeof($form_data) > 0) {
-        foreach ($form_data as $tab_id => $form_json) {
-            if (array_key_exists('form', $form_json)) {
-                $form_obj[$tab_id] = new AdihaForm();
+if (is_array($form_data) && sizeof($form_data) > 0) {
+    foreach ($form_data as $tab_id => $form_json) {            
+        if (array_key_exists('form', $form_json)) {
+            $form_obj[$tab_id] = new AdihaForm();
 
-                if ($tab_id == 0) {
-                    $udf_menu = new AdihaMenu();
-                    echo $tab_obj->attach_menu_cell('udf_menu', $tab_id);
-                    echo $udf_menu->init_by_attach('udf_menu', $form_namespace);
-                    echo $udf_menu->load_menu($udf_menu_json);
-                    echo $udf_menu->attach_event('', 'onClick', $form_namespace . '.udf_menu_click');
-                }
+            if ($tab_id == 0) {
+                $udf_menu = new AdihaMenu();
+                echo $tab_obj->attach_menu_cell('udf_menu', $tab_id);
+                echo $udf_menu->init_by_attach('udf_menu', $form_namespace);
+                echo $udf_menu->load_menu($udf_menu_json);
+                echo $udf_menu->attach_event('', 'onClick', $form_namespace . '.udf_menu_click');
+            }
 
-                echo $tab_obj->attach_form_cell('form_' . $tab_id, $tab_id);
-                echo $form_obj[$tab_id]->init_by_attach('form_' . $tab_id, $form_namespace);
-                echo $form_obj[$tab_id]->load_form($form_json['form']);
-                echo $form_obj[$tab_id]->attach_event('', 'onChange', $form_namespace . '.form_change');
-            } else if (array_key_exists('grid', $form_json)) {
-                $udt_grid_details = json_decode($form_json['grid']);
-                $udt_grid_name = $udt_grid_details->name;
-                $udt_grid_label = $udt_grid_details->label;
-
-                $udt_menu_json = '
+            echo $tab_obj->attach_form_cell('form_' . $tab_id, $tab_id);
+            echo $form_obj[$tab_id]->init_by_attach('form_' . $tab_id, $form_namespace);
+            echo $form_obj[$tab_id]->load_form($form_json['form']);
+            echo $form_obj[$tab_id]->attach_event('', 'onChange', $form_namespace . '.form_change');         
+        } else if (array_key_exists('grid', $form_json)) {
+            $udt_grid_details = json_decode($form_json['grid']);
+            $udt_grid_name = $udt_grid_details->name;
+            $udt_grid_label = $udt_grid_details->label;
+            
+            $udt_menu_json = '
                 [
                     {id:"t1", text:"Edit", img:"edit.gif", imgdis:"new_dis.gif" ,items:[
                             {id:"add", text:"Add", img:"new.gif", enabled:false, imgdis:"new_dis.gif", title:"Add", enabled:true},
@@ -359,43 +356,43 @@
                     ]} 
                 ]
             ';
-
-                $menu_name = $udt_grid_name . '_menu';
-                $header_udt_menu = new AdihaMenu();
-                echo $tab_obj->attach_menu_cell($menu_name, $tab_id);
-                echo $header_udt_menu->init_by_attach($menu_name, $form_namespace);
-                echo $header_udt_menu->load_menu($udt_menu_json);
-                echo $header_udt_menu->attach_event('', 'onClick', $form_namespace . '.udt_menu_click');
-
-                echo $tab_obj->set_user_data($tab_id, 'is_udt_tab', 'y');
-                echo $tab_obj->attach_status_bar($tab_id, true, '', 'a_' . $tab_id);
-                echo $tab_obj->attach_grid_cell($udt_grid_name, $tab_id);
-                $header_udt_grid = new GridTable($udt_grid_name);
-                echo $header_udt_grid->init_grid_table($udt_grid_name, $form_namespace, 'n');
-                echo $header_udt_grid->set_column_auto_size();
-                echo $header_udt_grid->enable_column_move();
-                echo $header_udt_grid->enable_multi_select();
-                echo $header_udt_grid->enable_paging(25, 'pagingArea_' . $tab_id);
-                echo $header_udt_grid->return_init();
-                echo $header_udt_grid->set_search_filter(true);
-                echo $header_udt_grid->set_user_data("", "grid_id", $udt_grid_name);
-                echo $header_udt_grid->set_user_data("", "grid_label", $udt_grid_label);
-                echo $header_udt_grid->set_user_data("", "grid_obj", $form_namespace . '.' . $udt_grid_name);
-                echo $header_udt_grid->attach_event("", "onRowSelect", $form_namespace . '.header_udt_select');
-                echo $header_udt_grid->load_grid_data('', $deal_reference_id, false);
-                echo $header_udt_grid->load_grid_functions(true);
-            }
+            
+            $menu_name = $udt_grid_name . '_menu';
+            $header_udt_menu = new AdihaMenu();
+            echo $tab_obj->attach_menu_cell($menu_name, $tab_id);
+            echo $header_udt_menu->init_by_attach($menu_name, $form_namespace);
+            echo $header_udt_menu->load_menu($udt_menu_json);
+            echo $header_udt_menu->attach_event('', 'onClick', $form_namespace . '.udt_menu_click');
+            
+            echo $tab_obj->set_user_data($tab_id, 'is_udt_tab', 'y');
+            echo $tab_obj->attach_status_bar($tab_id, true, '', 'a_' . $tab_id);
+            echo $tab_obj->attach_grid_cell($udt_grid_name, $tab_id);
+            $header_udt_grid = new GridTable($udt_grid_name);
+            echo $header_udt_grid->init_grid_table($udt_grid_name, $form_namespace, 'n');
+            echo $header_udt_grid->set_column_auto_size();
+            echo $header_udt_grid->enable_column_move();
+            echo $header_udt_grid->enable_multi_select();
+            echo $header_udt_grid->enable_paging(25, 'pagingArea_' . $tab_id);
+            echo $header_udt_grid->return_init();
+            echo $header_udt_grid->set_search_filter(true);
+            echo $header_udt_grid->set_user_data("", "grid_id", $udt_grid_name);
+            echo $header_udt_grid->set_user_data("", "grid_label", $udt_grid_label);
+            echo $header_udt_grid->set_user_data("", "grid_obj", $form_namespace . '.' . $udt_grid_name);
+            echo $header_udt_grid->attach_event("", "onRowSelect", $form_namespace . '.header_udt_select');
+            echo $header_udt_grid->load_grid_data('', $deal_reference_id, false);
+            echo $header_udt_grid->load_grid_functions(true);
         }
     }
+}
 
-    // attach Menu
-    echo $layout_obj->attach_menu_cell('deal_detail_menu', 'c');
-    $menu_object = new AdihaMenu();
+// attach Menu
+echo $layout_obj->attach_menu_cell('deal_detail_menu', 'c');
+$menu_object = new AdihaMenu();
 
-    if ($template_id != 'NULL' || $copy_deal_id != 'NULL') {
-        $menu_json = '[  
+if ($template_id != 'NULL' || $copy_deal_id != 'NULL') {
+    $menu_json = '[  
                     {id:"refresh", text:"Refresh", img:"refresh.gif", imgdis:"refresh_dis.gif", title: "Refresh"},
-                    {id:"actions", text:"Actions", img:"action.gif", imgdis:"action_dis.gif", enabled:' . (int)$has_rights_deal_edit . ', items:[
+                    {id:"actions", text:"Actions", img:"action.gif", imgdis:"action_dis.gif", enabled:'. (int)$has_rights_deal_edit . ', items:[
                         {id:"add_group", text:"Add Group", img:"add.gif", imgdis:"add_dis.gif", title: "Add Group", enabled:true},
                         {id:"add_leg", text:"Add Leg", img:"add.gif", imgdis:"add_dis.gif", title: "Add Leg", enabled:false},
                         {id:"add_container", text:"Add Shipment", img:"add.gif", imgdis:"add_dis.gif", title: "Add Shipment", enabled:false},
@@ -403,22 +400,22 @@
                         {id:"delete_term", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete", enabled:false},
                         {id:"update_volume", text:"Update Volume", img:"update_volume.gif", imgdis:"update_volume_dis.gif", title: "Update Volume", enabled:false}
             ]}';
-        if ($enable_pricing == 'y') {
-            $menu_json .= ', {id:"price", text:"Price", img:"price.gif", imgdis:"price_dis.gif", title: "Price", enabled:false}
+    if ($enable_pricing == 'y') {
+        $menu_json .= ', {id:"price", text:"Price", img:"price.gif", imgdis:"price_dis.gif", title: "Price", enabled:false}
                            , {id:"provisional_price", text:"Provisional Price", img:"price.gif", imgdis:"price_dis.gif", title: "Provisional Price", enabled:false}';
-        }
-    } else {
-        $menu_json = '[  
+    }
+} else {
+    $menu_json = '[  
                     {id:"refresh", text:"Refresh", img:"refresh.gif", imgdis:"refresh_dis.gif", title: "Refresh"},
                     {id:"export", text:"Export", img:"export.gif", items:[
                         {id:"excel", text:"Excel", img:"excel.gif", imgdis:"excel_dis.gif", title: "Excel"},
                         {id:"pdf", text:"PDF", img:"pdf.gif", imgdis:"pdf_dis.gif", title: "PDF"}
                     ]},
-                    {id:"edit", enabled:' . (int)$has_rights_deal_edit . ', text:"Edit", img:"edit.gif",  imgdis:"edit_dis.gif", items:[
+                    {id:"edit", enabled:'. (int)$has_rights_deal_edit . ', text:"Edit", img:"edit.gif",  imgdis:"edit_dis.gif", items:[
                         {id:"undo_cell", text:"Undo Cell Edit", img:"undo.gif", imgdis:"undo_dis.gif", title: "Undo Cell Edit"},
                         {id:"redo_cell", text:"Redo Cell Edit", img:"redo.gif", imgdis:"redo_dis.gif", title: "Redo Cell Edit"}
                     ]},
-                    {id:"actions", text:"Actions", img:"action.gif", imgdis:"action_dis.gif", enabled:' . (int)$has_rights_deal_edit . ', items:[
+                    {id:"actions", text:"Actions", img:"action.gif", imgdis:"action_dis.gif", enabled:'. (int)$has_rights_deal_edit . ', items:[
                         {id:"add_term", text:"Add Term", img:"add.gif", imgdis:"add_dis.gif", title: "Add Term", enabled:false},
                         {id:"add_leg", text:"Add Leg", img:"add.gif", imgdis:"add_dis.gif", title: "Add Leg", enabled:false},
                         {id:"update_volume", text:"Update Volume", img:"update_volume.gif", imgdis:"update_volume_dis.gif", title: "Update Volume", enabled:false},
@@ -430,127 +427,127 @@
                         {id:"unlock", text:"Unlock", img:"unlock.gif", imgdis:"unlock_dis.gif", title: "Unlock", enabled:false}
                     ';
 
-        if ($enable_update_actual) {
-            $menu_json .= ',{id:"update_actual", text:"Update Actual", img:"update_volume.gif", imgdis:"update_volume_dis.gif", title: "Update Actual", enabled:false}';
-        }
+    if ($enable_update_actual) {
+        $menu_json .= ',{id:"update_actual", text:"Update Actual", img:"update_volume.gif", imgdis:"update_volume_dis.gif", title: "Update Actual", enabled:false}';
+    }
 
-        $menu_json .= ']}'; // close actions menu
+    $menu_json .= ']}'; // close actions menu
 
-        // Add report menu
-        $menu_json .= ',{id:"reports", text:"Reports", img:"report.gif", items:[
+    // Add report menu
+    $menu_json .= ',{id:"reports", text:"Reports", img:"report.gif", items:[
                             {id:"view_certificate", text:"View Certificate", img:"certificate.gif", imgdis:"certificate_dis.gif", title: "View Certificate", enabled:false},
                             {id:"shipper_code_report", text:"Shipper Code Report", img:"report.gif", imgdis:"report_dis.gif", title: "Shipper Code Report", enabled:false},
                             {id:"dashboard_reports", text:"Dashboard Reports", img:"report.gif", imgdis:"report_dis.gif", title: "Dashboard Reports", enabled:true ' . $db_items . '}
                     ]}';
 
-        if ($enable_efp == 'y' || $enable_trigger == 'y' || $enable_exercise == 'y') {
-            $menu_json .= ',{id:"process", text:"Process", img:"process.gif", imgdis:"process_dis.gif", enabled:' . (int)$has_rights_deal_edit . ', items:[';
+    if ($enable_efp == 'y' || $enable_trigger == 'y' || $enable_exercise == 'y') {
+        $menu_json .= ',{id:"process", text:"Process", img:"process.gif", imgdis:"process_dis.gif", enabled:'. (int)$has_rights_deal_edit . ', items:[';
 
-            if ($enable_efp == 'y') {
-                if ($future_deal == 'y') {
-                    $menu_json .= '{id:"close", text:"Close", img:"add.gif", imgdis:"add_dis.gif", title: "Close", enabled:false}';
-                } else {
-                    $menu_json .= '{id:"post", text:"Post", img:"add.gif", imgdis:"add_dis.gif", title: "Post", enabled:false}';
-                }
+        if ($enable_efp == 'y') {
+            if ($future_deal == 'y') {
+                $menu_json .= '{id:"close", text:"Close", img:"add.gif", imgdis:"add_dis.gif", title: "Close", enabled:false}';
+            } else {
+                $menu_json .= '{id:"post", text:"Post", img:"add.gif", imgdis:"add_dis.gif", title: "Post", enabled:false}';
             }
-
-            if ($enable_trigger == 'y') {
-                if ($enable_efp == 'y')
-                    $menu_json .= ',';
-
-                $menu_json .= '{id:"trigger", text:"Trigger", img:"add.gif", imgdis:"add_dis.gif", title: "Trigger", enabled:false}';
-            }
-
-            if ($enable_exercise == 'y') {
-                if ($enable_efp == 'y' || $enable_trigger == 'y')
-                    $menu_json .= ',';
-
-                $menu_json .= '{id:"exercise", text:"Exercise", img:"run_view_schedule.gif", imgdis:"run_view_schedule_dis.gif", title: "Exercise", enabled:false}';
-            }
-
-            $menu_json .= ']}';
         }
 
-        if ($enable_pricing == 'y') {
-            $menu_json .= ', {id:"price", text:"Price", img:"price.gif", imgdis:"price_dis.gif", title: "Price", enabled:false}';
+        if ($enable_trigger == 'y') {
+            if ($enable_efp == 'y')
+                $menu_json .= ',';
+
+            $menu_json .= '{id:"trigger", text:"Trigger", img:"add.gif", imgdis:"add_dis.gif", title: "Trigger", enabled:false}';
         }
 
-        if ($enable_pricing == 'y') {
-            $menu_json .= ', {id:"provisional_price", text:"Provisional Price", img:"price.gif", imgdis:"price_dis.gif", title: "Provisional Price", enabled:false}';
+        if ($enable_exercise == 'y') {
+            if ($enable_efp == 'y' || $enable_trigger == 'y')
+                $menu_json .= ',';
+
+            $menu_json .= '{id:"exercise", text:"Exercise", img:"run_view_schedule.gif", imgdis:"run_view_schedule_dis.gif", title: "Exercise", enabled:false}';
         }
+
+        $menu_json .= ']}';
     }
 
-    if ($enable_detail_udt == 'y') {
-        $menu_json .= ', {id:"udt", text:"Additional", img:"data.png", imgdis:"data_dis.png", title: "Additional", enabled: false}';
-    }
-
-    $menu_json .= ']';
-
-    echo $menu_object->init_by_attach('deal_detail_menu', $form_namespace);
-    echo $menu_object->load_menu($menu_json);
-    echo $menu_object->attach_event('', 'onClick', $form_namespace . '.deal_menu_click');
-
-    //attach grid
-    $grid_obj = new AdihaGrid();
-    echo $layout_obj->attach_grid_cell('grid', 'c');
-    echo $layout_obj->attach_status_bar("c", true);
-
-    echo $grid_obj->init_by_attach('grid', $form_namespace);
-    echo $grid_obj->enable_column_move();
-    echo $grid_obj->enable_paging(25, 'pagingArea_c');
-    echo $grid_obj->attach_event('', 'onEditCell', $form_namespace . '.deal_detail_edit');
-    echo $grid_obj->load_config_json($detail_data[0]['config_json'], true, $detail_data[0]['header_menu']);
-    echo $grid_obj->set_column_auto_size();
-    echo $grid_obj->set_search_filter(false, $detail_data[0]['filter_list']);
-    echo $grid_obj->set_validation_rule($detail_data[0]['validation_rule']);
-
-    echo $grid_obj->attach_event("", "onSelectStateChanged", $form_namespace . '.grid_row_selection');
-    echo $grid_obj->attach_event("", "onBeforeSelect", $form_namespace . '.grid_before_row_selection');
-    echo $grid_obj->attach_event("", "onRowDblClicked", $form_namespace . '.grid_row_dbl_click');
-    echo $grid_obj->attach_event("", "onDragIn", $form_namespace . '.grid_before_drag');
-    echo $grid_obj->attach_event("", "onRowSelect", $form_namespace . '.on_row_select');
-
-    $combo_fields = array();
-    $combo_fields = explode("||||", $detail_data[0]['combo_list']);
-    $combo_url_info = $detail_data[0]['combo_list'];
-
-    foreach ($combo_fields as $combo_column) {
-        $json_array = array();
-        $json_array = explode("::::", $combo_column);
-        echo $grid_obj->load_connector_combo($json_array[0], $json_array[1]);
-    }
-
-    $apply_pricing_detail = '';
     if ($enable_pricing == 'y') {
-        $apply_pricing_detail = ',{id:"apply_pricing_to", text:"Apply Pricing to", title: "Apply Pricing to"}';
+        $menu_json .= ', {id:"price", text:"Price", img:"price.gif", imgdis:"price_dis.gif", title: "Price", enabled:false}';
     }
 
-    $context_menu_json = '[{id:"apply_to", text:"Apply to..", title: "Apply to.."}' . $apply_pricing_detail . ',{id:"new_group", text:"Move to new group", title: "Move to new group"}]';
-
-    $context_menu = new AdihaMenu();
-    echo $context_menu->init_menu('context_menu', $form_namespace);
-    echo $context_menu->render_as_context_menu();
-    echo $grid_obj->attach_event('', 'onRightClick', $form_namespace . '.check_context_menu');
-    echo $context_menu->attach_event('', 'onClick', $form_namespace . '.context_menu_click');
-    echo $context_menu->load_menu($context_menu_json);
-
-    echo $grid_obj->enable_context_menu($form_namespace . '.context_menu');
-    //echo $grid_obj->load_grid_data($detail_data[0][data_sp], 'g', '', false);
-    echo $grid_obj->load_grid_functions();
-
-    $hide_pricing = 1;
-    $hide_efp_trigger = 1;
-
-    $detail_tab_obj = new AdihaTab();
-    $detail_tab_data = '[';
-
-    // if show in form is active for some fields, add detail tab
-    if ($detail_data[0]['tab_json'] != '') {
-        $detail_tab_data .= $detail_data[0]['tab_json'];
+    if ($enable_pricing == 'y') {
+        $menu_json .= ', {id:"provisional_price", text:"Provisional Price", img:"price.gif", imgdis:"price_dis.gif", title: "Provisional Price", enabled:false}';
     }
+}
+
+if ($enable_detail_udt == 'y') {
+    $menu_json .= ', {id:"udt", text:"Additional", img:"data.png", imgdis:"data_dis.png", title: "Additional", enabled: false}';
+}
+
+$menu_json .= ']';
+    
+echo $menu_object->init_by_attach('deal_detail_menu', $form_namespace);
+echo $menu_object->load_menu($menu_json);
+echo $menu_object->attach_event('', 'onClick', $form_namespace . '.deal_menu_click');
+
+//attach grid
+$grid_obj = new AdihaGrid();
+echo $layout_obj->attach_grid_cell('grid', 'c');
+echo $layout_obj->attach_status_bar("c", true);
+
+echo $grid_obj->init_by_attach('grid', $form_namespace);
+echo $grid_obj->enable_column_move();
+echo $grid_obj->enable_paging(25, 'pagingArea_c');
+echo $grid_obj->attach_event('', 'onEditCell', $form_namespace . '.deal_detail_edit');
+echo $grid_obj->load_config_json($detail_data[0]['config_json'], true, $detail_data[0]['header_menu']);
+echo $grid_obj->set_column_auto_size();
+echo $grid_obj->set_search_filter(false, $detail_data[0]['filter_list']);
+echo $grid_obj->set_validation_rule($detail_data[0]['validation_rule']);
+
+echo $grid_obj->attach_event("", "onSelectStateChanged", $form_namespace . '.grid_row_selection');
+echo $grid_obj->attach_event("", "onBeforeSelect", $form_namespace . '.grid_before_row_selection');
+echo $grid_obj->attach_event("", "onRowDblClicked", $form_namespace . '.grid_row_dbl_click');
+echo $grid_obj->attach_event("", "onDragIn", $form_namespace . '.grid_before_drag');
+echo $grid_obj->attach_event("", "onRowSelect", $form_namespace . '.on_row_select');
+
+$combo_fields = array();
+$combo_fields = explode("||||", $detail_data[0]['combo_list']);
+$combo_url_info = $detail_data[0]['combo_list'];
+
+foreach ($combo_fields as $combo_column) {
+    $json_array = array();
+    $json_array = explode("::::", $combo_column);
+    echo $grid_obj->load_connector_combo($json_array[0], $json_array[1]);
+}
+
+$apply_pricing_detail = '';
+if($enable_pricing == 'y') {
+    $apply_pricing_detail = ',{id:"apply_pricing_to", text:"Apply Pricing to", title: "Apply Pricing to"}';
+}
+
+$context_menu_json = '[{id:"apply_to", text:"Apply to..", title: "Apply to.."}' . $apply_pricing_detail . ',{id:"new_group", text:"Move to new group", title: "Move to new group"}]';
+
+$context_menu = new AdihaMenu();
+echo $context_menu->init_menu('context_menu', $form_namespace);
+echo $context_menu->render_as_context_menu();
+echo $grid_obj->attach_event('', 'onRightClick', $form_namespace . '.check_context_menu');
+echo $context_menu->attach_event('', 'onClick', $form_namespace . '.context_menu_click');
+echo $context_menu->load_menu($context_menu_json);
+
+echo $grid_obj->enable_context_menu($form_namespace . '.context_menu');
+//echo $grid_obj->load_grid_data($detail_data[0][data_sp], 'g', '', false);
+echo $grid_obj->load_grid_functions();
+
+$hide_pricing = 1;
+$hide_efp_trigger = 1;
+
+$detail_tab_obj = new AdihaTab();
+$detail_tab_data = '[';
+
+// if show in form is active for some fields, add detail tab
+if ($detail_data[0]['tab_json'] != '') {
+    $detail_tab_data .= $detail_data[0]['tab_json'];
+}
 
 
-    /******* Removed pricing tab : Its availble in new popup window from price button in new enhancement.
+/******* Removed pricing tab : Its availble in new popup window from price button in new enhancement.
 // enable pricing tab
 if ($enable_pricing == 'y') {
 if ($detail_data[0][form_json] != '') {
@@ -568,132 +565,132 @@ $detail_tab_data .= ',{id:"tab_provisional", text:"Provisional"}';
 $detail_tab_data .= '{id:"tab_provisional", text:"Provisional", active:true}';
 }
 }
-     */
-    $additional_tabs = '';
-    // if escalation tab is enabled
-    if ($enable_escalation_tab == 'y') {
-        if ($detail_data[0]['form_json'] != '') {
-            $detail_tab_data .= ',{id:"tab_escalation", text:"Escalation"}';
-        } else {
-            $detail_tab_data .= '{id:"tab_escalation", text:"Escalation", active:true}';
-        }
+ */
+$additional_tabs = '';
+// if escalation tab is enabled
+if ($enable_escalation_tab == 'y') {
+    if ($detail_data[0]['form_json'] != '') {
+        $detail_tab_data .= ',{id:"tab_escalation", text:"Escalation"}';
+    } else {
+        $detail_tab_data .= '{id:"tab_escalation", text:"Escalation", active:true}';
     }
+}
 
-    // if efp tab is enabled
-    if ($enable_efp == 'y') {
-        if ($detail_data[0]['form_json'] != '' || $enable_escalation_tab == 'y') {
-            $detail_tab_data .= ',{id:"tab_efp", text:"Future"}';
-        } else {
-            $detail_tab_data .= '{id:"tab_efp", text:"Future", active:true}';
-        }
+// if efp tab is enabled
+if ($enable_efp == 'y') {
+    if ($detail_data[0]['form_json'] != '' || $enable_escalation_tab == 'y') {
+        $detail_tab_data .= ',{id:"tab_efp", text:"Future"}';
+    } else {
+        $detail_tab_data .= '{id:"tab_efp", text:"Future", active:true}';
     }
+}
 
-    // if trigger tab is enabled
-    if ($enable_trigger == 'y') {
-        if ($detail_data[0]['form_json'] != '' || $enable_efp == 'y' || $enable_escalation_tab == 'y') {
-            $detail_tab_data .= ',{id:"tab_trigger", text:"Trigger"}';
-        } else {
-            $detail_tab_data .= '{id:"tab_trigger", text:"Trigger", active:true}';
-        }
+// if trigger tab is enabled
+if ($enable_trigger == 'y') {
+    if ($detail_data[0]['form_json'] != '' || $enable_efp == 'y' || $enable_escalation_tab == 'y') {
+        $detail_tab_data .= ',{id:"tab_trigger", text:"Trigger"}';
+    } else {
+        $detail_tab_data .= '{id:"tab_trigger", text:"Trigger", active:true}';
     }
+}
 
-    // if efp Exercise is enabled
-    if ($enable_exercise == 'y') {
-        if ($detail_data[0]['form_json'] != '' || $enable_efp == 'y' || $enable_trigger == 'y' || $enable_escalation_tab == 'y') {
-            $detail_tab_data .= ',{id:"tab_exercise", text:"Exercise Deal"}';
-        } else {
-            $detail_tab_data .= '{id:"tab_exercise", text:"Exercise Deal", active:true}';
-        }
+// if efp Exercise is enabled
+if ($enable_exercise == 'y') {
+    if ($detail_data[0]['form_json'] != '' || $enable_efp == 'y' || $enable_trigger == 'y' || $enable_escalation_tab == 'y') {
+        $detail_tab_data .= ',{id:"tab_exercise", text:"Exercise Deal"}';
+    } else {
+        $detail_tab_data .= '{id:"tab_exercise", text:"Exercise Deal", active:true}';
     }
+}
 
-    // if efp detail cost is enabled
-    if ($detail_cost_enable == 'y') {
-        if ($detail_data[0]['form_json'] != '' || $enable_efp == 'y' || $enable_trigger == 'y' || $enable_exercise == 'y' || $enable_escalation_tab == 'y') {
-            $detail_tab_data .= ',{id:"tab_detail_cost", text:"Cost"}';
-        } else {
-            $detail_tab_data .= '{id:"tab_detail_cost", text:"Cost", active:true}';
-        }
+// if efp detail cost is enabled
+if ($detail_cost_enable == 'y') {
+    if ($detail_data[0]['form_json'] != '' || $enable_efp == 'y' || $enable_trigger == 'y' || $enable_exercise == 'y' || $enable_escalation_tab == 'y') {
+        $detail_tab_data .= ',{id:"tab_detail_cost", text:"Cost"}';
+    } else {
+        $detail_tab_data .= '{id:"tab_detail_cost", text:"Cost", active:true}';
     }
+}
 
-    if ($enable_udf_tab == 'y' && $deal_id != 'NULL') {
-        // add udf tab
-        if ($detail_cost_enable == 'y' || $detail_data[0]['form_json'] != '' || $enable_efp == 'y' || $enable_trigger == 'y' || $enable_exercise == 'y' || $enable_escalation_tab == 'y') {
-            $detail_tab_data .= ',{id:"tab_detail_udf", text:"UDFs"}';
-        } else {
-            $detail_tab_data .= '{id:"tab_detail_udf", text:"UDFs", active:true}';
-        }
+if ($enable_udf_tab == 'y' && $deal_id != 'NULL') {
+    // add udf tab
+    if ($detail_cost_enable == 'y' || $detail_data[0]['form_json'] != '' || $enable_efp == 'y' || $enable_trigger == 'y' || $enable_exercise == 'y' || $enable_escalation_tab == 'y') {
+        $detail_tab_data .= ',{id:"tab_detail_udf", text:"UDFs"}';
+    } else {
+        $detail_tab_data .= '{id:"tab_detail_udf", text:"UDFs", active:true}';
     }
+}
 
-    $detail_tab_data .= ']';
+$detail_tab_data .= ']';
 
-    echo $layout_obj->attach_tab_cell('deal_detail_tab', 'b', $detail_tab_data);
-    echo $detail_tab_obj->init_by_attach('deal_detail_tab', $form_namespace);
+echo $layout_obj->attach_tab_cell('deal_detail_tab', 'b', $detail_tab_data);
+echo $detail_tab_obj->init_by_attach('deal_detail_tab', $form_namespace);
 
-    if ($enable_trigger == 'y') {
-        $trigger_layout = new AdihaLayout();
-        echo $detail_tab_obj->attach_layout('trigger_layout', 'tab_trigger', '1C');
-        $trigger_layout->init_by_attach('trigger_layout', $form_namespace);
-        echo $trigger_layout->hide_header('a');
-        echo $trigger_layout->attach_grid_cell('deal_triggers', 'a');
-        echo $trigger_layout->attach_status_bar("a", true);
-        $trigger_grid_obj = new GridTable('deal_triggers');
-        echo $trigger_grid_obj->init_grid_table('deal_triggers', $form_namespace, 'n');
-        echo $trigger_grid_obj->set_column_auto_size();
-        echo $trigger_grid_obj->set_search_filter(true, "");
-        echo $trigger_grid_obj->enable_paging(50, 'pagingArea_a', 'true');
-        echo $trigger_grid_obj->enable_column_move();
-        echo $trigger_grid_obj->enable_multi_select();
-        echo $trigger_grid_obj->return_init();
+if ($enable_trigger == 'y') {
+    $trigger_layout = new AdihaLayout();
+    echo $detail_tab_obj->attach_layout('trigger_layout', 'tab_trigger', '1C');
+    $trigger_layout->init_by_attach('trigger_layout', $form_namespace);
+    echo $trigger_layout->hide_header('a');
+    echo $trigger_layout->attach_grid_cell('deal_triggers', 'a');
+    echo $trigger_layout->attach_status_bar("a", true);
+    $trigger_grid_obj = new GridTable('deal_triggers');
+    echo $trigger_grid_obj->init_grid_table('deal_triggers', $form_namespace, 'n');
+    echo $trigger_grid_obj->set_column_auto_size();
+    echo $trigger_grid_obj->set_search_filter(true, "");
+    echo $trigger_grid_obj->enable_paging(50, 'pagingArea_a', 'true');
+    echo $trigger_grid_obj->enable_column_move();
+    echo $trigger_grid_obj->enable_multi_select();
+    echo $trigger_grid_obj->return_init();
 
-        $sp_trigger_grid = "EXEC spa_efp_trigger @flag='g', @deal_id=" . $deal_id;
-        echo $trigger_grid_obj->load_grid_data($sp_trigger_grid);
+    $sp_trigger_grid = "EXEC spa_efp_trigger @flag='g', @deal_id=" . $deal_id;
+    echo $trigger_grid_obj->load_grid_data($sp_trigger_grid);
+}
+
+if ($enable_efp == 'y') {
+    $efp_layout = new AdihaLayout();
+    echo $detail_tab_obj->attach_layout('efp_layout', 'tab_efp', '1C');
+    $efp_layout->init_by_attach('efp_layout', $form_namespace);
+    echo $efp_layout->hide_header('a');
+    echo $efp_layout->attach_grid_cell('deal_efp', 'a');
+    echo $efp_layout->attach_status_bar("a", true);
+    $efp_grid_obj = new GridTable('deal_efp');
+    echo $efp_grid_obj->init_grid_table('deal_efp', $form_namespace, 'n');
+    echo $efp_grid_obj->set_column_auto_size();
+    echo $efp_grid_obj->set_search_filter(true, "");
+    echo $efp_grid_obj->enable_paging(50, 'pagingArea_a', 'true');
+    echo $efp_grid_obj->enable_column_move();
+    echo $efp_grid_obj->enable_multi_select();
+    echo $efp_grid_obj->return_init();
+
+    if ($future_deal == 'y') {
+        $sp_efp_grid = "EXEC spa_deal_close @flag='p', @deal_id=" . $deal_id;
+    } else {
+        $sp_efp_grid = "EXEC spa_efp_trigger @flag='h', @deal_id=" . $deal_id;
     }
+    echo $efp_grid_obj->load_grid_data($sp_efp_grid);
+}
 
-    if ($enable_efp == 'y') {
-        $efp_layout = new AdihaLayout();
-        echo $detail_tab_obj->attach_layout('efp_layout', 'tab_efp', '1C');
-        $efp_layout->init_by_attach('efp_layout', $form_namespace);
-        echo $efp_layout->hide_header('a');
-        echo $efp_layout->attach_grid_cell('deal_efp', 'a');
-        echo $efp_layout->attach_status_bar("a", true);
-        $efp_grid_obj = new GridTable('deal_efp');
-        echo $efp_grid_obj->init_grid_table('deal_efp', $form_namespace, 'n');
-        echo $efp_grid_obj->set_column_auto_size();
-        echo $efp_grid_obj->set_search_filter(true, "");
-        echo $efp_grid_obj->enable_paging(50, 'pagingArea_a', 'true');
-        echo $efp_grid_obj->enable_column_move();
-        echo $efp_grid_obj->enable_multi_select();
-        echo $efp_grid_obj->return_init();
-
-        if ($future_deal == 'y') {
-            $sp_efp_grid = "EXEC spa_deal_close @flag='p', @deal_id=" . $deal_id;
-        } else {
-            $sp_efp_grid = "EXEC spa_efp_trigger @flag='h', @deal_id=" . $deal_id;
-        }
-        echo $efp_grid_obj->load_grid_data($sp_efp_grid);
-    }
-
-    if ($enable_exercise == 'y') {
-        $exercise_menu = new AdihaMenu();
-        $exercise_json = '[  
+if ($enable_exercise == 'y') {
+    $exercise_menu = new AdihaMenu();
+    $exercise_json = '[  
                         {id:"delete", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete",enabled:true}                       
                     ]';
-        echo $detail_tab_obj->attach_menu_cell('exercise_menu', 'tab_exercise');
-        echo $exercise_menu->init_by_attach('exercise_menu', $form_namespace);
-        echo $exercise_menu->load_menu($exercise_json);
-        echo $exercise_menu->attach_event('', 'onClick', $form_namespace . '.exercise_menu_click');
+    echo $detail_tab_obj->attach_menu_cell('exercise_menu', 'tab_exercise');
+    echo $exercise_menu->init_by_attach('exercise_menu', $form_namespace);
+    echo $exercise_menu->load_menu($exercise_json);
+    echo $exercise_menu->attach_event('', 'onClick', $form_namespace . '.exercise_menu_click');
 
-        $exercise_layout = new AdihaLayout();
-        echo $detail_tab_obj->attach_layout('exercise_layout', 'tab_exercise', '1C');
-        $exercise_layout->init_by_attach('exercise_layout', $form_namespace);
-        echo $exercise_layout->hide_header('a');
-        echo $exercise_layout->attach_grid_cell('deal_exercise', 'a');
-        $exercise_grid_obj = new GridTable('deal_exercise');
-        echo $exercise_grid_obj->init_grid_table('deal_exercise', $form_namespace, 'n');
-        echo $exercise_grid_obj->return_init();
-    }
+    $exercise_layout = new AdihaLayout();
+    echo $detail_tab_obj->attach_layout('exercise_layout', 'tab_exercise', '1C');
+    $exercise_layout->init_by_attach('exercise_layout', $form_namespace);
+    echo $exercise_layout->hide_header('a');
+    echo $exercise_layout->attach_grid_cell('deal_exercise', 'a');
+    $exercise_grid_obj = new GridTable('deal_exercise');
+    echo $exercise_grid_obj->init_grid_table('deal_exercise', $form_namespace, 'n');
+    echo $exercise_grid_obj->return_init();
+}
 
-    /******* Removed pricing tab : Its availble in new popup window from price button in new enhancement.
+/******* Removed pricing tab : Its availble in new popup window from price button in new enhancement.
 if ($enable_pricing == 'y') {
 echo $detail_tab_obj->attach_url('tab_pricing', 'deal.pricing.php?pricing_provisional=p');
 }
@@ -701,45 +698,45 @@ echo $detail_tab_obj->attach_url('tab_pricing', 'deal.pricing.php?pricing_provis
 if ($enable_provisional_tab == 'y') {
 echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_provisional=q');
 }
-     */
-    if ($enable_escalation_tab == 'y') {
-        // escalation tab
-        $escalation_menu = new AdihaMenu();
+ */
+if ($enable_escalation_tab == 'y') {
+    // escalation tab
+    $escalation_menu = new AdihaMenu();
 
-        $escalation_json = '[  
+    $escalation_json = '[  
                         {id:"refresh", text:"Refresh", img:"refresh.gif", enabled:false, imgdis:"refresh_dis.gif", title: "Refresh"},
                         {id:"t1", text:"Edit", img:"edit.gif", imgdis:"new_dis.gif" ,items:[
                             {id:"add", text:"Add", img:"new.gif", enabled:false ,imgdis:"new_dis.gif", title: "Add"},
                             {id:"delete", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete",enabled:false},
                         ]}                       
                     ]';
-        echo $detail_tab_obj->attach_menu_cell('escalation_menu', 'tab_escalation');
-        echo $escalation_menu->init_by_attach('escalation_menu', $form_namespace);
-        echo $escalation_menu->load_menu($escalation_json);
-        echo $escalation_menu->attach_event('', 'onClick', $form_namespace . '.escalation_menu_click');
+    echo $detail_tab_obj->attach_menu_cell('escalation_menu', 'tab_escalation');
+    echo $escalation_menu->init_by_attach('escalation_menu', $form_namespace);
+    echo $escalation_menu->load_menu($escalation_json);
+    echo $escalation_menu->attach_event('', 'onClick', $form_namespace . '.escalation_menu_click');
 
-        // escalation grid
-        echo $detail_tab_obj->attach_grid_cell('deal_escalation', 'tab_escalation');
-        $deal_escalation = new GridTable('deal_escalation');
-        echo $deal_escalation->init_grid_table('deal_escalation', $form_namespace, 'n');
-        echo $deal_escalation->set_column_auto_size();
-        echo $deal_escalation->enable_column_move();
-        echo $deal_escalation->enable_multi_select();
-        echo $deal_escalation->return_init();
-        echo $deal_escalation->enable_cell_edit_events("true", "true", "true");
-        echo $deal_escalation->attach_event("", "onSelectStateChanged", $form_namespace . '.deal_escalation_selection');
-    }
+    // escalation grid
+    echo $detail_tab_obj->attach_grid_cell('deal_escalation', 'tab_escalation');
+    $deal_escalation = new GridTable('deal_escalation');
+    echo $deal_escalation->init_grid_table('deal_escalation', $form_namespace, 'n');
+    echo $deal_escalation->set_column_auto_size();
+    echo $deal_escalation->enable_column_move();
+    echo $deal_escalation->enable_multi_select();
+    echo $deal_escalation->return_init();
+    echo $deal_escalation->enable_cell_edit_events("true", "true", "true");
+    echo $deal_escalation->attach_event("", "onSelectStateChanged", $form_namespace . '.deal_escalation_selection');
+}
 
-    if ($detail_cost_enable != 'n' && $detail_cost_enable != '') {
-        $detail_cost_layout = new AdihaLayout();
-        echo $detail_tab_obj->attach_layout('detail_cost_layout', 'tab_detail_cost', '2E');
-        $detail_cost_layout->init_by_attach('detail_cost_layout', $form_namespace);
-        echo $detail_cost_layout->hide_header('a');
-        echo $detail_cost_layout->hide_header('b');
-        echo $detail_cost_layout->set_cell_height('a', 30);
-        echo $detail_cost_layout->set_cell_height('b', 650);
+if ($detail_cost_enable != 'n' && $detail_cost_enable != '') {
+    $detail_cost_layout = new AdihaLayout();
+    echo $detail_tab_obj->attach_layout('detail_cost_layout', 'tab_detail_cost', '2E');
+    $detail_cost_layout->init_by_attach('detail_cost_layout', $form_namespace);
+    echo $detail_cost_layout->hide_header('a');
+    echo $detail_cost_layout->hide_header('b');
+    echo $detail_cost_layout->set_cell_height('a', 30);
+    echo $detail_cost_layout->set_cell_height('b', 650);
 
-        $form_structure = "[
+    $form_structure = "[
             {type:'calendar', name:'term_start', label:'Term Start', position:'label-top', inputWidth:200, offsetLeft: 15, dateFormat:'$date_format', serverDateFormat: '%Y-%m-%d'},
             {type:'newcolumn'},
             {type:'calendar', name:'term_end', label:'Term End', position:'label-top', inputWidth:200, offsetLeft: 15, dateFormat:'$date_format', serverDateFormat: '%Y-%m-%d'},
@@ -747,117 +744,118 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             {type:'combo', name:'leg', label:'Leg', position:'label-top', inputWidth:200, offsetLeft: 15, options:[{'value':'','text':'','state':'','selected':'true'},{'value':'1','text':'1','state':''},{'value':'2','text':'2','state':''},{'value':'3','text':'3','state':''},{'value':'4','text':'4','state':''},{'value':'5','text':'5','state':''},{'value':'6','text':'6','state':''},{'value':'7','text':'7','state':''},{'value':'8','text':'8','state':''},{'value':'9','text':'9','state':''},{'value':'10','text':'10','state':''},{'value':'11','text':'11','state':''},{'value':'12','text':'12','state':''}]}
         ]";
 
-        $filter_name = 'detail_cost_filter_form';
-        echo $detail_cost_layout->attach_form($filter_name, 'a');
-        $filter_obj = new AdihaForm();
-        echo $filter_obj->init_by_attach($filter_name, $form_namespace);
-        echo $filter_obj->load_form($form_structure);
+    $filter_name = 'detail_cost_filter_form';
+    echo $detail_cost_layout->attach_form($filter_name, 'a');
+    $filter_obj = new AdihaForm();
+    echo $filter_obj->init_by_attach($filter_name, $form_namespace);
+    echo $filter_obj->load_form($form_structure);
 
-        $detail_cost_menu_json = '[
+    $detail_cost_menu_json = '[
             {id:"refresh", img:"refresh.gif", text:"Refresh", title:"Refresh"},
             {id:"add", text:"Add/Delete Costs", title: "Add/Delete Costs", img:"edit.gif", imgdis:"edit_dis.gif"}
         ]';
 
-        $detail_cost_menu = new AdihaMenu();
-        echo $detail_cost_layout->attach_menu_cell('detail_cost_menu', 'b');
-        echo $detail_cost_menu->init_by_attach('detail_cost_menu', $form_namespace);
-        echo $detail_cost_menu->load_menu($detail_cost_menu_json);
-        echo $detail_cost_menu->attach_event('', 'onClick', $form_namespace . '.detail_cost_menu_click');
+    $detail_cost_menu = new AdihaMenu();
+    echo $detail_cost_layout->attach_menu_cell('detail_cost_menu', 'b');
+    echo $detail_cost_menu->init_by_attach('detail_cost_menu', $form_namespace);
+    echo $detail_cost_menu->load_menu($detail_cost_menu_json);
+    echo $detail_cost_menu->attach_event('', 'onClick', $form_namespace . '.detail_cost_menu_click');
 
-        echo $detail_cost_layout->attach_grid_cell('deal_detail_cost', 'b');
+    echo $detail_cost_layout->attach_grid_cell('deal_detail_cost', 'b');
 
-        $context_menu_json = '[{id: "apply_to_all", text: "Apply to all"}]';
-        $context_menu = new AdihaMenu();
-        echo $context_menu->init_menu('grid_context_menu', $form_namespace);
-        echo $context_menu->render_as_context_menu();
-        echo $context_menu->load_menu($context_menu_json);
-        echo $context_menu->attach_event('', 'onClick', $form_namespace . '.udf_cost_context_menu_click');
+    $context_menu_json = '[{id: "apply_to_all", text: "Apply to all"}]';
+    $context_menu = new AdihaMenu();
+    echo $context_menu->init_menu('grid_context_menu', $form_namespace);
+    echo $context_menu->render_as_context_menu();
+    echo $context_menu->load_menu($context_menu_json);
+    echo $context_menu->attach_event('', 'onClick', $form_namespace . '.udf_cost_context_menu_click');
 
-        $deal_detail_cost = new GridTable('deal_detail_cost');
-        echo $deal_detail_cost->init_grid_table('deal_detail_cost', $form_namespace, 'n');
-        echo $deal_detail_cost->set_column_auto_size();
-        echo $deal_detail_cost->enable_column_move();
-        echo $deal_detail_cost->enable_multi_select();
-        echo $deal_detail_cost->enable_context_menu($form_namespace . '.grid_context_menu');
-        echo $deal_detail_cost->attach_event("", "onBeforeSelect", $form_namespace . '.detail_cost_select');
-        echo $deal_detail_cost->attach_event("", "onEditCell", $form_namespace . '.detail_cost_edit');
-        echo $deal_detail_cost->return_init();
-    }
+    $deal_detail_cost = new GridTable('deal_detail_cost');
+    echo $deal_detail_cost->init_grid_table('deal_detail_cost', $form_namespace, 'n');
+    echo $deal_detail_cost->set_column_auto_size();
+    echo $deal_detail_cost->enable_column_move();
+    echo $deal_detail_cost->enable_multi_select();
+    echo $deal_detail_cost->enable_context_menu($form_namespace . '.grid_context_menu');
+    echo $deal_detail_cost->attach_event("", "onBeforeSelect", $form_namespace . '.detail_cost_select');
+    echo $deal_detail_cost->attach_event("", "onEditCell", $form_namespace . '.detail_cost_edit');
+    echo $deal_detail_cost->return_init();
+}
 
-    if ($enable_udf_tab == 'y' && $deal_id != 'NULL') {
-        // add menu and form on detail UDF tab
-        $detail_udf_menu = new AdihaMenu();
-        echo $detail_tab_obj->attach_menu_cell('detail_udf_menu', 'tab_detail_udf');
-        echo $detail_udf_menu->init_by_attach('detail_udf_menu', $form_namespace);
-        echo $detail_udf_menu->load_menu($udf_menu_json);
-        echo $detail_udf_menu->attach_event('', 'onClick', $form_namespace . '.detail_udf_menu_click');
+if ($enable_udf_tab == 'y' && $deal_id != 'NULL') {
+    // add menu and form on detail UDF tab
+    $detail_udf_menu = new AdihaMenu();
+    echo $detail_tab_obj->attach_menu_cell('detail_udf_menu', 'tab_detail_udf');
+    echo $detail_udf_menu->init_by_attach('detail_udf_menu', $form_namespace);
+    echo $detail_udf_menu->load_menu($udf_menu_json);
+    echo $detail_udf_menu->attach_event('', 'onClick', $form_namespace . '.detail_udf_menu_click');
 
-        echo $detail_tab_obj->attach_form_cell('detail_udf_form', 'tab_detail_udf');
-        $detail_udf_form = new AdihaForm();
-        echo $detail_udf_form->init_by_attach('detail_udf_form', $form_namespace);
-    }
+    echo $detail_tab_obj->attach_form_cell('detail_udf_form', 'tab_detail_udf');
+    $detail_udf_form = new AdihaForm();
+    echo $detail_udf_form->init_by_attach('detail_udf_form', $form_namespace);
+}
 
-    if ($detail_data[0]['form_json'] != '') {
-        $detail_tab_array = array();
-        $detail_tab_array = explode(',', $detail_data[0]['tab_ids']);
-        $form_obj['details_tab'] = new AdihaForm();
-        $cnt = 0;
-        foreach ($detail_tab_array as $value) {
-            $rel_array = array();
-            $rel_array = explode("::", $value);
+if ($detail_data[0]['form_json'] != '') {
+    $detail_tab_array = array();
+    $detail_tab_array = explode(',', $detail_data[0]['tab_ids']);
+    $form_obj['details_tab'] = new AdihaForm();
+    $cnt = 0;
+    foreach ($detail_tab_array as $value) {
+        $rel_array = array();
+        $rel_array = explode("::", $value);
 
-            if ($cnt == 0) {
-                echo $detail_tab_obj->attach_form_cell('form_details_tab', $rel_array[0]);
-                echo $form_obj['details_tab']->init_by_attach('form_details_tab', $form_namespace);
-                echo $form_obj['details_tab']->load_form($detail_data[0]['form_json']);
-                echo $detail_tab_obj->set_active_tab($rel_array[0]);
-            } else {
-                echo $detail_tab_obj->attach_object($rel_array[0], $rel_array[1]);
-            }
-            $cnt++;
-        }
-
-        echo $form_obj['details_tab']->attach_event('', 'onChange', $form_namespace . '.detail_form_change');
-        // echo $form_obj['details_tab']->attach_event('', 'onFocus', $form_namespace . '.detail_form_onfocus');
-        //echo $form_obj['details_tab']->attach_event('', 'onBlur', $form_namespace . '.detail_form_onblur');
-
-        $hide_pricing = 0;
-    }
-
-    // header costs
-    if ($header_cost_enable != 'n' && $header_cost_enable != '') {
-        echo $tab_obj->attach_grid_cell('header_deal_costs', $header_cost_enable);
-
-        if ($view_deleted == 'y') {
-            $cost_menu_json = '[{id:"add", text:"Add/Delete Costs", title: "Add/Delete Costs", img:"edit.gif", imgdis:"edit_dis.gif", enabled:false}]';
+        if ($cnt == 0) {
+            echo $detail_tab_obj->attach_form_cell('form_details_tab', $rel_array[0]);
+            echo $form_obj['details_tab']->init_by_attach('form_details_tab', $form_namespace);
+            echo $form_obj['details_tab']->load_form($detail_data[0]['form_json']);
+            echo $detail_tab_obj->set_active_tab($rel_array[0]);
         } else {
-            $cost_menu_json = '[{id:"add", text:"Add/Delete Costs", title: "Add/Delete Costs", img:"edit.gif", imgdis:"edit_dis.gif"}]';
+            echo $detail_tab_obj->attach_object($rel_array[0], $rel_array[1]);
         }
-        $header_cost_menu = new AdihaMenu();
-        echo $tab_obj->attach_menu_cell('header_cost_menu', $header_cost_enable);
-        echo $header_cost_menu->init_by_attach('header_cost_menu', $form_namespace);
-        echo $header_cost_menu->load_menu($cost_menu_json);
-        echo $header_cost_menu->attach_event('', 'onClick', $form_namespace . '.header_cost_menu_click');
-
-        $header_deal_costs = new GridTable('deal_costs');
-        echo $header_deal_costs->init_grid_table('header_deal_costs', $form_namespace, 'n');
-        echo $header_deal_costs->set_column_auto_size();
-        echo $header_deal_costs->enable_column_move();
-        echo $header_deal_costs->enable_multi_select();
-        echo $header_deal_costs->return_init();
-        echo $header_deal_costs->enable_header_menu("true,true,true,true,true,true");
-        echo $header_deal_costs->set_search_filter(true);
-        echo $header_deal_costs->attach_event("", "onBeforeSelect", $form_namespace . '.header_cost_select');
-        echo $header_deal_costs->attach_event('', 'onEditCell', $form_namespace . '.header_cost_edit');
-
-        $sp_cost_grid = $grid_sql[$header_cost_enable];
-        echo $header_deal_costs->load_grid_data($sp_cost_grid, '', false, $form_namespace . '.header_cost_onload');
+        $cnt++;
     }
 
-    if ($enable_prepay_tab == 'y' && $insert_mode != true) {
-        echo $tab_obj->attach_grid_cell('header_deal_prepay', '-1');
+    echo $form_obj['details_tab']->attach_event('', 'onChange', $form_namespace . '.detail_form_change');
+    // echo $form_obj['details_tab']->attach_event('', 'onFocus', $form_namespace . '.detail_form_onfocus');
+    //echo $form_obj['details_tab']->attach_event('', 'onBlur', $form_namespace . '.detail_form_onblur');
 
-        $prepay_menu_json = '
+    $hide_pricing = 0;
+}
+
+// header costs
+if ($header_cost_enable != 'n' && $header_cost_enable != '') {
+    echo $tab_obj->attach_grid_cell('header_deal_costs', $header_cost_enable);
+
+    if ($view_deleted == 'y') {
+        $cost_menu_json = '[{id:"add", text:"Add/Delete Costs", title: "Add/Delete Costs", img:"edit.gif", imgdis:"edit_dis.gif", enabled:false}]';
+    } else {
+        $cost_menu_json = '[{id:"add", text:"Add/Delete Costs", title: "Add/Delete Costs", img:"edit.gif", imgdis:"edit_dis.gif"}]';
+    }
+    $header_cost_menu = new AdihaMenu();
+    echo $tab_obj->attach_menu_cell('header_cost_menu', $header_cost_enable);
+    echo $header_cost_menu->init_by_attach('header_cost_menu', $form_namespace);
+    echo $header_cost_menu->load_menu($cost_menu_json);
+    echo $header_cost_menu->attach_event('', 'onClick', $form_namespace . '.header_cost_menu_click');
+
+    $header_deal_costs = new GridTable('deal_costs');
+    echo $header_deal_costs->init_grid_table('header_deal_costs', $form_namespace, 'n');
+    echo $header_deal_costs->set_column_auto_size();
+    echo $header_deal_costs->enable_column_move();
+    echo $header_deal_costs->enable_multi_select();
+    echo $header_deal_costs->return_init();
+    echo $header_deal_costs->enable_header_menu("true,true,true,true,true,true");
+    echo $header_deal_costs->set_search_filter(true);
+    echo $header_deal_costs->attach_event("", "onBeforeSelect", $form_namespace . '.header_cost_select');
+    echo $header_deal_costs->attach_event('', 'onEditCell', $form_namespace . '.header_cost_edit');
+
+    $sp_cost_grid = $grid_sql[$header_cost_enable];
+    echo $header_deal_costs->load_grid_data($sp_cost_grid, '', false, $form_namespace . '.header_cost_onload');
+
+}
+
+if ($enable_prepay_tab == 'y' && $insert_mode != true) {
+    echo $tab_obj->attach_grid_cell('header_deal_prepay', '-1');
+
+    $prepay_menu_json = '
             [
                 {id:"t1", text:"Edit", img:"edit.gif", imgdis:"new_dis.gif" ,items:[
                         {id:"add", text:"Add", img:"new.gif", enabled:false ,imgdis:"new_dis.gif", title: "Add",enabled:true},
@@ -866,32 +864,32 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             ]
         ';
 
-        $header_prepay_menu = new AdihaMenu();
-        echo $tab_obj->attach_menu_cell('header_prepay_menu', '-1');
-        echo $header_prepay_menu->init_by_attach('header_prepay_menu', $form_namespace);
-        echo $header_prepay_menu->load_menu($prepay_menu_json);
-        echo $header_prepay_menu->attach_event('', 'onClick', $form_namespace . '.prepay_menu_click');
+    $header_prepay_menu = new AdihaMenu();
+    echo $tab_obj->attach_menu_cell('header_prepay_menu', '-1');
+    echo $header_prepay_menu->init_by_attach('header_prepay_menu', $form_namespace);
+    echo $header_prepay_menu->load_menu($prepay_menu_json);
+    echo $header_prepay_menu->attach_event('', 'onClick', $form_namespace . '.prepay_menu_click');
 
-        $header_deal_prepay = new GridTable('DealPrepay');
-        echo $header_deal_prepay->init_grid_table('header_deal_prepay', $form_namespace, 'n');
-        echo $header_deal_prepay->set_column_auto_size();
-        echo $header_deal_prepay->enable_column_move();
-        echo $header_deal_prepay->enable_multi_select();
-        echo $header_deal_prepay->set_search_filter(false, "#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter");
-        echo $header_deal_prepay->return_init();
-        echo $header_deal_prepay->attach_event("", "onRowSelect", $form_namespace . '.header_prepay_select');
+    $header_deal_prepay = new GridTable('DealPrepay');
+    echo $header_deal_prepay->init_grid_table('header_deal_prepay', $form_namespace, 'n');
+    echo $header_deal_prepay->set_column_auto_size();
+    echo $header_deal_prepay->enable_column_move();
+    echo $header_deal_prepay->enable_multi_select();
+    echo $header_deal_prepay->set_search_filter(false, "#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter,#text_filter");
+    echo $header_deal_prepay->return_init();
+    echo $header_deal_prepay->attach_event("", "onRowSelect", $form_namespace . '.header_prepay_select');
 
-        $sp_prepay_grid = "EXEC spa_source_deal_prepay 's', " . $deal_id;
-        echo $header_deal_prepay->load_grid_data($sp_prepay_grid, '', false, $form_namespace . '.header_prepay_onload');
-    }
+    $sp_prepay_grid = "EXEC spa_source_deal_prepay 's', " . $deal_id;
+    echo $header_deal_prepay->load_grid_data($sp_prepay_grid, '', false, $form_namespace . '.header_prepay_onload');
+}
 
-    if ($document_enable == 'y') {
-        // document tab
-        echo $tab_obj->add_tab('document_tab', 'Documents');
+if ($document_enable == 'y') {
+    // document tab
+    echo $tab_obj->add_tab('document_tab', 'Documents');
 
-        $document_menu = new AdihaMenu();
+    $document_menu = new AdihaMenu();
 
-        $document_json = '[  
+    $document_json = '[  
                         {id:"refresh", text:"Refresh", img:"refresh.gif", enabled:true, imgdis:"refresh_dis.gif", title: "Refresh"},
                         {id:"t1", text:"Edit", img:"edit.gif", imgdis:"new_dis.gif" ,items:[
                             {id:"add", text:"Add", img:"new.gif", enabled:true ,imgdis:"new_dis.gif", title: "Add"},
@@ -899,30 +897,31 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         ]}                      
                     ]';
 
-        echo $tab_obj->attach_menu_cell('document_menu', 'document_tab');
-        echo $document_menu->init_by_attach('document_menu', $form_namespace);
-        echo $document_menu->load_menu($document_json);
-        echo $document_menu->attach_event('', 'onClick', $form_namespace . '.document_menu_click');
+    echo $tab_obj->attach_menu_cell('document_menu', 'document_tab');
+    echo $document_menu->init_by_attach('document_menu', $form_namespace);
+    echo $document_menu->load_menu($document_json);
+    echo $document_menu->attach_event('', 'onClick', $form_namespace . '.document_menu_click');
 
-        echo $tab_obj->attach_grid_cell('deal_documents', 'document_tab');
-        $deal_documents = new GridTable('deal_documents');
-        echo $deal_documents->init_grid_table('deal_documents', $form_namespace, 'n');
-        echo $deal_documents->set_column_auto_size();
-        echo $deal_documents->enable_column_move();
-        echo $deal_documents->enable_multi_select();
-        echo $deal_documents->return_init();
-        echo $deal_documents->enable_header_menu("true,true,true");
-        //echo $deal_documents->attach_event('', 'onRowDblClicked', $form_namespace . '.update_deal_required_doc');
-        echo $deal_documents->attach_event('', 'onSelectStateChanged', $form_namespace . '.doc_selected');
-    }
+    echo $tab_obj->attach_grid_cell('deal_documents', 'document_tab');
+    $deal_documents = new GridTable('deal_documents');
+    echo $deal_documents->init_grid_table('deal_documents', $form_namespace, 'n');
+    echo $deal_documents->set_column_auto_size();
+    echo $deal_documents->enable_column_move();
+    echo $deal_documents->enable_multi_select();
+    echo $deal_documents->return_init();
+    echo $deal_documents->enable_header_menu("true,true,true");
+    //echo $deal_documents->attach_event('', 'onRowDblClicked', $form_namespace . '.update_deal_required_doc');
+    echo $deal_documents->attach_event('', 'onSelectStateChanged', $form_namespace . '.doc_selected');
 
-    if ($enable_remarks == 'y') {
-        // remarks tab
-        echo $tab_obj->add_tab('tab_remarks', 'Remarks');
+}
 
-        $remarks_menu = new AdihaMenu();
+if ($enable_remarks == 'y') {
+    // remarks tab
+    echo $tab_obj->add_tab('tab_remarks', 'Remarks');
 
-        $remarks_json = '[  
+    $remarks_menu = new AdihaMenu();
+
+    $remarks_json = '[  
                         {id:"refresh", text:"Refresh", img:"refresh.gif", enabled:true, imgdis:"refresh_dis.gif", title: "Refresh"},
                         {id:"t1", text:"Edit", img:"edit.gif", imgdis:"new_dis.gif" ,items:[
                             {id:"add", text:"Add pre defined remarks", img:"new.gif", enabled:true ,imgdis:"new_dis.gif", title: "Add pre defined remarks"},
@@ -930,46 +929,46 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                             {id:"delete", text:"Delete", img:"trash.gif", imgdis:"trash_dis.gif", title: "Delete",enabled:false},
                         ]}                      
                     ]';
-        echo $tab_obj->attach_menu_cell('remarks_menu', 'tab_remarks');
-        echo $remarks_menu->init_by_attach('remarks_menu', $form_namespace);
-        echo $remarks_menu->load_menu($remarks_json);
-        echo $remarks_menu->attach_event('', 'onClick', $form_namespace . '.remarks_menu_click');
+    echo $tab_obj->attach_menu_cell('remarks_menu', 'tab_remarks');
+    echo $remarks_menu->init_by_attach('remarks_menu', $form_namespace);
+    echo $remarks_menu->load_menu($remarks_json);
+    echo $remarks_menu->attach_event('', 'onClick', $form_namespace . '.remarks_menu_click');
 
-        echo $tab_obj->attach_grid_cell('deal_remarks', 'tab_remarks');
-        $deal_remarks = new GridTable('deal_remarks');
-        echo $deal_remarks->init_grid_table('deal_remarks', $form_namespace, 'n');
-        echo $deal_remarks->set_column_auto_size();
-        echo $deal_remarks->enable_column_move();
-        echo $deal_remarks->enable_multi_select();
-        echo $deal_remarks->return_init();
-        echo $deal_remarks->enable_header_menu("true,true");
-        echo $deal_remarks->attach_event('', 'onSelectStateChanged', $form_namespace . '.remarks_selected');
-        echo $deal_remarks->attach_event('', 'onEditCell', $form_namespace . '.remarks_edit');
-    }
+    echo $tab_obj->attach_grid_cell('deal_remarks', 'tab_remarks');
+    $deal_remarks = new GridTable('deal_remarks');
+    echo $deal_remarks->init_grid_table('deal_remarks', $form_namespace, 'n');
+    echo $deal_remarks->set_column_auto_size();
+    echo $deal_remarks->enable_column_move();
+    echo $deal_remarks->enable_multi_select();
+    echo $deal_remarks->return_init();
+    echo $deal_remarks->enable_header_menu("true,true");
+    echo $deal_remarks->attach_event('', 'onSelectStateChanged', $form_namespace . '.remarks_selected');
+    echo $deal_remarks->attach_event('', 'onEditCell', $form_namespace . '.remarks_edit');
+}
 
-    echo $layout_obj->close_layout();
+echo $layout_obj->close_layout();
 
-    $category_data = array();
-    if ($template_id == 'NULL') {
-        $category_name = 'Deal';
-        $category_sql = "SELECT value_id FROM static_data_value WHERE type_id = 25 AND code = '" . $category_name . "'";
-        $category_data = readXMLURL2($category_sql);
-    }
+$category_data = array();
+if ($template_id == 'NULL') {
+    $category_name = 'Deal';
+    $category_sql = "SELECT value_id FROM static_data_value WHERE type_id = 25 AND code = '" . $category_name . "'";
+    $category_data = readXMLURL2($category_sql);
+}
 
-    $detail_formula_fields = $detail_data[0]['detail_formula_field'];
-    $formula_process_id = ($detail_data[0]['formula_process_id'] == '') ? 'NULL' : $detail_data[0]['formula_process_id'];
+$detail_formula_fields = $detail_data[0]['detail_formula_field'];
+$formula_process_id = ($detail_data[0]['formula_process_id'] == '') ? 'NULL' : $detail_data[0]['formula_process_id'];
 
-    if ($template_id != 'NULL' || $copy_deal_id != 'NULL') {
-        $process_id = $detail_data[0]['process_id'];
-    } else {
-        $process_id = 'NULL';
-    }
+if ($template_id != 'NULL' || $copy_deal_id != 'NULL') {
+    $process_id = $detail_data[0]['process_id'];
+} else {
+    $process_id = 'NULL';
+}
 
-    $formula_forms = new AdihaForm();
-    $sp_formula = "EXEC spa_formula_editor @flag = 'x'";
-    $formula_dropdown_json = $formula_forms->adiha_form_dropdown($sp_formula, 0, 1, true);
+$formula_forms = new AdihaForm();
+$sp_formula = "EXEC spa_formula_editor @flag = 'x'";
+$formula_dropdown_json = $formula_forms->adiha_form_dropdown($sp_formula, 0, 1, true);
 
-    $formula_form_data = '[
+$formula_form_data = '[
         {type: "settings"},
         {type: "label", label: "Formula", offsetLeft: "15"},
         {type:"block", "blockOffset": "15", list:[
@@ -1001,55 +1000,54 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
     //Get valuation index mapped in location
     if ($insert_mode) {
-        $sp_url = "EXEC spa_source_deal_header @flag = 'q', @commodity_id = " . $commodity_id . ",@deal_ids=" . $deal_id;
+        $sp_url = "EXEC spa_source_deal_header @flag = 'q', @commodity_id = " . $commodity_id . ",@deal_ids=" . $deal_id ;
         $result_value = readXMLURL2($sp_url);
         $valuation_index_json = $result_value[0]['valuation_index_json'];
     } else {
         $valuation_index_json = "{}";
     }
 
-    ?>
-    <style type="text/css">
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            margin: 0px;
-            padding: 0px;
-            background-color: #ebebeb;
-            overflow: hidden;
-        }
-    </style>
+?>
+<style type="text/css">
+    html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        padding: 0px;
+        background-color: #ebebeb;
+        overflow: hidden;
+    }
+</style>
 </body>
 <textarea style="display:none" name="txt_save_status" id="txt_save_status">cancel</textarea>
 <script type="text/javascript">
     var php_script_loc = '<?php echo $app_php_script_loc; ?>';
-    var category_id = "<?php echo $category_data[0]['value_id'] ?? ''; ?>";
-    var template_id = '<?php echo $template_id; ?>';
+    var category_id = "<?php echo $category_data[0]['value_id'] ?? '';?>";
+    var template_id = '<?php echo $template_id;?>';
     var apply_to_window;
     var document_window;
-    var hide_pricing = '<?php echo $hide_pricing; ?>';
-    var enable_efp = '<?php echo $enable_efp; ?>';
-    var enable_trigger = '<?php echo $enable_trigger; ?>';
-    var future_deal = '<?php echo $future_deal; ?>';
-    var copy_deal_id = '<?php echo $copy_deal_id; ?>';
+    var hide_pricing = '<?php echo $hide_pricing;?>';
+    var enable_efp = '<?php echo $enable_efp;?>';
+    var enable_trigger = '<?php echo $enable_trigger;?>';
+    var future_deal = '<?php echo $future_deal;?>';
+    var copy_deal_id = '<?php echo $copy_deal_id;?>';
     var enable_pricing = '<?php echo $enable_pricing; ?>';
     var enable_provisional_tab = '<?php echo $enable_provisional_tab; ?>';
     var enable_escalation_tab = '<?php echo $enable_escalation_tab; ?>';
     var detail_cost_enable = '<?php echo $detail_cost_enable; ?>';
-    var certificate = '<?php echo $certificate ?>';
+    var certificate = '<?php echo $certificate?>';
     var document_enable = '<?php echo $document_enable; ?>';
     var copy_insert_mode = '<?php echo $copy_insert_mode; ?>';
-    var enable_remarks = '<?php echo $enable_remarks; ?>';
+    var enable_remarks = '<?php echo $enable_remarks;?>';
     var group_name_win;
     var soft_commodity = Boolean('<?php echo $soft_commodity; ?>');
-    var deal_trade_locked = '<?php echo $deal_trade_locked; ?>';
-    var enable_save_button = '<?php echo $enable_save_button; ?>';
+    var deal_trade_locked = '<?php echo $deal_trade_locked;?>';
+    var enable_save_button = '<?php echo $enable_save_button;?>';
     var enable_location = true;
-    var enable_exercise = '<?php echo $enable_exercise; ?>';
+    var enable_exercise = '<?php echo $enable_exercise;?>';
     var exercise_window;
-    var is_shaped = '<? echo $is_shaped; ?>';
-    var process_id = '<?php echo $process_id; ?>';
+    var is_shaped = '<?echo $is_shaped; ?>';
+    var process_id = '<?php echo $process_id;?>';
     var shaped_granularity = '';
     var shaped_created = 'n';
     var header_formula_fields = '<?php echo $header_formula_fields; ?>';
@@ -1058,22 +1056,20 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
     var detail_formula_array = new Array();
     var detail_formula_popup, detail_formula_layout, formula_form, formula_field_form;
     var formula_process_id = '<?php echo $formula_process_id; ?>';
-    //var is_capacity = '<?php //echo $is_capacity;
-                            ?>';
-    var enable_udf_tab = '<?php echo $enable_udf_tab; ?>';
+    //var is_capacity = '<?php //echo $is_capacity;?>';
+    var enable_udf_tab = '<?php echo $enable_udf_tab;?>';
     var enable_detail_udf_tab = 'n';
-    var deal_type = '<?php echo $deal_type; ?>';
-    var deal_type_text = '<?php echo $deal_type_text; ?>';
-    var is_environmental = '<?php echo $is_environmental; ?>';
-    var enable_product_button = '<?php echo $enable_product_button; ?>';
-    var enable_certificate_button = '<?php echo $enable_certificate_button; ?>';
-    // var enable_environment = '<?php //echo $enable_environment;
-                                    ?>';
+    var deal_type = '<?php echo $deal_type;?>';
+    var deal_type_text = '<?php echo $deal_type_text;?>';
+    var is_environmental = '<?php echo $is_environmental;?>';
+    var enable_product_button = '<?php echo $enable_product_button;?>';
+    var enable_certificate_button= '<?php echo $enable_certificate_button;?>';
+    // var enable_environment = '<?php //echo $enable_environment;?>';
     var volume_type = '<?php echo $volume_type; ?>';
     var profile_gran_with_meter = '<?php echo $profile_gran_with_meter; ?>';
     var insert_mode = '<?php echo $insert_mode; ?>';
     var deal_price_data_process_id = '';
-    var deal_provisional_price_data_process_id = '';
+    var deal_provisional_price_data_process_id= '';
     var copy_price_process_id = '<?php echo $copy_price_process_id; ?>';
     var enable_prepay_tab = '<?php echo $enable_prepay_tab; ?>';
     var deal_id = '<?php echo $deal_id; ?>';
@@ -1086,7 +1082,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
     var save_all_detail_cost_udf = 0;
     var combo_url_info = '<?php echo $combo_url_info; ?>';
     var combo_list = '<?php echo $detail_data[0]['combo_list']; ?>';
-    var has_rights_transfer = Boolean('<?php echo $has_rights_transfer; ?>');
+	var has_rights_transfer = Boolean('<?php echo $has_rights_transfer; ?>');
     var deal_reference_id = '<?php echo $deal_reference_id; ?>';
     var enable_header_udt = '<?php echo $enable_header_udt; ?>';
 
@@ -1105,7 +1101,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
     }
 
     $(function() {
-        var has_document_rights = '<?php echo (int)$has_document_rights; ?>';
+        var has_document_rights = '<?php echo (int)$has_document_rights;?>';
         var deal_id = '<?php echo $deal_id; ?>';
         dhxWins = new dhtmlXWindows();
 
@@ -1138,12 +1134,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         }
 
 
-        if (copy_deal_id != 'NULL') {
-            data = {
-                "action": "spa_deal_update_new",
-                "flag": "check_environmental",
-                "source_deal_header_id": copy_deal_id
-            };
+        if (copy_deal_id != 'NULL' ) {
+            data = {"action": "spa_deal_update_new", "flag":"check_environmental", "source_deal_header_id":copy_deal_id};
             adiha_post_data("return", data, '', '', 'dealDetail.check_environmental');
         }
 
@@ -1161,17 +1153,17 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         }
 
 
-        if (enable_certificate_button == 'true') {
+        if (enable_certificate_button == 'true'){
             dealDetail.toolbar.enableItem('certificate');
         }
-
-        if (deal_id != 'NULL') {
-            if (has_rights_transfer) dealDetail.toolbar.enableItem('transfer');
-        } else {
+		
+		if (deal_id != 'NULL'){
+			if (has_rights_transfer) dealDetail.toolbar.enableItem('transfer');
+		} else { 
             dealDetail.toolbar.disableItem('transfer');
         }
 
-        dealDetail.grid.enableEditEvents(true, false, true);
+        dealDetail.grid.enableEditEvents(true,false,true);
         dealDetail.grid.setDateFormat(user_date_format, "%Y-%m-%d");
         dealDetail.grid.setUserData("", 'formula_id', 10211093);
         dealDetail.grid.enableColumnMove(true);
@@ -1180,7 +1172,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         dealDetail.grid.enableTreeGridLines();
         dealDetail.grid.i18n.decimal_separator = global_decimal_separator;
         dealDetail.grid.i18n.group_separator = global_group_separator;
-        dealDetail.grid.attachEvent("onBeforeCMove", function(cInd, newPos) {
+        dealDetail.grid.attachEvent("onBeforeCMove",function(cInd, newPos){
             var col_type = dealDetail.grid.getColType(0);
             if (col_type == "tree") {
                 if (cInd < 3 || newPos < 3) return false;
@@ -1193,7 +1185,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         dealDetail.grid.enableUndoRedo();
 
         if (copy_deal_id != 'NULL') {
-            dealDetail.grid.attachEvent("onXLE", function(grid_obj, count) {
+            dealDetail.grid.attachEvent("onXLE", function(grid_obj, count){
                 var xml = '<root>';
                 var term_start_idx = grid_obj.getColIndexById('term_start');
                 var term_end_idx = grid_obj.getColIndexById('term_end');
@@ -1201,16 +1193,16 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                 if (term_start_idx != undefined && term_end_idx != undefined) {
                     grid_obj.forEachRow(function(id) {
-                        xml += '<deal_details  source_deal_detail_id="' + grid_obj.cells(id, grid_obj.getColIndexById('source_deal_detail_id')).getValue() + '" ';
-                        xml += ' term_start="' + grid_obj.cells(id, term_start_idx).getValue() + '" ';
-                        xml += ' term_end="' + grid_obj.cells(id, term_end_idx).getValue() + '" ';
-                        xml += ' blotterleg="' + grid_obj.cells(id, leg_idx).getValue() + '" />';
+                        xml += '<deal_details  source_deal_detail_id="' +  grid_obj.cells(id, grid_obj.getColIndexById('source_deal_detail_id')).getValue() + '" ';
+                        xml += ' term_start="' +  grid_obj.cells(id, term_start_idx).getValue() + '" ';
+                        xml += ' term_end="' +  grid_obj.cells(id, term_end_idx).getValue() + '" ';
+                        xml += ' blotterleg="' +  grid_obj.cells(id, leg_idx).getValue() + '" />';
                     });
 
                     xml += '</root>';
 
                     var data = {
-                        "action": "spa_deal_pricing_detail",
+                        "action":"spa_deal_pricing_detail",
                         "flag": "k",
                         "xml_process_id": copy_price_process_id,
                         "xml": xml,
@@ -1221,7 +1213,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     deal_price_data_process_id = copy_price_process_id;
 
                     var data_provisional = {
-                        "action": "spa_deal_pricing_detail_provisional",
+                        "action":"spa_deal_pricing_detail_provisional",
                         "flag": "k",
                         "xml_process_id": copy_provisional_price_process_id,
                         "xml": xml,
@@ -1292,17 +1284,17 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 if (form_obj instanceof dhtmlXForm) {
                     var deal_lock_combo = form_obj.getCombo('deal_locked');
                     if (deal_lock_combo)
-                        form_obj.setItemValue('deal_locked', 'y');
+                        form_obj.setItemValue('deal_locked','y');
                 }
             });
         }
 
-        dealDetail.deal_detail.attachEvent("onDblClick", function(name) {
+        dealDetail.deal_detail.attachEvent("onDblClick", function(name){
             return;
         });
 
         if (insert_mode != 1 && enable_prepay_tab == 'y') {
-            dealDetail.header_deal_prepay.attachEvent("onEditCell", function(stage, rid, cInd, nValue, oValue) {
+            dealDetail.header_deal_prepay.attachEvent("onEditCell", function(stage, rid, cInd, nValue, oValue){
                 var prepay_index = dealDetail.header_deal_prepay.getColIndexById('prepay');
 
                 if (cInd == prepay_index && stage == 2) {
@@ -1357,7 +1349,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                                 if (combo.getOption(combo_value)) {
                                     var combo_text = combo.getOption(combo_value).text;
-                                    if (combo_text.toLowerCase().indexOf(input.toLowerCase()) !== -1) {
+                                    if (combo_text.toLowerCase().indexOf(input.toLowerCase())!==-1){ 
                                         return true;
                                     }
                                 }
@@ -1375,7 +1367,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
     });
 
     dealDetail.prepay_menu_click = function(name) {
-        if (name == 'add') {
+        if(name == 'add') {
             var values_array = [];
             var new_id = (new Date()).valueOf();
             dealDetail.header_deal_prepay.addRow(new_id, '', 0);
@@ -1394,7 +1386,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
             var sql_url = js_data_collector_url + '&' + sql_param;
 
-            if (insert_mode != 1) {
+            if (insert_mode != 1){
                 dealDetail.header_deal_prepay.clearAll();
                 dealDetail.header_deal_prepay.loadXML(sql_url);
             }
@@ -1406,8 +1398,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
     dealDetail.header_prepay_onload = function() {
         var data = {
-            "action": "spa_source_deal_prepay",
-            "flag": "j"
+            "action":"spa_source_deal_prepay",
+            "flag":"j"
         }
 
         adiha_post_data("return_array", data, '', '', 'dealDetail.load_callback');
@@ -1454,7 +1446,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var grid_name = 'dealDetail.header_deal_prepay';
         var prepay_id = dealDetail.header_deal_prepay.cells(row_id, prepay_index).getValue();
 
-        if (prepay_id != '') {
+        if(prepay_id != '') {
             var b = prepay_properties.filter(function(e) {
                 return e[0] == prepay_id;
             });
@@ -1498,18 +1490,15 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
             combo.clearAll();
             if (combo_value != null && combo_value != '') {
-                var cm_param = {
-                    "action": "spa_counterparty_products",
-                    "flag": dep_flag
-                };
+                var cm_param = {"action": "spa_counterparty_products", "flag":dep_flag};
                 cm_param = $.param(cm_param);
                 var url = js_dropdown_connector_url + '&' + cm_param;
                 combo.load(url, function() {
                     setTimeout(function() {
-                        dealDetail.form_details_tab.setUserData(name, 'change_event', 'n');
+                        dealDetail.form_details_tab.setUserData(name,'change_event','n');
                         combo.setComboValue(combo_value);
                         combo.enableFilteringMode('between');
-                        dealDetail.form_details_tab.setUserData(name, 'change_event', 'y');
+                        dealDetail.form_details_tab.setUserData(name,'change_event','y');
                     }, 100)
                 });
             }
@@ -1529,7 +1518,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         if (product_grading == 'n') return true;
         else {
-            dealDetail.form_details_tab.setUserData(name, 'change_event', 'n');
+            dealDetail.form_details_tab.setUserData(name,'change_event','n');
 
             var dep_flag = (name == 'origin') ? 'o' : (name == 'form') ? 'f' : (name == 'attribute1') ? 'a' : (name == 'attribute2') ? 'b' : (name == 'attribute3') ? 'c' : (name == 'attribute4') ? 'e' : 'g';
             var parent_name = (name == 'origin') ? 'detail_commodity_id' : (name == 'form') ? 'origin' : (name == 'attribute1') ? 'form' : (name == 'attribute2') ? 'attribute1' : (name == 'attribute3') ? 'attribute2' : (name == 'attribute4') ? 'attribute3' : 'attribute4';
@@ -1547,11 +1536,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             combo.clearAll();
 
             if (value != null && value != '') {
-                var cm_param = {
-                    "action": "spa_counterparty_products",
-                    "flag": dep_flag,
-                    "dependent_id": value
-                };
+                var cm_param = {"action": "spa_counterparty_products", "flag":dep_flag, "dependent_id":value};
                 cm_param = $.param(cm_param);
                 var url = js_dropdown_connector_url + '&' + cm_param;
                 combo.load(url, function() {
@@ -1559,7 +1544,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         combo.setComboValue(combo_value);
                         combo.enableFilteringMode('between');
                         combo.openSelect();
-                        dealDetail.form_details_tab.setUserData(name, 'change_event', 'y');
+                        dealDetail.form_details_tab.setUserData(name,'change_event','y');
                     }, 100)
                 });
             }
@@ -1578,10 +1563,10 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         concat_array = ['detail_commodity_id', 'form', 'origin', 'organic', 'attribute1', 'attribute2', 'attribute3', 'attribute4', 'attribute5'];
 
         if (product_grading == 'y') {
-            var change_event = dealDetail.form_details_tab.getUserData(name, 'change_event');
+            var change_event = dealDetail.form_details_tab.getUserData(name,'change_event');
             if (change_event == 'n') return;
 
-            var dep_flag = (name == 'detail_commodity_id') ? 'o' : (name == 'origin') ? 'f' : (name == 'form') ? 'a' : (name == 'attribute1') ? 'b' : (name == 'attribute2') ? 'c' : (name == 'attribute3') ? 'e' : 'g';
+            var dep_flag = (name == 'detail_commodity_id') ?  'o' : (name == 'origin') ? 'f' : (name == 'form') ? 'a' : (name == 'attribute1') ? 'b' : (name == 'attribute2') ? 'c' : (name == 'attribute3') ? 'e' : 'g';
             var child = (name == 'detail_commodity_id') ? 'origin' : (name == 'origin') ? 'form' : (name == 'form') ? 'attribute1' : (name == 'attribute1') ? 'attribute2' : (name == 'attribute2') ? 'attribute3' : (name == 'attribute3') ? 'attribute4' : 'attribute5';
 
             var combo = dealDetail.form_details_tab.getCombo(child);
@@ -1590,18 +1575,14 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 combo.clearAll();
 
                 if (value != null && value != '') {
-                    var cm_param = {
-                        "action": "spa_counterparty_products",
-                        "flag": dep_flag,
-                        "dependent_id": value
-                    };
+                    var cm_param = {"action": "spa_counterparty_products", "flag":dep_flag, "dependent_id":value};
                     cm_param = $.param(cm_param);
                     var url = js_dropdown_connector_url + '&' + cm_param;
                     combo.load(url, function() {
                         setTimeout(function() {
                             combo.selectOption(1);
                             combo.enableFilteringMode('between');
-                            dealDetail.form_details_tab.setUserData(name, 'change_event', 'y');
+                            dealDetail.form_details_tab.setUserData(name,'change_event','y');
                         }, 100)
                     });
 
@@ -1627,10 +1608,10 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var leg_index = dealDetail.grid.getColIndexById('blotterleg');
         var avoid_index = [group_index, group_id_index, leg_index, detail_flag_index];
 
-        var change_event = dealDetail.form_details_tab.getUserData(name, 'change_event');
+        var change_event = dealDetail.form_details_tab.getUserData(name,'change_event');
 
         if (change_event == 'n') {
-            dealDetail.form_details_tab.setUserData(name, 'change_event', 'y');
+            dealDetail.form_details_tab.setUserData(name,'change_event', 'y');
             return;
         }
 
@@ -1640,19 +1621,19 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             if (parent_id != 0) {
                 dealDetail.grid.cells(parent_id, detail_flag_index).setValue('');
 
-                for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                     if ($.inArray(cellIndex, avoid_index) == -1) {
                         dealDetail.grid.cells(parent_id, cellIndex).setValue('');
                         dealDetail.grid.cells(parent_id, cellIndex).cell.wasChanged = false;
                     }
                 }
 
-                dealDetail.grid._h2.forEachChild(parent_id, function(element) {
+                dealDetail.grid._h2.forEachChild(parent_id,function(element){
                     dealDetail.grid.cells(element.id, detail_flag_index).setValue(1);
                     dealDetail.grid.cells(element.id, detail_flag_index).cell.wasChanged = true;
                 });
             } else {
-                dealDetail.grid._h2.forEachChild(selected_row, function(element) {
+                dealDetail.grid._h2.forEachChild(selected_row,function(element){
                     dealDetail.grid.cells(element.id, column_index).setValue(value);
                     dealDetail.grid.cells(element.id, column_index).cell.wasChanged = true;
                 });
@@ -1663,18 +1644,18 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         dealDetail.grid.cells(selected_row, column_index).cell.wasChanged = true;
 
         var concat_string = '';
-        $.each(concat_array, function(index, v2) {
+        $.each(concat_array, function(index, v2){
             var col_index = dealDetail.grid.getColIndexById(v2);
             if (typeof col_index != 'undefined') {
                 //var val_id = dealDetail.grid.cells(selected_row, col_index).getValue();
                 //var val = dealDetail.grid.cells(selected_row, col_index).getTitle();
                 //Modified code to take value from form instead of grid to fix id displayed on product instead of text and change made to not load data on PGS to fix perfomance issue
                 var item_type = dealDetail.form_details_tab.getItemType(v2);
-                if (item_type == 'combo') {
+                if(item_type == 'combo') {
                     var cmb_object = dealDetail.form_details_tab.getCombo(v2);
                     var val_id = cmb_object.getSelectedValue();
                     var val = cmb_object.getComboText();
-                } else if (item_type == 'checkbox') {
+                } else if(item_type == 'checkbox') {
 
                     var val_id = (dealDetail.form_details_tab.isItemChecked(v2) == true) ? 'y' : 'n';
                     //console.log(item_type,val_id);
@@ -1697,7 +1678,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var prod_desc_index = dealDetail.grid.getColIndexById('product_description');
 
         if (typeof prod_desc_index != 'undefined') {
-            concat_string = concat_string.replace(/\s\s+/g, ' ');
+            concat_string = concat_string.replace( /\s\s+/g, ' ' );
             dealDetail.grid.cells(selected_row, prod_desc_index).setValue(concat_string);
             dealDetail.grid.cells(selected_row, prod_desc_index).cell.wasChanged = true;
         }
@@ -1710,7 +1691,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      */
     dealDetail.resize_layout = function() {
         var h = 0;
-        dealDetail.deal_detail.forEachItem(function(item) {
+        dealDetail.deal_detail.forEachItem(function(item){
             if (item.getId() != 'b')
                 h += item.getHeight();
         });
@@ -1724,7 +1705,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      */
     dealDetail.check_context_menu = function(rowId, cellId) {
         var parent_id = dealDetail.grid.getParentId(rowId);
-        dealDetail.grid.selectRowById(rowId, true, false, true);
+        dealDetail.grid.selectRowById(rowId,true,false,true);
         return true;
     }
 
@@ -1759,7 +1740,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         var cost_id = dealDetail.deal_detail_cost.cells(row_id, cost_index).getValue();
         var col_value = dealDetail.deal_detail_cost.cells(row_id, column_index).getValue();
-
+        
         dealDetail.deal_detail_cost.forEachRow(function(id) {
             var select_cost_value = dealDetail.deal_detail_cost.cells(row_id, cost_index).getValue();
             var dest_cost_value = dealDetail.deal_detail_cost.cells(id, cost_index).getValue();
@@ -1774,7 +1755,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[string]} menuitemId [menuitemId]
      * @param  {[string]} type       [type]
      */
-    dealDetail.context_menu_click = function(menuitemId, type) {
+    dealDetail.context_menu_click = function(menuitemId,type) {
         var data = dealDetail.grid.contextID.split("_"); //rowId_colInd
         var row_id = dealDetail.grid.getSelectedRowId();
         var column_index = data[data.length - 1];
@@ -1811,10 +1792,10 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
             var term_start_index = dealDetail.grid.getColIndexById('term_start');
             var min_max_term = dealDetail.grid.collectValues(term_start_index);
-            min_max_term.sort(function(a, b) {
+            min_max_term.sort(function(a, b){
                 return Date.parse(a) - Date.parse(b);
             });
-            var max_date = min_max_term[min_max_term.length - 1];
+            var max_date = min_max_term[min_max_term.length-1];
             var min_date = min_max_term[0];
 
             var leg_index = dealDetail.grid.getColIndexById('blotterleg');
@@ -1829,7 +1810,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var win_title = "Apply To Column - " + col_label;
             var win_url = 'apply.to.rows.php';
 
-            if (menuitemId == 'apply_pricing_to') {
+            if(menuitemId == 'apply_pricing_to') {
                 var win_title = "Apply Pricing";
                 var win_url = 'apply.pricing.php';
                 var col_label = 'Pricing';
@@ -1843,18 +1824,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             win.setText(win_title);
             win.centerOnScreen();
             win.setModal(true);
-            win.attachURL(win_url, false, {
-                deal_id: deal_id,
-                term_start: min_date,
-                term_end: max_date,
-                col_label: col_label,
-                col_text: col_text,
-                max_leg: max_leg,
-                selected_leg: selected_leg,
-                source_deal_detail_id: source_deal_detail_id,
-                source_deal_header_id: deal_id,
-                deal_provisional_price_data_process_id: deal_provisional_price_data_process_id
-            });
+            win.attachURL(win_url, false, {deal_id:deal_id,term_start:min_date,term_end:max_date,col_label:col_label,col_text:col_text,max_leg:max_leg,selected_leg:selected_leg, source_deal_detail_id:source_deal_detail_id, source_deal_header_id:deal_id, deal_provisional_price_data_process_id: deal_provisional_price_data_process_id});
 
             win.attachEvent('onClose', function(w) {
                 var ifr = w.getFrame();
@@ -1868,21 +1838,15 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 var form_xml = '<FormXML source_deal_header_id="' + deal_id + '" leg="' + legs + '" term_start="' + from_date + '" term_end="' + to_date + '"></FormXML>';
 
                 if (formula_process_id != '' || formula_process_id != undefined) {
-                    var cm_param = {
-                        "action": "spa_deal_formula_udf",
-                        "flag": "a",
-                        "process_id": formula_process_id,
-                        "form_xml": form_xml,
-                        "source_deal_detail_id": source_deal_detail_id
-                    };
+                    var cm_param = {"action": "spa_deal_formula_udf", "flag": "a", "process_id":formula_process_id, "form_xml":form_xml, "source_deal_detail_id":source_deal_detail_id};
                     adiha_post_data("return", cm_param, '', '', '');
 
                 }
 
                 if (from_date != 'Cancel' && from_date != '' && menuitemId !== 'apply_pricing_to') {
-                    $.each(leg_array, function(index, value) {
+                    $.each(leg_array, function(index, value){
                         var legs_rows = dealDetail.grid.findCell(value, 3, false, true);
-                        $.each(legs_rows, function(i, v) {
+                        $.each(legs_rows, function(i, v){
                             var t_start = dealDetail.grid.cells(v[0], term_start_index).getValue();
                             var lock_deal_detail = 'n';
                             lock_deal_detail = dealDetail.grid.cells(v[0], lock_deal_detail_index).getValue();
@@ -1897,7 +1861,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                                 if (compare_start == 0 || compare_start == 1) {
                                     if (compare_end == 0 || compare_end == -1) {
                                         dealDetail.grid.cells(v[0], column_index).setValue(col_value);
-                                        dealDetail.grid.cells(v[0], column_index).cell.wasChanged = true;
+                                        dealDetail.grid.cells(v[0], column_index).cell.wasChanged=true;
 
                                         var detail_flag_index = dealDetail.grid.getColIndexById('detail_flag');
                                         var parent_id = dealDetail.grid.getParentId(v[0]);
@@ -1908,7 +1872,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                                             var leg_index = dealDetail.grid.getColIndexById('blotterleg');
                                             var avoid_index = [group_index, group_id_index, leg_index, detail_flag_index];
                                             dealDetail.grid.openItem(parent_id);
-                                            for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                                            for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                                                 if ($.inArray(cellIndex, avoid_index) == -1) {
                                                     dealDetail.grid.cells(parent_id, cellIndex).setValue('');
                                                     dealDetail.grid.cells(parent_id, cellIndex).cell.wasChanged = false;
@@ -1960,11 +1924,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var group_count = unique_groups.length + 1;
 
         var sql_param = {
-            "action": "spa_deal_update_new",
-            "flag": "f",
-            "source_deal_header_id": deal_id,
-            "detail_id": detail_id,
-            "group_id": group_count
+            "action":"spa_deal_update_new",
+            "flag":"f",
+            "source_deal_header_id":deal_id,
+            "detail_id":detail_id,
+            "group_id":group_count
         }
         adiha_post_data("return_json", sql_param, '', '', 'dealDetail.change_group_callback');
     }
@@ -2009,7 +1973,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                 if (enable_escalation_tab == 'y ') {
                     // escalation save
-                    if (new_row != '')
+                    if(new_row != '')
                         dealDetail.save_escalation_data('');
                 }
 
@@ -2056,7 +2020,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 }
                  */
 
-            } else return true;
+            }  else return true;
         }
 
         return true;
@@ -2068,13 +2032,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      */
     dealDetail.grid_row_selection = function(row_ids) {
         var has_rights_deal_edit = Boolean('<?php echo $has_rights_deal_edit; ?>');
-        var has_term_edit_right = Boolean('<?php echo $term_edit_privilege; ?>');
+        var has_term_edit_right = Boolean('<?php echo $term_edit_privilege;?>');
         var deal_id = '<?php echo $deal_id; ?>';
         dealDetail.deal_detail.cells('c').progressOn();
         var future_deal = '<?php echo $future_deal; ?>';
         var has_update_actual_edit = Boolean('<?php echo $enable_update_actual; ?>');
         var lock_deal_detail_index = dealDetail.grid.getColIndexById('lock_deal_detail');
-        var view_deleted = '<?php echo $view_deleted; ?>';
+        var view_deleted = '<?php echo $view_deleted;?>';
         var enable_detail_udt = '<?php echo $enable_detail_udt; ?>';
 
         if (row_ids != null && row_ids != '') {
@@ -2091,7 +2055,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
             if (deal_id != 'NULL') {
                 if (has_term_edit_right) dealDetail.deal_detail_menu.setItemEnabled('add_term');
-                var has_schedule_deal = Boolean('<?php echo $has_schedule_deal; ?>');
+                var has_schedule_deal = Boolean('<?php echo $has_schedule_deal;?>');
                 if (has_rights_deal_edit && enable_exercise == 'y') dealDetail.deal_detail_menu.setItemEnabled('exercise');
 
                 if (parent_id == 0 && no_of_child > 0) {
@@ -2142,10 +2106,10 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         dealDetail.deal_detail_menu.setItemDisabled('price');
                         dealDetail.deal_detail_menu.setItemEnabled('provisional_price');
                     }
-
+                    
                     if (enable_detail_udt == 'y') {
                         dealDetail.deal_detail_menu.setItemDisabled('udt');
-                    }
+                	}
                 }
 
                 if (parent_id != 0 || (parent_id == 0 && no_of_child == 0)) {
@@ -2288,46 +2252,46 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         if (hide_pricing == 0 && row_ids != null) {
             var field_array = ['detail_commodity_id', 'origin', 'form', 'attribute1', 'attribute2', 'attribute3', 'attribute4', 'attribute5'];
-            $.each(field_array, function(index, value) {
+            $.each(field_array, function(index, value){
                 var field_type = dealDetail.form_details_tab.getItemType(value);
                 if (field_type != null) {
-                    dealDetail.form_details_tab.setUserData(value, 'change_event', 'n');
+                    dealDetail.form_details_tab.setUserData(value,'change_event', 'n');
                 }
             })
             var loaded_combov2s = [];
-            for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+            for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                 var column_id = dealDetail.grid.getColumnId(cellIndex);
                 var field_type = dealDetail.form_details_tab.getItemType(column_id);
                 if (field_type != null) {
-                    val = dealDetail.grid.cells(row_ids, cellIndex).getValue();
+                    val = dealDetail.grid.cells(row_ids,cellIndex).getValue();
                     val = (field_type == 'checkbox') ? (val == 'y' ? 1 : 0) : val;
 
                     var child_fields = ['origin', 'form', 'attribute1', 'attribute2', 'attribute3', 'attribute4', 'attribute5']
 
                     // Check if field is dependent child
-                    var dependent_child = child_fields.filter(function(field) {
+                    var dependent_child = child_fields.filter(function(field){
                         return field == column_id
                     }).length > 0;
 
-                    if (field_type == 'combo' && val != '') {
-                        if (!dealDetail.form_details_tab.getCombo(column_id)._is_loaded && combo_url_info) {
+                    if(field_type == 'combo' && val != '') {
+                        if(!dealDetail.form_details_tab.getCombo(column_id)._is_loaded && combo_url_info ) {
                             var url_array = combo_url_info
                                 .split('||||')
-                                .filter(function(combo_prop) {
+                                .filter(function (combo_prop) {
                                     return combo_prop.split('::::')[0] == column_id;
                                 });
                             var url_v2 = (Array.isArray(url_array) && url_array.length == 1) ? url_array[0].split('::::')[1] : '';
 
                             // Reset default value to value present on grid cell.
-                            url_v2 = js_php_path + url_v2.split('&').map(function(params) {
+                            url_v2 = js_php_path + url_v2.split('&').map(function (params) {
                                 var params_array = params.split('=');
                                 if (params_array[0] == 'default_value') params_array[1] = val;
                                 return params_array;
-                            }).map(function(val) {
+                            }).map(function (val) {
                                 return val.join('=');
                             }).join('&');
 
-                            if (!dependent_child && val != '') {
+                            if(!dependent_child && val != '') {
                                 loaded_combov2s.push(column_id);
                                 dealDetail.form_details_tab.getCombo(column_id).clearAll();
                                 dealDetail.form_details_tab.getCombo(column_id).load(url_v2);
@@ -2336,14 +2300,14 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     }
 
                     // Check if value is set or not.
-                    var is_default_set = loaded_combov2s.filter(function(loaded_combov2) {
+                    var is_default_set = loaded_combov2s.filter(function (loaded_combov2) {
                         return loaded_combov2 == column_id;
                     }).length > 0;
 
                     var product_grading = (column_id == 'detail_commodity_id' || column_id == 'origin' || column_id == 'form' || column_id == 'attribute1' || column_id == 'attribute2' || column_id == 'attribute3' || column_id == 'attribute4' || column_id == 'attribute5') ? 'y' : 'n';
                     if (product_grading == 'y') {
                         var parent_combo = dealDetail.form_details_tab.getCombo(column_id);
-                        if (!is_default_set) {
+                        if(!is_default_set) {
                             var combo_index = parent_combo.getIndexByValue(val);
                             if (combo_index == -1) {
                                 parent_combo.unSelectOption();
@@ -2352,21 +2316,16 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                             }
                         }
 
-                        var dep_flag = (column_id == 'detail_commodity_id') ? 'o' : (column_id == 'origin') ? 'f' : (column_id == 'form') ? 'a' : (column_id == 'attribute1') ? 'b' : (column_id == 'attribute2') ? 'c' : (column_id == 'attribute3') ? 'e' : 'g';
+                        var dep_flag = (column_id == 'detail_commodity_id') ?  'o' : (column_id == 'origin') ? 'f' : (column_id == 'form') ? 'a' : (column_id == 'attribute1') ? 'b' : (column_id == 'attribute2') ? 'c' : (column_id == 'attribute3') ? 'e' : 'g';
                         var child = (column_id == 'detail_commodity_id') ? 'origin' : (column_id == 'origin') ? 'form' : (column_id == 'form') ? 'attribute1' : (column_id == 'attribute1') ? 'attribute2' : (column_id == 'attribute2') ? 'attribute3' : (column_id == 'attribute3') ? 'attribute4' : 'attribute5';
 
                         var dep_combo = dealDetail.form_details_tab.getCombo(child);
 
-                        if (dep_combo != null && dep_combo != 'null' && child != '') {
+                        if (dep_combo != null && dep_combo != 'null' && child != '')    {
                             if (val != null && val != '') {
-                                var get_dep_index = dealDetail.grid.getColIndexById(child);
+                                var get_dep_index =  dealDetail.grid.getColIndexById(child);
                                 var selected_value = dealDetail.grid.cells(row_ids, get_dep_index).getValue();
-                                var cm_param = {
-                                    "action": "spa_counterparty_products",
-                                    "flag": dep_flag,
-                                    "dependent_id": val,
-                                    "SELECTED_VALUE": selected_value
-                                };
+                                var cm_param = {"action": "spa_counterparty_products", "flag":dep_flag, "dependent_id":val, "SELECTED_VALUE":selected_value};
                                 cm_param = $.param(cm_param);
                                 var url = js_dropdown_connector_url + '&' + cm_param;
                                 //console.log(child + '   ' + dep_flag + '   ' + val + '   ' + dep_combo);
@@ -2380,7 +2339,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                             child = '';
                         }
                     } else {
-                        dealDetail.form_details_tab.setUserData(column_id, 'change_event', 'n');
+                        dealDetail.form_details_tab.setUserData(column_id,'change_event', 'n');
                         if (field_type == 'combo' || field_type == 'combo_v2') {
                             var combo_obj = dealDetail.form_details_tab.getCombo(column_id);
                             combo_obj.setComboText('');
@@ -2389,7 +2348,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                         // Load function automatically sets the value.
                         // Added condition to prevent resetting value.
-                        if (!is_default_set) {
+                        if(!is_default_set) {
                             dealDetail.form_details_tab.setItemValue(column_id, val);
                         }
 
@@ -2398,10 +2357,10 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 }
             }
 
-            $.each(field_array, function(index, value) {
+            $.each(field_array, function(index, value){
                 var field_type = dealDetail.form_details_tab.getItemType(value);
                 if (field_type != null) {
-                    dealDetail.form_details_tab.setUserData(value, 'change_event', 'y');
+                    dealDetail.form_details_tab.setUserData(value,'change_event', 'y');
                 }
             });
         }
@@ -2438,7 +2397,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             changed_ids = changed_rows.split(",");
             $.each(changed_ids, function(index, value) {
                 grid_xml += '<GridRow ';
-                for (var cellIndex = 0; cellIndex < dealDetail.deal_detail_cost.getColumnsNum(); cellIndex++) {
+                for(var cellIndex = 0; cellIndex < dealDetail.deal_detail_cost.getColumnsNum(); cellIndex++){
                     var column_id = dealDetail.deal_detail_cost.getColumnId(cellIndex);
                     var cell_value = dealDetail.deal_detail_cost.cells(value, cellIndex).getValue();
                     grid_xml += ' ' + column_id + '="' + cell_value + '"';
@@ -2448,14 +2407,14 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             grid_xml += '</GridXML>';
 
             var sql_param = {
-                "action": "spa_udf_groups",
-                "flag": "u",
-                "deal_id": deal_id,
-                "detail_id": detail_id,
-                "udf_process_id": udf_process_id,
-                "template_id": template_id,
-                "udf_type": 'dc',
-                "udf_xml": grid_xml
+                "action":"spa_udf_groups",
+                "flag":"u",
+                "deal_id":deal_id,
+                "detail_id":detail_id,
+                "udf_process_id":udf_process_id,
+                "template_id":template_id,
+                "udf_type":'dc',
+                "udf_xml":grid_xml
             }
             adiha_post_data("return_status", sql_param, '', '', '');
         }
@@ -2487,20 +2446,20 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         if (detail_id == '') detail_id = 'NULL';
 
         var sql_param = {
-            "action": "spa_udf_groups",
-            "flag": "z",
-            "deal_id": deal_id,
-            "detail_id": detail_id,
-            "udf_type": 'dc',
-            "udf_process_id": udf_process_id,
-            "template_id": template_id,
-            "grid_type": "g"
+            "action":"spa_udf_groups",
+            "flag":"z",
+            "deal_id":deal_id,
+            "detail_id":detail_id,
+            "udf_type":'dc',
+            "udf_process_id":udf_process_id,
+            "template_id":template_id,
+            "grid_type":"g"
         }
 
         sql_param = $.param(sql_param);
         var sql_url = js_data_collector_url + "&" + sql_param;
         dealDetail.deal_detail_cost.clearAll();
-        dealDetail.deal_detail_cost.load(sql_url, function() {
+        dealDetail.deal_detail_cost.load(sql_url, function(){
             dealDetail.detail_cost_onload();
         });
     }
@@ -2583,17 +2542,17 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         detail_formula_popup.attachEvent('onShow', function() {
             formula_form_load_status = 0;
             if (!detail_formula_layout) {
-                var formula_form_data = <?php echo $formula_form_data; ?>;
+                var formula_form_data = <?php echo $formula_form_data;?>;
                 detail_formula_layout = detail_formula_popup.attachLayout(600, 200, "2U");
                 detail_formula_layout.cells('a').hideHeader();
                 detail_formula_layout.cells('a').setWidth(210);
                 detail_formula_layout.cells('b').setText('Formula Fields');
                 detail_formula_layout.cells('b').collapse();
                 formula_form = detail_formula_layout.cells('a').attachForm(formula_form_data);
-                formula_form.setItemValue('source_deal_detail_id', source_deal_detail_id);
-                formula_form.setItemValue('group_id', group_id);
-                formula_form.setItemValue('leg', leg);
-                formula_form.setItemValue('row_id', 1);
+                formula_form.setItemValue('source_deal_detail_id',source_deal_detail_id);
+                formula_form.setItemValue('group_id',group_id);
+                formula_form.setItemValue('leg',leg);
+                formula_form.setItemValue('row_id',1);
             }
 
             formula_field_form = detail_formula_layout.cells('b').attachForm();
@@ -2611,16 +2570,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         var detail_id = formula_form.getItemValue('source_deal_detail_id')
                         var d_leg = formula_form.getItemValue('leg');
                         var d_group_id = formula_form.getItemValue('group_id')
-                        var cm_param = {
-                            "action": "spa_deal_formula_udf",
-                            "flag": "y",
-                            "formula_id": value,
-                            "row_id": 1,
-                            "source_deal_detail_id": detail_id,
-                            "leg": d_leg,
-                            "source_deal_group_id": d_group_id,
-                            "process_id": formula_process_id
-                        };
+                        var cm_param = {"action": "spa_deal_formula_udf", "flag": "y", "formula_id":value, "row_id":1, "source_deal_detail_id":detail_id, "leg":d_leg, "source_deal_group_id":d_group_id, "process_id":formula_process_id};
                         adiha_post_data("return", cm_param, '', '', 'dealDetail.load_formula_fields');
                     }
                 }
@@ -2635,11 +2585,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
             if (!formula_id) formula_id = '';
             if (formula_id != '' && formula_id != null) {
-                var cm_param = {
-                    "action": "spa_deal_formula_udf",
-                    "flag": "z",
-                    "formula_id": formula_id
-                };
+                var cm_param = {"action": "spa_deal_formula_udf", "flag": "z", "formula_id":formula_id};
                 adiha_post_data("return", cm_param, '', '', 'dealDetail.is_formula_template');
             } else {
                 formula_form_load_status = 1;
@@ -2648,7 +2594,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         detail_formula_popup.show(x, y, w, z);
 
-        detail_formula_popup.attachEvent('onHide', function() {
+        detail_formula_popup.attachEvent('onHide', function(){
             if (formula_form_load_status === 0) return;
             var new_old = formula_form.getCheckedValue('form_sel');
 
@@ -2662,7 +2608,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             }
 
             grid.cells(rId, cInd).setValue(formula_id + '^' + formula_text);
-            grid.cells(rId, cInd).cell.wasChanged = true;
+            grid.cells(rId, cInd).cell.wasChanged=true;
             grid.callEvent("onEditCell", [2, rId, cInd, formula_id, oValue]);
 
             if (formula_field_form instanceof dhtmlXForm && typeof source_deal_detail_index != 'undefined') {
@@ -2676,12 +2622,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 form_xml += "</Root>";
             }
 
-            var cm_param = {
-                "action": "spa_deal_formula_udf",
-                "flag": "x",
-                "process_id": formula_process_id,
-                "form_xml": form_xml
-            };
+            var cm_param = {"action": "spa_deal_formula_udf", "flag": "x", "process_id":formula_process_id, "form_xml":form_xml};
             adiha_post_data("return", cm_param, '', '', '');
         });
     }
@@ -2692,16 +2633,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var detail_id = formula_form.getItemValue('source_deal_detail_id')
             var d_leg = formula_form.getItemValue('leg');
             var d_group_id = formula_form.getItemValue('group_id')
-            var cm_param = {
-                "action": "spa_deal_formula_udf",
-                "flag": "y",
-                "formula_id": formula_id,
-                "row_id": 1,
-                "source_deal_detail_id": detail_id,
-                "leg": d_leg,
-                "source_deal_group_id": d_group_id,
-                "process_id": formula_process_id
-            };
+            var cm_param = {"action": "spa_deal_formula_udf", "flag": "y", "formula_id":formula_id, "row_id":1, "source_deal_detail_id":detail_id, "leg":d_leg, "source_deal_group_id":d_group_id, "process_id":formula_process_id};
             adiha_post_data("return", cm_param, '', '', 'dealDetail.load_formula_fields');
         }
     }
@@ -2745,19 +2677,19 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[type]} nValue [new value]
      * @param  {[type]} oValue [old value]
      */
-    dealDetail.deal_detail_edit = function(stage, rId, cInd, nValue, oValue) {
+    dealDetail.deal_detail_edit = function(stage,rId,cInd,nValue,oValue) {
         var group_index = dealDetail.grid.getColIndexById('deal_group');
         var location_index = dealDetail.grid.getColIndexById('location_id');
         var volume_index = dealDetail.grid.getColIndexById('deal_volume');
         var actual_vol_index = dealDetail.grid.getColIndexById('actual_volume');
         var schedule_vol_index = dealDetail.grid.getColIndexById('schedule_volume');
-        var actualization_flag = '<?php echo $actualization_flag; ?>';
+        var actualization_flag = '<?php echo $actualization_flag;?>';
         var view_deleted = '<?php echo $view_deleted; ?>';
         var column_id = dealDetail.grid.getColumnId(cInd);
         var status_index = dealDetail.grid.getColIndexById('status');
         var tab_obj = dealDetail.deal_tab;
         var granularity = '';
-        var volume_type = '';
+        var volume_type = '' ;
 
         tab_obj.forEachTab(function(tab) {
             var form_object = tab.getAttachedObject();
@@ -2790,12 +2722,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         }
 
         if (stage != 2 && jQuery.inArray(column_id, detail_formula_array) != -1) {
-            var pos = dealDetail.grid.getPosition(dealDetail.grid.cells(rId, cInd).cell);
+            var pos = dealDetail.grid.getPosition(dealDetail.grid.cells(rId,cInd).cell);
             var y = pos[1];
             var x = pos[0];
 
-            var w = dealDetail.grid.cells(rId, cInd).cell.offsetWidth;
-            var z = dealDetail.grid.cells(rId, cInd).cell.offsetHeight;
+            var w = dealDetail.grid.cells(rId,cInd).cell.offsetWidth;
+            var z = dealDetail.grid.cells(rId,cInd).cell.offsetHeight;
 
             dealDetail.open_formula(dealDetail.grid, rId, cInd, oValue, x, y, w, z);
             return false;
@@ -2826,7 +2758,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             return false;
         }
 
-        if (stage != 2 && view_deleted != 'y' && ((typeof actual_vol_index != 'undefined' && actual_vol_index == cInd) || (typeof schedule_vol_index != 'undefined' && schedule_vol_index == cInd))) {
+        if (stage != 2 && view_deleted != 'y' && ((typeof actual_vol_index != 'undefined' && actual_vol_index == cInd) || (typeof schedule_vol_index != 'undefined' && schedule_vol_index == cInd)))  {
             if (actualization_flag == 'm' || actualization_flag == 's' || volume_type == 17302) {
                 dealDetail.open_update_actual();
                 return false;
@@ -2858,15 +2790,15 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                 if (column_id == 'term_start') {
                     var vintage_index = dealDetail.grid.getColIndexById('vintage');
-                    if (vintage_index > 0) {
+                    if(vintage_index > 0) {
                         dealDetail.grid.cells(rId, vintage_index).setValue(0);
                     }
-                    var term_frequency = '<?php echo $term_frequency; ?>';
+                    var term_frequency = '<?php echo $term_frequency;?>';
                     var new_term_end = dates.getTermEnd(term_start, term_frequency);
                     dealDetail.grid.cells(rId, term_end_index).setValue(new_term_end);
                     dealDetail.load_shipper_dropdown(rId, 'term_start_end');
-                }
-                if (column_id == 'term_start' || column_id == 'term_end') {
+                 } 
+				if (column_id == 'term_start' || column_id == 'term_end') {
                     // update expiration date by term_start or term_end
                     var term_end = dealDetail.grid.cells(rId, term_end_index).getValue();
                     var parent_id = dealDetail.grid.getParentId(rId);
@@ -2882,10 +2814,10 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     }
 
                     dhtmlx.alert({
-                        title: "Alert",
-                        type: "alert",
-                        text: message,
-                        callback: function(result) {
+                        title:"Alert",
+                        type:"alert",
+                        text:message,
+                        callback: function(result){
                             if (oValue.replace('&nbsp;', '') != '' && oValue.replace('&nbsp;', '') != null) {
                                 dealDetail.grid.cells(rId, cInd).setFormattedValue(oValue);
                                 return true;
@@ -2902,8 +2834,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 var origin_index = dealDetail.grid.getColIndexById('origin');
                 if (origin_index) {
                     field_array = ['origin', 'form', 'attribute1', 'attribute2', 'attribute3', 'attribute4', 'attribute5'];
-                    $.each(field_array, function(index, value) {
-                        dealDetail.form_details_tab.setUserData(name, 'change_event', 'y');
+                    $.each(field_array, function(index, value){
+                        dealDetail.form_details_tab.setUserData(name,'change_event', 'y');
                         var combo = dealDetail.form_details_tab.getCombo(value);
                         combo.setComboText(null);
                         combo.setComboValue(null);
@@ -2916,33 +2848,28 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 if (insert_mode == 1 && curve_id_index) {
                     var cmb_curve = dealDetail.grid.getColumnCombo(curve_id_index);
                     if (valuation_index_obj.location[nValue] && cmb_curve.getIndexByValue(valuation_index_obj.location[nValue]) != -1) {
-                        dealDetail.grid.cells(rId, curve_id_index).setValue(valuation_index_obj.location[nValue]);
+                        dealDetail.grid.cells(rId,curve_id_index).setValue(valuation_index_obj.location[nValue]);
                     } else {
-                        dealDetail.grid.cells(rId, curve_id_index).setValue('');
+                        dealDetail.grid.cells(rId,curve_id_index).setValue('');
                     }
                 }
                 if (detail_commodity_id_index) {
                     var detail_commodity_combo = dealDetail.grid.cells(rId, detail_commodity_id_index).getCellCombo();
 
                     detail_commodity_id = dealDetail.grid.cells(rId, detail_commodity_id_index).getValue();
-                    var cm_param = {
-                        "action": "spa_source_commodity_maintain",
-                        "flag": "k",
-                        "location_id": nValue,
-                        "SELECTED_VALUE": detail_commodity_id
-                    };
+                    var cm_param = {"action": "spa_source_commodity_maintain", "flag": "k", "location_id": nValue, "SELECTED_VALUE":detail_commodity_id};
                     cm_param = $.param(cm_param);
                     var url = js_dropdown_connector_url + '&' + cm_param;
                     detail_commodity_combo.clearAll();
                     detail_commodity_combo.closeAll();
                     detail_commodity_combo.enableFilteringMode(true);
-                    detail_commodity_combo.load(url, function() {
-                        if (detail_commodity_combo.getIndexByValue(detail_commodity_id) == -1)
+                    detail_commodity_combo.load(url,function () {
+                        if(detail_commodity_combo.getIndexByValue(detail_commodity_id) == -1)
                             dealDetail.grid.cells(rId, detail_commodity_id_index).setValue('');
                     });
                 }
                 dealDetail.load_shipper_dropdown(rId, 'location');
-            }
+            }  
 
             var detail_flag_index = dealDetail.grid.getColIndexById('detail_flag');
             var detail_flag_val = dealDetail.grid.cells(rId, detail_flag_index).getValue();
@@ -2959,7 +2886,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     dealDetail.grid.cells(parent_id, detail_flag_index).setValue('');
                     dealDetail.grid.cells(parent_id, detail_flag_index).cell.wasChanged = false;
 
-                    for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                    for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                         if ($.inArray(cellIndex, avoid_index) == -1) {
                             dealDetail.grid.cells(parent_id, cellIndex).setValue('');
                             dealDetail.grid.cells(parent_id, cellIndex).cell.wasChanged = false;
@@ -2979,7 +2906,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     var text = dealDetail.grid.cells(rId, cInd).getTitle();
                     if (type == 'win_link_custom') {
                         nValue = nValue + '^' + text;
-                        dealDetail.grid._h2.forEachChild(rId, function(element) {
+                        dealDetail.grid._h2.forEachChild(rId,function(element){
                             dealDetail.grid.cells(element.id, cInd).setValue(nValue);
                             dealDetail.grid.cells(element.id, cInd).cell.wasChanged = true;
                         });
@@ -2988,24 +2915,24 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         var no_of_child = dealDetail.grid.hasChildren(rId);
                         if (no_of_child > 0 && nValue != oValue) {
                             if (save_function_call == 'y') {
-                                dealDetail.grid._h2.forEachChild(rId, function(element) {
+                                dealDetail.grid._h2.forEachChild(rId,function(element){
                                     dealDetail.grid.cells(element.id, cInd).setValue(nValue);
                                     dealDetail.grid.cells(element.id, cInd).cell.wasChanged = true;
                                 });
                             } else {
                                 dhtmlx.message({
-                                    title: "Confirmation",
-                                    type: "confirm",
+                                    title:"Confirmation",
+                                    type:"confirm",
                                     ok: "Confirm",
                                     text: 'Value will be updated to the selected column in all items of group. Do you want to continue?',
                                     callback: function(result) {
                                         if (result) {
-                                            dealDetail.grid._h2.forEachChild(rId, function(element) {
+                                            dealDetail.grid._h2.forEachChild(rId,function(element){                                               
                                                 dealDetail.grid.cells(element.id, cInd).setValue(nValue);
                                                 dealDetail.grid.cells(element.id, cInd).cell.wasChanged = true;
                                                 if (column_id == 'location_id') {
                                                     dealDetail.load_shipper_dropdown(element.id, 'set_all_location');
-                                                }
+                                                }                                                
                                             });
                                             return true;
                                         } else {
@@ -3032,9 +2959,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      */
     dealDetail.load_shipper_dropdown = function(rId, call_from) {
         var shipper_code1_index = dealDetail.grid.getColIndexById('shipper_code1');
-        var shipper_code2_index = dealDetail.grid.getColIndexById('shipper_code2');
+        var shipper_code2_index = dealDetail.grid.getColIndexById('shipper_code2');       
         var deal_id = '<?php echo $deal_id; ?>';
-        var copy_deal_id = '<?php echo $copy_deal_id; ?>';
+        var copy_deal_id = '<?php echo $copy_deal_id; ?>';       
         var counterparty_id, template_text;
         var contract_id = '';
         var location_id = '';
@@ -3044,12 +2971,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             deal_id = copy_deal_id;
         }
 
-        var child_rows = dealDetail.grid.hasChildren(rId);
+        var child_rows = dealDetail.grid.hasChildren(rId) ;
 
-        var tab_obj = dealDetail.deal_tab;
+        var tab_obj = dealDetail.deal_tab ;   
         tab_obj.forEachTab(function(tab) {
             var form_obj = tab.getAttachedObject();
-
+            
             if (form_obj instanceof dhtmlXForm) {
                 var counterparty_combo = form_obj.getCombo('counterparty_id');
                 if (counterparty_combo) {
@@ -3059,22 +2986,22 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 var contract_combo = form_obj.getCombo('contract_id');
                 if (contract_combo) {
                     contract_id = form_obj.getItemValue('contract_id');
-                }
+                } 
 
                 var template_obj = form_obj.getCombo('template_id');
                 if (template_obj) {
                     template_text = template_obj.getComboText();
                     //template_id = template_obj.getSelectedValue();
-                }
+                }  
             }
-
-        });
+                        
+        });   
 
         if (template_text != 'Transportation NG') contract_id = '';
-        var location_id_index = dealDetail.grid.getColIndexById('location_id');
-
+        var location_id_index = dealDetail.grid.getColIndexById('location_id'); 
+       
         if (typeof location_id_index != 'undefined' && template_text != 'Transportation NG') location_id = dealDetail.grid.cells(rId, location_id_index).getValue();
-
+        
         var term_start_index = dealDetail.grid.getColIndexById('term_start');
         var term_start;
         if (typeof term_start_index != 'undefined') term_start = dealDetail.grid.cells(rId, term_start_index).getValue();
@@ -3083,51 +3010,50 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var buy_sell_flag;
         if (typeof buy_sell_index != 'undefined') buy_sell_flag = dealDetail.grid.cells(rId, buy_sell_index).getValue();
 
-        function load_shipper_code_combo_options_and_set_value(combo_index, deal_field) {
-            if (!combo_index) {
-                return
-            }
-            var shipper_code_combo = dealDetail.grid.cells(rId, combo_index).getCellCombo();
-            var default_value_shipper = dealDetail.grid.cells(rId, combo_index).getValue();
-
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "template_id": template_id == "" ? '<?php echo $template_id; ?>': template_id,
-                "counterparty_id": counterparty_id,
-                "location_id": location_id,
-                "deal_fields": deal_field,
-                "term_start": term_start,
-                "default_value": default_value_shipper,
-                "contract_id": contract_id,
-                "buy_sell_flag": buy_sell_flag,
-                "load_default": insert_mode == 1 || copy_insert_mode == 'y' ? 1 : 0,
-                "has_blank_option": true
-            };
+        if (shipper_code1_index) {
+            var shipper_code1_combo = dealDetail.grid.cells(rId, shipper_code1_index).getCellCombo();           
+            default_value_shipper1 = dealDetail.grid.cells(rId, shipper_code1_index).getValue();
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id,  "template_id": template_id, "counterparty_id": counterparty_id, "location_id": location_id,  "deal_fields": 'shipper_code1', "term_start": term_start, "default_value":default_value_shipper1, "contract_id" : contract_id, "buy_sell_flag" : buy_sell_flag};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
-            dealDetail.grid.cells(rId, combo_index).setValue('');
-            shipper_code_combo.clearAll();
+            dealDetail.grid.cells(rId, shipper_code1_index).setValue('');
+            shipper_code1_combo.clearAll();
 
             if (child_rows == 0) {
-                shipper_code_combo.enableFilteringMode(true);
-                shipper_code_combo.load(url, function() {
-                    shipper_code_combo.forEachOption(function(option) {
+                shipper_code1_combo.enableFilteringMode(true);
+                shipper_code1_combo.load(url,function () {                
+                    shipper_code1_combo.forEachOption(function(option) {
                         if (option.selected == true) {
-                            dealDetail.grid.cells(rId, combo_index).setValue(option.value);
+                            dealDetail.grid.cells(rId, shipper_code1_index).setValue(option.value);
                         }
-                    });
-
-                });
-            }
-
+                    }); 
+                    
+                }); 
+            }        
+                                 
         }
 
-        load_shipper_code_combo_options_and_set_value(shipper_code1_index, deal_field = 'shipper_code1');
-        load_shipper_code_combo_options_and_set_value(shipper_code2_index, deal_field = 'shipper_code2');
+        if (shipper_code2_index) {
+            var shipper_code2_combo = dealDetail.grid.cells(rId, shipper_code2_index).getCellCombo();           
+            default_value_shipper2 = dealDetail.grid.cells(rId, shipper_code2_index).getValue();  
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id,  "template_id": template_id, "counterparty_id": counterparty_id, "location_id": location_id,  "deal_fields": 'shipper_code2', "term_start": term_start, "default_value":default_value_shipper2, "contract_id" : contract_id, "buy_sell_flag" : buy_sell_flag};
+            cm_param = $.param(cm_param);
+            var url = js_dropdown_connector_url + '&' + cm_param;
+            dealDetail.grid.cells(rId, shipper_code2_index).setValue('');
+            shipper_code2_combo.clearAll(); 
 
+            if (child_rows == 0) {     
+                shipper_code2_combo.enableFilteringMode(true);
+                shipper_code2_combo.load(url,function () {                
+                    shipper_code2_combo.forEachOption(function(options) { 
+                        if (options.selected == true) {
+                            dealDetail.grid.cells(rId, shipper_code2_index).setValue(options.value);
+                        }
+                    }); 
+                    
+                });   
+            }                   
+        }
     }
 
     /**
@@ -3178,27 +3104,27 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var template_id = '<?php echo $template_id; ?>';
         var view_deleted = '<?php echo $view_deleted; ?>';
         var pricing_process_id = '<?php echo $pricing_process_id; ?>';
-        var deal_type_id = '<?php echo $deal_type_id; ?>';
-        var pricing_type_id = '<?php echo $pricing_type_id; ?>';
-        var term_frequency = '<?php echo $term_frequency; ?>';
-        var commodity_id = '<?php echo $commodity_id; ?>';
+        var deal_type_id = '<?php echo $deal_type_id;?>';
+        var pricing_type_id = '<?php echo $pricing_type_id;?>';
+        var term_frequency = '<?php echo $term_frequency;?>';
+        var commodity_id = '<?php echo $commodity_id;?>';
 
         var data = {
-            "action": "spa_deal_update_new",
-            "flag": "e",
-            "source_deal_header_id": deal_id,
-            "view_deleted": view_deleted,
-            "grid_type": "tg",
-            "grouping_column": "deal_group",
-            "grouping_type": 3,
-            "template_id": template_id,
-            "copy_deal_id": copy_deal_id,
-            "pricing_process_id": pricing_process_id,
-            "deal_type_id": deal_type_id,
-            "pricing_type": pricing_type_id,
-            "term_frequency": term_frequency,
-            "process_id": process_id,
-            "commodity_id": commodity_id
+            "action":"spa_deal_update_new",
+            "flag":"e",
+            "source_deal_header_id":deal_id,
+            "view_deleted":view_deleted,
+            "grid_type":"tg",
+            "grouping_column":"deal_group",
+            "grouping_type":3,
+            "template_id":template_id,
+            "copy_deal_id":copy_deal_id,
+            "pricing_process_id":pricing_process_id,
+            "deal_type_id":deal_type_id,
+            "pricing_type":pricing_type_id,
+            "term_frequency":term_frequency,
+            "process_id":process_id,
+            "commodity_id":commodity_id
 
         }
 
@@ -3210,15 +3136,15 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[type]} id [Menu id]
      */
     dealDetail.deal_menu_click = function(id) {
-        switch (id) {
+        switch(id) {
             case "refresh":
                 var deal_id = '<?php echo $deal_id; ?>';
                 var data = dealDetail.get_refresh_param();
 
                 if ((dealDetail.grid.getColIndexById('shipper_code1') || dealDetail.grid.getColIndexById('shipper_code2')) && deal_id != 'NULL') {
                     dealDetail.deal_detail_menu.setItemDisabled('shipper_code_report');
-                }
-
+                } 
+                
                 var changed_rows = dealDetail.grid.getChangedRows(true);
                 if (changed_rows != '' || dealDetail.deleted_details.length > 0) {
                     confirm_messagebox("There are unsaved changes. Are you sure you want to refresh grid?", function() {
@@ -3238,7 +3164,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     dealDetail.deal_detail.cells('c').progressOn();
                     dealDetail.refresh_grid(data, function() {
                         dealDetail.deal_detail.cells("c").progressOff();
-
+                        
                         if (deal_id != 'NULL' && copy_insert_mode != 'y') {
                             var win_id = 'w_' + deal_id;
 
@@ -3261,7 +3187,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                                 var tab_obj = dealDetail.deal_tab;
                                 var iterate_check = true;
                                 tab_obj.forEachTab(function(tab) {
-                                    if (iterate_check) {
+                                    if(iterate_check) {
                                         var form_obj = tab.getAttachedObject();
                                         if (form_obj instanceof dhtmlXForm) {
                                             var prof_gran_combo = form_obj.getCombo('profile_granularity');
@@ -3284,8 +3210,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         var curve_id_index = dealDetail.grid.getColIndexById('curve_id');
                         if (col_index_location_id) {
                             var cmb_location = dealDetail.grid.getColumnCombo(col_index_location_id);
-                            dealDetail.grid.forEachRow(function(id) {
-                                var location_id = dealDetail.grid.cells(id, col_index_location_id).getValue();
+                            dealDetail.grid.forEachRow(function(id){
+                                var location_id = dealDetail.grid.cells(id,col_index_location_id).getValue();
                                 if (insert_mode == 1) {
                                     if (dealDetail.grid.hasChildren(id) == 0) {
                                         // Set location combo value by default when not present
@@ -3295,23 +3221,23 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                                             } else {
                                                 location_id = cmb_location.getOptionByIndex(0).value;
                                             }
-                                            dealDetail.grid.cells(id, col_index_location_id).setValue(location_id);
+                                            dealDetail.grid.cells(id,col_index_location_id).setValue(location_id);
                                         }
 
                                         // Set curve value based on location. If not present select null by default
                                         if (curve_id_index) {
                                             var cmb_curve = dealDetail.grid.getColumnCombo(curve_id_index);
-                                            var curve_id = dealDetail.grid.cells(id, curve_id_index).getValue();
+                                            var curve_id = dealDetail.grid.cells(id,curve_id_index).getValue();
                                             if (valuation_index_obj.location[location_id] && cmb_curve.getIndexByValue(valuation_index_obj.location[location_id]) != -1) {
-                                                dealDetail.grid.cells(id, curve_id_index).setValue(valuation_index_obj.location[location_id]);
+                                                dealDetail.grid.cells(id,curve_id_index).setValue(valuation_index_obj.location[location_id]);
                                             } else if (cmb_curve.getIndexByValue(curve_id) == -1) {
-                                                dealDetail.grid.cells(id, curve_id_index).setValue('');
+                                                dealDetail.grid.cells(id,curve_id_index).setValue('');
                                             }
                                         }
 
                                     }
                                 }
-
+                                
                                 if (location_id != '' && detail_commodity_id_index) {
                                     dealDetail.grid.callEvent("onEditCell", [2, id, col_index_location_id, location_id]);
                                 } else {
@@ -3365,7 +3291,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 break;
             case "add_group":
                 var counter = 0;
-                dealDetail.grid.forEachRow(function(id) {
+                dealDetail.grid.forEachRow(function(id){
                     if (counter == 0) {
                         var selected_id = dealDetail.grid.getSelectedRowId();
 
@@ -3383,7 +3309,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         var leg = dealDetail.grid.cells(id, leg_index).getValue();
                         var legs = dealDetail.grid.collectValues(leg_index);
                         var max_leg = Math.max.apply(null, legs);
-                        max_group = max_group + 1;
+                        max_group = max_group+1;
                         var new_id = (new Date()).valueOf();
 
                         var group_ids = dealDetail.grid.collectValues(group_id_index);
@@ -3391,12 +3317,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         var group_count = unique_groups.length + 1;
 
                         var group_array = new Array();
-                        for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                        for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                             if (cellIndex == source_deal_detail_index) {
                                 group_array.push("NEW_" + new_id);
                             } else if (group_index == cellIndex) {
                                 group_array.push(group_count);
-                            } else if (group_id_index == cellIndex) {
+                            } else if(group_id_index == cellIndex) {
                                 group_array.push(max_group);
                             } else if (detail_flag_index == cellIndex) {
                                 group_array.push(0);
@@ -3411,15 +3337,15 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                             }
                         }
 
-                        dealDetail.grid.addRow(new_id, group_array, 0, null, null, true);
+                        dealDetail.grid.addRow(new_id, group_array, 0, null, null,true);
 
-                        var j = 0;
+                        var j=0;
                         if (copy_deal_id == 'NULL') {
-                            dealDetail.grid._h2.forEachChild(id, function(element) {
+                            dealDetail.grid._h2.forEachChild(id,function(element){
                                 var values_array = new Array();
                                 values_array.push('');
 
-                                for (var cellIndex = 1; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                                for(var cellIndex = 1; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                                     if (group_id_index == cellIndex) {
                                         values_array.push(max_group);
                                     } else {
@@ -3498,17 +3424,17 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             case 'udt':
                 dealDetail.open_udt('d');
                 break;
-            default:
+                default:
                 if (id.indexOf("dashboard_") != -1) {
                     var str_len = id.length;
                     var dashboard_id = id.substring(10, str_len);
                     var dashboard_name = dealDetail.deal_detail_menu.getItemText(id);
-                    var selected_ids = '<?php echo $deal_id; ?>';
-                    var param_filter_xml = '<Root><FormXML param_name="source_deal_header_id" param_value="' + selected_ids + '"></FormXML></Root>';
-
+                    var selected_ids =  '<?php echo $deal_id; ?>';
+                    var param_filter_xml ='<Root><FormXML param_name="source_deal_header_id" param_value="' + selected_ids + '"></FormXML></Root>';
+                    
                     show_dashboard_report(dashboard_id, dashboard_name, param_filter_xml)
                     break;
-                } else {
+                } else {                	
                     show_messagebox("Under Maintainence! We will be back soon!");
                     break;
                 }
@@ -3525,7 +3451,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var win_url = 'deal.provisional.price.detail.php';
 
 
-        source_deal_detail_id = dealDetail.grid.cells(dealDetail.grid.getSelectedRowId(), dealDetail.grid.getColIndexById('source_deal_detail_id')).getValue();
+        source_deal_detail_id = dealDetail.grid.cells(dealDetail.grid.getSelectedRowId(),  dealDetail.grid.getColIndexById('source_deal_detail_id')).getValue();
         /*
                 term_start = dealDetail.grid.cells(dealDetail.grid.getSelectedRowId(),  dealDetail.grid.getColIndexById('term_start')).getTitle();
                 term_end = dealDetail.grid.cells(dealDetail.grid.getSelectedRowId(),  dealDetail.grid.getColIndexById('term_end')).getTitle();
@@ -3561,7 +3487,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         win.attachURL(win_url, null);
 
-        win.attachEvent("onContentLoaded", function(win) {
+        win.attachEvent("onContentLoaded", function(win){
             win.progressOff();
         });
 
@@ -3573,7 +3499,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var win_url = 'deal.price.detail.php';
 
 
-        source_deal_detail_id = dealDetail.grid.cells(dealDetail.grid.getSelectedRowId(), dealDetail.grid.getColIndexById('source_deal_detail_id')).getValue();
+        source_deal_detail_id = dealDetail.grid.cells(dealDetail.grid.getSelectedRowId(),  dealDetail.grid.getColIndexById('source_deal_detail_id')).getValue();
         /*
                 term_start = dealDetail.grid.cells(dealDetail.grid.getSelectedRowId(),  dealDetail.grid.getColIndexById('term_start')).getTitle();
                 term_end = dealDetail.grid.cells(dealDetail.grid.getSelectedRowId(),  dealDetail.grid.getColIndexById('term_end')).getTitle();
@@ -3590,12 +3516,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                 var filter_details = deal_group + ' | ' + term_start + ' | ' + term_end + ' | ' + location_id + ' | ' + volume + ' | ' + uom + ' | ' + frequency + ' | ' + total_volume + ' | ' + position_uom + ' | ' + currency_id;*/
 
-        if (deal_price_data_process_id != '' || deal_price_data_process_id != 'NULL' || deal_provisional_price_data_process_id == '' || deal_provisional_price_data_process_id == 'NULL')
+        if (deal_price_data_process_id != '' || deal_price_data_process_id != 'NULL' || deal_provisional_price_data_process_id == '' || deal_provisional_price_data_process_id == 'NULL' )
             win_url += '?source_deal_detail_id=' + source_deal_detail_id + '&deal_price_data_process_id=' + deal_price_data_process_id;
         else if (deal_provisional_price_data_process_id == '' || deal_provisional_price_data_process_id == 'NULL' || deal_price_data_process_id != '' || deal_price_data_process_id != 'NULL')
             win_url += '&source_deal_detail_id=' + source_deal_detail_id + '&deal_provisional_price_data_process_id=' + deal_provisional_price_data_process_id;
         else if (deal_provisional_price_data_process_id != '' || deal_provisional_price_data_process_id != 'NULL' || deal_price_data_process_id != '' || deal_price_data_process_id != 'NULL')
-            win_url += '?source_deal_detail_id=' + source_deal_detail_id + '&deal_price_data_process_id=' + deal_price_data_process_id + '&deal_provisional_price_data_process_id=' + deal_provisional_price_data_process_id;
+            win_url += '?source_deal_detail_id=' + source_deal_detail_id + '&deal_price_data_process_id=' + deal_price_data_process_id +'&deal_provisional_price_data_process_id=' + deal_provisional_price_data_process_id;
         else
             win_url += '&source_deal_detail_id=' + source_deal_detail_id;
 
@@ -3613,7 +3539,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         win.attachURL(win_url, null);
 
-        win.attachEvent("onContentLoaded", function(win) {
+        win.attachEvent("onContentLoaded", function(win){
             win.progressOff();
         });
 
@@ -3678,7 +3604,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         win.attachURL(win_url, null);
 
-        win.attachEvent("onContentLoaded", function(win) {
+        win.attachEvent("onContentLoaded", function(win){
             win.progressOff();
         });
 
@@ -3704,9 +3630,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.setText(win_title);
         win.centerOnScreen();
         win.setModal(true);
-        win.attachURL(win_url, false, {
-            deal_id: deal_id
-        });
+        win.attachURL(win_url, false, {deal_id:deal_id});
 
         win.attachEvent('onClose', function(w) {
             var ifr = w.getFrame();
@@ -3737,7 +3661,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var deal_detail_index = dealDetail.grid.getColIndexById('source_deal_detail_id');
         var row_id = dealDetail.grid.getSelectedRowId();
         var detail_id = dealDetail.grid.cells(row_id, deal_detail_index).getValue();
-        var is_future = '<?php echo $future_deal; ?>';
+        var is_future = '<?php echo $future_deal;?>';
 
         dealDetail.unload_efp_trigger_window();
         if (!efp_trigger_window) {
@@ -3751,10 +3675,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.setText(win_title);
         win.centerOnScreen();
         win.setModal(true);
-        win.attachURL(win_url, false, {
-            type: type,
-            detail_id: detail_id
-        });
+        win.attachURL(win_url, false, {type:type,detail_id:detail_id});
 
         win.attachEvent('onClose', function(w) {
             var ifr = w.getFrame();
@@ -3778,18 +3699,18 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         if (enable_efp == 'y') {
             if (future_deal == 'y') {
                 var sql_param = {
-                    "action": "spa_deal_close",
-                    "flag": "p",
-                    "deal_id": deal_id,
-                    "grid_type": "g"
+                    "action":"spa_deal_close",
+                    "flag":"p",
+                    "deal_id":deal_id,
+                    "grid_type":"g"
                 }
             } else {
                 var sql_param = {
-                    "action": "spa_efp_trigger",
-                    "flag": "h",
-                    "deal_id": deal_id,
-                    "detail_id": detail_id,
-                    "grid_type": "g"
+                    "action":"spa_efp_trigger",
+                    "flag":"h",
+                    "deal_id":deal_id,
+                    "detail_id":detail_id,
+                    "grid_type":"g"
                 }
             }
             sql_param = $.param(sql_param);
@@ -3799,11 +3720,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         }
         if (enable_trigger == 'y') {
             var sql_param = {
-                "action": "spa_efp_trigger",
-                "flag": "g",
-                "deal_id": deal_id,
-                "detail_id": detail_id,
-                "grid_type": "g"
+                "action":"spa_efp_trigger",
+                "flag":"g",
+                "deal_id":deal_id,
+                "detail_id":detail_id,
+                "grid_type":"g"
             }
             sql_param = $.param(sql_param);
             var sql_url = js_data_collector_url + "&" + sql_param;
@@ -3813,12 +3734,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         if (enable_exercise == 'y') {
             var sql_param = {
-                "action": "spa_deal_exercise_detail",
-                "flag": "s",
-                "source_deal_detail_id": detail_id,
-                "source_deal_header_id": deal_id,
-                "source_deal_group_id": group_id,
-                "grid_type": "g"
+                "action":"spa_deal_exercise_detail",
+                "flag":"s",
+                "source_deal_detail_id":detail_id,
+                "source_deal_header_id":deal_id,
+                "source_deal_group_id":group_id,
+                "grid_type":"g"
             }
             sql_param = $.param(sql_param);
             var sql_url = js_data_collector_url + "&" + sql_param;
@@ -3845,7 +3766,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var no_of_parent = 0;
         var deal_id = '<?php echo $deal_id; ?>';
 
-        for (var i = 0; i < dealDetail.grid.getRowsNum(); i++) {
+        for (var i=0; i < dealDetail.grid.getRowsNum(); i++){
             if (no_of_parent == 2) break;
             if (no_of_rows == 2) break;
 
@@ -3857,8 +3778,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         if (no_of_parent < 2 && no_of_rows < 2) {
             dhtmlx.alert({
-                title: "Alert",
-                type: "alert",
+                title:"Alert",
+                type:"alert",
                 text: "Deal must have some details."
             });
             return;
@@ -3869,7 +3790,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var source_deal_detail_index = dealDetail.grid.getColIndexById('source_deal_detail_id');
 
         if (parent_id == 0 && no_of_child > 0) {
-            dealDetail.grid._h2.forEachChild(row_id, function(element) {
+            dealDetail.grid._h2.forEachChild(row_id,function(element){
                 var source_deal_detail_id = dealDetail.grid.cells(element.id, source_deal_detail_index).getValue();
                 if (source_deal_detail_id.indexOf("NEW_") == -1 && source_deal_detail_id != '') {
                     dealDetail.deleted_details.push(source_deal_detail_id);
@@ -3894,7 +3815,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      */
     dealDetail.open_term_window = function(type) {
         var deal_id = '<?php echo $deal_id; ?>';
-        var deal_date = '<?php echo $deal_date; ?>';
+        var deal_date = '<?php echo $deal_date;?>';
         var term_start = '';
         var term_end = '';
 
@@ -3907,22 +3828,22 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var win_url = 'add.terms.php';
         var term_start_index = dealDetail.grid.getColIndexById('term_start');
         var min_max_term = dealDetail.grid.collectValues(term_start_index);
-        min_max_term.sort(function(a, b) {
+        min_max_term.sort(function(a, b){
             return Date.parse(a) - Date.parse(b);
         });
 
         var term_end_index = dealDetail.grid.getColIndexById('term_end');
         var max_term_end = dealDetail.grid.collectValues(term_end_index);
-        max_term_end.sort(function(a, b) {
+        max_term_end.sort(function(a, b){
             return Date.parse(a) - Date.parse(b);
         });
 
         if (type == 'leg') {
-            var max_date = max_term_end[max_term_end.length - 1];
+            var max_date = max_term_end[max_term_end.length-1];
             var min_date = min_max_term[0];
         } else if (type == 'term') {
             min_date = deal_date;
-            max_date = min_max_term[min_max_term.length - 1];
+            max_date = min_max_term[min_max_term.length-1];
         } else {
             var row_id = dealDetail.grid.getSelectedRowId();
         }
@@ -3933,14 +3854,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.setText(win_title);
         win.centerOnScreen();
         win.setModal(true);
-        win.attachURL(win_url, false, {
-            deal_id: deal_id,
-            term_start: term_start,
-            term_end: term_end,
-            min_date: min_date,
-            max_date: max_date,
-            type: type
-        });
+        win.attachURL(win_url, false, {deal_id:deal_id,term_start:term_start,term_end:term_end,min_date:min_date,max_date:max_date,type:type});
 
         win.attachEvent('onClose', function(w) {
             var ifr = w.getFrame();
@@ -3993,15 +3907,15 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         if (parent_id == 0 && no_of_child > 0) {
             var min_max_term = dealDetail.grid.collectValues(term_start_index);
-            min_max_term.sort(function(a, b) {
+            min_max_term.sort(function(a, b){
                 return Date.parse(a) - Date.parse(b);
             });
-            var max_term_start = min_max_term[min_max_term.length - 1];
+            var max_term_start = min_max_term[min_max_term.length-1];
             var max_term_end = dealDetail.grid.collectValues(term_end_index);
-            max_term_end.sort(function(a, b) {
+            max_term_end.sort(function(a, b){
                 return Date.parse(a) - Date.parse(b);
             });
-            var max_term_end = max_term_end[max_term_end.length - 1];
+            var max_term_end = max_term_end[max_term_end.length-1];
         } else {
             var max_term_start = dealDetail.grid.cells(row_id, term_start_index).getValue();
             var max_term_end = dealDetail.grid.cells(row_id, term_end_index).getValue();
@@ -4015,11 +3929,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.setText(win_title);
         win.centerOnScreen();
         win.setModal(true);
-        win.attachURL(win_url, false, {
-            type: 'c',
-            term_start: max_term_start,
-            term_end: max_term_end
-        });
+        win.attachURL(win_url, false, {type:'c',term_start:max_term_start,term_end:max_term_end});
 
         win.attachEvent('onClose', function(w) {
             var ifr = w.getFrame();
@@ -4053,7 +3963,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var group_ids = dealDetail.grid.collectValues(group_id_index);
         var unique_groups = _.uniq(group_ids);
         var group_count = unique_groups.length;
-        var new_group_id = group_count + 1;
+        var new_group_id = group_count+1;
 
         var leg_index = dealDetail.grid.getColIndexById('blotterleg');
         var legs = dealDetail.grid.collectValues(leg_index);
@@ -4065,14 +3975,14 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         if (parent_id == 0 && no_of_child > 0) {
             var new_id = (new Date()).valueOf();
-            dealDetail.grid.addRow(new_id, [], 0, 0, 'folder.gif', true);
+            dealDetail.grid.addRow(new_id, [], 0 , 0, 'folder.gif', true);
             dealDetail.grid.cells(new_id, group_id_index).setValue(new_group_id);
             dealDetail.grid.cells(new_id, group_index).setValue(container_name);
-            dealDetail.grid._h2.forEachChild(row_id, function(element) {
+            dealDetail.grid._h2.forEachChild(row_id, function(element){
                 var values_array = new Array();
                 var new_row_id = (new Date()).valueOf();
 
-                for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                     if (cellIndex == source_deal_detail_index) {
                         values_array.push("NEW_" + new_row_id);
                     } else if (group_index == cellIndex) {
@@ -4102,7 +4012,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var values_array = new Array();
             var new_row_id = (new Date()).valueOf();
 
-            for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+            for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                 if (cellIndex == source_deal_detail_index) {
                     values_array.push("NEW_" + new_row_id);
                 } else if (group_index == cellIndex) {
@@ -4148,7 +4058,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var new_id = (new Date()).valueOf();
             var values_array = new Array();
 
-            for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+            for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                 if (group_index == cellIndex) {
                     values_array.push('');
                 } else {
@@ -4165,18 +4075,18 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     dealDetail.grid.cells(row_id, cellIndex).setValue('');
             }
 
-            dealDetail.grid.addRow(new_id, values_array, null, row_id, null, false);
+            dealDetail.grid.addRow(new_id, values_array, null , row_id, null, false);
             var new_row_id = (new Date()).valueOf();
-            dealDetail.grid.addRow(new_row_id, values_array, null, row_id, null, false);
+            dealDetail.grid.addRow(new_row_id, values_array, null , row_id, null, false);
             dealDetail.grid.cells(new_row_id, source_deal_detail_index).setValue("NEW_" + new_row_id);
             dealDetail.grid.cells(new_row_id, leg_index).setValue(new_leg);
             dealDetail.grid.openItem(row_id);
-            dealDetail.grid.selectRowById(new_row_id, true, true, true);
+            dealDetail.grid.selectRowById(new_row_id,true,true,true);
         } else {
             var new_id = (new Date()).valueOf();
             var values_array = new Array();
 
-            for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+            for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                 if (cellIndex == source_deal_detail_index) {
                     values_array.push("NEW_" + new_id);
                 } else if (group_index == cellIndex) {
@@ -4193,8 +4103,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     values_array.push(val);
                 }
             }
-            dealDetail.grid.addRow(new_id, values_array, null, parent_id, null, false);
-            dealDetail.grid.selectRowById(new_id, true, true, true);
+            dealDetail.grid.addRow(new_id, values_array, null , parent_id, null, false);
+            dealDetail.grid.selectRowById(new_id,true,true,true);
         }
     }
 
@@ -4258,7 +4168,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 row_id = dealDetail.grid.getSelectedRowId();
             }
 
-            for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+            for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                 if (cellIndex == term_start_index) {
                     values_array.push(from_date);
                 } else if (cellIndex == term_end_index) {
@@ -4289,14 +4199,14 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
             }
 
-            dealDetail.grid.addRow(new_id, values_array, 0, null, null, true);
+            dealDetail.grid.addRow(new_id, values_array, 0 , null, null, true);
             dealDetail.load_shipper_dropdown(new_id, 'term_add');
             ids_to_apply_price = 'NEW_' + new_id;
 
             var selected_row_id = dealDetail.grid.getSelectedRowId();
             added_from_sdd_id = dealDetail.grid.cells(selected_row_id, source_deal_detail_index).getValue();
 
-            dealDetail.grid.setUserData(new_id, 'added_from_sdd_id', added_from_sdd_id);
+            dealDetail.grid.setUserData(new_id, 'added_from_sdd_id',added_from_sdd_id);
 
             if (i == 0) {
                 dealDetail.grid.selectRowById(new_id);
@@ -4308,9 +4218,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         deal_provisional_price_data_process_id = (deal_provisional_price_data_process_id != '') ? deal_provisional_price_data_process_id : 'NULL';
 
         var data = {
-            "action": "spa_deal_pricing_detail",
-            "flag": "t",
-            "mode": "fetch",
+            "action":"spa_deal_pricing_detail",
+            "flag":"t",
+            "mode":"fetch",
             "xml_process_id": deal_price_data_process_id,
             "source_deal_detail_id": added_from_sdd_id,
             "ids_to_apply_price": ids_to_apply_price
@@ -4319,9 +4229,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         adiha_post_data("return_array", data, '', '', 'dealDetail.check_pricing_data');
 
         var data_prov = {
-            "action": "spa_deal_pricing_detail_provisional",
-            "flag": "t",
-            "mode": "fetch",
+            "action":"spa_deal_pricing_detail_provisional",
+            "flag":"t",
+            "mode":"fetch",
             "xml_process_id": deal_provisional_price_data_process_id,
             "source_deal_detail_id": added_from_sdd_id,
             "ids_to_apply_price": ids_to_apply_price
@@ -4358,7 +4268,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var values_array = new Array();
         var deal_id = '<?php echo $deal_id; ?>';
 
-        for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+        for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
             if (deal_id != 'NULL' && (source_deal_detail_index == cellIndex || cellIndex == group_id_index)) {
                 values_array.push("NEW_" + new_id);
             } else if (cellIndex == term_start_index) {
@@ -4368,7 +4278,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             } else if (cellIndex == contract_expiration_date_index) {
                 values_array.push(to_date);
             } else if (leg_index == cellIndex) {
-                values_array.push(max_leg + 1);
+                values_array.push(max_leg+1);
             } else {
                 if (row_id != null) {
                     var val = dealDetail.grid.cells(row_id, cellIndex).getValue();
@@ -4380,7 +4290,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                     if (leg_index2 != undefined && leg_index2 != '' && leg_index2 != null) {
                         if (cellIndex == leg_index2) {
-                            val = max_leg + 1;
+                            val = max_leg+1;
                         }
                     }
 
@@ -4394,7 +4304,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         added_from_sdd_id = dealDetail.grid.cells(selected_row_id, source_deal_detail_index).getValue();
 
         values_array[source_deal_detail_index] = "NEW_" + new_id;
-        dealDetail.grid.addRow(new_id, values_array, 0, null, null, true);
+        dealDetail.grid.addRow(new_id, values_array, 0 , null, null, true);
         dealDetail.grid.selectRowById(new_id);
         dealDetail.load_shipper_dropdown(new_id, 'leg_add');
         ids_to_apply_price = values_array[source_deal_detail_index];
@@ -4402,9 +4312,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         deal_provisional_price_data_process_id = (deal_provisional_price_data_process_id != '') ? deal_provisional_price_data_process_id : 'NULL';
 
         var data = {
-            "action": "spa_deal_pricing_detail",
-            "flag": "t",
-            "mode": "fetch",
+            "action":"spa_deal_pricing_detail",
+            "flag":"t",
+            "mode":"fetch",
             "xml_process_id": deal_price_data_process_id,
             "source_deal_detail_id": added_from_sdd_id,
             "ids_to_apply_price": ids_to_apply_price
@@ -4413,9 +4323,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         adiha_post_data("return_array", data, '', '', 'dealDetail.check_pricing_data');
 
         var data_prov = {
-            "action": "spa_deal_pricing_detail_provisional",
-            "flag": "t",
-            "mode": "fetch",
+            "action":"spa_deal_pricing_detail_provisional",
+            "flag":"t",
+            "mode":"fetch",
             "xml_process_id": deal_provisional_price_data_process_id,
             "source_deal_detail_id": added_from_sdd_id,
             "ids_to_apply_price": ids_to_apply_price
@@ -4424,14 +4334,14 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         adiha_post_data("return_array", data_prov, '', '', 'dealDetail.check_provisional_pricing_data');
     }
 
-    dealDetail.check_pricing_data = function(result) {
+    dealDetail.check_pricing_data = function (result) {
         if (result[0][3] != 'Error') {
             var process_id = result[0][5];
             deal_price_data_process_id = process_id;
         }
     }
 
-    dealDetail.check_provisional_pricing_data = function(result) {
+    dealDetail.check_provisional_pricing_data = function (result) {
         if (result[0][3] != 'Error') {
             var process_id = result[0][5];
             deal_provisional_price_data_process_id = process_id;
@@ -4465,7 +4375,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         })
 
         if (!is_environmental) {
-            return_array = [1, '', ''];
+            return_array = [1,'',''];
             return return_array;
         }
 
@@ -4480,7 +4390,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var no_of_child = dealDetail.grid.hasChildren(ids);
 
             if (parent_id != 0 || no_of_child < 1) {
-                for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                     var column_id = dealDetail.grid.getColumnId(cellIndex);
                     var cell_value = dealDetail.grid.cells(ids, cellIndex).getValue();
 
@@ -4507,15 +4417,15 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 cancel_status = 25008;
             }
 
-            return_array = [0, 'Are you sure you want to set Deal Detail Status to "Expired"?', cancel_status];
+            return_array = [0,'Are you sure you want to set Deal Detail Status to "Expired"?', cancel_status];
         } else if (certified_volume != '' && status != 25004) {
-            return_array = [0, 'When Certified Volume is available, acceptable detail status is "Certified".  Are you sure you want to proceed?', '25004'];
+            return_array = [0,'When Certified Volume is available, acceptable detail status is "Certified".  Are you sure you want to proceed?', '25004'];
         } else if (actual_volume != '' && certified_volume == '' && status != 25003) {
-            return_array = [0, 'When Actual Volume is available, acceptable detail status is "Actual"  Are you sure you want to proceed?', '25003'];
+            return_array = [0,'When Actual Volume is available, acceptable detail status is "Actual"  Are you sure you want to proceed?', '25003'];
         } else if (forecast_volume != '' && actual_volume == '' && certified_volume == '' && status != 25008) {
-            return_array = [0, 'When Contractual/Forecast Volume is available, acceptable detail status is "Contractual/Forecast"  Are you sure you want to proceed?', '25008'];
+            return_array = [0,'When Contractual/Forecast Volume is available, acceptable detail status is "Contractual/Forecast"  Are you sure you want to proceed?', '25008'];
         } else {
-            return_array = [1, '', ''];
+            return_array = [1,'',''];
         }
 
         return return_array;
@@ -4526,7 +4436,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[type]} id [Menu id]
      */
     dealDetail.page_toolbar_click = function(id) {
-        switch (id) {
+        switch(id) {
             case "save":
                 dealDetail.toolbar.disableItem('save');
                 var row_id = dealDetail.grid.getSelectedRowId();
@@ -4538,9 +4448,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 if (row_id != '' && row_id != null) {
                     if ((enable_pricing == 'y' || enable_provisional_tab == 'y' || enable_escalation_tab == 'y' || hide_pricing == 0) && detail_cost_enable != 'n' && detail_cost_enable != '') {
                         dealDetail.loop(
-                            function() {
-                                pricing_save = dealDetail.grid_before_row_selection(null, row_id);
-                            },
+                            function() { pricing_save = dealDetail.grid_before_row_selection(null, row_id); },
                             function() {
                                 if (pricing_save) {
                                     if (detail_cost_enable == 'y') dealDetail.save_detail_cost('', row_id);
@@ -4549,9 +4457,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                                     dealDetail.toolbar.enableItem('save');
                                 }
                             },
-                            function() {
-                                dealDetail.save_detail_udf(row_id, '');
-                            },
+                            function() { dealDetail.save_detail_udf(row_id, '');  },
                             function() {
                                 if (pricing_save) dealDetail.save_deal();
                                 else {
@@ -4563,9 +4469,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         );
                     } else if (enable_pricing == 'y' || enable_provisional_tab == 'y' || enable_escalation_tab == 'y' || hide_pricing == 0) {
                         dealDetail.loop(
-                            function() {
-                                pricing_save = dealDetail.grid_before_row_selection(null, row_id);
-                            },
+                            function() { pricing_save = dealDetail.grid_before_row_selection(null, row_id); },
                             function() {
                                 if (pricing_save) dealDetail.save_deal();
                                 else {
@@ -4579,21 +4483,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                             function() {
                                 if (detail_cost_enable == 'y') dealDetail.save_detail_cost('', row_id);
                             },
-                            function() {
-                                dealDetail.save_detail_udf(row_id, '');
-                            },
-                            function() {
-                                dealDetail.save_deal();
-                            }
+                            function() { dealDetail.save_detail_udf(row_id, ''); },
+                            function() { dealDetail.save_deal(); }
                         );
                     } else {
                         dealDetail.loop(
-                            function() {
-                                dealDetail.save_detail_udf(row_id, '');
-                            },
-                            function() {
-                                dealDetail.save_deal();
-                            }
+                            function() { dealDetail.save_detail_udf(row_id, ''); },
+                            function() { dealDetail.save_deal(); }
                         );
                     }
                 } else {
@@ -4606,10 +4502,10 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             case 'certificate':
                 dealDetail.open_certificate();
                 break;
-            case 'transfer':
+			case 'transfer':
                 dealDetail.open_deal_transfer();
                 break;
-            case 'product':
+            case 'product' :
                 dealDetail.open_product();
                 break;
             case 'udt':
@@ -4632,7 +4528,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var no_of_parent = 0;
         var deal_id = '<?php echo $deal_id; ?>';
 
-        for (var i = 0; i < dealDetail.grid.getRowsNum(); i++) {
+        for (var i=0; i < dealDetail.grid.getRowsNum(); i++){
             if (no_of_parent == 2) break;
             if (no_of_rows == 2) break;
 
@@ -4647,8 +4543,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             dealDetail.toolbar.enableItem('save');
 
             dhtmlx.alert({
-                title: "Alert",
-                type: "alert",
+                title:"Alert",
+                type:"alert",
                 text: "Deal must have details for some terms."
             });
             return;
@@ -4707,11 +4603,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var header_xml = '<Root><FormXML ';
             var grid_xml = "";
             var sub_book = '<?php echo $sub_book; ?>';
-            var header_cost_enable = '<?php echo $header_cost_enable; ?>';
+            var header_cost_enable = '<?php echo $header_cost_enable;?>';
             var header_cost_process_id = '<?php echo $header_cost_process_id; ?>'
-            var deal_type_id = '<?php echo $deal_type_id; ?>';
-            var pricing_type_id = '<?php echo $pricing_type_id; ?>';
-            var term_frequency = '<?php echo $term_frequency; ?>';
+            var deal_type_id = '<?php echo $deal_type_id;?>';
+            var pricing_type_id = '<?php echo $pricing_type_id;?>';
+            var term_frequency = '<?php echo $term_frequency;?>';
 
             var header_cost_xml = 'NULL';
             var header_udt_grid_xml = '<GridGroup>';
@@ -4738,13 +4634,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                             var ids = form_obj.getChangedRows(true);
                             if (deleted_xml != null && deleted_xml != "") {
-                                header_udt_grid_xml += "<GridDelete grid_id=\"" + grid_id + "\">";
+                                header_udt_grid_xml += "<GridDelete grid_id=\""+ grid_id + "\">";
                                 header_udt_grid_xml += deleted_xml;
                                 header_udt_grid_xml += "</GridDelete>";
                             };
 
                             if (ids != "") {
-                                form_obj.setSerializationLevel(false, false, true, true, true, true);
+                                form_obj.setSerializationLevel(false,false,true,true,true,true);
 
                                 header_udt_grid_xml += '<Grid grid_id="' + grid_id + '">';
 
@@ -4780,9 +4676,10 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                             if (form_obj.getItemType(field_label) == 'calendar') {
                                 var field_value = form_obj.getItemValue(field_label, true);
-                            } else if (field_label == 'confirm_status_type' && copy_deal_id != 'NULL') {
+                            } else if (field_label == 'confirm_status_type' && copy_deal_id != 'NULL'){
                                 var field_value = 17200;
-                            } else {
+                            }
+                            else {
                                 var field_value = data[field_label];
 
                                 if (field_label == 'internal_desk_id' && field_value != 17302) {
@@ -4811,11 +4708,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     //if (header_cost_change != '') {
                     header_cost_xml = '<GridXML>';
 
-                    for (var hci = 0; hci < dealDetail.header_deal_costs.getRowsNum(); hci++) {
+                    for (var hci=0; hci < dealDetail.header_deal_costs.getRowsNum(); hci++){
                         header_cost_xml += '<GridRow ';
                         header_cost_xml += ' seq_no="' + hci + '" ';
 
-                        for (var cellIndex = 0; cellIndex < dealDetail.header_deal_costs.getColumnsNum(); cellIndex++) {
+                        for(var cellIndex = 0; cellIndex < dealDetail.header_deal_costs.getColumnsNum(); cellIndex++){
                             var column_id = dealDetail.header_deal_costs.getColumnId(cellIndex);
                             var cell_value = dealDetail.header_deal_costs.cells2(hci, cellIndex).getValue();
                             header_cost_xml += ' ' + column_id + '="' + cell_value + '"';
@@ -4832,10 +4729,10 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                         header_prepay_xml = '<GridPrePayXML>';
 
-                        for (var ppi = 0; ppi < dealDetail.header_deal_prepay.getRowsNum(); ppi++) {
+                        for (var ppi=0; ppi < dealDetail.header_deal_prepay.getRowsNum(); ppi++) {
                             header_prepay_xml += '<GridRow ';
 
-                            for (var cellIndex = 0; cellIndex < dealDetail.header_deal_prepay.getColumnsNum(); cellIndex++) {
+                            for(var cellIndex = 0; cellIndex < dealDetail.header_deal_prepay.getColumnsNum(); cellIndex++){
                                 var column_id = dealDetail.header_deal_prepay.getColumnId(cellIndex);
                                 var cell_value = dealDetail.header_deal_prepay.cells2(ppi, cellIndex).getValue();
 
@@ -4884,7 +4781,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             });
 
             header_udt_grid_xml += '</GridGroup>';
-
+            
             if (!final_status) {
                 dealDetail.deal_detail.progressOff();
                 dealDetail.toolbar.enableItem('save');
@@ -4899,8 +4796,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             } else {
                 header_xml += "></FormXML></Root>";
             }
-            // var shared_docs_path = <?php //echo "'" . addslashes(addslashes($BATCH_FILE_EXPORT_PATH)) . "'"; 
-                                        ?> ;
+            // var shared_docs_path = <?php //echo "'" . addslashes(addslashes($BATCH_FILE_EXPORT_PATH)) . "'"; ?> ;
             // shared_docs_path = shared_docs_path.replace('\\temp_Note', '');
             var vol_validate = '';
             var tab_obj = dealDetail.deal_tab;
@@ -5004,7 +4900,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         var no_of_child = dealDetail.grid.hasChildren(value);
                         detail_xml += '<GridRow ';
 
-                        detail_xml += ' added_from_sdd_id="' + dealDetail.grid.getUserData(value, 'added_from_sdd_id') + '"';
+                        detail_xml += ' added_from_sdd_id="' +  dealDetail.grid.getUserData(value, 'added_from_sdd_id') + '"';
 
 
                         var group_index = dealDetail.grid.getColIndexById('deal_group');
@@ -5017,18 +4913,18 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         detail_xml += ' deal_group="' + group_name + '"';
 
                         if (group_id == '') {
-                            group_id = dealDetail.grid.cells(value, group_id_index).getValue();
+                            group_id = dealDetail.grid.cells(value,group_id_index).getValue();
                         }
 
                         if (group_id == '') {
                             var first_child = dealDetail.grid.getChildItemIdByIndex(value, 0);
-                            group_id = dealDetail.grid.cells(first_child, group_id_index).getValue();
+                            group_id = dealDetail.grid.cells(first_child,group_id_index).getValue();
                         }
 
                         detail_xml += ' group_id="' + group_id + '"';
 
                         if (parent_id != 0 || no_of_child < 1) {
-                            for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                            for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                                 var column_id = dealDetail.grid.getColumnId(cellIndex);
                                 var cell_value = dealDetail.grid.cells(value, cellIndex).getValue();
 
@@ -5066,7 +4962,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                                 var grid_index = dealDetail.deal_detail_cost.getColumnId(ind);
                                 var value = cell_obj.getValue(ind);
 
-                                xml_grid = xml_grid + grid_index + '="' + value + '" ';
+                                xml_grid = xml_grid + grid_index + '="' + value  + '" ';
                             });
 
                             xml_grid += '/>';
@@ -5078,58 +4974,19 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     var cm_param = {
                         "action": "spa_udf_groups",
                         "flag": "u",
-                        "udf_process_id": udf_process_id,
-                        "deal_id": deal_id,
-                        "udf_xml": xml_grid,
-                        "udf_type": 'dc'
+                        "udf_process_id":udf_process_id,
+                        "deal_id":deal_id,
+                        "udf_xml":xml_grid,
+                        "udf_type":'dc'
                     };
                     save_all_detail_cost_udf = '0';
                     adiha_post_data("return", cm_param, '', '', '');
                 }
 
                 if (deleted_detail_ids == '') {
-                    data = {
-                        "action": "spa_deal_update_new",
-                        "flag": "s",
-                        "source_deal_header_id": deal_id,
-                        "header_xml": header_xml,
-                        "detail_xml": detail_xml,
-                        pricing_process_id: pricing_process_id,
-                        header_cost_xml: header_cost_xml,
-                        "deal_type_id": deal_type_id,
-                        "pricing_type": pricing_type_id,
-                        "term_frequency": term_frequency,
-                        "shaped_process_id": process_id,
-                        "formula_process_id": formula_process_id,
-                        "udf_process_id": udf_process_id,
-                        "environment_process_id": environment_process_id,
-                        "certificate_process_id": certificate_process_id,
-                        "deal_price_data_process_id": deal_price_data_process_id,
-                        "deal_provisional_price_data_process_id": deal_provisional_price_data_process_id,
-                        header_prepay_xml: header_prepay_xml,
-                        header_udt_grid: header_udt_grid_xml
-                    };
+                    data = {"action": "spa_deal_update_new", "flag":"s", "source_deal_header_id":deal_id, "header_xml":header_xml, "detail_xml":detail_xml, pricing_process_id:pricing_process_id, header_cost_xml:header_cost_xml, "deal_type_id":deal_type_id,"pricing_type":pricing_type_id, "term_frequency":term_frequency, "shaped_process_id":process_id, "formula_process_id":formula_process_id, "udf_process_id":udf_process_id,"environment_process_id":environment_process_id,"certificate_process_id":certificate_process_id, "deal_price_data_process_id": deal_price_data_process_id, "deal_provisional_price_data_process_id":deal_provisional_price_data_process_id, header_prepay_xml: header_prepay_xml, header_udt_grid: header_udt_grid_xml};
                 } else {
-                    data = {
-                        "action": "spa_deal_update_new",
-                        "flag": "s",
-                        "source_deal_header_id": deal_id,
-                        "header_xml": header_xml,
-                        "detail_xml": detail_xml,
-                        pricing_process_id: pricing_process_id,
-                        "deleted_details": deleted_detail_ids,
-                        header_cost_xml: header_cost_xml,
-                        "deal_type_id": deal_type_id,
-                        "pricing_type": pricing_type_id,
-                        "term_frequency": term_frequency,
-                        "shaped_process_id": process_id,
-                        "formula_process_id": formula_process_id,
-                        "udf_process_id": udf_process_id,
-                        "deal_price_data_process_id": deal_price_data_process_id,
-                        "deal_provisional_price_data_process_id": deal_provisional_price_data_process_id,
-                        header_prepay_xml: header_prepay_xml,
-                        header_udt_grid: header_udt_grid_xml
-                    };
+                    data = {"action": "spa_deal_update_new", "flag":"s", "source_deal_header_id":deal_id, "header_xml":header_xml, "detail_xml":detail_xml, pricing_process_id:pricing_process_id, "deleted_details":deleted_detail_ids, header_cost_xml:header_cost_xml, "deal_type_id":deal_type_id,"pricing_type":pricing_type_id, "term_frequency":term_frequency, "shaped_process_id":process_id, "formula_process_id":formula_process_id, "udf_process_id":udf_process_id, "deal_price_data_process_id": deal_price_data_process_id,"deal_provisional_price_data_process_id":deal_provisional_price_data_process_id, header_prepay_xml: header_prepay_xml, header_udt_grid: header_udt_grid_xml};
                 }
 
                 adiha_post_data("alert", data, '', '', 'dealDetail.save_callback');
@@ -5139,7 +4996,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 var max_leg = Math.max.apply(null, legs);
                 var detail_xml = '<GridXML>';
 
-                dealDetail.grid.forEachRow(function(id) {
+                dealDetail.grid.forEachRow(function(id){
                     var no_of_child = dealDetail.grid.hasChildren(id);
                     var parent_id = dealDetail.grid.getParentId(id);
                     var group_index = dealDetail.grid.getColIndexById('deal_group');
@@ -5149,15 +5006,15 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     var group_id = dealDetail.grid.cells(id, group_id_index).getValue();
 
                     if (no_of_child > 0) {
-                        dealDetail.grid._h2.forEachChild(id, function(element) {
+                        dealDetail.grid._h2.forEachChild(id,function(element){
                             detail_xml += '<GridRow row_id="1" ';
                             detail_xml += ' deal_group="' + group_name + '"';
                             group_id = (group_id == '') ? 1 : group_id;
                             detail_xml += ' group_id="' + group_id + '"';
 
-                            for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                            for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                                 var column_id = dealDetail.grid.getColumnId(cellIndex);
-                                var cell_value = dealDetail.grid.cells(element.id, cellIndex).getValue();
+                                var cell_value = dealDetail.grid.cells(element.id,cellIndex).getValue();
 
                                 if (cellIndex != group_index && cellIndex != group_id_index) {
                                     detail_xml += ' ' + column_id + '="' + cell_value + '"';
@@ -5167,9 +5024,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         });
                     } else if (parent_id == 0) {
                         detail_xml += '<GridRow row_id="1" ';
-                        for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                        for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                             var column_id = dealDetail.grid.getColumnId(cellIndex);
-                            var cell_value = dealDetail.grid.cells(id, cellIndex).getValue();
+                            var cell_value = dealDetail.grid.cells(id,cellIndex).getValue();
                             detail_xml += ' ' + column_id + '="' + cell_value + '"';
                         }
                         detail_xml += '></GridRow>';
@@ -5180,27 +5037,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                 detail_xml = (detail_xml != '<GridXML></GridXML>') ? detail_xml : 'NULL';
                 document.getElementById("txt_save_status").value = 'save';
-                var commodity_id = '<?php echo $commodity_id; ?>';
+                var commodity_id = '<?php echo $commodity_id;?>';
 
-                data = {
-                    "action": "spa_insert_blotter_deal",
-                    "flag": "i",
-                    "call_from": "form",
-                    "template_id": template_id,
-                    "header_xml": header_xml,
-                    "detail_xml": detail_xml,
-                    "deal_type_id": deal_type_id,
-                    "pricing_type": pricing_type_id,
-                    "term_frequency": term_frequency,
-                    "shaped_process_id": process_id,
-                    header_cost_xml: header_cost_xml,
-                    "formula_process_id": formula_process_id,
-                    "commodity_id": commodity_id,
-                    "environment_process_id": environment_process_id,
-                    "certificate_process_id": certificate_process_id,
-                    "deal_price_data_process_id": deal_price_data_process_id,
-                    "deal_provisional_price_data_process_id": deal_provisional_price_data_process_id
-                };
+                data = {"action": "spa_insert_blotter_deal", "flag":"i", "call_from":"form", "template_id":template_id, "header_xml":header_xml, "detail_xml":detail_xml, "deal_type_id":deal_type_id,"pricing_type":pricing_type_id, "term_frequency":term_frequency, "shaped_process_id":process_id, header_cost_xml:header_cost_xml, "formula_process_id":formula_process_id, "commodity_id":commodity_id, "environment_process_id":environment_process_id,"certificate_process_id":certificate_process_id, "deal_price_data_process_id":deal_price_data_process_id, "deal_provisional_price_data_process_id":deal_provisional_price_data_process_id};
 
                 adiha_post_data("alert", data, '', '', 'dealDetail.save_callback');
             } else if (final_status && copy_deal_id != 'NULL') {
@@ -5211,7 +5050,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                 var group_count = 0;
 
-                dealDetail.grid.forEachRow(function(id) {
+                dealDetail.grid.forEachRow(function(id){
                     var no_of_child = dealDetail.grid.hasChildren(id);
                     var parent_id = dealDetail.grid.getParentId(id);
                     var group_name = dealDetail.grid.cells(id, group_index).getValue();
@@ -5221,15 +5060,15 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     var group_id = dealDetail.grid.cells(id, group_id_index).getValue();
 
                     if (no_of_child > 0) {
-                        dealDetail.grid._h2.forEachChild(id, function(element) {
+                        dealDetail.grid._h2.forEachChild(id,function(element){
                             detail_xml += '<GridRow row_id="1" is_break="n" ';
                             detail_xml += ' deal_group="' + group_name + '"';
                             group_count++;
                             detail_xml += ' group_id="' + group_count + '"';
 
-                            for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                            for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                                 var column_id = dealDetail.grid.getColumnId(cellIndex);
-                                var cell_value = dealDetail.grid.cells(element.id, cellIndex).getValue();
+                                var cell_value = dealDetail.grid.cells(element.id,cellIndex).getValue();
                                 if (cellIndex != group_index && cellIndex != group_id_index) {
                                     detail_xml += ' ' + column_id + '="' + cell_value + '"';
                                 }
@@ -5238,9 +5077,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                         });
                     } else if (parent_id == 0) {
                         detail_xml += '<GridRow row_id="1" is_break="n" ';
-                        for (var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++) {
+                        for(var cellIndex = 0; cellIndex < dealDetail.grid.getColumnsNum(); cellIndex++){
                             var column_id = dealDetail.grid.getColumnId(cellIndex);
-                            var cell_value = dealDetail.grid.cells(id, cellIndex).getValue();
+                            var cell_value = dealDetail.grid.cells(id,cellIndex).getValue();
 
                             if (column_id == 'deal_group') {
                                 cell_value = cell_value.replace(/'/g, "''");
@@ -5258,21 +5097,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                 document.getElementById("txt_save_status").value = 'save';
 
-                data = {
-                    "action": "spa_deal_copy",
-                    "flag": "s",
-                    "copy_deal_id": copy_deal_id,
-                    "header_xml": header_xml,
-                    "detail_xml": detail_xml,
-                    header_cost_xml: header_cost_xml,
-                    header_cost_process_id: header_cost_process_id,
-                    pricing_process_id: pricing_process_id,
-                    "shaped_process_id": process_id,
-                    "environment_process_id": environment_process_id,
-                    "certificate_process_id": certificate_process_id,
-                    "deal_price_data_process_id": deal_price_data_process_id,
-                    "deal_provisional_price_data_process_id": deal_provisional_price_data_process_id
-                };
+                data = {"action": "spa_deal_copy", "flag":"s", "copy_deal_id":copy_deal_id,"header_xml":header_xml, "detail_xml":detail_xml, header_cost_xml:header_cost_xml, header_cost_process_id:header_cost_process_id,pricing_process_id:pricing_process_id, "shaped_process_id":process_id,"environment_process_id":environment_process_id,"certificate_process_id":certificate_process_id, "deal_price_data_process_id":deal_price_data_process_id,"deal_provisional_price_data_process_id":deal_provisional_price_data_process_id};
                 adiha_post_data("alert", data, '', '', 'dealDetail.save_callback');
             }
         }
@@ -5297,9 +5122,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.centerOnScreen();
         win.setModal(true);
         win.maximize();
-        win.attachURL(win_url, false, {
-            notes_category: 33
-        });
+        win.attachURL(win_url, false, {notes_category:33});
 
         win.attachEvent('onClose', function(w) {
             update_document_counter(deal_id, dealDetail.toolbar);
@@ -5320,11 +5143,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var view_deleted = '<?php echo $view_deleted; ?>';
             var template_id = '<?php echo $template_id; ?>';
             var pricing_process_id = '<?php echo $pricing_process_id; ?>';
-            var deal_type_id = '<?php echo $deal_type_id; ?>';
-            var pricing_type_id = '<?php echo $pricing_type_id; ?>';
-            var term_frequency = '<?php echo $term_frequency; ?>';
-            var profile_granularity = '<?php echo $profile_granularity; ?>';
-            var deal_type = '<?php echo $deal_type; ?>';
+            var deal_type_id = '<?php echo $deal_type_id;?>';
+            var pricing_type_id = '<?php echo $pricing_type_id;?>';
+            var term_frequency = '<?php echo $term_frequency;?>';
+            var profile_granularity = '<?php echo $profile_granularity;?>';
+            var deal_type = '<?php echo $deal_type;?>';
             var recommendation_arr = new Array();
             prepay_delete_check = 0;
 
@@ -5340,11 +5163,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     }
                 });
             }
-
+            
             if (enable_prepay_tab == 'y')
                 dealDetail.prepay_menu_click('refresh');
 
-            if (result[0].recommendation != '' && result[0].recommendation != null) {
+            if (result[0].recommendation != '' && result[0].recommendation != null ) {
                 recommendation_arr = result[0].recommendation.split(',')
 
             }
@@ -5367,55 +5190,51 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             if (template_id != 'NULL' || copy_deal_id != 'NULL') {
                 var win_obj = window.parent.deal_insert_window.window("w1");
                 var deal_id = result[0].recommendation;
-                var param = {
-                    deal_id: deal_id,
-                    view_deleted: 'n',
-                    copy_insert_mode: 'y'
-                };
+                var param = {deal_id:deal_id,view_deleted:'n',copy_insert_mode:'y'};
                 win_obj.setText("Deal - " + deal_id);
                 win_obj.attachURL('deal.detail.new.php', false, param);
             } else {
                 var data = {
-                    "action": "spa_deal_update_new",
-                    "flag": "e",
-                    "source_deal_header_id": deal_id,
-                    "view_deleted": view_deleted,
-                    "grid_type": "tg",
-                    "grouping_column": "deal_group",
-                    "grouping_type": 3,
-                    "copy_deal_id": copy_deal_id,
-                    "pricing_process_id": pricing_process_id,
-                    "deal_type_id": deal_type_id,
-                    "pricing_type": pricing_type_id,
-                    "term_frequency": term_frequency,
-                    "process_id": process_id
+                    "action":"spa_deal_update_new",
+                    "flag":"e",
+                    "source_deal_header_id":deal_id,
+                    "view_deleted":view_deleted,
+                    "grid_type":"tg",
+                    "grouping_column":"deal_group",
+                    "grouping_type":3,
+                    "copy_deal_id":copy_deal_id,
+                    "pricing_process_id":pricing_process_id,
+                    "deal_type_id":deal_type_id,
+                    "pricing_type":pricing_type_id,
+                    "term_frequency":term_frequency,
+                    "process_id":process_id
                 }
 
                 if (dealDetail.form_details_tab) {
                     var field_array = ['detail_commodity_id', 'origin', 'form', 'attribute1', 'attribute2', 'attribute3', 'attribute4', 'attribute5'];
-                    $.each(field_array, function(index, value) {
+                    $.each(field_array, function(index, value){
                         var field_type = dealDetail.form_details_tab.getItemType(value);
                         if (field_type != null) {
-                            dealDetail.form_details_tab.setUserData(value, 'change_event', 'n');
+                            dealDetail.form_details_tab.setUserData(value,'change_event', 'n');
                         }
                     });
                 }
 
-                dealDetail.refresh_grid(data, function() {
+                dealDetail.refresh_grid(data, function () {
                     var col_index_location_id = dealDetail.grid.getColIndexById('location_id');
                     var detail_commodity_id_index = dealDetail.grid.getColIndexById('detail_commodity_id');
                     if (col_index_location_id && detail_commodity_id_index) {
-                        dealDetail.grid.forEachRow(function(id) {
-                            var location_id = dealDetail.grid.cells(id, col_index_location_id).getValue();
+                        dealDetail.grid.forEachRow(function(id){
+                            var location_id = dealDetail.grid.cells(id,col_index_location_id).getValue();
 
                             if (location_id != '')
-                                dealDetail.grid.callEvent("onEditCell", [2, id, col_index_location_id, location_id]);
-                        });
+                                dealDetail.grid.callEvent("onEditCell", [2, id,col_index_location_id,location_id]);
+                        });                        
                     } else {
                         dealDetail.grid.forEachRow(function(id) {
                             dealDetail.load_shipper_dropdown(id, 'refresh_after_save');
                         });
-                    }
+                    }                 
                 });
                 dealDetail.grid.setUserData("", 'formula_id', 10211093);
                 dealDetail.grid_row_selection(null);
@@ -5424,34 +5243,26 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 }
             }
 
-            if (deal_id != 'NULL') {
-                data = {
-                    "action": "spa_deal_update_new",
-                    "flag": "check_environmental",
-                    "source_deal_header_id": deal_id
-                };
+            if (deal_id != 'NULL' ) {
+                data = {"action": "spa_deal_update_new", "flag":"check_environmental", "source_deal_header_id":deal_id};
                 adiha_post_data("return", data, '', '', 'dealDetail.check_environmental');
             }
 
-            if (copy_deal_id != 'NULL') {
-                data = {
-                    "action": "spa_deal_update_new",
-                    "flag": "check_environmental",
-                    "source_deal_header_id": copy_deal_id
-                };
+            if (copy_deal_id != 'NULL' ) {
+                data = {"action": "spa_deal_update_new", "flag":"check_environmental", "source_deal_header_id":copy_deal_id};
                 adiha_post_data("return", data, '', '', 'dealDetail.check_environmental');
             }
 
             if (hide_pricing == 0) {
-                dealDetail.form_details_tab.forEachItem(function(name) {
-                    if (name.indexOf('dhxId_') == -1) {
+                dealDetail.form_details_tab.forEachItem(function(name){
+                    if(name.indexOf('dhxId_') == -1) {
                         dealDetail.form_details_tab.setItemValue(name, '');
                     }
                 });
             }
         } else {
             deal_price_data_process_id = '';
-            if (enable_prepay_tab == 'y') {
+            if (enable_prepay_tab == 'y'){
                 dealDetail.prepay_menu_click('refresh');
             }
             dealDetail.deal_detail.progressOff();
@@ -5466,31 +5277,28 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @return {[type]}       [description]
      */
 
-    dealDetail.check_environmental = function(result) {
-        if (result == '') {
+    dealDetail.check_environmental = function (result){
+        if(result == '') {
             dealDetail.toolbar.disableItem('product');
             dealDetail.toolbar.disableItem('certificate');
-        } else {
+        }
+        else {
             dealDetail.toolbar.enableItem('product');
             dealDetail.toolbar.enableItem('certificate');
 
-            if (copy_deal_id != 'NULL') {
-                data = {
-                    "action": "spa_deal_update_new",
-                    "flag": "check_buy_sell",
-                    "source_deal_header_id": copy_deal_id
-                };
+            if (copy_deal_id != 'NULL' ) {
+                data = {"action": "spa_deal_update_new", "flag":"check_buy_sell", "source_deal_header_id":copy_deal_id};
                 adiha_post_data("return", data, '', '', 'dealDetail.check_buy_sell');
             }
         }
     }
 
-    dealDetail.check_buy_sell = function(result) {
-        if (result == 'BUY') {
+    dealDetail.check_buy_sell = function(result){
+        if (result=='BUY') {
             dealDetail.toolbar.enableItem('product');
             dealDetail.toolbar.enableItem('certificate');
         }
-        if (result == '') {
+        if(result == '') {
             dealDetail.toolbar.enableItem('product');
             dealDetail.toolbar.disableItem('certificate');
         }
@@ -5508,7 +5316,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         } else if (name == 'deal_date' || name == 'logical_term') {
             var deal_id = '<?php echo $deal_id; ?>';
             var template_id = '<?php echo $template_id; ?>';
-            var term_frequency = '<?php echo $term_frequency; ?>';
+            var term_frequency = '<?php echo $term_frequency;?>';
 
             if (deal_id == 'NULL' && template_id != 'NULL') {
                 var deal_date = '';
@@ -5523,14 +5331,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     }
                 });
 
-                data = {
-                    "action": "spa_blotter_deal",
-                    "flag": "t",
-                    "template_id": template_id,
-                    "deal_date": deal_date,
-                    "term_frequency": term_frequency,
-                    "term_rule": term_rule
-                };
+                data = {"action": "spa_blotter_deal", "flag":"t", "template_id":template_id, "deal_date":deal_date, "term_frequency":term_frequency, "term_rule": term_rule};
                 adiha_post_data("return", data, '', '', 'dealDetail.change_term');
             }
         } else if (name == 'underlying_options') {
@@ -5541,22 +5342,22 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var schedule_volume_index = dealDetail.grid.getColIndexById('schedule_volume');
             var total_volume_index = dealDetail.grid.getColIndexById('total_volume');
 
-            dealDetail.grid.forEachRow(function(id) {
+            dealDetail.grid.forEachRow (function(id){
                 if (deal_volume_index != undefined) {
-                    dealDetail.grid.cells(id, deal_volume_index).setValue(null);
+                    dealDetail.grid.cells(id,deal_volume_index).setValue(null);
                     dealDetail.grid.cells(id, deal_volume_index).cell.wasChanged = true;
                 }
 
                 if (actual_volume_index != undefined) {
-                    dealDetail.grid.cells(id, actual_volume_index).setValue(null);
+                    dealDetail.grid.cells(id,actual_volume_index).setValue(null);
                     dealDetail.grid.cells(id, actual_volume_index).cell.wasChanged = true;
                 }
                 if (schedule_volume_index != undefined) {
-                    dealDetail.grid.cells(id, schedule_volume_index).setValue(null);
+                    dealDetail.grid.cells(id,schedule_volume_index).setValue(null);
                     dealDetail.grid.cells(id, schedule_volume_index).cell.wasChanged = true;
                 }
                 if (total_volume_index != undefined) {
-                    dealDetail.grid.cells(id, total_volume_index).setValue(null);
+                    dealDetail.grid.cells(id,total_volume_index).setValue(null);
                     dealDetail.grid.cells(id, total_volume_index).cell.wasChanged = true;
                 }
             });
@@ -5581,11 +5382,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             });
         } else if (name == 'sub_book') {
             if (value != '') {
-                data = {
-                    "action": "spa_source_deal_header",
-                    "flag": "p",
-                    "sub_book": value
-                };
+                data = {"action": "spa_source_deal_header", "flag":"p", "sub_book":value};
                 adiha_post_data("return", data, '', '', 'dealDetail.change_internal_counterparty');
             }
         } else if (name == 'header_buy_sell_flag' && (value && value != '')) {
@@ -5601,18 +5398,16 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                             var detail_row_count = dealDetail.grid.getRowsNum();
                             if (row_ids_array.length > 1) { // In case of multiple leg switch value
                                 var current_value = dealDetail.grid.cells(row_ids_array[i], buy_sell_flag_index).getValue();
-                                value_new = (current_value == 'b') ? 's' : 'b';
+                                value_new = (current_value == 'b')?'s':'b';
                             }
                             dealDetail.grid.cells(row_ids_array[i], buy_sell_flag_index).setValue(value_new);
                             dealDetail.grid.cells(row_ids_array[i], buy_sell_flag_index).cell.wasChanged = true;
                         } else if (no_of_child > 0) {
-                            dealDetail.grid._h2.forEachChild(row_ids_array[i], function(element) {
-                                row_ids_array = row_ids_array.filter(function(e) {
-                                    return e !== element.id
-                                }); // Remove child ids from array when row is expanded (Child row are included when row is expanded).
+                            dealDetail.grid._h2.forEachChild(row_ids_array[i],function(element) {
+                                row_ids_array = row_ids_array.filter(function(e) { return e !== element.id}); // Remove child ids from array when row is expanded (Child row are included when row is expanded).
                                 if (no_of_child > 1) {
                                     var current_value = dealDetail.grid.cells(element.id, buy_sell_flag_index).getValue();
-                                    value_new = (current_value == 'b') ? 's' : 'b';
+                                    value_new = (current_value == 'b')?'s':'b';
                                 }
                                 dealDetail.grid.cells(element.id, buy_sell_flag_index).setValue(value_new);
                                 dealDetail.grid.cells(element.id, buy_sell_flag_index).cell.wasChanged = true;
@@ -5632,7 +5427,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var iterate_check = true;
 
         tab_obj.forEachTab(function(tab) {
-            if (iterate_check) {
+            if(iterate_check) {
                 var form_obj = tab.getAttachedObject();
 
                 if (form_obj instanceof dhtmlXForm) {
@@ -5655,7 +5450,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var iterate_check = true;
 
         tab_obj.forEachTab(function(tab) {
-            if (iterate_check) {
+            if(iterate_check) {
                 var form_obj = tab.getAttachedObject();
 
                 if (form_obj instanceof dhtmlXForm) {
@@ -5665,14 +5460,14 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                             form_obj.enableItem('profile_granularity');
                             form_obj.showItem('profile_granularity');
                             prof_gran_combo.setSize(180);
-                            form_obj.setRequired('profile_granularity', true);
+                            form_obj.setRequired('profile_granularity',true);
                             var initial_shaped_gran = form_obj.getItemValue('profile_granularity');
                             if (initial_shaped_gran != '' && initial_shaped_gran != null) {
                                 dealDetail.shape_change(initial_shaped_gran);
                             }
                         } else {
                             form_obj.setItemValue('profile_granularity', '');
-                            form_obj.setRequired('profile_granularity', false);
+                            form_obj.setRequired('profile_granularity',false);
                             form_obj.disableItem('profile_granularity');
                             form_obj.hideItem('profile_granularity');
                         }
@@ -5693,13 +5488,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var vol_freq_index = dealDetail.grid.getColIndexById('deal_volume_frequency');
             if (typeof vol_freq_index != 'undefined') {
                 var vol_freq = (value == 987) ? 'x' : (value == 989) ? 'y' : (value == 993) ? 'a' : (value == 981) ? 'd' : (value == 982) ? 'h' : (value == 980) ? 'm' : 't';
-                dealDetail.grid.forEachRow(function(detail_row_id) {
+                dealDetail.grid.forEachRow(function(detail_row_id){
                     var no_of_child = dealDetail.grid.hasChildren(detail_row_id);
                     if (no_of_child == 0) {
                         dealDetail.grid.cells(detail_row_id, vol_freq_index).setValue(vol_freq);
                     }
                     if (no_of_child > 0) {
-                        dealDetail.grid._h2.forEachChild(detail_row_id, function(element) {
+                        dealDetail.grid._h2.forEachChild(detail_row_id,function(element){
                             dealDetail.grid.cells(element.id, vol_freq_index).setValue(vol_freq);
                         });
                     }
@@ -5715,7 +5510,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      */
     dealDetail.enable_location = function(value) {
         if (value === undefined) {
-            var header_cost_enable = '<?php echo $header_cost_enable; ?>';
+            var header_cost_enable = '<?php echo $header_cost_enable;?>';
             var tab_obj = dealDetail.deal_tab;
             tab_obj.forEachTab(function(tab) {
                 var id = tab.getId();
@@ -5752,19 +5547,19 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var term_start_index = dealDetail.grid.getColIndexById('term_start');
         var term_end_index = dealDetail.grid.getColIndexById('term_end');
 
-        dealDetail.grid.forEachRow(function(detail_row_id) {
+        dealDetail.grid.forEachRow(function(detail_row_id){
             var no_of_child = dealDetail.grid.hasChildren(detail_row_id);
             if (no_of_child == 0) {
                 dealDetail.grid.cells(detail_row_id, term_start_index).setValue(return_val[0].term_start);
                 dealDetail.grid.cells(detail_row_id, term_end_index).setValue(return_val[0].term_end);
             }
             if (no_of_child > 0) {
-                dealDetail.grid._h2.forEachChild(detail_row_id, function(element) {
+                dealDetail.grid._h2.forEachChild(detail_row_id,function(element){
                     dealDetail.grid.cells(element.id, term_start_index).setValue(return_val[0].term_start);
                     dealDetail.grid.cells(element.id, term_end_index).setValue(return_val[0].term_end);
                 });
             }
-
+            
             dealDetail.load_shipper_dropdown(detail_row_id, 'term_change');
         });
     }
@@ -5777,8 +5572,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var deal_id = '<?php echo $deal_id; ?>';
         var template_id = '<?php echo $template_id; ?>';
         var copy_deal_id = '<?php echo $copy_deal_id; ?>';
-        var header_cost_enable = '<?php echo $header_cost_enable; ?>';
-        var deal_type_id = '<?php echo $deal_type_id; ?>';
+        var header_cost_enable = '<?php echo $header_cost_enable;?>';
+        var deal_type_id = '<?php echo $deal_type_id;?>';
         var commodity_id = 'NULL';
         var counterparty_id = 'NULL';
         var trader_id = 'NULL';
@@ -5794,7 +5589,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var counterparty2_trader_id = 'NULL';
         var state_value_id = 'NULL';
         var reporting_jurisdiction_id = 'NULL';
-
+        
 
         if (deal_id == 'NULL' && copy_deal_id != 'NULL') {
             deal_id = copy_deal_id;
@@ -5863,12 +5658,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 }
 
                 var broker_combo = form_obj.getCombo('broker_id');
-                if (broker_combo) {
+                if(broker_combo) {
                     broker_value = form_obj.getItemValue('broker_id');
                 }
 
                 var broker_contract_combo = form_obj.getCombo('UDF___1342');
-                if (broker_contract_combo) {
+                if(broker_contract_combo) {
                     global_broker_contract_combo = broker_contract_combo;
                 }
             }
@@ -5884,34 +5679,21 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 global_contract_combo.setComboText(null);
             }
             global_contract_combo.enableFilteringMode('between');
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "contract_id",
-                "default_value": contract_id,
-                "template_id": template_id,
-                "deal_type_id": deal_type_id,
-                "commodity_id": commodity_id,
-                "trader_id": trader_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "contract_id", "default_value":contract_id, "template_id": template_id, "deal_type_id":deal_type_id, "commodity_id":commodity_id, "trader_id":trader_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             global_contract_combo.clearAll();
             global_contract_combo.load(url);
         }
 
-        if (global_broker_contract_combo) {
+        if (global_broker_contract_combo) {    
             global_broker_contract_combo.setComboValue('');
             global_broker_contract_combo.setComboText('');
             global_broker_contract_combo.clearAll();
             global_broker_contract_combo.enableFilteringMode('between');
-            var cm_param = {
-                "action": "spa_counterparty_contract_address",
-                "flag": "n",
-                "broker_id": broker_value
+            var cm_param = {"action": "spa_counterparty_contract_address"
+                , "flag": "n"
+                , "broker_id": broker_value
             };
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
@@ -5924,19 +5706,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             global_sub_book_combo.setComboText('');
             global_sub_book_combo.clearAll();
             global_sub_book_combo.enableFilteringMode('between');
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "sub_book",
-                "default_value": sub_book_id,
-                "template_id": template_id,
-                "deal_type_id": deal_type_id,
-                "commodity_id": commodity_id,
-                "trader_id": trader_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "sub_book", "default_value":sub_book_id, "template_id": template_id, "deal_type_id":deal_type_id, "commodity_id":commodity_id, "trader_id":trader_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             global_sub_book_combo.clearAll();
@@ -5948,16 +5718,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             global_counterparty_trader_combo.setComboText('');
             global_counterparty_trader_combo.clearAll();
             global_counterparty_trader_combo.enableFilteringMode('between');
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "counterparty_trader",
-                "default_value": counterparty_trader_id,
-                "template_id": template_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "counterparty_trader", "default_value":counterparty_trader_id, "template_id": template_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             global_counterparty_trader_combo.clearAll();
@@ -5969,16 +5730,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             global_counterparty2_trader_combo.setComboText('');
             global_counterparty2_trader_combo.clearAll();
             global_counterparty2_trader_combo.enableFilteringMode('between');
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "counterparty2_trader",
-                "default_value": counterparty2_trader_id,
-                "template_id": template_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "counterparty2_trader", "default_value":counterparty2_trader_id, "template_id": template_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             global_counterparty2_trader_combo.clearAll();
@@ -5991,46 +5743,20 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             global_tier_value_combo.clearAll();
             global_tier_value_combo.enableFilteringMode('between');
 
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "tier_value_id",
-                "default_value": contract_id,
-                "template_id": template_id,
-                "deal_type_id": deal_type_id,
-                "commodity_id": commodity_id,
-                "trader_id": trader_id,
-                "state_value_id": state_value_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "tier_value_id", "default_value":contract_id, "template_id": template_id, "deal_type_id":deal_type_id, "commodity_id":commodity_id, "trader_id":trader_id, "state_value_id": state_value_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             global_tier_value_combo.clearAll();
             global_tier_value_combo.load(url);
         }
 
-        if (global_reporting_tier_combo) {
+        if(global_reporting_tier_combo) {
             global_reporting_tier_combo.setComboValue('');
             global_reporting_tier_combo.setComboText('');
             global_reporting_tier_combo.clearAll();
             global_reporting_tier_combo.enableFilteringMode('between');
 
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "reporting_tier_id",
-                "default_value": contract_id,
-                "template_id": template_id,
-                "deal_type_id": deal_type_id,
-                "commodity_id": commodity_id,
-                "trader_id": trader_id,
-                "reporting_jurisdiction_id": reporting_jurisdiction_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "reporting_tier_id", "default_value":contract_id, "template_id": template_id, "deal_type_id":deal_type_id, "commodity_id":commodity_id, "trader_id":trader_id, "reporting_jurisdiction_id": reporting_jurisdiction_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             global_reporting_tier_combo.clearAll();
@@ -6044,18 +5770,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             curve_combo.setComboText('');
             curve_combo.clearAll();
             curve_combo.enableFilteringMode('between');
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "curve_id",
-                "template_id": template_id,
-                "deal_type_id": deal_type_id,
-                "commodity_id": commodity_id,
-                "trader_id": trader_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "curve_id", "template_id": template_id, "deal_type_id":deal_type_id, "commodity_id":commodity_id, "trader_id":trader_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             curve_combo.clearAll();
@@ -6070,18 +5785,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     var combo_value = combo.getSelectedValue();
                     combo.clearAll();
 
-                    var cm_param = {
-                        "action": "spa_deal_fields_mapping",
-                        "call_from": "grid",
-                        "flag": "s",
-                        "deal_id": deal_id,
-                        "counterparty_id": counterparty_id,
-                        "deal_fields": "curve_id",
-                        "template_id": template_id,
-                        "deal_type_id": deal_type_id,
-                        "commodity_id": commodity_id,
-                        "trader_id": trader_id
-                    };
+                    var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "curve_id", "template_id": template_id, "deal_type_id":deal_type_id, "commodity_id":commodity_id, "trader_id":trader_id};
                     cm_param = $.param(cm_param);
                     var url = js_dropdown_connector_url + '&' + cm_param;
                     combo.load(url, function() {
@@ -6100,18 +5804,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             formula_curve_combo.setComboText('');
             formula_curve_combo.clearAll();
             formula_curve_combo.enableFilteringMode('between');
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "formula_curve_id",
-                "template_id": template_id,
-                "deal_type_id": deal_type_id,
-                "commodity_id": commodity_id,
-                "trader_id": trader_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "formula_curve_id", "template_id": template_id, "deal_type_id":deal_type_id, "commodity_id":commodity_id, "trader_id":trader_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             formula_curve_combo.clearAll();
@@ -6125,18 +5818,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             location_combo.setComboText('');
             location_combo.clearAll();
             location_combo.enableFilteringMode('between');
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "location_id",
-                "template_id": template_id,
-                "deal_type_id": deal_type_id,
-                "commodity_id": commodity_id,
-                "trader_id": trader_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "location_id", "template_id": template_id, "deal_type_id":deal_type_id, "commodity_id":commodity_id, "trader_id":trader_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             location_combo.clearAll();
@@ -6154,18 +5836,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             detail_commodity_combo.setComboText('');
             detail_commodity_combo.clearAll();
             detail_commodity_combo.enableFilteringMode('between');
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "detail_commodity_id",
-                "template_id": template_id,
-                "deal_type_id": deal_type_id,
-                "commodity_id": commodity_id,
-                "trader_id": trader_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "detail_commodity_id", "template_id": template_id, "deal_type_id":deal_type_id, "commodity_id":commodity_id, "trader_id":trader_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             detail_commodity_combo.clearAll();
@@ -6179,18 +5850,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             deal_volume_uom_combo.setComboText('');
             deal_volume_uom_combo.clearAll();
             deal_volume_uom_combo.enableFilteringMode('between');
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "deal_volume_uom_id",
-                "template_id": template_id,
-                "deal_type_id": deal_type_id,
-                "commodity_id": commodity_id,
-                "trader_id": trader_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "deal_volume_uom_id", "template_id": template_id, "deal_type_id":deal_type_id, "commodity_id":commodity_id, "trader_id":trader_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             deal_volume_uom_combo.clearAll();
@@ -6204,18 +5864,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             detail_status_combo.setComboText('');
             detail_status_combo.clearAll();
             detail_status_combo.enableFilteringMode('between');
-            var cm_param = {
-                "action": "spa_deal_fields_mapping",
-                "call_from": "grid",
-                "flag": "s",
-                "deal_id": deal_id,
-                "counterparty_id": counterparty_id,
-                "deal_fields": "status",
-                "template_id": template_id,
-                "deal_type_id": deal_type_id,
-                "commodity_id": commodity_id,
-                "trader_id": trader_id
-            };
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id, "counterparty_id": counterparty_id, "deal_fields": "status", "template_id": template_id, "deal_type_id":deal_type_id, "commodity_id":commodity_id, "trader_id":trader_id};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             detail_status_combo.clearAll();
@@ -6225,7 +5874,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
     var volume_window;
     dealDetail.open_update_volume = function() {
-        var deal_id = '<?php echo $deal_id; ?>';
+        var deal_id = '<?php echo $deal_id;?>';
 
         if (volume_type == 17301) {
             dealDetail.open_update_profile();
@@ -6243,11 +5892,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         if (deal_id == 'NULL' || detail_id == '' || detail_id.indexOf('NEW') != -1 || detail_id.indexOf('New') != -1) {
             if (is_shaped == 'y') dealDetail.open_update_volume_post('');
         } else {
-            data = {
-                "action": "spa_shaped_deal",
-                "flag": "c",
-                "source_deal_detail_id": detail_id
-            };
+            data = {"action": "spa_shaped_deal", "flag":"c", "source_deal_detail_id":detail_id};
             adiha_post_data("return_array", data, '', '', 'dealDetail.open_update_volume_post');
         }
     }
@@ -6261,14 +5906,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
     dealDetail.open_update_volume_post = function(return_value) {
         if (return_value == '') {
-            return_value = [
-                ['Success']
-            ];
+            return_value = [['Success']];
 
         }
         if (return_value[0][0] == 'Success') {
             var win_title = 'Update Volume';
-            var deal_id = '<?php echo $deal_id; ?>';
+            var deal_id = '<?php echo $deal_id;?>';
             var detail_index = dealDetail.grid.getColIndexById('source_deal_detail_id');
             var term_start_index = dealDetail.grid.getColIndexById('term_start');
             var term_end_index = dealDetail.grid.getColIndexById('term_end');
@@ -6282,7 +5925,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var price_index = dealDetail.grid.getColIndexById('fixed_price');
             var template_id = '<?php echo $template_id; ?>';
             var tab_obj = dealDetail.deal_tab;
-            var term_frequency = '<?php echo $term_frequency; ?>';
+            var term_frequency = '<?php echo $term_frequency;?>';
 
             tab_obj.forEachTab(function(tab) {
                 var form_object = tab.getAttachedObject();
@@ -6306,7 +5949,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 profile_granularity = null
             }
 
-            var copy_deal_id = '<?php echo $copy_deal_id; ?>';
+            var copy_deal_id = '<?php echo $copy_deal_id;?>';
             var leg = 'NULL';
             var volume = 'NULL';
             var price = 'NULL';
@@ -6326,12 +5969,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var selected_ids = dealDetail.grid.getColumnValues(1);
             var win = volume_window.createWindow('w1', 0, 0, 400, 400);
             var profile_type = (is_shaped == 'y') ? 17302 : return_value[0][5];
-
+            
             var detail_commodity_id_index = dealDetail.grid.getColIndexById('detail_commodity_id');
-            var detail_commodity_id = (detail_commodity_id_index) ? dealDetail.grid.cells(row_id, detail_commodity_id_index).getValue() : '';
+            var detail_commodity_id = (detail_commodity_id_index) ? dealDetail.grid.cells(row_id, detail_commodity_id_index).getValue(): '';
 
             if (is_shaped == 'y' || (volume_type == 17300 && term_frequency != 'd')) {
-                var win_url = 'shaped.deals.php?header_detail=d&detail_commodity_id=' + detail_commodity_id;
+                var win_url = 'shaped.deals.php?header_detail=d&detail_commodity_id='+detail_commodity_id;
             } else {
                 var win_url = 'update.demand.volume.php?header_detail=d';
             }
@@ -6351,21 +5994,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             win.centerOnScreen();
             win.setModal(true);
             win.maximize();
-            win.attachURL(win_url, false, {
-                deal_ref_ids: deal_id,
-                detail_ids: detail_id,
-                profile_type: profile_type,
-                term_start: term_start,
-                term_end: term_end,
-                template_id: template_id,
-                process_id: process_id,
-                leg: leg,
-                volume: volume,
-                price: price,
-                copy_deal_id: copy_deal_id,
-                is_new: is_new,
-                granularity: profile_granularity
-            });
+            win.attachURL(win_url, false, {deal_ref_ids:deal_id,detail_ids:detail_id, profile_type:profile_type,term_start:term_start,term_end:term_end,template_id:template_id,process_id:process_id,leg:leg,volume:volume,price:price,copy_deal_id:copy_deal_id,is_new:is_new,granularity:profile_granularity});
 
             win.attachEvent('onClose', function(w) {
                 if (is_new == 'n') {
@@ -6398,20 +6027,20 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 }
                 return true;
             });
-        } else {
+        } else  {
             dealDetail.profile_type_mismatch(return_value[0][4]);
             return;
         }
 
         dealDetail.deal_detail.cells('c').progressOff();
     }
-
-    /**
+	
+	/**
      * [open_deal_transfer Open Deal Transfer UI.]
      */
     var deal_transfer_window;
     dealDetail.open_deal_transfer = function() {
-        var deal_id = '<?php echo $deal_id; ?>';
+         var deal_id = '<?php echo $deal_id; ?>';
         if (deal_transfer_window != null && deal_transfer_window.unload != null) {
             deal_transfer_window.unload();
             deal_transfer_window = w1 = null;
@@ -6421,15 +6050,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             deal_transfer_window = new dhtmlXWindows();
         }
 
-        var transfer_win = deal_transfer_window.createWindow('w1', 0, 0, 500, 500);
+        var transfer_win = deal_transfer_window.createWindow('w1',  0, 0, 500, 500);
         transfer_win.setText("Deal Transfer - " + deal_id);
         transfer_win.centerOnScreen();
         transfer_win.setModal(true);
-        transfer_win.maximize();
-        transfer_win.attachURL('deal.transfer.php', false, {
-            deal_id: deal_id
-        });
-
+		transfer_win.maximize();
+        transfer_win.attachURL('deal.transfer.php', false, {deal_id:deal_id});
+		
         transfer_win.attachEvent('onClose', function(w) {
             var ifr = w.getFrame();
             var ifrWindow = ifr.contentWindow;
@@ -6443,16 +6070,16 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             return true;
         });
     }
-
+	
     /**
      * [profile_type_mismatch Display msg for mismatch deals profile type]
      * @param  {[string]} message [Failed message]
      */
     dealDetail.profile_type_mismatch = function(message) {
         dhtmlx.alert({
-            title: "Alert",
-            type: "alert",
-            text: message
+            title:"Alert",
+            type:"alert",
+            text:message
         });
     }
 
@@ -6474,7 +6101,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[type]} id [Menu id]
      */
     dealDetail.escalation_menu_click = function(id) {
-        switch (id) {
+        switch(id) {
             case "add":
                 var new_id = (new Date()).valueOf();
                 dealDetail.deal_escalation.addRow(new_id, '');
@@ -6497,13 +6124,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 var pricing_process_id = '<?php echo $pricing_process_id; ?>';
 
                 var data = {
-                    "action": "spa_deal_pricing",
-                    "flag": 'd',
-                    "source_deal_detail_id": detail_id,
-                    "group_id": group_id,
-                    "pricing_process_id": pricing_process_id,
-                    "pricing_id": system_id,
-                    "pricing_table_type": 'e'
+                    "action":"spa_deal_pricing",
+                    "flag":'d',
+                    "source_deal_detail_id":detail_id,
+                    "group_id":group_id,
+                    "pricing_process_id":pricing_process_id,
+                    "pricing_id":system_id,
+                    "pricing_table_type":'e'
                 }
                 dealDetail.deal_escalation.deleteSelectedRows();
                 dealDetail.escalation_menu.setItemDisabled('delete');
@@ -6549,12 +6176,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             }
 
             var data = {
-                "action": "spa_deal_pricing",
-                "flag": 'e',
-                "source_deal_detail_id": detail_id,
-                "group_id": group_id,
-                "pricing_process_id": pricing_process_id,
-                "grid_type": "g"
+                "action":"spa_deal_pricing",
+                "flag":'e',
+                "source_deal_detail_id":detail_id,
+                "group_id":group_id,
+                "pricing_process_id":pricing_process_id,
+                "grid_type":"g"
             }
             data = $.param(data);
             var sql_url = js_data_collector_url + "&" + data;
@@ -6591,11 +6218,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             }
 
             escalation_xml = '<GridXML>';
-            dealDetail.deal_escalation.forEachRow(function(id) {
+            dealDetail.deal_escalation.forEachRow(function(id){
                 escalation_xml += '<GridRow ';
-                for (var cellIndex = 0; cellIndex < dealDetail.deal_escalation.getColumnsNum(); cellIndex++) {
+                for(var cellIndex = 0; cellIndex < dealDetail.deal_escalation.getColumnsNum(); cellIndex++){
                     var column_id = dealDetail.deal_escalation.getColumnId(cellIndex);
-                    var cell_value = dealDetail.deal_escalation.cells(id, cellIndex).getValue();
+                    var cell_value = dealDetail.deal_escalation.cells(id,cellIndex).getValue();
 
                     escalation_xml += ' ' + column_id + '="' + cell_value + '"';
                 }
@@ -6604,12 +6231,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             escalation_xml += '</GridXML>';
 
             var data = {
-                "action": "spa_deal_pricing",
-                "flag": 't',
-                "source_deal_detail_id": detail_id,
-                "group_id": group_id,
-                "pricing_process_id": pricing_process_id,
-                "escalation_xml": escalation_xml
+                "action":"spa_deal_pricing",
+                "flag":'t',
+                "source_deal_detail_id":detail_id,
+                "group_id":group_id,
+                "pricing_process_id":pricing_process_id,
+                "escalation_xml":escalation_xml
             }
             adiha_post_data("return_status", data, '', '', '');
         }
@@ -6619,12 +6246,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * [Open Certificate window]
      */
     certi_process_id = 0;
-    var certificate_process_id;
-    dealDetail.open_certificate = function() {
+    var certificate_process_id ;
+    dealDetail.open_certificate = function(){
         var deal_id = '<?php echo $deal_id; ?>';
         var buy_sell = '<?php echo $buy_sell; ?>';
 
-        var param = app_form_path + '_deal_capture/maintain_deals/certificate.php?&source_deal_header_id=' + deal_id + '&buy_sell=' + buy_sell + '&certificate_process_id=' + certificate_process_id;
+        var param = app_form_path +  '_deal_capture/maintain_deals/certificate.php?&source_deal_header_id=' + deal_id + '&buy_sell=' + buy_sell+ '&certificate_process_id=' + certificate_process_id;
         var is_win = dhxWins.isWindow('w11');
 
         if (is_win == true) {
@@ -6649,9 +6276,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
     /**
      * [Open Product window]
      */
-    dealDetail.open_product = function() {
+    dealDetail.open_product = function(){
         var deal_id = '<?php echo $deal_id; ?>';
-        var param = app_form_path + '_deal_capture/maintain_deals/product.php?&source_deal_header_id=' + deal_id + '&environment_process_id=' + environment_process_id;
+        var param = app_form_path +  '_deal_capture/maintain_deals/product.php?&source_deal_header_id=' + deal_id + '&environment_process_id=' + environment_process_id;
 
         var is_win = dhxWins.isWindow('w11');
 
@@ -6675,7 +6302,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
     var cost_udf_window;
 
     dealDetail.udf_menu_click = function(id) {
-        switch (id) {
+        switch(id) {
             case "add":
                 var header_xml = 'NULL';
 
@@ -6702,8 +6329,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                 header_xml = (header_xml == '<GridXML></GridXML>') ? 'NULL' : header_xml;
 
-                var udf_process_id = '<?php echo $udf_process_id; ?>';
-                var deal_id = '<?php echo $deal_id; ?>';
+                var udf_process_id = '<?php echo $udf_process_id;?>';
+                var deal_id = '<?php echo $deal_id;?>';
 
                 if (deal_id == 'NULL') {
                     var template_id = '<?php echo $template_id; ?>';
@@ -6711,21 +6338,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     var template_id = 'NULL';
                 }
 
-                var cm_param = {
-                    "action": "spa_udf_groups",
-                    "flag": "u",
-                    "udf_process_id": udf_process_id,
-                    "deal_id": deal_id,
-                    "template_id": template_id,
-                    "udf_xml": header_xml,
-                    "udf_type": 'hu'
-                };
+                var cm_param = {"action": "spa_udf_groups", "flag": "u", "udf_process_id":udf_process_id, "deal_id":deal_id, "template_id":template_id, "udf_xml":header_xml, "udf_type":'hu'};
                 adiha_post_data("return", cm_param, '', '', 'dealDetail.open_udf_window');
                 break;
 
             case "refresh":
-                var deal_id = '<?php echo $deal_id; ?>';
-                var udf_process_id = '<?php echo $udf_process_id; ?>';
+                var deal_id = '<?php echo $deal_id;?>';
+                var udf_process_id = '<?php echo $udf_process_id;?>';
 
                 if (deal_id == 'NULL') {
                     var template_id = '<?php echo $template_id; ?>';
@@ -6734,12 +6353,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 }
 
                 var data = {
-                    "action": "spa_udf_groups",
-                    "flag": 'k',
-                    "deal_id": deal_id,
-                    "template_id": template_id,
-                    "udf_process_id": udf_process_id,
-                    "udf_type": 'hu'
+                    "action":"spa_udf_groups",
+                    "flag":'k',
+                    "deal_id":deal_id,
+                    "template_id":template_id,
+                    "udf_process_id":udf_process_id,
+                    "udf_type":'hu'
                 }
                 adiha_post_data("return", data, '', '', 'dealDetail.reload_udf_form');
                 break;
@@ -6764,7 +6383,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             cost_udf_window = w1 = null;
         }
         var deal_id = '<?php echo $deal_id; ?>';
-        var udf_process_id = '<?php echo $udf_process_id; ?>';
+        var udf_process_id = '<?php echo $udf_process_id;?>';
 
         if (!cost_udf_window) {
             cost_udf_window = new dhtmlXWindows();
@@ -6784,12 +6403,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.centerOnScreen();
         win.setModal(true);
 
-        win.attachURL(win_url, false, {
-            deal_id: deal_id,
-            type: 'hu',
-            udf_process_id: udf_process_id,
-            template_id: template_id
-        });
+        win.attachURL(win_url, false, {deal_id:deal_id,type:'hu',udf_process_id:udf_process_id,template_id:template_id});
         win.attachEvent('onClose', function(w) {
             var ifr = w.getFrame();
             var ifrWindow = ifr.contentWindow;
@@ -6808,7 +6422,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[string]} id [menu id]
      */
     dealDetail.header_cost_menu_click = function(id) {
-        switch (id) {
+        switch(id) {
             case "add":
                 var header_cost_change = dealDetail.header_deal_costs.getChangedRows(true);
                 var header_cost_xml = 'NULL';
@@ -6819,7 +6433,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     changed_ids = header_cost_change.split(",");
                     $.each(changed_ids, function(index, value) {
                         header_cost_xml += '<GridRow ';
-                        for (var cellIndex = 0; cellIndex < dealDetail.header_deal_costs.getColumnsNum(); cellIndex++) {
+                        for(var cellIndex = 0; cellIndex < dealDetail.header_deal_costs.getColumnsNum(); cellIndex++){
                             var column_id = dealDetail.header_deal_costs.getColumnId(cellIndex);
                             var cell_value = dealDetail.header_deal_costs.cells(value, cellIndex).getValue();
                             header_cost_xml += ' ' + column_id + '="' + cell_value + '"';
@@ -6831,29 +6445,21 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                 header_cost_xml = (header_cost_xml == '<GridXML></GridXML>') ? 'NULL' : header_cost_xml;
 
-                var udf_process_id = '<?php echo $udf_process_id; ?>';
-                var deal_id = '<?php echo $deal_id; ?>';
+                var udf_process_id = '<?php echo $udf_process_id;?>';
+                var deal_id = '<?php echo $deal_id;?>';
                 if (deal_id == 'NULL') {
                     var template_id = '<?php echo $template_id; ?>';
                 } else {
                     var template_id = 'NULL';
                 }
 
-                var cm_param = {
-                    "action": "spa_udf_groups",
-                    "flag": "u",
-                    "udf_process_id": udf_process_id,
-                    "deal_id": deal_id,
-                    "template_id": template_id,
-                    "udf_xml": header_cost_xml,
-                    "udf_type": 'hc'
-                };
+                var cm_param = {"action": "spa_udf_groups", "flag": "u", "udf_process_id":udf_process_id, "deal_id":deal_id, "template_id":template_id, "udf_xml":header_cost_xml, "udf_type":'hc'};
                 adiha_post_data("return", cm_param, '', '', 'dealDetail.open_header_cost_udf_window');
 
                 break;
             case "refresh":
-                var deal_id = '<?php echo $deal_id; ?>';
-                var udf_process_id = '<?php echo $udf_process_id; ?>';
+                var deal_id = '<?php echo $deal_id;?>';
+                var udf_process_id = '<?php echo $udf_process_id;?>';
 
                 if (deal_id == 'NULL') {
                     var template_id = '<?php echo $template_id; ?>';
@@ -6862,13 +6468,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 }
 
                 var data = {
-                    "action": "spa_udf_groups",
-                    "flag": 'z',
-                    "deal_id": deal_id,
-                    "template_id": template_id,
-                    "udf_process_id": udf_process_id,
-                    "udf_type": 'hc',
-                    "grid_type": "g"
+                    "action":"spa_udf_groups",
+                    "flag":'z',
+                    "deal_id":deal_id,
+                    "template_id":template_id,
+                    "udf_process_id":udf_process_id,
+                    "udf_type":'hc',
+                    "grid_type":"g"
                 }
                 sql_param = $.param(data);
 
@@ -6894,7 +6500,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             cost_udf_window = w1 = null;
         }
         var deal_id = '<?php echo $deal_id; ?>';
-        var udf_process_id = '<?php echo $udf_process_id; ?>';
+        var udf_process_id = '<?php echo $udf_process_id;?>';
 
         if (deal_id == 'NULL') {
             var template_id = '<?php echo $template_id; ?>';
@@ -6914,12 +6520,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.centerOnScreen();
         win.setModal(true);
 
-        win.attachURL(win_url, false, {
-            deal_id: deal_id,
-            template_id: template_id,
-            type: 'hc',
-            udf_process_id: udf_process_id
-        });
+        win.attachURL(win_url, false, {deal_id:deal_id,template_id:template_id,type:'hc',udf_process_id:udf_process_id});
         win.attachEvent('onClose', function(w) {
             var ifr = w.getFrame();
             var ifrWindow = ifr.contentWindow;
@@ -6938,7 +6539,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[string]} id [menu id]
      */
     dealDetail.detail_cost_menu_click = function(id, call_from) {
-        switch (id) {
+        switch(id) {
             case "add":
                 dealDetail.deal_detail_cost.clearSelection();
                 var detail_cost_change = dealDetail.deal_detail_cost.getChangedRows(true);
@@ -6950,7 +6551,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     changed_ids = detail_cost_change.split(",");
                     $.each(changed_ids, function(index, value) {
                         detail_cost_xml += '<GridRow ';
-                        for (var cellIndex = 0; cellIndex < dealDetail.deal_detail_cost.getColumnsNum(); cellIndex++) {
+                        for(var cellIndex = 0; cellIndex < dealDetail.deal_detail_cost.getColumnsNum(); cellIndex++){
                             var column_id = dealDetail.deal_detail_cost.getColumnId(cellIndex);
                             var cell_value = dealDetail.deal_detail_cost.cells(value, cellIndex).getValue();
                             detail_cost_xml += ' ' + column_id + '="' + cell_value + '"';
@@ -6962,8 +6563,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                 detail_cost_xml = (detail_cost_xml == '<GridXML></GridXML>') ? 'NULL' : detail_cost_xml;
 
-                var udf_process_id = '<?php echo $udf_process_id; ?>';
-                var deal_id = '<?php echo $deal_id; ?>';
+                var udf_process_id = '<?php echo $udf_process_id;?>';
+                var deal_id = '<?php echo $deal_id;?>';
 
                 if (deal_id == 'NULL') {
                     var template_id = '<?php echo $template_id; ?>';
@@ -6987,12 +6588,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 var cm_param = {
                     "action": "spa_udf_groups",
                     "flag": "u",
-                    "udf_process_id": udf_process_id,
-                    "deal_id": deal_id,
-                    "template_id": template_id,
-                    "udf_xml": detail_cost_xml,
-                    "udf_type": 'dc',
-                    "detail_id": detail_id
+                    "udf_process_id":udf_process_id,
+                    "deal_id":deal_id,
+                    "template_id":template_id,
+                    "udf_xml":detail_cost_xml,
+                    "udf_type":'dc',
+                    "detail_id":detail_id
                 };
 
                 adiha_post_data("return", cm_param, '', '', 'dealDetail.open_detail_cost_udf_window');
@@ -7000,8 +6601,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             case "refresh":
                 dealDetail.detail_cost_menu.setItemEnabled('add');
                 save_all_detail_cost_udf = 1;
-                var deal_id = '<?php echo $deal_id; ?>';
-                var udf_process_id = '<?php echo $udf_process_id; ?>';
+                var deal_id = '<?php echo $deal_id;?>';
+                var udf_process_id = '<?php echo $udf_process_id;?>';
                 var term_start = dealDetail.detail_cost_filter_form.getItemValue('term_start', true);
                 var term_end = dealDetail.detail_cost_filter_form.getItemValue('term_end', true);
                 var leg = dealDetail.detail_cost_filter_form.getItemValue('leg');;
@@ -7026,17 +6627,17 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 }
 
                 var data = {
-                    "action": "spa_udf_groups",
-                    "flag": 'z',
-                    "deal_id": deal_id,
-                    "template_id": template_id,
-                    "udf_process_id": udf_process_id,
-                    "udf_type": 'dc',
-                    "detail_id": detail_id,
-                    "term_start": term_start,
-                    "term_end": term_end,
-                    "leg": leg,
-                    "grid_type": "g"
+                    "action":"spa_udf_groups",
+                    "flag":'z',
+                    "deal_id":deal_id,
+                    "template_id":template_id,
+                    "udf_process_id":udf_process_id,
+                    "udf_type":'dc',
+                    "detail_id":detail_id,
+                    "term_start":term_start,
+                    "term_end":term_end,
+                    "leg":leg,
+                    "grid_type":"g"
                 }
                 sql_param = $.param(data);
 
@@ -7054,7 +6655,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             cost_udf_window = w1 = null;
         }
         var deal_id = '<?php echo $deal_id; ?>';
-        var udf_process_id = '<?php echo $udf_process_id; ?>';
+        var udf_process_id = '<?php echo $udf_process_id;?>';
 
         if (deal_id == 'NULL') {
             var template_id = '<?php echo $template_id; ?>';
@@ -7087,13 +6688,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             detail_id = (parent_id != 0 || no_of_child < 1) ? dealDetail.grid.cells(row_id, deal_detail_index).getValue() : '';
         }
 
-        win.attachURL(win_url, false, {
-            deal_id: deal_id,
-            template_id: template_id,
-            type: 'dc',
-            udf_process_id: udf_process_id,
-            detail_id: detail_id
-        });
+        win.attachURL(win_url, false, {deal_id:deal_id,template_id:template_id,type:'dc',udf_process_id:udf_process_id,detail_id:detail_id});
         win.attachEvent('onClose', function(w) {
             var ifr = w.getFrame();
             var ifrWindow = ifr.contentWindow;
@@ -7142,8 +6737,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
             detail_xml = (detail_xml == '<GridXML></GridXML>') ? 'NULL' : detail_xml;
 
-            var udf_process_id = '<?php echo $udf_process_id; ?>';
-            var deal_id = '<?php echo $deal_id; ?>';
+            var udf_process_id = '<?php echo $udf_process_id;?>';
+            var deal_id = '<?php echo $deal_id;?>';
 
             if (deal_id == 'NULL') {
                 var template_id = '<?php echo $template_id; ?>';
@@ -7152,16 +6747,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             }
 
             var detail_id = dealDetail.grid.cells(row_id, deal_detail_index).getValue();
-            var cm_param = {
-                "action": "spa_udf_groups",
-                "flag": "u",
-                "udf_process_id": udf_process_id,
-                "deal_id": deal_id,
-                "template_id": template_id,
-                "udf_xml": detail_xml,
-                "udf_type": 'du',
-                "detail_id": detail_id
-            };
+            var cm_param = {"action": "spa_udf_groups", "flag": "u", "udf_process_id":udf_process_id, "deal_id":deal_id, "template_id":template_id, "udf_xml":detail_xml, "udf_type":'du', "detail_id":detail_id};
 
             if (callback_function != '') {
                 adiha_post_data("return", cm_param, '', '', callback_function);
@@ -7173,7 +6759,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
     }
 
     dealDetail.detail_udf_menu_click = function(id) {
-        switch (id) {
+        switch(id) {
             case "add":
                 dealDetail.save_detail_udf('', 'dealDetail.open_detail_udf_window');
                 break;
@@ -7181,8 +6767,8 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 var row_id = dealDetail.grid.getSelectedRowId();
 
                 if (row_id != '' && row_id != null) {
-                    var deal_id = '<?php echo $deal_id; ?>';
-                    var udf_process_id = '<?php echo $udf_process_id; ?>';
+                    var deal_id = '<?php echo $deal_id;?>';
+                    var udf_process_id = '<?php echo $udf_process_id;?>';
 
                     if (deal_id == 'NULL') {
                         var template_id = '<?php echo $template_id; ?>';
@@ -7197,13 +6783,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     if (parent_id != 0 || no_of_child < 1) {
                         var detail_id = dealDetail.grid.cells(row_id, deal_detail_index).getValue();
                         var data = {
-                            "action": "spa_udf_groups",
-                            "flag": 'k',
-                            "deal_id": deal_id,
-                            "template_id": template_id,
-                            "udf_process_id": udf_process_id,
-                            "detail_id": detail_id,
-                            "udf_type": 'du'
+                            "action":"spa_udf_groups",
+                            "flag":'k',
+                            "deal_id":deal_id,
+                            "template_id":template_id,
+                            "udf_process_id":udf_process_id,
+                            "detail_id":detail_id,
+                            "udf_type":'du'
                         }
                         adiha_post_data("return", data, '', '', 'dealDetail.reload_detail_udf_form');
                     } else {
@@ -7241,7 +6827,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             cost_udf_window = w1 = null;
         }
         var deal_id = '<?php echo $deal_id; ?>';
-        var udf_process_id = '<?php echo $udf_process_id; ?>';
+        var udf_process_id = '<?php echo $udf_process_id;?>';
 
         if (!cost_udf_window) {
             cost_udf_window = new dhtmlXWindows();
@@ -7262,12 +6848,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             win.centerOnScreen();
             win.setModal(true);
 
-            win.attachURL(win_url, false, {
-                deal_id: deal_id,
-                type: 'du',
-                udf_process_id: udf_process_id,
-                detail_id: detail_id
-            });
+            win.attachURL(win_url, false, {deal_id:deal_id,type:'du',udf_process_id:udf_process_id,detail_id:detail_id});
             win.attachEvent('onClose', function(w) {
                 var ifr = w.getFrame();
                 var ifrWindow = ifr.contentWindow;
@@ -7287,7 +6868,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[type]} id [Menu id]
      */
     dealDetail.document_menu_click = function(id) {
-        switch (id) {
+        switch(id) {
             case "add":
                 dealDetail.open_deal_required_document(-1);
                 break;
@@ -7330,11 +6911,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var pricing_process_id = '<?php echo $pricing_process_id; ?>';
         var deal_id = '<?php echo $deal_id; ?>';
         var data = {
-            "action": "spa_deal_update_new",
-            "flag": 'z',
-            "source_deal_header_id": deal_id,
-            "document_list": selected_docs,
-            "pricing_process_id": pricing_process_id
+            "action":"spa_deal_update_new",
+            "flag":'z',
+            "source_deal_header_id":deal_id,
+            "document_list":selected_docs,
+            "pricing_process_id":pricing_process_id
         }
         dealDetail.deal_documents.deleteSelectedRows();
         dealDetail.document_menu.setItemDisabled('delete');
@@ -7362,10 +6943,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.centerOnScreen();
         win.setModal(true);
         win.maximize();
-        win.attachURL(win_url, false, {
-            deal_id: deal_id,
-            process_id: pricing_process_id
-        });
+        win.attachURL(win_url, false, {deal_id:deal_id,process_id:pricing_process_id});
 
         win.attachEvent('onClose', function(w) {
             dealDetail.refresh_document_grid();
@@ -7382,11 +6960,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var download_path = php_script_loc + 'force_download.php';
 
         var data = {
-            "action": "spa_deal_update_new",
-            "flag": 'w',
-            "source_deal_header_id": deal_id,
-            "pricing_process_id": pricing_process_id,
-            "grid_type": "g"
+            "action":"spa_deal_update_new",
+            "flag":'w',
+            "source_deal_header_id":deal_id,
+            "pricing_process_id":pricing_process_id,
+            "grid_type":"g"
         }
         data = $.param(data);
         var sql_url = js_data_collector_url + "&" + data;
@@ -7429,9 +7007,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             win.setText(win_title);
             win.centerOnScreen();
             win.setModal(true);
-            win.attachURL(win_url, false, {
-                group_name: group_name
-            });
+            win.attachURL(win_url, false, {group_name:group_name});
 
             win.attachEvent('onClose', function(w) {
                 var ifr = w.getFrame();
@@ -7456,7 +7032,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[type]} sObj [drop object]
      * @param  {[type]} tObj [target object]
      */
-    dealDetail.grid_before_drag = function(dId, tId, sObj, tObj) {
+    dealDetail.grid_before_drag = function(dId,tId,sObj,tObj) {
         var parent_id = dealDetail.grid.getParentId(tId);
         if (parent_id == 0) {
             dealDetail.grid.setDragBehavior("child");
@@ -7472,13 +7048,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[type]} id [Menu ID]
      */
     dealDetail.remarks_menu_click = function(id) {
-        switch (id) {
+        switch(id) {
             case "add":
                 dealDetail.open_deal_remarks();
                 break;
             case "add_new":
                 var new_id = (new Date()).valueOf();
-                dealDetail.deal_remarks.addRow(new_id, ["New_" + new_id, '']);
+                dealDetail.deal_remarks.addRow(new_id, ["New_"+new_id, '']);
                 break;
             case "delete":
                 dhtmlx.message({
@@ -7540,10 +7116,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.setText(win_title);
         win.centerOnScreen();
         win.setModal(true);
-        win.attachURL(win_url, false, {
-            deal_id: deal_id,
-            process_id: pricing_process_id
-        });
+        win.attachURL(win_url, false, {deal_id:deal_id,process_id:pricing_process_id});
 
         win.attachEvent('onClose', function(w) {
             dealDetail.refresh_remarks_grid();
@@ -7559,11 +7132,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var pricing_process_id = '<?php echo $pricing_process_id; ?>';
         var deal_id = '<?php echo $deal_id; ?>';
         var data = {
-            "action": "spa_deal_update_new",
-            "flag": 'u',
-            "source_deal_header_id": deal_id,
-            "remarks_list": selected_remarks,
-            "pricing_process_id": pricing_process_id
+            "action":"spa_deal_update_new",
+            "flag":'u',
+            "source_deal_header_id":deal_id,
+            "remarks_list":selected_remarks,
+            "pricing_process_id":pricing_process_id
         }
         dealDetail.deal_remarks.deleteSelectedRows();
         dealDetail.remarks_menu.setItemDisabled('delete');
@@ -7578,11 +7151,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var deal_id = '<?php echo $deal_id; ?>';
 
         var data = {
-            "action": "spa_deal_update_new",
-            "flag": 'o',
-            "source_deal_header_id": deal_id,
-            "pricing_process_id": pricing_process_id,
-            "grid_type": "g"
+            "action":"spa_deal_update_new",
+            "flag":'o',
+            "source_deal_header_id":deal_id,
+            "pricing_process_id":pricing_process_id,
+            "grid_type":"g"
         }
         data = $.param(data);
         var sql_url = js_data_collector_url + "&" + data;
@@ -7599,7 +7172,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[type]} nValue [New Value]
      * @param  {[type]} oValue [Old Value]
      */
-    dealDetail.remarks_edit = function(stage, rId, cInd, nValue, oValue) {
+    dealDetail.remarks_edit = function(stage,rId,cInd,nValue,oValue) {
         if (stage == 2) {
             var pricing_process_id = '<?php echo $pricing_process_id; ?>';
             var deal_id = '<?php echo $deal_id; ?>';
@@ -7610,12 +7183,12 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 var id = dealDetail.deal_remarks.cells(rId, id_index).getValue();
                 var remarks = dealDetail.deal_remarks.cells(rId, remarks_index).getValue();
                 var data = {
-                    "action": "spa_deal_update_new",
-                    "flag": 'v',
-                    "source_deal_header_id": deal_id,
-                    "remarks_list": id,
-                    "document_list": remarks, // used document_list param to avoid extra param
-                    "pricing_process_id": pricing_process_id
+                    "action":"spa_deal_update_new",
+                    "flag":'v',
+                    "source_deal_header_id":deal_id,
+                    "remarks_list":id,
+                    "document_list":remarks, // used document_list param to avoid extra param
+                    "pricing_process_id":pricing_process_id
                 }
                 dealDetail.deal_remarks.deleteSelectedRows();
                 dealDetail.remarks_menu.setItemDisabled('delete');
@@ -7632,7 +7205,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var row_id = dealDetail.grid.getSelectedRowId();
         var parent_id = dealDetail.grid.getParentId(row_id);
         var no_of_child = dealDetail.grid.hasChildren(row_id);
-        var deal_id = '<?php echo $deal_id; ?>';
+        var deal_id = '<?php echo $deal_id;?>';
         var group_id_index = dealDetail.grid.getColIndexById('group_id');
         var deal_detail_index = dealDetail.grid.getColIndexById('source_deal_detail_id');
 
@@ -7651,15 +7224,15 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         if (parent_id == 0 && no_of_child > 0) {
             var min_max_term = dealDetail.grid.collectValues(term_start_index);
-            min_max_term.sort(function(a, b) {
+            min_max_term.sort(function(a, b){
                 return Date.parse(a) - Date.parse(b);
             });
             var min_term_start = min_max_term[0];
             var max_term_end = dealDetail.grid.collectValues(term_end_index);
-            max_term_end.sort(function(a, b) {
+            max_term_end.sort(function(a, b){
                 return Date.parse(a) - Date.parse(b);
             });
-            var max_term_end = max_term_end[max_term_end.length - 1];
+            var max_term_end = max_term_end[max_term_end.length-1];
 
             var first_child = dealDetail.grid.getChildItemIdByIndex(row_id, 0);
             var group_id = dealDetail.grid.cells(first_child, group_id_index).getValue();
@@ -7678,20 +7251,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.setText(win_title);
         win.centerOnScreen();
         win.setModal(true);
-        win.attachURL(win_url, false, {
-            type: 'c',
-            term_start: min_term_start,
-            term_end: max_term_end,
-            deal_id: deal_id,
-            detail_id: detail_id,
-            group_id: group_id
-        });
+        win.attachURL(win_url, false, {type:'c',term_start:min_term_start,term_end:max_term_end,deal_id:deal_id,detail_id:detail_id,group_id:group_id});
     }
 
     dealDetail.open_update_profile = function() {
         var tab_obj = dealDetail.deal_tab;
         var granularity = '';
-        var volume_type = '';
+        var volume_type = '' ;
 
         tab_obj.forEachTab(function(tab) {
             var form_object = tab.getAttachedObject();
@@ -7748,16 +7314,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.centerOnScreen();
         win.setModal(true);
         win.maximize();
-        win.attachURL(win_url, false, {
-            call_from: 'deal_detail',
-            deal_id: deal_id,
-            detail_id: detail_id,
-            term_start: term_start,
-            term_end: term_end,
-            granularity: granularity,
-            profile_id: profile_id,
-            location_id: location_id
-        });
+        win.attachURL(win_url, false, {call_from: 'deal_detail',deal_id:deal_id,detail_id:detail_id,term_start:term_start,term_end:term_end,granularity:granularity,profile_id:profile_id,location_id:location_id});
         var is_new = 'n';
 
         if (copy_deal_id != 'NULL' || template_id != 'NULL' || detail_id.indexOf('New') == 0 || detail_id.indexOf('NEW') == 0) {
@@ -7810,21 +7367,17 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var row_id = dealDetail.deal_exercise.getSelectedRowId();
         if (row_id == null) {
             dhtmlx.alert({
-                title: "Error",
-                type: "alert-error",
-                text: "Please select some row(s)."
+                title:"Error",
+                type:"alert-error",
+                text:"Please select some row(s)."
             });
             return;
         }
         var deal_ids = dealDetail.deal_exercise.cells(row_id, 0).getValue();
-        deal_ids = deal_ids.replace(/(<([^>]+)>)/ig, "");
+        deal_ids = deal_ids.replace(/(<([^>]+)>)/ig,"");
 
 
-        data = {
-            "action": "spa_source_deal_header",
-            "flag": "d",
-            "deal_ids": deal_ids
-        };
+        data = {"action": "spa_source_deal_header", "flag":"d", "deal_ids":deal_ids};
         adiha_post_data("alert", data, '', '', 'dealDetail.exercise_delete_callback');
     }
 
@@ -7840,9 +7393,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
     dealDetail.update_actual_clicked = function() {
         var deal_id = '<?php echo $deal_id; ?>';
         var data = {
-            "action": "spa_source_deal_header",
-            "flag": 'f',
-            "deal_ids": deal_id
+            "action":"spa_source_deal_header",
+            "flag":'f',
+            "deal_ids":deal_id
         }
         adiha_post_data("return", data, '', '', 'dealDetail.open_update_actual');
     }
@@ -7856,7 +7409,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         var tab_obj = dealDetail.deal_tab;
         var granularity = '';
-        var volume_type = '';
+        var volume_type = '' ;
 
         tab_obj.forEachTab(function(tab) {
             var form_object = tab.getAttachedObject();
@@ -7931,16 +7484,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.centerOnScreen();
         win.setModal(true);
         win.maximize();
-        win.attachURL(win_url, false, {
-            deal_id: deal_id,
-            detail_id: detail_id,
-            term_start: term_start,
-            term_end: term_end,
-            granularity: granularity,
-            meter_id: meter_id,
-            call_from: 'deal_detail',
-            location_id: location_id
-        });
+        win.attachURL(win_url, false, {deal_id:deal_id,detail_id:detail_id,term_start:term_start,term_end:term_end,granularity:granularity,meter_id:meter_id,call_from:'deal_detail',location_id:location_id});
 
         win.attachEvent('onClose', function(w) {
             if (is_new == 'n') {
@@ -7976,11 +7520,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
     }
 
     setup_generation_hyperlink = function(name, value) {
-        if (name == "setup_generation") return "<div class='simple_link'><a href='#' onclick='open_setup_generation()'>" + value + "</a></div>";
+        if (name == "setup_generation") return "<div class='simple_link'><a href='#' onclick='open_setup_generation()'>"+value+"</a></div>";
     }
 
     collateral_hyperlink = function(name, value) {
-        if (name == "collateral_link") return "<div class='simple_link'><a href='#' onclick='open_setup_collateral()'>" + value + "</a></div>";
+        if (name == "collateral_link") return "<div class='simple_link'><a href='#' onclick='open_setup_collateral()'>"+value+"</a></div>";
     }
 
     var setup_collateral;
@@ -7991,7 +7535,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var tab_obj = dealDetail.deal_tab;
         var iterate_check = true;
         tab_obj.forEachTab(function(tab) {
-            if (iterate_check) {
+            if(iterate_check) {
                 var form_obj = tab.getAttachedObject();
                 if (form_obj instanceof dhtmlXForm) {
                     var cpty_combo = form_obj.getCombo('counterparty_id');
@@ -8005,9 +7549,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         if (counterparty_id == '' || counterparty_id == null) {
             dhtmlx.message({
-                title: 'Alert',
-                type: "alert",
-                text: "Please select counterparty!"
+                title:'Alert',
+                type:"alert",
+                text:"Please select counterparty!"
             });
             return;
         }
@@ -8053,18 +7597,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         var status_name = (status == 'y') ? 'lock' : 'unlock';
         dhtmlx.message({
-            title: "Confirmation",
-            type: "confirm",
+            title:"Confirmation",
+            type:"confirm",
             ok: "Confirm",
             text: "Are you sure you want to " + status_name + " selected detail?",
             callback: function(result) {
                 if (result) {
-                    data = {
-                        "action": "spa_deal_update_new",
-                        "flag": "lock_unlock",
-                        "detail_lock_status": status,
-                        "detail_id": source_deal_detail_id
-                    };
+                    data = {"action": "spa_deal_update_new", "flag":"lock_unlock", "detail_lock_status":status, "detail_id":source_deal_detail_id};
                     adiha_post_data("alert", data, '', '', 'dealDetail.update_detail_lock_status_callback');
                 }
             }
@@ -8083,11 +7622,11 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             dealDetail.grid.cells(row_id, lock_deal_detail_index).setValue(status);
 
             if (status == 'y') {
-                dealDetail.grid.lockRow(row_id, true);
-                dealDetail.grid.setRowColor(row_id, "lightgrey");
+                dealDetail.grid.lockRow(row_id,true);
+                dealDetail.grid.setRowColor(row_id,"lightgrey");
             } else {
-                dealDetail.grid.lockRow(row_id, false);
-                dealDetail.grid.setRowColor(row_id, "white");
+                dealDetail.grid.lockRow(row_id,false);
+                dealDetail.grid.setRowColor(row_id,"white");
             }
         }
     }
@@ -8099,7 +7638,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[type]} old_row  [Old Row ID]
      * @param  {[type]} new_col_index   [Selected Column Index]
      */
-    dealDetail.header_cost_select = function(new_row, old_row, new_col_index) {
+    dealDetail.header_cost_select = function(new_row,old_row,new_col_index) {
         var internal_type_column_index = dealDetail.header_deal_costs.getColIndexById('internal_field_type');
         var uom_index = dealDetail.header_deal_costs.getColIndexById('uom_id');
         var type_name = dealDetail.header_deal_costs.cells(new_row, internal_type_column_index).getText();
@@ -8120,9 +7659,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         if (udf_type == 'w') {
             var formula_id = dealDetail.header_deal_costs.cells(new_row, udf_value_index).getValue();
 
-            var data = {
-                'udf_value': 'formula_form->0'
-            };
+            var data = {'udf_value' : 'formula_form->0'};
             dealDetail.header_deal_costs.attachBrowser(data);
         }
 
@@ -8144,19 +7681,14 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             var udf_type = dealDetail.header_deal_costs.cells(id, udf_field_type_index).getValue();
 
             if (udf_type == 'w') {
-                dealDetail.header_deal_costs.setCellExcellType(id, udf_value_index, 'browser');
+                dealDetail.header_deal_costs.setCellExcellType(id,udf_value_index,'browser');
             }
 
             if (contract_id != '' && contract_id != null && typeof contract_id != 'undefined' && counterparty_id != '' && counterparty_id != null && typeof counterparty_id != 'undefined') {
                 var header_cost_contract_combo = dealDetail.header_deal_costs.cells(id, contract_index).getCellCombo();
                 header_cost_contract_combo.enableFilteringMode(true);
                 header_cost_contract_combo.clearAll();
-                var cm_param = {
-                    "action": "spa_contract_group",
-                    "flag": "r",
-                    "counterparty_id": counterparty_id,
-                    "SELECTED_VALUE": contract_id
-                };
+                var cm_param = {"action": "spa_contract_group", "flag": "r", "counterparty_id": counterparty_id, "SELECTED_VALUE":contract_id};
                 cm_param = $.param(cm_param);
                 var url = js_dropdown_connector_url + '&' + cm_param;
                 header_cost_contract_combo.load(url);
@@ -8188,11 +7720,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
                 nValue = (nValue == '' || nValue == null || typeof nValue == 'undefined') ? 'NULL' : nValue;
                 if (nValue != '' && nValue != null && typeof nValue != 'undefined') {
-                    var cm_param = {
-                        "action": "spa_contract_group",
-                        "flag": "r",
-                        "counterparty_id": nValue
-                    };
+                    var cm_param = {"action": "spa_contract_group", "flag": "r", "counterparty_id": nValue};
                     cm_param = $.param(cm_param);
                     var url = js_dropdown_connector_url + '&' + cm_param;
                     header_cost_contract_combo.load(url);
@@ -8209,7 +7737,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[type]} old_row  [Old Row ID]
      * @param  {[type]} new_col_index   [Selected Column Index]
      */
-    dealDetail.detail_cost_select = function(new_row, old_row, new_col_index) {
+    dealDetail.detail_cost_select = function(new_row,old_row,new_col_index) {
         var internal_type_column_index = dealDetail.deal_detail_cost.getColIndexById('internal_field_type');
         var uom_index = dealDetail.deal_detail_cost.getColIndexById('uom_id');
         var type_name = dealDetail.deal_detail_cost.cells(new_row, internal_type_column_index).getValue();
@@ -8237,12 +7765,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 var detail_cost_contract_combo = dealDetail.deal_detail_cost.cells(id, contract_index).getCellCombo();
                 detail_cost_contract_combo.enableFilteringMode(true);
                 detail_cost_contract_combo.clearAll();
-                var cm_param = {
-                    "action": "spa_contract_group",
-                    "flag": "r",
-                    "counterparty_id": counterparty_id,
-                    "SELECTED_VALUE": contract_id
-                };
+                var cm_param = {"action": "spa_contract_group", "flag": "r", "counterparty_id": counterparty_id, "SELECTED_VALUE":contract_id};
                 cm_param = $.param(cm_param);
                 var url = js_dropdown_connector_url + '&' + cm_param;
                 detail_cost_contract_combo.load(url);
@@ -8273,11 +7796,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 detail_cost_contract_combo.clearAll();
                 nValue = (nValue == '' || nValue == null || typeof nValue == 'undefined') ? 'NULL' : nValue;
                 if (nValue != '' && nValue != null && typeof nValue != 'undefined') {
-                    var cm_param = {
-                        "action": "spa_contract_group",
-                        "flag": "r",
-                        "counterparty_id": nValue
-                    };
+                    var cm_param = {"action": "spa_contract_group", "flag": "r", "counterparty_id": nValue};
                     cm_param = $.param(cm_param);
                     var url = js_dropdown_connector_url + '&' + cm_param;
                     detail_cost_contract_combo.load(url);
@@ -8293,9 +7812,9 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      * @param  {[type]} report_type [Report type]
      */
     dealDetail.open_report = function(report_type) {
-        var deal_id = '<?php echo $deal_id; ?>'
+        var deal_id = '<?php echo $deal_id;?>'
 
-        if (report_type == 'view_certificate') {
+        if (report_type == 'view_certificate') {            
             data = {
                 "action": 'spa_call_report_manager_report',
                 "flag": 'scheduling_report',
@@ -8303,7 +7822,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 "deal_id": deal_id
             };
 
-        } else if (report_type == 'shipper_code_report') {
+        } else if (report_type == 'shipper_code_report') {            
             data = {
                 "action": 'spa_call_report_manager_report',
                 "flag": 'scheduling_report',
@@ -8312,13 +7831,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
             };
 
         }
-
+        
         adiha_post_data('return_json', data, '', '', 'dealDetail.deal_detail_report_callback', '');
-
+        
     }
 
     dealDetail.deal_detail_report_callback = function(result) {
-        var deal_id = '<?php echo $deal_id; ?>'
+        var deal_id = '<?php echo $deal_id;?>'
         var row_id = dealDetail.grid.getSelectedRowId();
         var deal_detail_index = dealDetail.grid.getColIndexById('source_deal_detail_id');
         var deal_detail_id = dealDetail.grid.cells(row_id, deal_detail_index).getValue();
@@ -8327,7 +7846,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var items_combined = result[0]['items_combined'];
         var process_id = result[0]['process_id'];
         var report_name = result[0]['report_name'];
-        var url = '../../_reporting/report_manager_dhx/report.viewer.php?report_name=' + encodeURI(report_name) + '_' + encodeURI(report_name) + '&is_refresh=1&items_combined=' + items_combined + '&paramset_id=' + paramset_id + '&export_type=HTML4.0'
+        var url = '../../_reporting/report_manager_dhx/report.viewer.php?report_name=' + encodeURI(report_name) + '_'+ encodeURI(report_name) + '&is_refresh=1&items_combined=' + items_combined + '&paramset_id=' + paramset_id + '&export_type=HTML4.0'
 
         dhxWins = new dhtmlXWindows();
         var is_win = dhxWins.isWindow('w2');
@@ -8341,14 +7860,14 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
 
         if (report_name == 'REC Deal Detail Certificate') {
             var param = {
-                'sec_filters_info': 'buy_detail_id=' + deal_detail_id + '_-_' + process_id + ''
+                'sec_filters_info': 'buy_detail_id='+ deal_detail_id +'_-_' + process_id + ''
             }
         } else if (report_name == 'Shipper Code Report') {
-            var tab_obj = dealDetail.deal_tab;
+            var tab_obj = dealDetail.deal_tab ;   
             var term_start, location_id = '', contract_id = '';
             tab_obj.forEachTab(function(tab) {
                 var form_obj = tab.getAttachedObject();
-
+                
                 if (form_obj instanceof dhtmlXForm) {
                     var counterparty_combo = form_obj.getCombo('counterparty_id');
                     if (counterparty_combo) {
@@ -8358,22 +7877,22 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     var contract_combo = form_obj.getCombo('contract_id');
                     if (contract_combo) {
                         contract_id = form_obj.getItemValue('contract_id');
-                    }
+                    }   
                 }
+                            
+            });   
 
-            });
+            var location_id_index = dealDetail.grid.getColIndexById('location_id'); 
+            
+            if (typeof location_id_index != 'undefined') var location_id = dealDetail.grid.cells(row_id, location_id_index).getValue();       
 
-            var location_id_index = dealDetail.grid.getColIndexById('location_id');
-
-            if (typeof location_id_index != 'undefined') var location_id = dealDetail.grid.cells(row_id, location_id_index).getValue();
-
-            var term_start_index = dealDetail.grid.getColIndexById('term_start');
+            var term_start_index = dealDetail.grid.getColIndexById('term_start');            
             if (typeof term_start_index != 'undefined') var term_start = dealDetail.grid.cells(row_id, term_start_index).getValue();
-
+            
             var term_end_index = dealDetail.grid.getColIndexById('term_end');
             if (typeof term_end_index != 'undefined') var term_end = dealDetail.grid.cells(row_id, term_end_index).getValue();
 
-            var param = {
+            var param = {                
                 'sec_filters_info': 'deal_header_id=' + deal_id + ',contract_id=' + contract_id + ',counterparty_id=' + counterparty_id + ',location_id=' + location_id + ',term_start=' + term_start + ',term_end=' + term_end + ',deal_detail_id=' + deal_detail_id + ',external_id=NULL_-_' + process_id
             }
         }
@@ -8388,10 +7907,10 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
      */
     dealDetail.on_row_select = function() {
         var deal_id = '<?php echo $deal_id; ?>';
-
+        
         if (deal_id != 'NULL') {
             var buy_sell = '<?php echo $buy_sell; ?>';
-            var is_environmental = '<?php echo $is_environmental; ?>';
+            var is_environmental = '<?php echo $is_environmental;?>';
             var row_id = dealDetail.grid.getSelectedRowId();
 
             if (dealDetail.grid.getColIndexById('buy_sell_flag')) {
@@ -8411,7 +7930,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 } else {
                     dealDetail.deal_detail_menu.setItemDisabled('view_certificate');
                 }
-
+                
                 if (dealDetail.grid.getColIndexById('shipper_code1') || dealDetail.grid.getColIndexById('shipper_code2')) {
                     dealDetail.deal_detail_menu.setItemEnabled('shipper_code_report');
                 } else {
@@ -8425,34 +7944,26 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
     }
 
     dealDetail.add_missing_column = function() {
-        var required_columns = [{
-                id: "term_start",
-                text: "Term Start",
-                type: "dhxCalendarA"
-            },
-            {
-                id: "term_end",
-                text: "Term End",
-                type: "dhxCalendarA"
-            }
-        ];
-        var term_frequency = '<?php echo $term_frequency; ?>';
-        for (var i = 0; i < required_columns.length; i++) {
+        var required_columns = [{id: "term_start", text: "Term Start", type: "dhxCalendarA"},
+                                {id: "term_end", text: "Term End", type: "dhxCalendarA"}
+                                ];
+        var term_frequency = '<?php echo $term_frequency;?>';
+        for (var i=0; i < required_columns.length; i++) {
             var column_id = required_columns[i].id;
             if (dealDetail.grid.getColIndexById(column_id)) //Return when column already present in grid
                 continue;
             var new_col_index = dealDetail.grid.getColumnsNum();
             dealDetail.grid.insertColumn(new_col_index, required_columns[i].text, required_columns[i].type);
-            dealDetail.grid.setColumnId(new_col_index, column_id);
-            dealDetail.grid.setColumnHidden(new_col_index, true);
-            switch (column_id) {
+            dealDetail.grid.setColumnId(new_col_index,column_id);
+            dealDetail.grid.setColumnHidden(new_col_index,true);
+            switch(column_id) {
                 case 'term_start':
                     var term_start = null;
                     var term_start_obj = null;
                     dealDetail.grid.forEachRow(function(id) {
                         if (dealDetail.grid.getColIndexById('vintage')) {
                             var col_vintage = dealDetail.grid.getColIndexById('vintage');
-                            var vintage = dealDetail.grid.cells(id, col_vintage).getTitle();
+                            var vintage = dealDetail.grid.cells(id,col_vintage).getTitle();
                             if (!vintage.trim() || vintage == undefined || vintage == '') {
                                 vintage = new Date().getFullYear();
                             }
@@ -8463,7 +7974,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                             term_start_obj = dates.convert(term_start);
                         }
 
-                        dealDetail.grid.cells(id, new_col_index).setValue(term_start_obj);
+                        dealDetail.grid.cells(id,new_col_index).setValue(term_start_obj);
                     });
                     break;
                 case 'term_end':
@@ -8475,25 +7986,25 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     dealDetail.grid.forEachRow(function(id) {
                         if (dealDetail.grid.getColIndexById('vintage')) {
                             var col_vintage = dealDetail.grid.getColIndexById('vintage');
-                            var vintage = dealDetail.grid.cells(id, col_vintage).getTitle();
+                            var vintage = dealDetail.grid.cells(id,col_vintage).getTitle();
                             if (!vintage.trim() || vintage == undefined || vintage == '') {
                                 vintage = new Date().getFullYear();
                             }
                             term_end = vintage + '-12-31';
                             term_end_obj = dates.convert(term_end);
                         } else {
-                            term_start = dealDetail.grid.cells(id, col_term_start).getValue();
+                            term_start = dealDetail.grid.cells(id,col_term_start).getValue();
                             term_end_obj = dates.convert(dates.getTermEnd(term_start, term_frequency));
                         }
 
-                        dealDetail.grid.cells(id, new_col_index).setValue(term_end_obj);
+                        dealDetail.grid.cells(id,new_col_index).setValue(term_end_obj);
                     });
                     break;
             }
         }
 
     }
-
+	
     /**
      * Opens UDT window to show the avialable deal UDT's
      * 
@@ -8528,7 +8039,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         win.setModal(true);
         win.attachURL("deal.udt.php", false, data);
     }
-
+    
     var udt_window;
     /**
      * Unloads the UDT window if exists
@@ -8550,13 +8061,13 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         var active_tab_id = dealDetail.deal_tab.getActiveTab();
         var tab_attached_grid_obj = dealDetail.deal_tab.tabs(active_tab_id).getAttachedObject();
 
-        switch (name) {
+        switch(name) {
             case "add":
                 var row_id = (new Date()).valueOf();
                 tab_attached_grid_obj.addRow(row_id, "");
                 tab_attached_grid_obj.selectRowById(row_id);
                 this.setItemEnabled('delete');
-
+                
                 tab_attached_grid_obj.forEachRow(function(row) {
                     tab_attached_grid_obj.forEachCell(row, function(cellObj, ind) {
                         tab_attached_grid_obj.validateCell(row, ind);
@@ -8565,7 +8076,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                 break;
             case "delete":
                 var row_id = tab_attached_grid_obj.getSelectedRowId();
-                var previously_deleted_xml = tab_attached_grid_obj.getUserData("", "deleted_xml");
+                var previously_deleted_xml = tab_attached_grid_obj.getUserData("", "deleted_xml");          
                 var grid_xml = "";
                 if (previously_deleted_xml != null) {
                     grid_xml += previously_deleted_xml;
@@ -8576,7 +8087,7 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
                     if ((tab_attached_grid_obj.cells(value, 0).getValue() != "")) {
                         grid_xml += "<GridRow ";
                         for (var cellIndex = 0; cellIndex < tab_attached_grid_obj.getColumnsNum(); cellIndex++) {
-                            grid_xml += " " + tab_attached_grid_obj.getColumnId(cellIndex) + '="' + tab_attached_grid_obj.cells(value, cellIndex).getValue() + '"';
+                            grid_xml += " " + tab_attached_grid_obj.getColumnId(cellIndex) + '="' + tab_attached_grid_obj.cells(value,cellIndex).getValue() + '"';
                         }
                         grid_xml += " ></GridRow> ";
                     }
@@ -8591,5 +8102,4 @@ echo $detail_tab_obj->attach_url('tab_provisional', 'deal.pricing.php?pricing_pr
         }
     }
 </script>
-
 </html>
