@@ -1205,10 +1205,9 @@ BEGIN
 		END
 	END
 	
-
 	UPDATE #temp_combo
 	SET selected = 'true'
-	WHERE value = @default_value
+	WHERE value = ISNULL(@default_value, @shipper_default_value)
 
 	IF @flag = 'v'
 	BEGIN
