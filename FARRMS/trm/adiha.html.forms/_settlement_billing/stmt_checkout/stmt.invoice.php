@@ -217,7 +217,6 @@
 
         SettlementInvoice.menu.setItemDisabled('audit');
         SettlementInvoice.menu.setItemDisabled('finalize_status');
-        SettlementInvoice.menu.setItemDisabled('workflow_status');
         SettlementInvoice.menu.setItemDisabled('void_status');
         SettlementInvoice.menu.setItemDisabled('unfinalize_status');
         SettlementInvoice.menu.setItemDisabled('paid');
@@ -542,7 +541,6 @@
                 SettlementInvoice.grid.enableContextMenu();
                 SettlementInvoice.menu.setItemDisabled('finalize_status'); 
                 SettlementInvoice.menu.setItemDisabled('void_status');
-                SettlementInvoice.menu.setItemDisabled('workflow_status');
                 SettlementInvoice.menu.setItemDisabled('unfinalize_status'); 
                 SettlementInvoice.menu.setItemDisabled('audit');
                 SettlementInvoice.menu.setItemDisabled('paid'); 
