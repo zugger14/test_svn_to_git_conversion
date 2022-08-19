@@ -572,7 +572,7 @@
 
     load_workflow_status = function() { 
         SettlementInvoice.menu.addNewSibling('t2', 'process', 'Process', false, 'action.gif', 'action_dis.gif'); 
-        SettlementInvoice.menu.addNewChild('process', '0', 'workflow_status', 'Workflow Status', true, 'update_invoice_stat.gif', 'update_invoice_stat_dis.gif');
+        SettlementInvoice.menu.addNewChild('process', '0', 'workflow_status', 'Workflow Status', false, 'update_invoice_stat.gif', 'update_invoice_stat_dis.gif');
         SettlementInvoice.menu.addNewChild('process', '8', 'finalize_status_all', 'Finalize All', false, 'finalize.gif', 'finalize_dis.gif');
         SettlementInvoice.menu.addNewChild('process', '1', 'finalize_status', 'Finalize', true, 'finalize.gif', 'finalize_dis.gif');
         SettlementInvoice.menu.addNewChild('process', '2', 'unfinalize_status', 'UnFinalize', true, 'unfinalize.gif', 'unfinalize_dis.gif');
@@ -922,6 +922,10 @@
     
     function update_workflow_status() {
         var selected_row = SettlementInvoice.grid.getSelectedRowId();
+		if(selected_row == null){
+			selected_row = SettlementInvoice.grid.getAllRowIds();
+		}
+		
         var un_finalized_invoice = new Array();
         var xml = "<Root>"; 
 
