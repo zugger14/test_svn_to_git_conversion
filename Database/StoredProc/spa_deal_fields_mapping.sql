@@ -1206,18 +1206,9 @@ BEGIN
 		END
 	END
 	
-	IF @load_default = 1
-	BEGIN
-		UPDATE #temp_combo
-		SET selected = 'true'
-		WHERE value = ISNULL(@default_value, @shipper_default_value)
-	END
-	ELSE IF @load_default = 0
-	BEGIN
-		UPDATE #temp_combo
-		SET selected = 'true'
-		WHERE value = @default_value
-	END
+	UPDATE #temp_combo
+	SET selected = 'true'
+	WHERE value = ISNULL(@default_value, @shipper_default_value)
 
 	IF @flag = 'v'
 	BEGIN
