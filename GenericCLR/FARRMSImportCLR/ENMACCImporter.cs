@@ -50,7 +50,7 @@ namespace FARRMSImportCLR
                 {
                     string new_token = JsonHelper.GetValue(responseFromServer, "access_token");
                     clrImportInfo.WebServiceInfo.Token = new_token;
-                    
+
                     using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                     //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                     {
@@ -77,6 +77,44 @@ namespace FARRMSImportCLR
         }
 
         /// <summary>
+        /// Convert local time to UTC time as per system time zone
+        /// </summary>
+        /// <param name="localTime"></param>
+        /// <returns>string converted utctime</returns>
+        public string ConvertLocalToUTCTime(String localTime)
+        {
+            string utctime = "";
+
+            using (SqlConnection cn = new SqlConnection("Context Connection=true"))
+            {
+                string query = "EXEC [spa_time_zone] @flag = 'c', @localtime = '" + localTime + "'";
+                cn.Open();
+                using (SqlCommand cmd = new SqlCommand(query, cn))
+                {
+                    try
+                    {
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                utctime = reader["utc_time"].ToString();
+                                utctime = System.Convert.ToDateTime(utctime).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + ".000Z";
+                            }
+                            reader.Close();
+                            return utctime;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ex.LogError("ENMACC error converting local to UTC time", ex.Message);
+                        throw;
+                    }
+                }
+                cn.Close();
+            }
+        }
+
+        /// <summary>
         /// Get trades from ENMACC interface
         /// </summary>
         /// <param name="clrImportInfo"></param>
@@ -100,23 +138,23 @@ namespace FARRMSImportCLR
             }
 
             string traded_start = clrImportInfo.Params[2].paramValue;
-            if (traded_start == "null")
+            if (traded_start == "null" || string.IsNullOrEmpty(traded_start))
             {
                 traded_start = "";
             }
             else
             {
-                traded_start = (!string.IsNullOrEmpty(traded_start) ? (traded_start.Contains("Z") ? traded_start : System.Convert.ToDateTime(traded_start).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + ".000Z") : "");
+                traded_start = ConvertLocalToUTCTime(traded_start);
             }
 
             string traded_end = clrImportInfo.Params[3].paramValue;
-            if (traded_end == "null")
+            if (traded_end == "null" || string.IsNullOrEmpty(traded_end))
             {
                 traded_end = "";
             }
             else
             {
-                traded_end = (!string.IsNullOrEmpty(traded_end) ? (traded_end.Contains("Z") ? traded_end : System.Convert.ToDateTime(traded_end).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + ".000Z") : "");
+                traded_end = ConvertLocalToUTCTime(traded_end);
             }
 
             string skip = clrImportInfo.Params[4].paramValue;
@@ -126,25 +164,15 @@ namespace FARRMSImportCLR
             }
             //default value of limit is set to 50 
             string limit = clrImportInfo.Params[5].paramValue;
-            if (limit == "null" || string.IsNullOrEmpty(limit) ||limit == "0")
+            if (limit == "null" || string.IsNullOrEmpty(limit) || limit == "0")
             {
                 limit = "50";
             }
 
             string traded_at = "";
-            if(traded_start != "" && traded_end !="")
+            if (traded_start != "" && traded_end != "")
             {
-                traded_at = traded_start + "_" + traded_end;               
-            }
-            else if(traded_start != "" && traded_end == "")
-            {
-                //if traded_end is blank then add 7 days to traded start date
-                traded_at = traded_start + "_" + System.Convert.ToDateTime(traded_start).AddDays(7).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + ".000Z";
-            }
-            else if (traded_start == "" && traded_end != "")
-            {
-                //if traded start is blank then reduce traded_end date by 7
-                traded_at = System.Convert.ToDateTime(traded_end).AddDays(-7).ToString("yyyy-MM-dd HH:mm:ss").Replace(" ", "T") + ".000Z" + "_" + traded_end;
+                traded_at = traded_start + "_" + traded_end;
             }
 
             url = clrImportInfo.WebServiceInfo.WebServiceURL + "/trades?limit=" + limit;
@@ -155,7 +183,7 @@ namespace FARRMSImportCLR
                 url = (commodity != "") ? url + "&commodity=" + commodity : url;
             }
             //add venue
-            if (!string.IsNullOrEmpty(venue) )
+            if (!string.IsNullOrEmpty(venue))
             {
                 url = (venue != "") ? url + "&venue=" + venue : url;
             }
@@ -165,13 +193,13 @@ namespace FARRMSImportCLR
                 url = (traded_at != "") ? url + "&traded-at=" + traded_at : url;
             }
             //add skip
-            if (!string.IsNullOrEmpty(skip) )
+            if (!string.IsNullOrEmpty(skip))
             {
                 url = (skip != "") ? url + "&skip=" + skip : url;
             }
 
             try
-            {                
+            {
                 responseString = GetWebResponse(url, clrImportInfo);
 
                 status = new ENMACCImportStatus { Status = "Success", ResponseMessage = responseString, Exception = null };
@@ -244,49 +272,49 @@ namespace FARRMSImportCLR
 
                 //generate token if token expired and get trades list 
                 if (WebResponse.Status == "Unauthorized")
-                { 
+                {
                     bool token = GenerateToken(clrImportInfo);
                     if (token == false) throw new Exception("Failed to Generate Token.");
                     WebResponse = GetTrades(clrImportInfo);
                 }
-                
+
                 if (WebResponse.Status == "Success")
                 {
                     var response = WebResponse.ResponseMessage;
                     JObject tradeids = JsonHelper.GetJObject(response);
-                    
+
                     using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                     //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                     {
                         cn.Open();
-                        var finalTable = new string[] { "id", "short_id", "name", "action","role", "trader", "settlement", "term_start", "term_end", "commodity", "load", "location", "reference_market", "value", "unit", "pricing_type", "price_value", "price_currency", "counterparty_name", "traded_at", "interval_start", "interval_value" };
+                        var finalTable = new string[] { "id", "short_id", "name", "action", "role", "trader", "settlement", "term_start", "term_end", "commodity", "load", "location", "reference_market", "value", "unit", "pricing_type", "price_value", "price_currency", "counterparty_name", "traded_at", "interval_start", "interval_value" };
 
                         //  Create process table                         
                         var finalDataTable = Utility.CreateProcessTable(processTableName, finalTable, cn);
-                       
+
                         //loop through all id in items
                         foreach (var result in tradeids["items"])
                         {
                             url = (string)result["_links"]["trade"]["href"];
-                       
+
                             string tdetail = GetWebResponse(url, clrImportInfo);
-                        
+
                             JObject trade_detail = JsonHelper.GetJObject(tdetail);
-                            
+
                             //get href to request load shape details
                             string load_shape_url = (string)trade_detail["quantity"]["ref"];
                             //Console.WriteLine(trade_detail);
                             if (!string.IsNullOrEmpty(load_shape_url))
                             {
                                 var loadShapeDetails = GetWebResponse(load_shape_url, clrImportInfo);
-                                                             
-                                JObject load_shape_detail = JsonHelper.GetJObject(loadShapeDetails);                               
-                                
-                                foreach( var load_data in load_shape_detail["data"])
+
+                                JObject load_shape_detail = JsonHelper.GetJObject(loadShapeDetails);
+
+                                foreach (var load_data in load_shape_detail["data"])
                                 {
                                     DataRow dtrow = finalDataTable.NewRow();
-                                    var commodity = (string) trade_detail["instrument"]["commodity"];
-                                    
+                                    var commodity = (string)trade_detail["instrument"]["commodity"];
+
                                     dtrow["id"] = trade_detail["id"];
                                     dtrow["short_id"] = trade_detail["short-id"];
                                     dtrow["action"] = trade_detail["action"];
@@ -317,7 +345,7 @@ namespace FARRMSImportCLR
                             {
                                 DataRow dtrow = finalDataTable.NewRow();
 
-                                var commodity = (string) trade_detail["instrument"]["commodity"];
+                                var commodity = (string)trade_detail["instrument"]["commodity"];
 
                                 dtrow["id"] = trade_detail["id"];
                                 dtrow["short_id"] = trade_detail["short-id"];
@@ -330,7 +358,7 @@ namespace FARRMSImportCLR
                                 dtrow["term_end"] = trade_detail["instrument"]["maturity"]["end"];
                                 dtrow["commodity"] = commodity;
                                 dtrow["load"] = trade_detail["instrument"]["load"];
-                                dtrow["location"] = (commodity.ToLower() == "power") ? trade_detail["instrument"]["balancing-zone"] :  trade_detail["instrument"]["market-area"];
+                                dtrow["location"] = (commodity.ToLower() == "power") ? trade_detail["instrument"]["balancing-zone"] : trade_detail["instrument"]["market-area"];
                                 dtrow["reference_market"] = trade_detail["instrument"]["reference-market"];
                                 dtrow["value"] = trade_detail["quantity"]["amount"]["value"];
                                 dtrow["unit"] = trade_detail["quantity"]["amount"]["unit"];
@@ -350,10 +378,10 @@ namespace FARRMSImportCLR
                             using (SqlCommandBuilder builder = new SqlCommandBuilder(adapter))
                             {
                                 builder.GetInsertCommand();
-                                adapter.Update(finalDataTable );                                                               
+                                adapter.Update(finalDataTable);
                             }
                         }
-                        
+
                         importStatus.ProcessTableName = processTableName;
                         importStatus.Status = "Success";
                         importStatus.ResponseMessage = "Data inserted in Process table successfully";
@@ -367,7 +395,7 @@ namespace FARRMSImportCLR
                 importStatus.Status = "Failed";
                 importStatus.Exception = webEx;
                 importStatus.ResponseMessage = webEx.Message;
-                webEx.LogError("ENMACC",  processTableName + "|" + webEx.Message);
+                webEx.LogError("ENMACC", processTableName + "|" + webEx.Message);
             }
             catch (Exception ex)
             {
@@ -375,9 +403,9 @@ namespace FARRMSImportCLR
                 importStatus.Status = "Failed";
                 importStatus.Exception = ex;
                 importStatus.ResponseMessage = ex.Message;
-                ex.LogError("ENMACC",  processTableName + "|" + ex.Message);
+                ex.LogError("ENMACC", processTableName + "|" + ex.Message);
             }
-            
+
             return importStatus;
         }
         public class ENMACCImportStatus
