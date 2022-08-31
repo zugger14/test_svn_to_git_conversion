@@ -658,12 +658,8 @@
             var row_index = row_col_arr[count][0];
             var cellIndex = row_col_arr[count][1];
             grid_xml = grid_xml + '<GridRow';
-            
-            var m_date = new Date(forward_grid.cells(row_index,0).getValue());
-            y = m_date.getFullYear();
-            m = m_date.getMonth();
-            var maturity_date = new Date(y, m, 1);
-            maturity_date = dates.convert_to_sql(maturity_date);
+
+            var maturity_date = dates.convert_to_sql(forward_grid.cells(row_index,0).getValue());
 
             grid_xml = grid_xml + ' maturity_date="' + maturity_date + '"';
             
