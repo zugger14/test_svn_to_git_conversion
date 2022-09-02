@@ -113,7 +113,6 @@ IF ''@accounting_month'' <> ''NULL''
 
 -- SELECT @_stmt_invoice_id=3928,@_prod_date_from=NULL,@_prod_date_to=NULL,@_to_as_of_date=NULL,@_as_of_date=NULL,@_counterparty_id=NULL,@_contract_id=NULL,@_charge_type_id=NULL,@_create_ts_from=NULL,@_create_ts_to=NULL,@_update_ts_from=NULL,@_update_ts_to=NULL,@_source_deal_header_id=NULL,@_accounting_status=NULL,@_invoice_type=NULL,@_invoice_status=NULL,@_payment_date_from=NULL,@_payment_date_to=NULL,@_period_from=NULL,@_period_to=NULL,@_accrual_or_final=NULL,@_accounting_month=NULL
 
-
 IF OBJECT_ID(''tempdb..#stmt_void_data'') IS NOT NULL
 BEGIN
     DROP TABLE #stmt_void_data
@@ -258,8 +257,8 @@ BEGIN
             MAX(st.trader_name) trader,
             MAX(sdv_cnty.description) [country],
             MAX(sdv_region.code) [region],
-            MAX(sdd.term_start) [term_start],   
-            MAX(sdd.term_end) [term_end],
+            MAX(sdh.entire_term_start) [term_start],   
+            MAX(sdh.entire_term_end) [term_end],
             MAX(CAST(YEAR(sdd.term_start) AS VARCHAR(5)) + ''''-'''' + RIGHT(''''0''''+ CAST(MONTH(sdd.term_start) AS VARCHAR(2)), 2))   [term_start_year_month],
             ''''a'''' [actual_forward],
             MAX(ag_t.agg_term) [term_quarter],
@@ -659,8 +658,8 @@ BEGIN
     MAX(st.trader_name) trader,
     MAX(sdv_cnty.description) [country],
     MAX(sdv_region.code) [region],
-    MAX(sdd_d.term_start) [term_start],   
-    MAX(sdd_d.term_end) [term_end],
+    MAX(sdh.entire_term_start) [term_start],   
+    MAX(sdh.entire_term_end) [term_end],
     MAX(CAST(YEAR(sdd.term_start) AS VARCHAR(5)) + ''''-'''' + RIGHT(''''0''''+ CAST(MONTH(sdd.term_start) AS VARCHAR(2)), 2))   [term_start_year_month],
     ''''a'''' [actual_forward],
     MAX(ag_t.agg_term) [term_quarter],
@@ -1194,7 +1193,6 @@ SELECT
         ''
         SET @_sql7 = ''
 
-
 , MAX (taf.void_status) void_status
 , cet.commodity_energy_tax_value commodity_energy_tax_value 
 , ppcv.positive_commodity_vat_value pcv_positive_commodity_vat_value
@@ -1293,7 +1291,6 @@ where
         and (taf.source_deal_header_id = COALESCE(cet.source_deal_header_id,taf.source_deal_header_id)
             OR taf.source_deal_header_id = COALESCE(cett.source_deal_header_id,taf.source_deal_header_id))
 GROUP BY taf.source_deal_header_id,ppcv.positive_commodity_vat_value,ppcv.source_deal_header_id,cet.commodity_energy_tax_value,npcv.negative_commodity_vat_value,npcv.source_deal_header_id,taf.source_deal_detail_id
-
 
 select stmt_invoice_id, as_of_date, to_as_of_date,  prod_date_from, prod_date_to,   settlement_date,    counterparty_name,  counterparty_accounting_code,   counterparty_id,    contract_name,  contract_id,    charge_type,    charge_type_id, 
     CAST(SUM(volume) as Numeric(28, 10)) volume,
