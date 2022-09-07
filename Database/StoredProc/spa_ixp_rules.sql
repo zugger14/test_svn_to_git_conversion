@@ -58,6 +58,8 @@ GO
 						2 -> Execute in parallel
 	@file_transfer_endpoint_id	:	File transfer endpoint id, configured in file_transfer_endpoint table
 	@ftp_remote_directory		:	Ftp target remote target, NULL will point endpoint remote directory if setup, otherwise to root folder
+	@notify_empty_source : 0 --> Do not notify user for empty source files
+						   1 --> Notify user for empty source files to user
  */
 
 CREATE OR ALTER PROCEDURE [dbo].[spa_ixp_rules]
@@ -95,6 +97,7 @@ CREATE OR ALTER PROCEDURE [dbo].[spa_ixp_rules]
 	, @execute_in_queue INT = NULL
 	, @file_transfer_endpoint_id INT = NULL
 	, @ftp_remote_directory NVARCHAR(1024) = NULL
+	, @notify_empty_source BIT = 1 
     
 AS
 
@@ -2821,7 +2824,18 @@ BEGIN
 										END
 										ELSE
 										BEGIN
-											EXEC spa_run_sp_as_job @job_name,  @sql, 'ImportData', @user_name	
+											DECLARE @count_process_data INT
+											CREATE TABLE #temp_count(row_count INT)
+																						
+											EXEC('INSERT INTO #temp_count
+												  SELECT COUNT(*)
+												  FROM ' + @insert_process_table
+											)
+											
+											SELECT @count_process_data = row_count FROM #temp_count
+											
+											IF @count_process_data <> 0 OR @notify_empty_source = 1
+												EXEC spa_run_sp_as_job @job_name,  @sql, 'ImportData', @user_name	
 										END
 									END						
 								END
