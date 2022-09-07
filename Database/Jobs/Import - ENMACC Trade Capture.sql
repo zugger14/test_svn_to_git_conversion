@@ -95,18 +95,18 @@ EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Notify o
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
-EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Run daily', 
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'Run weekdays-8 to 6', 
 		@enabled=1, 
-		@freq_type=4, 
-		@freq_interval=1, 
+		@freq_type=8, 
+		@freq_interval=62, 
 		@freq_subday_type=4, 
 		@freq_subday_interval=2, 
 		@freq_relative_interval=0, 
-		@freq_recurrence_factor=0, 
+		@freq_recurrence_factor=1, 
 		@active_start_date=20220801, 
 		@active_end_date=99991231, 
-		@active_start_time=0, 
-		@active_end_time=235959
+		@active_start_time=80000, 
+		@active_end_time=180000
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
 EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
 IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
