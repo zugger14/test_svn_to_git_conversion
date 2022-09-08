@@ -1,5 +1,5 @@
 DECLARE @job_db_name	NVARCHAR(250) = DB_NAME(),
-		@job_owner		NVARCHAR(100) = dbo.FNADBUser(),
+		@job_owner		NVARCHAR(100) = dbo.FNAMainDBUser(),
 		@job_category	NVARCHAR(150) = N'Import', 
 		@job_name		NVARCHAR(500) = '',
 		@step_init		NVARCHAR(2000) = '',
