@@ -2799,45 +2799,47 @@ BEGIN
  											)
  											DROP TABLE ' + @insert_process_table + '_pre'
 										 )
-								
-									-- for debugging purpose only
-									IF (ISNULL(@execute_in_queue, 0) = 0 AND (@run_in_debug_mode = 'y' OR @count_tables > 1)) 
-									BEGIN
-										EXEC(@sql)
-									END
-									ELSE
-									BEGIN
 									
-										IF @execute_in_queue = 1
+									--process to check if data rows are empty or not to supress no data message
+									DECLARE @count_process_data INT
+									CREATE TABLE #temp_count(row_count INT)
+																				
+									EXEC('INSERT INTO #temp_count
+										  SELECT COUNT(*)
+										  FROM ' + @insert_process_table
+									)
+									
+									SELECT @count_process_data = row_count FROM #temp_count
+									
+									IF @count_process_data <> 0 OR @notify_empty_source = 1
+									BEGIN
+										-- for debugging purpose only
+										IF (ISNULL(@execute_in_queue, 0) = 0 AND (@run_in_debug_mode = 'y' OR @count_tables > 1)) 
 										BEGIN
-											DECLARE @queue_sql NVARCHAR(MAX) = 'EXEC ' + @sql
-
-											DECLARE @process_queue_status NVARCHAR(100)
-											EXEC spa_process_queue	@flag = 'create_process_queue',
-																	@source_id = @ixp_rules_id,
-																	@process_queue_type = 112300,
-																	@queue_sql = @queue_sql,
-																	@process_id = @process_id,
-																	@output_status = @process_queue_status
-											
-											EXEC spa_process_queue @flag = 'create_or_start_queue_job',@output_status = @process_queue_status
+											EXEC(@sql)
 										END
 										ELSE
 										BEGIN
-											DECLARE @count_process_data INT
-											CREATE TABLE #temp_count(row_count INT)
-																						
-											EXEC('INSERT INTO #temp_count
-												  SELECT COUNT(*)
-												  FROM ' + @insert_process_table
-											)
+											IF @execute_in_queue = 1
+											BEGIN
+												DECLARE @queue_sql NVARCHAR(MAX) = 'EXEC ' + @sql
+
+												DECLARE @process_queue_status NVARCHAR(100)
+												EXEC spa_process_queue	@flag = 'create_process_queue',
+																		@source_id = @ixp_rules_id,
+																		@process_queue_type = 112300,
+																		@queue_sql = @queue_sql,
+																		@process_id = @process_id,
+																		@output_status = @process_queue_status
 											
-											SELECT @count_process_data = row_count FROM #temp_count
-											
-											IF @count_process_data <> 0 OR @notify_empty_source = 1
+												EXEC spa_process_queue @flag = 'create_or_start_queue_job',@output_status = @process_queue_status
+											END
+											ELSE
+											BEGIN
 												EXEC spa_run_sp_as_job @job_name,  @sql, 'ImportData', @user_name	
-										END
-									END						
+											END											
+										END	
+									END
 								END
 							END
 							ELSE
