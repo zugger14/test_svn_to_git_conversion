@@ -52,20 +52,23 @@ DECLARE @set_process_id VARCHAR(40)
 SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[final_process_table]''), 0,37))
 
 DECLARE @sql NVARCHAR(1000) =''
-IF OBJECT_ID(''''adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + '''''') IS NOT NULL
-	DROP TABLE adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + ''
-SELECT 
-	temp.short_id,
-	dbo.[FNAGetLOCALTime](interval_start, '' + CAST(@default_code_value AS VARCHAR(10))+ '') term_date,
-	interval_value volume,
-	price_value price
-INTO adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + ''
-FROM [temp_process_table] temp
-WHERE temp.[commodity] = ''''power'''' 
-	AND temp.[load] = ''''shape''''''
+IF OBJECT_ID(''''adiha_process.dbo.temp_enmacc_deal_detail_hour_''+ @set_process_id + '''''') IS NOT NULL
+	DROP TABLE adiha_process.dbo.temp_enmacc_deal_detail_hour_''+ @set_process_id + ''
+	
+SELECT *,  IIF(ROW_NUMBER() OVER (PARTITION BY term_date, short_id ORDER BY term_date) > 1, 1, 0) is_dst
+INTO adiha_process.dbo.temp_enmacc_deal_detail_hour_''+ @set_process_id + ''
+FROM (SELECT 
+    	temp.short_id,
+    	dbo.[FNAGetLOCALTime](interval_start, '' + CAST(@default_code_value AS VARCHAR(10))+ '') term_date,
+    	interval_value volume,
+    	price_value price
+    FROM [temp_process_table] temp
+    WHERE temp.[commodity] = ''''power'''' 
+    	AND temp.[load] = ''''shape''''
+) tbl''
 
 EXEC (@sql)
-	
+
 --change date to local time
 UPDATE t
 SET t.[term_start] = [dbo].[FNAGetLOCALTime](t.[term_start] , @default_code_value) ,
@@ -130,9 +133,17 @@ WHERE gmh.mapping_name = ''ENMACC Counterparty Mapping''
 DECLARE @product_mapping_id INT 
 SELECT  @product_mapping_id = mapping_table_id FROM generic_mapping_header WHERE mapping_name = ''ENMACC Product Mapping''
 
---Index mapping
+--Index , deal volume frequency mapping
 UPDATE t
-	SET t.curve_id = ISNULL(spcd.curve_id,t.curve_id)
+	SET t.curve_id = ISNULL(spcd.curve_id,t.curve_id),
+	t.deal_volume_frequency = COALESCE( CASE gmv.clm6_value WHEN ''x'' THEN ''15 Minutes''
+															   WHEN ''y'' THEN ''30 Minutes''
+															   WHEN ''a'' THEN ''Annually''
+															   WHEN ''d'' THEN ''Daily''
+															   WHEN ''h'' THEN ''Hourly''
+															   WHEN ''m'' THEN ''Monthly''
+															   WHEN ''t'' THEN ''Term''
+										   ELSE NULL END,NULLIF(t.deal_volume_frequency,''''))
 FROM [final_process_table] t
 INNER JOIN source_commodity sc ON sc.commodity_id = t.commodity_id
 INNER JOIN generic_mapping_values gmv
@@ -166,21 +177,6 @@ LEFT JOIN source_minor_location sml
 LEFT JOIN  source_deal_header_template sdht
 	ON sdht.template_id = gmv.clm5_value
 
-UPDATE t
-SET deal_volume_frequency = COALESCE( CASE gmv.clm6_value WHEN ''x'' THEN ''15 Minutes''
-															   WHEN ''y'' THEN ''30 Minutes''
-															   WHEN ''a'' THEN ''Annually''
-															   WHEN ''d'' THEN ''Daily''
-															   WHEN ''h'' THEN ''Hourly''
-															   WHEN ''m'' THEN ''Monthly''
-															   WHEN ''t'' THEN ''Term''
-										   ELSE NULL END,NULLIF(t.deal_volume_frequency,''''))
-FROM [final_process_table] t
-INNER JOIN source_deal_header_template sdht
-	ON sdht.template_name = t.template_id
-LEFT JOIN generic_mapping_values gmv 
-	ON  gmv.mapping_table_id = @product_mapping_id
-    AND gmv.clm5_value = sdht.template_id
 
 
 DECLARE @block_mapping_id INT 
@@ -228,7 +224,8 @@ CREATE TABLE #temp_final_deal_detail_hour (
 	term_date DATETIME,
 	hour VARCHAR(20),
 	volume FLOAT,
-	price FLOAT 
+	price FLOAT,
+	is_dst BIT
 )
 
 IF OBJECT_ID (N''tempdb..#temp_deal_day_hour'') IS NOT NULL  
@@ -241,37 +238,42 @@ CREATE TABLE #temp_deal_day_hour (
 	t_min INT,
 	t_day_hour  VARCHAR(20),
 	t_volume FLOAT,
-	t_price FLOAT 
+	t_price FLOAT,
+	is_dst BIT
 )
 
 -- insert into temp table to check if it is hourly or 15 min deal
-EXEC(''
-    INSERT INTO #temp_deal_day_hour(t_short_id, t_term_date, t_hr, t_min, t_day_hour, t_volume, t_price)
+DECLARE @_sql NVARCHAR(2000)
+SET @_sql = ''
+    INSERT INTO #temp_deal_day_hour(t_short_id, t_term_date, t_hr, t_min, t_day_hour, t_volume, t_price, is_dst)
     SELECT td.short_id
     , term_date
     , DATEPART(HOUR, term_date) +1 t_hr
     , DATEPART(MINUTE, term_date) t_min
-    , CAST(DATEPART(DAY, term_date) AS VARCHAR(10)) +'':''+ CAST(DATEPART(HOUR, term_date) +1 AS VARCHAR(10)) t_day_hour
+    , CAST(DATEPART(DAY, term_date) AS VARCHAR(10)) +'''':''''+ CAST(DATEPART(HOUR, term_date) +1 AS VARCHAR(10)) t_day_hour
     , MAX(volume) t_volume
     , MAX(price) t_price 
-    FROM  adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id+''  td 
-    GROUP BY  short_id, term_date 
-'')
+    , td.is_dst
+    FROM  adiha_process.dbo.temp_enmacc_deal_detail_hour_''+ @set_process_id+''  td 
+    GROUP BY  short_id, term_date , is_dst
+''
+EXEC(@_sql)
 
 INSERT INTO #temp_final_deal_detail_hour (
 	short_id ,
 	term_date ,
 	hour ,
 	volume ,
-	price 
+	price ,
+	is_dst
 )
-SELECT a.t_short_id, CAST(a.t_term_date AS DATE) term_date, FORMAT(a.t_hr,''00'',''en-US'') + '':'' + FORMAT(a.t_min ,''00'',''en-US'') [hour] ,a.t_volume, a.t_price 
+SELECT a.t_short_id, CAST(a.t_term_date AS DATE) term_date, FORMAT(a.t_hr,''00'',''en-US'') + '':'' + FORMAT(a.t_min ,''00'',''en-US'') [hour] ,a.t_volume, a.t_price, a.is_dst
 FROM #temp_deal_day_hour a 
 WHERE a.t_short_id NOT IN ( SELECT DISTINCT t_short_id FROM #temp_deal_day_hour GROUP BY t_short_id, t_day_hour  HAVING count(t_day_hour) = 1)  --15 min deal
 
 UNION 
 -- hourly deal
-SELECT a.t_short_id, CAST(a.t_term_date AS DATE) term_date , FORMAT(a.t_hr,''00'',''en-US'')+'':''+FORMAT(b.minn,''00'',''en-US'') [hour], CAST(a.t_volume AS FLOAT)/4 volume , a.t_price price
+SELECT a.t_short_id, CAST(a.t_term_date AS DATE) term_date , FORMAT(a.t_hr,''00'',''en-US'')+'':''+FORMAT(b.minn,''00'',''en-US'') [hour], CAST(a.t_volume AS FLOAT)/4 volume , a.t_price price, a.is_dst
 FROM #b b
 CROSS JOIN #temp_deal_day_hour a 
 WHERE a.t_short_id IN ( SELECT DISTINCT t_short_id FROM #temp_deal_day_hour GROUP BY t_short_id, t_day_hour  HAVING count(t_day_hour) = 1) 
@@ -288,14 +290,14 @@ INSERT INTO source_deal_detail_hour (source_deal_detail_id, term_date, hr, is_ds
 SELECT  sdd.source_deal_detail_id, 
 	td.term_date,
 	td.[hour] hr,
-	0 is_dst,
+	td.is_dst,
 	MAX(td.volume) volume,
 	987 granularity,
 	MAX(td.price) price 
 FROM #temp_final_deal_detail_hour td 
 INNER JOIN source_deal_header sdh ON sdh.deal_id = td.short_id
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id 
-GROUP BY sdd.source_deal_detail_id, td.term_date, td.[hour]
+GROUP BY sdd.source_deal_detail_id, td.term_date, td.[hour], td.is_dst
 ',
 					'i' ,
 					'n' ,
@@ -334,20 +336,23 @@ DECLARE @set_process_id VARCHAR(40)
 SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[final_process_table]''), 0,37))
 
 DECLARE @sql NVARCHAR(1000) =''
-IF OBJECT_ID(''''adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + '''''') IS NOT NULL
-	DROP TABLE adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + ''
-SELECT 
-	temp.short_id,
-	dbo.[FNAGetLOCALTime](interval_start, '' + CAST(@default_code_value AS VARCHAR(10))+ '') term_date,
-	interval_value volume,
-	price_value price
-INTO adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id + ''
-FROM [temp_process_table] temp
-WHERE temp.[commodity] = ''''power'''' 
-	AND temp.[load] = ''''shape''''''
+IF OBJECT_ID(''''adiha_process.dbo.temp_enmacc_deal_detail_hour_''+ @set_process_id + '''''') IS NOT NULL
+	DROP TABLE adiha_process.dbo.temp_enmacc_deal_detail_hour_''+ @set_process_id + ''
+	
+SELECT *,  IIF(ROW_NUMBER() OVER (PARTITION BY term_date, short_id ORDER BY term_date) > 1, 1, 0) is_dst
+INTO adiha_process.dbo.temp_enmacc_deal_detail_hour_''+ @set_process_id + ''
+FROM (SELECT 
+    	temp.short_id,
+    	dbo.[FNAGetLOCALTime](interval_start, '' + CAST(@default_code_value AS VARCHAR(10))+ '') term_date,
+    	interval_value volume,
+    	price_value price
+    FROM [temp_process_table] temp
+    WHERE temp.[commodity] = ''''power'''' 
+    	AND temp.[load] = ''''shape''''
+) tbl''
 
 EXEC (@sql)
-	
+
 --change date to local time
 UPDATE t
 SET t.[term_start] = [dbo].[FNAGetLOCALTime](t.[term_start] , @default_code_value) ,
@@ -412,9 +417,17 @@ WHERE gmh.mapping_name = ''ENMACC Counterparty Mapping''
 DECLARE @product_mapping_id INT 
 SELECT  @product_mapping_id = mapping_table_id FROM generic_mapping_header WHERE mapping_name = ''ENMACC Product Mapping''
 
---Index mapping
+--Index , deal volume frequency mapping
 UPDATE t
-	SET t.curve_id = ISNULL(spcd.curve_id,t.curve_id)
+	SET t.curve_id = ISNULL(spcd.curve_id,t.curve_id),
+	t.deal_volume_frequency = COALESCE( CASE gmv.clm6_value WHEN ''x'' THEN ''15 Minutes''
+															   WHEN ''y'' THEN ''30 Minutes''
+															   WHEN ''a'' THEN ''Annually''
+															   WHEN ''d'' THEN ''Daily''
+															   WHEN ''h'' THEN ''Hourly''
+															   WHEN ''m'' THEN ''Monthly''
+															   WHEN ''t'' THEN ''Term''
+										   ELSE NULL END,NULLIF(t.deal_volume_frequency,''''))
 FROM [final_process_table] t
 INNER JOIN source_commodity sc ON sc.commodity_id = t.commodity_id
 INNER JOIN generic_mapping_values gmv
@@ -448,21 +461,6 @@ LEFT JOIN source_minor_location sml
 LEFT JOIN  source_deal_header_template sdht
 	ON sdht.template_id = gmv.clm5_value
 
-UPDATE t
-SET deal_volume_frequency = COALESCE( CASE gmv.clm6_value WHEN ''x'' THEN ''15 Minutes''
-															   WHEN ''y'' THEN ''30 Minutes''
-															   WHEN ''a'' THEN ''Annually''
-															   WHEN ''d'' THEN ''Daily''
-															   WHEN ''h'' THEN ''Hourly''
-															   WHEN ''m'' THEN ''Monthly''
-															   WHEN ''t'' THEN ''Term''
-										   ELSE NULL END,NULLIF(t.deal_volume_frequency,''''))
-FROM [final_process_table] t
-INNER JOIN source_deal_header_template sdht
-	ON sdht.template_name = t.template_id
-LEFT JOIN generic_mapping_values gmv 
-	ON  gmv.mapping_table_id = @product_mapping_id
-    AND gmv.clm5_value = sdht.template_id
 
 
 DECLARE @block_mapping_id INT 
@@ -510,7 +508,8 @@ CREATE TABLE #temp_final_deal_detail_hour (
 	term_date DATETIME,
 	hour VARCHAR(20),
 	volume FLOAT,
-	price FLOAT 
+	price FLOAT,
+	is_dst BIT
 )
 
 IF OBJECT_ID (N''tempdb..#temp_deal_day_hour'') IS NOT NULL  
@@ -523,37 +522,42 @@ CREATE TABLE #temp_deal_day_hour (
 	t_min INT,
 	t_day_hour  VARCHAR(20),
 	t_volume FLOAT,
-	t_price FLOAT 
+	t_price FLOAT,
+	is_dst BIT
 )
 
 -- insert into temp table to check if it is hourly or 15 min deal
-EXEC(''
-    INSERT INTO #temp_deal_day_hour(t_short_id, t_term_date, t_hr, t_min, t_day_hour, t_volume, t_price)
+DECLARE @_sql NVARCHAR(2000)
+SET @_sql = ''
+    INSERT INTO #temp_deal_day_hour(t_short_id, t_term_date, t_hr, t_min, t_day_hour, t_volume, t_price, is_dst)
     SELECT td.short_id
     , term_date
     , DATEPART(HOUR, term_date) +1 t_hr
     , DATEPART(MINUTE, term_date) t_min
-    , CAST(DATEPART(DAY, term_date) AS VARCHAR(10)) +'':''+ CAST(DATEPART(HOUR, term_date) +1 AS VARCHAR(10)) t_day_hour
+    , CAST(DATEPART(DAY, term_date) AS VARCHAR(10)) +'''':''''+ CAST(DATEPART(HOUR, term_date) +1 AS VARCHAR(10)) t_day_hour
     , MAX(volume) t_volume
     , MAX(price) t_price 
-    FROM  adiha_process.dbo.temp_enmac_deal_detail_hour_''+ @set_process_id+''  td 
-    GROUP BY  short_id, term_date 
-'')
+    , td.is_dst
+    FROM  adiha_process.dbo.temp_enmacc_deal_detail_hour_''+ @set_process_id+''  td 
+    GROUP BY  short_id, term_date , is_dst
+''
+EXEC(@_sql)
 
 INSERT INTO #temp_final_deal_detail_hour (
 	short_id ,
 	term_date ,
 	hour ,
 	volume ,
-	price 
+	price ,
+	is_dst
 )
-SELECT a.t_short_id, CAST(a.t_term_date AS DATE) term_date, FORMAT(a.t_hr,''00'',''en-US'') + '':'' + FORMAT(a.t_min ,''00'',''en-US'') [hour] ,a.t_volume, a.t_price 
+SELECT a.t_short_id, CAST(a.t_term_date AS DATE) term_date, FORMAT(a.t_hr,''00'',''en-US'') + '':'' + FORMAT(a.t_min ,''00'',''en-US'') [hour] ,a.t_volume, a.t_price, a.is_dst
 FROM #temp_deal_day_hour a 
 WHERE a.t_short_id NOT IN ( SELECT DISTINCT t_short_id FROM #temp_deal_day_hour GROUP BY t_short_id, t_day_hour  HAVING count(t_day_hour) = 1)  --15 min deal
 
 UNION 
 -- hourly deal
-SELECT a.t_short_id, CAST(a.t_term_date AS DATE) term_date , FORMAT(a.t_hr,''00'',''en-US'')+'':''+FORMAT(b.minn,''00'',''en-US'') [hour], CAST(a.t_volume AS FLOAT)/4 volume , a.t_price price
+SELECT a.t_short_id, CAST(a.t_term_date AS DATE) term_date , FORMAT(a.t_hr,''00'',''en-US'')+'':''+FORMAT(b.minn,''00'',''en-US'') [hour], CAST(a.t_volume AS FLOAT)/4 volume , a.t_price price, a.is_dst
 FROM #b b
 CROSS JOIN #temp_deal_day_hour a 
 WHERE a.t_short_id IN ( SELECT DISTINCT t_short_id FROM #temp_deal_day_hour GROUP BY t_short_id, t_day_hour  HAVING count(t_day_hour) = 1) 
@@ -570,14 +574,14 @@ INSERT INTO source_deal_detail_hour (source_deal_detail_id, term_date, hr, is_ds
 SELECT  sdd.source_deal_detail_id, 
 	td.term_date,
 	td.[hour] hr,
-	0 is_dst,
+	td.is_dst,
 	MAX(td.volume) volume,
 	987 granularity,
 	MAX(td.price) price 
 FROM #temp_final_deal_detail_hour td 
 INNER JOIN source_deal_header sdh ON sdh.deal_id = td.short_id
 INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id 
-GROUP BY sdd.source_deal_detail_id, td.term_date, td.[hour]
+GROUP BY sdd.source_deal_detail_id, td.term_date, td.[hour], td.is_dst
 '
 				, import_export_flag = 'i'
 				, ixp_owner = @admin_user
