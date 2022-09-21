@@ -3013,7 +3013,7 @@ $formula_form_data = '[
         if (shipper_code1_index) {
             var shipper_code1_combo = dealDetail.grid.cells(rId, shipper_code1_index).getCellCombo();           
             default_value_shipper1 = dealDetail.grid.cells(rId, shipper_code1_index).getValue();
-            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id,  "template_id": template_id, "counterparty_id": counterparty_id, "location_id": location_id,  "deal_fields": 'shipper_code1', "term_start": term_start, "default_value":default_value_shipper1, "contract_id" : contract_id, "buy_sell_flag" : buy_sell_flag};
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id,  "template_id": template_id, "counterparty_id": counterparty_id, "location_id": location_id,  "deal_fields": 'shipper_code1', "term_start": term_start, "default_value":default_value_shipper1, "contract_id" : contract_id, "buy_sell_flag" : buy_sell_flag, "load_default": insert_mode == 1 || deal_id != 'NULL' ? 1 : 0 || copy_insert_mode == 'y' ? 1 : 0};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             dealDetail.grid.cells(rId, shipper_code1_index).setValue('');
@@ -3036,7 +3036,7 @@ $formula_form_data = '[
         if (shipper_code2_index) {
             var shipper_code2_combo = dealDetail.grid.cells(rId, shipper_code2_index).getCellCombo();           
             default_value_shipper2 = dealDetail.grid.cells(rId, shipper_code2_index).getValue();  
-            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id,  "template_id": template_id, "counterparty_id": counterparty_id, "location_id": location_id,  "deal_fields": 'shipper_code2', "term_start": term_start, "default_value":default_value_shipper2, "contract_id" : contract_id, "buy_sell_flag" : buy_sell_flag};
+            var cm_param = {"action": "spa_deal_fields_mapping", "call_from": "grid", "flag": "s", "deal_id": deal_id,  "template_id": template_id, "counterparty_id": counterparty_id, "location_id": location_id,  "deal_fields": 'shipper_code2', "term_start": term_start, "default_value":default_value_shipper2, "contract_id" : contract_id, "buy_sell_flag" : buy_sell_flag, "load_default": insert_mode == 1 || deal_id != 'NULL' ? 1 : 0 ||  copy_insert_mode == 'y' ? 1 : 0};
             cm_param = $.param(cm_param);
             var url = js_dropdown_connector_url + '&' + cm_param;
             dealDetail.grid.cells(rId, shipper_code2_index).setValue('');

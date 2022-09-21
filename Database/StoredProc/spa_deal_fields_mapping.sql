@@ -52,7 +52,8 @@ CREATE PROCEDURE [dbo].[spa_deal_fields_mapping]
 	@sub_book_id INT = NULL,
 	@term_start DATETIME = NULL,
 	@contract_id INT = NULL,
-	@buy_sell_flag NCHAR(1) = NULL
+	@buy_sell_flag NCHAR(1) = NULL,
+	@load_default BIT = 1
 AS
 /*------------------Debug Section------------------
 DECLARE @flag NCHAR(1),
@@ -1080,7 +1081,7 @@ BEGIN
 		AND (
 			(MONTH(scmd.effective_date) <= MONTH(@term_start) AND YEAR(scmd.effective_date) <= YEAR(@term_start) )
 			OR (YEAR(scmd.effective_date) < YEAR(@term_start) AND scmd.effective_date < @term_start) 
-		)
+		) AND scmd.is_default = 'y'
 
 		DECLARE @dup_shipper_code NVARCHAR(200), @effective_date DATETIME
 		DECLARE remove_duplicate CURSOR FOR
@@ -1206,9 +1207,18 @@ BEGIN
 		END
 	END
 	
-	UPDATE #temp_combo
-	SET selected = 'true'
-	WHERE value = ISNULL(@default_value, @shipper_default_value)
+	IF @load_default = 1
+	BEGIN
+		UPDATE #temp_combo
+		SET selected = 'true'
+		WHERE value = @default_value
+	END
+	ELSE IF @load_default = 0
+	BEGIN
+		UPDATE #temp_combo
+		SET selected = 'true'
+		WHERE value = ISNULL(@default_value, @shipper_default_value)
+	END
 
 	IF @flag = 'v'
 	BEGIN

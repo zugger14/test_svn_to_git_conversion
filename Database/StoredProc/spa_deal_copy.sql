@@ -42,6 +42,9 @@ CREATE PROCEDURE [dbo].[spa_deal_copy]
 AS
 
 /*---------------------Debug Section---------------------------
+EXEC sys.sp_set_session_context @key = N'DB_USER', @value = 'bkarki';
+exec spa_drop_all_temp_table
+
 DECLARE @flag NCHAR(1),
 		@copy_deal_id INT = NULL,    
 		@header_xml XML = NULL,
@@ -55,9 +58,26 @@ DECLARE @flag NCHAR(1),
 		@deal_price_data_process_id NVARCHAR(100) = NULL,
 		@deal_provisional_price_data_process_id NVARCHAR(100) = NULL
 
-SELECT 
-@flag='s',@copy_deal_id='225111',@header_xml='<Root><FormXML  source_deal_header_id="" sub_book="3758" header_buy_sell_flag="b" deal_id="COPY_225111" deal_date="2019-09-13" trader_id="2284" counterparty_id="7683" contract_id="12480" 
-entire_term_start="2019-04-01" entire_term_end="2019-04-30" deal_status="5604" confirm_status_type="17200" governing_law="" UDF___2875="n" UDF___2876="" UDF___2877="" UDF___2878="" UDF___2879="" source_system_book_id1="4781" source_system_book_id2="-2" source_system_book_id3="-3" source_system_book_id4="-4" fas_deal_type_value_id="400" template_id="2799" source_deal_type_id="1171" commodity_id="2435" physical_financial_flag="p" pricing_type="46702" internal_deal_subtype_value_id="" internal_desk_id="17300" profile_granularity="" confirmation_type="" confirmation_template="" counterparty_id2="" counterparty2_trader="" internal_counterparty="7648" description1="" description2="" description3="test3343tttrrrreee" description4="" deal_locked="" counterparty_trader="" pricing="" holiday_calendar="" payment_term="" payment_days="" fx_conversion_market="" create_ts="2019-09-14 01:10:00" create_user="Runaj  Khatiwada" update_ts="2019-09-14 01:12:00" update_user="Runaj  Khatiwada"></FormXML></Root>',@detail_xml='<GridXML><GridRow row_id="1" is_break="n"  deal_group=" deamnd - NYMEX - 04/01/2019 - 04/30/2019" group_id="223184" detail_flag="0" blotterleg="1" source_deal_detail_id="NEW_1_76D263A7DD" lock_deal_detail="n" detail_commodity_id="2435" buyer_seller_option="40402" deal_volume="1000" detail_inco_terms="" fixed_price_currency_id="1" position_uom="1082" total_volume="30000" term_start="2019-04-01" term_end="2019-04-30" curve_id="7078" deal_volume_frequency="d" deal_volume_uom_id="1082" location_id="2749" UDF___1613="" UDF___1612=""></GridRow></GridXML>',@header_cost_xml=NULL,@header_cost_process_id='',@pricing_process_id='E25A279F_331C_43D0_AFF9_A8EF587B87A0',@shaped_process_id='768E6DE4_3AB2_4AD1_AAAF_9C68150FC97D',@environment_process_id='',@certificate_process_id='',@deal_price_data_process_id='C00A17B3_4C04_4D65_90E5_85FC32DAC021',@deal_provisional_price_data_process_id='F0516F03_CC53_40CD_919F_22EF4357DB11'
+SELECT @flag = 's', @copy_deal_id = '105710', @header_xml = '<Root><FormXML  UDF___-1495="" ext_deal_id="" reference="" close_reference_id="" confirmation_type="" confirmation_template="" counterparty_id2="" counterparty2_trader="" internal_counterparty="" description1="" description2="" description3="" description4="" create_user="Shekhar  Ghimire" create_ts="2020-11-16 11:53:00" update_user="Bijan  Karki" update_ts="2021-11-22 06:31:00" sub_book="12" header_buy_sell_flag="b" deal_id="COPY_105710" deal_date="2020-10-09" counterparty_id="7715" trader_id="1206" contract_id="8210" entire_term_start="2020-11-01" entire_term_end="2021-12-31" broker_id="" block_define_id="" deal_status="5606" confirm_status_type="17200" deal_category_value_id="475" deal_locked="y" reporting_group1="" reporting_group2="" reporting_group3="" UDF___1759="" reporting_group4="" reporting_group5="" UDF___1342="" UDF___1958="" UDF___1959="" UDF___1953="" UDF___1346="" UDF___1760="" UDF___1761="" UDF___1762="" UDF___1763="" pricing="" fx_conversion_market="" payment_term="" payment_days="" template_id="2751" source_deal_type_id="2288" deal_sub_type_type_id="" internal_desk_id="17302" commodity_id="" pricing_type="46701" physical_financial_flag="p" granularity_id="" internal_portfolio_id="" profile_granularity="987" UDF___1796="" UDF___1722=""></FormXML></Root>', @detail_xml = '<GridXML>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="1" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_1109750ABA" lock_deal_detail="n" term_start="2020-11-01" term_end="2020-11-30" location_id="2848" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="-121.5076" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="9113.0664" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="" shipper_code2="" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="2" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_0FBDD9A5DC" lock_deal_detail="n" term_start="2020-12-01" term_end="2020-12-31" location_id="2848" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="" shipper_code2="" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="3" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_222F270B4C" lock_deal_detail="n" term_start="2021-01-01" term_end="2021-01-31" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="-305.1755" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="37231.4134" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="4" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_3451AF0C0E" lock_deal_detail="n" term_start="2021-02-01" term_end="2021-02-28" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="1520.4754" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="109474.2302" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="5" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_646A45B9F9" lock_deal_detail="n" term_start="2021-03-01" term_end="2021-03-31" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="1234.2451" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="88865.647" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="6" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_E5F137C30D" lock_deal_detail="n" term_start="2021-04-01" term_end="2021-04-30" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="1131.4864" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="108622.6957" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="7" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_5563D928DA" lock_deal_detail="n" term_start="2021-05-01" term_end="2021-05-31" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="8" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_6F042421EB" lock_deal_detail="n" term_start="2021-06-01" term_end="2021-06-30" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="9" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_AE29773A69" lock_deal_detail="n" term_start="2021-07-01" term_end="2021-07-31" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="10" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_E97874DE23" lock_deal_detail="n" term_start="2021-08-01" term_end="2021-08-31" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="11" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_1331C577D2" lock_deal_detail="n" term_start="2021-09-01" term_end="2021-09-30" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="12" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_7DAC158EA4" lock_deal_detail="n" term_start="2021-10-01" term_end="2021-10-31" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="1644.4953" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="41112.3813" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="13" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_BC3EED47E4" lock_deal_detail="n" term_start="2021-11-01" term_end="2021-11-30" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="1152.2829" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="27654.7907" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+	<GridRow row_id="1" is_break="n" deal_group="01.11.2021 - 31.12.2021" group_id="14" detail_flag="1" blotterleg="1" source_deal_detail_id="NEW_1_FA6F9957A3" lock_deal_detail="n" term_start="2021-12-01" term_end="2021-12-31" location_id="2855" profile_id="" meter_id="" curve_id="7227" upstream_counterparty="" upstream_contract="" deal_volume="" multiplier="" actual_volume="" deal_volume_uom_id="1158" deal_volume_frequency="x" total_volume="" position_uom="1159" fixed_price="" formula_curve_id="" price_adder="" formula_id="" fixed_price_currency_id="1109" fx_conversion_rate="" physical_financial_flag="p" Leg="1" cycle="" schedule_volume="" detail_commodity_id="123" settlement_date="" shipper_code1="729" shipper_code2="729" UDF___1919=""/>
+</GridXML>', @header_cost_xml = '<GridXML><GridRow  
+seq_no="0"  cost_id="270" cost_name="Commodity Energy Tax" internal_field_type_id="18745" internal_field_type="Energy Tax" udf_value="67" currency_id="" uom_id="" 
+counterparty_id="" contract_id="" receive_pay="" udf_field_type="w" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days="" fixed_fx_rate=""></GridRow><GridRow  seq_no="1"  cost_id="271" cost_name="Positive Price Commodity VAT" internal_field_type_id="18744" internal_field_type="VAT" udf_value="65" currency_id="" uom_id="" counterparty_id="" contract_id="" receive_pay="" udf_field_type="w" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days="" fixed_fx_rate=""></GridRow><GridRow  seq_no="2"  cost_id="272" cost_name="Negative Price Commodity VAT" internal_field_type_id="18744" internal_field_type="VAT" udf_value="66" currency_id="" uom_id="" counterparty_id="" contract_id="" receive_pay="" udf_field_type="w" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days="" fixed_fx_rate=""></GridRow><GridRow  seq_no="3"  cost_id="-1742" cost_name="Clearing Fees" internal_field_type_id="18700" internal_field_type="Position based fee" udf_value="" currency_id="" uom_id="" counterparty_id="" contract_id="" receive_pay="" udf_field_type="t" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days="" fixed_fx_rate=""></GridRow><GridRow  seq_no="4"  cost_id="-1856" cost_name="Transportation Fees" internal_field_type_id="18730" internal_field_type="Fees" udf_value="" currency_id="" uom_id="" counterparty_id="" contract_id="" receive_pay="" udf_field_type="t" settlement_date="" settlement_calendar="" settlement_days="" payment_date="" payment_calendar="" payment_days="" fixed_fx_rate=""></GridRow></GridXML>', @header_cost_process_id = 'EFCE22A3_6B91_4A21_A6DA_1E7F8DF54D28', @pricing_process_id = '', @shaped_process_id = 'A48EAA1B_C357_42BD_B0E3_C32AB62B68B5', @environment_process_id = '', @certificate_process_id = '', @deal_price_data_process_id = 'D9923478_4266_45FD_BCDF_BC7CE2D2055A', @deal_provisional_price_data_process_id = 'E1EC93A4_FF19_4AC4_AC25_394F9EB5C510'
+
+
 ----------------------------------------------------------------------------*/
 SET NOCOUNT ON
 DECLARE @SQL NVARCHAR(MAX)
@@ -489,7 +509,9 @@ BEGIN
 			'apply_to_all_legs',
 			'deal_volume_frequency',
 			'deal_volume_uom_id',
-			'total_volume'
+			'total_volume',
+			'shipper_code1',
+			'shipper_code2'
 		)
 		
 		IF OBJECT_ID('tempdb..#temp_source_deal_detail') IS NOT NULL
@@ -498,7 +520,7 @@ BEGIN
 		CREATE TABLE #temp_source_deal_detail (
 			sno INT IDENTITY(1,1)
 		)		
-		SET @sql = ' ALTER TABLE #temp_source_deal_detail ADD ' + @detail_create_list + ', detail_flag INT, leg INT, source_deal_header_id INT, group_id INT, group_name NVARCHAR(1000)  COLLATE DATABASE_DEFAULT, contract_expiration_date DATETIME, buy_sell_flag NCHAR(1) COLLATE DATABASE_DEFAULT  , fixed_float_leg NCHAR(1)  COLLATE DATABASE_DEFAULT, deal_volume_frequency NCHAR(1) COLLATE DATABASE_DEFAULT, deal_volume_uom_id INT  ' + @udf_create
+		SET @sql = ' ALTER TABLE #temp_source_deal_detail ADD ' + @detail_create_list + ', detail_flag INT, leg INT, source_deal_header_id INT, group_id INT, group_name NVARCHAR(1000)  COLLATE DATABASE_DEFAULT, contract_expiration_date DATETIME, buy_sell_flag NCHAR(1) COLLATE DATABASE_DEFAULT  , fixed_float_leg NCHAR(1)  COLLATE DATABASE_DEFAULT, deal_volume_frequency NCHAR(1) COLLATE DATABASE_DEFAULT, deal_volume_uom_id INT,  shipper_code1 NVARCHAR(25) COLLATE DATABASE_DEFAULT, shipper_code2 NVARCHAR(25) COLLATE DATABASE_DEFAULT' + @udf_create
 		--PRINT(@sql)
 		EXEC(@sql)
 		
@@ -883,7 +905,11 @@ BEGIN
 				@deal_volume_frequency_column NVARCHAR(50),
 				@deal_volume_frequency_value NVARCHAR(MAX),
 				@deal_volume_uom_id_column NVARCHAR(50),
-				@deal_volume_uom_id_value NVARCHAR(MAX)
+				@deal_volume_uom_id_value NVARCHAR(MAX),
+				@shipper_code1_column NVARCHAR(50),
+				@shipper_code1_value NVARCHAR(50),
+				@shipper_code2_column NVARCHAR(50),
+				@shipper_code2_value NVARCHAR(50)
 
 		IF ISNULL(CHARINDEX('contract_expiration_date', @detail_final_insert_list), 0) = 0 AND ISNULL(CHARINDEX('contract_expiration_date', @detail_final_SELECT_list), 0) = 0
  		BEGIN
@@ -897,6 +923,18 @@ BEGIN
 			SET @buy_sell_value = ', COALESCE(temp.buy_sell_flag, sdd.buy_sell_flag, ''' + @original_deal_buy_sell_flag + ''', sddt.buy_sell_flag)'
  		END
 
+		IF ISNULL(CHARINDEX('shipper_code1', @detail_final_insert_list), 0) = 0 
+ 		BEGIN
+ 			SET @shipper_code1_column = ', shipper_code1'
+			SET @shipper_code1_value = ', ISNULL(temp.shipper_code1, sddt.shipper_code1)'
+ 		END
+
+		IF ISNULL(CHARINDEX('shipper_code2', @detail_final_insert_list), 0) = 0 
+ 		BEGIN
+ 			SET @shipper_code2_column = ', shipper_code2'
+			SET @shipper_code2_value = ', ISNULL(temp.shipper_code2, sddt.shipper_code2)'
+ 		END
+		
 		IF ISNULL(CHARINDEX('fixed_float_leg', @detail_final_insert_list), 0) = 0 AND ISNULL(CHARINDEX('fixed_float_leg', @detail_final_SELECT_list), 0) = 0
  		BEGIN
  			SET @fixed_float_leg_column = ', fixed_float_leg'
@@ -942,6 +980,8 @@ BEGIN
 				+ ISNULL(@fixed_float_leg_column, '')
 				+ ISNULL(@deal_volume_frequency_column, '')
 				+ ISNULL(@deal_volume_uom_id_column, '')
+				+ ISNULL(@shipper_code1_column, '') 
+				+ ISNULL(@shipper_code2_column, '') 
 				+'
 			)
 			OUTPUT INSERTED.source_deal_header_id, INSERTED.source_deal_detail_id, INSERTED.leg, INSERTED.term_start, INSERTED.term_end INTO #temp_inserted_sdd (source_deal_header_id, source_deal_detail_id, leg, term_start, term_end)
@@ -950,7 +990,9 @@ BEGIN
 						+ ISNULL(@buy_sell_value, '') 
 						+ ISNULL(@fixed_float_leg_value, '') 
 						+ ISNULL(@deal_volume_frequency_value, '') 
-						+ ISNULL(@deal_volume_uom_id_value, '') 
+						+ ISNULL(@deal_volume_uom_id_value, '')
+						+ ISNULL(@shipper_code1_value, '') 
+						+ ISNULL(@shipper_code2_value, '') 
 						+ '
 			FROM #temp_source_deal_detail temp			
 			OUTER APPLY ( 
