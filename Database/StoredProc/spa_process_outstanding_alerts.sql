@@ -634,10 +634,11 @@ BEGIN
 					@component_id INT,
 					@file_option_type NCHAR(1),
 					@attachment_file_name NVARCHAR(200),
-					@alert_source_id INT
+					@alert_source_id INT,
+					@report_sortby NVARCHAR(500)
 			DECLARE email_report_cursor CURSOR FOR  
-			SELECT ar.alert_reports_id,ar.report_writer,ar.paramset_hash,ISNULL(trp.report_params,ar.report_param),rps.report_paramset_id,rpt.report_page_tablix_id, ISNULL(NULLIF(ar.file_option_type, ''), 'r'), ar.report_desc, wa_sid.source_id
-			FROM alert_reports ar
+			SELECT ar.alert_reports_id,ar.report_writer,ar.paramset_hash,ISNULL(trp.report_params,ar.report_param),rps.report_paramset_id,rpt.report_page_tablix_id, ISNULL(NULLIF(ar.file_option_type, ''), 'r'), ar.report_desc, wa_sid.source_id,  IIF(CHARINDEX('ORDER BY ', ar.report_where_clause) > 0, SUBSTRING(ar.report_where_clause, CHARINDEX('ORDER BY ', ar.report_where_clause), LEN(ar.report_where_clause)), NULL)
+		    FROM alert_reports ar
 			LEFT JOIN report_paramset rps ON ar.paramset_hash = rps.paramset_hash
 			LEFT JOIN report_page_tablix rpt ON rpt.page_id = rps.page_id
 			LEFT JOIN #temp_report_params trp ON ar.alert_reports_id = trp.alert_report_id
@@ -647,7 +648,7 @@ BEGIN
 			--LEFT JOIN workflow_activities wa ON wa.event_message_id  = ar.event_message_id 
 			WHERE ar.event_message_id = @event_message_id AND (report_writer = 'n' OR report_writer ='a' OR report_writer ='y') --AND wa.process_id = @process_id
 			OPEN email_report_cursor;
-			FETCH NEXT FROM email_report_cursor INTO @alert_reports_id,@report_writer,@paramset_hash,@report_param,@report_paramset_id,@component_id,@file_option_type,@attachment_file_name,@alert_source_id
+			FETCH NEXT FROM email_report_cursor INTO @alert_reports_id,@report_writer,@paramset_hash,@report_param,@report_paramset_id,@component_id,@file_option_type,@attachment_file_name,@alert_source_id, @report_sortby
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
 				DECLARE @html_string NVARCHAR(MAX),
@@ -681,7 +682,7 @@ BEGIN
 				IF @report_writer IN('n', 'y', 'a') AND @file_option_type IN('b', 'r')
 				BEGIN
 					--creates the html string of process table datas 
-					EXEC spa_create_html_table @report_table, NULL, @html_string OUTPUT
+					EXEC spa_create_html_table @report_table, @report_sortby, @html_string OUTPUT
 				END
 				IF @report_writer IN('n', 'y', 'a') AND @file_option_type IN('b', 'f')
 				BEGIN
@@ -702,7 +703,7 @@ BEGIN
 					EXEC('DROP TABLE ' + @report_table)
 
 				SELECT @report_html = COALESCE(@report_html + ' <br />', '') + @html_string
-				FETCH NEXT FROM email_report_cursor INTO @alert_reports_id,@report_writer,@paramset_hash,@report_param,@report_paramset_id,@component_id,@file_option_type,@attachment_file_name,@alert_source_id;
+				FETCH NEXT FROM email_report_cursor INTO @alert_reports_id,@report_writer,@paramset_hash,@report_param,@report_paramset_id,@component_id,@file_option_type,@attachment_file_name,@alert_source_id, @report_sortby
 			END
 			CLOSE email_report_cursor
 			DEALLOCATE email_report_cursor
