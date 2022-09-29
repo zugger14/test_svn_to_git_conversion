@@ -494,6 +494,10 @@ SET deal_date = CAST(deal_date AS DATE),
 									 THEN deal_date
 								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' AND DATEPART(dw, temp.deal_date) = 1 THEN DATEADD(dd, 7,deal_date)
 							    WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday''  THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
+						        WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''W/END'' AND DATEPART(dw, temp.deal_date) = 7 AND DATEPART(hour,temp.deal_date) < 3
+										THEN deal_date
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''W/END'' AND DATEPART(dw, temp.deal_date) = 7 THEN DATEADD(dd, 8,deal_date)
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''W/END'' THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
 						  ELSE term_end END
 					 AS DATE)
 FROM [final_process_table] temp
@@ -1309,6 +1313,10 @@ SET deal_date = CAST(deal_date AS DATE),
 									 THEN deal_date
 								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday'' AND DATEPART(dw, temp.deal_date) = 1 THEN DATEADD(dd, 7,deal_date)
 							    WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''Sunday''  THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
+						        WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''W/END'' AND DATEPART(dw, temp.deal_date) = 7 AND DATEPART(hour,temp.deal_date) < 3
+										THEN deal_date
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''W/END'' AND DATEPART(dw, temp.deal_date) = 7 THEN DATEADD(dd, 8,deal_date)
+								WHEN ISNULL(t1.FirstSequenceItemName,t1.SecondSequenceItemName) = ''W/END'' THEN DATEADD(dd, 8-(DATEPART(dw, deal_date)), deal_date)
 						  ELSE term_end END
 					 AS DATE)
 FROM [final_process_table] temp
