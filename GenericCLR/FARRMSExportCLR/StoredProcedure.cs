@@ -40,6 +40,7 @@ namespace FARRMSExportCLR
                             reader.Read();
                             webserviceExportInfo = new ExportWebServiceInfo()
                             {
+                                wsName = reader["ws_name"].ToString(),
                                 webServiceURL = reader["web_service_url"].ToString(),
                                 authToken = reader["auth_token"].ToString(),
                                 handlerClassName = reader["handler_class_name"].ToString(),
@@ -47,7 +48,9 @@ namespace FARRMSExportCLR
                                 userName = reader["user_name"].ToString(),
                                 requestParam = reader["request_param"].ToString(),
                                 authUrl = reader["auth_url"].ToString(),
-                                password = reader["password"].ToString()
+                                password = reader["password"].ToString(),
+                                authKey = reader["auth_key"].ToString(),
+                                tokenUpdatedDate = reader["token_updated_date"].ToString()
                             };
                         }
                     }

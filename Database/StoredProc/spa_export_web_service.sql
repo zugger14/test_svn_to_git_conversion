@@ -26,7 +26,18 @@ SET NOCOUNT ON
 
 IF @flag = 's'
 BEGIN 
-	SELECT web_service_url, auth_token, handler_class_name, [user_name], request_param, auth_url, dbo.FNADecrypt([password]) [password] FROM export_web_service WHERE id = @id
+	SELECT web_service_url,
+			auth_token, 
+			handler_class_name, 
+			[user_name], 
+			request_param,
+			auth_url,
+			dbo.FNADecrypt([password]) [password],
+			ws_name,
+			auth_key,
+			token_updated_date 
+	FROM export_web_service 
+	WHERE id = @id
 END
 ELSE IF @flag = 'c' 
 BEGIN
