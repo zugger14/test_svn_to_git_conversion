@@ -98,17 +98,12 @@ BEGIN TRY
 	UPDATE data_source
 	SET alias = @new_ds_alias, description = NULL
 	, [tsql] = CAST('' AS VARCHAR(MAX)) + 'DECLARE
-
 	@_source_deal_header_id VARCHAR(MAX) = ''@source_deal_header_id'' --102692, 102624,268530,
-
 	, @_flag CHAR(1) = ''v''
-
 	, @_param_term_start DATE = NULL
-
 DECLARE @_counterparty_id INT, @_pricing FLOAT, @_company VARCHAR(500)
 SELECT @_company = [entity_name] FROM portfolio_hierarchy WHERE  [entity_id] = -1
 SELECT @_counterparty_id = fs2.counterparty_id FROM fas_subsidiaries fs2 WHERE  fs2.fas_subsidiary_id = -1	
-
 IF OBJECT_ID(''tempdb..#signature_temp_table'') IS NOT NULL
 BEGIN
   DROP TABLE #signature_temp_table
@@ -163,11 +158,9 @@ BEGIN
 							AND sdd1.leg = 1
 						LEFT JOIN source_price_curve_def spcd1 ON  sdd1.curve_id = spcd1.source_curve_def_id''
 	EXEC (@_sql1)
-	
 	EXEC spa_get_dealvolume_mult_byfrequency @_vol_frequency_table
 	--EXEC spa_print @_vol_frequency_table	
 	CREATE TABLE #deal_confirmation_tbl(source_deal_header_id INT, confirm_replace_flag CHAR(1) COLLATE DATABASE_DEFAULT , [filename] VARCHAR(1000) COLLATE DATABASE_DEFAULT , [filename1] VARCHAR(1000) COLLATE DATABASE_DEFAULT , term INT,	wtavgCost NUMERIC(30,18))
-	
 	INSERT INTO #deal_confirmation_tbl(source_deal_header_id, confirm_replace_flag, [filename], [filename1], term,	wtavgCost)
 	SELECT  sdh.source_deal_header_id
 			, MAX(CASE WHEN scs.confirm_id IS NULL THEN ''c'' ELSE ''r'' END) confirm_replace_flag
@@ -175,7 +168,6 @@ BEGIN
 			, MAX(ISNULL(drt2.[filename], ''confirm_template_replacement.php'')) [filename1]
 			, COUNT(*) term
 			, CASE WHEN SUM(deal_volume) = 0 THEN 0 ELSE SUM(deal_volume * (ISNULL(sdd.fixed_price, 0) + ISNULL(sdd.price_adder, 0))) / SUM(deal_volume) END
-		
 	FROM source_deal_header sdh
 	INNER JOIN dbo.FNASplit(@_source_deal_header_id, '','') a ON a.item = sdh.source_deal_header_id
 	INNER JOIN source_deal_detail sdd ON sdd.source_deal_header_id = sdh.source_deal_header_id
@@ -194,7 +186,6 @@ IF @_flag = ''v''
 BEGIN
 	SET @_sql1 = ''
 			 SELECT 
-		 
 			 dbo.FNAConvertTZAwareDateFormat(GETDATE(),1) [Date], '''''' + isnull(@_company,'''') +'''''' company_name,
 			 CASE 
 				WHEN sdh.header_buy_sell_flag = ''''b''''
@@ -255,7 +246,6 @@ BEGIN
 							THEN CAST((sdd.fixed_price + sdd.price_adder) AS Numeric(28,10))
 						 ELSE CAST(sdd.fixed_price AS Numeric(28,10))
 				END [Fixed Price],
-				
 				''''firm'''' [Service Type],
 				dbo.FNAGetFrequencyText(MAX(sdht.term_frequency_type),''''a'''') [Payment Frequency],
 				CASE WHEN sdh.source_deal_type_id=3 THEN ''''T+2'''' ELSE ''''T+5'''' END [Settle Rules],
@@ -281,7 +271,7 @@ BEGIN
 				MAX(sdh.option_settlement_date) [Premium Settlement Date],
 				CAST(ROUND(MAX(sdd.option_strike_price),2) AS NUMERIC(20,2))[Strike Price],
 				CAST(CAST(ROUND(AVG((( isnull(sdd.fixed_price, 0) + isnull(sdd.price_adder, 0)) * isnull(sdd.price_multiplier, 1))),2)AS NUMERIC(20,2)) AS VARCHAR) + '''' ''''  [Premium],
-				CAST(dbo.FNANumberFormat(ROUND(SUM(((isnull(sdd.fixed_price, 0) +  isnull(sdd.price_adder, 0)) * isnull(sdd.price_multiplier, 1))* ISNULL(vft.Volume_Mult,1)*sdd.deal_volume),2), ''''n'''') AS VARCHAR(100)) + '''' '''' + MAX(scu.currency_name) [TotalPremium],
+				CAST(CAST(ROUND(AVG((( isnull(sdd.fixed_price, 0) + isnull(sdd.price_adder, 0)) * isnull(sdd.price_multiplier, 1))* sdd.total_volume),2)AS NUMERIC(20,2)) AS VARCHAR) + '''' '''' + MAX(scu.currency_name) [TotalPremium],
 				dbo.FNAConvertTZAwareDateFormat(MAX(sdh.create_ts),1) [Input Date],
 				au2.user_l_name + '''', '''' + au2.user_f_name + '''' '''' + ISNULL(au2.user_m_name,'''''''') [Verified By Name],
 				sdh.verified_date [Verified Date],
@@ -686,9 +676,7 @@ BEGIN
 			LEFT JOIN static_data_value sdv_volume_t ON sdv_volume_t.value_id = sdh.internal_desk_id
 			LEFT JOIN source_commodity scom ON scom.source_commodity_id = sdh.commodity_id
 			OUTER APPLY( SELECT volume, price, term_date, 
-								
 								CASE WHEN sdh.profile_granularity = 987 
-								
 									THEN RIGHT(''''0'''' + CAST(LEFT(hr,2) - 1 AS VARCHAR(2))  + '''':'''' + RIGHT( ''''0'''' + CAST(RIGHT(hr,2) AS VARCHAR(2)), 2), 5) 
 								WHEN sdh.profile_granularity = 982	
 									THEN RIGHT(''''0'''' + CAST(LEFT(hr,2) - 1 as varchar(2)) + RIGHT(hr,3), 5)	
@@ -739,26 +727,16 @@ BEGIN
 				,a.is_confirm, sdh.source_deal_header_id,sdd.price_multiplier, sddh_shp.volume, sddh_shp.price, sddh_shp.term_date, sddh_shp.hr,sddh_shp.hr_from, sdd.term_start, sdd.term_end, sdd.deal_volume_frequency
 				,sdd.total_volume, sdd.deal_volume, sddh.volume, sdd.deal_volume, sdd.price_adder, sdd.fixed_price
 				order by sddh_shp.term_date, sort_col
-					
-			
 			select * 
 			 --[__batch_report__]
 			from #temp_final_data	
-
 			''
-
 END
-
 	--print @_sql1
-
 	--print @_sql2
-
 	--print @_sql3
-
 	EXEC(@_sql1+@_sql2+@_sql3)
-
 	DROP TABLE #deal_confirmation_tbl
-
 END', report_id = @report_id_data_source_dest,
 	system_defined = NULL
 	,category = '106500' 
