@@ -271,7 +271,7 @@ BEGIN
 				MAX(sdh.option_settlement_date) [Premium Settlement Date],
 				CAST(ROUND(MAX(sdd.option_strike_price),2) AS NUMERIC(20,2))[Strike Price],
 				CAST(CAST(ROUND(AVG((( isnull(sdd.fixed_price, 0) + isnull(sdd.price_adder, 0)) * isnull(sdd.price_multiplier, 1))),2)AS NUMERIC(20,2)) AS VARCHAR) + '''' ''''  [Premium],
-				CAST(CAST(ROUND(AVG((( isnull(sdd.fixed_price, 0) + isnull(sdd.price_adder, 0)) * isnull(sdd.price_multiplier, 1))* sdd.total_volume),2)AS NUMERIC(20,2)) AS VARCHAR) + '''' '''' + MAX(scu.currency_name) [TotalPremium],
+				CAST(dbo.FNANumberFormat(ROUND(AVG((( isnull(sdd.fixed_price, 0) + isnull(sdd.price_adder, 0)) * isnull(sdd.price_multiplier, 1))* sdd.total_volume),2), ''''n'''') AS VARCHAR(100)) + '''' '''' + MAX(scu.currency_name) [TotalPremium],
 				dbo.FNAConvertTZAwareDateFormat(MAX(sdh.create_ts),1) [Input Date],
 				au2.user_l_name + '''', '''' + au2.user_f_name + '''' '''' + ISNULL(au2.user_m_name,'''''''') [Verified By Name],
 				sdh.verified_date [Verified Date],
