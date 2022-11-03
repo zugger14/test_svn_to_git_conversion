@@ -648,9 +648,9 @@ SELECT * INTO #temp_deal_table FROM [final_process_table]
 UPDATE temp
     SET deal_id = 
 	CASE 
-	WHEN CAST(temp.deal_date AS DATE) > ''2021-05-27'' AND CAST(temp.deal_date AS DATE) <= ''2022-09-30'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') 
-	WHEN temp.counterparty_id = ''ICE'' AND CAST(temp.deal_date AS DATE) > ''2022-09-30'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') + IIF(NULLIF(t1.[OrderID], '''') IS NOT NULL, ''_'' + t1.[OrderID], '''')
-	WHEN temp.counterparty_id <> ''ICE'' AND CAST(temp.deal_date AS DATE) > ''2022-09-30'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') 
+	WHEN CAST(temp.deal_date AS DATE) > ''2021-05-27'' AND CAST(temp.deal_date AS DATE) <= ''2022-11-14'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') 
+	WHEN temp.counterparty_id = ''ICE'' AND CAST(temp.deal_date AS DATE) > ''2022-11-14'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') + IIF(NULLIF(t1.[OrderID], '''') IS NOT NULL, ''_'' + t1.[OrderID], '''')
+	WHEN temp.counterparty_id <> ''ICE'' AND CAST(temp.deal_date AS DATE) > ''2022-11-14'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') 
 	ELSE deal_id
 	END
 FROM [final_process_table] temp
@@ -670,9 +670,9 @@ EXEC(''IF OBJECT_ID('''''' + @temp_process_table1 + '''''') IS NOT NULL
 EXEC(''UPDATE tpt
 		SET [tradeid] = 
 			CASE 
-			WHEN CAST(tdt.deal_date AS DATE) > ''''2021-05-27'''' AND CAST(tdt.deal_date AS DATE) <= ''''2022-09-30'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') 
-			WHEN tdt.counterparty_id = ''''ICE'''' AND CAST(tdt.deal_date AS DATE) > ''''2022-09-30'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') + IIF(NULLIF([OrderID], '''''''') IS NOT NULL, ''''_'''' + [OrderID], '''''''')
-			WHEN tdt.counterparty_id <> ''''ICE'''' AND CAST(tdt.deal_date AS DATE) > ''''2022-09-30'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') 
+			WHEN CAST(tdt.deal_date AS DATE) > ''''2021-05-27'''' AND CAST(tdt.deal_date AS DATE) <= ''''2022-11-14'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') 
+			WHEN tdt.counterparty_id = ''''ICE'''' AND CAST(tdt.deal_date AS DATE) > ''''2022-11-14'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') + IIF(NULLIF([OrderID], '''''''') IS NOT NULL, ''''_'''' + [OrderID], '''''''')
+			WHEN tdt.counterparty_id <> ''''ICE'''' AND CAST(tdt.deal_date AS DATE) > ''''2022-11-14'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') 
 			ELSE [tradeid]
 			END
 		FROM '' + @temp_process_table + '' tpt
@@ -1483,9 +1483,9 @@ SELECT * INTO #temp_deal_table FROM [final_process_table]
 UPDATE temp
     SET deal_id = 
 	CASE 
-	WHEN CAST(temp.deal_date AS DATE) > ''2021-05-27'' AND CAST(temp.deal_date AS DATE) <= ''2022-09-30'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') 
-	WHEN temp.counterparty_id = ''ICE'' AND CAST(temp.deal_date AS DATE) > ''2022-09-30'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') + IIF(NULLIF(t1.[OrderID], '''') IS NOT NULL, ''_'' + t1.[OrderID], '''')
-	WHEN temp.counterparty_id <> ''ICE'' AND CAST(temp.deal_date AS DATE) > ''2022-09-30'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') 
+	WHEN CAST(temp.deal_date AS DATE) > ''2021-05-27'' AND CAST(temp.deal_date AS DATE) <= ''2022-11-14'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') 
+	WHEN temp.counterparty_id = ''ICE'' AND CAST(temp.deal_date AS DATE) > ''2022-11-14'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') + IIF(NULLIF(t1.[OrderID], '''') IS NOT NULL, ''_'' + t1.[OrderID], '''')
+	WHEN temp.counterparty_id <> ''ICE'' AND CAST(temp.deal_date AS DATE) > ''2022-11-14'' THEN deal_id + IIF(NULLIF(t1.[ExecutionVenueID], '''') IS NOT NULL, ''_'' + t1.[ExecutionVenueID], '''') 
 	ELSE deal_id
 	END
 FROM [final_process_table] temp
@@ -1505,9 +1505,9 @@ EXEC(''IF OBJECT_ID('''''' + @temp_process_table1 + '''''') IS NOT NULL
 EXEC(''UPDATE tpt
 		SET [tradeid] = 
 			CASE 
-			WHEN CAST(tdt.deal_date AS DATE) > ''''2021-05-27'''' AND CAST(tdt.deal_date AS DATE) <= ''''2022-09-30'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') 
-			WHEN tdt.counterparty_id = ''''ICE'''' AND CAST(tdt.deal_date AS DATE) > ''''2022-09-30'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') + IIF(NULLIF([OrderID], '''''''') IS NOT NULL, ''''_'''' + [OrderID], '''''''')
-			WHEN tdt.counterparty_id <> ''''ICE'''' AND CAST(tdt.deal_date AS DATE) > ''''2022-09-30'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') 
+			WHEN CAST(tdt.deal_date AS DATE) > ''''2021-05-27'''' AND CAST(tdt.deal_date AS DATE) <= ''''2022-11-14'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') 
+			WHEN tdt.counterparty_id = ''''ICE'''' AND CAST(tdt.deal_date AS DATE) > ''''2022-11-14'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') + IIF(NULLIF([OrderID], '''''''') IS NOT NULL, ''''_'''' + [OrderID], '''''''')
+			WHEN tdt.counterparty_id <> ''''ICE'''' AND CAST(tdt.deal_date AS DATE) > ''''2022-11-14'''' THEN [tradeid] + IIF(NULLIF([ExecutionVenueID], '''''''') IS NOT NULL, ''''_'''' + [ExecutionVenueID], '''''''') 
 			ELSE [tradeid]
 			END
 		FROM '' + @temp_process_table + '' tpt
