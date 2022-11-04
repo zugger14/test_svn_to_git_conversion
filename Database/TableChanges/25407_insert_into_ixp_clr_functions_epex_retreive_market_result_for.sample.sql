@@ -68,7 +68,7 @@ BEGIN
    </soapenv:Body>
 </soapenv:Envelope>',
  '2022-11-02',--TODO Change values according to enviroment
- 'dummy_token'
+ '36660175660574339149359231156058441412054325707580475916457027002352104567621841'
 	FROM ixp_clr_functions 
 	WHERE ixp_clr_functions_name = 'EPEXRetrieveMarketResultsForDayAhead'		
 END
