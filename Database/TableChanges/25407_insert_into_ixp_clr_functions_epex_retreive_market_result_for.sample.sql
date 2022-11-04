@@ -35,12 +35,12 @@ IF NOT EXISTS(SELECT 1
 					ON iws.clr_function_id = icf.ixp_clr_functions_id 
 				WHERE  icf.ixp_clr_functions_name = 'EPEXRetrieveMarketResultsForDayAhead')
 BEGIN
-	INSERT INTO import_web_service (ws_name, web_service_url, clr_function_id, [user_name], [password], client_secret, request_body, password_updated_date)
+	INSERT INTO import_web_service (ws_name, web_service_url, clr_function_id, [user_name], [password], client_secret, request_body, password_updated_date, auth_token)
 	SELECT 'EPEXRetrieveMarketResultsForDayAhead', 
-			'https://ets-simu1.api.epexspot.com:4444/OpenAccess/3.3',  --TODO Change values according to enviroment 
+			'https://api-ets2.epex.simu.epexspot.com/OpenAccess/3.6',  --TODO Change values according to enviroment 
 			ixp_clr_functions_id,
 			'TSWHNBCDAPI50',										--TODO Change values according to enviroment
-			dbo.FNAEncrypt('!pN7uY2#jf3nVrw'),						--TODO Change values according to enviroment
+			dbo.FNAEncrypt('TSWHNBC03November2022!'),						--TODO Change values according to enviroment
 			'TRM2020',
 			'<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:openaccess">
@@ -67,11 +67,13 @@ BEGIN
       </urn:RetrieveMarketResultsFor>
    </soapenv:Body>
 </soapenv:Envelope>',
- '2020-05-18'															--TODO Change values according to enviroment
+ '2022-11-02',--TODO Change values according to enviroment
+ 'dummy_token'
 	FROM ixp_clr_functions 
 	WHERE ixp_clr_functions_name = 'EPEXRetrieveMarketResultsForDayAhead'		
 END
 
 UPDATE import_web_service SET
-certificate_path = 'E:\FARRMS_SPTFiles\CLR\TRMTracker_Release\EPEX\Certificate\ETS_Cert_simu.pfx' --TODO Change values according to enviroment
+web_service_url ='https://api-ets2.epex.simu.epexspot.com/OpenAccess/3.6'
+--, certificate_path = 'F:\FARRMS_SPTFiles\CLR\TRMTracker_Enercity_UAT\EPEX\Certificate\ETS_Cert_simu.pfx' --TODO Change values according to enviroment
 WHERE ws_name = 'EPEXRetrieveMarketResultsForDayAhead'
