@@ -1710,7 +1710,8 @@ SELECT
 	, tfd.curve_name
 	, tfd.index_tou
 	, tfd.formula
-	, CASE WHEN (tfd.buy_sell_flag=''Sell'') THEN -ABS(tfd.total_volume) ELSE ABS(tfd.total_volume) END total_volume
+	, CASE WHEN (tfd.buy_sell_flag=''Sell'' AND tfd.close_reference_id IS NOT NULL) THEN -ABS(tfd.total_volume) WHEN (tfd.buy_sell_flag=''buy'' AND tfd.close_reference_id IS NOT NULL) THEN ABS(tfd.total_volume)
+    ELSE (tfd.total_volume) END total_volume
 	, tfd.position_uom
 	, tfd.CVA
 	, tfd.DVA
