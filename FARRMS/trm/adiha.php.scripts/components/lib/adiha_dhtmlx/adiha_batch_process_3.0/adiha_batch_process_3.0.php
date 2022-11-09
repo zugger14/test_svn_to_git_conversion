@@ -234,7 +234,7 @@ if ($flag == 'u') {
 
 $enable_non_sys = ($notification_type == 750 || $notification_type == 752 || $notification_type == 754 || $notification_type == 756 ) ? 'false' : 'true';
 
-$exec_call = str_replace(array("\r\n","\n\r","\r", "\n"), '', $exec_call);
+$exec_call = ($flag != 'x') ?  addslashes($exec_call) : str_replace(array("\r\n","\n\r","\r", "\n"), '', $exec_call);
 
 $exec_call = ($flag == 'x') ? str_replace('"', '\"', $exec_call) : $exec_call;
 

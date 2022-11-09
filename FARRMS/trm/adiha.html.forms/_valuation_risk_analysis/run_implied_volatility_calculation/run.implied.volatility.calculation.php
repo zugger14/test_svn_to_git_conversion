@@ -215,7 +215,8 @@
             var risk_free_rate = run_volatility_calucalation.run_volatility_calucalation_form.getItemValue('risk_free_rate');
             var no_of_days = run_volatility_calucalation.run_volatility_calucalation_form.getItemValue('no_of_days');
             var curve_source = run_volatility_calucalation.run_volatility_calucalation_form.getItemValue('curve_source');
-            var as_of_date = run_volatility_calucalation.run_volatility_calucalation_form.getItemValue('as_of_date', true);
+            var as_of_date_tmp = run_volatility_calucalation.run_volatility_calucalation_form.getItemValue('as_of_date', true);
+			var as_of_date = dates.convert_to_user_format(as_of_date_tmp);
             var grid_xml = '';
             
             var grid_xml = "<Root>";
