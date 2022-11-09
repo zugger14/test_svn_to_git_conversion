@@ -15,13 +15,20 @@ GO
 	@flag : Flag
 		'w' - For import web service
 	@rules_id : ID of import rule
+	@ws_name : Web service Name,
+	@auth_token : Authentication token for web service
+	@password : Password of webservice
+	@password_updated_date : Password update date
 
 */
 
 CREATE PROCEDURE [dbo].[spa_import_web_service]
     @flag CHAR(1),
-	@rules_id INT = NULL
-    
+	@rules_id INT = NULL,
+	@ws_name NVARCHAR(50) = NULL,
+	@auth_token NVARCHAR(1000) = NULL,
+	@password NVARCHAR(100) = NULL,
+	@password_updated_date DATETIME = NULL
 AS
 SET NOCOUNT ON
 IF @flag = 'w'
@@ -42,5 +49,13 @@ BEGIN
 	INNER JOIN import_web_service iws
 		ON iids.clr_function_id = iws.clr_function_id
 	WHERE rules_id = @rules_id
+END
+ELSE IF @flag = 'a'
+BEGIN
+	UPDATE import_web_service 
+	SET auth_token = ISNULL(@auth_token, auth_token),
+		[password] = ISNULL(dbo.FNAEncrypt(@password), [password]), 
+		password_updated_date = ISNULL(@password_updated_date, password_updated_date)	
+	WHERE ws_name = @ws_name
 END
 GO

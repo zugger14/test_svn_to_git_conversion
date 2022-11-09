@@ -77,7 +77,6 @@
     <Compile Include="ICLRImporter.cs" />
     <Compile Include="ImportWebServiceInfo.cs" />
     <Compile Include="EAODailyImbalancePriceImporter.cs" />
-    <Compile Include="EPEXRetrieveMarketResultsForImporter.cs" />
     <Compile Include="GatsPjmGetRecs.cs" />
     <Compile Include="LikronImporter.cs" />
     <Compile Include="LocusEnergyMntlyVolsImporter.cs" />
@@ -88,6 +87,7 @@
     <Compile Include="TreasuryImporter.cs" />
     <Compile Include="PrismaImporter.cs" />
     <Compile Include="ENMACCImporter.cs" />
+    <Compile Include="EpexRetrieveMarketResultsForImporter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FAARMSFileTransferService\FAARMSFileTransferService.csproj">

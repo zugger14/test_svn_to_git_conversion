@@ -22,6 +22,10 @@ GO
 	@process_id			: Process Id
 	@process_table		: Process Table
 	@response_data      : Response Data
+	@status				: Status of webservice
+	@message			: Message to be sent
+	@user_name			: User name of Web service
+	@password			: Password of Web service
 */
 
 CREATE PROCEDURE [dbo].[spa_import_epex_web_service]
@@ -32,7 +36,11 @@ CREATE PROCEDURE [dbo].[spa_import_epex_web_service]
 	@auction_name_id INT = NULL,
 	@process_id NVARCHAR(200) = NULL,
 	@process_table NVARCHAR(200) = NULL,
-	@response_data NVARCHAR(MAX) = NULL
+	@response_data NVARCHAR(MAX) = NULL,
+	@status NVARCHAR(20) = NULL,
+	@message NVARCHAR(MAX) = NULL,
+	@user_name NVARCHAR(50) = NULL,
+	@password NVARCHAR(100) = NULL
     
 AS
 SET NOCOUNT ON
@@ -128,6 +136,28 @@ BEGIN
 	EXEC('SELECT trader_id, related_order_id, underlying_start, underlying_end, delivery_start_local_time, delivery_start_local_time_cet, delivery_start_utc_time, delivery_start_ticks, delivery_start_local_date, delivery_end_local_time, delivery_end_local_time_cet, delivery_end_utc_time, delivery_end_ticks, delivery_end_local_date, type, name, short_name, daylight_change_suffix, is_hour, is_quarter, is_half_hour, is_block, major_type, traded_underlying_delivery_day, delivery_hour, scaling_factor, tso_name, tso, target_tso, is_buy_trade, quantity, price, trade_id, exchange_id, external_trade_id, execution_time_local_time, execution_time_local_time_cet, execution_utc_time, execution_ticks, execution_local_date, strategy_order_id, external_order_id, text, state, strategy_name, trading_cost_group, pre_arranged, pre_arranged_type, com_xerv_eic, user_code, com_xerv_account_type, balance_group, portfolio, analysis_info, self_trade, com_xerv_product, contract, signed_quantity, scaled_quantity, exchange_key, product_name, buy_or_sell, delivery_day, contract_type, CAST(delivery_start_local_time AS DATE) delivery_date ,
 		CASE WHEN contract_type = ''QH'' THEN DATEPART(HOUR,CONVERT(VARCHAR(19),delivery_start_local_time, 120)) ELSE CASE WHEN DATEPART(HOUR,CONVERT(VARCHAR(19),delivery_end_local_time, 120)) = 0 THEN 24 ELSE DATEPART(HOUR,CONVERT(VARCHAR(19),delivery_end_local_time, 120)) END END [hour], 
 		CASE WHEN contract_type = ''QH'' THEN DATEPART(MINUTE,CONVERT(VARCHAR(19),delivery_start_local_time, 120)) ELSE DATEPART(MINUTE,CONVERT(VARCHAR(19),delivery_end_local_time, 120)) END minutes   INTO '+ @process_table +' FROM #temp_likron_table')
+END
+ELSE IF @flag = 'send_email'
+BEGIN	
+	DECLARE @role_id INT,  @template_params NVARCHAR(500), @module_type INT
+	SELECT @role_id = role_id FROM application_security_role WHERE role_name LIKE '%EPEX ETS'
+	SET @template_params = ''
+
+	if (@status = 'Success')
+	BEGIN
+		SET @template_params = dbo.FNABuildNameValueXML(@template_params, '<EPEX_USER_NAME>', @user_name)
+		SET @template_params = dbo.FNABuildNameValueXML(@template_params, '<EPEX_PASSWORD>', @password)
+	END
+
+	SET @module_type = IIF(@status = 'Success', '17823', '17824') 
+	SET @template_params = dbo.FNABuildNameValueXML(@template_params, '<EPEX_INFO>', @message)                                              
+	EXEC spa_email_notes
+	@flag = 'b',
+	@email_module_type_value_id = @module_type,
+	@send_status = 'n',
+	@active_flag = 'y',
+	@template_params = @template_params,
+	@role_ids = @role_id
 END
 
 GO

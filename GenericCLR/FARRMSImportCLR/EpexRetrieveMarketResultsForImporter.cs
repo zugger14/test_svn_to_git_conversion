@@ -10,7 +10,10 @@ using System.Text;
 
 namespace FARRMSImportCLR
 {
-    class EPEXRetrieveMarketResultsForImporter : CLRWebImporterBase
+    /// <summary>
+    /// Service Handler for retrieving Market Results from EPEX
+    /// </summary>
+    internal class EpexRetrieveMarketResultsForImporter : CLRWebImporterBase
     {
         public String type;
         string area;
@@ -18,8 +21,11 @@ namespace FARRMSImportCLR
         XmlDocument xmlDoc;
         XmlNamespaceManager xmlnsManager;
        
-
-        public EPEXRetrieveMarketResultsForImporter(String type)
+        /// <summary>
+        /// Initilize EPEX webservice based on the type.
+        /// </summary>
+        /// <param name="type">DayAhead</param>
+        public EpexRetrieveMarketResultsForImporter(string type)
         {
             this.type = type;
         }
@@ -34,16 +40,15 @@ namespace FARRMSImportCLR
         {
             string responseFromServer;
             ServicePointManager.Expect100Continue = true;
-            #pragma warning disable S4423 // Added Strong protocols including ssl3
+#pragma warning disable S4423 // Added Strong protocols including ssl3
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3 | (SecurityProtocolType)(0xc0 | 0x300 | 0xc00);
-            #pragma warning restore S4423 // Added Strong protocols including ssl3
-            HttpWebRequest webRequest = (HttpWebRequest)HttpWebRequest.Create(clrImportInfo.WebServiceInfo.WebServiceURL);
+            HttpWebRequest webRequest = (HttpWebRequest)WebRequest.Create(clrImportInfo.WebServiceInfo.WebServiceURL);
             webRequest.Method = "POST";
             webRequest.ContentType = "text/xml;charset=UTF-8";
             webRequest.Headers.Add("SOAPAction", action);
             webRequest.ProtocolVersion = HttpVersion.Version10;
             webRequest.ClientCertificates.Add(new X509Certificate2(clrImportInfo.WebServiceInfo.CertificatePath, clrImportInfo.WebServiceInfo.ClientSecret));
-            
+
             using (var writeStream = new StreamWriter(webRequest.GetRequestStream()))
             {
                 writeStream.Write(request);
@@ -51,12 +56,12 @@ namespace FARRMSImportCLR
                 writeStream.Close();
             }
 
-            WebResponse response = webRequest.GetResponse();
-            Stream stream = response.GetResponseStream();
-
-            StreamReader reader = new StreamReader(stream);
-            responseFromServer = reader.ReadToEnd();
-
+            using (WebResponse webResponse = webRequest.GetResponse())
+            {
+                Stream stream = webResponse.GetResponseStream();
+                StreamReader reader = new StreamReader(stream);
+                responseFromServer = reader.ReadToEnd();
+            }
             return responseFromServer;
         }
         /// <summary>
@@ -98,11 +103,10 @@ namespace FARRMSImportCLR
                 responseFromServer = GetWebResponse(passwordRequestBody, clrImportInfo, "UpdatePassword");
                 xmlDoc = new XmlDocument();
                 xmlDoc.LoadXml(responseFromServer);
-               
-                xmlnsManager = new System.Xml.XmlNamespaceManager(xmlDoc.NameTable);
+
+                xmlnsManager = new XmlNamespaceManager(xmlDoc.NameTable);
                 #pragma warning disable S1075 // URL path won't change
                 xmlnsManager.AddNamespace("SOAP-ENV", "http://schemas.xmlsoap.org/soap/envelope/");
-                #pragma warning disable S1075 // URL path won't change
                 xmlnsManager.AddNamespace("ns", "urn:openaccess");
 
                 node = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:UpdatePasswordResponse/UpdatePasswordAcknowledgement", xmlnsManager);
@@ -113,12 +117,23 @@ namespace FARRMSImportCLR
                 {
                     string passwordInformation = node["ns:passwordInformation"].InnerText;
                     using (SqlConnection cn = new SqlConnection("Context Connection=true"))
-                    //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                     {
                         cn.Open();
-                        ws_name = "EPEXRetrieveMarketResultsFor" + this.type;
-                        SqlCommand updCmd = new SqlCommand("UPDATE import_web_service SET [password] = dbo.FNAEncrypt('" + updatedPassword + "'), password_updated_date = GETDATE() WHERE ws_name = '" + ws_name + "' ", cn);
-                        updCmd.ExecuteReader();
+                        ws_name = "EPEXRetrieveMarketResultsFor" + type;
+
+                        using (SqlCommand cmd = new SqlCommand("spa_import_web_service", cn))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("flag", "a");
+                            cmd.Parameters.AddWithValue("password", updatedPassword);
+                            cmd.Parameters.AddWithValue("ws_name", ws_name);
+                            cmd.Parameters.AddWithValue("password_updated_date", "GETDATE()");
+                            
+                            cn.Open();
+                            cmd.ExecuteNonQuery();
+                            cn.Close();
+                        }      
+                        
                         clrImportInfo.WebServiceInfo.Password = updatedPassword;
                         cn.Close();
                     }
@@ -132,16 +147,21 @@ namespace FARRMSImportCLR
                     XmlNode errors = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:SetNewPasswordResponse/SetNewPasswordAcknowledgement/ns:errors", xmlnsManager);
                     XmlNode error = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:SetNewPasswordResponse/SetNewPasswordAcknowledgement/ns:error", xmlnsManager);
 
-                    XmlNodeList list = null ;
-                    #pragma warning disable S1854 // Either error or errors node exists
-                    if (errors != null) list = errors.ParentNode.SelectNodes(errors.Name, xmlnsManager);                        
-                    else if (error != null) list = error.ParentNode.SelectNodes(error.Name, xmlnsManager);
-                    #pragma warning disable S1854 // Either error or errors node exists
-                    string error_message = "";
+                    XmlNodeList list = null;
+                    
+                    if (errors != null)
+                    {
+                        list = errors.ParentNode.SelectNodes(errors.Name, xmlnsManager);
+                    }
+                    else if (error != null)
+                    {
+                        list = error.ParentNode.SelectNodes(error.Name, xmlnsManager);
+                    }
+
+                    string error_message = string.Empty;
                     StringBuilder bld = new StringBuilder();
 
                     if (list != null && list.Count > 0)
-
                     {
                         for (int i = 0; i < list.Count; i++)
                         {
@@ -152,7 +172,7 @@ namespace FARRMSImportCLR
                     }
 
                     status = "fail";
-                }     
+                }
             }
             catch (Exception ex)
             {
@@ -175,36 +195,22 @@ namespace FARRMSImportCLR
         public void SendEmail(CLRImportInfo clrImportInfo, string status, string message, string password) 
         {
             try
-            {
+            { 
                 using (SqlConnection cn = new SqlConnection("Context Connection=true"))
-                //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                 {
-                    cn.Open();
-                    string sql = @"
-                            DECLARE @role_id INT,  @template_params NVARCHAR(500) 
-                            SELECT @role_id = role_id FROM application_security_role WHERE role_name LIKE '%EPEX ETS'
-                            SET @template_params = ''";
-
-                    if (status == "Success")
+                    using (SqlCommand cmd = new SqlCommand("spa_import_epex_web_service", cn))
                     {
-                        sql += "SET @template_params = dbo.FNABuildNameValueXML(@template_params, '<EPEX_USER_NAME>', '" + clrImportInfo.WebServiceInfo.UserName + @"')
-                            SET @template_params = dbo.FNABuildNameValueXML(@template_params, '<EPEX_PASSWORD>', '" + password + @"')";
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("flag", "send_email");
+                        cmd.Parameters.AddWithValue("status", status);
+                        cmd.Parameters.AddWithValue("message", message);
+                        cmd.Parameters.AddWithValue("user_name", clrImportInfo.WebServiceInfo.UserName);
+                        cmd.Parameters.AddWithValue("password ", password);
+                        cn.Open();
+                        cmd.ExecuteNonQuery();
+                        cn.Close();
                     }
-
-                    string moduleType = (status == "Success") ? "17823" : "17824";
-                    sql += "SET @template_params = dbo.FNABuildNameValueXML(@template_params, '<EPEX_INFO>', '" + message + @"')
-                                              
-                            EXEC spa_email_notes
-                            @flag = 'b',
-                            @email_module_type_value_id = " + moduleType + @",
-                            @send_status = 'n',
-                            @active_flag = 'y',
-                            @template_params = @template_params,
-                            @role_ids = @role_id";
-
-                    SqlCommand updCmd = new SqlCommand(sql, cn);
-                    updCmd.ExecuteReader();
-                    cn.Close();
+                    
                 }
             }            
             catch (Exception ex)
@@ -220,13 +226,18 @@ namespace FARRMSImportCLR
         /// <returns>string success/fail</returns>
         public string GenerateToken(CLRImportInfo clrImportInfo)
         {
-            string status = "success";
+            if (clrImportInfo is null)
+            {
+                throw new ArgumentNullException(nameof(clrImportInfo));
+            }
+
             string ws_name;
-            string responseFromServer;
             XmlNode node;
             string state;
-            try 
-            {   
+
+            string status;
+            try
+            {
                 string tokenRequestBody = @"<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:urn='urn:openaccess'>
                     <soapenv:Header/>
                     <soapenv:Body>
@@ -236,36 +247,40 @@ namespace FARRMSImportCLR
                     </urn:EstablishConnection>
                     </soapenv:Body>
                     </soapenv:Envelope>";
-                responseFromServer = GetWebResponse(tokenRequestBody, clrImportInfo, "EstablishConnection");
+                string responseFromServer = GetWebResponse(tokenRequestBody, clrImportInfo, "EstablishConnection");
                 xmlDoc = new XmlDocument();
                 xmlDoc.LoadXml(responseFromServer);
 
                 xmlnsManager = new System.Xml.XmlNamespaceManager(xmlDoc.NameTable);
 
-                #pragma warning disable S1075 // This URL does not change in XML
+#pragma warning disable S1075 // This URL does not change in XML
                 xmlnsManager.AddNamespace("SOAP-ENV", "http://schemas.xmlsoap.org/soap/envelope/");
-                #pragma warning restore S1075 // This URL does not change in XML
+#pragma warning restore S1075 // This URL does not change in XML
                 xmlnsManager.AddNamespace("ns", "urn:openaccess");
 
                 node = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:EstablishConnectionResponse/EstablishSessionResponse", xmlnsManager);
                 state = node["ns:state"].InnerText;
-                
+
                 if (state == "ACK")
                 {
                     node = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:EstablishConnectionResponse/EstablishSessionResponse/ns:sessionToken", xmlnsManager);
                     string token = node["ns:sessionKey"].InnerText;
 
                     using (SqlConnection cn = new SqlConnection("Context Connection=true"))
-                    //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
                     {
                         cn.Open();
-                        ws_name = "EPEXRetrieveMarketResultsFor" + this.type;
-                        SqlCommand updCmd = new SqlCommand("UPDATE import_web_service SET auth_token = '" + token + "' WHERE ws_name = '" + ws_name + "'", cn);
-                        SqlDataReader r = updCmd.ExecuteReader();
-                        clrImportInfo.WebServiceInfo.Token = token;
-                        cn.Close();
-                    }
-
+                        ws_name = "EPEXRetrieveMarketResultsFor" + type;
+                        using (SqlCommand cmd = new SqlCommand("spa_import_web_service", cn))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("flag", "a");
+                            cmd.Parameters.AddWithValue("auth_token", token);
+                            cmd.Parameters.AddWithValue("ws_name", ws_name);
+                            cn.Open();
+                            cmd.ExecuteNonQuery();
+                            cn.Close();
+                        }
+                    }                    
                     status = "success";
                 }
                 else
@@ -278,7 +293,7 @@ namespace FARRMSImportCLR
                 status = "fail";
                 ex.LogError("Epex Generate Token", ex.Message);
             }
-            
+
             return status;
         }
 
@@ -289,13 +304,12 @@ namespace FARRMSImportCLR
         /// <returns>EpexImportStatus class</returns>
         public EpexImportStatus GenerateResponse(CLRImportInfo clrImportInfo, String requestType)
         {
-            EpexImportStatus status = null;
             string responseFromServer;
             XmlNode node;
+            EpexImportStatus status;
             try
             {
-                using (SqlConnection cn = new SqlConnection("Context Connection=true"))                
-                //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
+                using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                 {
                     cn.Open();
                     try
@@ -303,14 +317,14 @@ namespace FARRMSImportCLR
                         SqlDataReader rd;
                         if (requestType == "DayAhead")
                         {
-                            rd = cn.ExecuteStoredProcedureWithReturn("spa_import_epex_web_service", "flag:day_ahead,rules_id:" + clrImportInfo.RuleID.ToString() + ",auction_area_id:" + clrImportInfo.Params[0].paramValue.ToString() + ",auction_date:" + clrImportInfo.Params[1].paramValue.ToString().Replace(":",";") + ",auction_name_id:" + clrImportInfo.Params[2].paramValue.ToString());
+                            rd = cn.ExecuteStoredProcedureWithReturn("spa_import_epex_web_service", "flag:day_ahead,rules_id:" + clrImportInfo.RuleID.ToString() + ",auction_area_id:" + clrImportInfo.Params[0].paramValue.ToString() + ",auction_date:" + clrImportInfo.Params[1].paramValue.ToString().Replace(":", ";") + ",auction_name_id:" + clrImportInfo.Params[2].paramValue.ToString());
                             if (rd.HasRows)
                             {
                                 clrImportInfo.WebServiceInfo.RequestBody = rd[0].ToString();
                                 rd.Close();
                             }
-                        }                                               
-                        
+                        }
+
                     }
                     catch (Exception ex)
                     {
@@ -330,12 +344,11 @@ namespace FARRMSImportCLR
 
                 #pragma warning disable S1075 // URL won't change in XML
                 xmlnsManager.AddNamespace("SOAP-ENV", "http://schemas.xmlsoap.org/soap/envelope/");
-                #pragma warning disable S1075 // URL won't change in XML
                 xmlnsManager.AddNamespace("ns", "urn:openaccess");
-                XmlNode errors = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:RetrieveMarketResultsForResponse/RetrieveMarketResultAcknowledgement/ns:errors/ns:errorText", xmlnsManager);
-                XmlNode error = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:RetrieveMarketResultsForResponse/RetrieveMarketResultAcknowledgement/ns:error/ns:errorText", xmlnsManager);
-               
-                node = (errors != null ? errors : error); 
+                XmlNode errors = xmlDoc.SelectSingleNode(xpath: "/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:RetrieveMarketResultsForResponse/RetrieveMarketResultAcknowledgement/ns:errors/ns:errorText", xmlnsManager);
+                XmlNode error = xmlDoc.SelectSingleNode(xpath: "/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:RetrieveMarketResultsForResponse/RetrieveMarketResultAcknowledgement/ns:error/ns:errorText", xmlnsManager);
+
+                node = errors ?? error;
                 if (node != null)
                 {
                     outputResponse = node.InnerText;
@@ -345,7 +358,7 @@ namespace FARRMSImportCLR
                 else
                 {
                     node = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:RetrieveMarketResultsForResponse/RetrieveMarketResultAcknowledgement/ns:marketResults", xmlnsManager);
-                    resultStatus = node["ns:ResultsStatus"].InnerText;                
+                    resultStatus = node["ns:ResultsStatus"].InnerText;
                     area = node["ns:area"].InnerText;
                     outputResponse = node["ns:marketResultExport"].InnerText;
                 }
@@ -380,12 +393,14 @@ namespace FARRMSImportCLR
                 {
                     string token = GenerateToken(clrImportInfo);
                     #pragma warning disable S112 // To show exact message in clr_error_log
-                    if (token == "fail") throw new Exception("Failed to Generate Token while updating password.");
-                    #pragma warning disable S112 // To show exact message in clr_error_log
+                    if (token == "fail") throw new Exception("Failed to Generate Token while updating password.");                 
                     updStatus = UpdatePassword(clrImportInfo);
                     #pragma warning disable S112 // To show exact message in clr_error_log
-                    if (updStatus == "fail") throw new Exception("Failed to Update Password.");
-                    #pragma warning restore S112 // To show exact message in clr_error_log
+                    if (updStatus == "fail")
+                    {
+                        throw new Exception("Failed to Update Password.");
+                    }
+
                 }
 
                 //Generate response, if token has expired generate token and regenerate response               
@@ -395,14 +410,12 @@ namespace FARRMSImportCLR
                     string token = GenerateToken(clrImportInfo);
                     #pragma warning disable S112 // To show exact message in clr_error_log
                     if (token == "fail") throw new Exception("Failed to Generate Token.");
-                    #pragma warning disable S112 // To show exact message in clr_error_log
                     WebResponse = GenerateResponse(clrImportInfo, this.type);
                 }
 
                 string response = WebResponse.ResponseMessage;
-            
-                string[] datarows;              
-                DataTable dt = new DataTable("dtTable");
+                string[] datarows;
+                DataTable dt = new DataTable("dtTable");                
                 dt.Columns.Add(new DataColumn("column1"));
                 DataColumn dc = dt.Columns.Add("ixp_source_unique_id", typeof(int));
                 dc.AutoIncrement = true;
@@ -415,11 +428,9 @@ namespace FARRMSImportCLR
                     dt.Rows.Add(row,null);
                 }
 
-                using (SqlConnection cn = new SqlConnection("Context Connection=true"))
-                //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
+                using (SqlConnection cn = new SqlConnection("Context Connection=true")) 
                 {
                     cn.Open();
-
                     SqlDataReader rd = cn.ExecuteStoredProcedureWithReturn("spa_ixp_import_data_source", "flag:x,rules_id:" + clrImportInfo.RuleID.ToString());
                     if (rd.HasRows)
                     {
@@ -427,8 +438,8 @@ namespace FARRMSImportCLR
                         rd.Close();
                     }
 
-                    processTableName = "adiha_process.dbo.temp_import_data_table_" + dataSourceAlias + "_" + clrImportInfo.ProcessID;
-                    string createTableSql = "IF OBJECT_ID('" + processTableName + "') IS NOT NULL DROP TABLE " + processTableName;
+                    processTableName = $"adiha_process.dbo.temp_import_data_table_{dataSourceAlias}_{clrImportInfo.ProcessID}";
+                    string createTableSql = $"IF OBJECT_ID('{processTableName}') IS NOT NULL DROP TABLE {processTableName}";
 
                     new SqlCommand(createTableSql, cn).ExecuteNonQuery();
 
@@ -468,7 +479,9 @@ namespace FARRMSImportCLR
                 throw status.Exception;
             }
         }
-
+        /// <summary>
+        /// Class to set Import status within EpexRetrieveMarketResultsForImporter
+        /// </summary>
         public class EpexImportStatus
         {
             public string Status { get; set; }

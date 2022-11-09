@@ -38,8 +38,8 @@ namespace FARRMSImportCLR
                     return new NepoolDataImporter("GetTransferablePositions");
                 case "PowerTrackMntlyVolsImporter":
                     return new PowerTrackMntlyVolsImporter();
-                case "EPEXRetrieveMarketResultsForDayAheadImporter":
-                    return new EPEXRetrieveMarketResultsForImporter("DayAhead");
+                case "EpexRetrieveMarketResultsForImporter":
+                    return new EpexRetrieveMarketResultsForImporter("DayAhead");
                 case "LikronImporter":
                     return new LikronImporter();
                 case "PrismaImporter":
