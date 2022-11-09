@@ -118,7 +118,6 @@ namespace FARRMSImportCLR
                     string passwordInformation = node["ns:passwordInformation"].InnerText;
                     using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                     {
-                        cn.Open();
                         ws_name = "EPEXRetrieveMarketResultsFor" + _type;
 
                         using (SqlCommand cmd = new SqlCommand("spa_import_web_service", cn))
@@ -134,8 +133,7 @@ namespace FARRMSImportCLR
                             cn.Close();
                         }
 
-                        clrImportInfo.WebServiceInfo.Password = updatedPassword;
-                        cn.Close();
+                        clrImportInfo.WebServiceInfo.Password = updatedPassword;                        
                     }
 
                     SendEmail(clrImportInfo, "Success", passwordInformation, updatedPassword);
@@ -268,7 +266,6 @@ namespace FARRMSImportCLR
 
                     using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                     {
-                        cn.Open();
                         ws_name = "EPEXRetrieveMarketResultsFor" + _type;
                         using (SqlCommand cmd = new SqlCommand("spa_import_web_service", cn))
                         {

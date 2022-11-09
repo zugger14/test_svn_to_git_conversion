@@ -3,7 +3,7 @@ ws_name = 'EpexRetrieveMarketResultsForDayAhead'
 WHERE ws_name = 'EPEXRetrieveMarketResultsForDayAhead'
 
 UPDATE ixp_clr_functions
-SET ixp_clr_functions_name = 'EpexRetrieveMarketResultsForDayAhead', method_name = 'EpexRetrieveMarketResultsForDayAheadImporter'
+SET ixp_clr_functions_name = 'EpexRetrieveMarketResultsForDayAhead', method_name = 'EpexRetrieveMarketResultsForImporter'
 WHERE ixp_clr_functions_name = 'EPEXRetrieveMarketResultsForDayAhead'
 
 IF NOT EXISTS (SELECT 1 FROM ixp_clr_functions WHERE ixp_clr_functions_name = 'EpexRetrieveMarketResultsForDayAhead')
