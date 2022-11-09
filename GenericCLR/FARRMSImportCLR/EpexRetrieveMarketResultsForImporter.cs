@@ -15,19 +15,19 @@ namespace FARRMSImportCLR
     /// </summary>
     internal class EpexRetrieveMarketResultsForImporter : CLRWebImporterBase
     {
-        public String type;
-        string area;
-        string resultStatus;      
-        XmlDocument xmlDoc;
-        XmlNamespaceManager xmlnsManager;
-       
+        private readonly string _type;
+        private string _area;
+        private string _resultStatus;
+        private XmlDocument _xmlDoc;
+        private XmlNamespaceManager _xmlnsManager;
+
         /// <summary>
         /// Initilize EPEX webservice based on the type.
         /// </summary>
         /// <param name="type">DayAhead</param>
         public EpexRetrieveMarketResultsForImporter(string type)
         {
-            this.type = type;
+            _type = type;
         }
 
         /// <summary>
@@ -75,12 +75,12 @@ namespace FARRMSImportCLR
             string ws_name;
             string responseFromServer;
             XmlNode node;
-            string state;           
+            string state;
             string passwordRequestBody;
-            try 
+            try
             {
-                string updatedPassword = clrImportInfo.WebServiceInfo.UserName.Substring(0, 7) + DateTime.Now.ToString("ddMMMMyyyy") + "!";              
-               
+                string updatedPassword = clrImportInfo.WebServiceInfo.UserName.Substring(0, 7) + DateTime.Now.ToString("ddMMMMyyyy") + "!";
+
                 passwordRequestBody = @"                        
                 <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:urn='urn:openaccess'>
                     <soapenv:Header>
@@ -99,17 +99,17 @@ namespace FARRMSImportCLR
                         </urn:UpdatePassword>
                     </soapenv:Body>
                 </soapenv:Envelope>";
-               
+
                 responseFromServer = GetWebResponse(passwordRequestBody, clrImportInfo, "UpdatePassword");
-                xmlDoc = new XmlDocument();
-                xmlDoc.LoadXml(responseFromServer);
+                _xmlDoc = new XmlDocument();
+                _xmlDoc.LoadXml(responseFromServer);
 
-                xmlnsManager = new XmlNamespaceManager(xmlDoc.NameTable);
-                #pragma warning disable S1075 // URL path won't change
-                xmlnsManager.AddNamespace("SOAP-ENV", "http://schemas.xmlsoap.org/soap/envelope/");
-                xmlnsManager.AddNamespace("ns", "urn:openaccess");
+                _xmlnsManager = new XmlNamespaceManager(_xmlDoc.NameTable);
+#pragma warning disable S1075 // URL path won't change
+                _xmlnsManager.AddNamespace("SOAP-ENV", "http://schemas.xmlsoap.org/soap/envelope/");
+                _xmlnsManager.AddNamespace("ns", "urn:openaccess");
 
-                node = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:UpdatePasswordResponse/UpdatePasswordAcknowledgement", xmlnsManager);
+                node = _xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:UpdatePasswordResponse/UpdatePasswordAcknowledgement", _xmlnsManager);
 
                 state = node["ns:state"].InnerText;
 
@@ -119,7 +119,7 @@ namespace FARRMSImportCLR
                     using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                     {
                         cn.Open();
-                        ws_name = "EPEXRetrieveMarketResultsFor" + type;
+                        ws_name = "EPEXRetrieveMarketResultsFor" + _type;
 
                         using (SqlCommand cmd = new SqlCommand("spa_import_web_service", cn))
                         {
@@ -128,12 +128,12 @@ namespace FARRMSImportCLR
                             cmd.Parameters.AddWithValue("password", updatedPassword);
                             cmd.Parameters.AddWithValue("ws_name", ws_name);
                             cmd.Parameters.AddWithValue("password_updated_date", "GETDATE()");
-                            
+
                             cn.Open();
                             cmd.ExecuteNonQuery();
                             cn.Close();
-                        }      
-                        
+                        }
+
                         clrImportInfo.WebServiceInfo.Password = updatedPassword;
                         cn.Close();
                     }
@@ -144,18 +144,18 @@ namespace FARRMSImportCLR
                 }
                 else
                 {
-                    XmlNode errors = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:SetNewPasswordResponse/SetNewPasswordAcknowledgement/ns:errors", xmlnsManager);
-                    XmlNode error = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:SetNewPasswordResponse/SetNewPasswordAcknowledgement/ns:error", xmlnsManager);
+                    XmlNode errors = _xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:SetNewPasswordResponse/SetNewPasswordAcknowledgement/ns:errors", _xmlnsManager);
+                    XmlNode error = _xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:SetNewPasswordResponse/SetNewPasswordAcknowledgement/ns:error", _xmlnsManager);
 
                     XmlNodeList list = null;
-                    
+
                     if (errors != null)
                     {
-                        list = errors.ParentNode.SelectNodes(errors.Name, xmlnsManager);
+                        list = errors.ParentNode.SelectNodes(errors.Name, _xmlnsManager);
                     }
                     else if (error != null)
                     {
-                        list = error.ParentNode.SelectNodes(error.Name, xmlnsManager);
+                        list = error.ParentNode.SelectNodes(error.Name, _xmlnsManager);
                     }
 
                     string error_message = string.Empty;
@@ -165,7 +165,7 @@ namespace FARRMSImportCLR
                     {
                         for (int i = 0; i < list.Count; i++)
                         {
-                            bld.Append("<li>" + list[i].LastChild.InnerText + "</li>");                            
+                            bld.Append("<li>" + list[i].LastChild.InnerText + "</li>");
                         }
                         error_message = bld.ToString();
                         SendEmail(clrImportInfo, "Fail", error_message, "");
@@ -179,7 +179,7 @@ namespace FARRMSImportCLR
                 status = "fail";
                 SendEmail(clrImportInfo, "Fail", "Failed to update password. Please contact techincal support.", "");
 
-                ex.LogError("Epex Update Password", ex.Message);                
+                ex.LogError("Epex Update Password", ex.Message);
             }
 
             return status;
@@ -192,10 +192,10 @@ namespace FARRMSImportCLR
         /// <param name="status"></param>
         /// <param name="message"></param>
         /// <param name="password"></param>
-        public void SendEmail(CLRImportInfo clrImportInfo, string status, string message, string password) 
+        public void SendEmail(CLRImportInfo clrImportInfo, string status, string message, string password)
         {
             try
-            { 
+            {
                 using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                 {
                     using (SqlCommand cmd = new SqlCommand("spa_import_epex_web_service", cn))
@@ -210,12 +210,12 @@ namespace FARRMSImportCLR
                         cmd.ExecuteNonQuery();
                         cn.Close();
                     }
-                    
+
                 }
-            }            
+            }
             catch (Exception ex)
             {
-                ex.LogError("Epex Update Password Email", ex.Message);               
+                ex.LogError("Epex Update Password Email", ex.Message);
             }
         }
 
@@ -248,28 +248,28 @@ namespace FARRMSImportCLR
                     </soapenv:Body>
                     </soapenv:Envelope>";
                 string responseFromServer = GetWebResponse(tokenRequestBody, clrImportInfo, "EstablishConnection");
-                xmlDoc = new XmlDocument();
-                xmlDoc.LoadXml(responseFromServer);
+                _xmlDoc = new XmlDocument();
+                _xmlDoc.LoadXml(responseFromServer);
 
-                xmlnsManager = new System.Xml.XmlNamespaceManager(xmlDoc.NameTable);
+                _xmlnsManager = new System.Xml.XmlNamespaceManager(_xmlDoc.NameTable);
 
 #pragma warning disable S1075 // This URL does not change in XML
-                xmlnsManager.AddNamespace("SOAP-ENV", "http://schemas.xmlsoap.org/soap/envelope/");
+                _xmlnsManager.AddNamespace("SOAP-ENV", "http://schemas.xmlsoap.org/soap/envelope/");
 #pragma warning restore S1075 // This URL does not change in XML
-                xmlnsManager.AddNamespace("ns", "urn:openaccess");
+                _xmlnsManager.AddNamespace("ns", "urn:openaccess");
 
-                node = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:EstablishConnectionResponse/EstablishSessionResponse", xmlnsManager);
+                node = _xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:EstablishConnectionResponse/EstablishSessionResponse", _xmlnsManager);
                 state = node["ns:state"].InnerText;
 
                 if (state == "ACK")
                 {
-                    node = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:EstablishConnectionResponse/EstablishSessionResponse/ns:sessionToken", xmlnsManager);
+                    node = _xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:EstablishConnectionResponse/EstablishSessionResponse/ns:sessionToken", _xmlnsManager);
                     string token = node["ns:sessionKey"].InnerText;
 
                     using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                     {
                         cn.Open();
-                        ws_name = "EPEXRetrieveMarketResultsFor" + type;
+                        ws_name = "EPEXRetrieveMarketResultsFor" + _type;
                         using (SqlCommand cmd = new SqlCommand("spa_import_web_service", cn))
                         {
                             cmd.CommandType = CommandType.StoredProcedure;
@@ -280,7 +280,7 @@ namespace FARRMSImportCLR
                             cmd.ExecuteNonQuery();
                             cn.Close();
                         }
-                    }                    
+                    }
                     status = "success";
                 }
                 else
@@ -336,34 +336,34 @@ namespace FARRMSImportCLR
 
                 responseFromServer = GetWebResponse(clrImportInfo.WebServiceInfo.RequestBody, clrImportInfo, "RetrieveMarketResultsFor");
 
-                xmlDoc = new XmlDocument();
-                xmlDoc.LoadXml(responseFromServer);
+                _xmlDoc = new XmlDocument();
+                _xmlDoc.LoadXml(responseFromServer);
 
-                xmlnsManager = new System.Xml.XmlNamespaceManager(xmlDoc.NameTable);
+                _xmlnsManager = new System.Xml.XmlNamespaceManager(_xmlDoc.NameTable);
                 string outputResponse;
 
-                #pragma warning disable S1075 // URL won't change in XML
-                xmlnsManager.AddNamespace("SOAP-ENV", "http://schemas.xmlsoap.org/soap/envelope/");
-                xmlnsManager.AddNamespace("ns", "urn:openaccess");
-                XmlNode errors = xmlDoc.SelectSingleNode(xpath: "/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:RetrieveMarketResultsForResponse/RetrieveMarketResultAcknowledgement/ns:errors/ns:errorText", xmlnsManager);
-                XmlNode error = xmlDoc.SelectSingleNode(xpath: "/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:RetrieveMarketResultsForResponse/RetrieveMarketResultAcknowledgement/ns:error/ns:errorText", xmlnsManager);
+#pragma warning disable S1075 // URL won't change in XML
+                _xmlnsManager.AddNamespace("SOAP-ENV", "http://schemas.xmlsoap.org/soap/envelope/");
+                _xmlnsManager.AddNamespace("ns", "urn:openaccess");
+                XmlNode errors = _xmlDoc.SelectSingleNode(xpath: "/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:RetrieveMarketResultsForResponse/RetrieveMarketResultAcknowledgement/ns:errors/ns:errorText", _xmlnsManager);
+                XmlNode error = _xmlDoc.SelectSingleNode(xpath: "/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:RetrieveMarketResultsForResponse/RetrieveMarketResultAcknowledgement/ns:error/ns:errorText", _xmlnsManager);
 
                 node = errors ?? error;
                 if (node != null)
                 {
                     outputResponse = node.InnerText;
-                    area = "";
-                    resultStatus = "";
+                    _area = "";
+                    _resultStatus = "";
                 }
                 else
                 {
-                    node = xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:RetrieveMarketResultsForResponse/RetrieveMarketResultAcknowledgement/ns:marketResults", xmlnsManager);
-                    resultStatus = node["ns:ResultsStatus"].InnerText;
-                    area = node["ns:area"].InnerText;
+                    node = _xmlDoc.SelectSingleNode("/SOAP-ENV:Envelope/SOAP-ENV:Body/ns:RetrieveMarketResultsForResponse/RetrieveMarketResultAcknowledgement/ns:marketResults", _xmlnsManager);
+                    _resultStatus = node["ns:ResultsStatus"].InnerText;
+                    _area = node["ns:area"].InnerText;
                     outputResponse = node["ns:marketResultExport"].InnerText;
                 }
 
-                status = new EpexImportStatus { Status = "Success", ResponseMessage = outputResponse, Exception = null, Area = area, ResultStatus = resultStatus };
+                status = new EpexImportStatus { Status = "Success", ResponseMessage = outputResponse, Exception = null, Area = _area, ResultStatus = _resultStatus };
 
             }
             catch (Exception ex)
@@ -387,15 +387,15 @@ namespace FARRMSImportCLR
             string processTableName = "";
             string updStatus;
             try
-            {                               
+            {
                 //Validty of password is 90 days. So update password if less than 7 days remain
                 if ((DateTime.Now.Date - clrImportInfo.WebServiceInfo.PasswordUpdatedDate.Date).Days > 83)
                 {
                     string token = GenerateToken(clrImportInfo);
-                    #pragma warning disable S112 // To show exact message in clr_error_log
-                    if (token == "fail") throw new Exception("Failed to Generate Token while updating password.");                 
+#pragma warning disable S112 // To show exact message in clr_error_log
+                    if (token == "fail") throw new Exception("Failed to Generate Token while updating password.");
                     updStatus = UpdatePassword(clrImportInfo);
-                    #pragma warning disable S112 // To show exact message in clr_error_log
+#pragma warning disable S112 // To show exact message in clr_error_log
                     if (updStatus == "fail")
                     {
                         throw new Exception("Failed to Update Password.");
@@ -404,18 +404,18 @@ namespace FARRMSImportCLR
                 }
 
                 //Generate response, if token has expired generate token and regenerate response               
-                EpexImportStatus WebResponse = GenerateResponse(clrImportInfo, this.type);
+                EpexImportStatus WebResponse = GenerateResponse(clrImportInfo, _type);
                 if (WebResponse.ResponseMessage == "Login Denied: Wrong session key")
                 {
                     string token = GenerateToken(clrImportInfo);
-                    #pragma warning disable S112 // To show exact message in clr_error_log
+#pragma warning disable S112 // To show exact message in clr_error_log
                     if (token == "fail") throw new Exception("Failed to Generate Token.");
-                    WebResponse = GenerateResponse(clrImportInfo, this.type);
+                    WebResponse = GenerateResponse(clrImportInfo, _type);
                 }
 
                 string response = WebResponse.ResponseMessage;
                 string[] datarows;
-                DataTable dt = new DataTable("dtTable");                
+                DataTable dt = new DataTable("dtTable");
                 dt.Columns.Add(new DataColumn("column1"));
                 DataColumn dc = dt.Columns.Add("ixp_source_unique_id", typeof(int));
                 dc.AutoIncrement = true;
@@ -425,10 +425,10 @@ namespace FARRMSImportCLR
                 datarows = response.Split(new string[] { "\r" }, StringSplitOptions.RemoveEmptyEntries);
                 foreach (var row in datarows)
                 {
-                    dt.Rows.Add(row,null);
+                    dt.Rows.Add(row, null);
                 }
 
-                using (SqlConnection cn = new SqlConnection("Context Connection=true")) 
+                using (SqlConnection cn = new SqlConnection("Context Connection=true"))
                 {
                     cn.Open();
                     SqlDataReader rd = cn.ExecuteStoredProcedureWithReturn("spa_ixp_import_data_source", "flag:x,rules_id:" + clrImportInfo.RuleID.ToString());
@@ -446,8 +446,8 @@ namespace FARRMSImportCLR
                     createTableSql = "CREATE TABLE " + processTableName + "(" + "[" + dt.Columns[0].ColumnName + "] NVARCHAR(MAX), " + "[" + dt.Columns[1].ColumnName + "] INT)";
 
                     new SqlCommand(createTableSql, cn).ExecuteNonQuery();
-                    
-                    if (resultStatus == "Final")
+
+                    if (_resultStatus == "Final")
                     {
                         using (SqlDataAdapter adapter = new SqlDataAdapter("SELECT * FROM " + processTableName, cn))
                         {
@@ -471,7 +471,7 @@ namespace FARRMSImportCLR
 
                 status.ProcessTableName = processTableName;
                 return status;
-               
+
             }
             catch (Exception ex)
             {
