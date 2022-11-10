@@ -126,7 +126,7 @@ namespace FARRMSImportCLR
                             cmd.Parameters.AddWithValue("flag", "a");
                             cmd.Parameters.AddWithValue("password", updatedPassword);
                             cmd.Parameters.AddWithValue("ws_name", ws_name);
-                            cmd.Parameters.AddWithValue("password_updated_date", "GETDATE()");
+                            cmd.Parameters.AddWithValue("password_updated_date", value: DateTime.Now);
 
                             cn.Open();
                             cmd.ExecuteNonQuery();
