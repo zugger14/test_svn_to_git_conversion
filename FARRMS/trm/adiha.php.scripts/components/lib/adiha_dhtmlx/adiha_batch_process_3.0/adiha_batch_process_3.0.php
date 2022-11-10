@@ -1050,7 +1050,7 @@ echo $layout->close_layout();
     var date_separator = app_date_format.split('')[2];
     var batch_layout_namespace = {};
     var report_type = '<?php echo $report_type; ?>';
-    var exec_call = "<?php echo ($flag == 'x') ? addslashes($exec_call) : $exec_call; ?>";
+    var exec_call = "<?php echo ($flag == 'x' || $call_from = 'run_implied_volatility_calculation') ? addslashes($exec_call) : $exec_call; ?>";
     var is_stmt = '<?php echo $is_stmt; ?>';
     var batch_type = '<?php echo $batch_type;?>';
     
