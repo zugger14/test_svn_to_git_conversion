@@ -219,15 +219,15 @@
 			var as_of_date = dates.convert_to_user_format(as_of_date_tmp);
             var grid_xml = '';
             
-            var grid_xml = "<Root>";
+            var grid_xml = '<Root>';
             run_volatility_calucalation.ImpliedVolatilityCalculation.forEachRow(function(id) {
-                grid_xml += "<PSRecordset ";
+                grid_xml += '<PSRecordset ';
                 for(var cellIndex = 0; cellIndex < run_volatility_calucalation.ImpliedVolatilityCalculation.getColumnsNum(); cellIndex++){
-                    grid_xml += " " + run_volatility_calucalation.ImpliedVolatilityCalculation.getColumnId(cellIndex) + '="' + run_volatility_calucalation.ImpliedVolatilityCalculation.cells(id,cellIndex).getValue() + '"';
+                    grid_xml += ' ' + run_volatility_calucalation.ImpliedVolatilityCalculation.getColumnId(cellIndex) + '="' + run_volatility_calucalation.ImpliedVolatilityCalculation.cells(id,cellIndex).getValue() + '"';
                 }
-                grid_xml += " ></PSRecordset> ";
+                grid_xml += ' ></PSRecordset> ';
             });
-            grid_xml += "</Root>";         
+            grid_xml += '</Root>';         
             
             var param = 'call_from=run_implied_volatility_calculation&gen_as_of_date=1&batch_type=c&as_of_date=' + as_of_date;
             var title = 'Run Implied Volatility Calculation';
