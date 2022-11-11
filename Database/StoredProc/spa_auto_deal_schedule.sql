@@ -317,7 +317,7 @@ ELSE IF @granularity = 982
 BEGIN
 
 	SET @location_id = CASE WHEN @buy_sell = 'b' THEN @from_location ELSE @to_location END
-	SET @multiplier = CASE WHEN @buy_sell = 'b' THEN 1 ELSE -1 END
+	SET @multiplier = 1 --CASE WHEN @buy_sell = 'b' THEN 1 ELSE -1 END
 
 	IF @transport_deal_id IS NULL
 	BEGIN
