@@ -198,6 +198,8 @@ LEFT JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm2_value AND sdv.type_id = 10018
 LEFT JOIN  static_data_value sdv1
 	ON sdv1.value_id = gmv.clm4_value AND sdv1.type_id = 17300
+
+
 ',
 					'DECLARE @set_process_id VARCHAR(40) 
 SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37))
@@ -482,6 +484,8 @@ LEFT JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm2_value AND sdv.type_id = 10018
 LEFT JOIN  static_data_value sdv1
 	ON sdv1.value_id = gmv.clm4_value AND sdv1.type_id = 17300
+
+
 '
 				, after_insert_trigger = 'DECLARE @set_process_id VARCHAR(40) 
 SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37))
@@ -668,6 +672,10 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'source_deal_type_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[interval_value]', ic.ixp_columns_id, '''''', NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'description3' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''real''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
@@ -688,7 +696,7 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'contract_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[load]', ic.ixp_columns_id, '''deal volume''', 'Max', 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[load]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'internal_desk_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
@@ -744,7 +752,7 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'fixed_price_currency_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[value]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[value]', ic.ixp_columns_id, 'CASE WHEN etc.[commodity] = ''Gas'' AND etc.[load] = ''Shape'' THEN etc.[interval_value] ELSE etc.[value] END', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
