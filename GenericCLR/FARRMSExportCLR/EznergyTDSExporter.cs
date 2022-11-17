@@ -89,7 +89,9 @@ namespace FARRMSExportCLR
             catch (Exception ex)
             {
                 status = false;
-                BuildMessagesLog("Failed to get token", exportStatus.ProcessID, exportStatus.FileName, "Error", tds.newProcessID, tds.jobName, ex.Message);
+                BuildMessagesLog("Failed to generate token", exportStatus.ProcessID, exportStatus.FileName, "Error", tds.newProcessID, tds.jobName, ex.Message);
+                MessageBoard("TimeSeries Decimal Segment", exportStatus.ProcessID, exportStatus.FileName, "Error", tds.newProcessID, tds.jobName, "e");
+
             }
 
             return status;
@@ -126,7 +128,7 @@ namespace FARRMSExportCLR
                     timeSeriesInfo.timeSerieId = getUniqueTimeSerieIds[x].timeSerieId;
                     StringBuilder builder = new StringBuilder();
 
-                    for (int y = 0; y < getReportDataItems.Count(); y++)
+                    for (int y = 0; y < getReportDataItems.Count; y++)
                     {
                         if (timeSeriesInfo.timeSerieId == getReportDataItems[y].timeSerieId)
                         {
@@ -261,10 +263,6 @@ namespace FARRMSExportCLR
 
                 flag = (tableNameorQuery.IndexOf("spa_rfx_run_sql") > 0) ? "m" : "n";
 
-                string responseToken = "";
-                string tokenId = "";
-
-
                 #region Report data table name
                 exportWebServiceInfo.Connection.Open();
                 using (cmd = new SqlCommand("SELECT dbo.FNAProcessTableName('batch_report', NULL, '" + processID + "') [process_table]", exportWebServiceInfo.Connection))
@@ -302,7 +300,11 @@ namespace FARRMSExportCLR
                 if (string.IsNullOrEmpty(exportWebServiceInfo.authToken) || string.IsNullOrEmpty(exportWebServiceInfo.tokenUpdatedDate) || ((DateTime.Now.Subtract(DateTime.Parse(exportWebServiceInfo.tokenUpdatedDate)).TotalHours) > 10))
                 {
                     bool token = GenerateToken(exportWebServiceInfo, exportStatus, tds);
-                    if (token == false) throw new Exception("Failed to get token");
+                    if (!token)
+                    {
+                        exportStatus.Status = "Error";
+                        return exportStatus;
+                    }
                 }
                 #endregion
 
@@ -312,7 +314,11 @@ namespace FARRMSExportCLR
                 if (response.Status == "Unauthorized")
                 {
                     bool token = GenerateToken(exportWebServiceInfo, exportStatus, tds);
-                    if (token == false) throw new Exception("Failed to Generate Token.");
+                    if (!token)
+                    {
+                        exportStatus.Status = "Error";
+                        return exportStatus;
+                    }
                     response = PutTimeSeries(exportWebServiceInfo, tds, getReportDataItems, exportStatus, flag);
                     exportStatus.Status = response.Status;                        
                 }
@@ -323,12 +329,14 @@ namespace FARRMSExportCLR
             catch (WebException webEx)
             {
                 BuildMessagesLog("Failed to post data", exportStatus.ProcessID, exportStatus.FileName, "Error", tds.newProcessID, tds.jobName, webEx.Message);
+                MessageBoard("TimeSeries Decimal Segment", exportStatus.ProcessID, exportStatus.FileName, "Error", tds.newProcessID, tds.jobName, "e");
                 exportStatus.Status = "Error";
                 exportStatus.Exception = webEx;
             }
             catch (Exception ex)
             {
                 BuildMessagesLog("Failed to post data", exportStatus.ProcessID, exportStatus.FileName, "Error", tds.newProcessID, tds.jobName, ex.Message);
+                MessageBoard("TimeSeries Decimal Segment", exportStatus.ProcessID, exportStatus.FileName, "Error", tds.newProcessID, tds.jobName, "e");
                 exportStatus.Status = "Error";
                 exportStatus.Exception = ex;
             }
@@ -344,31 +352,20 @@ namespace FARRMSExportCLR
             //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
             using (SqlConnection con = new SqlConnection("Context Connection=true"))
             {
-                try
+                using (SqlCommand cmdm = new SqlCommand("spa_remote_service_response_log", con))
                 {
-                    using (SqlCommand cmdm = new SqlCommand("spa_remote_service_response_log", con))
-                    {
-                        cmdm.CommandType = CommandType.StoredProcedure;
-                        cmdm.Parameters.Add(new SqlParameter("@flag", flag));
-                        cmdm.Parameters.Add(new SqlParameter("@response_status", Status));
-                        cmdm.Parameters.Add(new SqlParameter("@response_message", msg));
-                        cmdm.Parameters.Add(new SqlParameter("@request_msg_detail", ""));
-                        cmdm.Parameters.Add(new SqlParameter("@process_id", ProcessId));
-                        cmdm.Parameters.Add(new SqlParameter("@type", "s"));
-                        cmdm.Parameters.Add(new SqlParameter("@job_name", jobName));
-                        cmdm.Parameters.Add(new SqlParameter("@source", "Timeseries Decimal Segments"));
-                        cmdm.Parameters.Add(new SqlParameter("@new_process_id", newProcessID));
-                        con.Open();
-                        cmdm.ExecuteNonQuery();
-                    }
-                }
-                catch (Exception)
-                {
-
-                }
-                finally
-                {
-                    con.Close();
+                    cmdm.CommandType = CommandType.StoredProcedure;
+                    cmdm.Parameters.Add(new SqlParameter("@flag", flag));
+                    cmdm.Parameters.Add(new SqlParameter("@response_status", Status));
+                    cmdm.Parameters.Add(new SqlParameter("@response_message", msg));
+                    cmdm.Parameters.Add(new SqlParameter("@request_msg_detail", ""));
+                    cmdm.Parameters.Add(new SqlParameter("@process_id", ProcessId));
+                    cmdm.Parameters.Add(new SqlParameter("@type", "s"));
+                    cmdm.Parameters.Add(new SqlParameter("@job_name", jobName));
+                    cmdm.Parameters.Add(new SqlParameter("@source", "Timeseries Decimal Segments"));
+                    cmdm.Parameters.Add(new SqlParameter("@new_process_id", newProcessID));
+                    con.Open();
+                    cmdm.ExecuteNonQuery();
                 }
             }
 
@@ -389,34 +386,24 @@ namespace FARRMSExportCLR
             //using (SqlConnection cn = new SqlConnection(@"Data Source=EU-U-SQL03.farrms.us,2033;Initial Catalog=TRMTracker_Enercity_UAT;Persist Security Info=True;User ID=dev_admin;password=Admin2929"))
             using (SqlConnection con = new SqlConnection("Context Connection=true"))
             {
-                try
+                
+                using (SqlCommand cmdn = new SqlCommand("spa_remote_service_response_log", con))
                 {
-                    using (SqlCommand cmdn = new SqlCommand("spa_remote_service_response_log", con))
+                    cmdn.CommandType = CommandType.StoredProcedure;
+                    cmdn.Parameters.Add(new SqlParameter("@flag", "i"));
+                    cmdn.Parameters.Add(new SqlParameter("@response_status", Status));
+                    cmdn.Parameters.Add(new SqlParameter("@response_message", msg));
+                    cmdn.Parameters.Add(new SqlParameter("@request_msg_detail", urlDesc));
+                    if (!string.IsNullOrEmpty(responseMesage))
                     {
-                        cmdn.CommandType = CommandType.StoredProcedure;
-                        cmdn.Parameters.Add(new SqlParameter("@flag", "i"));
-                        cmdn.Parameters.Add(new SqlParameter("@response_status", Status));
-                        cmdn.Parameters.Add(new SqlParameter("@response_message", msg));
-                        cmdn.Parameters.Add(new SqlParameter("@request_msg_detail", urlDesc));
-                        if (!string.IsNullOrEmpty(responseMesage))
-                        {
-                            cmdn.Parameters.Add(new SqlParameter("@response_msg_detail", responseMesage));
-                        }
-                        cmdn.Parameters.Add(new SqlParameter("@new_process_id", newProcessID));
-                        cmdn.Parameters.Add(new SqlParameter("@type", type));
-                        cmdn.Parameters.Add(new SqlParameter("@job_name", jobName));
-                        cmdn.Parameters.Add(new SqlParameter("@source", "Timeseries Decimal Segments"));
-                        con.Open();
-                        cmdn.ExecuteNonQuery();
+                        cmdn.Parameters.Add(new SqlParameter("@response_msg_detail", responseMesage));
                     }
-                }
-                catch (Exception)
-                {
-
-                }
-                finally
-                {
-                    con.Close();
+                    cmdn.Parameters.Add(new SqlParameter("@new_process_id", newProcessID));
+                    cmdn.Parameters.Add(new SqlParameter("@type", type));
+                    cmdn.Parameters.Add(new SqlParameter("@job_name", jobName));
+                    cmdn.Parameters.Add(new SqlParameter("@source", "Timeseries Decimal Segments"));
+                    con.Open();
+                    cmdn.ExecuteNonQuery();
                 }
             }
 
@@ -469,13 +456,9 @@ namespace FARRMSExportCLR
 
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
-            }
-            finally
-            {
-
+                ex.LogError("EznergyTDSExporter",  ex.Message);
             }
             return lst;
         }

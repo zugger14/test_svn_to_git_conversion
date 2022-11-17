@@ -95,61 +95,75 @@ DECLARE @user_login_id NVARCHAR(250)
 SET @user_login_id =  dbo.FNADBUSER()
 
 
-IF @flag = 'm'
+IF @flag = 'm' or @flag = 'e'
 BEGIN
-SELECT @error_count = COUNT(1)
-FROM remote_service_response_log rsrl	
-WHERE rsrl.process_id = @new_process_id AND response_status = 'Error'
+	SET @url  = './dev/spa_html.php?__user_name__=' + @user_login_id + '&spa=exec spa_remote_service_response_log @process_id =''' + @new_process_id + ''',@flag=''s'', @response_status=''Error'''
 
-SELECT @success_count = COUNT(1)
-FROM remote_service_response_log rsrl	
-WHERE rsrl.process_id = @new_process_id AND response_status = 'Success'
+	IF @flag = 'e'
+	BEGIN 
+		SELECT  @detail_description = response_msg_detail, @response_message = ISNULL(response_message, 'Failed to post data')
+		FROM remote_service_response_log rsrl	
+		WHERE rsrl.process_id = @new_process_id AND response_status = 'Error'
 
-SELECT @total_count = COUNT(1)
-FROM remote_service_response_log rsrl	
-WHERE rsrl.process_id = @new_process_id 
+		SET @type ='e'
 
+		SET @detail_url =  '<a target="_blank" href="' + @url + '"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')
+			 <font color="red">(Error(s) Found).</font> </br> ' + @response_message + '	</ul></a>' 
+	END
+	ELSE
+	BEGIN		
 
-SET @url  = './dev/spa_html.php?__user_name__=' + @user_login_id + '&spa=exec spa_remote_service_response_log @process_id =''' + @new_process_id + ''',@flag=''s'', @response_status=''Error'''
+		SELECT @error_count = COUNT(1)
+		FROM remote_service_response_log rsrl	
+		WHERE rsrl.process_id = @new_process_id AND response_status = 'Error'
 
-IF @error_count <> 0
-BEGIN
-	SET @detail_url =  '<a target="_blank" href="' + @url + '"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')
-	 <font color="red">(Error(s) Found).</font> </br> (Out of ' + @total_count + ' Timeseries Decimal Segments, ' + @success_count + ' successfully posted and ' + @error_count + ' Error(s) found.)	</ul></a>' 
+		SELECT @success_count = COUNT(1)
+		FROM remote_service_response_log rsrl	
+		WHERE rsrl.process_id = @new_process_id AND response_status = 'Success'
+
+		SELECT @total_count = COUNT(1)
+		FROM remote_service_response_log rsrl	
+		WHERE rsrl.process_id = @new_process_id 
+
+		IF @error_count <> 0
+		BEGIN
+			SET @detail_url =  '<a target="_blank" href="' + @url + '"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')
+			 <font color="red">(Error(s) Found).</font> </br> (Out of ' + @total_count + ' Timeseries Decimal Segments, ' + @success_count + ' successfully posted and ' + @error_count + ' Error(s) found.)	</ul></a>' 
+		END
+		ELSE
+		BEGIN
+			SET @detail_url = 'Post data Details (' + @source + ') </br> (' + @success_count + ' Timeseries Decimal Segment(s) successfully posted.)'
+		END
+	END
+
+	INSERT INTO message_board (
+		 user_login_id
+		,source
+		,[description]
+		,url_desc
+		,url
+		,[type]
+		,job_name
+		,as_of_date
+		,process_id
+		)
+	SELECT DISTINCT ISNULL(bpn.user_login_id, aru.user_login_id)
+		,@source
+		,ISNULL(@detail_url, 'Description is null')
+		,NULL
+		,NULL
+		,@type
+		,@job_name
+		,NULL
+		,@new_process_id
+	FROM batch_process_notifications bpn
+	LEFT JOIN application_role_user aru ON bpn.role_id = aru.role_Id
+	WHERE bpn.process_id = RIGHT(@process_id, 13)
+		AND bpn.notification_type IN (751,752,755,756)
+		AND (bpn.user_login_id IS NOT NULL OR aru.user_login_id IS NOT NULL)
+
 END
-ELSE
-BEGIN
-	SET @detail_url = 'Post data Details (' + @source + ') </br> (' + @success_count + ' Timeseries Decimal Segment(s) successfully posted.)'
-END
-
-INSERT INTO message_board (
-	 user_login_id
-	,source
-	,[description]
-	,url_desc
-	,url
-	,[type]
-	,job_name
-	,as_of_date
-	,process_id
-	)
-SELECT DISTINCT ISNULL(bpn.user_login_id, aru.user_login_id)
-	,@source
-	,ISNULL(@detail_url, 'Description is null')
-	,NULL
-	,NULL
-	,@type
-	,@job_name
-	,NULL
-	,@new_process_id
-FROM batch_process_notifications bpn
-LEFT JOIN application_role_user aru ON bpn.role_id = aru.role_Id
-WHERE bpn.process_id = RIGHT(@process_id, 13)
-	AND bpn.notification_type IN (751,752,755,756)
-	AND (bpn.user_login_id IS NOT NULL OR aru.user_login_id IS NOT NULL)
-
-END
-IF @flag = 'n'
+ELSE IF @flag = 'n'
 BEGIN
 	-- For Success case, send message to users in role 'Nomination Submission Notification-Success'
 	INSERT INTO message_board (
@@ -210,7 +224,7 @@ BEGIN
 	WHERE rsrl.process_id = @new_process_id AND response_status = 'Error'
 END
 
-IF @flag = 'i'
+ELSE IF @flag = 'i'
 BEGIN
 	INSERT INTO remote_service_response_log (
 	  remote_service_type_id
@@ -250,7 +264,7 @@ BEGIN
 
 END
 
-IF @flag = 's'
+ELSE IF @flag = 's'
 BEGIN
 	 SELECT  
 		  remote_service_response_log_id [System Source ID]
@@ -268,7 +282,3 @@ BEGIN
 END
 
 GO	
-
-
-
-
