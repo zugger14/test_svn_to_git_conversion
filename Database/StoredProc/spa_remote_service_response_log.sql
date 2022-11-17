@@ -88,12 +88,15 @@ DECLARE
 EXEC spa_drop_all_temp_table
 --*/
 
-DECLARE @SQL VARCHAR(MAX)
-DECLARE @detail_url varchar(MAX) , @url varchar(MAX), @success_count NVARCHAR(20), @error_count  NVARCHAR(20)
-DECLARE @detail_description varchar(MAX), @total_count NVARCHAR(20)
-DECLARE @user_login_id NVARCHAR(250)
-SET @user_login_id =  dbo.FNADBUSER()
+DECLARE @detail_url NVARCHAR(MAX)
+		, @url NVARCHAR(MAX)
+		, @success_count NVARCHAR(20)
+		, @error_count  NVARCHAR(20)
+		, @detail_description NVARCHAR(MAX)
+		, @total_count NVARCHAR(20)
+		, @user_login_id NVARCHAR(250)
 
+SET @user_login_id =  dbo.FNADBUSER()
 
 IF @flag = 'm' or @flag = 'e'
 BEGIN
@@ -111,8 +114,7 @@ BEGIN
 			 <font color="red">(Error(s) Found).</font> </br> ' + @response_message + '	</ul></a>' 
 	END
 	ELSE
-	BEGIN		
-
+	BEGIN
 		SELECT @error_count = COUNT(1)
 		FROM remote_service_response_log rsrl	
 		WHERE rsrl.process_id = @new_process_id AND response_status = 'Error'
@@ -136,26 +138,25 @@ BEGIN
 		END
 	END
 
-	INSERT INTO message_board (
-		 user_login_id
-		,source
-		,[description]
-		,url_desc
-		,url
-		,[type]
-		,job_name
-		,as_of_date
-		,process_id
-		)
+	INSERT INTO message_board( user_login_id
+		, [source]
+		, [description]
+		, url_desc
+		, [url]
+		, [type]
+		, job_name
+		, as_of_date
+		, process_id
+	)
 	SELECT DISTINCT ISNULL(bpn.user_login_id, aru.user_login_id)
-		,@source
-		,ISNULL(@detail_url, 'Description is null')
-		,NULL
-		,NULL
-		,@type
-		,@job_name
-		,NULL
-		,@new_process_id
+		, @source
+		, ISNULL(@detail_url, 'Description is null')
+		, NULL
+		, NULL
+		, @type
+		, @job_name
+		, NULL
+		, @new_process_id
 	FROM batch_process_notifications bpn
 	LEFT JOIN application_role_user aru ON bpn.role_id = aru.role_Id
 	WHERE bpn.process_id = RIGHT(@process_id, 13)
@@ -166,59 +167,59 @@ END
 ELSE IF @flag = 'n'
 BEGIN
 	-- For Success case, send message to users in role 'Nomination Submission Notification-Success'
-	INSERT INTO message_board (
-		 user_login_id
-		,source
-		,[description]
-		,url_desc
-		,[url]
-		,[type]
-		,job_name
-		,as_of_date
-		,process_id
+	INSERT INTO message_board( user_login_id
+		, [source]
+		, [description]
+		, url_desc
+		, [url]
+		, [type]
+		, job_name
+		, as_of_date
+		, process_id
 		)
 	SELECT DISTINCT users.user_login_id
-		,@source
-		,ISNULL('<a target="_blank" href="./dev/spa_html.php?__user_name__=' + users.user_login_id + '&spa=exec spa_remote_service_response_log @process_id =''' + @new_process_id + ''',@flag=''s'', @response_status=''Success''"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')</ul></a>', 'Description is null')
-		,NULL
-		,NULL
-		,'s'
-		,@job_name
-		,NULL
-		,@new_process_id
+		, @source
+		, ISNULL('<a target="_blank" href="./dev/spa_html.php?__user_name__=' + users.user_login_id + '&spa=exec spa_remote_service_response_log @process_id =''' + @new_process_id + ''',@flag=''s'', @response_status=''Success''"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')</ul></a>', 'Description is null')
+		, NULL
+		, NULL
+		, 's'
+		, @job_name
+		, NULL
+		, @new_process_id
 	FROM remote_service_response_log rsrl
 	CROSS APPLY (
-		SELECT user_login_id FROM application_security_role asr 
-		INNER JOIN application_role_user aru ON aru.role_id = asr.role_id
+		SELECT user_login_id 
+		FROM application_security_role asr 
+			INNER JOIN application_role_user aru ON aru.role_id = asr.role_id
 		WHERE role_name = 'Nomination Submission Notification-Success'
 	) users
 	WHERE rsrl.process_id = @new_process_id AND response_status = 'Success'
 	
 	-- For Error case, send message to users in role 'Nomination Submission Notification-Error'
-	INSERT INTO message_board (
-		 user_login_id
-		,source
-		,[description]
-		,url_desc
-		,[url]
-		,[type]
-		,job_name
-		,as_of_date
-		,process_id
+	INSERT INTO message_board ( user_login_id
+		, source
+		, [description]
+		, url_desc
+		, [url]
+		, [type]
+		, job_name
+		, as_of_date
+		, process_id
 		)
 	SELECT DISTINCT users.user_login_id
-		,@source
-		,ISNULL('<a target="_blank" href="./dev/spa_html.php?__user_name__=' + users.user_login_id + '&spa=exec spa_remote_service_response_log @process_id =''' + @new_process_id + ''',@flag=''s'', @response_status=''Error''"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')</ul></a><font color=''red''>(Error(s) Found).</font>', 'Description is null')
-		,NULL
-		,NULL
-		,'e'
-		,@job_name
-		,NULL
-		,@new_process_id
+		, @source
+		, ISNULL('<a target="_blank" href="./dev/spa_html.php?__user_name__=' + users.user_login_id + '&spa=exec spa_remote_service_response_log @process_id =''' + @new_process_id + ''',@flag=''s'', @response_status=''Error''"><ul style="padding:0px;margin:0px;list-style-type:none;"> Post data Details (' + @source + ')</ul></a><font color=''red''>(Error(s) Found).</font>', 'Description is null')
+		, NULL
+		, NULL
+		, 'e'
+		, @job_name
+		, NULL
+		, @new_process_id
 	FROM remote_service_response_log rsrl
 	CROSS APPLY (
-		SELECT user_login_id FROM application_security_role asr 
-		INNER JOIN application_role_user aru ON aru.role_id = asr.role_id
+		SELECT user_login_id 
+		FROM application_security_role asr 
+			INNER JOIN application_role_user aru ON aru.role_id = asr.role_id
 		WHERE role_name = 'Nomination Submission Notification-Error'
 	) users
 	WHERE rsrl.process_id = @new_process_id AND response_status = 'Error'
@@ -277,8 +278,9 @@ BEGIN
 		, request_msg_detail [Request Message Detail]
 		, create_user [Create User]
 		, create_ts [Create TS]
-	FROM remote_service_response_log WHERE process_id  =  @process_id 
-	AND response_status = ISNULL(@response_status, response_status)  
+	FROM remote_service_response_log 
+	WHERE process_id  =  @process_id 
+		AND response_status = ISNULL(@response_status, response_status)  
 END
 
 GO	
