@@ -80,6 +80,46 @@ t.[deal_date] =  [dbo].[FNAGetLOCALTime](t.[deal_date] , @default_code_value)
 
 FROM  [final_process_table] t
 
+
+/** update term_end for gas and shape
+ v cnt and day_diff is to verify the month difference by counting the no of details and date difference
+*/
+UPDATE t
+SET t.[term_end] = CASE WHEN t1.[commodity] = ''Gas'' AND t1.[load] = ''Shape'' 
+					THEN 
+						CASE WHEN DATEDIFF(MONTH, t1.[term_start], t1.[term_end]) = 1 AND v.cnt = v.day_diff 
+								THEN t.term_start
+							ELSE [dbo].[FNAGetFirstLastDayOfMonth](t.term_start,''l'')
+						END
+					ELSE t.[term_end]
+				END
+FROM  [final_process_table] t
+INNER JOIN  [temp_process_table] t1 on t.ixp_source_unique_id = t1.ixp_source_unique_id
+OUTER APPLY (
+	SELECT count(short_id) cnt
+		, DATEDIFF(DAY, MAX(t1.[term_start]), MAX(t1.[term_end])) day_diff 
+	FROM [temp_process_table] t1 
+	WHERE t1.short_id = t.deal_id
+	GROUP BY short_id
+) v
+
+/** updated unnecessary mapped description data*/
+UPDATE t
+SET t.[description3] = NULL 
+, t.[description4] = NULL 
+FROM  [final_process_table] t
+INNER JOIN  [temp_process_table] t1 on t.ixp_source_unique_id = t1.ixp_source_unique_id
+
+DROP TABLE IF EXISTS #dist_data
+SELECT DISTINCT deal_id, term_start, max(ixp_source_unique_id) ixp_source_unique_id
+INTO #dist_data 
+FROM [final_process_table]
+GROUP BY deal_id, term_start
+
+DELETE FROM [final_process_table]
+WHERE ixp_source_unique_id NOT IN (SELECT ixp_source_unique_id FROM #dist_data)
+
+
 UPDATE t
 SET t.[contract_id] =  cg.[contract_name]
 FROM [final_process_table] t
@@ -198,6 +238,7 @@ LEFT JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm2_value AND sdv.type_id = 10018
 LEFT JOIN  static_data_value sdv1
 	ON sdv1.value_id = gmv.clm4_value AND sdv1.type_id = 17300
+	
 ',
 					'DECLARE @set_process_id VARCHAR(40) 
 SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37))
@@ -364,6 +405,46 @@ t.[deal_date] =  [dbo].[FNAGetLOCALTime](t.[deal_date] , @default_code_value)
 
 FROM  [final_process_table] t
 
+
+/** update term_end for gas and shape
+ v cnt and day_diff is to verify the month difference by counting the no of details and date difference
+*/
+UPDATE t
+SET t.[term_end] = CASE WHEN t1.[commodity] = ''Gas'' AND t1.[load] = ''Shape'' 
+					THEN 
+						CASE WHEN DATEDIFF(MONTH, t1.[term_start], t1.[term_end]) = 1 AND v.cnt = v.day_diff 
+								THEN t.term_start
+							ELSE [dbo].[FNAGetFirstLastDayOfMonth](t.term_start,''l'')
+						END
+					ELSE t.[term_end]
+				END
+FROM  [final_process_table] t
+INNER JOIN  [temp_process_table] t1 on t.ixp_source_unique_id = t1.ixp_source_unique_id
+OUTER APPLY (
+	SELECT count(short_id) cnt
+		, DATEDIFF(DAY, MAX(t1.[term_start]), MAX(t1.[term_end])) day_diff 
+	FROM [temp_process_table] t1 
+	WHERE t1.short_id = t.deal_id
+	GROUP BY short_id
+) v
+
+/** updated unnecessary mapped description data*/
+UPDATE t
+SET t.[description3] = NULL 
+, t.[description4] = NULL 
+FROM  [final_process_table] t
+INNER JOIN  [temp_process_table] t1 on t.ixp_source_unique_id = t1.ixp_source_unique_id
+
+DROP TABLE IF EXISTS #dist_data
+SELECT DISTINCT deal_id, term_start, max(ixp_source_unique_id) ixp_source_unique_id
+INTO #dist_data 
+FROM [final_process_table]
+GROUP BY deal_id, term_start
+
+DELETE FROM [final_process_table]
+WHERE ixp_source_unique_id NOT IN (SELECT ixp_source_unique_id FROM #dist_data)
+
+
 UPDATE t
 SET t.[contract_id] =  cg.[contract_name]
 FROM [final_process_table] t
@@ -482,6 +563,7 @@ LEFT JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm2_value AND sdv.type_id = 10018
 LEFT JOIN  static_data_value sdv1
 	ON sdv1.value_id = gmv.clm4_value AND sdv1.type_id = 17300
+	
 '
 				, after_insert_trigger = 'DECLARE @set_process_id VARCHAR(40) 
 SELECT @set_process_id = REVERSE(SUBSTRING(REVERSE(''[temp_process_table]''), 0,37))
@@ -668,6 +750,10 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'source_deal_type_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[interval_value]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'description3' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''real''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
@@ -688,7 +774,7 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'contract_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[load]', ic.ixp_columns_id, '''deal volume''', 'Max', 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[load]', ic.ixp_columns_id, '''deal volume''', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'internal_desk_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
@@ -712,7 +798,11 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'sub_book' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[term_start]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[interval_start]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'description4' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[term_start]', ic.ixp_columns_id, 'CASE WHEN etc.[commodity] = ''Gas'' AND etc.[load] = ''Shape'' THEN ISNULL(etc.[interval_start], etc.[term_start]) ELSE etc.[term_start] END', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'term_start' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
@@ -744,7 +834,7 @@ INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_n
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'fixed_price_currency_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[value]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'etc.[value]', ic.ixp_columns_id, 'CASE WHEN etc.[commodity] = ''Gas'' AND etc.[load] = ''Shape'' THEN ISNULL(etc.[interval_value], etc.[value]) ELSE etc.[value] END', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
