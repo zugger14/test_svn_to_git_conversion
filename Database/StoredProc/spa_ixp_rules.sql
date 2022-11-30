@@ -4350,3 +4350,17 @@ BEGIN
 	INNER JOIN ixp_rules ixp ON iids.rules_id = ixp.ixp_rules_id
 	WHERE ISNULL(enable_email_import,0) = 1
 END
+/*
+ * [To show Deal import status]
+ */
+ELSE IF @flag = '7'
+BEGIN
+	SELECT	ISNULL(NULLIF(ids.ws_function_name,''),ss.rules_name) [import_function],
+			code			[status],
+			[description] 	[description],
+			dbo.FNADateTimeFormat(ss.create_ts,1) [import_timestamp]			
+	 FROM source_system_data_import_status ss
+	 LEFT JOIN ixp_rules ir ON ss.rules_name = ir.ixp_rules_name
+	 LEFT JOIN ixp_import_data_source ids ON ir.ixp_rules_id = ids.rules_id
+	 WHERE ss.process_id = @process_id
+END
