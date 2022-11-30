@@ -650,6 +650,15 @@ class API extends REST {
                         'body' => $body
                     )
                 )
+            ),			
+            'Getdealimportstatus' => array(
+                'controller' => new DataImportController(),
+                'routes' => array(
+                    "Getdealimportstatus" => array(
+                        'POST' => 'Getdealimportstatus',
+                        'body' => $body
+                    )
+                )
             ),
             'getreportlist' => array(
                 'controller' => new ReportController(),

@@ -273,4 +273,10 @@ class DataImport {
         $result = DB::query($sql);
         return $result;
     }
+
+	public static function Getdealimportstatus($import_process) {
+        $sql = "EXEC spa_ixp_rules  @flag='7', @process_id='$import_process'";
+		$result = DB::query($sql);
+		return $result;
+    }
 }

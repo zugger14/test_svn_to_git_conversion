@@ -27,6 +27,12 @@ class DataImportController extends REST {
         $results = DataImport::getImportStatus($import_process);
 		$this->response($this->json($results));
     }
+
+    public function Getdealimportstatus($body) {
+		$import_process = $body->import_process;
+        $results = DataImport::Getdealimportstatus($import_process);
+		$this->response($this->json($results));
+    }
     
     /*
      * To run import rule sequence from Excel
