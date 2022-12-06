@@ -60,6 +60,7 @@ EXEC(''IF OBJECT_ID('''''' + @temp_process_table + '''''') IS NOT NULL
 
 SELECT @row_count = count(*) FROM [final_process_table]
 
+
 UPDATE t
 	SET t.[DateTime] = CAST(t.[DateTime] AS VARCHAR(23))
 FROM [temp_process_table] t
@@ -158,29 +159,16 @@ AND NULLIF(gmv0.clm2_value,'''') IS NULL
 AND gmv.generic_mapping_values_id IS NULL
 AND gmv0.[clm1_value] NOT IN (''Saturday'', ''Sunday'')
 
-UPDATE temp
-	SET temp.[block_define_id] = sdv.code
-FROM [final_process_table] temp
-INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
-INNER JOIN generic_mapping_values gmv 
-	ON gmv.mapping_table_id = @mapping_table_id 
-	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
-	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-INNER JOIN static_data_value sdv
-	ON sdv.value_id = gmv.clm4_value
-WHERE ISDATE(temp.[deal_date]) = 1
 
-UPDATE temp
-	SET temp.[block_define_id] = sdv.code
-FROM [final_process_table] temp
-INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
+UPDATE t
+    SET t.[block_define_id] = sdv.code
+FROM [final_process_table] t
 INNER JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
-	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
-	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
+    AND t.[block_define_id] = gmv.clm2_value
 INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
-WHERE ISDATE(temp.[deal_date]) = 1 AND ISNULL(gmv.clm5_value, ''n'') =''y''
+WHERE NULLIF(gmv.clm1_value,'''') IS NULL
 
 UPDATE t
     SET t.[block_define_id] = sdv.code
@@ -209,15 +197,41 @@ INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
 WHERE t.[term_start] IN (''Saturday'', ''Sunday'')
 
+UPDATE temp
+	SET temp.[block_define_id] = sdv.code
+FROM [final_process_table] temp
+INNER JOIN mv90_dst d2 ON CAST(d2.date AS DATE) = CAST(temp.[deal_date] AS DATE) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
+INNER JOIN generic_mapping_values gmv 
+	ON gmv.mapping_table_id = @mapping_table_id 
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
+	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
+INNER JOIN static_data_value sdv
+	ON sdv.value_id = gmv.clm4_value
+WHERE ISDATE(temp.[deal_date]) = 1
+
 UPDATE t
     SET t.[block_define_id] = sdv.code
 FROM [final_process_table] t
 INNER JOIN generic_mapping_values gmv
+    ON gmv.mapping_table_id = @mapping_table_id  
+INNER JOIN static_data_value sdv
+    ON sdv.value_id = gmv.clm4_value
+AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(t.[deal_date] AS DATETIME),15)) AS VARCHAR(10))
+WHERE gmv.clm1_value = ''WD'' AND clm5_value IS NULL
+
+UPDATE temp
+	SET temp.[block_define_id] = sdv.code
+FROM [final_process_table] temp
+INNER JOIN mv90_dst d1 ON CAST(d1.date AS DATE) = CAST(temp.[deal_date] AS DATE) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
+INNER JOIN generic_mapping_values gmv
 	ON gmv.mapping_table_id = @mapping_table_id
-    AND t.[block_define_id] = gmv.clm2_value
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
+	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
 INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
-WHERE NULLIF(gmv.clm1_value,'''') IS NULL
+WHERE ISDATE(temp.[deal_date]) = 1 AND ISNULL(gmv.clm5_value, ''n'') =''y''
+
+
 
 UPDATE [final_process_table]
 SET term_start = IIF(CHARINDEX('' '',term_start) = 0,term_start,SUBSTRING(term_start,0, CHARINDEX('' '',term_start)))
@@ -895,6 +909,7 @@ EXEC(''IF OBJECT_ID('''''' + @temp_process_table + '''''') IS NOT NULL
 
 SELECT @row_count = count(*) FROM [final_process_table]
 
+
 UPDATE t
 	SET t.[DateTime] = CAST(t.[DateTime] AS VARCHAR(23))
 FROM [temp_process_table] t
@@ -993,29 +1008,16 @@ AND NULLIF(gmv0.clm2_value,'''') IS NULL
 AND gmv.generic_mapping_values_id IS NULL
 AND gmv0.[clm1_value] NOT IN (''Saturday'', ''Sunday'')
 
-UPDATE temp
-	SET temp.[block_define_id] = sdv.code
-FROM [final_process_table] temp
-INNER JOIN mv90_dst d2 ON d2.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
-INNER JOIN generic_mapping_values gmv 
-	ON gmv.mapping_table_id = @mapping_table_id 
-	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
-	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
-INNER JOIN static_data_value sdv
-	ON sdv.value_id = gmv.clm4_value
-WHERE ISDATE(temp.[deal_date]) = 1
 
-UPDATE temp
-	SET temp.[block_define_id] = sdv.code
-FROM [final_process_table] temp
-INNER JOIN mv90_dst d1 ON d1.year = YEAR(CAST(temp.[deal_date] AS DATE)) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
+UPDATE t
+    SET t.[block_define_id] = sdv.code
+FROM [final_process_table] t
 INNER JOIN generic_mapping_values gmv 
 	ON gmv.mapping_table_id = @mapping_table_id 
-	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
-	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
+    AND t.[block_define_id] = gmv.clm2_value
 INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
-WHERE ISDATE(temp.[deal_date]) = 1 AND ISNULL(gmv.clm5_value, ''n'') =''y''
+WHERE NULLIF(gmv.clm1_value,'''') IS NULL
 
 UPDATE t
     SET t.[block_define_id] = sdv.code
@@ -1044,15 +1046,41 @@ INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
 WHERE t.[term_start] IN (''Saturday'', ''Sunday'')
 
+UPDATE temp
+	SET temp.[block_define_id] = sdv.code
+FROM [final_process_table] temp
+INNER JOIN mv90_dst d2 ON CAST(d2.date AS DATE) = CAST(temp.[deal_date] AS DATE) AND d2.insert_delete = ''i'' AND d2.dst_group_value_id = 102201
+INNER JOIN generic_mapping_values gmv 
+	ON gmv.mapping_table_id = @mapping_table_id 
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
+	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
+INNER JOIN static_data_value sdv
+	ON sdv.value_id = gmv.clm4_value
+WHERE ISDATE(temp.[deal_date]) = 1
+
 UPDATE t
     SET t.[block_define_id] = sdv.code
 FROM [final_process_table] t
 INNER JOIN generic_mapping_values gmv
+    ON gmv.mapping_table_id = @mapping_table_id  
+INNER JOIN static_data_value sdv
+    ON sdv.value_id = gmv.clm4_value
+AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(t.[deal_date] AS DATETIME),15)) AS VARCHAR(10))
+WHERE gmv.clm1_value = ''WD'' AND clm5_value IS NULL
+
+UPDATE temp
+	SET temp.[block_define_id] = sdv.code
+FROM [final_process_table] temp
+INNER JOIN mv90_dst d1 ON CAST(d1.date AS DATE) = CAST(temp.[deal_date] AS DATE) AND d1.insert_delete = ''d'' AND d1.dst_group_value_id = 102201
+INNER JOIN generic_mapping_values gmv
 	ON gmv.mapping_table_id = @mapping_table_id
-    AND t.[block_define_id] = gmv.clm2_value
+	AND gmv.clm1_value = CASE WHEN temp.curve_id IN (''NCG L - WEST EEX'',''NCG L - EAST EEX'',''THE L West (Hour) EEX'',''THE L East (Hour) EEX'') THEN IIF(CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) = 0, RTRIM(LTRIM(temp.term_start)),SUBSTRING(RTRIM(LTRIM(temp.term_start)), CHARINDEX('' '',RTRIM(LTRIM(temp.term_start))) + 1 , LEN(RTRIM(LTRIM(temp.term_start))))) ELSE temp.term_start END 
+	AND gmv.clm3_value = CAST(DATEPART(HH, dbo.FNAGetLOCALTime(CAST(temp.[deal_date] AS DATETIME),15)) AS VARCHAR(10)) 
 INNER JOIN static_data_value sdv
 	ON sdv.value_id = gmv.clm4_value
-WHERE NULLIF(gmv.clm1_value,'''') IS NULL
+WHERE ISDATE(temp.[deal_date]) = 1 AND ISNULL(gmv.clm5_value, ''n'') =''y''
+
+
 
 UPDATE [final_process_table]
 SET term_start = IIF(CHARINDEX('' '',term_start) = 0,term_start,SUBSTRING(term_start,0, CHARINDEX('' '',term_start)))
@@ -1750,89 +1778,18 @@ INSERT INTO ixp_import_data_source (rules_id, data_source_type, connection_strin
 						END
 					
 
-INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[TradeID]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[DateTime]', ic.ixp_columns_id, 'CAST(tdi.[DateTime] AS VARCHAR(23))', NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_date' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''p''', 'Max', 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'physical_financial_flag' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggressorCompany]', ic.ixp_columns_id, 'CASE WHEN tdi.AggressorCompany = ''Stadtwerke Hannover AG''
-    THEN MAX(tdi.[InitiatorCompany])
+INSERT INTO ixp_import_data_mapping(ixp_rules_id, dest_table_id, source_column_name, dest_column, column_function, column_aggregation, repeat_number, where_clause ,udf_field_id)   SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InitiatorTrader]', ic.ixp_columns_id, 'CASE WHEN tdi.AggressorCompany = ''Stadtwerke Hannover AG''
+    THEN tdi.[InitiatorTrader]
     ELSE
-        tdi.[AggressorCompany]
+        MAX(tdi.[AggressorTrader])
 END', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'counterparty_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggressorBrokerID]', ic.ixp_columns_id, '''Physical''', 'Max', 0, NULL, NULL 
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'reference' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InstName]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'source_deal_type_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InitiatorOwnedSpread]', ic.ixp_columns_id, 'CASE WHEN tdi.[InitiatorOwnedSpread]=''TRUE'' THEN ''1''
-ELSE ''0'' END', NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'description1' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggressorOwnedSpread]', ic.ixp_columns_id, 'CASE WHEN tdi.[AggressorOwnedSpread]=''TRUE'' THEN ''1''
-ELSE ''0'' END', NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'description2' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggSleeve]', ic.ixp_columns_id, 'CASE WHEN tdi.[AggSleeve]=''TRUE'' THEN ''1''
-ELSE ''0'' END', NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'description3' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Real''', 'Max', 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_category_value_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggressorTrader]', ic.ixp_columns_id, 'CASE WHEN tdi.AggressorCompany = ''Stadtwerke Hannover AG''
-    THEN tdi.[AggressorTrader]
-    ELSE
-        MAX(tdi.[InitiatorTrader])
-END', NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'trader_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InitiatorTraderID]', ic.ixp_columns_id, '''Physical''', 'Max', 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'template_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InitiatorAction]', ic.ixp_columns_id, 'CASE WHEN tdi.AggressorCompany = ''Stadtwerke Hannover AG''
-    THEN tdi.[AggressorAction]
-    ELSE
-        tdi.[InitiatorAction]
-END', NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'header_buy_sell_flag' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggressorBroker]', ic.ixp_columns_id, 'CASE WHEN tdi.AggressorCompany = ''Stadtwerke Hannover AG''
-    THEN tdi.[AggressorBroker]
-    ELSE
-        MAX(tdi.[InitiatorBroker])
-END', NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'broker_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[initiatorBroker]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'aggregate_envrionment_comment' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InitiatorUser]', ic.ixp_columns_id, '''Default_contract''', 'Max', 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'contract_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''deal volume''', 'Max', 0, NULL, NULL 
-									   FROM ixp_tables it 
-									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'internal_desk_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'block_define_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[CPTY_Commodity]', ic.ixp_columns_id, 'CASE WHEN tdi.[instname]=''Germany Baseload EEX'' THEN ''POWER''
 WHEN tdi.[instname]=''Germany Baseload'' THEN ''POWER''
 WHEN tdi.[instname]=''Germany 20-24'' THEN ''POWER''
@@ -1855,18 +1812,60 @@ ELSE ''GAS'' END', NULL, 0, NULL, NULL
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'commodity_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InitiatorTrader]', ic.ixp_columns_id, 'CASE WHEN tdi.AggressorCompany = ''Stadtwerke Hannover AG''
-    THEN tdi.[InitiatorTrader]
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''deal volume''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'internal_desk_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InitiatorUser]', ic.ixp_columns_id, '''Default_contract''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'contract_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[initiatorBroker]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'aggregate_envrionment_comment' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggressorBroker]', ic.ixp_columns_id, 'CASE WHEN tdi.AggressorCompany = ''Stadtwerke Hannover AG''
+    THEN tdi.[AggressorBroker]
     ELSE
-        MAX(tdi.[AggressorTrader])
+        MAX(tdi.[InitiatorBroker])
 END', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'reference' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InstName]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'broker_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InitiatorAction]', ic.ixp_columns_id, 'CASE WHEN tdi.AggressorCompany = ''Stadtwerke Hannover AG''
+    THEN tdi.[AggressorAction]
+    ELSE
+        tdi.[InitiatorAction]
+END', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'block_define_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'header_buy_sell_flag' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InitiatorTraderID]', ic.ixp_columns_id, '''Physical''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'template_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggressorTrader]', ic.ixp_columns_id, 'CASE WHEN tdi.AggressorCompany = ''Stadtwerke Hannover AG''
+    THEN tdi.[AggressorTrader]
+    ELSE
+        MAX(tdi.[InitiatorTrader])
+END', NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'trader_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''Real''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_category_value_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggSleeve]', ic.ixp_columns_id, 'CASE WHEN tdi.[AggSleeve]=''TRUE'' THEN ''1''
+ELSE ''0'' END', NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'description3' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggressorOwnedSpread]', ic.ixp_columns_id, 'CASE WHEN tdi.[AggressorOwnedSpread]=''TRUE'' THEN ''1''
+ELSE ''0'' END', NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'description2' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[Action]', ic.ixp_columns_id, 'CASE WHEN tdi.[action]=''Query'' THEN ''New'' 
 WHEN tdi.[action]=''Insert'' THEN ''New''
 WHEN tdi.[action]=''Update'' THEN ''Amended'' 
@@ -1875,6 +1874,20 @@ END', NULL, 0, NULL, NULL
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_status' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[volume]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[Unit]', ic.ixp_columns_id, 'CASE WHEN tdi.[Unit]=''Mwh/h'' THEN ''MWh'' 
+WHEN tdi.[Unit]=''000''''MT'' THEN ''MT'' 
+else tdi.[Unit] END', NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume_uom_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[initiatorCompany]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_detail_description' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InitiatorUserID]', ic.ixp_columns_id, '''Not Confirmed''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
@@ -1924,20 +1937,35 @@ END', NULL, 0, NULL, NULL
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
 									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'fixed_price_currency_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[volume]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[InitiatorOwnedSpread]', ic.ixp_columns_id, 'CASE WHEN tdi.[InitiatorOwnedSpread]=''TRUE'' THEN ''1''
+ELSE ''0'' END', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[Unit]', ic.ixp_columns_id, 'CASE WHEN tdi.[Unit]=''Mwh/h'' THEN ''MWh'' 
-WHEN tdi.[Unit]=''000''''MT'' THEN ''MT'' 
-else tdi.[Unit] END', NULL, 0, NULL, NULL 
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'description1' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggressorBrokerID]', ic.ixp_columns_id, '''Physical''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_volume_uom_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
-									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[initiatorCompany]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'source_deal_type_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[AggressorCompany]', ic.ixp_columns_id, 'CASE WHEN tdi.AggressorCompany = ''Stadtwerke Hannover AG''
+    THEN MAX(tdi.[InitiatorCompany])
+    ELSE
+        tdi.[AggressorCompany]
+END', NULL, 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
-									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_detail_description' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'd' OR ic.header_detail IS NULL)
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'counterparty_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, '', ic.ixp_columns_id, '''p''', 'Max', 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'physical_financial_flag' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[DateTime]', ic.ixp_columns_id, 'CAST(tdi.[DateTime] AS VARCHAR(23))', NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_date' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
+									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[TradeID]', ic.ixp_columns_id, NULL, NULL, 0, NULL, NULL 
+									   FROM ixp_tables it 
+									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
+									   INNER JOIN ixp_columns ic ON ic.ixp_columns_name = 'deal_id' AND ic.ixp_table_id = it2.ixp_tables_id AND (ic.header_detail = 'h' OR ic.header_detail IS NULL)
 									   WHERE it.ixp_tables_name = 'ixp_source_deal_template' UNION ALL  SELECT @ixp_rules_id_new, it.ixp_tables_id, 'tdi.[IsMarketData]', ic.ixp_columns_id, '''default_location''', 'Max', 0, NULL, NULL 
 									   FROM ixp_tables it 
 									   INNER JOIN ixp_tables it2 ON it2.ixp_tables_name = 'ixp_source_deal_template'
