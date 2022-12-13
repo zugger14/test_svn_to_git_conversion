@@ -233,7 +233,7 @@
             var title = 'Run Implied Volatility Calculation';
             var exec_call = 'EXEC spa_curve_volatility_imp ' + singleQuote(grid_xml)+ ', ' +
                         		singleQuote(risk_free_rate) + ', ' + 
-                        		singleQuote(as_of_date) + ', ' + 
+                        		singleQuote(as_of_date_tmp) + ', ' + 
                         		singleQuote(no_of_days) + ', ' + 
                         		singleQuote(curve_source) + ', 2';
     
