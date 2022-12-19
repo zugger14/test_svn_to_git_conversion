@@ -71,7 +71,8 @@ BEGIN TRY
 				@val_transfer_counterparty_id NVARCHAR(100),
 				@val_transfer_contract_id NVARCHAR(100),
 				@counterparty_id_to NVARCHAR(100),
-				@transfer_template_id NVARCHAR(100)
+				@transfer_template_id NVARCHAR(100),
+				@source_deal_type_id NVARCHAR(100)
 			
 		IF OBJECT_ID ('tempdb..#transfer_mapping_ids') IS NOT NULL
 			DROP TABLE #transfer_mapping_ids
@@ -202,6 +203,7 @@ BEGIN TRY
 							COALESCE(dtmd.transfer_trader_id,deal_data.trader_id) AS [@transfer_trader_id],
 							dtmd.transfer_sub_book AS [@transfer_sub_book],
 							COALESCE(dtmd.transfer_template_id,deal_data.template_id) AS [@transfer_template_id],
+							ISNULL(CAST(dtm.source_deal_type_id AS NVARCHAR(10)), '') AS [@source_deal_type_id],
 							dtmd.fixed_adder AS [@fixed_adder],
 							@val_index_adder AS [@index_adder]
 					FROM deal_transfer_mapping dtm

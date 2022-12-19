@@ -251,7 +251,8 @@ BEGIN
 					transfer_without_offset BIT,
 					transfer_only_offset BIT,
 					est_movement_date NVARCHAR(10) COLLATE DATABASE_DEFAULT,
-					index_adder INT
+					index_adder INT,
+					source_deal_type_id NVARCHAR(100)
 				)
 
 				IF OBJECT_ID('tempdb..#temp_sdg_transfer') IS NOT NULL
@@ -270,7 +271,7 @@ BEGIN
 				INSERT INTO #temp_deal_transfer (
 					parent_source_deal_header_id, transfer_without_offset, transfer_only_offset, est_movement_date,
 					transfer_counterparty_id, transfer_contract_id, transfer_trader_id, transfer_sub_book, transfer_template_id, counterparty_id,contract_id, 
-					trader_id, sub_book, template_id, transfer_volume, volume_per, pricing_options, fixed_price, fixed_adder, transfer_date, location_id,index_adder
+					trader_id, sub_book, template_id, transfer_volume, volume_per, pricing_options, fixed_price, fixed_adder, transfer_date, location_id,index_adder, source_deal_type_id
 				)
 				SELECT NULLIF(A.deal.value('@source_deal_header_id', 'int'), 0) parent_source_deal_header_id,
 					A.deal.value('@transfer_without_offset', 'int') transfer_without_offset,
@@ -293,7 +294,8 @@ BEGIN
 					B.trans.value('@fixed_adder', 'float') fixed_adder,
 					B.trans.value('@transfer_date', 'date') transfer_date,
 					NULLIF(B.trans.value('@location_id', 'int'), 0) location_id,
-					NULLIF(B.trans.value('@index_adder', 'int'), 0) index_adder
+					NULLIF(B.trans.value('@index_adder', 'int'), 0) index_adder,
+					B.trans.value('@source_deal_type_id', 'NVARCHAR(100)') source_deal_type_id
 				FROM @xml.nodes('/GridXML/GridHeader') A(deal)
 				CROSS APPLY deal.nodes('GridRow') B(trans)
 
@@ -880,7 +882,11 @@ BEGIN
 					)
 					BEGIN
 						UPDATE sdh
-						SET sdh.source_deal_type_id = ISNULL(sdht.source_deal_type_id, sdh.source_deal_type_id), 
+						SET sdh.source_deal_type_id = CASE 
+														WHEN COALESCE(tdf.source_deal_type_id, '') <> '' THEN tdf.source_deal_type_id
+														WHEN sdht.source_deal_type_id IS NOT NULL THEN sdht.source_deal_type_id
+														ELSE sdh.source_deal_type_id
+													END,  
 							sdh.deal_sub_type_type_id = ISNULL(sdht.deal_sub_type_type_id, sdh.deal_sub_type_type_id)
 						FROM #temp_deal_transfer tdf
 						INNER JOIN source_deal_header_template sdht ON sdht.template_id = tdf.transfer_template_id
@@ -896,7 +902,11 @@ BEGIN
 				)
 				BEGIN
 					UPDATE sdh
-					SET sdh.source_deal_type_id = ISNULL(sdht.source_deal_type_id, sdh.source_deal_type_id),
+					SET sdh.source_deal_type_id = CASE 
+													WHEN COALESCE(tdf.source_deal_type_id, '') <> '' THEN tdf.source_deal_type_id
+													WHEN sdht.source_deal_type_id IS NOT NULL THEN sdht.source_deal_type_id
+													ELSE sdh.source_deal_type_id
+												END,
 						sdh.deal_sub_type_type_id = ISNULL(sdht.deal_sub_type_type_id, sdh.deal_sub_type_type_id)
 					FROM #temp_deal_transfer tdf
 					INNER JOIN source_deal_header_template sdht ON sdht.template_id = tdf.template_id
@@ -912,7 +922,11 @@ BEGIN
 				)
 				BEGIN					
 					UPDATE sdh
-					SET sdh.source_deal_type_id = ISNULL(sdht.source_deal_type_id, sdh.source_deal_type_id),
+					SET sdh.source_deal_type_id = CASE 
+													WHEN COALESCE(tdf.source_deal_type_id, '') <> '' THEN tdf.source_deal_type_id
+													WHEN sdht.source_deal_type_id IS NOT NULL THEN sdht.source_deal_type_id
+													ELSE sdh.source_deal_type_id
+												END,
 						sdh.deal_sub_type_type_id = ISNULL(sdht.deal_sub_type_type_id, sdh.deal_sub_type_type_id)
 					FROM #temp_deal_transfer tdf
 					INNER JOIN source_deal_header_template sdht ON sdht.template_id = tdf.template_id
@@ -920,7 +934,11 @@ BEGIN
 					INNER JOIN #temp_offset_deal_headers TEMP ON sdh.source_deal_header_id = TEMP.source_deal_header_id
 				
 					UPDATE sdh
-					SET sdh.source_deal_type_id = ISNULL(sdht.source_deal_type_id, sdh.source_deal_type_id),
+					SET sdh.source_deal_type_id = CASE 
+													WHEN COALESCE(tdf.source_deal_type_id, '') <> '' THEN tdf.source_deal_type_id
+													WHEN sdht.source_deal_type_id IS NOT NULL THEN sdht.source_deal_type_id
+													ELSE sdh.source_deal_type_id
+												END, 
 						sdh.deal_sub_type_type_id = ISNULL(sdht.deal_sub_type_type_id, sdh.deal_sub_type_type_id)
 					FROM #temp_deal_transfer tdf
 					INNER JOIN source_deal_header_template sdht ON sdht.template_id = tdf.transfer_template_id
